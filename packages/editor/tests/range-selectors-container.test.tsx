@@ -20,9 +20,9 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const codeBlockContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..code-block',
-  field: 'lines',
+const codeBlockContainer = defineContainer({
+  type: 'code-block',
+  childField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}

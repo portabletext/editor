@@ -3,7 +3,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
 
@@ -62,29 +62,29 @@ const schemaDefinition = defineSchema({
 })
 
 const containers = [
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..code-block',
-    field: 'lines',
+  defineContainer({
+    type: 'code-block',
+    childField: 'lines',
     render: ({attributes, children}) => <pre {...attributes}>{children}</pre>,
   }),
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+  defineContainer({
+    type: 'table',
+    childField: 'rows',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+  defineContainer({
+    type: 'row',
+    childField: 'cells',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  defineContainer({
+    type: 'cell',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -993,24 +993,24 @@ const tableSchemaDefinition = defineSchema({
 })
 
 const tableContainers = [
-  defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+  defineContainer({
+    type: 'table',
+    childField: 'rows',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
-  defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+  defineContainer({
+    type: 'row',
+    childField: 'cells',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
-  defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  defineContainer({
+    type: 'cell',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
-  defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -2243,22 +2243,62 @@ describe('cross-container range delete: deep structures', () => {
     // 'insert.block' for the image. The image must land inside the
     // callout's 'content' field (replacing the empty placeholder
     // text block left by the delete), not as a root sibling after
-    // the callout. Mirrors the playground's fact-box where a second
-    // container is registered at the text-block scope
-    // ('\$..callout.block') — the configuration that triggers the
-    // bug, since the inner-container registration is what causes the
-    // empty text block to be unset (leaving the editor selection
-    // stale) instead of just emptied.
-    const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..callout.block',
-      field: 'children',
-      render: ({attributes, children}) => <p {...attributes}>{children}</p>,
-    })
-
+    // the callout. Mirrors the playground's fact-box where a nested
+    // text-block container is registered inside the callout's `of`
+    // -- the configuration that triggers the bug, since the inner-
+    // container registration is what causes the empty text block to
+    // be unset (leaving the editor selection stale) instead of just
+    // emptied.
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
+    const containersWithCalloutBlock = [
+      defineContainer({
+        type: 'code-block',
+        childField: 'lines',
+        render: ({attributes, children}) => (
+          <pre {...attributes}>{children}</pre>
+        ),
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+        of: [
+          defineTextBlock({
+            type: 'block',
+            render: ({attributes, children}) => (
+              <p {...attributes}>{children}</p>
+            ),
+          }),
+        ],
+      }),
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+      }),
+      defineContainer({
+        type: 'row',
+        childField: 'cells',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+      }),
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+      }),
+    ]
 
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -2280,9 +2320,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[...containers, calloutBlockContainer]} />
-      ),
+      children: <ContainerPlugin containers={containersWithCalloutBlock} />,
     })
 
     const spanPath = [
@@ -2510,5 +2548,250 @@ describe('cross-container range delete: deep structures', () => {
     await userEvent.keyboard('{Delete}')
 
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+  })
+
+  test('positional-only nested containers: clears cell text in selection range', async () => {
+    // Regression: when `row` and `cell` are registered ONLY as nested
+    // positional overrides inside `table.of` (no top-level registration),
+    // a selection range crossing cells should still clear text in covered
+    // cells. The bug: `clearContainerContents` used a bare type-keyed
+    // `editor.containers.get('cell')` which only finds top-level
+    // registrations; positionally-registered cells were silently skipped,
+    // leaving text in covered intermediate cells.
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const row0Key = keyGenerator()
+    const cell00Key = keyGenerator()
+    const block00Key = keyGenerator()
+    const span00Key = keyGenerator()
+    const cell01Key = keyGenerator()
+    const block01Key = keyGenerator()
+    const span01Key = keyGenerator()
+    const cell02Key = keyGenerator()
+    const block02Key = keyGenerator()
+    const span02Key = keyGenerator()
+    const row1Key = keyGenerator()
+    const cell10Key = keyGenerator()
+    const block10Key = keyGenerator()
+    const span10Key = keyGenerator()
+    const cell11Key = keyGenerator()
+    const block11Key = keyGenerator()
+    const span11Key = keyGenerator()
+    const cell12Key = keyGenerator()
+    const block12Key = keyGenerator()
+    const span12Key = keyGenerator()
+
+    // Mirrors the playground's plugin.table.tsx: row and cell are
+    // declared ONLY positionally inside table.of, NOT as top-level
+    // entries in the containers array.
+    const positionalTableContainers = [
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+        of: [
+          defineContainer({
+            type: 'row',
+            childField: 'cells',
+            render: ({attributes, children}) => (
+              <div {...attributes}>{children}</div>
+            ),
+            of: [
+              defineContainer({
+                type: 'cell',
+                childField: 'content',
+                render: ({attributes, children}) => (
+                  <div {...attributes}>{children}</div>
+                ),
+              }),
+            ],
+          }),
+        ],
+      }),
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: row0Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell00Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block00Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span00Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell01Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block01Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span01Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell02Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block02Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span02Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: row1Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell10Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block10Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: span10Key,
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell11Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block11Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: span11Key,
+                          text: 'bar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell12Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block12Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span12Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={positionalTableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row0Key},
+            'cells',
+            {_key: cell00Key},
+            'content',
+            {_key: block00Key},
+            'children',
+            {_key: span00Key},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row1Key},
+            'cells',
+            {_key: cell11Key},
+            'content',
+            {_key: block11Key},
+            'children',
+            {_key: span11Key},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await userEvent.keyboard('{Delete}')
+
+    // Assert text content of every cell in the resulting value.
+    // Positional-only registration doesn't expose containers to toTextspec
+    // (test utility limitation), so we read the value directly.
+    const value = editor.getSnapshot().context.value as Array<
+      Record<string, unknown>
+    >
+    const cellTexts = (
+      value[0]!['rows'] as Array<Record<string, unknown>>
+    ).flatMap((row) =>
+      (row['cells'] as Array<Record<string, unknown>>).map(
+        (cell) =>
+          (
+            (cell['content'] as Array<Record<string, unknown>>)[0]![
+              'children'
+            ] as Array<{text: string}>
+          )[0]!.text,
+      ),
+    )
+    expect(cellTexts).toEqual(['', '', '', '', '', ''])
   })
 })

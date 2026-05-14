@@ -1,4 +1,8 @@
-import {defineContainer, defineLeaf} from '@portabletext/editor'
+import {
+  defineContainer,
+  defineLeaf,
+  defineTextBlock,
+} from '@portabletext/editor'
 import {ContainerPlugin, LeafPlugin} from '@portabletext/editor/plugins'
 import {
   InfoIcon,
@@ -8,7 +12,6 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react'
 import type {JSX} from 'react'
-import type {playgroundSchemaDefinition} from '../playground-schema-definition'
 
 const toneClassName: Record<string, string> = {
   note: 'border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-100',
@@ -39,9 +42,9 @@ function ToneIcon({tone}: {tone: string}): JSX.Element {
   }
 }
 
-const calloutContainer = defineContainer<typeof playgroundSchemaDefinition>({
-  scope: '$..callout',
-  field: 'content',
+const calloutContainer = defineContainer({
+  type: 'callout',
+  childField: 'content',
   render: ({attributes, children, node, selected}) => {
     const tone = typeof node.tone === 'string' ? node.tone : 'note'
     const toneStyle = toneClassName[tone] ?? defaultToneClassName
@@ -61,62 +64,60 @@ const calloutContainer = defineContainer<typeof playgroundSchemaDefinition>({
       </aside>
     )
   },
+  of: [
+    defineTextBlock({
+      type: 'block',
+      render: ({attributes, children, node}) => {
+        if (node.listItem !== undefined) {
+          return (
+            <div {...attributes} className="my-1">
+              {children}
+            </div>
+          )
+        }
+
+        switch (node.style) {
+          case 'h1':
+            return (
+              <h1 {...attributes} className="my-2 font-bold text-2xl">
+                {children}
+              </h1>
+            )
+          case 'h2':
+            return (
+              <h2 {...attributes} className="my-2 font-bold text-xl">
+                {children}
+              </h2>
+            )
+          case 'h3':
+            return (
+              <h3 {...attributes} className="my-2 font-bold text-lg">
+                {children}
+              </h3>
+            )
+          case 'blockquote':
+            return (
+              <blockquote
+                {...attributes}
+                className="my-1 border-l-2 border-amber-600 pl-2 italic dark:border-amber-300"
+              >
+                {children}
+              </blockquote>
+            )
+          default:
+            return (
+              <p {...attributes} className="my-1">
+                {children}
+              </p>
+            )
+        }
+      },
+    }),
+  ],
 })
 
-const calloutBlockContainer = defineContainer<
-  typeof playgroundSchemaDefinition
->({
-  scope: '$..callout.block',
-  field: 'children',
-  render: ({attributes, children, node}) => {
-    if (node.listItem !== undefined) {
-      return (
-        <div {...attributes} className="my-1">
-          {children}
-        </div>
-      )
-    }
-
-    switch (node.style) {
-      case 'h1':
-        return (
-          <h1 {...attributes} className="my-2 font-bold text-2xl">
-            {children}
-          </h1>
-        )
-      case 'h2':
-        return (
-          <h2 {...attributes} className="my-2 font-bold text-xl">
-            {children}
-          </h2>
-        )
-      case 'h3':
-        return (
-          <h3 {...attributes} className="my-2 font-bold text-lg">
-            {children}
-          </h3>
-        )
-      case 'blockquote':
-        return (
-          <blockquote
-            {...attributes}
-            className="my-1 border-l-2 border-amber-600 pl-2 italic dark:border-amber-300"
-          >
-            {children}
-          </blockquote>
-        )
-      default:
-        return (
-          <p {...attributes} className="my-1">
-            {children}
-          </p>
-        )
-    }
-  },
-})
-
-const calloutImageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..callout.image',
+const calloutImageLeaf = defineLeaf({
+  type: 'image',
   render: ({attributes, children, node, focused, selected}) => {
     const image = node as {src?: string; alt?: string}
     return (
@@ -147,8 +148,8 @@ const calloutImageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
 export function CalloutPlugin(): JSX.Element {
   return (
     <>
-      <ContainerPlugin containers={[calloutContainer, calloutBlockContainer]} />
-      <LeafPlugin leafs={[calloutImageLeaf]} />
+      <ContainerPlugin containers={[calloutContainer]} />
+      <LeafPlugin leaves={[calloutImageLeaf]} />
     </>
   )
 }

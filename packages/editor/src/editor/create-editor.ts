@@ -106,6 +106,18 @@ export function createInternalEditor(config: EditorConfig): {
         })
       }
     },
+    registerTextBlock: (textBlock) => {
+      editorActor.send({
+        type: 'register text-block',
+        textBlock,
+      })
+      return () => {
+        editorActor.send({
+          type: 'unregister text-block',
+          textBlock,
+        })
+      }
+    },
     send: (event) => {
       switch (event.type) {
         case 'update value':

@@ -4,11 +4,15 @@ import type {
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
-import {useContext, type ReactElement} from 'react'
+import {useContext, useMemo, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
-import type {ContainerConfig} from '../renderers/renderer.types'
-import {lookupContainer} from '../schema/lookup-container'
+import {serializePath} from '../paths/serialize-path'
+import type {
+  ContainerConfig,
+  LeafConfig,
+  TextBlockConfig,
+} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
@@ -18,15 +22,64 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
-import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorSchema} from './editor-schema'
+import {ParentContainerContext} from './parent-container-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
-import {useLeafConfig} from './render.leaf-config'
 import {RenderTextBlock} from './render.text-block'
 import {resolveElementDropPosition} from './resolve-element-drop-position'
+import {SelectionStateContext} from './selection-state-context'
+
+/**
+ * Reference-equality comparator for fixed-length tuples. Each slot is
+ * compared via `Object.is`; the tuple is considered equal when every
+ * slot's reference is unchanged. Lets a multi-slot `useSelector` skip
+ * re-renders unless one of the slots actually changes.
+ */
+function tupleRefEqual<T extends readonly unknown[]>(
+  previous: T,
+  next: T,
+): boolean {
+  if (previous.length !== next.length) {
+    return false
+  }
+  for (let i = 0; i < previous.length; i++) {
+    if (!Object.is(previous[i], next[i])) {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * Find a positional override for `_type` in the parent's pre-resolved
+ * `of` array. Returns the matching {@link ContainerConfig} or
+ * {@link LeafConfig}, or `undefined` if no override exists.
+ *
+ * One-hop only - does not walk ancestors. Nested registrations beyond
+ * the immediate parent only fire when the engine descends into the
+ * matching container, at which point that container's `of` defines the
+ * next hop.
+ */
+function findPositionalOverride(
+  parentConfig: ContainerConfig | undefined,
+  type: string,
+): ContainerConfig | LeafConfig | TextBlockConfig | undefined {
+  if (!parentConfig?.of) {
+    return undefined
+  }
+  return parentConfig.of.find((entry) => {
+    if ('container' in entry) {
+      return entry.container.type === type
+    }
+    if ('textBlock' in entry) {
+      return entry.textBlock.type === type
+    }
+    return entry.leaf.type === type
+  })
+}
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
@@ -43,41 +96,106 @@ export function RenderElement(props: {
   spellCheck?: boolean
 }) {
   const editorActor = useContext(EditorActorContext)
-  const containerScope = useContext(ContainerScopeContext)
+  const parentContainer = useContext(ParentContainerContext)
+  const {focusedContainerPath, selectedContainerPaths} = useContext(
+    SelectionStateContext,
+  )
   const slateStatic = useSlateStatic()
   const schema = props.schema
+  const type = props.element._type
 
-  const scopedTypeName = containerScope
-    ? `${containerScope}.${props.element._type}`
-    : props.element._type
+  // Positional override from the immediate parent's `of` array.
+  const positionalOverride = findPositionalOverride(parentContainer, type)
 
-  const containerConfig = useSelector(
-    editorActor,
-    (state) =>
-      // Internal cast: the public `Container` view is narrowed; runtime
-      // values are the full `ContainerConfig` carrying parsedScope/render.
-      lookupContainer(state.context.containers, scopedTypeName) as
-        | ContainerConfig
-        | undefined,
-  )
+  // Single live-subscribed lookup pulling all three maps. Tuple is
+  // ref-stable when each map entry's reference is unchanged, so the
+  // subscription only fires re-renders on real registration changes
+  // for this `_type`.
+  //
+  // `globalLeafConfig`'s fallback path (no positional override, no global
+  // container) is exercised implicitly by every test that renders a
+  // schema-declared block-object via the engine default. See
+  // `tests/container-rendering.test.tsx > 'gallery with void block objects'`
+  // for an explicit positive case.
+  const [globalContainerConfig, globalLeafConfig, textBlockConfig] =
+    useSelector(
+      editorActor,
+      (state) =>
+        [
+          state.context.containers.get(type),
+          state.context.leaves.get(type),
+          state.context.textBlocks.get(type),
+        ] as const,
+      tupleRefEqual,
+    )
 
-  const leafConfig = useLeafConfig(props.element, props.path)
+  // Compose effective configs. Positional override wins over global.
+  // Same `_type` cannot be BOTH a container and a leaf, so at most one
+  // of `containerConfig` / `leafConfig` is set.
+  //
+  // The positional override (when present) is already fully resolved
+  // the registration pass walked the `of` tree and attached the
+  // resolved field at every level, so no per-render schema walk is
+  // needed.
+  const containerConfig = useMemo<ContainerConfig | undefined>(() => {
+    if (positionalOverride && isContainerRegistration(positionalOverride)) {
+      return positionalOverride
+    }
+    return globalContainerConfig
+  }, [positionalOverride, globalContainerConfig])
+
+  const effectiveTextBlockConfig = useMemo<TextBlockConfig | undefined>(() => {
+    if (positionalOverride && isTextBlockRegistration(positionalOverride)) {
+      return positionalOverride
+    }
+    return textBlockConfig
+  }, [positionalOverride, textBlockConfig])
+
+  const leafConfig = useMemo<LeafConfig | undefined>(() => {
+    if (
+      positionalOverride &&
+      !isContainerRegistration(positionalOverride) &&
+      !isTextBlockRegistration(positionalOverride)
+    ) {
+      return positionalOverride
+    }
+    if (containerConfig) {
+      return undefined
+    }
+    return globalLeafConfig
+  }, [positionalOverride, globalLeafConfig, containerConfig])
 
   if (containerConfig) {
     return (
-      <RenderContainer
-        attributes={props.attributes}
-        element={props.element}
-        containerConfig={containerConfig}
-        path={props.path}
-      >
-        {props.children}
-      </RenderContainer>
+      <ParentContainerContext.Provider value={containerConfig}>
+        <RenderContainer
+          attributes={props.attributes}
+          element={props.element}
+          containerConfig={containerConfig}
+          path={props.path}
+        >
+          {props.children}
+        </RenderContainer>
+      </ParentContainerContext.Provider>
     )
   }
 
   if (isTextBlock({schema}, props.element)) {
-    if (containerScope) {
+    if (effectiveTextBlockConfig) {
+      const serializedPath = serializePath(props.path)
+      const focused = focusedContainerPath === serializedPath
+      const selected = selectedContainerPaths.has(serializedPath)
+      return effectiveTextBlockConfig.textBlock.render({
+        attributes: props.attributes,
+        children: props.children,
+        focused,
+        node: props.element,
+        path: props.path,
+        readOnly: props.readOnly,
+        selected,
+      })
+    }
+    if (parentContainer) {
       const {'data-slate-node': _sn, ...rest} = props.attributes
       return (
         <div {...rest} data-pt-block-type="text">
@@ -108,7 +226,7 @@ export function RenderElement(props: {
   }
 
   if (isInline(slateStatic, props.path)) {
-    if (containerScope && !leafConfig) {
+    if (parentContainer && !leafConfig) {
       const {
         'data-slate-node': _sn,
         'data-slate-void': _sv,
@@ -139,7 +257,7 @@ export function RenderElement(props: {
     )
   }
 
-  if (containerScope && !leafConfig) {
+  if (parentContainer && !leafConfig) {
     const {
       'data-slate-node': _sn,
       'data-slate-void': _sv,
@@ -170,4 +288,16 @@ export function RenderElement(props: {
       {props.children}
     </RenderBlockObject>
   )
+}
+
+function isContainerRegistration(
+  entry: ContainerConfig | LeafConfig | TextBlockConfig,
+): entry is ContainerConfig {
+  return 'container' in entry
+}
+
+function isTextBlockRegistration(
+  entry: ContainerConfig | LeafConfig | TextBlockConfig,
+): entry is TextBlockConfig {
+  return 'textBlock' in entry
 }

@@ -5,7 +5,7 @@ import {
   isTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {makeContainerConfig} from '../schema/make-container-config'
+import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getNodeDescendants, getNodes} from './get-nodes'
 import {
@@ -798,18 +798,12 @@ describe(getNodes.name, () => {
         ...getNodeDescendants(
           {
             schema,
-            containers: resolveContainers(
-              schema,
-              new Map([
-                [
-                  '$..accordion',
-                  makeContainerConfig(schema, {
-                    scope: '$..accordion',
-                    field: 'value',
-                  }),
-                ],
-              ]),
-            ),
+            containers: resolveContainers(schema, [
+              defineContainer({
+                type: 'accordion',
+                childField: 'value',
+              }),
+            ]),
           },
           accordion,
         ),

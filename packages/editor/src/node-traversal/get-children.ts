@@ -1,8 +1,9 @@
-import type {OfDefinition} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {lookupContainer} from '../schema/lookup-container'
-import type {Containers} from '../schema/resolve-containers'
+import type {
+  Containers,
+  RegisteredContainer,
+} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
@@ -17,10 +18,10 @@ export function getChildren(
   path: Path,
 ): Array<{node: Node; path: Path}> {
   let currentChildren: Array<Node> = snapshot.context.value
-  let scopePath = ''
   let currentFieldName = 'value'
   let currentPath: Path = []
   let isRoot = true
+  let currentParent: RegisteredContainer | undefined
 
   for (const segment of path) {
     if (typeof segment === 'string') {
@@ -43,15 +44,15 @@ export function getChildren(
       : [...currentPath, currentFieldName, {_key: node._key}]
     isRoot = false
 
-    const next = getNodeChildren(snapshot.context, node, scopePath)
+    const next = getNodeChildren(snapshot.context, node, currentParent)
 
     if (!next) {
       return []
     }
 
     currentChildren = next.children
-    scopePath = next.scopePath
     currentFieldName = next.fieldName
+    currentParent = next.parent
   }
 
   return currentChildren.map((child) => ({
@@ -62,41 +63,48 @@ export function getChildren(
   }))
 }
 
+/**
+ * Resolve a node's editable child array.
+ *
+ * When `parent` is provided and its `of` declares a positional entry
+ * matching `node._type`, that positional entry's `field` is used.
+ * Otherwise the top-level `containers.get(node._type)` provides the
+ * fallback.
+ *
+ * The returned `parent` is the resolved container entry for `node`
+ * itself (used by the caller to thread further descent).
+ */
 export function getNodeChildren(
   context: {
     schema: EditorSchema
     containers: Containers
   },
   node: Node | {value: Array<Node>},
-  scopePath: string,
+  parent?: RegisteredContainer,
 ):
   | {
       children: Array<Node>
-      scope: ReadonlyArray<OfDefinition> | undefined
-      scopePath: string
       fieldName: string
+      parent: RegisteredContainer | undefined
     }
   | undefined {
   // Text blocks store children in .children
   if (isTextBlock(context, node)) {
     return {
       children: node.children,
-      scope: undefined,
-      scopePath: '',
       fieldName: 'children',
+      parent: undefined,
     }
   }
 
   if (isObjectNode(context, node)) {
-    const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
+    const resolved = resolveNodeContainer(context.containers, parent, node)
 
-    const arrayField = lookupContainer(context.containers, scopedKey)?.field
-
-    if (!arrayField) {
+    if (!resolved) {
       return undefined
     }
 
-    const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+    const fieldValue = (node as Record<string, unknown>)[resolved.field.name]
 
     if (!Array.isArray(fieldValue)) {
       return undefined
@@ -104,9 +112,8 @@ export function getNodeChildren(
 
     return {
       children: fieldValue as Array<Node>,
-      scope: arrayField.of,
-      scopePath: scopedKey,
-      fieldName: arrayField.name,
+      fieldName: resolved.field.name,
+      parent: resolved,
     }
   }
 
@@ -119,11 +126,34 @@ export function getNodeChildren(
   ) {
     return {
       children: node['value'] as Array<Node>,
-      scope: undefined,
-      scopePath: '',
       fieldName: 'value',
+      parent: undefined,
     }
   }
 
   return undefined
+}
+
+/**
+ * Pick the positional override from `parent.of` if present; fall back
+ * to the top-level entry. Returns only `RegisteredContainer` entries
+ * since leaves do not have editable children.
+ */
+function resolveNodeContainer(
+  containers: Containers,
+  parent: RegisteredContainer | undefined,
+  node: Node,
+): RegisteredContainer | undefined {
+  if (parent?.of) {
+    for (const entry of parent.of) {
+      if (entry.type === node._type) {
+        // Only return container entries; leaves have no editable children.
+        if ('field' in entry) {
+          return entry
+        }
+        return undefined
+      }
+    }
+  }
+  return containers.get(node._type)
 }

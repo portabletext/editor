@@ -1,6 +1,9 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeChildren} from '../node-traversal/get-children'
-import type {ResolvedContainers} from '../schema/resolve-containers'
+import type {
+  Containers,
+  RegisteredContainer,
+} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -15,12 +18,13 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export function getChildFieldName(
   context: {
     schema: EditorSchema
-    containers: ResolvedContainers
+    containers: Containers
     value: Array<Node>
   },
   path: Path,
 ): string | undefined {
-  let nodeChildren = getNodeChildren(context, {value: context.value}, '')
+  let nodeChildren = getNodeChildren(context, {value: context.value})
+  let currentParent: RegisteredContainer | undefined = nodeChildren?.parent
 
   for (let i = 0; i < path.length; i++) {
     if (!nodeChildren) {
@@ -46,11 +50,12 @@ export function getChildFieldName(
     }
 
     if (i === path.length - 1) {
-      const targetInfo = getNodeChildren(context, node, nodeChildren.scopePath)
+      const targetInfo = getNodeChildren(context, node, currentParent)
       return targetInfo?.fieldName
     }
 
-    nodeChildren = getNodeChildren(context, node, nodeChildren.scopePath)
+    nodeChildren = getNodeChildren(context, node, currentParent)
+    currentParent = nodeChildren?.parent
   }
 
   return undefined

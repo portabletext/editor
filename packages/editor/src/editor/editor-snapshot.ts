@@ -16,12 +16,20 @@ export type EditorContext = {
   selection: EditorSelection
   value: Array<PortableTextBlock>
   /**
-   * Map of registered editable containers keyed by their scoped type name
-   * (the '.'-joined type chain from root, e.g. `'code-block'`,
-   * `'callout.code-block'`, `'callout.code-block.block'`).
+   * Map of registered editable containers keyed by their bare
+   * block-object `_type` (e.g. `'callout'`, `'table'`).
    *
-   * Used by container-aware selectors and traversal utilities to resolve
-   * which array field on a container node holds its editable children.
+   * Each entry is a {@link RegisteredContainer} carrying `type`,
+   * the array `field` that holds the container's editable children,
+   * and (when present) the nested positional `of` registrations
+   * consulted by {@link resolveContainerAt}. The render callback is
+   * engine-internal and not surfaced here.
+   *
+   * Only top-level registrations appear as flat entries. A `_type`
+   * registered only inside a parent's `of` is reachable through that
+   * parent's `of`, not as a top-level entry. Use
+   * `resolveContainerAt(containers, value, path)` for position-aware
+   * resolution that handles both top-level and positional entries.
    *
    * @alpha
    */
@@ -57,7 +65,7 @@ export function createEditorSnapshot({
   const selection = editor.selection
 
   const context = {
-    containers: editor.containers,
+    containers: editor.publicContainers,
     converters,
     keyGenerator,
     readOnly,

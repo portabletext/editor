@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import type {Path} from '../src/slate/interfaces/path'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -90,21 +90,22 @@ describe('container render focused, selected, and path', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof calloutSchema>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children, focused, selected, path}) => {
                 calloutValues.push({focused, selected, path})
                 return <div {...attributes}>{children}</div>
               },
-            }),
-            defineContainer<typeof calloutSchema>({
-              scope: '$..callout.block',
-              field: 'children',
-              render: ({attributes, children, focused, selected, path}) => {
-                calloutBlockValues.push({focused, selected, path})
-                return <div {...attributes}>{children}</div>
-              },
+              of: [
+                defineTextBlock({
+                  type: 'block',
+                  render: ({attributes, children, focused, selected, path}) => {
+                    calloutBlockValues.push({focused, selected, path})
+                    return <div {...attributes}>{children}</div>
+                  },
+                }),
+              ],
             }),
           ]}
         />
@@ -172,9 +173,9 @@ describe('container render focused, selected, and path', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof calloutSchema>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children, focused, selected}) => {
                 calloutValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
@@ -242,37 +243,38 @@ describe('container render focused, selected, and path', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof tableSchema>({
-              scope: '$..table',
-              field: 'rows',
+            defineContainer({
+              type: 'table',
+              childField: 'rows',
               render: ({attributes, children, focused, selected}) => {
                 tableValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
             }),
-            defineContainer<typeof tableSchema>({
-              scope: '$..table.row',
-              field: 'cells',
+            defineContainer({
+              type: 'row',
+              childField: 'cells',
               render: ({attributes, children, focused, selected}) => {
                 rowValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
             }),
-            defineContainer<typeof tableSchema>({
-              scope: '$..table.row.cell',
-              field: 'content',
+            defineContainer({
+              type: 'cell',
+              childField: 'content',
               render: ({attributes, children, focused, selected}) => {
                 cellValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
-            }),
-            defineContainer<typeof tableSchema>({
-              scope: '$..table.row.cell.block',
-              field: 'children',
-              render: ({attributes, children, focused, selected}) => {
-                cellBlockValues.push({focused, selected})
-                return <div {...attributes}>{children}</div>
-              },
+              of: [
+                defineTextBlock({
+                  type: 'block',
+                  render: ({attributes, children, focused, selected}) => {
+                    cellBlockValues.push({focused, selected})
+                    return <div {...attributes}>{children}</div>
+                  },
+                }),
+              ],
             }),
           ]}
         />
@@ -370,23 +372,23 @@ describe('container render focused, selected, and path', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof tableSchema>({
-              scope: '$..table',
-              field: 'rows',
+            defineContainer({
+              type: 'table',
+              childField: 'rows',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
             }),
-            defineContainer<typeof tableSchema>({
-              scope: '$..table.row',
-              field: 'cells',
+            defineContainer({
+              type: 'row',
+              childField: 'cells',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
             }),
-            defineContainer<typeof tableSchema>({
-              scope: '$..table.row.cell',
-              field: 'content',
+            defineContainer({
+              type: 'cell',
+              childField: 'content',
               render: ({attributes, children, focused, selected, node}) => {
                 cellValues.push({key: node._key, focused, selected})
                 return <div {...attributes}>{children}</div>

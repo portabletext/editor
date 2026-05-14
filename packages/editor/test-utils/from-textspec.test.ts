@@ -1,7 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {makeContainerConfig} from '../src/schema/make-container-config'
 import {
   resolveContainers,
   type Containers,
@@ -66,32 +65,11 @@ const schemaDefinition = defineSchema({
 
 const schema = compileSchema(schemaDefinition)
 
-const tableContainers: Containers = resolveContainers(
-  schema,
-  new Map([
-    [
-      '$..table',
-      makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
-      }),
-    ],
-    [
-      '$..table.tableRow',
-      makeContainerConfig(schema, {
-        scope: '$..table.tableRow',
-        field: 'cells',
-      }),
-    ],
-    [
-      '$..table.tableRow.tableCell',
-      makeContainerConfig(schema, {
-        scope: '$..table.tableRow.tableCell',
-        field: 'content',
-      }),
-    ],
-  ]),
-)
+const tableContainers: Containers = resolveContainers(schema, [
+  {type: 'table', childField: 'rows'},
+  {type: 'tableRow', childField: 'cells'},
+  {type: 'tableCell', childField: 'content'},
+])
 
 describe(fromTextspec.name, () => {
   test('simple paragraph', () => {
@@ -577,22 +555,10 @@ describe('fromTextspec with self-referential schemas', () => {
 
   const recursiveContainers: Containers = resolveContainers(
     recursiveListSchema,
-    new Map([
-      [
-        '$..list',
-        makeContainerConfig(recursiveListSchema, {
-          scope: '$..list',
-          field: 'items',
-        }),
-      ],
-      [
-        '$..list.list-item',
-        makeContainerConfig(recursiveListSchema, {
-          scope: '$..list.list-item',
-          field: 'content',
-        }),
-      ],
-    ]),
+    [
+      {type: 'list', childField: 'items'},
+      {type: 'list-item', childField: 'content'},
+    ],
   )
 
   test('parses a list nested three levels deep with a deep text block', () => {

@@ -1,6 +1,7 @@
-import {isSpan, type PortableTextSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import {getNodeChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
+import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
@@ -57,7 +58,7 @@ export const modifyDescendant = <N extends Node>(
 
   const context = {
     schema: editor.schema,
-    containers: editor.containers,
+    containers: editor.publicContainers,
   }
   const nodeEntry = getNode(editor, path)
   if (!nodeEntry) {
@@ -88,10 +89,12 @@ export const modifyDescendant = <N extends Node>(
   const fieldNames: string[] = []
   {
     let currentNode: Node | {value: Array<Node>} = {value: editor.children}
-    let scopePath = ''
+    let currentParent:
+      | import('../../schema/resolve-containers').RegisteredContainer
+      | undefined
 
     for (let i = 0; i < keyedSegments.length; i++) {
-      const result = getNodeChildren(context, currentNode, scopePath)
+      const result = getNodeChildren(context, currentNode, currentParent)
       if (!result) {
         return
       }
@@ -107,7 +110,7 @@ export const modifyDescendant = <N extends Node>(
         return
       }
       currentNode = child
-      scopePath = result.scopePath
+      currentParent = result.parent
     }
   }
 
@@ -213,7 +216,7 @@ export const modifyChildren = (
   } else {
     const context = {
       schema: editor.schema,
-      containers: editor.containers,
+      containers: editor.publicContainers,
     }
 
     const nodeEntry = getNode(editor, path)
@@ -221,29 +224,22 @@ export const modifyChildren = (
       return
     }
 
-    // Walk the path to build scope context for nested container types.
-    const keyedSegments = getKeyedSegments(nodeEntry.path)
-    let scopePath = ''
-    {
-      let currentNode: Node | {value: Array<Node>} = {value: editor.children}
-      for (let i = 0; i < keyedSegments.length; i++) {
-        const result = getNodeChildren(context, currentNode, scopePath)
-        if (!result) {
-          break
-        }
-        const child = result.children.find(
-          (c) => c._key === keyedSegments[i]!._key,
-        )
-        if (!child) {
-          break
-        }
-        scopePath = result.scopePath
-        currentNode = child
-      }
+    // Resolve this node's positional container entry directly so the
+    // correct `field` is used regardless of whether `_type` is
+    // registered globally or only as a positional override.
+    const resolved = resolveContainerAt(
+      context.containers,
+      editor.children,
+      path,
+    )
+    let fieldName: string
+    if (resolved && 'field' in resolved) {
+      fieldName = resolved.field.name
+    } else if (isTextBlock(context, nodeEntry.node)) {
+      fieldName = 'children'
+    } else {
+      fieldName = 'children'
     }
-
-    const childInfo = getNodeChildren(context, nodeEntry.node, scopePath)
-    const fieldName = childInfo?.fieldName ?? 'children'
 
     modifyDescendant(editor, path, (node) => {
       const record = node as Record<string, unknown>

@@ -1,6 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import React, {useContext, type JSX} from 'react'
-import {ContainerScopeContext} from '../../../editor/container-scope-context'
+import {ParentContainerContext} from '../../../editor/parent-container-context'
 import {serializePath} from '../../../paths/serialize-path'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -40,9 +40,9 @@ const ObjectNodeComponent = (props: {
   } = props
   const dataPath = serializePath(path)
   const readOnly = useReadOnly()
-  const containerScope = useContext(ContainerScopeContext)
+  const parentContainer = useContext(ParentContainerContext)
 
-  const attributes: RenderElementProps['attributes'] = containerScope
+  const attributes: RenderElementProps['attributes'] = parentContainer
     ? {
         'data-pt-path': dataPath,
       }
@@ -60,7 +60,7 @@ const ObjectNodeComponent = (props: {
 
   const Tag = isInline ? 'span' : 'div'
 
-  const children = containerScope ? (
+  const children = parentContainer ? (
     <Tag
       data-pt-spacer
       style={{

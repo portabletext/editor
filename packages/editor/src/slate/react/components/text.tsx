@@ -3,7 +3,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import React, {useContext, type JSX} from 'react'
-import {ContainerScopeContext} from '../../../editor/container-scope-context'
+import {ParentContainerContext} from '../../../editor/parent-container-context'
 import {serializePath} from '../../../paths/serialize-path'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -61,7 +61,7 @@ const Text = (props: {
   }
 
   const dataPath = serializePath(path)
-  const containerScope = useContext(ContainerScopeContext)
+  const containerScope = useContext(ParentContainerContext)
 
   const attributes: {
     'data-slate-node'?: 'text'

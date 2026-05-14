@@ -1,45 +1,52 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {
-  ContainerConfig,
-  ContainerDefinition,
-} from '../renderers/renderer.types'
-import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers} from '../schema/resolve-containers'
+import {defineContainer, type Container} from '../renderers/renderer.types'
+import type {RegisteredContainer} from '../schema/container-types'
+import {resolveContainerField} from '../schema/resolve-container-field'
 
 /**
  * Container definitions for the testbed's table structure
  * (`table` → `rows`, `row` → `cells`, `cell` → `content`).
  */
-export const tableContainers: ReadonlyArray<ContainerDefinition> = [
-  {scope: '$..table', field: 'rows'},
-  {scope: '$..table.row', field: 'cells'},
-  {scope: '$..table.row.cell', field: 'content'},
+export const tableContainers: ReadonlyArray<Container> = [
+  {kind: 'container', type: 'table', childField: 'rows'},
+  {kind: 'container', type: 'row', childField: 'cells'},
+  {kind: 'container', type: 'cell', childField: 'content'},
 ]
 
 /**
  * Container definition for the testbed's code block
  * (`code-block` → `code`).
  */
-export const codeBlockContainer: ContainerDefinition = {
-  scope: '$..code-block',
-  field: 'code',
-}
+export const codeBlockContainer: Container = defineContainer({
+  type: 'code-block',
+  childField: 'code',
+})
 
 /**
- * Resolve the testbed's containers with a custom set of container
- * definitions. Useful for tests that vary which containers are registered.
+ * Build the testbed's `containers` map from a set of container
+ * registrations. Useful for tests that vary which containers are registered.
  */
 export function resolveTestbedContainers(
   schema: EditorSchema,
-  containers: ReadonlyArray<ContainerDefinition>,
-) {
-  const configs = new Map<string, ContainerConfig>()
+  containers: ReadonlyArray<Container>,
+): Map<string, RegisteredContainer> {
+  const resolved = new Map<string, RegisteredContainer>()
   for (const container of containers) {
-    configs.set(container.scope, makeContainerConfig(schema, container))
+    const field = resolveContainerField(
+      schema,
+      container.type,
+      container.childField,
+    )
+    if (!field) {
+      throw new Error(
+        `resolveTestbedContainers: field "${container.childField}" not found on type "${container.type}"`,
+      )
+    }
+    resolved.set(container.type, {type: container.type, field})
   }
-  return resolveContainers(schema, configs)
+  return resolved
 }
 
 /**

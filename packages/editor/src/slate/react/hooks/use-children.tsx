@@ -6,10 +6,10 @@ import type {
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import React, {useCallback, useRef, type JSX} from 'react'
 import {
-  ContainerScopeContext,
-  useContainerScope,
-} from '../../../editor/container-scope-context'
-import {lookupContainer} from '../../../schema/lookup-container'
+  ParentContainerContext,
+  useParentContainer,
+} from '../../../editor/parent-container-context'
+import type {ContainerConfig} from '../../../renderers/renderer.types'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -33,8 +33,31 @@ import TextComponent from '../components/text'
 import {useSlateStatic} from './use-slate-static'
 
 /**
- * Children.
+ * Resolve the container config for `node` given its immediate parent's
+ * container config. Returns the config or `undefined` if `node` is not
+ * a container at this position (positional leaf override, or no
+ * registration at all).
+ *
+ * Walks the parent's `of` array for a positional entry matching
+ * `node._type`, then falls back to the global `editor.containers`
+ * registration. Same descent shape as the engine-internal
+ * `resolveContainerByPath` so the React render path and the
+ * traversal path stay in sync.
  */
+function resolveContainerForNode(
+  editor: Editor,
+  parentContainer: ContainerConfig | undefined,
+  node: PortableTextObject,
+): ContainerConfig | undefined {
+  if (parentContainer?.of) {
+    for (const entry of parentContainer.of) {
+      if ('container' in entry && entry.container.type === node._type) {
+        return entry
+      }
+    }
+  }
+  return editor.containers.get(node._type)
+}
 
 const useChildren = (props: {
   decorations: DecoratedRange[]
@@ -55,7 +78,7 @@ const useChildren = (props: {
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
 
-  const containerScope = useContainerScope()
+  const parentContainer = useParentContainer()
 
   const decorationsByChild = useDecorationsByChild(
     editor,
@@ -66,18 +89,22 @@ const useChildren = (props: {
 
   let children: Array<Node> = []
   let childFieldName = 'children'
-  let childScope: string | undefined = containerScope
+  // The container config to propagate down to node's children: it becomes
+  // their parent's container config. Stays as parentContainer for text
+  // blocks and the editor root; updates to node's own config when node
+  // is itself a container object.
+  let childContainer: ContainerConfig | undefined = parentContainer
 
   if (isEditor(node)) {
     children = node.children
   } else if (isTextBlock({schema: editor.schema}, node)) {
     children = node.children
   } else if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedKey = containerScope
-      ? `${containerScope}.${node._type}`
-      : node._type
-
-    const containerConfig = lookupContainer(editor.containers, scopedKey)
+    const containerConfig = resolveContainerForNode(
+      editor,
+      parentContainer,
+      node,
+    )
 
     if (containerConfig) {
       const fieldValue = (node as Record<string, unknown>)[
@@ -88,7 +115,7 @@ const useChildren = (props: {
         childFieldName = containerConfig.field.name
       }
 
-      childScope = scopedKey
+      childContainer = containerConfig
     }
   }
 
@@ -181,8 +208,9 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
-      const scopedName = childScope ? `${childScope}.${n._type}` : n._type
-      if (lookupContainer(editor.containers, scopedName)) {
+      // Does `n` resolve as a container at this position?
+      // (positional override in childContainer.container.of, or global)
+      if (resolveContainerForNode(editor, childContainer, n)) {
         return renderElementComponent(n, i)
       }
       return renderObjectNodeComponent(n, i)
@@ -197,11 +225,11 @@ const useChildren = (props: {
     throw new Error(`Unexpected node type`)
   })
 
-  if (childScope && childScope !== containerScope) {
+  if (childContainer && childContainer !== parentContainer) {
     return (
-      <ContainerScopeContext value={childScope}>
+      <ParentContainerContext value={childContainer}>
         {elements}
-      </ContainerScopeContext>
+      </ParentContainerContext>
     )
   }
 

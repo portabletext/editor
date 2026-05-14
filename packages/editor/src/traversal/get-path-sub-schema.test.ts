@@ -1,14 +1,10 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {
-  ContainerConfig,
-  ContainerDefinition,
-} from '../renderers/renderer.types'
-import {makeContainerConfig} from '../schema/make-container-config'
+import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getPathSubSchema} from './get-path-sub-schema'
 
-const testRender: ContainerDefinition['render'] = ({children}) => children
+const testRender: Container['render'] = ({children}) => children
 
 describe(getPathSubSchema.name, () => {
   test('returns root sub-schema when path is at root', () => {
@@ -43,120 +39,6 @@ describe(getPathSubSchema.name, () => {
         styles: [{name: 'h1'}],
         blockObjects: [
           {
-            name: 'cell',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [
-                  {
-                    type: 'block',
-                    decorators: [{name: 'strong'}],
-                    styles: [{name: 'monospace'}],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    )
-
-    const containerConfigs: Map<string, ContainerConfig> = new Map()
-    containerConfigs.set(
-      '$..cell',
-      makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
-        render: testRender,
-      }),
-    )
-    const containers = resolveContainers(schema, containerConfigs)
-
-    const value = [
-      {
-        _type: 'cell',
-        _key: 'c0',
-        content: [{_type: 'block', _key: 'b0', children: []}],
-      },
-    ]
-    const context = {
-      context: {schema, containers, value},
-      blockIndexMap: new Map(),
-    }
-
-    const subSchema = getPathSubSchema(context, [
-      {_key: 'c0'},
-      'content',
-      {_key: 'b0'},
-    ])
-
-    // Verify-by-breaking: if the helper fell back to root, decorators would be ['strong', 'em'].
-    expect(subSchema.decorators.map((d) => d.name)).toEqual(['strong'])
-    expect(subSchema.styles.map((s) => s.name)).toEqual(['monospace'])
-  })
-
-  test('inherits root fields when nested block does not override', () => {
-    const schema = compileSchema(
-      defineSchema({
-        decorators: [{name: 'strong'}],
-        annotations: [{name: 'link'}],
-        inlineObjects: [{name: 'mention'}],
-        blockObjects: [
-          {
-            name: 'cell',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [{type: 'block'}],
-              },
-            ],
-          },
-        ],
-      }),
-    )
-
-    const containerConfigs: Map<string, ContainerConfig> = new Map()
-    containerConfigs.set(
-      '$..cell',
-      makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
-        render: testRender,
-      }),
-    )
-    const containers = resolveContainers(schema, containerConfigs)
-
-    const value = [
-      {
-        _type: 'cell',
-        _key: 'c0',
-        content: [{_type: 'block', _key: 'b0', children: []}],
-      },
-    ]
-    const context = {
-      context: {schema, containers, value},
-      blockIndexMap: new Map(),
-    }
-
-    const subSchema = getPathSubSchema(context, [
-      {_key: 'c0'},
-      'content',
-      {_key: 'b0'},
-    ])
-
-    expect(subSchema.decorators.map((d) => d.name)).toEqual(['strong'])
-    expect(subSchema.annotations.map((a) => a.name)).toEqual(['link'])
-    expect(subSchema.inlineObjects.map((i) => i.name)).toEqual(['mention'])
-  })
-
-  test('walks multiple ancestor levels to find the enclosing container', () => {
-    const schema = compileSchema(
-      defineSchema({
-        decorators: [{name: 'strong'}, {name: 'em'}],
-        blockObjects: [
-          {
             name: 'table',
             fields: [
               {
@@ -182,6 +64,7 @@ describe(getPathSubSchema.name, () => {
                                   {
                                     type: 'block',
                                     decorators: [{name: 'strong'}],
+                                    styles: [{name: 'monospace'}],
                                   },
                                 ],
                               },
@@ -199,32 +82,23 @@ describe(getPathSubSchema.name, () => {
       }),
     )
 
-    const containerConfigs: Map<string, ContainerConfig> = new Map()
-    containerConfigs.set(
-      '$..table',
-      makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
         render: testRender,
       }),
-    )
-    containerConfigs.set(
-      '$..row',
-      makeContainerConfig(schema, {
-        scope: '$..row',
-        field: 'cells',
+      defineContainer({
+        type: 'row',
+        childField: 'cells',
         render: testRender,
       }),
-    )
-    containerConfigs.set(
-      '$..cell',
-      makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
         render: testRender,
       }),
-    )
-    const containers = resolveContainers(schema, containerConfigs)
+    ])
 
     const value = [
       {

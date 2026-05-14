@@ -7,7 +7,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import {makeContainerConfig} from '../schema/make-container-config'
+import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getSelectedValue} from './selector.get-selected-value'
 
@@ -858,10 +858,10 @@ describe(`${getSelectedValue.name} with containers`, () => {
     }),
   )
 
-  const calloutContainer = {
-    scope: '$..callout' as const,
-    field: 'content' as const,
-  }
+  const calloutContainer = defineContainer({
+    type: 'callout',
+    childField: 'content',
+  })
 
   function createSnapshot(
     value: Array<PortableTextBlock>,
@@ -869,16 +869,9 @@ describe(`${getSelectedValue.name} with containers`, () => {
       Parameters<typeof createTestSnapshot>[0]['context']
     >['selection'],
     schema = calloutSchema,
-    containerDefs: ReadonlyArray<{
-      scope: `$..${string}`
-      field: string
-    }> = [calloutContainer],
+    containerDefs: ReadonlyArray<Container> = [calloutContainer],
   ) {
-    const configs = new Map()
-    for (const c of containerDefs) {
-      configs.set(c.scope, makeContainerConfig(schema, c))
-    }
-    const containers = resolveContainers(schema, configs)
+    const containers = resolveContainers(schema, containerDefs)
     return createTestSnapshot({
       context: {schema, value, selection, containers},
     })
@@ -1093,13 +1086,13 @@ describe(`${getSelectedValue.name} with containers`, () => {
     )
 
     const defs = [
-      {scope: '$..table' as const, field: 'rows' as const},
-      {scope: '$..table.row' as const, field: 'cells' as const},
-      {scope: '$..table.row.cell' as const, field: 'content' as const},
-      {
-        scope: '$..table.row.cell.callout' as const,
-        field: 'content' as const,
-      },
+      defineContainer({type: 'table', childField: 'rows'}),
+      defineContainer({type: 'row', childField: 'cells'}),
+      defineContainer({type: 'cell', childField: 'content'}),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+      }),
     ]
 
     const deepInnerBlock: PortableTextTextBlock = {
@@ -1244,9 +1237,9 @@ describe(`${getSelectedValue.name} with containers`, () => {
     )
 
     const defs = [
-      {scope: '$..table' as const, field: 'rows' as const},
-      {scope: '$..table.row' as const, field: 'cells' as const},
-      {scope: '$..table.row.cell' as const, field: 'content' as const},
+      defineContainer({type: 'table', childField: 'rows'}),
+      defineContainer({type: 'row', childField: 'cells'}),
+      defineContainer({type: 'cell', childField: 'content'}),
     ]
 
     const linkKey = 'link1'

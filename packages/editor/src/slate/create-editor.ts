@@ -26,7 +26,7 @@ export const createEditor = (): Editor => {
     get context() {
       return {
         schema: this.schema,
-        containers: this.containers,
+        containers: this.publicContainers,
         value: this.children,
         keyGenerator: this.keyGenerator,
       }

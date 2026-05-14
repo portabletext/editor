@@ -6,7 +6,7 @@ import {
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import {makeContainerConfig} from '../schema/make-container-config'
+import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 
@@ -66,15 +66,12 @@ describe(getSelectedTextBlocks.name, () => {
         ],
       }),
     )
-    const configs = new Map()
-    configs.set(
-      '$..callout',
-      makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
       }),
-    )
-    const containers = resolveContainers(schema, configs)
+    ])
 
     const rootBlock: PortableTextTextBlock = {
       _type: 'block',

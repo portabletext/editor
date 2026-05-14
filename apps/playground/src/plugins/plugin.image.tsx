@@ -4,7 +4,6 @@ import {LinkIcon, PencilIcon} from 'lucide-react'
 import type {JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
-import type {playgroundSchemaDefinition} from '../playground-schema-definition'
 import {Button} from '../primitives/button'
 import {Tooltip} from '../primitives/tooltip'
 
@@ -24,8 +23,8 @@ const cellImageStyle = tv({
   },
 })
 
-const imageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..image',
+const imageLeaf = defineLeaf({
+  type: 'image',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const image = node as {src?: string; alt?: string}
     return (
@@ -70,8 +69,8 @@ const imageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
   },
 })
 
-const cellImageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..table.row.cell.image',
+const cellImageLeaf = defineLeaf({
+  type: 'image',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const image = node as {src?: string; alt?: string}
     return (
@@ -99,5 +98,5 @@ const cellImageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
 })
 
 export function ImagePlugin(): JSX.Element {
-  return <LeafPlugin leafs={[imageLeaf, cellImageLeaf]} />
+  return <LeafPlugin leaves={[imageLeaf, cellImageLeaf]} />
 }

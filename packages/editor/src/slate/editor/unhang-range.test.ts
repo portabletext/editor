@@ -1,6 +1,8 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {defineContainer} from '../../renderers/renderer.types'
+import {resolveContainers} from '../../schema/resolve-containers'
 import type {Node} from '../interfaces/node'
 import {unhangRange} from './unhang-range'
 
@@ -335,13 +337,18 @@ function buildContainerContext(...value: Array<Node>) {
       ],
     }),
   )
-  const containers = new Map()
-  containers.set('callout', {
-    field: {name: 'content', type: 'array', of: [{type: 'block'}]},
-  })
-  containers.set('code-block', {
-    field: {name: 'lines', type: 'array', of: [{type: 'block'}]},
-  })
+  const containers = resolveContainers(schema, [
+    defineContainer({
+      type: 'callout',
+      childField: 'content',
+      render: () => null,
+    }),
+    defineContainer({
+      type: 'code-block',
+      childField: 'lines',
+      render: () => null,
+    }),
+  ])
   const blockIndexMap = new Map<string, number>()
   value.forEach((node, index) => {
     blockIndexMap.set((node as {_key: string})._key, index)

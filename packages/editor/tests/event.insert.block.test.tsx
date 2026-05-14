@@ -2235,9 +2235,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2326,9 +2326,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2417,9 +2417,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2528,9 +2528,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2659,9 +2659,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2779,9 +2779,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2896,9 +2896,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -3020,9 +3020,9 @@ describe('event.insert.block', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),

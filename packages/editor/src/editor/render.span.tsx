@@ -11,8 +11,8 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
-import {ContainerScopeContext} from './container-scope-context'
 import type {EditorSchema} from './editor-schema'
+import {ParentContainerContext} from './parent-container-context'
 import {RenderLeafConfig, useLeafConfig} from './render.leaf-config'
 import {SelectionStateContext} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
@@ -46,7 +46,7 @@ export function RenderSpan(props: RenderSpanProps) {
   const leafConfig = useLeafConfig(child ?? props.leaf, props.path)
 
   const selectionState = useContext(SelectionStateContext)
-  const containerScope = useContext(ContainerScopeContext)
+  const parentContainer = useContext(ParentContainerContext)
   const serializedPath = serializePath(props.path)
   const focused = selectionState.focusedLeafPath === serializedPath
   const selected = selectionState.selectedLeafPaths.has(serializedPath)
@@ -140,7 +140,7 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && props.renderChild && child && !leafConfig && !containerScope) {
+  if (block && props.renderChild && child && !leafConfig && !parentContainer) {
     children = (
       <RenderChild
         renderChild={props.renderChild}

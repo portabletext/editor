@@ -4,10 +4,12 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
-import type {ContainerDefinition} from '../src/renderers/renderer.types'
-import {makeContainerConfig} from '../src/schema/make-container-config'
-import type {ResolvedContainers} from '../src/schema/resolve-containers'
-import {resolveContainers} from '../src/schema/resolve-containers'
+import {defineContainer, type Container} from '../src/renderers/renderer.types'
+import {buildPublicContainers} from '../src/schema/build-public-containers'
+import {
+  resolveContainersRich,
+  type ResolvedContainers,
+} from '../src/schema/resolve-containers'
 import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
 import {normalize} from '../src/slate/editor/normalize'
 import {createTestEditor} from '../src/test/vitest'
@@ -57,37 +59,25 @@ const schemaDefinition = defineSchema({
 })
 
 function tableContainers(): ResolvedContainers {
-  const render: ContainerDefinition['render'] = ({children}) => children
+  const render: Container['render'] = ({children}) => children
   const schema = compileSchema(schemaDefinition)
-  return resolveContainers(
-    schema,
-    new Map([
-      [
-        '$..table',
-        makeContainerConfig(schema, {
-          scope: '$..table',
-          field: 'rows',
-          render,
-        }),
-      ],
-      [
-        '$..table.row',
-        makeContainerConfig(schema, {
-          scope: '$..table.row',
-          field: 'cells',
-          render,
-        }),
-      ],
-      [
-        '$..table.row.cell',
-        makeContainerConfig(schema, {
-          scope: '$..table.row.cell',
-          field: 'content',
-          render,
-        }),
-      ],
-    ]),
-  )
+  return resolveContainersRich(schema, [
+    defineContainer({
+      type: 'table',
+      childField: 'rows',
+      render,
+    }),
+    defineContainer({
+      type: 'row',
+      childField: 'cells',
+      render,
+    }),
+    defineContainer({
+      type: 'cell',
+      childField: 'content',
+      render,
+    }),
+  ])
 }
 
 async function createTableTestEditor() {
@@ -466,7 +456,12 @@ describe('tables', () => {
       })
 
       // Set containers so normalization traverses into containers
-      slateEditorRef.current!.containers = tableContainers()
+      const _resolvedContainers = tableContainers()
+
+      slateEditorRef.current!.containers = _resolvedContainers
+
+      slateEditorRef.current!.publicContainers =
+        buildPublicContainers(_resolvedContainers)
 
       // Force normalization with containers set
       withoutPatching(slateEditorRef.current!, () => {
@@ -530,7 +525,12 @@ describe('tables', () => {
         children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
       })
 
-      slateEditorRef.current!.containers = tableContainers()
+      const _resolvedContainers = tableContainers()
+
+      slateEditorRef.current!.containers = _resolvedContainers
+
+      slateEditorRef.current!.publicContainers =
+        buildPublicContainers(_resolvedContainers)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -593,7 +593,12 @@ describe('tables', () => {
         children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
       })
 
-      slateEditorRef.current!.containers = tableContainers()
+      const _resolvedContainers = tableContainers()
+
+      slateEditorRef.current!.containers = _resolvedContainers
+
+      slateEditorRef.current!.publicContainers =
+        buildPublicContainers(_resolvedContainers)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -674,7 +679,12 @@ describe('tables', () => {
         children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
       })
 
-      slateEditorRef.current!.containers = tableContainers()
+      const _resolvedContainers = tableContainers()
+
+      slateEditorRef.current!.containers = _resolvedContainers
+
+      slateEditorRef.current!.publicContainers =
+        buildPublicContainers(_resolvedContainers)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -745,7 +755,12 @@ describe('tables', () => {
         children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
       })
 
-      slateEditorRef.current!.containers = tableContainers()
+      const _resolvedContainers = tableContainers()
+
+      slateEditorRef.current!.containers = _resolvedContainers
+
+      slateEditorRef.current!.publicContainers =
+        buildPublicContainers(_resolvedContainers)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -803,7 +818,12 @@ describe('tables', () => {
         children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
       })
 
-      slateEditorRef.current!.containers = tableContainers()
+      const _resolvedContainers = tableContainers()
+
+      slateEditorRef.current!.containers = _resolvedContainers
+
+      slateEditorRef.current!.publicContainers =
+        buildPublicContainers(_resolvedContainers)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})

@@ -6,7 +6,7 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {forwardRef, memo, useContext, useRef, useState} from 'react'
-import {ContainerScopeContext} from '../../../editor/container-scope-context'
+import {ParentContainerContext} from '../../../editor/parent-container-context'
 import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
@@ -93,7 +93,7 @@ const SlateString = (props: {
  */
 const TextString = (props: {text: string; isTrailing?: boolean}) => {
   const {text, isTrailing = false} = props
-  const containerScope = useContext(ContainerScopeContext)
+  const containerScope = useContext(ParentContainerContext)
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
@@ -155,7 +155,7 @@ const MemoizedText = memo(
 
 const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   const {isLineBreak = false} = props
-  const containerScope = useContext(ContainerScopeContext)
+  const containerScope = useContext(ParentContainerContext)
 
   const value = isLineBreak ? 'n' : 'z'
   const attributes: {

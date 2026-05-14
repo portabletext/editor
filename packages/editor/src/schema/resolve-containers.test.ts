@@ -1,88 +1,100 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {describe, expect, test} from 'vitest'
-import type {EditorSchema} from '../editor/editor-schema'
-import type {
-  ContainerConfig,
-  ContainerDefinition,
+import {describe, expect, test, vi} from 'vitest'
+import {
+  defineContainer,
+  defineLeaf,
+  type Container,
+  type ContainerConfig,
+  type Leaf,
 } from '../renderers/renderer.types'
-import {makeContainerConfig} from './make-container-config'
-import type {ChildArrayField, ResolvedContainers} from './resolve-containers'
-import {resolveContainers} from './resolve-containers'
+import {buildPublicContainers} from './build-public-containers'
+import {
+  descendToParent,
+  resolveContainerByPath,
+  resolveContainers,
+  resolveContainersRich,
+  resolveNestedContainer,
+  type ResolvedContainers,
+} from './resolve-containers'
 
-const testRender: ContainerDefinition['render'] = ({children}) => children
-
-function makeConfigs(
-  schema: EditorSchema,
-  containers: Array<ContainerDefinition>,
-): Map<string, ContainerConfig> {
-  const map = new Map<string, ContainerConfig>()
-  for (const container of containers) {
-    map.set(container.scope, makeContainerConfig(schema, container))
-  }
-  return map
-}
-
-/** Extract the `field` shape from a resolved containers map for easier testing. */
-function fields(containers: ResolvedContainers): Map<string, ChildArrayField> {
-  const out = new Map<string, ChildArrayField>()
-  for (const [key, config] of containers) {
-    out.set(key, config.field)
-  }
-  return out
-}
+const containerRender: Container['render'] = ({children}) => children
+const leafRender: Leaf['render'] = ({children}) => children
 
 /**
- * What `{type: 'block'}` compiles to when the root schema has no decorators,
- * annotations, lists or inline objects declared. Compile resolves inheritance
- * and fills in the defaults (the auto-prepended `normal` style and empty
- * arrays for everything else).
+ * Test snapshots mirror the production shape closely enough for the
+ * traversal helpers to descend. Tests use numeric paths via getAncestors;
+ * the helpers compose isObjectNode + getAncestors over snapshot.context.
  */
-const resolvedEmptyBlock = {
-  type: 'block',
-  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
-  decorators: [],
-  annotations: [],
-  lists: [],
-  inlineObjects: [],
+function makeSnapshot(args: {
+  schema: ReturnType<typeof compileSchema>
+  containers:
+    | ReadonlyMap<string, ContainerConfig>
+    | ReadonlyMap<
+        string,
+        {type: string; field: import('./container-types').ChildArrayField}
+      >
+  value: ReadonlyArray<{_type: string; _key: string; [other: string]: unknown}>
+}) {
+  // Accept either rich (raw `ContainerConfig` map from `resolveContainersRich`
+  // or hand-built fixtures) or already-narrowed `Containers`. Project rich
+  // entries through `buildPublicContainers`; pass narrow entries straight
+  // through.
+  const first = args.containers.values().next().value
+  const isAlreadyNarrow =
+    first === undefined || !('container' in (first as object))
+  const containers = isAlreadyNarrow
+    ? (args.containers as import('./container-types').Containers)
+    : buildPublicContainers(args.containers as ResolvedContainers)
+  return {
+    context: {
+      schema: args.schema,
+      containers,
+      value: args.value as never,
+    },
+    blockIndexMap: new Map(args.value.map((node, index) => [node._key, index])),
+  }
 }
 
-describe(resolveContainers.name, () => {
-  test('resolves a single-level container', () => {
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'code',
-            fields: [
-              {name: 'content', type: 'array', of: [{type: 'codeLine'}]},
-            ],
-          },
-        ],
+function makeRichInput(args: {
+  schema: ReturnType<typeof compileSchema>
+  containers: ResolvedContainers
+  value: ReadonlyArray<{_type: string; _key: string; [other: string]: unknown}>
+}) {
+  return {
+    schema: args.schema,
+    containers: args.containers,
+    value: args.value as never,
+  }
+}
+
+describe(resolveNestedContainer.name, () => {
+  const calloutSchema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+  )
+
+  test('pre-resolves a top-level container with no `of` overrides', () => {
+    const config = resolveNestedContainer(
+      calloutSchema,
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
       }),
     )
-
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {
-              scope: '$..code',
-              field: 'content',
-              render: ({children}) => children,
-            },
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        ['code', {name: 'content', type: 'array', of: [{type: 'codeLine'}]}],
-      ]),
-    )
+    expect(config?.container.type).toEqual('callout')
+    expect(config?.field.name).toEqual('content')
+    expect(config?.of).toBeUndefined()
   })
 
-  test('resolves a deeply nested container', () => {
-    const schema = compileSchema(
+  test('pre-resolves nested containers, attaching resolved fields at each level', () => {
+    const tableSchema = compileSchema(
       defineSchema({
         blockObjects: [
           {
@@ -122,291 +134,183 @@ describe(resolveContainers.name, () => {
         ],
       }),
     )
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {scope: '$..table', field: 'rows', render: testRender},
-            {scope: '$..table.row', field: 'cells', render: testRender},
-            {
-              scope: '$..table.row.cell',
-              field: 'content',
-              render: testRender,
-            },
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        [
-          'table',
-          {
-            name: 'rows',
-            type: 'array',
+    const config = resolveNestedContainer(
+      tableSchema,
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
+        render: containerRender,
+        of: [
+          defineContainer({
+            type: 'row',
+            childField: 'cells',
+            render: containerRender,
             of: [
-              {
-                type: 'object',
-                name: 'row',
-                fields: [
-                  {
-                    name: 'cells',
-                    type: 'array',
-                    of: [
-                      {
-                        type: 'object',
-                        name: 'cell',
-                        fields: [
-                          {
-                            name: 'content',
-                            type: 'array',
-                            of: [resolvedEmptyBlock],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
+              defineContainer({
+                type: 'cell',
+                childField: 'content',
+                render: containerRender,
+              }),
             ],
-          },
-        ],
-        [
-          'table.row',
-          {
-            name: 'cells',
-            type: 'array',
-            of: [
-              {
-                type: 'object',
-                name: 'cell',
-                fields: [
-                  {
-                    name: 'content',
-                    type: 'array',
-                    of: [resolvedEmptyBlock],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-        [
-          'table.row.cell',
-          {name: 'content', type: 'array', of: [resolvedEmptyBlock]},
-        ],
-      ]),
-    )
-  })
-
-  test('returns empty Map when no containers are registered', () => {
-    const schema = compileSchema(defineSchema({}))
-
-    expect(fields(resolveContainers(schema, new Map()))).toEqual(new Map())
-  })
-
-  test('merges types from multiple container configs', () => {
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'code',
-            fields: [
-              {name: 'content', type: 'array', of: [{type: 'codeLine'}]},
-            ],
-          },
-          {
-            name: 'callout',
-            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
-          },
+          }),
         ],
       }),
     )
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {scope: '$..code', field: 'content', render: testRender},
-            {scope: '$..callout', field: 'content', render: testRender},
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        ['code', {name: 'content', type: 'array', of: [{type: 'codeLine'}]}],
-        ['callout', {name: 'content', type: 'array', of: [resolvedEmptyBlock]}],
-      ]),
-    )
+    expect(config?.container.type).toEqual('table')
+    expect(config?.field.name).toEqual('rows')
+    const rowEntry = config?.of?.[0]
+    expect(rowEntry && 'container' in rowEntry).toEqual(true)
+    if (!rowEntry || !('container' in rowEntry)) {
+      throw new Error('expected row container')
+    }
+    expect(rowEntry.container.type).toEqual('row')
+    expect(rowEntry.field.name).toEqual('cells')
+    const cellEntry = rowEntry.of?.[0]
+    expect(cellEntry && 'container' in cellEntry).toEqual(true)
+    if (!cellEntry || !('container' in cellEntry)) {
+      throw new Error('expected cell container')
+    }
+    expect(cellEntry.container.type).toEqual('cell')
+    expect(cellEntry.field.name).toEqual('content')
   })
 
-  test('resolves bare block scope to synthesized children field', () => {
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'callout',
-            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
-          },
-        ],
-        inlineObjects: [{name: 'stock-ticker'}],
-      }),
-    )
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {scope: '$..block', field: 'children', render: testRender},
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        [
-          'block',
-          {
-            name: 'children',
-            type: 'array',
-            of: [{type: 'span'}, {type: 'stock-ticker'}],
-          },
-        ],
-        [
-          'callout.block',
-          {
-            name: 'children',
-            type: 'array',
-            of: [{type: 'span'}, {type: 'stock-ticker'}],
-          },
-        ],
-      ]),
-    )
-  })
-
-  test('root-anchored block scope only resolves root blocks', () => {
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'callout',
-            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
-          },
-        ],
-      }),
-    )
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {scope: '$.block', field: 'children', render: testRender},
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        ['block', {name: 'children', type: 'array', of: [{type: 'span'}]}],
-      ]),
-    )
-  })
-
-  test('resolves scoped block scope like $..callout.block', () => {
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'callout',
-            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
-          },
-        ],
-      }),
-    )
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {scope: '$..callout', field: 'content', render: testRender},
+  test('warns with chain context when a nested registration is unresolvable', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const tableSchema = compileSchema(
+        defineSchema({
+          blockObjects: [
             {
-              scope: '$..callout.block',
-              field: 'children',
-              render: testRender,
+              name: 'table',
+              fields: [
+                {
+                  name: 'rows',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'row',
+                      fields: [
+                        {
+                          name: 'cells',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'object',
+                              name: 'cell',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
             },
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        ['callout', {name: 'content', type: 'array', of: [resolvedEmptyBlock]}],
-        [
-          'callout.block',
-          {name: 'children', type: 'array', of: [{type: 'span'}]},
-        ],
-      ]),
-    )
+          ],
+        }),
+      )
+      const config = resolveNestedContainer(
+        tableSchema,
+        defineContainer({
+          type: 'table',
+          childField: 'rows',
+          render: containerRender,
+          of: [
+            defineContainer({
+              type: 'row',
+              childField: 'cells',
+              render: containerRender,
+              of: [
+                defineContainer({
+                  type: 'cell',
+                  // intentionally wrong field name
+                  childField: 'contents' as 'content',
+                  render: containerRender,
+                }),
+              ],
+            }),
+          ],
+        }),
+      )
+      // The nested cell is skipped; table + row remain resolved.
+      expect(config?.container.type).toEqual('table')
+      const rowEntry = config?.of?.[0]
+      expect(rowEntry && 'container' in rowEntry).toEqual(true)
+      if (!rowEntry || !('container' in rowEntry)) {
+        throw new Error('row missing')
+      }
+      expect(rowEntry.of).toEqual([])
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('(nested inside "table" inside "row")'),
+      )
+    } finally {
+      warnSpy.mockRestore()
+    }
   })
+})
 
-  test('resolves block scope without inline objects', () => {
-    const schema = compileSchema(defineSchema({}))
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {scope: '$..block', field: 'children', render: testRender},
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        ['block', {name: 'children', type: 'array', of: [{type: 'span'}]}],
-      ]),
-    )
-  })
+describe(resolveContainerByPath.name, () => {
+  const calloutSchema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+  )
 
-  test('ignores fields not matching the declared name', () => {
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'figure',
-            fields: [
-              {name: 'caption', type: 'array', of: [{type: 'block'}]},
-              {name: 'tags', type: 'array', of: [{type: 'string'}]},
-            ],
-          },
-        ],
+  test('6. immediate-parent: finds and matches', () => {
+    const containers = resolveContainersRich(calloutSchema, [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
       }),
-    )
-
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
+    ])
+    const richInput = makeRichInput({
+      schema: calloutSchema,
+      containers,
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
             {
-              scope: '$..figure',
-              field: 'caption',
-              render: ({children}) => children,
+              _type: 'block',
+              _key: 'b0',
+              children: [],
+              markDefs: [],
+              style: 'normal',
             },
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        ['figure', {name: 'caption', type: 'array', of: [resolvedEmptyBlock]}],
-      ]),
+          ],
+        },
+      ],
+    })
+    const result = resolveContainerByPath(
+      richInput,
+      [{_key: 'c0'}, 'content', {_key: 'b0'}],
+      {_type: 'block', _key: 'b0'},
     )
+    // 'block' has no registration outside parent's `of`. callout doesn't
+    // declare a positional override for block, so falls back to top-level
+    // - which has no 'block' entry. Returns undefined.
+    expect(result).toBeUndefined()
   })
 
-  test('resolves a bare type reference inside a container', () => {
-    // Schema: callout's content holds blocks AND a bare reference to a
-    // top-level `image` block-object. The resolver should follow the
-    // reference and emit a candidate at `callout.image`.
+  test('7. parent has no `of` match: falls back to top-level', () => {
     const schema = compileSchema(
       defineSchema({
         blockObjects: [
-          {name: 'image', fields: [{name: 'src', type: 'string'}]},
           {
             name: 'callout',
             fields: [
@@ -417,165 +321,66 @@ describe(resolveContainers.name, () => {
               },
             ],
           },
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
         ],
       }),
     )
-
-    expect(
-      fields(
-        resolveContainers(
-          schema,
-          makeConfigs(schema, [
-            {
-              scope: '$..callout',
-              field: 'content',
-              render: ({children}) => children,
-            },
-          ]),
-        ),
-      ),
-    ).toEqual(
-      new Map([
-        [
-          'callout',
-          {
-            name: 'content',
-            type: 'array',
-            of: [resolvedEmptyBlock, {type: 'image'}],
-          },
-        ],
-      ]),
-    )
-  })
-
-  test('resolves a self-referential schema with cycle detection', () => {
-    // A `list` whose `list-item.content.of` references `list` again.
-    // The resolver should walk one level, hit the cycle, and emit
-    // candidates at `list`, `list.list-item`, `list.list-item.list`.
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'list',
-            fields: [
-              {name: 'kind', type: 'string'},
-              {
-                name: 'items',
-                type: 'array',
-                of: [
-                  {
-                    type: 'object',
-                    name: 'list-item',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        of: [{type: 'block'}, {type: 'list'}],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+    const containers = resolveContainersRich(schema, [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
       }),
-    )
-
-    const resolved = resolveContainers(
-      schema,
-      makeConfigs(schema, [
-        {
-          scope: '$..list',
-          field: 'items',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..list.list-item',
-          field: 'content',
-          render: ({children}) => children,
-        },
-      ]),
-    )
-
-    // The walk reaches `list` (top), `list.list-item` (inline), and emits
-    // a cycle candidate at `list.list-item.list` (where
-    // `list-item.content` references `list` again). The walk terminates -
-    // no infinite candidates - and `$..list` matches both the root list
-    // and the cycle position via terminal-anchored matching.
-    expect(Array.from(resolved.keys()).sort()).toEqual([
-      'list',
-      'list.list-item',
-      'list.list-item.list',
     ])
-  })
-
-  test('skips bare references whose target is undeclared', () => {
-    // `{type: 'list'}` referenced inside a container but no `list` declared
-    // anywhere. The resolver should silently skip - no candidate emitted.
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'callout',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [{type: 'block'}, {type: 'list'}],
-              },
-            ],
-          },
-        ],
-      }),
-    )
-
-    const resolved = resolveContainers(
+    const richInput = makeRichInput({
       schema,
-      makeConfigs(schema, [
+      containers,
+      value: [
         {
-          scope: '$..callout',
-          field: 'content',
-          render: ({children}) => children,
+          _type: 'callout',
+          _key: 'c0',
+          content: [{_type: 'image', _key: 'i0', src: 'foo.png'}],
         },
-      ]),
+      ],
+    })
+    const result = resolveContainerByPath(
+      richInput,
+      [{_key: 'c0'}, 'content', {_key: 'i0'}],
+      {_type: 'image', _key: 'i0'},
     )
-
-    expect(Array.from(resolved.keys()).sort()).toEqual(['callout'])
+    // callout's `of` is undefined (no positional overrides registered);
+    // fallback to top-level lookup for 'image'. No top-level image
+    // registration either, so undefined.
+    expect(result).toBeUndefined()
   })
 
-  test('resolves a reference to an inline-declared type from its descendant', () => {
-    // `list` is declared inline inside callout's content. `list-item.content.of`
-    // references `list` again. Even though `list` is NOT at the schema root,
-    // the resolver should follow the reference because `list` is in the
-    // ancestor chain when we encounter the bare reference.
-    const schema = compileSchema(
+  test('8. nested-only chain: descent threads parent through ancestors', () => {
+    const tableSchema = compileSchema(
       defineSchema({
         blockObjects: [
           {
-            name: 'callout',
+            name: 'table',
             fields: [
               {
-                name: 'content',
+                name: 'rows',
                 type: 'array',
                 of: [
-                  {type: 'block'},
                   {
                     type: 'object',
-                    name: 'list',
+                    name: 'row',
                     fields: [
                       {
-                        name: 'items',
+                        name: 'cells',
                         type: 'array',
                         of: [
                           {
                             type: 'object',
-                            name: 'list-item',
+                            name: 'cell',
                             fields: [
                               {
                                 name: 'content',
                                 type: 'array',
-                                of: [{type: 'block'}, {type: 'list'}],
+                                of: [{type: 'block'}],
                               },
                             ],
                           },
@@ -590,54 +395,179 @@ describe(resolveContainers.name, () => {
         ],
       }),
     )
-
-    const resolved = resolveContainers(
-      schema,
-      makeConfigs(schema, [
-        {
-          scope: '$..callout',
-          field: 'content',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..list',
-          field: 'items',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..list.list-item',
-          field: 'content',
-          render: ({children}) => children,
-        },
-        {
-          // This is the new case - registering the cycle candidate.
-          // Previously, the resolver couldn't emit this candidate
-          // because `list` isn't at the schema root.
-          scope: '$..list.list-item.list',
-          field: 'items',
-          render: ({children}) => children,
-        },
-      ]),
+    const tableConfig = resolveNestedContainer(
+      tableSchema,
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
+        render: containerRender,
+        of: [
+          defineContainer({
+            type: 'row',
+            childField: 'cells',
+            render: containerRender,
+            of: [
+              defineContainer({
+                type: 'cell',
+                childField: 'content',
+                render: containerRender,
+              }),
+            ],
+          }),
+        ],
+      }),
     )
-
-    // `callout`, `callout.list`, `callout.list.list-item`, and the cycle
-    // candidate `callout.list.list-item.list` all resolve. Without
-    // ancestor-aware reference resolution, the cycle candidate would be
-    // dropped because `list` isn't in `schema.blockObjects`.
-    expect(Array.from(resolved.keys()).sort()).toEqual([
-      'callout',
-      'callout.list',
-      'callout.list.list-item',
-      'callout.list.list-item.list',
-    ])
+    if (!tableConfig) {
+      throw new Error('table failed')
+    }
+    const containers = new Map([['table', tableConfig]])
+    const richInput = makeRichInput({
+      schema: tableSchema,
+      containers,
+      value: [
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [{_type: 'cell', _key: 'cell0', content: []}],
+            },
+          ],
+        },
+      ],
+    })
+    const result = resolveContainerByPath(
+      richInput,
+      [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'cell0'}],
+      {_type: 'cell', _key: 'cell0'},
+    )
+    expect(result !== undefined).toEqual(true)
+    if (!result || !('container' in result)) {
+      throw new Error('expected cell container')
+    }
+    expect(result.container.type).toEqual('cell')
+    expect(result.field.name).toEqual('content')
   })
 
-  test('reference to inline-declared type only visible to descendants of the declaration', () => {
-    // `list` is inline-declared inside callout.content. A SIBLING entry in
-    // callout.content also has `{type: 'list'}` - but that sibling is NOT a
-    // descendant of the list declaration, so the ancestor chain at that
-    // walk position contains only `callout`, not `list`. The reference
-    // should NOT resolve (no root `list` either).
+  test('9. position-specific descent: same _type in two positions returns position-specific config', () => {
+    const dualSchema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'cell',
+                    fields: [
+                      {name: 'content', type: 'array', of: [{type: 'block'}]},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: 'diagram',
+            fields: [
+              {
+                name: 'shapes',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'cell',
+                    fields: [
+                      {name: 'markers', type: 'array', of: [{type: 'block'}]},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const tableConfig = resolveNestedContainer(
+      dualSchema,
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
+        render: containerRender,
+        of: [
+          defineContainer({
+            type: 'cell',
+            childField: 'content',
+            render: containerRender,
+          }),
+        ],
+      }),
+    )
+    const diagramConfig = resolveNestedContainer(
+      dualSchema,
+      defineContainer({
+        type: 'diagram',
+        childField: 'shapes',
+        render: containerRender,
+        of: [
+          defineContainer({
+            type: 'cell',
+            childField: 'markers',
+            render: containerRender,
+          }),
+        ],
+      }),
+    )
+    if (!tableConfig || !diagramConfig) {
+      throw new Error('failed')
+    }
+    const containers = new Map([
+      ['table', tableConfig],
+      ['diagram', diagramConfig],
+    ])
+    const richInput = makeRichInput({
+      schema: dualSchema,
+      containers,
+      value: [
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [{_type: 'cell', _key: 'tcell', content: []}],
+        },
+        {
+          _type: 'diagram',
+          _key: 'd0',
+          shapes: [{_type: 'cell', _key: 'dcell', markers: []}],
+        },
+      ],
+    })
+    const tableCell = resolveContainerByPath(
+      richInput,
+      [{_key: 't0'}, 'rows', {_key: 'tcell'}],
+      {_type: 'cell', _key: 'tcell'},
+    )
+    const diagramCell = resolveContainerByPath(
+      richInput,
+      [{_key: 'd0'}, 'shapes', {_key: 'dcell'}],
+      {_type: 'cell', _key: 'dcell'},
+    )
+    if (!tableCell || !('container' in tableCell)) {
+      throw new Error('table cell')
+    }
+    if (!diagramCell || !('container' in diagramCell)) {
+      throw new Error('diagram cell')
+    }
+    expect(tableCell.field.name).toEqual('content')
+    expect(diagramCell.field.name).toEqual('markers')
+  })
+
+  test('10. leaf-ancestor short-circuit: descendants of a leaf-resolved ancestor return undefined', () => {
     const schema = compileSchema(
       defineSchema({
         blockObjects: [
@@ -648,97 +578,11 @@ describe(resolveContainers.name, () => {
                 name: 'content',
                 type: 'array',
                 of: [
-                  {type: 'block'},
                   {
                     type: 'object',
-                    name: 'list',
+                    name: 'image',
                     fields: [
-                      {name: 'kind', type: 'string'},
-                      {
-                        name: 'items',
-                        type: 'array',
-                        of: [{type: 'block'}],
-                      },
-                    ],
-                  },
-                  // Sibling reference to `list` - outside `list`'s descendant
-                  // scope. With path-scoped resolution (not hoisting), this
-                  // should NOT resolve.
-                  {type: 'list'},
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    )
-
-    const resolved = resolveContainers(
-      schema,
-      makeConfigs(schema, [
-        {
-          scope: '$..callout',
-          field: 'content',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..list',
-          field: 'items',
-          render: ({children}) => children,
-        },
-      ]),
-    )
-
-    // `callout` and `callout.list` resolve. The sibling reference is silently
-    // dropped because `list` isn't in the ancestor chain at THAT walk
-    // position and isn't at root either.
-    expect(Array.from(resolved.keys()).sort()).toEqual([
-      'callout',
-      'callout.list',
-    ])
-  })
-
-  test('inline ancestor shadows root declaration of the same name', () => {
-    // `list` is declared at root with one shape (items: [block]) AND
-    // inline-declared inside callout with a different shape
-    // (items: [block, list]). Inside the inline declaration's descendants,
-    // `{type: 'list'}` should resolve to the INLINE shape (closer ancestor
-    // wins), not the root one.
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'list',
-            fields: [{name: 'items', type: 'array', of: [{type: 'block'}]}],
-          },
-          {
-            name: 'callout',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [
-                  {
-                    type: 'object',
-                    name: 'list',
-                    fields: [
-                      {
-                        name: 'items',
-                        type: 'array',
-                        of: [
-                          {
-                            type: 'object',
-                            name: 'list-item',
-                            fields: [
-                              {
-                                name: 'content',
-                                type: 'array',
-                                of: [{type: 'block'}, {type: 'list'}],
-                              },
-                            ],
-                          },
-                        ],
-                      },
+                      {name: 'caption', type: 'array', of: [{type: 'block'}]},
                     ],
                   },
                 ],
@@ -748,242 +592,156 @@ describe(resolveContainers.name, () => {
         ],
       }),
     )
-
-    const resolved = resolveContainers(
+    const calloutConfig = resolveNestedContainer(
       schema,
-      makeConfigs(schema, [
-        {scope: '$.list', field: 'items', render: ({children}) => children},
-        {
-          scope: '$..callout',
-          field: 'content',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..callout.list',
-          field: 'items',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..callout.list.list-item',
-          field: 'content',
-          render: ({children}) => children,
-        },
-        {
-          scope: '$..callout.list.list-item.list',
-          field: 'items',
-          render: ({children}) => children,
-        },
-      ]),
-    )
-
-    // The root `list` resolves on its own. Inside callout, the inline
-    // declaration shadows root, and the cycle reference resolves to the
-    // INLINE shape - so the cycle candidate at `callout.list.list-item.list`
-    // is emitted.
-    expect(Array.from(resolved.keys()).sort()).toEqual([
-      'callout',
-      'callout.list',
-      'callout.list.list-item',
-      'callout.list.list-item.list',
-      'list',
-    ])
-
-    // The cycle candidate's field MUST be the INLINE shape, not the root
-    // shape. The inline `list` accepts list-items inside its `items` field;
-    // the root `list` accepts plain blocks.
-    const cycleField = resolved.get('callout.list.list-item.list')?.field
-    expect(cycleField?.of[0]).toEqual(
-      expect.objectContaining({
-        type: 'object',
-        name: 'list-item',
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
+        of: [defineLeaf({type: 'image', render: leafRender})],
       }),
     )
-  })
-
-  test('reference falls back to root when not in ancestor chain', () => {
-    // Plain root-only reference (the case PR #2630 already supports).
-    // Kept as a regression test alongside the new ancestor-aware paths.
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {name: 'image', fields: [{name: 'src', type: 'string'}]},
-          {
-            name: 'callout',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [{type: 'block'}, {type: 'image'}],
-              },
-            ],
-          },
-        ],
-      }),
-    )
-
-    const resolved = resolveContainers(
+    if (!calloutConfig) {
+      throw new Error('callout failed')
+    }
+    const containers = new Map([['callout', calloutConfig]])
+    const richInput = makeRichInput({
       schema,
-      makeConfigs(schema, [
+      containers,
+      value: [
         {
-          scope: '$..callout',
-          field: 'content',
-          render: ({children}) => children,
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'image',
+              _key: 'i0',
+              caption: [{_type: 'block', _key: 'b0', children: []}],
+            },
+          ],
         },
-      ]),
+      ],
+    })
+    // Path points to a block inside an image's caption inside the callout.
+    // The image is resolved as a leaf in callout's `of`; descent stops
+    // returning undefined for descendants.
+    const result = resolveContainerByPath(
+      richInput,
+      [{_key: 'c0'}, 'content', {_key: 'i0'}, 'caption', {_key: 'b0'}],
+      {_type: 'block', _key: 'b0'},
     )
-
-    expect(Array.from(resolved.keys()).sort()).toEqual(['callout'])
+    expect(result).toBeUndefined()
   })
 
-  test('mutually-recursive root types: cycle stub resolves against root', () => {
-    // Mirror the bridge's cross-root-reference output. `a` and `b` are both
-    // at the root. `a.content` inlines `b` one level; that inlined `b`
-    // contains a cycle stub `{type: 'a'}`. The resolver should follow the
-    // stub via root lookup and emit a candidate at the cycle position.
-    const schema = compileSchema(
-      defineSchema({
-        blockObjects: [
-          {
-            name: 'a',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [
-                  {type: 'block'},
-                  {
-                    type: 'object',
-                    name: 'b',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        of: [{type: 'block'}, {type: 'a'}],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            name: 'b',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [
-                  {type: 'block'},
-                  {
-                    type: 'object',
-                    name: 'a',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        of: [{type: 'block'}, {type: 'b'}],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    )
-
-    const resolved = resolveContainers(
-      schema,
-      makeConfigs(schema, [
-        {scope: '$..a', field: 'content', render: testRender},
-        {scope: '$..b', field: 'content', render: testRender},
-        {scope: '$..a.b', field: 'content', render: testRender},
-        {scope: '$..b.a', field: 'content', render: testRender},
-        {scope: '$..a.b.a', field: 'content', render: testRender},
-        {scope: '$..b.a.b', field: 'content', render: testRender},
-      ]),
-    )
-
-    // Each root + the inlined level + the cycle reference all resolve.
-    expect(Array.from(resolved.keys()).sort()).toEqual([
-      'a',
-      'a.b',
-      'a.b.a',
-      'b',
-      'b.a',
-      'b.a.b',
-    ])
-  })
-
-  test('callout references a root-declared recursive list', () => {
+  test('11. path-driven top-level fallthrough: no container ancestor returns containers.get(_type)', () => {
     const schema = compileSchema(
       defineSchema({
         blockObjects: [
           {
             name: 'callout',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [{type: 'block'}, {type: 'list'}],
-              },
-            ],
-          },
-          {
-            name: 'list',
-            fields: [
-              {
-                name: 'items',
-                type: 'array',
-                of: [
-                  {
-                    type: 'object',
-                    name: 'list-item',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        of: [{type: 'block'}, {type: 'list'}],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
           },
         ],
       }),
     )
-
-    const resolved = resolveContainers(
-      schema,
-      makeConfigs(schema, [
-        {scope: '$..callout', field: 'content', render: testRender},
-        {scope: '$..list', field: 'items', render: testRender},
-        {scope: '$..list-item', field: 'content', render: testRender},
-        {scope: '$..callout.list', field: 'items', render: testRender},
-        {
-          scope: '$..callout.list.list-item',
-          field: 'content',
-          render: testRender,
-        },
-        {
-          scope: '$..callout.list.list-item.list',
-          field: 'items',
-          render: testRender,
-        },
-      ]),
-    )
-
-    expect(Array.from(resolved.keys()).sort()).toEqual([
-      'callout',
-      'callout.list',
-      'callout.list.list-item',
-      'callout.list.list-item.list',
-      'list',
-      'list.list-item',
-      'list.list-item.list',
+    const containers = resolveContainersRich(schema, [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
+      }),
     ])
+    const richInput = makeRichInput({
+      schema,
+      containers,
+      value: [{_type: 'callout', _key: 'c0', content: []}],
+    })
+    // Top-level callout has no container ancestor; `descendToParent`
+    // returns undefined, then `resolveContainerByPath` falls back to
+    // the global `containers.get` entry.
+    const result = resolveContainerByPath(richInput, [{_key: 'c0'}], {
+      _type: 'callout',
+      _key: 'c0',
+    })
+    expect(result !== undefined).toEqual(true)
+    if (!result || !('container' in result)) {
+      throw new Error('expected callout')
+    }
+    expect(result.container.type).toEqual('callout')
+  })
+})
+
+describe(descendToParent.name, () => {
+  test('returns undefined when path has no container ancestor', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+    )
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
+      }),
+    ])
+    const snapshot = makeSnapshot({
+      schema,
+      containers,
+      value: [{_type: 'callout', _key: 'c0', content: []}],
+    })
+    // Top-level node has no parent.
+    expect(descendToParent(snapshot, [{_key: 'c0'}])).toBeUndefined()
+  })
+
+  test('returns parent ContainerConfig and parentPath for nested node', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+    )
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: containerRender,
+      }),
+    ])
+    const snapshot = makeSnapshot({
+      schema,
+      containers,
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    })
+    const descent = descendToParent(snapshot, [
+      {_key: 'c0'},
+      'content',
+      {_key: 'b0'},
+    ])
+    expect(descent?.parent.type).toEqual('callout')
+    expect(descent?.parentPath).toEqual([{_key: 'c0'}])
   })
 })

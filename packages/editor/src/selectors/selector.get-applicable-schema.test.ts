@@ -7,8 +7,6 @@ import {
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import type {ContainerConfig} from '../renderers/renderer.types'
-import {makeContainerConfig} from '../schema/make-container-config'
 import {resolveContainers} from '../schema/resolve-containers'
 import {
   compareApplicableSchema,
@@ -46,12 +44,9 @@ const baseSchemaDef = defineSchema({
 })
 
 const schema = compileSchema(baseSchemaDef)
-const containerConfigs: Map<string, ContainerConfig> = new Map()
-containerConfigs.set(
-  '$..callout',
-  makeContainerConfig(schema, {scope: '$..callout', field: 'content'}),
-)
-const containers = resolveContainers(schema, containerConfigs)
+const containers = resolveContainers(schema, [
+  {kind: 'container', type: 'callout', childField: 'content'},
+])
 
 const rootBlock1: PortableTextTextBlock = {
   _type: 'block',

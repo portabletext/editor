@@ -4,7 +4,6 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {makeContainerConfig} from '../src/schema/make-container-config'
 import {
   resolveContainers,
   type Containers,
@@ -68,32 +67,11 @@ const schemaDefinition = defineSchema({
 
 const schema = compileSchema(schemaDefinition)
 
-const tableContainers: Containers = resolveContainers(
-  schema,
-  new Map([
-    [
-      '$..table',
-      makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
-      }),
-    ],
-    [
-      '$..table.tableRow',
-      makeContainerConfig(schema, {
-        scope: '$..table.tableRow',
-        field: 'cells',
-      }),
-    ],
-    [
-      '$..table.tableRow.tableCell',
-      makeContainerConfig(schema, {
-        scope: '$..table.tableRow.tableCell',
-        field: 'content',
-      }),
-    ],
-  ]),
-)
+const tableContainers: Containers = resolveContainers(schema, [
+  {type: 'table', childField: 'rows'},
+  {type: 'tableRow', childField: 'cells'},
+  {type: 'tableCell', childField: 'content'},
+])
 
 function block(
   props: Partial<PortableTextTextBlock> & {

@@ -12,8 +12,8 @@ const schemaDefinition = defineSchema({
 
 describe('defineLeaf void block-object wrapper contract', () => {
   test('consumer wrapping content with contentEditable=false + draggable on the inner wrapper preserves the spacer in editable context', async () => {
-    const imageLeaf = defineLeaf<typeof schemaDefinition>({
-      scope: '$..image',
+    const imageLeaf = defineLeaf({
+      type: 'image',
       render: ({attributes, children, readOnly}) => (
         <div {...attributes} data-testid="image">
           {children}
@@ -32,7 +32,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue: [{_key: 'i0', _type: 'image'}],
-      children: <LeafPlugin leafs={[imageLeaf]} />,
+      children: <LeafPlugin leaves={[imageLeaf]} />,
     })
 
     await vi.waitFor(() => {
@@ -62,8 +62,8 @@ describe('defineLeaf void block-object wrapper contract', () => {
     const spanKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    const imageLeaf = defineLeaf<typeof schemaDefinition>({
-      scope: '$..image',
+    const imageLeaf = defineLeaf({
+      type: 'image',
       render: ({attributes, children, readOnly}) => (
         <div {...attributes}>
           {children}
@@ -87,7 +87,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
         },
         {_key: imageKey, _type: 'image'},
       ],
-      children: <LeafPlugin leafs={[imageLeaf]} />,
+      children: <LeafPlugin leaves={[imageLeaf]} />,
     })
 
     await userEvent.click(locator)

@@ -1,5 +1,6 @@
 export {BehaviorPlugin} from './plugin.behavior'
 export {ContainerPlugin} from './plugin.container'
 export {LeafPlugin} from './plugin.leaf'
+export {TextBlockPlugin} from './plugin.text-block'
 export {EditorRefPlugin} from './plugin.editor-ref'
 export {EventListenerPlugin} from './plugin.event-listener'

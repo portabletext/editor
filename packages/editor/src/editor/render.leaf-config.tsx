@@ -6,36 +6,29 @@ import type {
 import {useSelector} from '@xstate/react'
 import type {ReactElement} from 'react'
 import {useContext} from 'react'
-import {findMatchingLeaf} from '../renderers/find-matching-leaf'
 import type {LeafConfig} from '../renderers/renderer.types'
-import {getTypeChain} from '../schema/get-type-chain'
 import type {Path} from '../slate/interfaces/path'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {EditorActorContext} from './editor-actor-context'
 
 /**
- * Hook: resolve the registered leaf-config that should render `node` at
- * `path`, or `undefined` if none matches.
+ * Hook: resolve the registered leaf config for `node` at `path` from the
+ * global leaf registry, or `undefined` if none matches.
  *
- * Reads the live `leafs` map from the editor actor (so the component
- * re-renders when leafs register/unregister), computes the type chain,
- * then picks the most-specific matching config.
+ * Subscribes to the editor actor's `leaves` map so the component
+ * re-renders when leaves register/unregister.
+ *
+ * One-hop type-keyed dispatch. Positional (in-parent) overrides via
+ * `defineContainer`'s `of` array are resolved one level up by the
+ * caller's parent.
  */
 export function useLeafConfig(
   node: PortableTextBlock | PortableTextSpan | PortableTextObject,
-  path: Path,
+  _path: Path,
 ): LeafConfig | undefined {
-  const editor = useSlateStatic()
   const editorActor = useContext(EditorActorContext)
-  const leafs = useSelector(editorActor, (state) => state.context.leafs)
-
-  if (leafs.size === 0) {
-    return undefined
-  }
-
-  const typeChain = getTypeChain(editor, node, path)
-
-  return findMatchingLeaf(leafs, typeChain)
+  return useSelector(editorActor, (state) =>
+    state.context.leaves.get(node._type),
+  )
 }
 
 /**

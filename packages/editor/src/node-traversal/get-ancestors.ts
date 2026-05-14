@@ -13,8 +13,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *   [{_key:'t1'}]
  *
  * Walks from root to the target in a single pass collecting each ancestor
- * as it goes. Previously called `getNode` per ancestor, each of which
- * re-walked from the root - that's O(depth^2). Single descent is O(depth).
+ * as it goes.
  */
 export function getAncestors(
   snapshot: TraversalSnapshot,
@@ -35,11 +34,11 @@ export function getAncestors(
 
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
-  let scopePath = ''
   let isRootLevel = true
+  let currentParent:
+    | import('../schema/resolve-containers').RegisteredContainer
+    | undefined
 
-  // Collected ancestors in document order (root first). Each entry holds
-  // the node and the resolved path to it.
   const ancestorsByDepth: Array<{node: Node; path: Path}> = []
   const resolvedPath: Path = []
 
@@ -89,19 +88,26 @@ export function getAncestors(
       return []
     }
 
-    // This is an ancestor (we haven't reached the target). Record it.
-    ancestorsByDepth.push({node, path: resolvedPath.slice()})
-
-    // Descend into its children for the next iteration.
-    const next = getNodeChildren(context, node, scopePath)
+    // Descend with positional awareness. `getNodeChildren` checks the
+    // current parent's `of` for a positional override before falling
+    // back to the top-level `containers` map - so same-`_type`
+    // registered under different parents with different `field`
+    // resolves to the right entry at this position.
+    const next = getNodeChildren(context, node, currentParent)
     if (!next) {
       return []
     }
+
+    ancestorsByDepth.push({
+      node,
+      path: resolvedPath.slice(),
+    })
+
     currentChildren = next.children
-    scopePath = next.scopePath
+    currentParent = next.parent
     segmentIndex++
   }
 
-  // Return nearest-first (reverse of document order).
+  // Return nearest-first (reverse of document order at the call site).
   return ancestorsByDepth.reverse()
 }

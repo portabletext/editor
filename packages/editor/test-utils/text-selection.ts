@@ -1,7 +1,6 @@
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../src/editor/editor-snapshot'
 import {safeStringify} from '../src/internal-utils/safe-json'
-import {lookupContainer} from '../src/schema/lookup-container'
 import type {Path, PathSegment} from '../src/slate/interfaces/path'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {collapseSelection} from './collapse-selection'
@@ -21,7 +20,7 @@ function collectTextBlocks(
   context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
 ): Array<TextBlockEntry> {
   const entries: Array<TextBlockEntry> = []
-  walkBlocks(context, context.value, [], '', entries)
+  walkBlocks(context, context.value, [], entries)
   return entries
 }
 
@@ -29,7 +28,6 @@ function walkBlocks(
   context: Pick<EditorContext, 'schema' | 'containers'>,
   blocks: ReadonlyArray<unknown>,
   basePath: Path,
-  scopePath: string,
   entries: Array<TextBlockEntry>,
 ): void {
   for (const block of blocks) {
@@ -48,16 +46,11 @@ function walkBlocks(
       continue
     }
 
-    const containerScope =
-      typeof (block as {_type?: unknown})._type === 'string'
-        ? scopePath === ''
-          ? (block as {_type: string})._type
-          : `${scopePath}.${(block as {_type: string})._type}`
-        : ''
-    if (!containerScope) {
+    const _type = (block as {_type?: unknown})._type
+    if (typeof _type !== 'string') {
       continue
     }
-    const container = lookupContainer(context.containers, containerScope)
+    const container = context.containers?.get(_type)
     if (!container) {
       continue
     }
@@ -68,13 +61,7 @@ function walkBlocks(
       continue
     }
 
-    walkBlocks(
-      context,
-      fieldValue,
-      [...path, fieldName],
-      containerScope,
-      entries,
-    )
+    walkBlocks(context, fieldValue, [...path, fieldName], entries)
   }
 }
 

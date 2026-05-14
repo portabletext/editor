@@ -25,8 +25,10 @@ export function getNode(
 
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
-  let scopePath = ''
   let node: Node | undefined
+  let currentParent:
+    | import('../schema/resolve-containers').RegisteredContainer
+    | undefined
   const resolvedPath: Path = []
   let isRootLevel = true
 
@@ -79,14 +81,14 @@ export function getNode(
     }
 
     if (hasMoreSegments) {
-      const next = getNodeChildren(context, node, scopePath)
+      const next = getNodeChildren(context, node, currentParent)
 
       if (!next) {
         return undefined
       }
 
       currentChildren = next.children
-      scopePath = next.scopePath
+      currentParent = next.parent
     }
   }
 

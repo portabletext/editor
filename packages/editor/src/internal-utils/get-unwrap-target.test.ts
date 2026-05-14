@@ -1,14 +1,10 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {
-  ContainerConfig,
-  ContainerDefinition,
-} from '../renderers/renderer.types'
-import {makeContainerConfig} from '../schema/make-container-config'
+import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getUnwrapTarget} from './get-unwrap-target'
 
-const testRender: ContainerDefinition['render'] = ({children}) => children
+const testRender: Container['render'] = ({children}) => children
 
 describe(getUnwrapTarget.name, () => {
   test('stops at the origin when its parent accepts the payload', () => {
@@ -41,24 +37,18 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..cell',
-        makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..cell.callout',
-        makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -150,40 +140,28 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..table',
-        makeContainerConfig(schema, {
-          scope: '$..table',
-          field: 'rows',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..table.row',
-        makeContainerConfig(schema, {
-          scope: '$..table.row',
-          field: 'cells',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..table.row.cell',
-        makeContainerConfig(schema, {
-          scope: '$..table.row.cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..table.row.cell.callout',
-        makeContainerConfig(schema, {
-          scope: '$..table.row.cell.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'table',
+        childField: 'rows',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'row',
+        childField: 'cells',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -288,32 +266,23 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..row',
-        makeContainerConfig(schema, {
-          scope: '$..row',
-          field: 'cells',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..row.cell',
-        makeContainerConfig(schema, {
-          scope: '$..row.cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..row.cell.callout',
-        makeContainerConfig(schema, {
-          scope: '$..row.cell.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'row',
+        childField: 'cells',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -393,16 +362,13 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..callout',
-        makeContainerConfig(schema, {
-          scope: '$..callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -467,24 +433,18 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..cell',
-        makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..cell.callout',
-        makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -554,24 +514,18 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..cell',
-        makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..cell.callout',
-        makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -640,24 +594,18 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..cell',
-        makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..cell.callout',
-        makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -726,24 +674,18 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..row',
-        makeContainerConfig(schema, {
-          scope: '$..row',
-          field: 'cells',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..row.cell',
-        makeContainerConfig(schema, {
-          scope: '$..row.cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'row',
+        childField: 'cells',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -839,32 +781,23 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..cell',
-        makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..cell.section',
-        makeContainerConfig(schema, {
-          scope: '$..cell.section',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-      [
-        '$..cell.section.callout',
-        makeContainerConfig(schema, {
-          scope: '$..cell.section.callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'cell',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'section',
+        childField: 'content',
+        render: testRender,
+      }),
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(
@@ -927,16 +860,13 @@ describe(getUnwrapTarget.name, () => {
         ],
       }),
     )
-    const configs: Map<string, ContainerConfig> = new Map([
-      [
-        '$..callout',
-        makeContainerConfig(schema, {
-          scope: '$..callout',
-          field: 'content',
-          render: testRender,
-        }),
-      ],
-    ])
+    const configs = [
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+        render: testRender,
+      }),
+    ]
     const containers = resolveContainers(schema, configs)
 
     expect(

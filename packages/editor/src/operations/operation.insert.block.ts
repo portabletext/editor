@@ -11,8 +11,6 @@ import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {getContainerScopedName} from '../schema/get-container-scoped-name'
-import {lookupContainer} from '../schema/lookup-container'
 import {end as editorEnd} from '../slate/editor/end'
 import {pathRef} from '../slate/editor/path-ref'
 import {rangeRef} from '../slate/editor/range-ref'
@@ -194,10 +192,7 @@ function resolveTarget(args: {
     // when a behavior raises a `delete` followed by an `insert.block`:
     // the raises run as one batch and normalization hasn't yet inserted
     // a placeholder when the second one starts.
-    const containerField = lookupContainer(
-      editor.containers,
-      getContainerScopedName(editor, endBlock, endBlockPath),
-    )?.field
+    const containerField = editor.containers.get(endBlock._type)?.field
     const fieldValue =
       containerField &&
       (endBlock as Record<string, unknown>)[containerField.name]

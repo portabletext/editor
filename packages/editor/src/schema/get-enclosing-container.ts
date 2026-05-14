@@ -1,14 +1,19 @@
 import type {OfDefinition} from '@portabletext/schema'
-import {getAncestors} from '../node-traversal/get-ancestors'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
-import {getContainerScopedName} from './get-container-scoped-name'
-import {lookupContainer} from './lookup-container'
+import {descendToParent} from './descend-to-parent'
 
 /**
- * Walk ancestors from `path` and return the nearest registered editable
- * container.
+ * Return the immediate registered-container ancestor of `path` along
+ * with its `of` array (the schema definitions accepted at this position).
+ *
+ * Position-aware: nested-only registrations (e.g. `cell` registered
+ * only inside `table.row.of`) are recognized via the same descent
+ * primitive used by all parent-aware traversal.
+ *
+ * Returns `undefined` when `path` has no registered-container ancestor
+ * (i.e. is at the document root) or when descent hits a leaf-resolved
+ * ancestor.
  */
 export function getEnclosingContainer(
   snapshot: TraversalSnapshot,
@@ -19,27 +24,12 @@ export function getEnclosingContainer(
       path: Path
     }
   | undefined {
-  for (const ancestor of getAncestors(snapshot, path)) {
-    if (!isObjectNode({schema: snapshot.context.schema}, ancestor.node)) {
-      continue
-    }
-
-    const scopedName = getContainerScopedName(
-      snapshot,
-      ancestor.node,
-      ancestor.path,
-    )
-    const container = lookupContainer(snapshot.context.containers, scopedName)
-
-    if (!container) {
-      continue
-    }
-
-    return {
-      of: container.field.of,
-      path: ancestor.path,
-    }
+  const descent = descendToParent(snapshot, path)
+  if (!descent) {
+    return undefined
   }
-
-  return undefined
+  return {
+    of: descent.parent.field.of,
+    path: descent.parentPath,
+  }
 }
