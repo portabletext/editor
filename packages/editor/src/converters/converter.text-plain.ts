@@ -1,6 +1,6 @@
 import {htmlToPortableText} from '@portabletext/html'
 import {isTextBlock} from '@portabletext/schema'
-import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {getFragment} from '../selectors/selector.get-fragment'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
@@ -18,7 +18,7 @@ export const converterTextPlain = defineConverter({
       }
     }
 
-    const blocks = getSelectedValue(snapshot)
+    const blocks = getFragment(snapshot).map((entry) => entry.node)
 
     const data = blocks
       .map((block) => {

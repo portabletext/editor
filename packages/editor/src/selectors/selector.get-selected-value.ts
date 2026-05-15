@@ -30,6 +30,10 @@ type SliceContext = Pick<
  * on the selection boundary are recursed into so only the selected portion
  * of their content is kept. Text blocks on the boundary are span-sliced.
  *
+ * The result preserves the full ancestor envelope around the selection. For
+ * the clipboard-shaped view that unwraps the envelope toward the selection's
+ * lowest common ancestor, see {@link getFragment}.
+ *
  * @public
  */
 export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (

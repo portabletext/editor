@@ -16,6 +16,7 @@ import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annota
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {getFragment} from '../selectors/selector.get-fragment'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import type {Path as InternalPath} from '../slate/interfaces/path'
@@ -436,7 +437,7 @@ export function createEditableAPI(
         slateEditorInstance: editor,
       })
 
-      return getSelectedValue(snapshot)
+      return getFragment(snapshot).map((entry) => entry.node)
     },
     isSelectionsOverlapping: (
       selectionA: EditorSelection,
