@@ -32,6 +32,40 @@
   color-scheme: light;
 }
 
+/* Dark theme. Activated via `:root[data-theme="dark"]`, written by useTheme.
+ * All visual tokens invert; semantic structure (1px borders, type hierarchy,
+ * spacing, fonts) stays identical. Accent shifts cooler so brown reads on
+ * a neutral-cool surface. */
+
+:root[data-theme='dark'] {
+  --paper: #1a1a1c;
+  --page-bg: #0f0f10;
+
+  --ink: #ececec;
+  --ink-soft: #d8d8d8;
+  --ink-muted: #a8a8a8;
+  --ink-subtle: #7f7f7f;
+  --ink-faint: #555555;
+
+  --rule: rgba(236, 236, 236, 0.1);
+  --rule-soft: rgba(236, 236, 236, 0.05);
+  --rule-hover: rgba(236, 236, 236, 0.18);
+
+  --tint-bg: rgba(236, 236, 236, 0.04);
+  --tint-bg-strong: rgba(236, 236, 236, 0.06);
+  --accent: #c89a6a;
+  --selection: rgba(200, 154, 106, 0.18);
+
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'] .pc-page {
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
 * {
   box-sizing: border-box;
 }
