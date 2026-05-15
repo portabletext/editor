@@ -4,16 +4,12 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import React, {useCallback, useRef, type JSX} from 'react'
+import React, {useCallback, type JSX} from 'react'
 import {
   ParentContainerContext,
   useParentContainer,
 } from '../../../editor/parent-container-context'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
-import {
-  isElementDecorationsEqual,
-  splitDecorationsByChild,
-} from '../../dom/utils/range-list'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
@@ -30,6 +26,7 @@ import type {
 import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
+import {useDecorationsByChild} from './use-decorations-by-child'
 import {useSlateStatic} from './use-slate-static'
 
 /**
@@ -234,42 +231,6 @@ const useChildren = (props: {
   }
 
   return <>{elements}</>
-}
-
-const useDecorationsByChild = (
-  editor: Editor,
-  node: Editor | Node,
-  path: Path,
-  decorations: DecoratedRange[],
-) => {
-  const decorationsByChild = splitDecorationsByChild(
-    editor,
-    node,
-    path,
-    decorations,
-  )
-
-  // The value we return is a mutable array of `DecoratedRange[]` arrays. Each
-  // `DecoratedRange[]` is only updated if the decorations at that index have
-  // changed, which speeds up the equality check for the `decorations` prop in
-  // the memoized `Element` and `Text` components.
-  const mutableDecorationsByChild = useRef(decorationsByChild).current
-
-  // Resize the mutable array to match the latest result
-  mutableDecorationsByChild.length = decorationsByChild.length
-
-  for (let i = 0; i < decorationsByChild.length; i++) {
-    const decorations = decorationsByChild[i]!
-
-    const previousDecorations: DecoratedRange[] | null =
-      mutableDecorationsByChild[i] ?? null
-
-    if (!isElementDecorationsEqual(previousDecorations, decorations)) {
-      mutableDecorationsByChild[i] = decorations!
-    }
-  }
-
-  return mutableDecorationsByChild
 }
 
 export default useChildren
