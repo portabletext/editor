@@ -24,6 +24,32 @@
  */
 
 import type {ObjectMatcher} from '@portabletext/markdown'
+/**
+ * Pilcrow's serializer renderers. Wired into `portableTextToMarkdown`
+ * to translate pilcrow's editor shape back to a markdown string.
+ *
+ *   - code-block: walks `lines[].children[]` spans, concatenates with
+ *     newlines, wraps in a fenced block. The language attribute is
+ *     emitted on the opening fence when present.
+ *
+ *   - table: pilcrow stores rows[].cells[].content as block arrays. The
+ *     renderer renders each cell's content inline (single line) and
+ *     joins with pipes, since markdown tables don't support multi-line
+ *     cells. Header row separator added when headerRows is set.
+ *
+ *   - image: emits `![alt](src "title")` with optional title attribute.
+ *
+ *   - horizontal-rule: standard `---` rule.
+ *
+ *   - callout: reuses the built-in GFM alert renderer.
+ */
+
+import {
+  DefaultCalloutRenderer,
+  DefaultHorizontalRuleRenderer,
+  type PortableTextRenderers,
+  type PortableTextTypeRenderer,
+} from '@portabletext/markdown'
 import type {PortableTextBlock} from '@portabletext/schema'
 
 type AnyValue = Record<string, unknown>
@@ -110,4 +136,91 @@ export const pilcrowMatchers = {
   table: tableMatcher,
   horizontalRule: horizontalRuleMatcher,
   callout: calloutMatcher,
+}
+
+type CodeLine = {children?: Array<{_type: string; text?: string}>}
+type Cell = {_type: 'cell'; content: Array<unknown>}
+type Row = {_type: 'row'; cells: Array<Cell>}
+
+const codeBlockRenderer: PortableTextTypeRenderer = ({value}) => {
+  const codeBlockValue = value as {language?: string; lines?: Array<CodeLine>}
+  const lines = codeBlockValue.lines ?? []
+  const code = lines
+    .map((line) =>
+      (line.children ?? [])
+        .map((child) => (child._type === 'span' ? (child.text ?? '') : ''))
+        .join(''),
+    )
+    .join('\n')
+  const fence = codeBlockValue.language
+    ? `\`\`\`${codeBlockValue.language}`
+    : '```'
+  return `${fence}\n${code}\n\`\`\``
+}
+
+const tableRenderer: PortableTextTypeRenderer = ({value, renderNode}) => {
+  const tableValue = value as {headerRows?: number; rows?: Array<Row>}
+  const rows = tableValue.rows ?? []
+  if (rows.length === 0 || rows[0]?.cells.length === 0) {
+    return ''
+  }
+  const headerRows = tableValue.headerRows ?? 0
+  const renderCell = (cell: Cell): string => {
+    return cell.content
+      .map((block, index) =>
+        renderNode({
+          node: block as Parameters<typeof renderNode>[0]['node'],
+          index,
+          isInline: false,
+          renderNode,
+        }),
+      )
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+  const out: Array<string> = []
+  for (let i = 0; i < headerRows; i++) {
+    const row = rows[i]
+    if (!row) {
+      continue
+    }
+    out.push(`| ${row.cells.map(renderCell).join(' | ')} |`)
+  }
+  if (headerRows > 0) {
+    const firstRow = rows[0]
+    if (firstRow) {
+      const sep = firstRow.cells.map(() => ' --- ').join('|')
+      out.push(`|${sep}|`)
+    }
+  }
+  for (let i = headerRows; i < rows.length; i++) {
+    const row = rows[i]
+    if (!row) {
+      continue
+    }
+    out.push(`| ${row.cells.map(renderCell).join(' | ')} |`)
+  }
+  return out.join('\n')
+}
+
+const imageRenderer: PortableTextTypeRenderer = ({value}) => {
+  const image = value as {src?: string; alt?: string; title?: string}
+  const alt = image.alt ?? ''
+  const src = image.src ?? ''
+  const title = image.title ? ` "${image.title}"` : ''
+  return `![${alt}](${src}${title})`
+}
+
+/**
+ * Renderers wired into `portableTextToMarkdown(value, pilcrowRenderers)`.
+ */
+export const pilcrowRenderers: Partial<PortableTextRenderers> = {
+  types: {
+    'code-block': codeBlockRenderer,
+    'table': tableRenderer,
+    'image': imageRenderer,
+    'horizontal-rule': DefaultHorizontalRuleRenderer,
+    'callout': DefaultCalloutRenderer,
+  },
 }
