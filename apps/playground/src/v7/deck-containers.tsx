@@ -7,7 +7,7 @@ import {
   MessageSquareWarningIcon,
   OctagonAlertIcon,
 } from 'lucide-react'
-import type {JSX, ReactNode} from 'react'
+import type {JSX} from 'react'
 import {CodeHighlight} from './code-highlight'
 
 const toneStyles: Record<
@@ -154,21 +154,14 @@ const tableContainer = defineContainer({
   render: ({attributes, children, node, selected}) => {
     const headerRows = typeof node.headerRows === 'number' ? node.headerRows : 0
     return (
-      <div
-        contentEditable={false}
-        className="my-5 overflow-x-auto rounded-lg border border-stone-300 dark:border-stone-700"
+      <table
+        {...attributes}
+        data-header-rows={headerRows}
+        data-selected={selected ? '' : undefined}
+        className="deck-table my-5 w-full border-collapse overflow-hidden rounded-lg border border-stone-300 text-base dark:border-stone-700"
       >
-        <table
-          {...(attributes as Record<string, unknown> as Record<string, string>)}
-          contentEditable
-          suppressContentEditableWarning
-          data-header-rows={headerRows}
-          data-selected={selected ? '' : undefined}
-          className="deck-table w-full border-collapse text-base"
-        >
-          <tbody>{children as ReactNode}</tbody>
-        </table>
-      </div>
+        <tbody>{children}</tbody>
+      </table>
     )
   },
   of: [
@@ -176,10 +169,7 @@ const tableContainer = defineContainer({
       type: 'row',
       childField: 'cells',
       render: ({attributes, children, selected}) => (
-        <tr
-          {...(attributes as Record<string, unknown> as Record<string, string>)}
-          data-selected={selected ? '' : undefined}
-        >
+        <tr {...attributes} data-selected={selected ? '' : undefined}>
           {children}
         </tr>
       ),
@@ -190,10 +180,7 @@ const tableContainer = defineContainer({
           childField: 'content',
           render: ({attributes, children, selected}) => (
             <td
-              {...(attributes as Record<string, unknown> as Record<
-                string,
-                string
-              >)}
+              {...attributes}
               data-selected={selected ? '' : undefined}
               className="border border-stone-300 px-3 py-2 align-top dark:border-stone-700"
             >
