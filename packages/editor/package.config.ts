@@ -9,6 +9,13 @@ import {defineConfig} from '@sanity/pkg-utils'
  *   mutation).
  * - Tier 2 = hook utilities (`useContext`, `useEffect`-style and
  *   selector helpers used by the wrappers).
+ * - Tier 3 = wrapper components rendered by `useChildren`. The
+ *   compiler can compile these even though `useChildren` itself
+ *   stays uncompiled: the cache stabilizes the props bundle at the
+ *   call site. Hand-rolled `React.memo` equalities are retained for
+ *   now because `useChildren` allocates fresh `path` arrays each
+ *   render; deleting the equalities is gated on a follow-up that
+ *   compiles `useChildren`.
  *
  * See `/specs/render-pipeline-compiler-collapse.md`. Kept in lock-step
  * with `eslint.config.js` (the react-hooks ignores).
@@ -42,7 +49,23 @@ const TIER_2_PATHS = [
   '/src/slate/react/hooks/use-decorations.ts',
 ]
 
-const TIER_1_AND_2_PATHS = [...TIER_1_PATHS, ...TIER_2_PATHS]
+/**
+ * Tier 3 = wrapper components rendered by `useChildren`. Phase 3 of
+ * the un-exclusion plan.
+ */
+const TIER_3_PATHS = [
+  '/src/slate/react/components/element.tsx',
+  '/src/slate/react/components/text.tsx',
+  '/src/slate/react/components/leaf.tsx',
+  '/src/slate/react/components/object-node.tsx',
+  '/src/slate/react/components/string.tsx',
+]
+
+const UN_EXCLUDED_SLATE_PATHS = [
+  ...TIER_1_PATHS,
+  ...TIER_2_PATHS,
+  ...TIER_3_PATHS,
+]
 
 export default defineConfig({
   define: {
@@ -74,7 +97,7 @@ export default defineConfig({
       if (!filename.includes('/src/slate/')) {
         return true
       }
-      return TIER_1_AND_2_PATHS.some((path) => filename.endsWith(path))
+      return UN_EXCLUDED_SLATE_PATHS.some((path) => filename.endsWith(path))
     },
   },
   dts: 'rolldown',

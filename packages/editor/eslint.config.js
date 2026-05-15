@@ -34,7 +34,22 @@ const TIER_2_PATHS = [
   'src/slate/react/hooks/use-decorations.ts',
 ]
 
-const UN_IGNORED_SLATE_PATHS = [...TIER_1_PATHS, ...TIER_2_PATHS]
+/**
+ * Tier 3 = wrapper components rendered by `useChildren`.
+ */
+const TIER_3_PATHS = [
+  'src/slate/react/components/element.tsx',
+  'src/slate/react/components/text.tsx',
+  'src/slate/react/components/leaf.tsx',
+  'src/slate/react/components/object-node.tsx',
+  'src/slate/react/components/string.tsx',
+]
+
+const UN_IGNORED_SLATE_PATHS = [
+  ...TIER_1_PATHS,
+  ...TIER_2_PATHS,
+  ...TIER_3_PATHS,
+]
 
 export default tseslint.config([
   globalIgnores([
