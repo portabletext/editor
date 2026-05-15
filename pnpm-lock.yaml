@@ -198,6 +198,9 @@ importers:
       '@portabletext/plugin-emoji-picker':
         specifier: workspace:*
         version: link:../../packages/plugin-emoji-picker
+      '@portabletext/plugin-typeahead-picker':
+        specifier: workspace:*
+        version: link:../../packages/plugin-typeahead-picker
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../../packages/schema

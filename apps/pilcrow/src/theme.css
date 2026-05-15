@@ -739,3 +739,76 @@ body {
 .pc-emoji-picker-dismiss:hover {
   background: var(--rule);
 }
+
+/* — Slash menu — */
+
+.pc-slash-menu {
+  position: fixed;
+  z-index: 50;
+  width: 280px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.pc-slash-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.pc-slash-menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+}
+
+.pc-slash-menu-item-selected,
+.pc-slash-menu-item:hover {
+  background: var(--rule);
+}
+
+.pc-slash-menu-label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pc-slash-menu-desc {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.pc-slash-menu-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.pc-slash-menu-dismiss {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: 12px;
+}
+
+.pc-slash-menu-dismiss:hover {
+  background: var(--rule);
+}
