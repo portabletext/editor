@@ -1,12 +1,19 @@
 import {defineLeaf} from '@portabletext/editor'
 import {LeafPlugin} from '@portabletext/editor/plugins'
 
+/**
+ * Horizontal rule leaf. The visible rule is 1px, which makes for an
+ * impossibly thin click target. The outer wrapper carries the
+ * selection state and gives a generous transparent hit area around
+ * the rule (CSS adds vertical padding offset by negative margin so
+ * surrounding layout is preserved).
+ */
 const horizontalRuleLeaf = defineLeaf({
   type: 'horizontal-rule',
   render: ({attributes, children, selected, focused}) => (
     <div
       {...attributes}
-      className="pc-block"
+      className="pc-hr-wrap"
       data-selected={selected || undefined}
       data-focused={focused || undefined}
     >
