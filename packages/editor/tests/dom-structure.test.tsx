@@ -443,6 +443,7 @@ describe('DOM structure', () => {
           '</span>',
           '<span',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;].content[_key==&quot;b0&quot;].children[_key==&quot;i0&quot;]"',
+          ' contenteditable="false"',
           ' data-pt-child-type="object">',
           '<span',
           ' data-pt-spacer="true"',

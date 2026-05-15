@@ -231,7 +231,6 @@ export function RenderElement(props: {
       const {
         'data-slate-node': _sn,
         'data-slate-void': _sv,
-        'contentEditable': _ce,
         ...rest
       } = props.attributes
       return (
