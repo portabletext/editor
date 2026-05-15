@@ -1,42 +1,57 @@
 import {defineContainer} from '@portabletext/editor'
 import {ContainerPlugin} from '@portabletext/editor/plugins'
 
+/**
+ * Tables. Three nested containers map to semantic <table>/<tr>/<td>
+ * markup. Header rows render with <th> when `headerRows` is set on the
+ * table block (markdown emits 1 for GFM tables with a `| --- |` rule).
+ *
+ * Cells light `data-selected` + `data-focused` so the CSS can give a
+ * subtle ring on the active cell. Both attrs are omitted when false so
+ * the inspector reads cleanly.
+ */
+
 const cellContainer = defineContainer({
   type: 'cell',
   childField: 'content',
-  render: ({attributes, children}) => (
-    <div {...attributes} className="pc-table-cell">
+  render: ({attributes, children, selected, focused}) => (
+    <td
+      {...attributes}
+      className="pc-table-cell"
+      data-selected={selected || undefined}
+      data-focused={focused || undefined}
+    >
       {children}
-    </div>
+    </td>
   ),
 })
 
 const rowContainer = defineContainer({
   type: 'row',
   childField: 'cells',
-  render: ({attributes, children}) => {
-    return (
-      <div {...attributes} className="pc-table-row">
-        {children}
-      </div>
-    )
-  },
+  render: ({attributes, children}) => (
+    <tr {...attributes} className="pc-table-row">
+      {children}
+    </tr>
+  ),
   of: [cellContainer],
 })
 
 const tableContainer = defineContainer({
   type: 'table',
   childField: 'rows',
-  render: ({attributes, children, node}) => {
+  render: ({attributes, children, node, selected, focused}) => {
     const block = node as {headerRows?: number}
     return (
-      <div
+      <table
         {...attributes}
         className="pc-table"
         data-header-rows={block.headerRows ?? 0}
+        data-selected={selected || undefined}
+        data-focused={focused || undefined}
       >
-        {children}
-      </div>
+        <tbody>{children}</tbody>
+      </table>
     )
   },
   of: [rowContainer],
