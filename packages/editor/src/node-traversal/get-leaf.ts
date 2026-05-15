@@ -8,6 +8,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Get the deepest leaf node starting from a path, walking toward either the
  * start or end edge. A leaf is any node that has no children according to the
  * traversal context.
+ *
+ * @beta
  */
 export function getLeaf(
   snapshot: TraversalSnapshot,

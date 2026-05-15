@@ -9,6 +9,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * A leaf node cannot have children. Spans and non-editable object nodes are
  * leaves. Text blocks and editable container objects are not.
+ *
+ * @beta
  */
 export function isLeaf(snapshot: TraversalSnapshot, path: Path): boolean {
   if (path.length === 0) {

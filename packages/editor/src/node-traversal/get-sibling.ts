@@ -7,6 +7,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the next or previous sibling of the node at a given path.
+ *
+ * @beta
  */
 export function getSibling(
   snapshot: TraversalSnapshot,
