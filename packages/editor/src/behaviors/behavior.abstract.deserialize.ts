@@ -6,6 +6,7 @@ import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import {fitBlocksToDestination} from './fit-blocks-to-destination'
 
 const mimeTypePriority: Array<MIMEType> = [
   'application/x-portable-text',
@@ -232,10 +233,10 @@ export const abstractDeserializeBehaviors = [
   defineBehavior({
     on: 'deserialization.success',
     actions: [
-      ({event}) => [
+      ({snapshot, event}) => [
         raise({
           type: 'insert.blocks',
-          blocks: event.data,
+          blocks: fitBlocksToDestination(snapshot, event.data),
           placement: 'auto',
         }),
       ],
