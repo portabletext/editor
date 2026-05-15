@@ -1021,11 +1021,7 @@ describe(`${getSelectedValue.name} with containers`, () => {
     }
 
     expect(getSelectedValue(createSnapshot(value, selection))).toEqual([
-      {
-        _type: 'callout',
-        _key: 'cal1',
-        content: [innerBlock],
-      },
+      innerBlock,
     ])
   })
 
@@ -1156,37 +1152,13 @@ describe(`${getSelectedValue.name} with containers`, () => {
       ),
     ).toEqual([
       {
-        _type: 'table',
-        _key: 'dtable1',
-        rows: [
+        ...deepInnerBlock,
+        children: [
           {
-            _type: 'row',
-            _key: 'drow1',
-            cells: [
-              {
-                _type: 'cell',
-                _key: 'dcell1',
-                content: [
-                  {
-                    _type: 'callout',
-                    _key: 'dcal1',
-                    content: [
-                      {
-                        ...deepInnerBlock,
-                        children: [
-                          {
-                            _type: 'span',
-                            _key: 'dib1c1',
-                            text: 'ee',
-                            marks: [],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
+            _type: 'span',
+            _key: 'dib1c1',
+            text: 'ee',
+            marks: [],
           },
         ],
       },
@@ -1302,6 +1274,251 @@ describe(`${getSelectedValue.name} with containers`, () => {
       getSelectedValue(createSnapshot([table], selection, nestedSchema, defs)),
     ).toEqual([
       {
+        _type: 'block',
+        _key: 'ib1',
+        children: [
+          {
+            _type: 'span',
+            _key: 'ib1c1',
+            text: 'foo ',
+            marks: [],
+          },
+          {
+            _type: 'span',
+            _key: 'ib1c2',
+            text: 'linked',
+            marks: [linkKey],
+          },
+        ],
+        markDefs: [
+          {
+            _type: 'link',
+            _key: linkKey,
+            href: 'https://example.com',
+          },
+        ],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test('selection inside one cell across two text blocks unwraps the cell envelope', () => {
+    const tableSchema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const defs = [
+      defineContainer({type: 'table', childField: 'rows'}),
+      defineContainer({type: 'row', childField: 'cells'}),
+      defineContainer({type: 'cell', childField: 'content'}),
+    ]
+
+    const block1: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 'b1c1', text: 'first', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const block2: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b2',
+      children: [{_type: 'span', _key: 'b2c1', text: 'second', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const cell = {
+      _type: 'cell',
+      _key: 'cell1',
+      content: [block1, block2],
+    }
+    const row = {_type: 'row', _key: 'row1', cells: [cell]}
+    const table = {_type: 'table', _key: 'table1', rows: [row]}
+
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 'b1c1'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'b2'},
+          'children',
+          {_key: 'b2c1'},
+        ],
+        offset: 3,
+      },
+    }
+
+    expect(
+      getSelectedValue(createSnapshot([table], selection, tableSchema, defs)),
+    ).toEqual([
+      {
+        ...block1,
+        children: [{_type: 'span', _key: 'b1c1', text: 'irst', marks: []}],
+      },
+      {
+        ...block2,
+        children: [{_type: 'span', _key: 'b2c1', text: 'sec', marks: []}],
+      },
+    ])
+  })
+
+  test('selection across two cells in one row wraps up to the table', () => {
+    const tableSchema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const defs = [
+      defineContainer({type: 'table', childField: 'rows'}),
+      defineContainer({type: 'row', childField: 'cells'}),
+      defineContainer({type: 'cell', childField: 'content'}),
+    ]
+
+    const c1Block: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 'b1c1', text: 'one', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const c2Block: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b2',
+      children: [{_type: 'span', _key: 'b2c1', text: 'two', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const cell1 = {_type: 'cell', _key: 'cell1', content: [c1Block]}
+    const cell2 = {_type: 'cell', _key: 'cell2', content: [c2Block]}
+    const row = {_type: 'row', _key: 'row1', cells: [cell1, cell2]}
+    const table = {_type: 'table', _key: 'table1', rows: [row]}
+
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 'b1c1'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell2'},
+          'content',
+          {_key: 'b2'},
+          'children',
+          {_key: 'b2c1'},
+        ],
+        offset: 2,
+      },
+    }
+
+    expect(
+      getSelectedValue(createSnapshot([table], selection, tableSchema, defs)),
+    ).toEqual([
+      {
         _type: 'table',
         _key: 'table1',
         rows: [
@@ -1314,32 +1531,163 @@ describe(`${getSelectedValue.name} with containers`, () => {
                 _key: 'cell1',
                 content: [
                   {
-                    _type: 'block',
-                    _key: 'ib1',
+                    ...c1Block,
                     children: [
-                      {
-                        _type: 'span',
-                        _key: 'ib1c1',
-                        text: 'foo ',
-                        marks: [],
-                      },
-                      {
-                        _type: 'span',
-                        _key: 'ib1c2',
-                        text: 'linked',
-                        marks: [linkKey],
-                      },
+                      {_type: 'span', _key: 'b1c1', text: 'ne', marks: []},
                     ],
-                    markDefs: [
-                      {
-                        _type: 'link',
-                        _key: linkKey,
-                        href: 'https://example.com',
-                      },
-                    ],
-                    style: 'normal',
                   },
                 ],
+              },
+              {
+                _type: 'cell',
+                _key: 'cell2',
+                content: [
+                  {
+                    ...c2Block,
+                    children: [
+                      {_type: 'span', _key: 'b2c1', text: 'tw', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('selection across two rows in one table emits only the table envelope', () => {
+    const tableSchema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const defs = [
+      defineContainer({type: 'table', childField: 'rows'}),
+      defineContainer({type: 'row', childField: 'cells'}),
+      defineContainer({type: 'cell', childField: 'content'}),
+    ]
+
+    const r1Block: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 'b1c1', text: 'one', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const r2Block: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b2',
+      children: [{_type: 'span', _key: 'b2c1', text: 'two', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const row1 = {
+      _type: 'row',
+      _key: 'row1',
+      cells: [{_type: 'cell', _key: 'cell1', content: [r1Block]}],
+    }
+    const row2 = {
+      _type: 'row',
+      _key: 'row2',
+      cells: [{_type: 'cell', _key: 'cell2', content: [r2Block]}],
+    }
+    const table = {_type: 'table', _key: 'table1', rows: [row1, row2]}
+
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 'b1c1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row2'},
+          'cells',
+          {_key: 'cell2'},
+          'content',
+          {_key: 'b2'},
+          'children',
+          {_key: 'b2c1'},
+        ],
+        offset: 3,
+      },
+    }
+
+    expect(
+      getSelectedValue(createSnapshot([table], selection, tableSchema, defs)),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 'table1',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'row1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'cell1',
+                content: [r1Block],
+              },
+            ],
+          },
+          {
+            _type: 'row',
+            _key: 'row2',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'cell2',
+                content: [r2Block],
               },
             ],
           },
