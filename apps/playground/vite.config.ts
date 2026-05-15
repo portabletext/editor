@@ -21,6 +21,14 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        v7: path.resolve(__dirname, 'v7.html'),
+      },
+    },
+  },
   resolve: {
     alias: {
       '@portabletext/editor': path.resolve(
