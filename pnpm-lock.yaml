@@ -189,6 +189,9 @@ importers:
 
   apps/pilcrow:
     dependencies:
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
       react:
         specifier: ^19.2.5
         version: 19.2.5
