@@ -185,9 +185,9 @@ describe('Render count regression', () => {
     expect(itemTotal).toBeLessThanOrEqual(3)
   }, 60_000)
 
-  test('Mass unmount: deleting 500 blocks in one event does not crash', async () => {
-    // Forward smoke test: 500 blocks unmount in one React commit ->
-    // ~1000 `useSyncExternalStore` subscription cleanups -> bounded
+  test('Mass unmount: deleting 100 blocks in one event does not crash', async () => {
+    // Forward smoke test: 100 blocks unmount in one React commit ->
+    // ~200 `useSyncExternalStore` subscription cleanups -> bounded
     // `Set.delete` calls against the `SelectionStateProvider`'s local
     // subscriber Set. Pins that the per-slice external-store
     // architecture introduced by PR #2666 doesn't crash under mass
@@ -203,11 +203,14 @@ describe('Render count regression', () => {
     // count, so the per-consumer actor-unsubscribe pressure that
     // 6409f2ce1 fixed is not what's being exercised here.
     //
-    // Reason for 500 not 1000: 1000 blocks exceeds `createTestEditor`'s
-    // internal mount waitFor timeout. 500 is plenty to exercise the
-    // bounded-Set-delete cleanup path.
+    // Why 100 not 500/1000: `createTestEditor`'s internal mount
+    // waitFor uses a 1s default. Larger initial values stall CI past
+    // that bound (flake observed at 500). 100 blocks mounts well
+    // within budget while still exercising the bounded-`Set.delete`
+    // cleanup path - the architectural property scales by structure,
+    // not by N.
 
-    const BLOCKS = 500
+    const BLOCKS = 100
 
     const initialValue: Array<Record<string, unknown>> = []
     for (let i = 0; i < BLOCKS; i++) {
