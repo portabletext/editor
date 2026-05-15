@@ -1,5 +1,5 @@
 import {safeParse, safeStringify} from '../internal-utils/safe-json'
-import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {getFragment} from '../selectors/selector.get-fragment'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
@@ -17,7 +17,7 @@ export const converterPortableText = defineConverter({
       }
     }
 
-    const blocks = getSelectedValue(snapshot)
+    const blocks = getFragment(snapshot).map((entry) => entry.node)
 
     if (blocks.length === 0) {
       return {

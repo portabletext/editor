@@ -2,7 +2,7 @@ import {
   markdownToPortableText,
   portableTextToMarkdown,
 } from '@portabletext/markdown'
-import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {getFragment} from '../selectors/selector.get-fragment'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
@@ -20,7 +20,7 @@ export const converterTextMarkdown = defineConverter({
       }
     }
 
-    const blocks = getSelectedValue(snapshot)
+    const blocks = getFragment(snapshot).map((entry) => entry.node)
 
     const markdown = portableTextToMarkdown(blocks)
 
