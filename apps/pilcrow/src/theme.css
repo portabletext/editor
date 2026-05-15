@@ -1,6 +1,35 @@
+/* Pilcrow — M0 theme.
+ * Adapted from /visual-prototypes/v1/index-resting.html + theme.css.
+ * Frame B quieted. Single page, ivory paper, hover-¶ gutter, italic floor.
+ */
+
 :root {
-  --pc-bg: #ffffff;
-  --pc-fg-faint: #e0e0e0;
+  --pc-font-serif: 'Crimson Pro', 'Iowan Old Style', Georgia, serif;
+  --pc-font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --pc-font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  --paper: #fbf7ee;
+  --page-bg: #f4f0e8;
+
+  --ink: #1c1c1c;
+  --ink-soft: #2a2a2a;
+  --ink-muted: #555555;
+  --ink-subtle: #888888;
+  --ink-faint: #b3a99a;
+
+  --rule: rgba(28, 28, 28, 0.08);
+  --rule-soft: rgba(28, 28, 28, 0.04);
+  --rule-hover: rgba(28, 28, 28, 0.15);
+
+  --tint-bg: rgba(28, 28, 28, 0.035);
+  --tint-bg-strong: rgba(28, 28, 28, 0.05);
+  --accent: #6a4a2b;
+  --selection: rgba(140, 100, 40, 0.1);
+
+  color-scheme: light;
 }
 
 * {
@@ -15,28 +44,491 @@ body,
 }
 
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-  background: var(--pc-bg);
+  font-family: var(--pc-font-sans);
+  color: var(--ink);
+  background: var(--page-bg);
+  font-feature-settings:
+    'onum' 1,
+    'kern' 1,
+    'liga' 1;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
+
+::selection {
+  background: var(--selection);
+}
+
+/* — Page shell — */
 
 .pc-shell {
-  height: 100%;
+  min-height: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  padding: 32px 24px 48px;
 }
 
-.pc-mark {
-  font-size: 4rem;
-  color: var(--pc-fg-faint);
+.pc-page {
+  background: var(--paper);
+  width: 100%;
+  max-width: 800px;
+  border-radius: 2px;
+  position: relative;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 16px 36px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+
+/* — Header — */
+
+.pc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 36px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.pc-logo-block {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.pc-logo {
+  font-family: var(--pc-font-serif);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.pc-doc-name {
+  font-family: var(--pc-font-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.pc-header-spacer {
+  flex: 1;
+}
+
+.pc-icon-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  color: var(--ink-subtle);
+  cursor: pointer;
+}
+
+.pc-icon-btn:hover {
+  color: var(--ink);
+  background: var(--rule-soft);
+}
+
+/* — Editor body — */
+
+.pc-doc {
+  flex: 1 1 auto;
+  padding: 32px 36px 32px 92px;
+}
+
+/* The editor mounts a contenteditable directly inside .pc-doc.
+ * Slate emits its own block wrappers; we drape pilcrow chrome over each
+ * via per-style/per-type classes from the consumer render callbacks. */
+.pc-doc [data-slate-editor='true'] {
+  outline: none;
+}
+
+/* Per-block wrapper applied by render callbacks. */
+.pc-block {
+  position: relative;
+}
+
+.pc-block-mark {
+  position: absolute;
+  left: -56px;
+  top: 0.18em;
+  font-family: var(--pc-font-serif);
+  font-size: 17px;
+  font-weight: 400;
+  color: transparent;
   user-select: none;
+  pointer-events: none;
+  transition: color 120ms;
+}
+
+.pc-block:hover .pc-block-mark,
+.pc-block[data-focused='true'] .pc-block-mark {
+  color: rgba(28, 28, 28, 0.3);
+}
+
+/* — Typography (styles + paragraphs) — */
+
+.pc-h1 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 2.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.pc-h2 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.85rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 32px 0 12px;
+  color: var(--ink);
+}
+
+.pc-h3 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.25;
+  margin: 28px 0 10px;
+  color: var(--ink);
+}
+
+.pc-h4 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  margin: 24px 0 8px;
+  color: var(--ink);
+}
+
+.pc-h5 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  margin: 20px 0 6px;
+  color: var(--ink);
+}
+
+.pc-h6 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  margin: 18px 0 6px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pc-p {
+  font-family: var(--pc-font-serif);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  color: var(--ink-soft);
+}
+
+/* — Inline marks — */
+
+.pc-strong {
+  font-weight: 700;
+}
+.pc-em {
+  font-style: italic;
+}
+.pc-strike {
+  text-decoration: line-through;
+  text-decoration-color: rgba(28, 28, 28, 0.45);
+}
+
+.pc-code {
+  font-family: var(--pc-font-mono);
+  font-size: 0.88em;
+  color: var(--ink);
+  background: var(--tint-bg);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.pc-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(28, 28, 28, 0.25);
+  text-underline-offset: 3px;
+}
+
+/* — Lists — */
+
+.pc-list {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.pc-list[data-kind='ol'] {
+  list-style: decimal;
+}
+.pc-list[data-kind='ul'],
+.pc-list[data-kind='task'] {
+  list-style: disc;
+}
+.pc-list[data-kind='task'] {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.pc-li {
+  font-family: var(--pc-font-serif);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 4px 0;
+  color: var(--ink-soft);
+}
+
+.pc-task-checkbox {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--rule-hover);
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  background: var(--paper);
+}
+
+.pc-task-checkbox[data-checked='true'] {
+  background: var(--ink-muted);
+  border-color: var(--ink-muted);
+  position: relative;
+}
+
+.pc-task-checkbox[data-checked='true']::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border: solid var(--paper);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* — Blockquote — */
+
+.pc-blockquote {
+  margin: 16px 0;
+  padding: 6px 0 6px 18px;
+  border-left: 2px solid var(--rule-hover);
+  color: var(--ink-muted);
+}
+
+.pc-blockquote .pc-blockquote {
+  margin: 8px 0;
+  border-left-color: var(--rule);
+}
+
+/* — Callout — */
+
+.pc-callout {
+  margin: 24px 0;
+  padding: 14px 18px 14px 22px;
+  background: var(--tint-bg);
+  border-left: 2px solid var(--rule-hover);
+  border-radius: 0 2px 2px 0;
+}
+
+.pc-callout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.pc-callout-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-muted);
+}
+
+.pc-callout-label {
+  font-family: var(--pc-font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.pc-callout-body {
+  margin: 0;
+}
+
+/* — Code block — */
+
+.pc-code-block {
+  margin: 24px 0;
+  background: var(--tint-bg);
+  border-left: 2px solid var(--rule-hover);
+  border-radius: 0 2px 2px 0;
+  overflow: hidden;
+  font-family: var(--pc-font-mono);
+  font-size: 13px;
+}
+
+.pc-code-block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px 6px 14px;
+  background: var(--tint-bg-strong);
+  border-bottom: 1px solid var(--rule);
+}
+
+.pc-code-block-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--pc-font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-subtle);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.pc-code-block-body {
+  padding: 14px 18px;
+  line-height: 1.55;
+  font-family: var(--pc-font-mono);
+  font-size: 13px;
+  white-space: pre;
+  color: var(--ink);
+}
+
+/* Each code line is a text block inside the body. */
+.pc-code-line {
+  font-family: var(--pc-font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* — Table — */
+
+.pc-table {
+  margin: 24px 0;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  font-feature-settings:
+    'onum' 1,
+    'kern' 1;
+}
+
+.pc-table-row {
+  display: flex;
+}
+
+.pc-table-row:not(:last-child) {
+  border-bottom: 1px solid var(--rule);
+}
+
+.pc-table-row[data-header='true'] {
+  background: var(--tint-bg);
+  border-bottom-color: var(--rule-hover);
+}
+
+.pc-table-row[data-header='true'] .pc-table-cell {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pc-table-cell {
+  flex: 1 1 0;
+  padding: 8px 12px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  min-width: 0;
+}
+
+.pc-table-cell:not(:last-child) {
+  border-right: 1px solid var(--rule);
+}
+
+/* — Image — */
+
+.pc-image {
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.pc-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 2px;
+}
+
+.pc-image-caption {
+  font-family: var(--pc-font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* — Horizontal rule — */
+
+.pc-hr {
+  border: 0;
+  height: 1px;
+  background: var(--rule);
+  margin: 28px 0;
+}
+
+/* — Floor — */
+
+.pc-floor {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 36px 18px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--pc-font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.pc-floor-pilcrow {
+  color: var(--ink-faint);
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.pc-floor-sep {
+  color: var(--ink-faint);
+  font-style: normal;
+  opacity: 0.5;
 }
