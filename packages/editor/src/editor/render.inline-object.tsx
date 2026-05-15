@@ -46,7 +46,6 @@ export function RenderInlineObject(props: {
     const {
       'data-slate-node': _slateNode,
       'data-slate-void': _slateVoid,
-      'contentEditable': _contentEditable,
       ...ptAttributes
     } = props.attributes
     return (
