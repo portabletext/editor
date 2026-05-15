@@ -54,7 +54,8 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     _key: string
     cells: Array<{
       _key: string
-      value: Array<PortableTextBlock>
+      value?: Array<PortableTextBlock>
+      content?: Array<PortableTextBlock>
     }>
   }>
 }> = ({value, renderNode}) => {
@@ -65,10 +66,22 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     cells: Array<{
       _type: 'cell'
       _key: string
-      value: Array<{_type: string; children?: Array<unknown>}>
+      value?: Array<{_type: string; children?: Array<unknown>}>
+      content?: Array<{_type: string; children?: Array<unknown>}>
     }>
   }>
   const lines: string[] = []
+
+  // Read the cell's child blocks from either `content` (the canonical
+  // editor-shape field, symmetric with callout/blockquote/list-item) or
+  // `value` (the historical field name). Supporting both keeps the
+  // renderer working for consumers that haven't migrated.
+  const getCellBlocks = (cell: {
+    value?: Array<{_type: string; children?: Array<unknown>}>
+    content?: Array<{_type: string; children?: Array<unknown>}>
+  }): Array<{_type: string; children?: Array<unknown>}> => {
+    return cell.content ?? cell.value ?? []
+  }
 
   // Helper to extract text from cell blocks
   const getCellText = (
@@ -91,7 +104,9 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   for (let i = 0; i < headerRows; i++) {
     const row = rows[i]
     if (row) {
-      const cellTexts = row.cells.map((cell) => getCellText(cell.value))
+      const cellTexts = row.cells.map((cell) =>
+        getCellText(getCellBlocks(cell)),
+      )
       lines.push(`| ${cellTexts.join(' | ')} |`)
     }
   }
@@ -106,7 +121,9 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   for (let i = headerRows; i < rows.length; i++) {
     const row = rows[i]
     if (row) {
-      const cellTexts = row.cells.map((cell) => getCellText(cell.value))
+      const cellTexts = row.cells.map((cell) =>
+        getCellText(getCellBlocks(cell)),
+      )
       lines.push(`| ${cellTexts.join(' | ')} |`)
     }
   }

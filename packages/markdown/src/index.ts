@@ -45,6 +45,11 @@ export type {
   PortableTextTypeRendererOptions,
 } from './from-portable-text/types'
 export {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
+export {
+  buildCodeBlockObjectMatcher,
+  buildObjectMatcher,
+  buildTableObjectMatcher,
+} from './to-portable-text/matchers'
 export type {
   AnnotationMatcher,
   DecoratorMatcher,
@@ -52,3 +57,11 @@ export type {
   ObjectMatcher,
   StyleMatcher,
 } from './to-portable-text/matchers'
+
+export {
+  defaultBlockquoteObjectDefinition,
+  defaultCodeBlockObjectDefinition,
+  defaultListObjectDefinition,
+  defaultTableObjectDefinition,
+  defaultSchema,
+} from './default-schema'

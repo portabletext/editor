@@ -7,7 +7,11 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from './default-schema'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
-import {buildObjectMatcher} from './to-portable-text/matchers'
+import {
+  buildCodeBlockObjectMatcher,
+  buildObjectMatcher,
+  buildTableObjectMatcher,
+} from './to-portable-text/matchers'
 
 describe(markdownToPortableText.name, () => {
   test('empty string', () => {
@@ -5948,6 +5952,139 @@ describe(markdownToPortableText.name, () => {
           markDefs: [],
         },
       ])
+    })
+  })
+
+  describe(`code-block as container (\`types.code\` with editor shape)`, () => {
+    const codeBlockObjectDefinition = {
+      name: 'code-block',
+      fields: [
+        {name: 'language', type: 'string'},
+        {name: 'lines', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaWithCodeBlock = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          codeBlockObjectDefinition,
+        ],
+      }),
+    )
+
+    test('splits fenced code source into per-line text blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['```javascript', 'const a = 1', 'const b = 2', '```'].join('\n'),
+          {
+            keyGenerator,
+            schema: schemaWithCodeBlock,
+            types: {
+              code: buildCodeBlockObjectMatcher(codeBlockObjectDefinition),
+            },
+          },
+        ),
+      ).toEqual([
+        {
+          _key: 'k4',
+          _type: 'code-block',
+          language: 'javascript',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k1', text: 'const a = 1', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k3', text: 'const b = 2', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('omits language when the fence does not specify one', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(['```', 'hello', '```'].join('\n'), {
+          keyGenerator,
+          schema: schemaWithCodeBlock,
+          types: {code: buildCodeBlockObjectMatcher(codeBlockObjectDefinition)},
+        }),
+      ).toEqual([
+        {
+          _key: 'k2',
+          _type: 'code-block',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'hello', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  describe(`table with editor cell shape (\`buildTableObjectMatcher\`)`, () => {
+    const tableObjectDefinition = {
+      name: 'table',
+      fields: [
+        {name: 'headerRows', type: 'number'},
+        {name: 'rows', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaWithTable = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [...defaultSchema.blockObjects, tableObjectDefinition],
+      }),
+    )
+
+    test('renames each cell value field to content', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText(
+        ['| A | B |', '| --- | --- |', '| 1 | 2 |'].join('\n'),
+        {
+          keyGenerator,
+          schema: schemaWithTable,
+          types: {table: buildTableObjectMatcher(tableObjectDefinition)},
+        },
+      )
+      // Pin the field-rename contract: every cell has `content`, not `value`.
+      // Iterate via cast-free type narrowing so the structural assertion
+      // doesn't carry a `value` field declaration that would mask its absence.
+      for (const block of result) {
+        if (block._type !== 'table') {
+          continue
+        }
+        const rows = (
+          block as {rows?: Array<{cells: Array<Record<string, unknown>>}>}
+        ).rows
+        for (const row of rows ?? []) {
+          for (const cell of row.cells) {
+            expect(cell).toHaveProperty('content')
+            expect(cell).not.toHaveProperty('value')
+          }
+        }
+      }
     })
   })
 })

@@ -122,11 +122,68 @@ export const defaultHtmlObjectDefinition = {
   fields: [{name: 'html', type: 'string'}],
 } as const satisfies BlockObjectDefinition
 
-const defaultTableObjectDefinition = {
+/**
+ * Default block-object definition for a `table` container with rows of
+ * cells where each cell holds a `value` array of child blocks.
+ *
+ * Add to a schema's `blockObjects` array to opt into table-as-container.
+ *
+ * @public
+ */
+export const defaultTableObjectDefinition = {
   name: 'table',
   fields: [
     {name: 'headerRows', type: 'number'},
     {name: 'rows', type: 'array'},
+  ],
+} as const satisfies BlockObjectDefinition
+
+/**
+ * Default block-object definition for the structural `list` shape produced
+ * by `markdownToPortableText` when a `types.list` matcher is provided.
+ *
+ * Add to a schema's `blockObjects` array to opt into list-as-container.
+ *
+ * @public
+ */
+export const defaultListObjectDefinition = {
+  name: 'list',
+  fields: [
+    {name: 'kind', type: 'string'},
+    {name: 'items', type: 'array'},
+  ],
+} as const satisfies BlockObjectDefinition
+
+/**
+ * Default block-object definition for the structural `blockquote` shape
+ * produced by `markdownToPortableText` when a `types.blockquote` matcher
+ * is provided.
+ *
+ * Add to a schema's `blockObjects` array to opt into blockquote-as-container.
+ *
+ * @public
+ */
+export const defaultBlockquoteObjectDefinition = {
+  name: 'blockquote',
+  fields: [{name: 'content', type: 'array'}],
+} as const satisfies BlockObjectDefinition
+
+/**
+ * Default block-object definition for an editor-shaped `code-block` where
+ * the source is split into an array of text blocks (one per line) instead
+ * of a single `code: string` field.
+ *
+ * The text-block sub-schema is intentionally narrow - no styles, decorators,
+ * annotations, lists, or inline objects - because a code line is plaintext.
+ * The wrapping container is expected to apply the monospace presentation.
+ *
+ * @public
+ */
+export const defaultCodeBlockObjectDefinition = {
+  name: 'code-block',
+  fields: [
+    {name: 'language', type: 'string'},
+    {name: 'lines', type: 'array'},
   ],
 } as const satisfies BlockObjectDefinition
 
