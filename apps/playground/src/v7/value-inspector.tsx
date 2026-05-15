@@ -46,7 +46,8 @@ export function ValueInspector(props: {open: boolean; onClose: () => void}) {
   return (
     <aside
       contentEditable={false}
-      className="pointer-events-auto fixed inset-y-0 right-0 z-40 flex w-[28rem] flex-col border-stone-300 border-l bg-white/95 shadow-2xl backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/95"
+      data-deck-no-swipe=""
+      className="pointer-events-auto fixed inset-y-0 right-0 z-40 flex w-full max-w-[28rem] flex-col border-stone-300 border-l bg-white/95 shadow-2xl backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/95"
     >
       <header className="flex items-center justify-between border-stone-200 border-b px-4 py-3 dark:border-stone-700">
         <div>

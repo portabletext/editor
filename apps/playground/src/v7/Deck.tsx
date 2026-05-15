@@ -26,6 +26,7 @@ import {useShikiDecorations} from './shiki'
 import {SlidePlugin} from './slide-container'
 import {SlideIndexContext} from './slide-nav-context'
 import {deckValue} from './slides'
+import {useSwipeNavigation} from './use-swipe-navigation'
 import {ValueInspector} from './value-inspector'
 
 /**
@@ -146,11 +147,17 @@ function DeckBody(props: {editorRef: React.RefObject<Editor | null>}) {
     [currentIndex, slideKeys],
   )
 
+  // Swipe navigation - touch only, ignored inside tables / code blocks /
+  // chrome / inspector / modal (those carry data-deck-no-swipe).
+  const swipeRef = useSwipeNavigation(navCallbacks)
+
   return (
     <SlideIndexContext.Provider value={contextValue}>
       <DeckNavPlugin {...navCallbacks} />
 
-      <DeckEditable />
+      <div ref={swipeRef} className="contents">
+        <DeckEditable />
+      </div>
 
       <DeckChrome
         currentIndex={currentIndex}

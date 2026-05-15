@@ -31,7 +31,7 @@ const slideContainer = defineContainer({
             return (
               <h1
                 {...attributes}
-                className="mt-2 mb-6 font-bold text-6xl tracking-tight text-stone-900 dark:text-stone-50"
+                className="mt-2 mb-4 font-bold text-4xl tracking-tight text-stone-900 sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl dark:text-stone-50"
               >
                 {children}
               </h1>
@@ -40,7 +40,7 @@ const slideContainer = defineContainer({
             return (
               <h2
                 {...attributes}
-                className="mt-6 mb-3 font-semibold text-3xl tracking-tight text-stone-800 dark:text-stone-100"
+                className="mt-5 mb-2 font-semibold text-xl tracking-tight text-stone-800 sm:text-2xl md:mt-6 md:mb-3 md:text-3xl dark:text-stone-100"
               >
                 {children}
               </h2>
@@ -49,7 +49,7 @@ const slideContainer = defineContainer({
             return (
               <h3
                 {...attributes}
-                className="-mt-2 mb-8 font-medium text-2xl text-stone-500 dark:text-stone-400"
+                className="-mt-1 mb-5 font-medium text-lg text-stone-500 sm:text-xl md:mb-8 md:text-2xl dark:text-stone-400"
               >
                 {children}
               </h3>
@@ -58,7 +58,7 @@ const slideContainer = defineContainer({
             return (
               <p
                 {...attributes}
-                className="my-3 text-xl leading-relaxed text-stone-700 dark:text-stone-200"
+                className="my-2 text-base leading-relaxed text-stone-700 sm:my-3 sm:text-lg md:text-xl dark:text-stone-200"
               >
                 {children}
               </p>
@@ -85,7 +85,8 @@ function SlideFrame(props: {
       data-slide-index={slideIndex >= 0 ? slideIndex : undefined}
       data-active={isActive ? '' : undefined}
       className={[
-        'absolute inset-0 mx-auto flex flex-col justify-center px-12 py-16',
+        'absolute inset-0 mx-auto flex flex-col justify-center',
+        'px-5 py-12 sm:px-8 sm:py-14 md:px-12 md:py-16',
         'mx-auto w-full max-w-4xl',
         'transition-opacity duration-300 ease-in-out',
         isActive
@@ -98,7 +99,7 @@ function SlideFrame(props: {
       {slideIndex >= 0 ? (
         <div
           contentEditable={false}
-          className="absolute top-8 left-12 select-none font-mono text-stone-400 text-xs tracking-widest uppercase dark:text-stone-500"
+          className="absolute top-5 left-5 select-none font-mono text-[10px] text-stone-400 tracking-widest uppercase sm:top-6 sm:left-8 sm:text-xs md:top-8 md:left-12 dark:text-stone-500"
         >
           {String(slideIndex + 1).padStart(2, '0')} /{' '}
           {String(slideKeys.length).padStart(2, '0')}

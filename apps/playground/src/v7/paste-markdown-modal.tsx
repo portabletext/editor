@@ -58,7 +58,8 @@ export function PasteMarkdownModal(props: {
       role="dialog"
       aria-label="Load markdown"
       contentEditable={false}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-8 backdrop-blur-sm"
+      data-deck-no-swipe=""
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm sm:p-8"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           props.onClose()

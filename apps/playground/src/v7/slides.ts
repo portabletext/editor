@@ -137,7 +137,7 @@ export const deckValue: ReadonlyArray<PortableTextBlock> = [
       span(
         'Each slide marks a turn in how the editor came to be what it is today. ',
       ),
-      span('Cmd/Ctrl + Arrow to advance.', ['em']),
+      span('Swipe or press Cmd/Ctrl + Arrow to advance.', ['em']),
     ]),
   ]),
 

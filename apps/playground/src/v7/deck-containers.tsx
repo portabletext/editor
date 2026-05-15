@@ -153,12 +153,16 @@ const tableContainer = defineContainer({
   childField: 'rows',
   render: ({attributes, children, node, selected}) => {
     const headerRows = typeof node.headerRows === 'number' ? node.headerRows : 0
+    // On narrow viewports the table renders as a scrollable block so wide
+    // technical comparisons pan horizontally instead of clipping. Resets
+    // to a normal full-width table at the sm breakpoint and above.
     return (
       <table
         {...attributes}
         data-header-rows={headerRows}
         data-selected={selected ? '' : undefined}
-        className="deck-table my-5 w-full border-collapse overflow-hidden rounded-lg border border-stone-300 text-base dark:border-stone-700"
+        data-deck-no-swipe=""
+        className="deck-table my-5 block max-w-full overflow-x-auto border-collapse rounded-lg border border-stone-300 text-sm sm:table sm:w-full sm:overflow-hidden sm:text-base dark:border-stone-700"
       >
         <tbody>{children}</tbody>
       </table>
@@ -182,7 +186,7 @@ const tableContainer = defineContainer({
             <td
               {...attributes}
               data-selected={selected ? '' : undefined}
-              className="border border-stone-300 px-3 py-2 align-top dark:border-stone-700"
+              className="border border-stone-300 px-2 py-1.5 align-top sm:px-3 sm:py-2 dark:border-stone-700"
             >
               {children}
             </td>
