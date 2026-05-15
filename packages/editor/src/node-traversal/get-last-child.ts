@@ -5,6 +5,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the last child of a node at a given path.
+ *
+ * @beta
  */
 export function getLastChild(
   snapshot: TraversalSnapshot,

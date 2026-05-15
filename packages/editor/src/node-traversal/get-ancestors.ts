@@ -14,6 +14,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * Walks from root to the target in a single pass collecting each ancestor
  * as it goes.
+ *
+ * @beta
  */
 export function getAncestors(
   snapshot: TraversalSnapshot,

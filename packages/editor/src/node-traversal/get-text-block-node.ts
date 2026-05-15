@@ -5,6 +5,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the text block node at a given path.
+ *
+ * @beta
  */
 export function getTextBlockNode(
   snapshot: TraversalSnapshot,

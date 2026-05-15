@@ -12,6 +12,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the children of a node at a given path.
+ *
+ * @beta
  */
 export function getChildren(
   snapshot: TraversalSnapshot,
@@ -73,6 +75,8 @@ export function getChildren(
  *
  * The returned `parent` is the resolved container entry for `node`
  * itself (used by the caller to thread further descent).
+ *
+ * @beta
  */
 export function getNodeChildren(
   context: {
