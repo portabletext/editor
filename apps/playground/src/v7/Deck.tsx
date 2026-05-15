@@ -103,7 +103,7 @@ export function Deck() {
 
   return (
     <SlideIndexContext.Provider value={contextValue}>
-      <div className="min-h-screen w-full">
+      <div className="relative min-h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950">
         <EditorProvider
           initialConfig={{
             initialValue: [...deckValue],
@@ -153,7 +153,7 @@ function DeckEditable() {
   const rangeDecorations = useShikiDecorations()
   return (
     <PortableTextEditable
-      className="deck-editable focus:outline-none"
+      className="deck-editable relative block h-screen w-full focus:outline-none"
       rangeDecorations={
         rangeDecorations as Parameters<
           typeof PortableTextEditable

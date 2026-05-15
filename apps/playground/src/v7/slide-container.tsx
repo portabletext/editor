@@ -31,7 +31,7 @@ const slideContainer = defineContainer({
             return (
               <h1
                 {...attributes}
-                className="mt-2 mb-6 font-bold text-5xl tracking-tight text-stone-900 dark:text-stone-50"
+                className="mt-2 mb-6 font-bold text-6xl tracking-tight text-stone-900 dark:text-stone-50"
               >
                 {children}
               </h1>
@@ -49,7 +49,7 @@ const slideContainer = defineContainer({
             return (
               <h3
                 {...attributes}
-                className="mt-4 mb-2 font-semibold text-xl text-stone-800 dark:text-stone-100"
+                className="-mt-2 mb-8 font-medium text-2xl text-stone-500 dark:text-stone-400"
               >
                 {children}
               </h3>
@@ -84,13 +84,26 @@ function SlideFrame(props: {
       {...(props.attributes as Record<string, string>)}
       data-slide-index={slideIndex >= 0 ? slideIndex : undefined}
       data-active={isActive ? '' : undefined}
-      className={
+      className={[
+        'absolute inset-0 mx-auto flex flex-col justify-center px-12 py-16',
+        'mx-auto w-full max-w-4xl',
+        'transition-opacity duration-300 ease-in-out',
         isActive
-          ? 'slide-visible relative mx-auto my-0 flex min-h-[calc(100vh-4rem)] w-full max-w-4xl flex-col justify-center px-12 py-16'
-          : 'slide-hidden absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden opacity-0'
-      }
+          ? 'opacity-100 pointer-events-auto z-10'
+          : 'opacity-0 pointer-events-none z-0',
+      ].join(' ')}
       aria-hidden={!isActive}
     >
+      {/* Milestone kicker - small numeric badge in the corner. */}
+      {slideIndex >= 0 ? (
+        <div
+          contentEditable={false}
+          className="absolute top-8 left-12 select-none font-mono text-stone-400 text-xs tracking-widest uppercase dark:text-stone-500"
+        >
+          {String(slideIndex + 1).padStart(2, '0')} /{' '}
+          {String(slideKeys.length).padStart(2, '0')}
+        </div>
+      ) : null}
       {props.children}
     </section>
   )
