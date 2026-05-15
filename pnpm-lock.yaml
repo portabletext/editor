@@ -195,12 +195,21 @@ importers:
       '@portabletext/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
+      '@portabletext/plugin-emoji-picker':
+        specifier: workspace:*
+        version: link:../../packages/plugin-emoji-picker
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../../packages/schema
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
+      emojilib:
+        specifier: ^4.0.2
+        version: 4.0.2
+      fuse.js:
+        specifier: ^7.1.0
+        version: 7.1.0
       react:
         specifier: ^19.2.5
         version: 19.2.5

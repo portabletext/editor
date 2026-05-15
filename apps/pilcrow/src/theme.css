@@ -664,3 +664,78 @@ body {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* — Emoji picker — */
+
+.pc-emoji-picker {
+  position: fixed;
+  z-index: 50;
+  width: 280px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.pc-emoji-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pc-emoji-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.pc-emoji-picker-item-selected,
+.pc-emoji-picker-item:hover {
+  background: var(--rule);
+}
+
+.pc-emoji-picker-glyph {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pc-emoji-picker-keyword {
+  color: var(--ink-soft);
+  font-family: var(--pc-font-mono);
+  font-size: 12px;
+}
+
+.pc-emoji-picker-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.pc-emoji-picker-dismiss {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: 12px;
+}
+
+.pc-emoji-picker-dismiss:hover {
+  background: var(--rule);
+}

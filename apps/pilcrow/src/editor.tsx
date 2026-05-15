@@ -3,6 +3,7 @@ import {BlockquotePlugin} from './plugins/blockquote'
 import {BubbleMenuPlugin} from './plugins/bubble-menu'
 import {CalloutPlugin} from './plugins/callout'
 import {CodeBlockPlugin} from './plugins/code-block'
+import {EmojiPickerPlugin} from './plugins/emoji-picker'
 import {HorizontalRulePlugin} from './plugins/horizontal-rule'
 import {ImagePlugin} from './plugins/image'
 import {MarkdownDeserializerPlugin} from './plugins/markdown-deserializer'
@@ -48,6 +49,7 @@ export function PilcrowEditor(props: {theme: Theme}) {
       <TextFileDeserializerPlugin />
       <SaveOnHotkeyPlugin />
       <BubbleMenuPlugin />
+      <EmojiPickerPlugin />
       <PortableTextEditable
         className="pc-editable"
         rangeDecorations={rangeDecorations as RangeDecoration[]}
