@@ -185,8 +185,9 @@ export function RenderElement(props: {
       const serializedPath = serializePath(props.path)
       const focused = focusedContainerPath === serializedPath
       const selected = selectedContainerPaths.has(serializedPath)
+      const {'data-slate-node': _sn, ...rest} = props.attributes
       return effectiveTextBlockConfig.textBlock.render({
-        attributes: props.attributes,
+        attributes: {...rest, 'data-pt-block-type': 'text'},
         children: props.children,
         focused,
         node: props.element,
