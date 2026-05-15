@@ -19,7 +19,7 @@ import {useTheme} from '../theme-context'
  * line index has no corresponding line key are dropped (parser produced
  * extra trailing lines).
  */
-export function tokensToDecorations(
+function tokensToDecorations(
   tokens: ReadonlyArray<ReadonlyArray<ThemedToken>>,
   lineKeys: ReadonlyArray<string>,
   codeBlockKey: string,

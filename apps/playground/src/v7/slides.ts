@@ -354,11 +354,6 @@ export const deckValue: ReadonlyArray<PortableTextBlock> = [
         span('registration is type-keyed, activation is position-gated.'),
       ]),
     ]),
-    para([
-      span(
-        'This slide is a slide container. The table on slide 3, the code block above, this callout - each one is a registered container in the same Portable Text document.',
-      ),
-    ]),
   ]),
 
   // -------------------------------------------------------------------
@@ -369,7 +364,7 @@ export const deckValue: ReadonlyArray<PortableTextBlock> = [
       span('Every slide you have seen so far is a '),
       span('slide', ['code']),
       span(
-        ' container at the root of a single PTE value. I am typing into it right now.',
+        ' container at the root of a single PTE value. The table on slide 3, the code block you just saw, this callout - each one is a registered container in the same document. I am typing into it right now.',
       ),
     ]),
     callout('tip', [
@@ -443,12 +438,12 @@ export const deckValue: ReadonlyArray<PortableTextBlock> = [
       '// Satisfied by EditorSnapshot, OperationSnapshot,',
       '// and the editor itself (via a `context` getter).',
     ]),
-    callout('tip', [
-      para([
-        span(
-          'Behaviors written for root-level text drop into a callout, a table cell, a code block - without rewriting. Many v6 plugins migrated with zero source changes.',
-        ),
-      ]),
+    para([
+      span(
+        'Behaviors written for root-level text drop into a callout, a table cell, a code block - without rewriting. ',
+        ['strong'],
+      ),
+      span('Many v6 plugins migrated with zero source changes.'),
     ]),
   ]),
 
@@ -512,18 +507,10 @@ export const deckValue: ReadonlyArray<PortableTextBlock> = [
       span('. Six events, one per apply-layer operation, one per patch type.'),
     ]),
     codeBlock('typescript', [
+      '// Backspace in an empty cell: clear the cell, keep the structure.',
       'defineBehavior({',
       "  on: 'keyboard.keydown',",
-      '  guard: ({event, snapshot}) => {',
-      "    if (event.originEvent.key !== 'Backspace') return false",
-      '    const container = resolveContainerAt(',
-      '      snapshot.context.containers,',
-      '      snapshot.context.value,',
-      '      snapshot.context.selection?.focus.path ?? [],',
-      '    )',
-      "    if (container?.type !== 'cell' || !isCellEmpty(container)) return false",
-      '    return {cellPath: container.path}',
-      '  },',
+      '  guard: backspaceInEmptyCell,',
       '  actions: [',
       '    (_, {cellPath}) => [',
       "      raise({type: 'unset', at: [...cellPath, 'content']}),",

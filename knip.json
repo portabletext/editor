@@ -57,6 +57,15 @@
         "sharp"
       ]
     },
+    "apps/playground": {
+      "entry": ["index.html", "v7.html", "src/v7/main.tsx!"],
+      "ignoreDependencies": [
+        "babel-plugin-react-compiler",
+        "eslint-formatter-gha",
+        "tailwindcss-react-aria-components",
+        "sharp"
+      ]
+    },
     "examples/*": {}
   }
 }
