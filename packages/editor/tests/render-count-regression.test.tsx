@@ -203,38 +203,49 @@ describe('Render count regression', () => {
     // count, so the per-consumer actor-unsubscribe pressure that
     // 6409f2ce1 fixed is not what's being exercised here.
     //
-    // Why 100 not 500/1000: `createTestEditor`'s internal mount
-    // waitFor uses a 1s default. Larger initial values stall CI past
-    // that bound (flake observed at 500). 100 blocks mounts well
-    // within budget while still exercising the bounded-`Set.delete`
-    // cleanup path - the architectural property scales by structure,
-    // not by N.
+    // The N blocks are mounted via `update value` AFTER
+    // `createTestEditor` returns, not via `initialValue`.
+    // `createTestEditor`'s internal mount `waitFor` is a hard-coded
+    // 1s that consumers can't override; passing a large
+    // `initialValue` stalls that mount on slower CI runners and
+    // flakes the test. Mounting empty is fast; the subsequent
+    // `update value` + DOM-presence waits use generous timeouts and
+    // are not subject to the internal ceiling. The architectural
+    // contract (N wrappers subscribe, then mass-unmount triggers
+    // bounded `Set.delete` cleanups) is identical either way.
 
     const BLOCKS = 100
-
-    const initialValue: Array<Record<string, unknown>> = []
-    for (let i = 0; i < BLOCKS; i++) {
-      initialValue.push({
-        _type: 'block',
-        _key: `b${i}`,
-        style: 'normal',
-        markDefs: [],
-        children: [
-          {_type: 'span', _key: `s${i}`, text: `block ${i}`, marks: []},
-        ],
-      })
-    }
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     try {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
-        initialValue: initialValue as never,
       })
 
+      // Mount the N blocks via `update value` after the editor is
+      // attached. The reconciler mounts N wrappers in one commit,
+      // each subscribing to the `SelectionStateProvider`'s local
+      // subscriber Set.
+      const initialValue: Array<Record<string, unknown>> = []
+      for (let i = 0; i < BLOCKS; i++) {
+        initialValue.push({
+          _type: 'block',
+          _key: `b${i}`,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: `s${i}`, text: `block ${i}`, marks: []},
+          ],
+        })
+      }
+      editor.send({
+        type: 'update value',
+        value: initialValue as never,
+      } as never)
+
       // Wait for the first and last blocks to be in the DOM, so we
-      // know all 1000 wrappers have mounted and subscribed.
+      // know all N wrappers have mounted and subscribed.
       await vi.waitFor(
         () => expect(locator.getByText('block 0')).toBeInTheDocument(),
         {timeout: 10_000},
@@ -253,7 +264,7 @@ describe('Render count regression', () => {
       errorSpy.mockClear()
 
       // Replace the entire value with a single empty block in one
-      // event. React reconciles by unmounting all 1000 blocks (and
+      // event. React reconciles by unmounting all N blocks (and
       // their child span wrappers) in a single commit.
       editor.send({
         type: 'update value',
@@ -269,7 +280,7 @@ describe('Render count regression', () => {
       } as never)
 
       // Wait for the old blocks to be gone from the DOM (which only
-      // happens after the 1000 wrappers finish unmounting and their
+      // happens after the N wrappers finish unmounting and their
       // subscription cleanups run).
       await vi.waitFor(
         () => {
