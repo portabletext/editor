@@ -8,6 +8,7 @@ import {MarkdownDeserializerPlugin} from './plugins/markdown-deserializer'
 import {SaveOnHotkeyPlugin} from './plugins/save-on-hotkey'
 import {StructuredListsPlugin} from './plugins/structured-lists'
 import {TablesPlugin} from './plugins/tables'
+import {TextFileDeserializerPlugin} from './plugins/text-file-deserializer'
 
 /**
  * Pilcrow's editor surface for M0.
@@ -40,6 +41,7 @@ export function PilcrowEditor() {
       <StructuredListsPlugin />
       <TablesPlugin />
       <MarkdownDeserializerPlugin />
+      <TextFileDeserializerPlugin />
       <SaveOnHotkeyPlugin />
       <PortableTextEditable
         className="pc-editable"
