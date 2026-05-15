@@ -1,10 +1,12 @@
-import {ChevronLeftIcon, ChevronRightIcon} from 'lucide-react'
+import {ChevronLeftIcon, ChevronRightIcon, CodeIcon} from 'lucide-react'
 
 export function DeckChrome(props: {
   currentIndex: number
   totalSlides: number
+  inspectorOpen: boolean
   onPrev: () => void
   onNext: () => void
+  onToggleInspector: () => void
 }) {
   const atStart = props.currentIndex === 0
   const atEnd = props.currentIndex === props.totalSlides - 1
@@ -19,6 +21,20 @@ export function DeckChrome(props: {
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={props.onToggleInspector}
+          aria-label={
+            props.inspectorOpen
+              ? 'Hide value inspector'
+              : 'Show value inspector'
+          }
+          aria-pressed={props.inspectorOpen}
+          className="flex size-10 items-center justify-center rounded-full bg-white/80 text-stone-700 shadow-sm backdrop-blur-md transition hover:bg-white aria-pressed:bg-stone-900 aria-pressed:text-white dark:bg-stone-800/80 dark:text-stone-200 dark:hover:bg-stone-800 dark:aria-pressed:bg-stone-100 dark:aria-pressed:text-stone-900"
+        >
+          <CodeIcon className="size-4" />
+        </button>
+
         <button
           type="button"
           onClick={props.onPrev}

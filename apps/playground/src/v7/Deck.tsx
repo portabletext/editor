@@ -15,10 +15,14 @@ import {
 } from '@portabletext/editor/plugins'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {DeckChrome} from './deck-chrome'
+import {DeckContainerPlugins} from './deck-containers'
+import {DeckNavPlugin} from './plugin.deck-nav'
 import {deckSchemaDefinition} from './schema'
+import {useShikiDecorations} from './shiki'
 import {SlidePlugin} from './slide-container'
 import {SlideIndexContext} from './slide-nav-context'
 import {deckValue} from './slides'
+import {ValueInspector} from './value-inspector'
 
 /**
  * The v7 deck.
@@ -34,6 +38,7 @@ import {deckValue} from './slides'
 export function Deck() {
   const editorRef = useRef<Editor | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [inspectorOpen, setInspectorOpen] = useState(false)
 
   // Stable slide _keys derived from the value. We only read them once; the
   // value is a const fixture for v1. If we ever add live "new slide" actions
@@ -76,39 +81,20 @@ export function Deck() {
     return () => window.removeEventListener('hashchange', fromHash)
   }, [slideKeys])
 
-  // Arrow keys advance the deck. We capture on the document so the editor's
-  // own keydown handlers don't swallow them, but we only act when the focus
-  // is outside the editor's editable element. Inside the editable, arrow
-  // keys move the caret.
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
-      const insideEditable = target?.closest('[contenteditable="true"]')
-      if (insideEditable) {
-        return
-      }
-
-      if (
-        event.key === 'ArrowRight' ||
-        event.key === 'PageDown' ||
-        event.key === ' '
-      ) {
-        event.preventDefault()
-        goTo(currentIndex + 1)
-      } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
-        event.preventDefault()
-        goTo(currentIndex - 1)
-      } else if (event.key === 'Home') {
-        event.preventDefault()
-        goTo(0)
-      } else if (event.key === 'End') {
-        event.preventDefault()
-        goTo(totalSlides - 1)
-      }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [currentIndex, goTo, totalSlides])
+  // Slide navigation lives in a behavior registered via DeckNavPlugin -
+  // see plugin.deck-nav.tsx. Cmd/Ctrl + Right/Left advance the deck;
+  // Cmd/Ctrl + Up/Down jump to the first/last slide. The behavior runs
+  // inside the editor's keyboard pipeline so it doesn't fight the editor's
+  // own keydown handlers.
+  const navCallbacks = useMemo(
+    () => ({
+      onNext: () => goTo(currentIndex + 1),
+      onPrev: () => goTo(currentIndex - 1),
+      onFirst: () => goTo(0),
+      onLast: () => goTo(totalSlides - 1),
+    }),
+    [currentIndex, goTo, totalSlides],
+  )
 
   const contextValue = useMemo(
     () => ({currentIndex, slideKeys}),
@@ -134,25 +120,51 @@ export function Deck() {
             }}
           />
           <SlidePlugin />
+          <DeckContainerPlugins />
+          <DeckNavPlugin {...navCallbacks} />
 
-          <PortableTextEditable
-            className="deck-editable focus:outline-none"
-            renderAnnotation={renderAnnotation}
-            renderDecorator={renderDecorator}
-            renderListItem={renderListItem}
-            renderPlaceholder={renderPlaceholder}
-            renderStyle={renderStyle}
-          />
+          <DeckEditable />
 
           <DeckChrome
             currentIndex={currentIndex}
             totalSlides={totalSlides}
+            inspectorOpen={inspectorOpen}
             onPrev={() => goTo(currentIndex - 1)}
             onNext={() => goTo(currentIndex + 1)}
+            onToggleInspector={() => setInspectorOpen((open) => !open)}
+          />
+
+          <ValueInspector
+            open={inspectorOpen}
+            onClose={() => setInspectorOpen(false)}
           />
         </EditorProvider>
       </div>
     </SlideIndexContext.Provider>
+  )
+}
+
+/**
+ * The editable surface. Pulled out as its own component so the
+ * `useShikiDecorations` hook (which calls `useEditor`) sits inside the
+ * `<EditorProvider>` tree.
+ */
+function DeckEditable() {
+  const rangeDecorations = useShikiDecorations()
+  return (
+    <PortableTextEditable
+      className="deck-editable focus:outline-none"
+      rangeDecorations={
+        rangeDecorations as Parameters<
+          typeof PortableTextEditable
+        >[0]['rangeDecorations']
+      }
+      renderAnnotation={renderAnnotation}
+      renderDecorator={renderDecorator}
+      renderListItem={renderListItem}
+      renderPlaceholder={renderPlaceholder}
+      renderStyle={renderStyle}
+    />
   )
 }
 

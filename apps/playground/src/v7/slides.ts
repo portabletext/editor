@@ -1,45 +1,120 @@
 import type {PortableTextBlock} from '@portabletext/editor'
 
 /**
- * The v7 deck content - 11 milestones plus an intro and a reveal slide.
+ * The v7 deck content - the 11 architectural milestones, plus an intro,
+ * a mid-deck reveal slide, and a closing arc slide.
  *
- * Each top-level entry is a `slide` container. The container's `content`
- * field holds the slide's blocks (paragraphs, headings, lists, and
- * eventually richer containers like code blocks and tables for the slides
- * that demonstrate those features).
- *
- * Slide _keys are stable so the navigation hash can deep-link to a slide.
+ * Each top-level entry is a `slide` container. The `content` field carries
+ * a mix of text blocks, callouts, code blocks, tables, and rich-content
+ * lists - the same building blocks v7 itself enables.
  */
+
+let nextKey = 0
+function k(prefix: string) {
+  nextKey += 1
+  return `${prefix}-${nextKey.toString(36)}`
+}
 
 const span = (
   text: string,
   marks: ReadonlyArray<string> = [],
-  key = `s${Math.random().toString(36).slice(2, 8)}`,
-) => ({
+): {
+  _type: 'span'
+  _key: string
+  text: string
+  marks: ReadonlyArray<string>
+} => ({
   _type: 'span',
-  _key: key,
+  _key: k('s'),
   text,
   marks,
 })
 
-const block = (
-  options: {
-    style?: string
-    listItem?: string
-    level?: number
-    children: ReadonlyArray<ReturnType<typeof span>>
-    markDefs?: ReadonlyArray<unknown>
-  },
-  key = `b${Math.random().toString(36).slice(2, 8)}`,
-): PortableTextBlock => ({
-  _type: 'block',
-  _key: key,
-  style: options.style ?? 'normal',
-  listItem: options.listItem,
-  level: options.level,
-  markDefs: options.markDefs ?? [],
-  children: options.children,
-})
+type Span = ReturnType<typeof span>
+
+const block = (options: {
+  style?: string
+  listItem?: string
+  level?: number
+  children: ReadonlyArray<Span>
+}): PortableTextBlock =>
+  ({
+    _type: 'block',
+    _key: k('b'),
+    style: options.style ?? 'normal',
+    listItem: options.listItem,
+    level: options.level,
+    markDefs: [],
+    children: options.children,
+  }) as PortableTextBlock
+
+const para = (children: ReadonlyArray<Span>) => block({children})
+const h1 = (text: string) => block({style: 'h1', children: [span(text)]})
+const h3 = (text: string) => block({style: 'h3', children: [span(text)]})
+const bullet = (children: ReadonlyArray<Span>) =>
+  block({listItem: 'bullet', level: 1, children})
+const numbered = (children: ReadonlyArray<Span>) =>
+  block({listItem: 'number', level: 1, children})
+
+const callout = (
+  tone: 'note' | 'tip' | 'important' | 'warning' | 'caution',
+  content: ReadonlyArray<PortableTextBlock>,
+): PortableTextBlock =>
+  ({
+    _type: 'callout',
+    _key: k('c'),
+    tone,
+    content,
+  }) as unknown as PortableTextBlock
+
+const codeBlock = (
+  language: string,
+  lines: ReadonlyArray<string>,
+): PortableTextBlock =>
+  ({
+    _type: 'code-block',
+    _key: k('cb'),
+    language,
+    lines: lines.map((line) => ({
+      _type: 'block',
+      _key: k('cl'),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: k('cs'),
+          text: line,
+          marks: [],
+        },
+      ],
+    })),
+  }) as unknown as PortableTextBlock
+
+const cell = (content: ReadonlyArray<PortableTextBlock>) =>
+  ({
+    _type: 'cell',
+    _key: k('cell'),
+    content,
+  }) as const
+
+const row = (cells: ReadonlyArray<ReturnType<typeof cell>>) =>
+  ({
+    _type: 'row',
+    _key: k('row'),
+    cells,
+  }) as const
+
+const table = (
+  headerRows: number,
+  rows: ReadonlyArray<ReturnType<typeof row>>,
+): PortableTextBlock =>
+  ({
+    _type: 'table',
+    _key: k('table'),
+    headerRows,
+    rows,
+  }) as unknown as PortableTextBlock
 
 const slide = (
   key: string,
@@ -51,504 +126,429 @@ const slide = (
     content,
   }) as unknown as PortableTextBlock
 
+const cellText = (text: string) => cell([para([span(text)])])
+
 export const deckValue: ReadonlyArray<PortableTextBlock> = [
+  // -------------------------------------------------------------------
   slide('slide-intro', [
-    block({style: 'h1', children: [span('Portable Text v7')]}),
-    block({
-      style: 'h3',
-      children: [span('The architecture, told as milestones.')],
-    }),
-    block({
-      children: [
-        span(
-          'Each slide marks a turn in how the editor came to be what it is today. ',
-        ),
-        span('Press the arrow keys to advance.', ['em']),
-      ],
-    }),
+    h1('Portable Text v7'),
+    h3('The architecture, told as milestones.'),
+    para([
+      span(
+        'Each slide marks a turn in how the editor came to be what it is today. ',
+      ),
+      span('Cmd/Ctrl + Arrow to advance.', ['em']),
+    ]),
   ]),
 
+  // -------------------------------------------------------------------
   slide('slide-1', [
-    block({style: 'h1', children: [span('1. We vendored Slate')]}),
-    block({
-      style: 'h3',
-      children: [span('From a generic editor to one we own.')],
-    }),
-    block({
-      children: [
+    h1('1. We vendored Slate'),
+    h3('From a generic editor to one we own.'),
+    para([
+      span(
+        'Slate had become a liability. Generic types, upstream pace, browser quirks - every fix turned into archaeology. So we copied it into the repo. Every component, every operation, every plugin. Then we started cutting.',
+      ),
+    ]),
+    callout('note', [
+      para([
+        span('What it unlocked: ', ['strong']),
         span(
-          'Slate had become a liability. Generic types, upstream pace, browser quirks - every fix was an archaeology dig. So we copied it into the repo. Every component, every operation, every plugin. Then we started cutting.',
+          'the right to delete, the right to rename, the right to say "this is PTE" without disclaimers. Everything downstream is only possible because we stopped translating.',
         ),
-      ],
-    }),
-    block({
-      style: 'h3',
-      children: [span('What it unlocked')],
-    }),
-    block({
-      children: [
-        span('The right to delete. The right to rename. The right to say ', []),
-        span('we own that code, it is PTE', ['em']),
-        span(
-          ' without disclaimers. Everything downstream is only possible because we stopped translating.',
-        ),
-      ],
-    }),
+      ]),
+    ]),
   ]),
 
+  // -------------------------------------------------------------------
   slide('slide-2', [
-    block({
-      style: 'h1',
-      children: [span('2. Portable Text-native')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('Stop pretending. The tree already was the value.')],
-    }),
-    block({
-      children: [
+    h1('2. Portable Text-native'),
+    h3('Stop pretending. The tree already was the value.'),
+    para([
+      span(
+        'The vendored Slate tree was Portable Text values in disguise. Generic ',
+      ),
+      span('Element', ['code']),
+      span(' and '),
+      span('Text', ['code']),
+      span(' became '),
+      span('PortableTextTextBlock', ['code']),
+      span(' and '),
+      span('PortableTextSpan', ['code']),
+      span(
+        '. The vocabulary aligned. Operations got renamed. Helpers got renamed.',
+      ),
+    ]),
+    callout('tip', [
+      para([
         span(
-          'The vendored Slate tree was Portable Text values in disguise: text blocks, spans, marks, markDefs, block objects. We deleted the disguise. Generic ',
+          'A consumer reading the source now sees the same words they see in the schema. No translation in the head, no translation on the wire.',
         ),
-        span('Element', ['code']),
-        span('/'),
-        span('Text', ['code']),
-        span(' became '),
-        span('PortableTextTextBlock', ['code']),
-        span('/'),
-        span('PortableTextSpan', ['code']),
-        span(
-          '. The vocabulary aligned. Operations got renamed. Helpers got renamed.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'A consumer reading the source now sees the same words they see in the schema. And the next layer - patches - became reachable, because the tree was already shaped like one.',
-        ),
-      ],
-    }),
+      ]),
+    ]),
   ]),
 
+  // -------------------------------------------------------------------
   slide('slide-3', [
-    block({
-      style: 'h1',
-      children: [span('3. Fully patch-compliant')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('The big one.')],
-    }),
-    block({
-      children: [
+    h1('3. Fully patch-compliant'),
+    h3('The big one.'),
+    para([
+      span(
+        'Pre-v7 the editor spoke Slate operations internally and translated them to Sanity patches on the way out. Translation went two ways and lost information both directions. Hundreds of lines. The source of an unreasonable share of bugs.',
+      ),
+    ]),
+    para([span('We converged the layers:')]),
+    table(1, [
+      row([
+        cellText('Operation'),
+        cellText('Sanity patch'),
+        cellText('Status'),
+      ]),
+      row([
+        cell([para([span('insert', ['code'])])]),
+        cell([para([span('insert', ['code'])])]),
+        cellText('Pass-through'),
+      ]),
+      row([
+        cell([para([span('unset', ['code'])])]),
+        cell([para([span('unset', ['code'])])]),
+        cellText('Pass-through'),
+      ]),
+      row([
+        cell([para([span('set', ['code'])])]),
+        cell([para([span('set', ['code'])])]),
+        cellText('Pass-through'),
+      ]),
+      row([
+        cell([para([span('insert.text', ['code'])])]),
+        cell([para([span('diffMatchPatch', ['code'])])]),
+        cellText('1:1 mapping'),
+      ]),
+    ]),
+    callout('important', [
+      para([
         span(
-          'Pre-v7 the editor spoke Slate operations internally and translated them to Sanity patches on the way out. Translation went two ways and lost information both directions. Hundreds of lines, the source of an unreasonable share of bugs.',
+          'We accept any patch and emit any patch. The lowest level of the editor is patch-compliant by construction.',
+          ['strong'],
         ),
-      ],
-    }),
-    block({
-      children: [
-        span('We converged the layers. ', []),
-        span('set_node', ['code']),
-        span(' died, replaced by primitive '),
-        span('set', ['code']),
-        span('/'),
-        span('unset', ['code']),
-        span(' operations that mirror Sanity patches one-to-one. '),
-        span('insert_node', ['code']),
-        span(' became '),
-        span('insert', ['code']),
-        span('. The apply layer took ownership of inverse computation.'),
-      ],
-    }),
-    block({
-      style: 'h3',
-      children: [span('The headline')],
-    }),
-    block({
-      children: [
-        span(
-          'We accept any patch and emit any patch. The lowest level of the editor is patch-compliant by construction. ',
-        ),
-        span('If you remember one milestone from this release, this is it.', [
-          'strong',
-        ]),
-      ],
-    }),
+      ]),
+      para([
+        span('If you remember one milestone from this release, this is it.'),
+      ]),
+    ]),
   ]),
 
+  // -------------------------------------------------------------------
   slide('slide-4', [
-    block({
-      style: 'h1',
-      children: [span('4. Keyed paths')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('Numeric indexes out. Keys in.')],
-    }),
-    block({
-      children: [
-        span(
-          'The internal selection format was [blockIndex, childIndex, ...] - numeric, positional, fragile. Every concurrent edit invalidated every other client. We rewrote selection, operations, dirty paths, and traversal to use keyed paths natively. 1545 tests. 129 files. One PR.',
-        ),
-      ],
-    }),
-    block({
-      style: 'h3',
-      children: [span('What it unlocked')],
-    }),
-    block({
-      style: 'normal',
-      listItem: 'bullet',
-      level: 1,
-      children: [
-        span(
-          'Concurrent editing - two clients on the same _key see the same selection.',
-        ),
-      ],
-    }),
-    block({
-      style: 'normal',
-      listItem: 'bullet',
-      level: 1,
-      children: [span('Container support - paths are keyed all the way down.')],
-    }),
-    block({
-      style: 'normal',
-      listItem: 'bullet',
-      level: 1,
-      children: [span('Wire format and internal format share one path type.')],
-    }),
-    block({
-      style: 'normal',
-      listItem: 'bullet',
-      level: 1,
-      children: [
-        span('Undo through structural mutations - blocks move, keys do not.'),
-      ],
-    }),
-    block({
-      style: 'normal',
-      listItem: 'bullet',
-      level: 1,
-      children: [
-        span('Depth-agnostic by default - utils compose at any depth.'),
-      ],
-    }),
+    h1('4. Keyed paths'),
+    h3('Numeric indexes out. Keys in.'),
+    para([
+      span(
+        'The internal selection format was [blockIndex, childIndex] - numeric, positional, fragile. Every concurrent edit invalidated every other client. We rewrote selection, operations, dirty paths, and traversal to use keyed paths natively.',
+      ),
+    ]),
+    para([span('Before:')]),
+    codeBlock('json', [
+      '// Selection — indexed',
+      '{',
+      '  "anchor": {"path": [3, 0], "offset": 4},',
+      '  "focus":  {"path": [3, 0], "offset": 4}',
+      '}',
+    ]),
+    para([span('After:')]),
+    codeBlock('json', [
+      '// Selection — keyed all the way down',
+      '{',
+      '  "anchor": {"path": [{"_key":"b1"}, "children", {"_key":"s1"}], "offset": 4},',
+      '  "focus":  {"path": [{"_key":"b1"}, "children", {"_key":"s1"}], "offset": 4}',
+      '}',
+    ]),
+    bullet([
+      span(
+        'Concurrent editing — two clients on the same _key see the same selection.',
+      ),
+    ]),
+    bullet([span('Container support — paths are keyed at any depth.')]),
+    bullet([span('Wire format and internal format share one path type.')]),
+    bullet([
+      span('Undo through structural mutations — blocks move, keys do not.'),
+    ]),
   ]),
 
+  // -------------------------------------------------------------------
   slide('slide-5', [
-    block({
-      style: 'h1',
-      children: [span('5. Containers')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('Nested editable structures, first-class.')],
-    }),
-    block({
-      children: [
+    h1('5. Containers'),
+    h3('Nested editable structures, first-class.'),
+    para([
+      span(
+        'Pre-v7 the editor knew two levels of depth: blocks and their children. Tables, code blocks, callouts - none of them representable. The first design was scope-grammar-based; JSONPath-style strings matching positions. It worked. We deleted it.',
+      ),
+    ]),
+    para([span('v2 is type-keyed:')]),
+    codeBlock('typescript', [
+      'const calloutContainer = defineContainer({',
+      "  type: 'callout',",
+      "  childField: 'content',",
+      '  render: ({attributes, children}) => (',
+      '    <aside {...attributes}>{children}</aside>',
+      '  ),',
+      "  of: [defineTextBlock({type: 'block', render: ...})],",
+      '})',
+    ]),
+    callout('important', [
+      para([
+        span('The locked rule: ', ['strong']),
+        span('registration is type-keyed, activation is position-gated.'),
+      ]),
+    ]),
+    para([
+      span(
+        'This slide is a slide container. The table on slide 3, the code block above, this callout - each one is a registered container in the same single Portable Text document. Tables, code blocks, callouts, fact-boxes, nested lists. Any consumer-defined nested structure works.',
+      ),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-reveal', [
+    h1('By the way…'),
+    h3('This deck is one Portable Text document.'),
+    para([
+      span(
+        'Every slide you have seen so far is a `slide` container at the root of a single PTE value. I am typing into it right now.',
+      ),
+    ]),
+    callout('tip', [
+      para([
         span(
-          'Pre-v7 the editor knew two levels of depth: blocks and their children. Tables, code blocks, callouts, lists - none of them representable as data. Consumers faked it. The first design was scope-grammar-based - JSONPath-style strings matching positions. It worked. We deleted it.',
+          'Open the value inspector (the ⟨/⟩ button in the bottom bar). Click into any slide and start typing. Watch the value update.',
         ),
-      ],
-    }),
-    block({
-      children: [
-        span('v2 is type-keyed. Register a container by its ', []),
-        span('_type', ['code']),
-        span(". Positional overrides go inside a parent's "),
-        span('of', ['code']),
-        span(' array. The locked rule: '),
-        span('registration is type-keyed, activation is position-gated.', [
+      ]),
+      para([span('It is just Portable Text.', ['em'])]),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-6', [
+    h1('6. Cascading normalization'),
+    h3('A bare type, made cursor-ready.'),
+    para([
+      span(
+        'Slate normalization assumed flat. Containers broke every assumption. We rewrote it to cascade.',
+      ),
+    ]),
+    para([span('An empty container with a missing field:')]),
+    codeBlock('typescript', [
+      "{_type: 'table'}",
+      '',
+      '// becomes…',
+      '',
+      "{_type: 'table', _key: 't1', rows: [",
+      "  {_type: 'row', _key: 'r1', cells: [",
+      "    {_type: 'cell', _key: 'c1', content: [",
+      "      {_type: 'block', _key: 'b1', children: [",
+      "        {_type: 'span', _key: 's1', text: '', marks: []}",
+      '      ]}',
+      '    ]}',
+      '  ]}',
+      ']}',
+    ]),
+    callout('note', [
+      para([
+        span(
+          'Press Backspace in an empty cell — the cell stays (it is structural). Press Backspace in the only line of a code block — the code block disappears. The complexity is internal; the surface is calm.',
+        ),
+      ]),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-7', [
+    h1('7. Depth-agnostic traversal'),
+    h3('A library of composable primitives.'),
+    para([
+      span(
+        'A hundred-plus traversal utilities existed pre-v7, most baking in path[0] or path.slice(0, 2). Each one had to be rewritten to compose primitives that work at any depth.',
+      ),
+    ]),
+    para([span('We unified the input shape:')]),
+    codeBlock('typescript', [
+      'export type TraversalSnapshot = {',
+      '  context: {',
+      '    schema: EditorSchema',
+      '    containers: ReadonlyMap<string, RegisteredContainer>',
+      '    value: PortableTextValue',
+      '    selection: EditorSelection',
+      '  }',
+      '  blockIndexMap: Map<string, number>',
+      '}',
+      '',
+      '// Satisfied by EditorSnapshot, OperationSnapshot,',
+      '// and the editor itself (via a `context` getter).',
+    ]),
+    callout('tip', [
+      para([
+        span(
+          'Behaviors written for root-level text drop into a callout, a table cell, a code block — without rewriting. Many v6 plugins migrated with zero source changes.',
+        ),
+      ]),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-8', [
+    h1('8. A cleaner DOM'),
+    h3('data-pt-path, everywhere it matters.'),
+    para([
+      span(
+        "Slate's DOM mapping had no relationship to Portable Text. data-slate-node, data-slate-leaf, data-slate-string - none of them told you which _key a node had.",
+      ),
+    ]),
+    para([span('The new mapping is direct:')]),
+    codeBlock('html', [
+      '<aside data-pt-container data-pt-path="[_key==\'k1\']">',
+      "  <p data-pt-leaf data-pt-path=\"[_key=='k1'].content[_key=='b1']\">",
+      '    <span data-pt-path="…children[_key==\'s1\']">Hello</span>',
+      '  </p>',
+      '</aside>',
+    ]),
+    para([
+      span(
+        'DOM-to-model resolution walks [data-pt-path] ancestors and parses. Open devtools on a v7 editor and you see Portable Text paths in the DOM. The mapping is no longer a translation; it is a serialization.',
+      ),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-9', [
+    h1('9. Primitive behavior events'),
+    h3('Behaviors compose the primitives the engine speaks.'),
+    para([
+      span(
+        'In v6 most behaviors raised "smart" synthetic events whose handlers contained the depth-2 assumptions. A behavior could not reach below the synthetic layer. In v7 we promoted the apply-layer primitives as ',
+      ),
+      span('@alpha', ['code']),
+      span(' behavior events:'),
+    ]),
+    codeBlock('typescript', [
+      'defineBehavior({',
+      "  on: 'keyboard.keydown',",
+      '  guard: ({event, snapshot}) => {',
+      "    if (event.originEvent.key !== 'Backspace') return false",
+      "    const cell = selectors.getFocusContainer(snapshot, {type: 'cell'})",
+      '    if (!cell || !isCellEmpty(cell)) return false',
+      '    return {cellPath: cell.path}',
+      '  },',
+      '  actions: [',
+      '    (_, {cellPath}) => [',
+      "      raise({type: 'unset', at: cellPath, paths: [['content']]}),",
+      "      raise({type: 'select', at: cellPath}),",
+      '    ],',
+      '  ],',
+      '})',
+    ]),
+    table(1, [
+      row([cellText('Event'), cellText('Sanity patch')]),
+      row([
+        cell([para([span('insert', ['code'])])]),
+        cell([para([span('insert', ['code'])])]),
+      ]),
+      row([
+        cell([para([span('unset', ['code'])])]),
+        cell([para([span('unset', ['code'])])]),
+      ]),
+      row([
+        cell([para([span('set', ['code'])])]),
+        cell([para([span('set', ['code'])])]),
+      ]),
+      row([
+        cell([para([span('insert.text', ['code'])])]),
+        cell([para([span('diffMatchPatch', ['code'])])]),
+      ]),
+      row([
+        cell([para([span('remove.text', ['code'])])]),
+        cell([para([span('diffMatchPatch', ['code'])])]),
+      ]),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-10', [
+    h1('10. Schema enforcement, symmetric'),
+    h3('Strict at every depth.'),
+    para([
+      span(
+        'Pre-v7 the editor enforced schema constraints inside containers, but accepted anything at root. Consumers wrote behaviors expecting strict enforcement; got intermittent silent drops when constraints applied below root and not at it.',
+      ),
+    ]),
+    callout('warning', [
+      para([
+        span('The asymmetry was a mistake. ', ['strong']),
+        span(
+          'v7 enforces strictly at every depth. Insert validates against the sub-schema at the target path. ',
+        ),
+        span('decorator.add', ['code']),
+        span(' filters per-block. '),
+        span('annotation.add', ['code']),
+        span(' validates the annotation type.'),
+      ]),
+    ]),
+    para([
+      span(
+        'A behavior that fires insert knows the editor will validate. A callout that only allows strong and em sees its constraints respected. The schema is the contract, top to bottom.',
+      ),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-11', [
+    h1('11. The traversal snapshot'),
+    h3('One input shape, everywhere.'),
+    para([
+      span('The type-level companion to milestone 7. '),
+      span('EditorSnapshot', ['code']),
+      span(', '),
+      span('OperationSnapshot', ['code']),
+      span(', '),
+      span('TraversalSnapshot', ['code']),
+      span(
+        ' - all share the same shape. The editor satisfies it via a context getter.',
+      ),
+    ]),
+    para([
+      span(
+        'Behaviors and selectors that read state do it the same way as the engine. 60 files migrated; the ergonomic dividend pays out forever.',
+      ),
+    ]),
+    callout('tip', [
+      para([
+        span('One mental model. ', ['strong']),
+        span('Three call sites. Zero adapters.'),
+      ]),
+    ]),
+  ]),
+
+  // -------------------------------------------------------------------
+  slide('slide-arc', [
+    h1('The arc'),
+    h3('Every advanced feature traces back to four ideas.'),
+    numbered([span('We accept any patch.')]),
+    numbered([span('We emit any patch.')]),
+    numbered([span('Paths are keyed.')]),
+    numbered([span('Depth is just a parameter.')]),
+    para([
+      span(
+        'A generic positional editor became a Portable Text-native, keyed, patch-compliant, depth-agnostic, container-aware document model.',
+      ),
+    ]),
+    callout('important', [
+      para([
+        span('The headline of v7 is the architectural foundation. ', [
           'strong',
         ]),
-      ],
-    }),
-    block({
-      children: [span('Every layer of the editor learned what nesting meant.')],
-    }),
-  ]),
-
-  slide('slide-reveal', [
-    block({
-      style: 'h1',
-      children: [span('By the way')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('This deck is one Portable Text document.')],
-    }),
-    block({
-      children: [
         span(
-          'Every slide you have seen so far is a `slide` container at the root of a single PTE value. I am typing into it right now.',
+          'Markdown compliance, structured lists, tables, code blocks, callouts - those are the dividend.',
         ),
-      ],
-    }),
-    block({
-      children: [
-        span('Open the inspector. Look at the value. ', []),
-        span('It is just Portable Text.', ['em']),
-      ],
-    }),
-  ]),
-
-  slide('slide-6', [
-    block({
-      style: 'h1',
-      children: [span('6. Cascading normalization')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('A bare type, made cursor-ready.')],
-    }),
-    block({
-      children: [
-        span(
-          'Slate normalization assumed flat: blocks at root, children inside blocks, nothing deeper. Containers broke every assumption. We rewrote it to cascade.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span('An empty container with a missing field gets ', []),
-        span('[]', ['code']),
-        span(
-          ', which triggers normalization at the cells level, which inserts a default cell, which inserts a placeholder text block, which inserts an empty span. The cascade walks from a bare ',
-        ),
-        span("{_type: 'table'}", ['code']),
-        span(' to a fully cursor-ready tree.'),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'Press Backspace in an empty table cell. The cell stays - it is structural. Press Backspace in the only line of a code block. The code block disappears - its content field accepts placeholders. Complexity is internal, the surface is calm.',
-        ),
-      ],
-    }),
-  ]),
-
-  slide('slide-7', [
-    block({
-      style: 'h1',
-      children: [span('7. Depth-agnostic traversal')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('The library of composable primitives.')],
-    }),
-    block({
-      children: [
-        span(
-          'A hundred-plus traversal utilities existed pre-v7, most baking in path[0] or path.slice(0, 2). Each one had to be rewritten to compose primitives that work at any depth.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span('We unified the input shape: ', []),
-        span('TraversalSnapshot', ['code']),
-        span(' - one structure satisfied by '),
-        span('EditorSnapshot', ['code']),
-        span(', '),
-        span('OperationSnapshot', ['code']),
-        span(', and the editor itself. One snapshot type. One mental model.'),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'Behaviors written for root-level text drop into a callout, a table cell, a code block - without rewriting. Many v6 plugins migrated with zero source changes.',
-        ),
-      ],
-    }),
-  ]),
-
-  slide('slide-8', [
-    block({
-      style: 'h1',
-      children: [span('8. A cleaner DOM')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('data-pt-path, everywhere it matters.')],
-    }),
-    block({
-      children: [
-        span(
-          "Slate's DOM mapping had no relationship to Portable Text. data-slate-node, data-slate-leaf, data-slate-string - none of them told you which _key a node had.",
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'The new mapping is direct. Every element inside a container carries ',
-          [],
-        ),
-        span('data-pt-path', ['code']),
-        span(
-          ' - a Sanity-bracket-notation serialized keyed path. DOM-to-model resolution walks ',
-        ),
-        span('[data-pt-path]', ['code']),
-        span(' ancestors and parses. '),
-        span('data-pt-container', ['code']),
-        span(', '),
-        span('data-pt-leaf', ['code']),
-        span(', '),
-        span('data-pt-spacer', ['code']),
-        span(' describe what each element is in Portable Text terms.'),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'Open devtools on a v7 editor and you see Portable Text paths in the DOM. The mapping is no longer a translation; it is a serialization.',
-        ),
-      ],
-    }),
-  ]),
-
-  slide('slide-9', [
-    block({
-      style: 'h1',
-      children: [span('9. Primitive behavior events')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('Behaviors compose the primitives the engine speaks.')],
-    }),
-    block({
-      children: [
-        span(
-          'In v6 most behaviors raised "smart" synthetic events - insert.block, delete.block, block.set - whose handlers contained the depth-2 assumptions. A behavior could not reach below the synthetic layer.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'We promoted the apply-layer primitives as @alpha behavior events. ',
-          [],
-        ),
-        span('insert', ['code']),
-        span(', '),
-        span('unset', ['code']),
-        span(', '),
-        span('set', ['code']),
-        span(', '),
-        span('insert.text', ['code']),
-        span(', '),
-        span('remove.text', ['code']),
-        span(', '),
-        span('select', ['code']),
-        span(
-          '. Six events. One per apply-layer operation. One per Sanity patch type.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'structured-lists became the canary: 11 flat-list behaviors decompose into 4 primitives plus 9 thin behaviors. No engine changes required. The engine ships the vocabulary; consumers compose.',
-        ),
-      ],
-    }),
-  ]),
-
-  slide('slide-10', [
-    block({
-      style: 'h1',
-      children: [span('10. Schema enforcement, symmetrical')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('Strict at every depth.')],
-    }),
-    block({
-      children: [
-        span(
-          'Pre-v7 the editor enforced schema constraints inside containers but accepted anything at root. The asymmetry was a mistake - consumers wrote behaviors expecting strict enforcement, got intermittent silent drops when constraints applied below root and not at it.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'v7 enforces strictly at every depth. Insert validates against the sub-schema at the target path. decorator.add filters per-block. annotation.add validates the annotation type. The operation layer absorbs the question; behavior guards no longer gate user intent.',
-        ),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'A behavior that fires insert knows the editor will validate. A callout that only allows strong and em sees its constraints respected. The schema is the contract, top to bottom.',
-        ),
-      ],
-    }),
-  ]),
-
-  slide('slide-11', [
-    block({
-      style: 'h1',
-      children: [span('11. The traversal snapshot')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('One input shape, everywhere.')],
-    }),
-    block({
-      children: [
-        span('The type-level companion to milestone 7. ', []),
-        span('EditorSnapshot', ['code']),
-        span(', '),
-        span('OperationSnapshot', ['code']),
-        span(', '),
-        span('TraversalSnapshot', ['code']),
-        span(' - all share the same shape. The editor satisfies it via a '),
-        span('context', ['code']),
-        span(' getter.'),
-      ],
-    }),
-    block({
-      children: [
-        span(
-          'Behaviors and selectors that read state do it the same way as the engine. 60 files migrated; the ergonomic dividend pays out forever.',
-        ),
-      ],
-    }),
-  ]),
-
-  slide('slide-arc', [
-    block({
-      style: 'h1',
-      children: [span('The arc')],
-    }),
-    block({
-      style: 'h3',
-      children: [span('Every advanced feature traces back to four ideas.')],
-    }),
-    block({
-      children: [span('We accept any patch.')],
-    }),
-    block({
-      children: [span('We emit any patch.')],
-    }),
-    block({
-      children: [span('Paths are keyed.')],
-    }),
-    block({
-      children: [span('Depth is just a parameter.')],
-    }),
-    block({
-      children: [
-        span(
-          'A generic positional editor became a Portable Text-native, keyed, patch-compliant, depth-agnostic, container-aware document model. The headline of v7 is the architectural foundation. Markdown compliance, structured lists, tables, code blocks - those are the dividend.',
-        ),
-      ],
-    }),
+      ]),
+    ]),
   ]),
 ]
