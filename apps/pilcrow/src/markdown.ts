@@ -224,3 +224,130 @@ export const pilcrowRenderers: Partial<PortableTextRenderers> = {
     'callout': DefaultCalloutRenderer,
   },
 }
+
+/**
+ * Pilcrow's schema represents lists and blockquotes as containers,
+ * not as flat text blocks with a `listItem`/`style: 'blockquote'`
+ * marker. The parser emits the flat form because that is the standard
+ * Portable Text shape; foldToContainers walks the parser output and
+ * groups the flat markers into pilcrow's container shape so the
+ * resulting blocks slot into the pilcrow schema cleanly.
+ *
+ *   - Consecutive blocks with the same `listItem` value at `level` 1
+ *     fold into one `list` container. The container's `kind` mirrors
+ *     the parser's `bullet`/`number`/`task` value. Each item becomes
+ *     a `list-item` whose `content` holds the original block stripped
+ *     of its `listItem`/`level` fields. Task items carry their
+ *     `checked` boolean.
+ *
+ *   - Consecutive blocks with `style: 'blockquote'` fold into a
+ *     single `blockquote` container. The folded children have their
+ *     style reset to `normal` because pilcrow's blockquote frame is
+ *     applied by the container, not by the inner block's style.
+ *
+ * Nested list levels are not handled in this pass; only flat lists
+ * round-trip. The parser already collapses adjacent indent levels to
+ * the same level when called with the default schema in practice for
+ * pilcrow's content shapes, so this gap rarely surfaces.
+ */
+type Block = {_type: string} & Record<string, unknown>
+type ListKind = 'bullet' | 'number' | 'task'
+
+function isListItem(block: Block): block is Block & {
+  listItem: string
+  level?: number
+} {
+  return (
+    block._type === 'block' && typeof (block as Block).listItem === 'string'
+  )
+}
+
+function mapListItemKind(listItem: string): ListKind | undefined {
+  if (listItem === 'bullet' || listItem === 'number' || listItem === 'task') {
+    return listItem
+  }
+  return undefined
+}
+
+function isBlockquoteStyle(block: Block): boolean {
+  return block._type === 'block' && block.style === 'blockquote'
+}
+
+export function foldToContainers<T extends {_type: string}>(
+  blocks: ReadonlyArray<T>,
+  keyGenerator: () => string,
+): Array<T> {
+  const input = blocks as ReadonlyArray<Block>
+  const out: Array<Block> = []
+  let i = 0
+  while (i < input.length) {
+    const current = input[i]
+    if (!current) {
+      i++
+      continue
+    }
+
+    if (isListItem(current)) {
+      const kind = mapListItemKind(current.listItem)
+      if (kind) {
+        const items: Array<Block> = []
+        while (i < input.length) {
+          const next = input[i]
+          if (!next || !isListItem(next)) {
+            break
+          }
+          if (mapListItemKind(next.listItem) !== kind) {
+            break
+          }
+          const {
+            listItem: _listItem,
+            level: _level,
+            checked: nestedChecked,
+            ...rest
+          } = next as {
+            listItem: string
+            level?: number
+            checked?: boolean
+          }
+          const checked = kind === 'task' ? Boolean(nestedChecked) : undefined
+          items.push({
+            _type: 'list-item',
+            _key: keyGenerator(),
+            ...(checked !== undefined ? {checked} : {}),
+            content: [rest],
+          })
+          i++
+        }
+        out.push({
+          _type: 'list',
+          _key: keyGenerator(),
+          kind,
+          items,
+        })
+        continue
+      }
+    }
+
+    if (isBlockquoteStyle(current)) {
+      const content: Array<Block> = []
+      while (i < input.length) {
+        const next = input[i]
+        if (!next || !isBlockquoteStyle(next)) {
+          break
+        }
+        content.push({...next, style: 'normal'})
+        i++
+      }
+      out.push({
+        _type: 'blockquote',
+        _key: keyGenerator(),
+        content,
+      })
+      continue
+    }
+
+    out.push(current)
+    i++
+  }
+  return out as unknown as Array<T>
+}

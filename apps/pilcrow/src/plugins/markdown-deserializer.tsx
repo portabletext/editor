@@ -2,7 +2,7 @@ import {useEditor} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {markdownToPortableText} from '@portabletext/markdown'
 import {useEffect} from 'react'
-import {pilcrowMatchers} from '../markdown'
+import {foldToContainers, pilcrowMatchers} from '../markdown'
 
 /**
  * Translates pasted plain text through `markdownToPortableText` so any
@@ -27,12 +27,12 @@ export function MarkdownDeserializerPlugin() {
           if (event.mimeType !== 'text/plain') {
             return false
           }
-          const blocks = markdownToPortableText(event.data, {
-            schema: snapshot.context.schema,
+          const flat = markdownToPortableText(event.data, {
             keyGenerator: snapshot.context.keyGenerator,
             html: {inline: 'skip'},
             types: pilcrowMatchers,
           })
+          const blocks = foldToContainers(flat, snapshot.context.keyGenerator)
           if (blocks.length === 0) {
             return false
           }
