@@ -1,5 +1,5 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
-import {useContext, useRef, type ReactElement} from 'react'
+import {useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
 import type {LeafConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
@@ -8,7 +8,7 @@ import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {RenderLeafConfig} from './render.leaf-config'
-import {SelectionStateContext} from './selection-state-context'
+import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
 export function RenderInlineObject(props: {
@@ -35,10 +35,9 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
-  const selected = selectionState.selectedLeafPaths.has(serializedPath)
-  const focused = selectionState.focusedLeafPath === serializedPath
+  const selected = useIsSelectedLeaf(serializedPath)
+  const focused = useIsFocusedLeaf(serializedPath)
 
   const inlineObject = props.element as unknown as PortableTextChild
 

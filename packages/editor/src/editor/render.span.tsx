@@ -14,7 +14,7 @@ import type {
 import type {EditorSchema} from './editor-schema'
 import {ParentContainerContext} from './parent-container-context'
 import {RenderLeafConfig, useLeafConfig} from './render.leaf-config'
-import {SelectionStateContext} from './selection-state-context'
+import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
 interface RenderSpanProps extends RenderLeafProps {
@@ -45,11 +45,10 @@ export function RenderSpan(props: RenderSpanProps) {
   // is found (transient state), fall back to the Slate leaf for identity.
   const leafConfig = useLeafConfig(child ?? props.leaf, props.path)
 
-  const selectionState = useContext(SelectionStateContext)
   const parentContainer = useContext(ParentContainerContext)
   const serializedPath = serializePath(props.path)
-  const focused = selectionState.focusedLeafPath === serializedPath
-  const selected = selectionState.selectedLeafPaths.has(serializedPath)
+  const focused = useIsFocusedLeaf(serializedPath)
+  const selected = useIsSelectedLeaf(serializedPath)
 
   const decoratorSchemaTypes = subSchema.decorators.map(
     (decorator) => decorator.name,
