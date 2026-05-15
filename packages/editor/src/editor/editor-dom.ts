@@ -2,6 +2,7 @@ import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {getDomNode} from '../dom-traversal/get-dom-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
+import {getFragment} from '../selectors/selector.get-fragment'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {rangeEdges} from '../slate/range/range-edges'
@@ -52,38 +53,17 @@ export function createEditorDom(
 function getBlockNodes(
   slateEditor: PortableTextSlateEditor,
   snapshot: EditorSnapshot,
-) {
+): Array<Node> {
   if (!snapshot.context.selection) {
     return []
   }
 
   try {
-    const [start, end] = rangeEdges(snapshot.context.selection, slateEditor)
-    const blockEntries: Array<{node: unknown; path: Path}> = []
-    let lastHighestPath: Path | undefined
+    const entries = getFragment(snapshot)
 
-    for (const entry of getNodes(slateEditor, {
-      from: start.path,
-      to: end.path,
-    })) {
-      const entryPath = entry.path
-
-      if (lastHighestPath && isAncestorPath(lastHighestPath, entryPath)) {
-        continue
-      }
-
-      lastHighestPath = entryPath
-      blockEntries.push(entry)
-    }
-
-    return blockEntries.flatMap((blockEntry) => {
-      const domNode = getDomNode(slateEditor, blockEntry.path)
-
-      if (!domNode) {
-        return []
-      }
-
-      return domNode
+    return entries.flatMap((entry) => {
+      const domNode = getDomNode(slateEditor, entry.path)
+      return domNode ? [domNode] : []
     })
   } catch {
     return []
@@ -172,26 +152,9 @@ function getStartBlockElement(
     return null
   }
 
-  const startBlockNode = getBlockNodes(slateEditor, {
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: {
-        anchor: {
-          path: startBlock.path,
-          offset: 0,
-        },
-        focus: {
-          path: startBlock.path,
-          offset: 0,
-        },
-      },
-    },
-  })?.at(0)
+  const startBlockNode = getDomNode(slateEditor, startBlock.path)
 
-  return startBlockNode && startBlockNode instanceof Element
-    ? startBlockNode
-    : null
+  return startBlockNode instanceof Element ? startBlockNode : null
 }
 
 function getEndBlockElement(
@@ -204,24 +167,9 @@ function getEndBlockElement(
     return null
   }
 
-  const endBlockNode = getBlockNodes(slateEditor, {
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: {
-        anchor: {
-          path: endBlock.path,
-          offset: 0,
-        },
-        focus: {
-          path: endBlock.path,
-          offset: 0,
-        },
-      },
-    },
-  })?.at(0)
+  const endBlockNode = getDomNode(slateEditor, endBlock.path)
 
-  return endBlockNode && endBlockNode instanceof Element ? endBlockNode : null
+  return endBlockNode instanceof Element ? endBlockNode : null
 }
 
 function setDragGhost({

@@ -1,7 +1,7 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {getDragSelection} from '../selectors/drag-selection'
-import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
+import {getFragment} from '../selectors/selector.get-fragment'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import {comparePoints} from '../slate/point/compare-points'
@@ -333,7 +333,7 @@ export const coreDndBehaviors = [
         },
       })
 
-      const draggedBlocks = getSelectedBlocks({
+      const draggedBlocks = getFragment({
         ...snapshot,
         context: {
           ...snapshot.context,

@@ -5,7 +5,7 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getFocusInlineObject} from './selector.get-focus-inline-object'
 import {getFocusSpan} from './selector.get-focus-span'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
-import {getSelectedBlocks} from './selector.get-selected-blocks'
+import {getFragment} from './selector.get-fragment'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'
@@ -75,7 +75,7 @@ export function getDragSelection({
     }
   }
 
-  const selectedBlocks = getSelectedBlocks(snapshot)
+  const selectedBlocks = getFragment(snapshot)
 
   if (
     snapshot.context.selection &&
