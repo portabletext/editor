@@ -1,6 +1,76 @@
+/**
+ * Pilcrow visual language. Grayscale base, distinct-by-typography-and-
+ * rule-not-color, 8px grid, 1px borders, generous vertical rhythm.
+ *
+ * Editable body uses Crimson Pro - a transitional text serif whose
+ * pilcrow has the two-stem structure (the visual P + T logo). UI
+ * chrome (toolbar, tabs, panels) uses system sans.
+ */
+
 :root {
   --pc-bg: #ffffff;
-  --pc-fg-faint: #e0e0e0;
+  --pc-bg-elevated: #fafafa;
+  --pc-bg-muted: #f4f4f4;
+  --pc-bg-code: #f6f6f6;
+  --pc-bg-hover: #f1f1f1;
+  --pc-fg: #1c1c1c;
+  --pc-fg-muted: #555555;
+  --pc-fg-subtle: #777777;
+  --pc-fg-faint: #b0b0b0;
+  --pc-border: #d0d0d0;
+  --pc-border-subtle: #e6e6e6;
+  --pc-rule: #c8c8c8;
+
+  --pc-space-1: 4px;
+  --pc-space-2: 8px;
+  --pc-space-3: 12px;
+  --pc-space-4: 16px;
+  --pc-space-5: 24px;
+  --pc-space-6: 32px;
+  --pc-space-7: 48px;
+  --pc-space-8: 64px;
+
+  --pc-radius: 2px;
+
+  --pc-font-serif:
+    'Crimson Pro', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia,
+    serif;
+  --pc-font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --pc-font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  --pc-leading: 1.6;
+  --pc-text-size: 17px;
+  --pc-text-size-small: 13px;
+  --pc-text-size-tiny: 11px;
+
+  color-scheme: light;
+}
+
+/**
+ * Dark theme. Activated via \`[data-theme="dark"]\` on the document
+ * element (the \`useTheme\` hook writes this). All visual tokens
+ * invert; semantic structure (1px borders, typography hierarchy,
+ * spacing) stays identical.
+ */
+:root[data-theme='dark'] {
+  --pc-bg: #161617;
+  --pc-bg-elevated: #1c1c1e;
+  --pc-bg-muted: #232325;
+  --pc-bg-code: #1f1f21;
+  --pc-bg-hover: #262629;
+  --pc-fg: #ececec;
+  --pc-fg-muted: #b0b0b0;
+  --pc-fg-subtle: #8b8b8b;
+  --pc-fg-faint: #5a5a5a;
+  --pc-border: #3a3a3c;
+  --pc-border-subtle: #2a2a2c;
+  --pc-rule: #4a4a4c;
+
+  color-scheme: dark;
 }
 
 * {
@@ -15,28 +85,1205 @@ body,
 }
 
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  font-family: var(--pc-font-sans);
+  color: var(--pc-fg);
   background: var(--pc-bg);
+  font-size: var(--pc-text-size);
+  line-height: var(--pc-leading);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Shell. */
+
 .pc-shell {
   height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.pc-pane {
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pc-pane-editor {
+  border-right: 1px solid var(--pc-border-subtle);
+}
+
+/* Header. */
+
+.pc-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pc-space-3);
+  padding: var(--pc-space-4) var(--pc-space-5);
+  border-bottom: 1px solid var(--pc-border-subtle);
+  flex: 0 0 auto;
+}
+
+.pc-logo {
+  font-family: var(--pc-font-serif);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--pc-fg);
+  font-weight: 500;
+  user-select: none;
+}
+
+.pc-header-title {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  letter-spacing: 0.04em;
+  color: var(--pc-fg-subtle);
+  text-transform: uppercase;
+  flex: 1 1 auto;
+}
+
+.pc-header-actions {
   display: flex;
   align-items: center;
+  gap: var(--pc-space-2);
+}
+
+/* Round theme toggle in the app header. Stands apart from toolbar
+ * tools - this is a persona switch, not a content tool. */
+.pc-theme-toggle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--pc-border-subtle);
+  border-radius: 50%;
+  color: var(--pc-fg-subtle);
+  background: var(--pc-bg);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.pc-theme-toggle:hover {
+  color: var(--pc-fg);
+  border-color: var(--pc-border);
+  background: var(--pc-bg-hover);
+}
+
+.pc-theme-toggle:focus-visible {
+  outline: 1px solid var(--pc-fg);
+  outline-offset: 2px;
+}
+
+/* Editor area. */
+
+.pc-editor {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pc-editor-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: var(--pc-space-6) var(--pc-space-6) 80vh;
+  display: flex;
   justify-content: center;
 }
 
-.pc-mark {
-  font-size: 4rem;
+.pc-editable {
+  font-family: var(--pc-font-serif);
+  font-size: var(--pc-text-size);
+  line-height: var(--pc-leading);
+  max-width: 680px;
+  width: 100%;
+  outline: none;
+}
+
+.pc-editable :focus-visible {
+  outline: none;
+}
+
+.pc-style {
+  margin: 0 0 var(--pc-space-4);
+}
+
+.pc-style-normal {
+  font-family: var(--pc-font-serif);
+}
+
+.pc-style-h1,
+.pc-style-h2,
+.pc-style-h3,
+.pc-style-h4,
+.pc-style-h5,
+.pc-style-h6 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: var(--pc-space-6) 0 var(--pc-space-3);
+}
+
+.pc-style-h1 {
+  font-size: 2.5rem;
+}
+
+.pc-style-h2 {
+  font-size: 1.85rem;
+}
+
+.pc-style-h3 {
+  font-size: 1.4rem;
+}
+
+.pc-style-h4 {
+  font-size: 1.15rem;
+}
+
+.pc-style-h5,
+.pc-style-h6 {
+  font-size: 1rem;
+}
+
+.pc-link {
+  color: var(--pc-fg);
+  text-decoration: underline;
+  text-decoration-color: var(--pc-rule);
+  text-underline-offset: 3px;
+}
+
+/* Toolbar. */
+
+.pc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--pc-space-1);
+  padding: var(--pc-space-2) var(--pc-space-4);
+  border-bottom: 1px solid var(--pc-border-subtle);
+  background: var(--pc-bg);
+  flex: 0 0 auto;
+}
+
+.pc-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--pc-border-subtle);
+  margin: 0 var(--pc-space-2);
+  flex: 0 0 auto;
+}
+
+.pc-toolbar-divider-grow {
+  width: auto;
+  height: 1px;
+  background: transparent;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.pc-toolbar-select {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg);
+  background: var(--pc-bg);
+  border: 1px solid var(--pc-border-subtle);
+  border-radius: var(--pc-radius);
+  padding: 4px var(--pc-space-2);
+  cursor: pointer;
+}
+
+.pc-toolbar-button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--pc-radius);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg-muted);
+}
+
+.pc-toolbar-button:hover:not(:disabled) {
+  background: var(--pc-bg-hover);
+  color: var(--pc-fg);
+}
+
+.pc-toolbar-button:disabled {
   color: var(--pc-fg-faint);
+  cursor: default;
+}
+
+.pc-toolbar-button-active {
+  background: var(--pc-bg-muted);
+  color: var(--pc-fg);
+}
+
+.pc-toolbar-symbol-strong {
+  font-weight: 700;
+}
+
+.pc-toolbar-symbol-em {
+  font-style: italic;
+}
+
+.pc-toolbar-symbol-code {
+  font-family: var(--pc-font-mono);
+  font-size: 11px;
+}
+
+.pc-toolbar-symbol-strike {
+  text-decoration: line-through;
+}
+
+/* Mirror pane (right side of shell). The markdown view is primary;
+ * Value / Patches live behind a corner view-switcher button. */
+
+.pc-mirror {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--pc-bg-elevated);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pc-mirror-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* Mirror header - matches \`.pc-header\` on the editor pane for
+ * symmetry. Title on the left, segmented view switcher on the right. */
+.pc-mirror-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pc-space-3);
+  padding: var(--pc-space-4) var(--pc-space-5);
+  border-bottom: 1px solid var(--pc-border-subtle);
+  flex: 0 0 auto;
+}
+
+.pc-mirror-title {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  letter-spacing: 0.04em;
+  color: var(--pc-fg-subtle);
+  text-transform: uppercase;
+  flex: 1 1 auto;
+}
+
+.pc-view-switcher {
+  display: inline-flex;
+  border: 1px solid var(--pc-border-subtle);
+  border-radius: var(--pc-radius);
+  overflow: hidden;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-tiny);
+  letter-spacing: 0.04em;
+}
+
+.pc-view-tab {
+  padding: var(--pc-space-1) var(--pc-space-3);
+  color: var(--pc-fg-subtle);
+  border-left: 1px solid var(--pc-border-subtle);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: transparent;
+}
+
+.pc-view-tab:first-child {
+  border-left: 0;
+}
+
+.pc-view-tab:hover {
+  background: var(--pc-bg-hover);
+  color: var(--pc-fg);
+}
+
+.pc-view-tab-active {
+  background: var(--pc-bg-muted);
+  color: var(--pc-fg);
+}
+
+/* Panels (shared). */
+
+.pc-panel {
+  padding: var(--pc-space-4) var(--pc-space-5);
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-small);
+}
+
+.pc-panel-list {
+  padding: var(--pc-space-3) 0;
+}
+
+.pc-panel-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg);
+}
+
+.pc-panel-text-muted {
+  color: var(--pc-fg-subtle);
+}
+
+.pc-panel-note {
+  margin: var(--pc-space-4) 0 0;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg-subtle);
+  max-width: 56ch;
+}
+
+.pc-panel-details {
+  margin-top: var(--pc-space-5);
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg-subtle);
+}
+
+.pc-panel-details summary {
+  cursor: pointer;
+  padding: var(--pc-space-2) 0;
   user-select: none;
+}
+
+.pc-panel-details pre {
+  margin-top: var(--pc-space-3);
+}
+
+.pc-panel-empty {
+  margin: 0;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg-subtle);
+}
+
+.pc-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--pc-space-3);
+}
+
+.pc-button {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  padding: 4px var(--pc-space-3);
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-radius);
+  background: var(--pc-bg);
+  color: var(--pc-fg);
+  cursor: pointer;
+}
+
+.pc-button:hover {
+  background: var(--pc-bg-hover);
+}
+
+/* Patches stream. */
+
+.pc-patch {
+  padding: var(--pc-space-3) var(--pc-space-5);
+  border-bottom: 1px solid var(--pc-border-subtle);
+}
+
+.pc-patch:last-child {
+  border-bottom: 0;
+}
+
+.pc-patch-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pc-space-3);
+  margin-bottom: var(--pc-space-2);
+}
+
+.pc-patch-index {
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-tiny);
+  color: var(--pc-fg-faint);
+  min-width: 24px;
+}
+
+.pc-patch-type {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  font-weight: 600;
+  color: var(--pc-fg);
+  letter-spacing: 0.02em;
+}
+
+.pc-patch-body {
+  margin: 0;
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-tiny);
+  color: var(--pc-fg-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Blockquote container. Nested quotes stack their left rules by
+   indenting each level, producing the classic '>>' look without any
+   marker glyphs. */
+
+.pc-blockquote {
+  border-left: 2px solid var(--pc-rule);
+  padding-left: var(--pc-space-4);
+  margin: var(--pc-space-5) 0;
+  color: var(--pc-fg-muted);
+}
+
+.pc-blockquote .pc-style {
+  margin: 0;
+}
+
+.pc-blockquote .pc-style + .pc-style {
+  margin-top: var(--pc-space-3);
+}
+
+/* Nested blockquotes get their own indent + rule. The outer
+   blockquote's padding-left already supplies the first indent, so
+   the inner one only needs a margin reset. */
+.pc-blockquote .pc-blockquote {
+  margin: var(--pc-space-3) 0;
+}
+
+/* Horizontal rule. */
+
+.pc-hr-wrapper {
+  padding: var(--pc-space-4) 0;
+  position: relative;
+}
+
+.pc-hr-inner {
+  user-select: none;
+  padding: var(--pc-space-2) var(--pc-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--pc-radius);
+  transition:
+    border-color 80ms ease-out,
+    background 80ms ease-out;
+}
+
+.pc-hr-selected {
+  background: var(--pc-bg-muted);
+  border-color: var(--pc-border-subtle);
+}
+
+.pc-hr-focused {
+  background: var(--pc-bg-muted);
+  border-color: var(--pc-fg-muted);
+}
+
+.pc-hr {
+  border: 0;
+  height: 1px;
+  background: var(--pc-rule);
+  margin: 0;
+}
+
+/* Block-level image. */
+
+.pc-image-wrapper {
+  margin: var(--pc-space-5) 0;
+  position: relative;
+}
+
+.pc-image {
+  margin: 0;
+  text-align: center;
+  border: 1px solid transparent;
+  border-radius: var(--pc-radius);
+  transition: border-color 80ms ease-out;
+}
+
+.pc-image-selected {
+  border-color: var(--pc-border);
+}
+
+.pc-image-focused {
+  border-color: var(--pc-fg-muted);
+}
+
+.pc-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--pc-radius);
+}
+
+.pc-image-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 240px;
+  min-height: 120px;
+  background: var(--pc-bg-muted);
+  border: 1px dashed var(--pc-border);
+  color: var(--pc-fg-subtle);
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  border-radius: var(--pc-radius);
+}
+
+.pc-image-caption {
+  margin-top: var(--pc-space-2);
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg-subtle);
+  font-style: italic;
+}
+
+/* Code block. */
+
+.pc-code-block {
+  margin: var(--pc-space-5) 0;
+  background: var(--pc-bg-code);
+  border-left: 2px solid var(--pc-rule);
+  border-radius: 0 var(--pc-radius) var(--pc-radius) 0;
+  overflow: hidden;
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-small);
+}
+
+.pc-code-block-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--pc-space-2) var(--pc-space-4);
+  background: var(--pc-bg-muted);
+  border-bottom: 1px solid var(--pc-border-subtle);
+}
+
+.pc-code-block-language {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-tiny);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pc-fg-subtle);
+}
+
+.pc-code-block-body {
+  padding: var(--pc-space-4);
+  line-height: 1.5;
+}
+
+.pc-code-block-body .pc-style {
+  margin: 0;
+  font-family: var(--pc-font-mono);
+}
+
+.pc-code-block-span {
+  font-family: var(--pc-font-mono);
+}
+
+/* Inline code decorator. */
+
+.pc-editable code {
+  font-family: var(--pc-font-mono);
+  font-size: 0.92em;
+  background: var(--pc-bg-code);
+  padding: 1px 4px;
+  border-radius: var(--pc-radius);
+}
+
+/* Mobile / narrow viewports - stack panes. */
+
+@media (max-width: 900px) {
+  .pc-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+
+  .pc-pane-editor {
+    border-right: 0;
+    border-bottom: 1px solid var(--pc-border-subtle);
+  }
+
+  .pc-editor-body {
+    padding: var(--pc-space-5) var(--pc-space-4) var(--pc-space-6);
+  }
+
+  .pc-toolbar {
+    overflow-x: auto;
+  }
+
+  .pc-toolbar-button {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* Callouts. */
+
+.pc-callout {
+  margin: var(--pc-space-5) 0;
+  padding: var(--pc-space-4) var(--pc-space-4) var(--pc-space-4)
+    var(--pc-space-5);
+  background: var(--pc-bg-elevated);
+  border-left: 2px solid var(--pc-rule);
+  border-radius: 0 var(--pc-radius) var(--pc-radius) 0;
+}
+
+.pc-callout-header {
+  display: flex;
+  align-items: center;
+  gap: var(--pc-space-2);
+  margin-bottom: var(--pc-space-2);
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg-muted);
+  user-select: none;
+}
+
+.pc-callout-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--pc-border);
+  background: var(--pc-bg);
+  font-family: var(--pc-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pc-fg-muted);
+  line-height: 1;
+}
+
+.pc-callout-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--pc-text-size-tiny);
+}
+
+.pc-callout-body {
+  color: var(--pc-fg);
+  font-family: var(--pc-font-serif);
+}
+
+.pc-callout-body .pc-style {
+  margin: 0;
+}
+
+.pc-callout-body .pc-style + .pc-style {
+  margin-top: var(--pc-space-3);
+}
+
+/* Tone-specific glyph treatments. The variants share the rule + indent;
+   the glyph differs to make each tone instantly identifiable. */
+
+.pc-callout-warning .pc-callout-glyph {
+  border-color: var(--pc-fg-muted);
+  color: var(--pc-fg);
+  font-weight: 700;
+}
+
+.pc-callout-caution .pc-callout-glyph {
+  border-color: var(--pc-fg-muted);
+  color: var(--pc-fg);
+}
+
+.pc-callout-tip .pc-callout-glyph {
+  border-color: var(--pc-fg-muted);
+  color: var(--pc-fg);
+}
+
+/* Tables. */
+
+.pc-table {
+  margin: var(--pc-space-5) 0;
+  display: grid;
+  grid-template-columns: repeat(var(--pc-table-columns), minmax(0, 1fr));
+  border: 1px solid var(--pc-border-subtle);
+  border-radius: var(--pc-radius);
+  overflow: hidden;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+}
+
+.pc-table-row {
+  display: contents;
+}
+
+.pc-table-cell {
+  padding: var(--pc-space-2) var(--pc-space-3);
+  border-right: 1px solid var(--pc-border-subtle);
+  border-bottom: 1px solid var(--pc-border-subtle);
+  background: var(--pc-bg);
+}
+
+.pc-table-cell:last-child {
+  border-right: 0;
+}
+
+.pc-table-row:last-child .pc-table-cell {
+  border-bottom: 0;
+}
+
+.pc-table-cell .pc-style {
+  margin: 0;
+  font-family: var(--pc-font-sans);
+}
+
+/* Header row treatment. Driven by the table's headerRows attribute -
+   the first N grid rows get heavier weight and a thicker bottom rule. */
+
+.pc-table[data-header-rows='1'] .pc-table-row:first-child .pc-table-cell {
+  background: var(--pc-bg-elevated);
+  font-weight: 600;
+  border-bottom: 1px solid var(--pc-border);
+}
+
+.pc-table[data-header-rows='2'] .pc-table-row:nth-child(-n + 2) .pc-table-cell {
+  background: var(--pc-bg-elevated);
+  font-weight: 600;
+}
+
+.pc-table[data-header-rows='2'] .pc-table-row:nth-child(2) .pc-table-cell {
+  border-bottom: 1px solid var(--pc-border);
+}
+
+/* Task list items. */
+
+.pc-task {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pc-space-3);
+}
+
+.pc-task-check {
+  flex: 0 0 auto;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-radius);
+  background: var(--pc-bg);
+  cursor: pointer;
+  margin: 4px 0 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--pc-font-sans);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--pc-bg);
+  transition: background 80ms ease-out;
+}
+
+.pc-task-check:hover {
+  background: var(--pc-bg-hover);
+}
+
+.pc-task-check:focus-visible {
+  outline: 2px solid var(--pc-fg-muted);
+  outline-offset: 1px;
+}
+
+.pc-task-check:checked {
+  background: var(--pc-fg);
+  border-color: var(--pc-fg);
+}
+
+.pc-task-check:checked::after {
+  content: '✓';
+  color: var(--pc-bg);
+  font-weight: 600;
+}
+
+.pc-task-body {
+  flex: 1 1 auto;
+}
+
+.pc-task-body-done {
+  text-decoration: line-through;
+  text-decoration-color: var(--pc-fg-faint);
+  color: var(--pc-fg-muted);
+}
+
+/* Structured lists. */
+
+.pc-list {
+  margin: var(--pc-space-4) 0;
+  padding-left: var(--pc-space-6);
+}
+
+.pc-list-bullet {
+  list-style: disc;
+}
+
+.pc-list-number {
+  list-style: decimal;
+}
+
+.pc-list-task {
+  list-style: none;
+  padding-left: var(--pc-space-3);
+}
+
+.pc-list-item {
+  margin: var(--pc-space-2) 0;
+}
+
+/*
+ * An empty wrapper list-item (no text content, only a nested list as
+ * its first/only child) shows up after sinking the first item of a
+ * list - the structured-lists plugin wraps the source item in a
+ * fresh list under a wrapper list-item so the move stays representable.
+ * The wrapper is purely structural; hide its marker so it doesn't
+ * read as a phantom bullet next to the actual nested item.
+ */
+.pc-list-item:has(> .pc-list:first-child:last-child) {
+  list-style: none;
+  margin-top: 0;
+}
+
+.pc-list-item-task {
+  list-style: none;
+}
+
+/* Tighten paragraphs inside list-items. */
+
+.pc-list-item .pc-style {
+  margin: 0;
+}
+
+.pc-list-item .pc-style + .pc-style {
+  margin-top: var(--pc-space-2);
+}
+
+.pc-list-item .pc-list {
+  margin: var(--pc-space-2) 0 0;
+}
+
+/* Markdown textarea (bidirectional editing). */
+
+.pc-panel-stretch {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pc-markdown-textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 0;
+  padding: var(--pc-space-4) var(--pc-space-5);
+  background: transparent;
+  border: 0;
+  resize: none;
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-small);
+  line-height: 1.55;
+  color: var(--pc-fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+}
+
+.pc-markdown-textarea:focus-visible {
+  outline: none;
+  background: var(--pc-bg);
+}
+
+.pc-panel-error {
+  flex: 1 1 auto;
+  margin-right: var(--pc-space-3);
+  font-family: var(--pc-font-mono);
+  font-size: var(--pc-text-size-tiny);
+  color: var(--pc-fg-muted);
+}
+
+/* JSON syntax highlighting (grayscale). Keys are weightier; strings and
+   literals shift through muted shades to give hierarchy without color. */
+
+.pc-json-key {
+  color: var(--pc-fg);
+  font-weight: 600;
+}
+
+.pc-json-string {
+  color: var(--pc-fg-muted);
+}
+
+.pc-json-literal {
+  color: var(--pc-fg);
+  font-weight: 600;
+}
+
+.pc-json-number {
+  color: var(--pc-fg);
+}
+
+.pc-list-item-task {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pc-space-3);
+  list-style: none;
+}
+
+.pc-list-item-task-done .pc-task-body {
+  text-decoration: line-through;
+  text-decoration-color: var(--pc-fg-faint);
+  color: var(--pc-fg-muted);
+}
+
+/* Typeahead panels (slash menu, emoji picker). */
+
+.pc-typeahead-panel {
+  position: absolute;
+  z-index: 50;
+  min-width: 240px;
+  max-width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--pc-bg);
+  border: 1px solid var(--pc-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-family: var(--pc-font-ui);
+  font-size: 13px;
+}
+
+.pc-typeahead-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+}
+
+.pc-typeahead-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  color: var(--pc-fg);
+}
+
+.pc-typeahead-item-selected {
+  background: var(--pc-bg-muted);
+}
+
+.pc-typeahead-item-label {
+  font-weight: 500;
+}
+
+.pc-typeahead-item-hint {
+  font-size: 11px;
+  color: var(--pc-fg-muted);
+}
+
+.pc-typeahead-empty {
+  padding: 8px 10px;
+  color: var(--pc-fg-muted);
+  font-size: 12px;
+}
+
+.pc-typeahead-item-row {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--pc-space-3);
+}
+
+.pc-emoji {
+  font-size: 18px;
+  line-height: 1;
+  width: 20px;
+  text-align: center;
+}
+
+/* Insert dialog (modal). */
+
+.pc-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(28, 28, 28, 0.12);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.pc-dialog {
+  width: 360px;
+  max-width: calc(100vw - var(--pc-space-5));
+  background: var(--pc-bg);
+  border: 1px solid var(--pc-border);
+  border-radius: 4px;
+  padding: var(--pc-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pc-space-4);
+  font-family: var(--pc-font-sans);
+}
+
+.pc-dialog-title {
+  margin: 0;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--pc-fg);
+}
+
+.pc-dialog-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pc-space-3);
+}
+
+.pc-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pc-space-1);
+}
+
+.pc-dialog-field-label {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-tiny);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pc-fg-subtle);
+}
+
+.pc-dialog-input,
+.pc-dialog-select {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-small);
+  padding: 6px var(--pc-space-2);
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-radius);
+  background: var(--pc-bg);
+  color: var(--pc-fg);
+  outline: none;
+}
+
+.pc-dialog-input:focus-visible,
+.pc-dialog-select:focus-visible {
+  border-color: var(--pc-fg-muted);
+}
+
+.pc-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--pc-space-2);
+}
+
+.pc-button-primary {
+  background: var(--pc-fg);
+  color: var(--pc-bg);
+  border-color: var(--pc-fg);
+}
+
+.pc-button-primary:hover {
+  background: var(--pc-fg-muted);
+  border-color: var(--pc-fg-muted);
+}
+
+.pc-dialog-field-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--pc-space-2);
+}
+
+.pc-dialog-field-inline .pc-dialog-field-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--pc-text-size-small);
+  color: var(--pc-fg);
+}
+
+.pc-dialog-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-radius);
+  background: var(--pc-bg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--pc-bg);
+  flex: 0 0 auto;
+}
+
+.pc-dialog-checkbox:checked {
+  background: var(--pc-fg);
+  border-color: var(--pc-fg);
+}
+
+.pc-dialog-checkbox:checked::after {
+  content: '✓';
+  color: var(--pc-bg);
+  font-weight: 600;
+}
+
+/* Code-block language switcher in the container header. */
+.pc-code-block-language-select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--pc-fg-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--pc-text-sm);
+  padding: 0 var(--pc-space-1);
+}
+
+.pc-code-block-language-select:hover {
+  color: var(--pc-fg);
+}
+
+.pc-code-block-language-select:focus-visible {
+  outline: 1px solid var(--pc-border);
+  outline-offset: 2px;
+}
+
+/* Callout tone switcher in the container header. Visually matches the
+ * label it replaces (uppercase tiny sans) so the header doesn't reflow
+ * when the tone changes. */
+.pc-callout-tone-select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--pc-fg-muted);
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-text-size-tiny);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0;
+}
+
+.pc-callout-tone-select:hover {
+  color: var(--pc-fg);
+}
+
+.pc-callout-tone-select:focus-visible {
+  outline: 1px solid var(--pc-border);
+  outline-offset: 2px;
 }

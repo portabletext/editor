@@ -63,14 +63,6 @@ function isAtContainerDeadEnd(
     return false
   }
 
-  const container = getAncestor(snapshot, focusTextBlock.path, (node, path) =>
-    isEditableContainer(snapshot, node, path),
-  )
-
-  if (!container) {
-    return false
-  }
-
   const edgeBlock =
     edge === 'end' ? getLastBlock(snapshot) : getFirstBlock(snapshot)
 
@@ -87,13 +79,34 @@ function isAtContainerDeadEnd(
     return false
   }
 
-  const sibling = getSibling(
-    snapshot,
-    container.path,
-    edge === 'end' ? 'next' : 'previous',
-  )
+  // Walk container ancestors from innermost to outermost. If ANY ancestor
+  // has a sibling at the edge direction, the browser can step out of the
+  // nested structure naturally - not a dead end. Only when every container
+  // ancestor up to the root is at its edge do we suppress the native event.
+  let cursorPath: Path | undefined = focusTextBlock.path
+  let foundEditableContainer = false
+  while (cursorPath !== undefined) {
+    const container: {path: Path; node: unknown} | undefined = getAncestor(
+      snapshot,
+      cursorPath,
+      (node, path) => isEditableContainer(snapshot, node, path),
+    )
+    if (!container) {
+      break
+    }
+    foundEditableContainer = true
+    const sibling = getSibling(
+      snapshot,
+      container.path,
+      edge === 'end' ? 'next' : 'previous',
+    )
+    if (sibling !== undefined) {
+      return false
+    }
+    cursorPath = container.path
+  }
 
-  return sibling === undefined
+  return foundEditableContainer
 }
 
 /**
