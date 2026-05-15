@@ -9,6 +9,7 @@ import {ImagePlugin} from './plugins/image'
 import {MarkdownDeserializerPlugin} from './plugins/markdown-deserializer'
 import {SaveOnHotkeyPlugin} from './plugins/save-on-hotkey'
 import {useShikiDecorations} from './plugins/shiki'
+import {SlashMenuPlugin} from './plugins/slash-menu'
 import {StructuredListsPlugin} from './plugins/structured-lists'
 import {TablesPlugin} from './plugins/tables'
 import {TextFileDeserializerPlugin} from './plugins/text-file-deserializer'
@@ -50,6 +51,7 @@ export function PilcrowEditor(props: {theme: Theme}) {
       <SaveOnHotkeyPlugin />
       <BubbleMenuPlugin />
       <EmojiPickerPlugin />
+      <SlashMenuPlugin />
       <PortableTextEditable
         className="pc-editable"
         rangeDecorations={rangeDecorations as RangeDecoration[]}

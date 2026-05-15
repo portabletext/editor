@@ -19,6 +19,7 @@
     "@portabletext/editor": "workspace:*",
     "@portabletext/markdown": "workspace:*",
     "@portabletext/plugin-emoji-picker": "workspace:*",
+    "@portabletext/plugin-typeahead-picker": "workspace:*",
     "@portabletext/schema": "workspace:*",
     "@portabletext/toolbar": "workspace:*",
     "emojilib": "^4.0.2",
