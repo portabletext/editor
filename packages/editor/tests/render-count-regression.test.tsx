@@ -184,4 +184,133 @@ describe('Render count regression', () => {
     // Absolute bound: total work is constant, not proportional to siblings.
     expect(itemTotal).toBeLessThanOrEqual(3)
   }, 60_000)
+
+  test('Mass unmount: deleting 500 blocks in one event does not crash', async () => {
+    // Why: when a user selects N blocks and deletes them all in one
+    // action, React unmounts N text-block wrappers and 2N+ leaf
+    // wrappers in a single commit. Each wrapper has subscribed to the
+    // selection-state external store via `useSyncExternalStore`. The
+    // cleanup runs O(N) times against the provider's subscriber Set.
+    //
+    // The prior implementation (single React Context value broadcast)
+    // had a documented constraint: it intentionally collapsed N
+    // `useSelector` calls into a single shared context read because
+    // mass unsubscriptions from the xstate actor were causing the
+    // editor to crash. The per-slice external-store approach in
+    // PR #2666 preserves that property: only the
+    // `SelectionStateProvider` subscribes to the actor. Consumers
+    // subscribe to a local `Set<() => void>`, so mass unmounts are
+    // bounded `Set.delete` calls - no actor churn.
+    //
+    // This test exercises the mass-unmount path empirically. 500
+    // blocks puts ~1000 hooks (focused/selected per text-block and
+    // span) through cleanup in one commit; 1000 blocks would do the
+    // same but exceeds `createTestEditor`'s internal mount timeout.
+
+    const BLOCKS = 500
+
+    const initialValue: Array<Record<string, unknown>> = []
+    for (let i = 0; i < BLOCKS; i++) {
+      initialValue.push({
+        _type: 'block',
+        _key: `b${i}`,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: `s${i}`, text: `block ${i}`, marks: []},
+        ],
+      })
+    }
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      const {editor, locator} = await createTestEditor({
+        schemaDefinition,
+        initialValue: initialValue as never,
+      })
+
+      // Wait for the first and last blocks to be in the DOM, so we
+      // know all 1000 wrappers have mounted and subscribed.
+      await vi.waitFor(
+        () => expect(locator.getByText('block 0')).toBeInTheDocument(),
+        {timeout: 10_000},
+      )
+      await vi.waitFor(
+        () =>
+          expect(locator.getByText(`block ${BLOCKS - 1}`)).toBeInTheDocument(),
+        {timeout: 10_000},
+      )
+
+      // Settle.
+      await new Promise((r) => setTimeout(r, 200))
+
+      // Clear any pre-existing console.error calls from setup
+      // (testing infra noise).
+      errorSpy.mockClear()
+
+      // Replace the entire value with a single empty block in one
+      // event. React reconciles by unmounting all 1000 blocks (and
+      // their child span wrappers) in a single commit.
+      editor.send({
+        type: 'update value',
+        value: [
+          {
+            _type: 'block',
+            _key: 'after',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 's-after', text: '', marks: []}],
+          },
+        ],
+      } as never)
+
+      // Wait for the old blocks to be gone from the DOM (which only
+      // happens after the 1000 wrappers finish unmounting and their
+      // subscription cleanups run).
+      await vi.waitFor(
+        () => {
+          expect(
+            (document.body.textContent ?? '').includes(`block ${BLOCKS - 1}`),
+            'last old block should have unmounted',
+          ).toBe(false)
+        },
+        {timeout: 10_000},
+      )
+
+      // Settle: let all cleanup callbacks run.
+      await new Promise((r) => setTimeout(r, 500))
+
+      // CONTRACT: no subscriber/unmount/cleanup errors logged. Filter
+      // out unrelated noise so the assertion stays focused on the
+      // architectural concern being tested.
+      const subscriberErrors = errorSpy.mock.calls.filter((args) => {
+        const message = args.map((a) => String(a)).join(' ')
+        return /subscrib|unmount|cleanup|set state on|memory leak|external store/i.test(
+          message,
+        )
+      })
+
+      expect(
+        subscriberErrors,
+        `Expected no subscriber/unmount errors during mass delete, got:\n${subscriberErrors
+          .map((c) => c.map(String).join(' '))
+          .join('\n---\n')}`,
+      ).toHaveLength(0)
+
+      // The editor remains responsive: type into the survivor block.
+      editor.send({
+        type: 'insert.text',
+        at: [{_key: 'after'}, 'children', {_key: 's-after'}] as never,
+        offset: 0,
+        text: 'OK',
+      } as never)
+
+      await vi.waitFor(() =>
+        expect(locator.getByText('OK')).toBeInTheDocument(),
+      )
+    } finally {
+      errorSpy.mockRestore()
+    }
+  }, 60_000)
 })
