@@ -39,7 +39,7 @@ export function App() {
               keyGenerator,
             }}
           >
-            <PilcrowEditor />
+            <PilcrowEditor theme={theme} />
           </EditorProvider>
         </div>
 

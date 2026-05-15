@@ -20,7 +20,8 @@
     "@portabletext/markdown": "workspace:*",
     "@portabletext/schema": "workspace:*",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "shiki": "^3.23.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

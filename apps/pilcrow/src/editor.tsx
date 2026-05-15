@@ -1,4 +1,4 @@
-import {PortableTextEditable} from '@portabletext/editor'
+import {PortableTextEditable, type RangeDecoration} from '@portabletext/editor'
 import {BlockquotePlugin} from './plugins/blockquote'
 import {CalloutPlugin} from './plugins/callout'
 import {CodeBlockPlugin} from './plugins/code-block'
@@ -6,9 +6,11 @@ import {HorizontalRulePlugin} from './plugins/horizontal-rule'
 import {ImagePlugin} from './plugins/image'
 import {MarkdownDeserializerPlugin} from './plugins/markdown-deserializer'
 import {SaveOnHotkeyPlugin} from './plugins/save-on-hotkey'
+import {useShikiDecorations} from './plugins/shiki'
 import {StructuredListsPlugin} from './plugins/structured-lists'
 import {TablesPlugin} from './plugins/tables'
 import {TextFileDeserializerPlugin} from './plugins/text-file-deserializer'
+import type {Theme} from './use-theme'
 
 /**
  * Pilcrow's editor surface for M0.
@@ -30,7 +32,8 @@ import {TextFileDeserializerPlugin} from './plugins/text-file-deserializer'
  * these stubs so the editor doesn't fall back to its default block
  * wrappers, which would conflict with the container chrome.
  */
-export function PilcrowEditor() {
+export function PilcrowEditor(props: {theme: Theme}) {
+  const rangeDecorations = useShikiDecorations(props.theme)
   return (
     <>
       <BlockquotePlugin />
@@ -45,6 +48,7 @@ export function PilcrowEditor() {
       <SaveOnHotkeyPlugin />
       <PortableTextEditable
         className="pc-editable"
+        rangeDecorations={rangeDecorations as RangeDecoration[]}
         renderStyle={({value, children}) => {
           if (value === 'normal') {
             return <p className="pc-p">{children}</p>
