@@ -594,3 +594,73 @@ body {
   font-style: normal;
   opacity: 0.5;
 }
+
+/* — Bubble menu — */
+
+.pc-bubble-wrap {
+  position: fixed;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.pc-bubble-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.pc-bubble-side-top .pc-bubble-menu::after,
+.pc-bubble-side-bottom .pc-bubble-menu::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: var(--ink);
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+
+.pc-bubble-side-top .pc-bubble-menu::after {
+  bottom: -4px;
+}
+
+.pc-bubble-side-bottom .pc-bubble-menu::after {
+  top: -4px;
+}
+
+.pc-bubble-button {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pc-bubble-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pc-bubble-button-active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.pc-bubble-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
