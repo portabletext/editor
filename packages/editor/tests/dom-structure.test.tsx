@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 function normalizeInnerHTML(html: string): string {
@@ -641,6 +641,67 @@ describe('DOM structure', () => {
       expect(calloutEl!.innerHTML.match(/data-block-name/g)).toEqual(null)
       expect(calloutEl!.innerHTML.match(/data-child-key/g)).toEqual(null)
       expect(calloutEl!.innerHTML.match(/data-child-name/g)).toEqual(null)
+    })
+  })
+
+  test('8. text block rendered via `defineTextBlock` inside a container emits `data-pt-block-type="text"`, not `data-slate-node="element"`', async () => {
+    const calloutSchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    })
+    const calloutContainer = defineContainer({
+      type: 'callout',
+      childField: 'content',
+      render: ({attributes, children}) => (
+        <div {...attributes} className="callout">
+          {children}
+        </div>
+      ),
+      of: [
+        defineTextBlock({
+          type: 'block',
+          render: ({attributes, children}) => (
+            <p {...attributes} className="callout-paragraph">
+              {children}
+            </p>
+          ),
+        }),
+      ],
+    })
+    await createTestEditor({
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue: [
+        {
+          _key: 'c0',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={[calloutContainer]} />,
+    })
+    await vi.waitFor(() => {
+      const paragraph = document.querySelector('.callout-paragraph')
+      expect(paragraph).not.toEqual(null)
+      expect(paragraph!.getAttribute('data-pt-block-type')).toEqual('text')
+      expect(paragraph!.hasAttribute('data-slate-node')).toEqual(false)
     })
   })
 })
