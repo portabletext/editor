@@ -4,6 +4,7 @@ import {CalloutPlugin} from './plugins/callout'
 import {CodeBlockPlugin} from './plugins/code-block'
 import {HorizontalRulePlugin} from './plugins/horizontal-rule'
 import {ImagePlugin} from './plugins/image'
+import {MarkdownDeserializerPlugin} from './plugins/markdown-deserializer'
 import {StructuredListsPlugin} from './plugins/structured-lists'
 import {TablesPlugin} from './plugins/tables'
 
@@ -37,6 +38,7 @@ export function PilcrowEditor() {
       <ImagePlugin />
       <StructuredListsPlugin />
       <TablesPlugin />
+      <MarkdownDeserializerPlugin />
       <PortableTextEditable
         className="pc-editable"
         renderStyle={({value, children}) => {

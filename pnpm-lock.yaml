@@ -192,6 +192,12 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@portabletext/markdown':
+        specifier: workspace:*
+        version: link:../../packages/markdown
+      '@portabletext/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
       react:
         specifier: ^19.2.5
         version: 19.2.5
