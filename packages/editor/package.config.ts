@@ -47,6 +47,7 @@ const TIER_2_PATHS = [
   '/src/slate/react/hooks/use-generic-selector.tsx',
   '/src/slate/react/hooks/use-read-only.ts',
   '/src/slate/react/hooks/use-decorations.ts',
+  '/src/slate/react/hooks/use-decorations-by-child.ts',
 ]
 
 /**
