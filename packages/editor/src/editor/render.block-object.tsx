@@ -1,5 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import {useContext, useRef, type ReactElement} from 'react'
+import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
 import type {LeafConfig} from '../renderers/renderer.types'
@@ -10,7 +10,7 @@ import type {EditorSchema} from './editor-schema'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
 import {RenderLeafConfig} from './render.leaf-config'
-import {SelectionStateContext} from './selection-state-context'
+import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
@@ -26,10 +26,9 @@ export function RenderBlockObject(props: {
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
 
-  const {selectedLeafPaths, focusedLeafPath} = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
-  const selected = selectedLeafPaths.has(serializedPath)
-  const focused = focusedLeafPath === serializedPath
+  const selected = useIsSelectedLeaf(serializedPath)
+  const focused = useIsFocusedLeaf(serializedPath)
 
   const blockObjectSchemaType = props.schema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,

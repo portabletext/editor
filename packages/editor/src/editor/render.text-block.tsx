@@ -2,7 +2,7 @@ import type {
   BlockObjectSchemaType,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {useContext, useRef, type ReactElement} from 'react'
+import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../slate/interfaces/path'
@@ -18,7 +18,10 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {DropIndicator} from './render.drop-indicator'
-import {SelectionStateContext} from './selection-state-context'
+import {
+  useIsFocusedContainer,
+  useIsSelectedContainer,
+} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
 export function RenderTextBlock(props: {
@@ -40,12 +43,9 @@ export function RenderTextBlock(props: {
     name: props.schema.block.name,
     fields: props.schema.block.fields ?? [],
   } satisfies BlockObjectSchemaType
-  const {selectedContainerPaths, focusedContainerPath} = useContext(
-    SelectionStateContext,
-  )
   const serializedPath = serializePath(props.path)
-  const selected = selectedContainerPaths.has(serializedPath)
-  const focused = focusedContainerPath === serializedPath
+  const selected = useIsSelectedContainer(serializedPath)
+  const focused = useIsFocusedContainer(serializedPath)
   const listIndex = useSlateSelector((editor) =>
     editor.listIndexMap.get(props.textBlock._key),
   )

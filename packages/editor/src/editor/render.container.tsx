@@ -7,7 +7,10 @@ import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateSelector} from '../slate/react/hooks/use-slate-selector'
 import {EditorActorContext} from './editor-actor-context'
-import {SelectionStateContext} from './selection-state-context'
+import {
+  useIsFocusedContainer,
+  useIsSelectedContainer,
+} from './selection-state-context'
 
 export function RenderContainer(props: {
   attributes: RenderElementProps['attributes']
@@ -16,16 +19,13 @@ export function RenderContainer(props: {
   containerConfig: ContainerConfig
   path: Path
 }) {
-  const {focusedContainerPath, selectedContainerPaths} = useContext(
-    SelectionStateContext,
-  )
+  const serializedPath = serializePath(props.path)
+  const focused = useIsFocusedContainer(serializedPath)
+  const selected = useIsSelectedContainer(serializedPath)
   const editorActor = useContext(EditorActorContext)
   const readOnly = useSelector(editorActor, (state) =>
     state.matches({'edit mode': 'read only'}),
   )
-  const serializedPath = serializePath(props.path)
-  const focused = focusedContainerPath === serializedPath
-  const selected = selectedContainerPaths.has(serializedPath)
   const listIndex = useSlateSelector((editor) =>
     editor.listIndexMap.get(props.element._key),
   )

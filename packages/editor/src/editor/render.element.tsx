@@ -30,7 +30,10 @@ import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
 import {resolveElementDropPosition} from './resolve-element-drop-position'
-import {SelectionStateContext} from './selection-state-context'
+import {
+  useIsFocusedContainer,
+  useIsSelectedContainer,
+} from './selection-state-context'
 
 /**
  * Reference-equality comparator for fixed-length tuples. Each slot is
@@ -97,9 +100,6 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const parentContainer = useContext(ParentContainerContext)
-  const {focusedContainerPath, selectedContainerPaths} = useContext(
-    SelectionStateContext,
-  )
   const slateStatic = useSlateStatic()
   const schema = props.schema
   const type = props.element._type
@@ -182,19 +182,18 @@ export function RenderElement(props: {
 
   if (isTextBlock({schema}, props.element)) {
     if (effectiveTextBlockConfig) {
-      const serializedPath = serializePath(props.path)
-      const focused = focusedContainerPath === serializedPath
-      const selected = selectedContainerPaths.has(serializedPath)
       const {'data-slate-node': _sn, ...rest} = props.attributes
-      return effectiveTextBlockConfig.textBlock.render({
-        attributes: {...rest, 'data-pt-block-type': 'text'},
-        children: props.children,
-        focused,
-        node: props.element,
-        path: props.path,
-        readOnly: props.readOnly,
-        selected,
-      })
+      return (
+        <RenderTextBlockConfig
+          attributes={{...rest, 'data-pt-block-type': 'text'}}
+          textBlockConfig={effectiveTextBlockConfig}
+          node={props.element}
+          path={props.path}
+          readOnly={props.readOnly}
+        >
+          {props.children}
+        </RenderTextBlockConfig>
+      )
     }
     if (parentContainer) {
       const {'data-slate-node': _sn, ...rest} = props.attributes
@@ -300,4 +299,34 @@ function isTextBlockRegistration(
   entry: ContainerConfig | LeafConfig | TextBlockConfig,
 ): entry is TextBlockConfig {
   return 'textBlock' in entry
+}
+
+/**
+ * Renders a text block via a registered `defineTextBlock` config.
+ * Extracted into its own component so the per-slice selection hooks
+ * (`useIsFocusedContainer` / `useIsSelectedContainer`) live at the top
+ * of a component, not inside a conditional in `RenderElement`'s body.
+ */
+function RenderTextBlockConfig(props: {
+  attributes: Omit<RenderElementProps['attributes'], 'data-pt-block-type'> & {
+    'data-pt-block-type': 'text'
+  }
+  children: ReactElement
+  node: PortableTextTextBlock
+  path: Path
+  readOnly: boolean
+  textBlockConfig: TextBlockConfig
+}) {
+  const serializedPath = serializePath(props.path)
+  const focused = useIsFocusedContainer(serializedPath)
+  const selected = useIsSelectedContainer(serializedPath)
+  return props.textBlockConfig.textBlock.render({
+    attributes: props.attributes,
+    children: props.children,
+    focused,
+    node: props.node,
+    path: props.path,
+    readOnly: props.readOnly,
+    selected,
+  })
 }
