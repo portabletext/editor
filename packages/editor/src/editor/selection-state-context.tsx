@@ -26,6 +26,11 @@ const defaultSelectionState: SelectionState = {
  * Returns `true` when the two states are equal by content; `false` when
  * any slice differs. Used to short-circuit notifications when a state
  * change doesn't move any per-component slice.
+ *
+ * Assumes the Set instances passed via `selectedLeafPaths` /
+ * `selectedContainerPaths` are immutable per emission - `getSelectionState`
+ * builds a fresh Set on each recompute rather than mutating in place,
+ * so size + containment equivalence is a sound equality check.
  */
 function selectionStatesEqual(
   prev: SelectionState,
@@ -140,12 +145,19 @@ export function SelectionStateProvider({
   // below takes ownership of updates after mount.
   const [seed] = useState(computeCurrent)
   const stateRef = useRef<SelectionState>(seed)
-  const subscribersRef = useRef<Set<() => void>>(new Set())
+
+  // Same pattern for the subscriber Set: lazy-init via `useState` so we
+  // allocate the empty Set exactly once, not on every render.
+  const [initialSubscribers] = useState(() => new Set<() => void>())
+  const subscribersRef = useRef<Set<() => void>>(initialSubscribers)
 
   useEffect(() => {
-    // Recompute on subscribe to catch any state changes between the
-    // initial seed (during render) and the subscription firing (after
-    // commit).
+    // Mount ordering: child effects run before parent effects, so by
+    // the time this effect runs every consumer `useSyncExternalStore`
+    // has already registered its notify callback in
+    // `subscribersRef.current`. The recompute-and-notify below catches
+    // any state changes between the provider's first render (when we
+    // seeded `stateRef`) and this effect firing (after commit).
     const next = computeCurrent()
     if (!selectionStatesEqual(stateRef.current, next)) {
       stateRef.current = next

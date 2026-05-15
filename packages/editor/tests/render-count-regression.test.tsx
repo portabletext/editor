@@ -186,26 +186,26 @@ describe('Render count regression', () => {
   }, 60_000)
 
   test('Mass unmount: deleting 500 blocks in one event does not crash', async () => {
-    // Why: when a user selects N blocks and deletes them all in one
-    // action, React unmounts N text-block wrappers and 2N+ leaf
-    // wrappers in a single commit. Each wrapper has subscribed to the
-    // selection-state external store via `useSyncExternalStore`. The
-    // cleanup runs O(N) times against the provider's subscriber Set.
+    // Forward smoke test: 500 blocks unmount in one React commit ->
+    // ~1000 `useSyncExternalStore` subscription cleanups -> bounded
+    // `Set.delete` calls against the `SelectionStateProvider`'s local
+    // subscriber Set. Pins that the per-slice external-store
+    // architecture introduced by PR #2666 doesn't crash under mass
+    // unmount.
     //
-    // The prior implementation (single React Context value broadcast)
-    // had a documented constraint: it intentionally collapsed N
-    // `useSelector` calls into a single shared context read because
-    // mass unsubscriptions from the xstate actor were causing the
-    // editor to crash. The per-slice external-store approach in
-    // PR #2666 preserves that property: only the
-    // `SelectionStateProvider` subscribes to the actor. Consumers
-    // subscribe to a local `Set<() => void>`, so mass unmounts are
-    // bounded `Set.delete` calls - no actor churn.
+    // What this test does NOT do: it doesn't replay the prior crash
+    // mode that motivated `6409f2ce1` (collapsing per-span
+    // `useSelector` into a shared context). That crash was N x
+    // actor.unsubscribe in one commit; this test's cleanup path is
+    // N x local `Set.delete`, which is structurally different. The
+    // selection-state architecture keeps exactly ONE
+    // `editorActor.subscribe` (in the provider) regardless of consumer
+    // count, so the per-consumer actor-unsubscribe pressure that
+    // 6409f2ce1 fixed is not what's being exercised here.
     //
-    // This test exercises the mass-unmount path empirically. 500
-    // blocks puts ~1000 hooks (focused/selected per text-block and
-    // span) through cleanup in one commit; 1000 blocks would do the
-    // same but exceeds `createTestEditor`'s internal mount timeout.
+    // Reason for 500 not 1000: 1000 blocks exceeds `createTestEditor`'s
+    // internal mount waitFor timeout. 500 is plenty to exercise the
+    // bounded-Set-delete cleanup path.
 
     const BLOCKS = 500
 
