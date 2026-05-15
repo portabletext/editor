@@ -1,13 +1,17 @@
 import {defineConfig} from '@sanity/pkg-utils'
 
 /**
- * Tier 1 of the slate-fork compiler un-exclusion (see
- * `/specs/render-pipeline-compiler-collapse.md`). These files are pure
- * utilities - no hooks, no React, no module-level mutation - and are
- * safe for react-compiler to memoize.
+ * The slate-fork lives at `src/slate/`. Historically excluded
+ * wholesale from react-compiler; we are un-excluding it in tiers as
+ * code is audited safe for the compiler.
  *
- * Tier 2+ (hook helpers, wrappers, dispatch) un-exclude in follow-up
- * phases.
+ * - Tier 1 = pure utilities (no hooks, no React, no module-level
+ *   mutation).
+ * - Tier 2 = hook utilities (`useContext`, `useEffect`-style and
+ *   selector helpers used by the wrappers).
+ *
+ * See `/specs/render-pipeline-compiler-collapse.md`. Kept in lock-step
+ * with `eslint.config.js` (the react-hooks ignores).
  */
 const TIER_1_PATHS = [
   '/src/slate/path/path-equals.ts',
@@ -24,6 +28,21 @@ const TIER_1_PATHS = [
   '/src/slate/dom/utils/environment.ts',
   '/src/slate/react/utils/direction.ts',
 ]
+
+/**
+ * Tier 2 = hook utilities (no per-render ref mutation, no manual
+ * memoization that the compiler can't see). Phase 2 of the
+ * un-exclusion plan.
+ */
+const TIER_2_PATHS = [
+  '/src/slate/react/hooks/use-slate-static.tsx',
+  '/src/slate/react/hooks/use-isomorphic-layout-effect.ts',
+  '/src/slate/react/hooks/use-generic-selector.tsx',
+  '/src/slate/react/hooks/use-read-only.ts',
+  '/src/slate/react/hooks/use-decorations.ts',
+]
+
+const TIER_1_AND_2_PATHS = [...TIER_1_PATHS, ...TIER_2_PATHS]
 
 export default defineConfig({
   define: {
@@ -51,15 +70,11 @@ export default defineConfig({
   babel: {reactCompiler: true},
   reactCompilerOptions: {
     target: '19',
-    // The slate-fork lives at `src/slate/`. Historically excluded
-    // wholesale; we are un-excluding it in tiers as code is audited
-    // safe for the compiler. Tier 1 = pure utilities (no hooks, no
-    // React, no module-level mutation).
     sources: (filename: string) => {
       if (!filename.includes('/src/slate/')) {
         return true
       }
-      return TIER_1_PATHS.some((path) => filename.endsWith(path))
+      return TIER_1_AND_2_PATHS.some((path) => filename.endsWith(path))
     },
   },
   dts: 'rolldown',

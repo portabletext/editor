@@ -3,8 +3,10 @@ import {globalIgnores} from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
 // Keep in lock-step with `reactCompilerOptions.sources` in
-// `package.config.ts`. Tier 1 files are un-excluded from BOTH the
-// react-compiler boundary and the eslint react-hooks rules.
+// `package.config.ts`. These slate-fork files are un-excluded from
+// BOTH the react-compiler boundary and the eslint react-hooks rules
+// in tiers as the code is audited safe (see
+// `/specs/render-pipeline-compiler-collapse.md`).
 const TIER_1_PATHS = [
   'src/slate/path/path-equals.ts',
   'src/slate/path/parent-path.ts',
@@ -21,6 +23,19 @@ const TIER_1_PATHS = [
   'src/slate/react/utils/direction.ts',
 ]
 
+/**
+ * Tier 2 = hook utilities. Phase 2 of the un-exclusion plan.
+ */
+const TIER_2_PATHS = [
+  'src/slate/react/hooks/use-slate-static.tsx',
+  'src/slate/react/hooks/use-isomorphic-layout-effect.ts',
+  'src/slate/react/hooks/use-generic-selector.tsx',
+  'src/slate/react/hooks/use-read-only.ts',
+  'src/slate/react/hooks/use-decorations.ts',
+]
+
+const UN_IGNORED_SLATE_PATHS = [...TIER_1_PATHS, ...TIER_2_PATHS]
+
 export default tseslint.config([
   globalIgnores([
     'coverage',
@@ -31,7 +46,7 @@ export default tseslint.config([
     'src/slate-dom/**',
     'src/slate-react/**',
     // Un-ignore Tier 1 pure utilities so react-hooks rules apply.
-    ...TIER_1_PATHS.map((path) => `!${path}`),
+    ...UN_IGNORED_SLATE_PATHS.map((path) => `!${path}`),
   ]),
   reactHooks.configs.flat.recommended,
   {
