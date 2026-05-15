@@ -19,6 +19,7 @@
     "@portabletext/editor": "workspace:*",
     "@portabletext/markdown": "workspace:*",
     "@portabletext/schema": "workspace:*",
+    "@portabletext/toolbar": "workspace:*",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "shiki": "^3.23.0"

@@ -1,5 +1,6 @@
 import {PortableTextEditable, type RangeDecoration} from '@portabletext/editor'
 import {BlockquotePlugin} from './plugins/blockquote'
+import {BubbleMenuPlugin} from './plugins/bubble-menu'
 import {CalloutPlugin} from './plugins/callout'
 import {CodeBlockPlugin} from './plugins/code-block'
 import {HorizontalRulePlugin} from './plugins/horizontal-rule'
@@ -46,6 +47,7 @@ export function PilcrowEditor(props: {theme: Theme}) {
       <MarkdownDeserializerPlugin />
       <TextFileDeserializerPlugin />
       <SaveOnHotkeyPlugin />
+      <BubbleMenuPlugin />
       <PortableTextEditable
         className="pc-editable"
         rangeDecorations={rangeDecorations as RangeDecoration[]}

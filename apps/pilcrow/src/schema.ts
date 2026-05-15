@@ -29,10 +29,10 @@ export const pilcrowSchema = defineSchema({
   ],
 
   decorators: [
-    {name: 'strong'},
-    {name: 'em'},
-    {name: 'code'},
-    {name: 'strike-through'},
+    {name: 'strong', title: 'Bold'},
+    {name: 'em', title: 'Italic'},
+    {name: 'code', title: 'Inline code'},
+    {name: 'strike-through', title: 'Strike-through'},
   ],
 
   annotations: [
