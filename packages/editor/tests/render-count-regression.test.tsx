@@ -1,4 +1,3 @@
-import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {ContainerPlugin} from '../src/plugins/plugin.container'

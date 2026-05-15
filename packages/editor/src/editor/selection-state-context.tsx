@@ -4,6 +4,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   useSyncExternalStore,
 } from 'react'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
@@ -98,9 +99,6 @@ export function SelectionStateProvider({
   const editorActor = useContext(EditorActorContext)
   const slateEditor = useSlateStatic()
 
-  const stateRef = useRef<SelectionState>(defaultSelectionState)
-  const subscribersRef = useRef<Set<() => void>>(new Set())
-
   // Compute the current snapshot once on every read. Cheap when nothing
   // has changed (refs are reference-equal); recomputes on actor updates
   // (handled in the subscription effect below).
@@ -135,11 +133,14 @@ export function SelectionStateProvider({
     [editorActor, slateEditor],
   )
 
-  // Initial seed so consumers calling `getSnapshot` before the
-  // subscription fires get a real value, not the empty default.
-  if (stateRef.current === defaultSelectionState) {
-    stateRef.current = computeCurrent()
-  }
+  // Seed the initial snapshot exactly once via `useState`'s lazy
+  // initializer, then keep it on a ref the external store reads from.
+  // `useRef(seed)` writes `seed` to the ref on first render only;
+  // subsequent renders ignore the argument. The subscription effect
+  // below takes ownership of updates after mount.
+  const [seed] = useState(computeCurrent)
+  const stateRef = useRef<SelectionState>(seed)
+  const subscribersRef = useRef<Set<() => void>>(new Set())
 
   useEffect(() => {
     // Recompute on subscribe to catch any state changes between the
