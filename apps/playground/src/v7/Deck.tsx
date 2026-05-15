@@ -2,6 +2,8 @@ import {
   EditorProvider,
   keyGenerator,
   PortableTextEditable,
+  useEditor,
+  useEditorSelector,
   type Editor,
   type RenderAnnotationFunction,
   type RenderDecoratorFunction,
@@ -13,9 +15,11 @@ import {
   EditorRefPlugin,
   EventListenerPlugin,
 } from '@portabletext/editor/plugins'
+import * as selectors from '@portabletext/editor/selectors'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {DeckChrome} from './deck-chrome'
 import {DeckContainerPlugins} from './deck-containers'
+import {PasteMarkdownModal} from './paste-markdown-modal'
 import {DeckNavPlugin} from './plugin.deck-nav'
 import {deckSchemaDefinition} from './schema'
 import {useShikiDecorations} from './shiki'
@@ -27,31 +31,75 @@ import {ValueInspector} from './value-inspector'
 /**
  * The v7 deck.
  *
- * One Portable Text document, N slide containers at the root, one slide
- * visible at a time. Navigation (arrow keys, click) drives a single
- * `currentSlideIndex` piece of state; the slide container's `render`
- * callback reads it from context and shows or hides itself.
+ * One Portable Text document, N `slide` containers at the root, one slide
+ * visible at a time. Slide keys are derived from the live editor value via
+ * `useEditorSelector` — when "Load markdown" replaces the value, the
+ * navigable slide set updates automatically.
  *
- * The editor is fully editable - Christian can type into a slide during
- * a presentation, which is half the point.
+ * The editor is fully editable; type into a slide during the talk.
  */
 export function Deck() {
   const editorRef = useRef<Editor | null>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [inspectorOpen, setInspectorOpen] = useState(false)
 
-  // Stable slide _keys derived from the value. We only read them once; the
-  // value is a const fixture for v1. If we ever add live "new slide" actions
-  // we'll lift this into state and update from a mutation listener.
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950">
+      <EditorProvider
+        initialConfig={{
+          initialValue: [...deckValue],
+          schemaDefinition: deckSchemaDefinition,
+          keyGenerator,
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'error') {
+              console.error('[deck]', event)
+            }
+          }}
+        />
+        <SlidePlugin />
+        <DeckContainerPlugins />
+        <DeckBody editorRef={editorRef} />
+      </EditorProvider>
+    </div>
+  )
+}
+
+/**
+ * The deck body. Lives inside `<EditorProvider>` so it can read the live
+ * editor value via `useEditorSelector`. Owns nav state, inspector toggle,
+ * paste-modal toggle.
+ */
+function DeckBody(props: {editorRef: React.RefObject<Editor | null>}) {
+  const editor = useEditor()
+  const value = useEditorSelector(editor, selectors.getValue) ?? []
+
   const slideKeys = useMemo(
     () =>
-      deckValue
-        .map((slide) => slide._key)
-        .filter((key): key is string => typeof key === 'string'),
-    [],
+      value
+        .filter(
+          (block): block is {_type: string; _key: string} =>
+            !!block &&
+            (block as {_type: string})._type === 'slide' &&
+            typeof (block as {_key?: string})._key === 'string',
+        )
+        .map((block) => block._key),
+    [value],
   )
 
   const totalSlides = slideKeys.length
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [inspectorOpen, setInspectorOpen] = useState(false)
+  const [pasteOpen, setPasteOpen] = useState(false)
+
+  // Clamp currentIndex when the slide count changes (e.g. after loading
+  // markdown with fewer slides than the current index).
+  useEffect(() => {
+    if (currentIndex >= totalSlides && totalSlides > 0) {
+      setCurrentIndex(0)
+    }
+  }, [currentIndex, totalSlides])
 
   const goTo = useCallback(
     (index: number) => {
@@ -67,7 +115,7 @@ export function Deck() {
     [slideKeys, totalSlides],
   )
 
-  // Read initial slide from hash, listen for hash changes.
+  // Read initial slide from hash + listen for hash changes.
   useEffect(() => {
     const fromHash = () => {
       const key = window.location.hash.slice(1)
@@ -81,11 +129,8 @@ export function Deck() {
     return () => window.removeEventListener('hashchange', fromHash)
   }, [slideKeys])
 
-  // Slide navigation lives in a behavior registered via DeckNavPlugin -
-  // see plugin.deck-nav.tsx. Cmd/Ctrl + Right/Left advance the deck;
-  // Cmd/Ctrl + Up/Down jump to the first/last slide. The behavior runs
-  // inside the editor's keyboard pipeline so it doesn't fight the editor's
-  // own keydown handlers.
+  // Slide navigation lives in a behavior registered via DeckNavPlugin.
+  // Cmd/Ctrl + Right/Left advance; Cmd/Ctrl + Up/Down jump to ends.
   const navCallbacks = useMemo(
     () => ({
       onNext: () => goTo(currentIndex + 1),
@@ -103,43 +148,35 @@ export function Deck() {
 
   return (
     <SlideIndexContext.Provider value={contextValue}>
-      <div className="relative min-h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950">
-        <EditorProvider
-          initialConfig={{
-            initialValue: [...deckValue],
-            schemaDefinition: deckSchemaDefinition,
-            keyGenerator,
-          }}
-        >
-          <EditorRefPlugin ref={editorRef} />
-          <EventListenerPlugin
-            on={(event) => {
-              if (event.type === 'error') {
-                console.error('[deck]', event)
-              }
-            }}
-          />
-          <SlidePlugin />
-          <DeckContainerPlugins />
-          <DeckNavPlugin {...navCallbacks} />
+      <DeckNavPlugin {...navCallbacks} />
 
-          <DeckEditable />
+      <DeckEditable />
 
-          <DeckChrome
-            currentIndex={currentIndex}
-            totalSlides={totalSlides}
-            inspectorOpen={inspectorOpen}
-            onPrev={() => goTo(currentIndex - 1)}
-            onNext={() => goTo(currentIndex + 1)}
-            onToggleInspector={() => setInspectorOpen((open) => !open)}
-          />
+      <DeckChrome
+        currentIndex={currentIndex}
+        totalSlides={totalSlides}
+        inspectorOpen={inspectorOpen}
+        onPrev={() => goTo(currentIndex - 1)}
+        onNext={() => goTo(currentIndex + 1)}
+        onToggleInspector={() => setInspectorOpen((open) => !open)}
+        onOpenPaste={() => setPasteOpen(true)}
+      />
 
-          <ValueInspector
-            open={inspectorOpen}
-            onClose={() => setInspectorOpen(false)}
-          />
-        </EditorProvider>
-      </div>
+      <ValueInspector
+        open={inspectorOpen}
+        onClose={() => setInspectorOpen(false)}
+      />
+
+      <PasteMarkdownModal
+        editor={props.editorRef.current}
+        open={pasteOpen}
+        onClose={() => setPasteOpen(false)}
+        onLoad={() => {
+          // Reset to the first slide of the new deck.
+          setCurrentIndex(0)
+          window.history.replaceState(null, '', window.location.pathname)
+        }}
+      />
     </SlideIndexContext.Provider>
   )
 }

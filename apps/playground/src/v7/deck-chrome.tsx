@@ -1,4 +1,9 @@
-import {ChevronLeftIcon, ChevronRightIcon, CodeIcon} from 'lucide-react'
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CodeIcon,
+  FileTextIcon,
+} from 'lucide-react'
 
 export function DeckChrome(props: {
   currentIndex: number
@@ -7,6 +12,7 @@ export function DeckChrome(props: {
   onPrev: () => void
   onNext: () => void
   onToggleInspector: () => void
+  onOpenPaste: () => void
 }) {
   const atStart = props.currentIndex === 0
   const atEnd = props.currentIndex === props.totalSlides - 1
@@ -21,6 +27,14 @@ export function DeckChrome(props: {
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={props.onOpenPaste}
+          aria-label="Load deck from markdown"
+          className="flex size-10 items-center justify-center rounded-full bg-white/80 text-stone-700 shadow-sm backdrop-blur-md transition hover:bg-white dark:bg-stone-800/80 dark:text-stone-200 dark:hover:bg-stone-800"
+        >
+          <FileTextIcon className="size-4" />
+        </button>
         <button
           type="button"
           onClick={props.onToggleInspector}

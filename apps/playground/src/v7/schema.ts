@@ -27,6 +27,7 @@ const richBlock = {
     {title: 'Heading 1', name: 'h1'},
     {title: 'Heading 2', name: 'h2'},
     {title: 'Heading 3', name: 'h3'},
+    {title: 'Blockquote', name: 'blockquote'},
   ],
 } as const
 
@@ -73,6 +74,7 @@ export const deckSchemaDefinition = defineSchema({
     {title: 'Heading 1', name: 'h1'},
     {title: 'Heading 2', name: 'h2'},
     {title: 'Heading 3', name: 'h3'},
+    {title: 'Blockquote', name: 'blockquote'},
   ],
   blockObjects: [
     {
