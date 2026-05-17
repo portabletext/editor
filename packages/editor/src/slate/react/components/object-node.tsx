@@ -71,8 +71,8 @@ const ObjectNodeComponent = (props: {
       }}
     >
       <span>
-        <span data-pt-mark>
-          <span data-pt-zero-width="z">{'\uFEFF'}</span>
+        <span data-pt-marks>
+          <span data-pt-zero-width>{'\uFEFF'}</span>
         </span>
       </span>
     </Tag>
@@ -88,8 +88,8 @@ const ObjectNodeComponent = (props: {
       }}
     >
       <span data-slate-node="text">
-        <span data-slate-leaf data-pt-mark>
-          <span data-slate-zero-width="z" data-pt-zero-width="z">
+        <span data-slate-leaf data-pt-marks>
+          <span data-slate-zero-width="z" data-pt-zero-width>
             {'\uFEFF'}
           </span>
         </span>
