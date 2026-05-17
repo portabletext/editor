@@ -6,7 +6,6 @@ import React, {type JSX} from 'react'
 import {getText} from '../../../node-traversal/get-text'
 import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
 import {serializePath} from '../../../paths/serialize-path'
-import {isEditableContainer} from '../../../schema/is-editable-container'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
@@ -22,26 +21,28 @@ import type {
   RenderTextProps,
 } from './editable'
 
-const defaultRenderElement = (props: RenderElementProps) => (
-  <DefaultElement {...props} />
-)
-
 /**
- * Element.
+ * Element wrapper. Receives a node that already has children (a text block
+ * or an editable container) and threads decorations + children through the
+ * `renderElement` callback.
+ *
+ * The `isContainer` flag is resolved by `useChildren` at dispatch time and
+ * passed in to avoid a second `isEditableContainer` walk here.
  */
-
 const Element = (props: {
   decorations: DecoratedRange[]
   element: PortableTextTextBlock | PortableTextObject
+  isContainer: boolean
   path: Path
-  renderElement?: (props: RenderElementProps) => JSX.Element
+  renderElement: (props: RenderElementProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
   const {
     decorations: parentDecorations,
     element,
-    renderElement = defaultRenderElement,
+    isContainer,
+    renderElement,
     renderLeaf,
     renderText,
   } = props
@@ -57,8 +58,6 @@ const Element = (props: {
     renderLeaf,
     renderText,
   })
-
-  const isContainer = isEditableContainer(editor, element, props.path)
 
   // Attributes that the developer must mix into the element in their
   // custom node renderer component.
@@ -94,6 +93,7 @@ const Element = (props: {
 const MemoizedElement = React.memo(Element, (prev, next) => {
   return (
     prev.element === next.element &&
+    prev.isContainer === next.isContainer &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
     prev.renderText === next.renderText &&
@@ -101,20 +101,5 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
     isElementDecorationsEqual(prev.decorations, next.decorations)
   )
 })
-
-/**
- * The default element renderer.
- */
-
-const DefaultElement = (props: RenderElementProps) => {
-  const {attributes, children} = props
-  const editor = useSlateStatic()
-  const Tag = isInlinePath(editor, props.path) ? 'span' : 'div'
-  return (
-    <Tag {...attributes} style={{position: 'relative'}}>
-      {children}
-    </Tag>
-  )
-}
 
 export default MemoizedElement

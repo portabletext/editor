@@ -60,7 +60,7 @@ const useChildren = (props: {
   decorations: DecoratedRange[]
   node: Editor | Node
   path: Path
-  renderElement?: (props: RenderElementProps) => JSX.Element
+  renderElement: (props: RenderElementProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }): React.ReactNode => {
@@ -117,7 +117,11 @@ const useChildren = (props: {
   }
 
   const renderElementComponent = useCallback(
-    (node: PortableTextTextBlock | PortableTextObject, i: number) => {
+    (
+      node: PortableTextTextBlock | PortableTextObject,
+      i: number,
+      isContainer: boolean,
+    ) => {
       const nodePath: Path =
         parentPath.length === 0
           ? [{_key: node._key}]
@@ -127,6 +131,7 @@ const useChildren = (props: {
         <ElementComponent
           decorations={decorationsByChild[i] ?? []}
           element={node}
+          isContainer={isContainer}
           key={node._key}
           path={nodePath}
           renderElement={renderElement}
@@ -175,6 +180,11 @@ const useChildren = (props: {
     )
   }
 
+  // `inContainer` is the effective container context the dispatched
+  // children will see: either the current node's own container (when we
+  // wrap below) or the inherited parent container otherwise.
+  const inContainer = Boolean(childContainer ?? parentContainer)
+
   const renderObjectNodeComponent = (
     node: PortableTextObject,
     index: number,
@@ -187,6 +197,7 @@ const useChildren = (props: {
     return (
       <ObjectNodeComponent
         decorations={decorationsByChild[index] ?? []}
+        inContainer={inContainer}
         isInline={textBlockParent !== undefined}
         key={node._key}
         objectNode={node}
@@ -198,7 +209,7 @@ const useChildren = (props: {
 
   const elements = children.map((n: Node, i: number) => {
     if (isTextBlock({schema: editor.schema}, n)) {
-      return renderElementComponent(n, i)
+      return renderElementComponent(n, i, false)
     }
     // Fallback for text block nodes without `children`
     if (isTextBlockNode({schema: editor.schema}, n)) {
@@ -208,7 +219,7 @@ const useChildren = (props: {
       // Does `n` resolve as a container at this position?
       // (positional override in childContainer.container.of, or global)
       if (resolveContainerForNode(editor, childContainer, n)) {
-        return renderElementComponent(n, i)
+        return renderElementComponent(n, i, true)
       }
       return renderObjectNodeComponent(n, i)
     }

@@ -1,6 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import React, {useContext, type JSX} from 'react'
-import {ParentContainerContext} from '../../../editor/parent-container-context'
+import React, {type JSX} from 'react'
 import {serializePath} from '../../../paths/serialize-path'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -9,40 +8,27 @@ import {pathEquals} from '../../path/path-equals'
 import {useReadOnly} from '../hooks/use-read-only'
 import type {RenderElementProps} from './editable'
 
-const defaultRenderElement = (props: RenderElementProps) => {
-  const {attributes, children} = props
-  return (
-    <div {...attributes} style={{position: 'relative'}}>
-      {children}
-    </div>
-  )
-}
-
 /**
- * ObjectNode component. Renders an ObjectNode (block object or inline object)
- * through the renderElement callback.
+ * Wrapper for block or inline object nodes that have no children in the Slate
+ * model. The DOM still needs a hidden zero-width text node for caret
+ * anchoring, which is the spacer below.
  *
- * Although ObjectNodes have no children in the Slate model, the DOM must
- * contain a hidden spacer with a zero-width text node for selection anchoring.
+ * The `inContainer` flag is resolved by `useChildren` at dispatch time and
+ * passed in to avoid a `useContext(ParentContainerContext)` read here.
  */
 const ObjectNodeComponent = (props: {
   decorations: DecoratedRange[]
-  objectNode: PortableTextObject
+  inContainer: boolean
   isInline: boolean
+  objectNode: PortableTextObject
   path: Path
-  renderElement?: (props: RenderElementProps) => JSX.Element
+  renderElement: (props: RenderElementProps) => JSX.Element
 }) => {
-  const {
-    objectNode,
-    isInline,
-    path,
-    renderElement = defaultRenderElement,
-  } = props
+  const {inContainer, isInline, objectNode, path, renderElement} = props
   const dataPath = serializePath(path)
   const readOnly = useReadOnly()
-  const parentContainer = useContext(ParentContainerContext)
 
-  const attributes: RenderElementProps['attributes'] = parentContainer
+  const attributes: RenderElementProps['attributes'] = inContainer
     ? {
         'data-pt-path': dataPath,
       }
@@ -52,15 +38,13 @@ const ObjectNodeComponent = (props: {
         'data-pt-path': dataPath,
       }
 
-  if (isInline) {
-    if (!readOnly) {
-      attributes.contentEditable = false
-    }
+  if (isInline && !readOnly) {
+    attributes.contentEditable = false
   }
 
   const Tag = isInline ? 'span' : 'div'
 
-  const children = parentContainer ? (
+  const children = inContainer ? (
     <Tag
       data-pt-spacer
       style={{
@@ -108,6 +92,7 @@ const ObjectNodeComponent = (props: {
 const MemoizedObjectNode = React.memo(ObjectNodeComponent, (prev, next) => {
   return (
     prev.objectNode === next.objectNode &&
+    prev.inContainer === next.inContainer &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
     prev.isInline === next.isInline &&
