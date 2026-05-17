@@ -16,14 +16,9 @@ import type {
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
-import type {
-  RenderBlockFunction,
-  RenderChildFunction,
-  RenderListItemFunction,
-  RenderStyleFunction,
-} from '../types/editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorSchema} from './editor-schema'
+import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {ParentContainerContext} from './parent-container-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
@@ -89,12 +84,9 @@ export function RenderElement(props: {
   children: ReactElement
   dropPosition?: DropPosition
   element: PortableTextTextBlock | PortableTextObject
+  legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
-  renderBlock?: RenderBlockFunction
-  renderChild?: RenderChildFunction
-  renderListItem?: RenderListItemFunction
-  renderStyle?: RenderStyleFunction
   schema: EditorSchema
   spellCheck?: boolean
 }) {
@@ -211,11 +203,9 @@ export function RenderElement(props: {
           props.path,
         )}
         element={props.element}
+        legacy={props.legacy}
         path={props.path}
         readOnly={props.readOnly}
-        renderBlock={props.renderBlock}
-        renderListItem={props.renderListItem}
-        renderStyle={props.renderStyle}
         schema={schema}
         spellCheck={props.spellCheck}
         textBlock={props.element}
@@ -246,9 +236,9 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         leafConfig={leafConfig}
+        legacy={props.legacy}
         path={props.path}
         readOnly={props.readOnly}
-        renderChild={props.renderChild}
         schema={schema}
       >
         {props.children}
@@ -279,9 +269,9 @@ export function RenderElement(props: {
       dropPosition={resolveElementDropPosition(props.dropPosition, props.path)}
       element={props.element}
       leafConfig={leafConfig}
+      legacy={props.legacy}
       path={props.path}
       readOnly={props.readOnly}
-      renderBlock={props.renderBlock}
       schema={schema}
     >
       {props.children}

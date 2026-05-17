@@ -7,6 +7,7 @@ import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
 import {RenderLeafConfig} from './render.leaf-config'
@@ -21,7 +22,7 @@ export function RenderBlockObject(props: {
   leafConfig?: LeafConfig
   path: Path
   readOnly: boolean
-  renderBlock?: RenderBlockFunction
+  legacy: LegacyRenderHooks
   schema: EditorSchema
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
@@ -69,10 +70,10 @@ export function RenderBlockObject(props: {
   }
 
   let innerContent: ReactElement
-  if (props.renderBlock && blockObjectSchemaType) {
+  if (props.legacy.renderBlock && blockObjectSchemaType) {
     innerContent = (
       <RenderBlock
-        renderBlock={props.renderBlock}
+        renderBlock={props.legacy.renderBlock}
         editorElementRef={blockObjectRef}
         focused={focused}
         path={[{_key: props.element._key}]}
