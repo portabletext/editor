@@ -128,7 +128,6 @@ export const PortableTextEditable = forwardRef<
     renderStyle,
     selection: propsSelection,
     scrollSelectionIntoView,
-    spellCheck,
     ...restProps
   } = props
 
@@ -195,10 +194,9 @@ export const PortableTextEditable = forwardRef<
         legacy={legacy}
         readOnly={readOnly}
         schema={schema}
-        spellCheck={spellCheck}
       />
     ),
-    [dropPosition, schema, readOnly, legacy, spellCheck],
+    [dropPosition, schema, readOnly, legacy],
   )
 
   const renderLeaf = useCallback(

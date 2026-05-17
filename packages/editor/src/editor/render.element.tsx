@@ -88,7 +88,6 @@ export function RenderElement(props: {
   path: Path
   readOnly: boolean
   schema: EditorSchema
-  spellCheck?: boolean
 }) {
   const editorActor = useContext(EditorActorContext)
   const parentContainer = useContext(ParentContainerContext)
@@ -207,7 +206,6 @@ export function RenderElement(props: {
         path={props.path}
         readOnly={props.readOnly}
         schema={schema}
-        spellCheck={props.spellCheck}
         textBlock={props.element}
       >
         {props.children}

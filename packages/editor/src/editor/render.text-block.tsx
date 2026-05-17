@@ -34,7 +34,6 @@ export function RenderTextBlock(props: {
   path: Path
   readOnly: boolean
   schema: EditorSchema
-  spellCheck?: boolean
   textBlock: PortableTextTextBlock
 }) {
   const blockRef = useRef<HTMLDivElement>(null)
@@ -127,7 +126,6 @@ export function RenderTextBlock(props: {
             ]
           : []),
       ].join(' ')}
-      spellCheck={props.spellCheck}
       data-block-key={props.textBlock._key}
       data-block-name={props.textBlock._type}
       data-block-type="text"
