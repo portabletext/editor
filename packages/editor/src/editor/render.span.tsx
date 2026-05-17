@@ -1,4 +1,7 @@
-import type {InlineObjectSchemaType} from '@portabletext/schema'
+import type {
+  InlineObjectSchemaType,
+  PortableTextSpan,
+} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
@@ -13,7 +16,7 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {ParentContainerContext} from './parent-container-context'
-import {RenderLeafConfig, useLeafConfig} from './render.leaf-config'
+import {RenderSpanConfig, useSpanConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -43,7 +46,7 @@ export function RenderSpan(props: RenderSpanProps) {
   const subSchema = useBlockSubSchema(props.path)
   // Span leafs are looked up against the resolved span child. When no child
   // is found (transient state), fall back to the Slate leaf for identity.
-  const leafConfig = useLeafConfig(child ?? props.leaf, props.path)
+  const spanConfig = useSpanConfig(child ?? props.leaf, props.path)
 
   const parentContainer = useContext(ParentContainerContext)
   const serializedPath = serializePath(props.path)
@@ -139,7 +142,7 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && props.renderChild && child && !leafConfig && !parentContainer) {
+  if (block && props.renderChild && child && !spanConfig && !parentContainer) {
     children = (
       <RenderChild
         renderChild={props.renderChild}
@@ -156,18 +159,18 @@ export function RenderSpan(props: RenderSpanProps) {
     )
   }
 
-  if (leafConfig) {
+  if (spanConfig) {
     return (
-      <RenderLeafConfig
-        leafConfig={leafConfig}
+      <RenderSpanConfig
+        spanConfig={spanConfig}
         attributes={props.attributes}
         focused={focused}
-        node={child ?? props.leaf}
+        node={(child ?? props.leaf) as PortableTextSpan}
         path={props.path}
         selected={selected}
       >
         {children}
-      </RenderLeafConfig>
+      </RenderSpanConfig>
     )
   }
 

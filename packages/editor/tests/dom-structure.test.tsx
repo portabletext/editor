@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -249,7 +249,7 @@ describe('DOM structure', () => {
     })
     const galleryContainer = defineContainer({
       type: 'gallery',
-      childField: 'items',
+      arrayField: 'items',
       render: ({attributes, children}) => (
         <div {...attributes} className="gallery">
           {children}
@@ -268,7 +268,7 @@ describe('DOM structure', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[galleryContainer]} />,
+      children: <NodePlugin nodes={[galleryContainer]} />,
     })
     await vi.waitFor(() => {
       const el = document.querySelector('[data-slate-editor]')
@@ -362,7 +362,7 @@ describe('DOM structure', () => {
     })
     const tableContainer = defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       render: ({attributes, children}) => (
         <table {...attributes}>
           <tbody>{children}</tbody>
@@ -371,12 +371,12 @@ describe('DOM structure', () => {
     })
     const rowContainer = defineContainer({
       type: 'row',
-      childField: 'cells',
+      arrayField: 'cells',
       render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
     })
     const cellContainer = defineContainer({
       type: 'cell',
-      childField: 'content',
+      arrayField: 'content',
       render: ({attributes, children}) => <td {...attributes}>{children}</td>,
     })
     await createTestEditor({
@@ -413,9 +413,7 @@ describe('DOM structure', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[tableContainer, rowContainer, cellContainer]}
-        />
+        <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
       ),
     })
     await vi.waitFor(() => {
@@ -490,7 +488,7 @@ describe('DOM structure', () => {
     })
     const codeContainer = defineContainer({
       type: 'code',
-      childField: 'lines',
+      arrayField: 'lines',
       render: ({attributes, children}) => (
         <pre {...attributes}>
           <code>{children}</code>
@@ -525,7 +523,7 @@ describe('DOM structure', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeContainer]} />,
+      children: <NodePlugin nodes={[codeContainer]} />,
     })
     await vi.waitFor(() => {
       const el = document.querySelector('[data-slate-editor]')
@@ -588,7 +586,7 @@ describe('DOM structure', () => {
     })
     const calloutContainer = defineContainer({
       type: 'callout',
-      childField: 'content',
+      arrayField: 'content',
       render: ({attributes, children}) => (
         <div {...attributes} className="callout">
           {children}
@@ -622,7 +620,7 @@ describe('DOM structure', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[calloutContainer]} />,
+      children: <NodePlugin nodes={[calloutContainer]} />,
     })
     await vi.waitFor(() => {
       const calloutEl = document.querySelector('.callout')
@@ -662,7 +660,7 @@ describe('DOM structure', () => {
     })
     const calloutContainer = defineContainer({
       type: 'callout',
-      childField: 'content',
+      arrayField: 'content',
       render: ({attributes, children}) => (
         <div {...attributes} className="callout">
           {children}
@@ -696,7 +694,7 @@ describe('DOM structure', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[calloutContainer]} />,
+      children: <NodePlugin nodes={[calloutContainer]} />,
     })
     await vi.waitFor(() => {
       const paragraph = document.querySelector('.callout-paragraph')

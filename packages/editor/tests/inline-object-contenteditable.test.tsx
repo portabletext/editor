@@ -1,14 +1,16 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {LeafPlugin} from '../src/plugins/plugin.leaf'
-import {defineContainer, defineLeaf} from '../src/renderers/renderer.types'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {
+  defineContainer,
+  defineInlineObject,
+} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('inline-object void wrapper contenteditable', () => {
-  test('the consumer wrapper has `contenteditable="false"` when registered via `defineLeaf`', async () => {
-    const stockTickerLeaf = defineLeaf({
+  test('the consumer wrapper has `contenteditable="false"` when registered via `defineInlineObject`', async () => {
+    const stockTickerLeaf = defineInlineObject({
       type: 'stock-ticker',
       render: ({attributes, children, node}) => {
         const ticker = node as {symbol?: string}
@@ -39,7 +41,7 @@ describe('inline-object void wrapper contenteditable', () => {
           style: 'normal',
         },
       ],
-      children: <LeafPlugin leaves={[stockTickerLeaf]} />,
+      children: <NodePlugin nodes={[stockTickerLeaf]} />,
     })
 
     await vi.waitFor(() => {
@@ -57,10 +59,10 @@ describe('inline-object void wrapper contenteditable', () => {
     })
   })
 
-  test('the engine-rendered placeholder wrapper has `contenteditable="false"` inside a container without `defineLeaf`', async () => {
+  test('the engine-rendered placeholder wrapper has `contenteditable="false"` inside a container without `defineInlineObject`', async () => {
     const cellContainer = defineContainer({
       type: 'cell',
-      childField: 'content',
+      arrayField: 'content',
       render: ({attributes, children}) => <div {...attributes}>{children}</div>,
     })
 
@@ -100,7 +102,7 @@ describe('inline-object void wrapper contenteditable', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[cellContainer]} />,
+      children: <NodePlugin nodes={[cellContainer]} />,
     })
 
     await vi.waitFor(() => {

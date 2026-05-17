@@ -18,10 +18,10 @@ export type ChildArrayField = FieldDefinition & {
  *   `OfDefinition`). Tells you what the schema permits as children.
  * - `of` (top-level on `RegisteredContainer`) is the list of
  *   POSITIONAL CHILD REGISTRATIONS - nested
- *   {@link RegisteredContainer} or {@link RegisteredLeaf} entries -
- *   that override the global registration when the engine descends
- *   into this parent. Tells you which child renderings are scoped to
- *   this parent.
+ *   {@link RegisteredContainer} or {@link RegisteredPositional}
+ *   entries - that override the global registration when the engine
+ *   descends into this parent. Tells you which child renderings are
+ *   scoped to this parent.
  *
  * The full container registration (including the render callback)
  * lives on the editor's internal {@link ResolvedContainers} map and
@@ -36,21 +36,60 @@ export type ChildArrayField = FieldDefinition & {
  * @alpha
  */
 export type RegisteredContainer = {
+  kind: 'container'
   type: string
   field: ChildArrayField
-  of?: ReadonlyArray<RegisteredContainer | RegisteredLeaf>
+  of?: ReadonlyArray<RegisteredContainer | RegisteredPositional>
 }
 
 /**
- * Public view of a registered leaf. Surfaced inside a containing
+ * Public view of a registered span, surfaced inside a containing
  * {@link RegisteredContainer}'s `of` array as a positional
- * registration that does not have editable children.
+ * registration. The render function is engine-internal.
  *
  * @alpha
  */
-export type RegisteredLeaf = {
+export type RegisteredSpan = {
+  kind: 'span'
   type: string
 }
+
+/**
+ * Public view of a registered block object, surfaced inside a
+ * containing {@link RegisteredContainer}'s `of` array as a positional
+ * registration. The render function is engine-internal.
+ *
+ * @alpha
+ */
+export type RegisteredBlockObject = {
+  kind: 'blockObject'
+  type: string
+}
+
+/**
+ * Public view of a registered inline object, surfaced inside a
+ * containing {@link RegisteredContainer}'s `of` array as a positional
+ * registration. The render function is engine-internal.
+ *
+ * @alpha
+ */
+export type RegisteredInlineObject = {
+  kind: 'inlineObject'
+  type: string
+}
+
+/**
+ * Union of non-container positional registrations that may appear in
+ * a {@link RegisteredContainer}'s `of` array. Text-block registrations
+ * are NOT included here; they surface on `EditorContext.textBlocks`,
+ * not on the containers tree.
+ *
+ * @alpha
+ */
+export type RegisteredPositional =
+  | RegisteredSpan
+  | RegisteredBlockObject
+  | RegisteredInlineObject
 
 /**
  * Map of registered editable containers carried on `EditorContext`.

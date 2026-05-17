@@ -66,9 +66,9 @@ const schemaDefinition = defineSchema({
 const schema = compileSchema(schemaDefinition)
 
 const tableContainers: Containers = resolveContainers(schema, [
-  {type: 'table', childField: 'rows'},
-  {type: 'tableRow', childField: 'cells'},
-  {type: 'tableCell', childField: 'content'},
+  {type: 'table', arrayField: 'rows'},
+  {type: 'tableRow', arrayField: 'cells'},
+  {type: 'tableCell', arrayField: 'content'},
 ])
 
 describe(fromTextspec.name, () => {
@@ -556,8 +556,8 @@ describe('fromTextspec with self-referential schemas', () => {
   const recursiveContainers: Containers = resolveContainers(
     recursiveListSchema,
     [
-      {type: 'list', childField: 'items'},
-      {type: 'list-item', childField: 'content'},
+      {type: 'list', arrayField: 'items'},
+      {type: 'list-item', arrayField: 'content'},
     ],
   )
 

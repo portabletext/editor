@@ -1,5 +1,5 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
 import {useEffect} from 'react'
@@ -39,7 +39,7 @@ const schemaDefinition = defineSchema({
 const containers = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => (
       <div data-testid="callout" {...attributes}>
         {children}
@@ -88,7 +88,7 @@ describe('useToolbarSchema', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={containers} />
+          <NodePlugin nodes={containers} />
           <ToolbarProbe onSchema={onSchema} />
         </>
       ),
@@ -146,7 +146,7 @@ describe('useApplicableSchema', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={containers} />
+          <NodePlugin nodes={containers} />
           <ApplicableProbe onApplicable={onApplicable} />
         </>
       ),
@@ -240,7 +240,7 @@ describe('useApplicableSchema', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={containers} />
+          <NodePlugin nodes={containers} />
           <ApplicableProbe onApplicable={onApplicable} />
         </>
       ),
@@ -290,7 +290,7 @@ describe('useApplicableSchema', () => {
       initialValue: [{_type: 'image', _key: 'img1'}],
       children: (
         <>
-          <ContainerPlugin containers={containers} />
+          <NodePlugin nodes={containers} />
           <ApplicableProbe onApplicable={onApplicable} />
         </>
       ),
@@ -340,7 +340,7 @@ describe('useApplicableSchema', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={containers} />
+          <NodePlugin nodes={containers} />
           <ApplicableProbe onApplicable={onApplicable} />
         </>
       ),

@@ -2,7 +2,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineContainer, defineSchema} from '../src'
-import {ContainerPlugin} from '../src/plugins'
+import {NodePlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
@@ -23,7 +23,7 @@ const schemaDefinition = defineSchema({
 
 const calloutContainer = defineContainer({
   type: 'callout',
-  childField: 'content',
+  arrayField: 'content',
 })
 
 describe('click above/below lonely block object in containers', () => {
@@ -48,7 +48,7 @@ describe('click above/below lonely block object in containers', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[calloutContainer]} />,
+      children: <NodePlugin nodes={[calloutContainer]} />,
     })
 
     await userEvent.click(locator)
@@ -128,7 +128,7 @@ describe('click above/below lonely block object in containers', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[calloutContainer]} />,
+      children: <NodePlugin nodes={[calloutContainer]} />,
     })
 
     await userEvent.click(locator)

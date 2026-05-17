@@ -85,17 +85,17 @@ describe(getPathSubSchema.name, () => {
     const containers = resolveContainers(schema, [
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: testRender,
       }),
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: testRender,
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ])

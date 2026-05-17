@@ -1,12 +1,14 @@
 import type {
+  BlockObjectConfig,
   ContainerConfig,
-  LeafConfig,
+  InlineObjectConfig,
+  SpanConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import type {
   Containers,
   RegisteredContainer,
-  RegisteredLeaf,
+  RegisteredPositional,
   ResolvedContainers,
 } from './container-types'
 
@@ -34,6 +36,7 @@ export function buildPublicContainers(
 
 function toRegisteredContainer(config: ContainerConfig): RegisteredContainer {
   return {
+    kind: 'container',
     type: config.container.type,
     field: config.field,
     ...(config.of
@@ -43,13 +46,24 @@ function toRegisteredContainer(config: ContainerConfig): RegisteredContainer {
 }
 
 function toRegisteredOfEntry(
-  entry: ContainerConfig | LeafConfig | TextBlockConfig,
-): RegisteredContainer | RegisteredLeaf | undefined {
+  entry:
+    | ContainerConfig
+    | SpanConfig
+    | BlockObjectConfig
+    | InlineObjectConfig
+    | TextBlockConfig,
+): RegisteredContainer | RegisteredPositional | undefined {
   if ('container' in entry) {
     return toRegisteredContainer(entry)
   }
-  if ('leaf' in entry) {
-    return {type: entry.leaf.type}
+  if ('span' in entry) {
+    return {kind: 'span', type: entry.span.type}
+  }
+  if ('blockObject' in entry) {
+    return {kind: 'blockObject', type: entry.blockObject.type}
+  }
+  if ('inlineObject' in entry) {
+    return {kind: 'inlineObject', type: entry.inlineObject.type}
   }
   // Text-block configs are not exposed on the public Containers tree -
   // they have their own `textBlocks` map on the editor context.

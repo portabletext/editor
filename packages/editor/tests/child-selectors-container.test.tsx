@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {getAnchorChild} from '../src/selectors/selector.get-anchor-child'
 import {getAnchorSpan} from '../src/selectors/selector.get-anchor-span'
@@ -25,7 +25,7 @@ const schemaDefinition = defineSchema({
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -61,7 +61,7 @@ describe('child and span selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)
@@ -117,7 +117,7 @@ describe('child and span selectors (container awareness)', () => {
 
     const inlineContainer = defineContainer({
       type: 'code-block',
-      childField: 'lines',
+      arrayField: 'lines',
       render: ({attributes, children}) => (
         <pre data-testid="code-block" {...attributes}>
           {children}
@@ -151,7 +151,7 @@ describe('child and span selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[inlineContainer]} />,
+      children: <NodePlugin nodes={[inlineContainer]} />,
     })
 
     await userEvent.click(locator)
@@ -214,7 +214,7 @@ describe('child and span selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)

@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -44,7 +44,7 @@ const schemaDefinition = defineSchema({
 const calloutContainer = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -52,7 +52,7 @@ const calloutContainer = [
 const codeBlockContainer = [
   defineContainer({
     type: 'code-block',
-    childField: 'lines',
+    arrayField: 'lines',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -67,7 +67,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
       initialValue: [
         {
           _type: 'callout',
@@ -124,7 +124,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -196,7 +196,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -264,7 +264,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -343,7 +343,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -398,7 +398,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'block',
@@ -449,7 +449,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -506,7 +506,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
       initialValue: [
         {
           _type: 'callout',
@@ -598,17 +598,17 @@ describe('event.update value with containers', () => {
     const tableContainers = [
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: ({children}) => <>{children}</>,
       }),
     ]
@@ -623,7 +623,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: deepSchema,
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
       initialValue: [
         {
           _type: 'table',
@@ -725,7 +725,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: value,
     })
 
@@ -751,7 +751,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -893,9 +893,7 @@ describe('event.update value with containers', () => {
       keyGenerator,
       schemaDefinition,
       children: (
-        <ContainerPlugin
-          containers={[...calloutContainer, ...codeBlockContainer]}
-        />
+        <NodePlugin nodes={[...calloutContainer, ...codeBlockContainer]} />
       ),
       initialValue: [
         {
@@ -954,7 +952,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
-      children: <ContainerPlugin containers={codeBlockContainer} />,
+      children: <NodePlugin nodes={codeBlockContainer} />,
       initialValue: [
         {
           _type: 'code-block',
@@ -1056,7 +1054,7 @@ describe('event.update value with containers', () => {
     const heteroContainer = [
       defineContainer({
         type: 'code-block',
-        childField: 'lines',
+        arrayField: 'lines',
         render: ({children}) => <>{children}</>,
       }),
     ]
@@ -1069,7 +1067,7 @@ describe('event.update value with containers', () => {
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: heteroSchema,
-      children: <ContainerPlugin containers={heteroContainer} />,
+      children: <NodePlugin nodes={heteroContainer} />,
       initialValue: [
         {
           _type: 'code-block',

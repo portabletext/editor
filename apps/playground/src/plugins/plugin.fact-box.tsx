@@ -1,11 +1,11 @@
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {LayersIcon} from 'lucide-react'
 import type {JSX} from 'react'
 
 const factBoxContainer = defineContainer({
   type: 'fact-box',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children, selected}) => (
     <section
       {...attributes}
@@ -93,5 +93,5 @@ const factBoxContainer = defineContainer({
 })
 
 export function FactBoxPlugin(): JSX.Element {
-  return <ContainerPlugin containers={[factBoxContainer]} />
+  return <NodePlugin nodes={[factBoxContainer]} />
 }

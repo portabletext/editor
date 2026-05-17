@@ -494,15 +494,15 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           debug.normalization('Fixing duplicate key on container child')
           // Use numeric index to address the duplicate since keyed path
           // is ambiguous for nodes with the same key.
-          const childFieldName = getChildFieldName(editor.context, path)
-          if (childFieldName) {
+          const arrayFieldName = getChildFieldName(editor.context, path)
+          if (arrayFieldName) {
             editor.apply({
               type: 'set',
-              path: [...path, childFieldName, i, '_key'],
+              path: [...path, arrayFieldName, i, '_key'],
               value: newKey,
               inverse: {
                 type: 'set',
-                path: [...path, childFieldName, i, '_key'],
+                path: [...path, arrayFieldName, i, '_key'],
                 value: key,
               },
             })

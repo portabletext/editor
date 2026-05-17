@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -24,7 +24,7 @@ const schemaDefinition = defineSchema({
 const containers = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
   }),
 ]
 
@@ -52,7 +52,7 @@ describe('delete on empty container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -113,7 +113,7 @@ describe('delete on empty container', () => {
           children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -169,7 +169,7 @@ describe('delete on empty container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -230,7 +230,7 @@ describe('delete on empty container', () => {
           children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -337,19 +337,19 @@ const tableSchemaPermissive = defineSchema({
 const tableContainersPermissive = [
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
   }),
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
   }),
 ]
 
@@ -408,19 +408,19 @@ const tableSchemaStructural = defineSchema({
 const tableContainersStructural = [
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
   }),
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
   }),
 ]
 
@@ -480,7 +480,7 @@ describe('delete on empty container - nested cascade', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainersPermissive} />,
+      children: <NodePlugin nodes={tableContainersPermissive} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -570,7 +570,7 @@ describe('delete on empty container - nested cascade', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainersStructural} />,
+      children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -637,7 +637,7 @@ describe('delete on empty container - nested cascade', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainersStructural} />,
+      children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -721,7 +721,7 @@ describe('delete on empty container - nested cascade', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainersStructural} />,
+      children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -785,7 +785,7 @@ describe('delete on empty container - nested block container', () => {
   const containers = [
     defineContainer({
       type: 'fact-box',
-      childField: 'content',
+      arrayField: 'content',
       of: [
         defineTextBlock({
           type: 'block',
@@ -819,7 +819,7 @@ describe('delete on empty container - nested block container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
@@ -884,7 +884,7 @@ describe('delete on empty container - nested block container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())

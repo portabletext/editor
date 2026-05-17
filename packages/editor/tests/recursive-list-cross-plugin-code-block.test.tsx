@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -22,7 +22,7 @@ import {createTestEditor} from '../src/test/vitest'
  *    code-block top-level. The locked rule "registration is type-keyed;
  *    activation is position-gated" implies the global registration
  *    activates wherever the schema declares a code-block with the
- *    matching childField.
+ *    matching arrayField.
  *
  * Both scenarios assert that normalization walks the full chain (list ->
  * item -> code-block -> lines) and fills an empty code-block's `lines`
@@ -115,7 +115,7 @@ function listPluginContainers() {
   return [
     defineContainer({
       type: 'list',
-      childField: 'items',
+      arrayField: 'items',
       render: ({attributes, children}) => (
         <ul data-testid="list" {...attributes}>
           {children}
@@ -124,7 +124,7 @@ function listPluginContainers() {
       of: [
         defineContainer({
           type: 'list-item',
-          childField: 'content',
+          arrayField: 'content',
           render: ({attributes, children}) => (
             <li data-testid="list-item" {...attributes}>
               {children}
@@ -139,7 +139,7 @@ function listPluginContainers() {
 function codeBlockPluginContainer() {
   return defineContainer({
     type: 'code-block',
-    childField: 'lines',
+    arrayField: 'lines',
     render: ({attributes, children}) => (
       <pre data-testid="code-block" {...attributes}>
         {children}
@@ -178,8 +178,8 @@ describe('Container API recursive list + cross-plugin code-block', () => {
       schemaDefinition: schemaWithCodeBlockTopLevel(),
       initialValue: initialListValue(keyGenerator),
       children: (
-        <ContainerPlugin
-          containers={[...listPluginContainers(), codeBlockPluginContainer()]}
+        <NodePlugin
+          nodes={[...listPluginContainers(), codeBlockPluginContainer()]}
         />
       ),
     })
@@ -212,8 +212,8 @@ describe('Container API recursive list + cross-plugin code-block', () => {
       schemaDefinition: schemaWithCodeBlockInlineOnly(),
       initialValue: initialListValue(keyGenerator),
       children: (
-        <ContainerPlugin
-          containers={[...listPluginContainers(), codeBlockPluginContainer()]}
+        <NodePlugin
+          nodes={[...listPluginContainers(), codeBlockPluginContainer()]}
         />
       ),
     })
@@ -272,8 +272,8 @@ describe('Container API recursive list + cross-plugin code-block', () => {
       schemaDefinition: schemaWithCodeBlockTopLevel(),
       initialValue,
       children: (
-        <ContainerPlugin
-          containers={[...listPluginContainers(), codeBlockPluginContainer()]}
+        <NodePlugin
+          nodes={[...listPluginContainers(), codeBlockPluginContainer()]}
         />
       ),
     })

@@ -1,14 +1,14 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
-import type {LeafConfig} from '../renderers/renderer.types'
+import type {InlineObjectConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {RenderDefaultInlineObject} from './render.default-object'
-import {RenderLeafConfig} from './render.leaf-config'
+import {RenderInlineObjectConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -16,7 +16,7 @@ export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextObject
-  leafConfig?: LeafConfig
+  inlineObjectConfig?: InlineObjectConfig
   legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
@@ -42,15 +42,15 @@ export function RenderInlineObject(props: {
 
   const inlineObject = props.element as unknown as PortableTextChild
 
-  if (props.leafConfig) {
+  if (props.inlineObjectConfig) {
     const {
       'data-slate-node': _slateNode,
       'data-slate-void': _slateVoid,
       ...ptAttributes
     } = props.attributes
     return (
-      <RenderLeafConfig
-        leafConfig={props.leafConfig}
+      <RenderInlineObjectConfig
+        inlineObjectConfig={props.inlineObjectConfig}
         attributes={{
           ...ptAttributes,
           'data-pt-inline': 'object',
@@ -61,7 +61,7 @@ export function RenderInlineObject(props: {
         selected={selected}
       >
         {props.children}
-      </RenderLeafConfig>
+      </RenderInlineObjectConfig>
     )
   }
 

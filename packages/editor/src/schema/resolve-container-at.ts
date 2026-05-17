@@ -4,12 +4,12 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {
   Containers,
   RegisteredContainer,
-  RegisteredLeaf,
+  RegisteredPositional,
 } from './container-types'
 
 /**
  * Walk the editor value following `path` and return the
- * {@link RegisteredContainer} or {@link RegisteredLeaf} that applies
+ * {@link RegisteredContainer} or {@link RegisteredPositional} that applies
  * at `path`'s target position.
  *
  * Resolution rules at each step:
@@ -28,7 +28,7 @@ import type {
  *    container at its position), return `undefined`.
  *
  * Returns `undefined` when the target's `_type` is not registered
- * at this position. Returns a {@link RegisteredLeaf} when the target
+ * at this position. Returns a {@link RegisteredPositional} when the target
  * resolves to a leaf in a positional `of` (terminal node with no
  * editable children).
  *
@@ -38,7 +38,7 @@ export function resolveContainerAt(
   containers: Containers,
   value: ReadonlyArray<Node>,
   path: Path,
-): RegisteredContainer | RegisteredLeaf | undefined {
+): RegisteredContainer | RegisteredPositional | undefined {
   const keyedIndices: Array<number> = []
   for (let index = 0; index < path.length; index++) {
     if (isKeyedSegment(path[index])) {
@@ -51,7 +51,7 @@ export function resolveContainerAt(
 
   let currentChildren: ReadonlyArray<Node> = value
   let parent: RegisteredContainer | undefined
-  let resolved: RegisteredContainer | RegisteredLeaf | undefined
+  let resolved: RegisteredContainer | RegisteredPositional | undefined
   const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
 
   let segmentIndex = 0
@@ -102,7 +102,7 @@ function resolveNodeEntry(
   containers: Containers,
   parent: RegisteredContainer | undefined,
   node: Node,
-): RegisteredContainer | RegisteredLeaf | undefined {
+): RegisteredContainer | RegisteredPositional | undefined {
   if (parent?.of) {
     for (const entry of parent.of) {
       if (entry.type === node._type) {

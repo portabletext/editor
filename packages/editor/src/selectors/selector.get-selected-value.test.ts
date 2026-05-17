@@ -860,7 +860,7 @@ describe(`${getSelectedValue.name} with containers`, () => {
 
   const calloutContainer = defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
   })
 
   function createSnapshot(
@@ -1086,12 +1086,12 @@ describe(`${getSelectedValue.name} with containers`, () => {
     )
 
     const defs = [
-      defineContainer({type: 'table', childField: 'rows'}),
-      defineContainer({type: 'row', childField: 'cells'}),
-      defineContainer({type: 'cell', childField: 'content'}),
+      defineContainer({type: 'table', arrayField: 'rows'}),
+      defineContainer({type: 'row', arrayField: 'cells'}),
+      defineContainer({type: 'cell', arrayField: 'content'}),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
       }),
     ]
 
@@ -1237,9 +1237,9 @@ describe(`${getSelectedValue.name} with containers`, () => {
     )
 
     const defs = [
-      defineContainer({type: 'table', childField: 'rows'}),
-      defineContainer({type: 'row', childField: 'cells'}),
-      defineContainer({type: 'cell', childField: 'content'}),
+      defineContainer({type: 'table', arrayField: 'rows'}),
+      defineContainer({type: 'row', arrayField: 'cells'}),
+      defineContainer({type: 'cell', arrayField: 'content'}),
     ]
 
     const linkKey = 'link1'

@@ -9,15 +9,15 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Regression: when the SAME `_type` is registered under two
- * different parents with DIFFERENT `childField` values, descent
+ * different parents with DIFFERENT `arrayField` values, descent
  * helpers must resolve the position-specific entry. Flat lookup by
  * bare `_type` would silently pick the wrong field and return `[]`
  * for nodes at the loser position.
  *
  * Schema configuration:
- * - `table` registers `cell` in its `of` with `childField:
+ * - `table` registers `cell` in its `of` with `arrayField:
  *   'content'`.
- * - `diagram` registers `cell` in its `of` with `childField:
+ * - `diagram` registers `cell` in its `of` with `arrayField:
  *   'markers'`.
  *
  * Two cells, two different fields, no top-level `cell` registration.
@@ -74,12 +74,12 @@ describe('getChildren with same _type registered under different parents', () =>
     schema,
     defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       render: containerRender,
       of: [
         defineContainer({
           type: 'cell',
-          childField: 'content',
+          arrayField: 'content',
           render: containerRender,
         }),
       ],
@@ -89,12 +89,12 @@ describe('getChildren with same _type registered under different parents', () =>
     schema,
     defineContainer({
       type: 'diagram',
-      childField: 'shapes',
+      arrayField: 'shapes',
       render: containerRender,
       of: [
         defineContainer({
           type: 'cell',
-          childField: 'markers',
+          arrayField: 'markers',
           render: containerRender,
         }),
       ],

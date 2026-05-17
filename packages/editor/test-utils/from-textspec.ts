@@ -710,30 +710,30 @@ function resolveContainerPoint(
   let currentNode: Record<string, unknown> = block
 
   for (const index of path) {
-    let childFieldName: string | undefined
+    let arrayFieldName: string | undefined
 
     if (isTextBlock(schemaContext, currentNode as PortableTextBlock)) {
-      childFieldName = 'children'
+      arrayFieldName = 'children'
     } else if (typeof currentNode['_type'] === 'string') {
       for (const [, containerConfig] of containers) {
         if (currentNode[containerConfig.field.name] !== undefined) {
-          childFieldName = containerConfig.field.name
+          arrayFieldName = containerConfig.field.name
           break
         }
       }
     }
 
-    if (!childFieldName) {
+    if (!arrayFieldName) {
       break
     }
 
-    const field = currentNode[childFieldName]
+    const field = currentNode[arrayFieldName]
 
     if (!Array.isArray(field)) {
       return undefined
     }
 
-    keyedPath.push(childFieldName)
+    keyedPath.push(arrayFieldName)
 
     const child = field[index] as Record<string, unknown> | undefined
 
@@ -832,25 +832,25 @@ function indexedPathToKeyedPath(
 
     keyedPath.push({_key: node['_key']})
 
-    let childFieldName: string | undefined
+    let arrayFieldName: string | undefined
 
     if (isTextBlock(schemaContext, node as PortableTextBlock)) {
-      childFieldName = 'children'
+      arrayFieldName = 'children'
     } else if (typeof node['_type'] === 'string') {
       // Look up the field name from the containers map
       for (const [, containerConfig] of containers) {
         if (node[containerConfig.field.name] !== undefined) {
-          childFieldName = containerConfig.field.name
+          arrayFieldName = containerConfig.field.name
           break
         }
       }
     }
 
-    if (childFieldName) {
-      const field = node[childFieldName]
+    if (arrayFieldName) {
+      const field = node[arrayFieldName]
 
       if (Array.isArray(field)) {
-        keyedPath.push(childFieldName)
+        keyedPath.push(arrayFieldName)
         currentChildren = field as Array<Record<string, unknown>>
       }
     } else {

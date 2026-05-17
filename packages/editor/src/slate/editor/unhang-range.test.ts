@@ -340,12 +340,12 @@ function buildContainerContext(...value: Array<Node>) {
   const containers = resolveContainers(schema, [
     defineContainer({
       type: 'callout',
-      childField: 'content',
+      arrayField: 'content',
       render: () => null,
     }),
     defineContainer({
       type: 'code-block',
-      childField: 'lines',
+      arrayField: 'lines',
       render: () => null,
     }),
   ])

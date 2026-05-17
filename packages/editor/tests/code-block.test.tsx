@@ -4,8 +4,8 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {Patch} from '../src'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -26,7 +26,7 @@ const schemaDefinition = defineSchema({
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -70,7 +70,7 @@ describe('code block', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={[codeBlockContainer]} />
+          <NodePlugin nodes={[codeBlockContainer]} />
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'mutation') {

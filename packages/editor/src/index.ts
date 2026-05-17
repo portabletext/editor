@@ -44,18 +44,26 @@ export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
 export {useEditor} from './editor/use-editor'
 export {
+  defineBlockObject,
   defineContainer,
-  defineLeaf,
+  defineInlineObject,
+  defineSpan,
   defineTextBlock,
+  type BlockObject,
   type Container,
-  type Leaf,
+  type InlineObject,
+  type RegistrableNode,
+  type Span,
   type TextBlock,
 } from './renderers/renderer.types'
 export {resolveContainerAt} from './schema/resolve-containers'
 export type {
   Containers,
+  RegisteredBlockObject,
   RegisteredContainer,
-  RegisteredLeaf,
+  RegisteredInlineObject,
+  RegisteredPositional,
+  RegisteredSpan,
 } from './schema/resolve-containers'
 export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'

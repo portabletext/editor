@@ -11,8 +11,8 @@ import {
 } from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
@@ -844,7 +844,7 @@ describe('Behavior API', () => {
 
       const calloutContainer = defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
@@ -893,7 +893,7 @@ describe('Behavior API', () => {
         ],
         children: (
           <>
-            <ContainerPlugin containers={[calloutContainer]} />
+            <NodePlugin nodes={[calloutContainer]} />
             <BehaviorPlugin
               behaviors={[
                 defineBehavior({
@@ -943,7 +943,7 @@ describe('Behavior API', () => {
 
       const calloutContainer = defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
@@ -992,7 +992,7 @@ describe('Behavior API', () => {
         ],
         children: (
           <>
-            <ContainerPlugin containers={[calloutContainer]} />
+            <NodePlugin nodes={[calloutContainer]} />
             <BehaviorPlugin
               behaviors={[
                 defineBehavior({

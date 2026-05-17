@@ -85,7 +85,7 @@ const useChildren = (props: {
   )
 
   let children: Array<Node> = []
-  let childFieldName = 'children'
+  let arrayFieldName = 'children'
   // The container config to propagate down to node's children: it becomes
   // their parent's container config. Stays as parentContainer for text
   // blocks and the editor root; updates to node's own config when node
@@ -109,7 +109,7 @@ const useChildren = (props: {
       ]
       if (Array.isArray(fieldValue)) {
         children = fieldValue as Array<Node>
-        childFieldName = containerConfig.field.name
+        arrayFieldName = containerConfig.field.name
       }
 
       childContainer = containerConfig
@@ -125,7 +125,7 @@ const useChildren = (props: {
       const nodePath: Path =
         parentPath.length === 0
           ? [{_key: node._key}]
-          : [...parentPath, childFieldName, {_key: node._key}]
+          : [...parentPath, arrayFieldName, {_key: node._key}]
 
       return (
         <ElementComponent
@@ -141,7 +141,7 @@ const useChildren = (props: {
       )
     },
     [
-      childFieldName,
+      arrayFieldName,
       decorationsByChild,
       parentPath,
       renderElement,
@@ -192,7 +192,7 @@ const useChildren = (props: {
     const nodePath: Path =
       parentPath.length === 0
         ? [{_key: node._key}]
-        : [...parentPath, childFieldName, {_key: node._key}]
+        : [...parentPath, arrayFieldName, {_key: node._key}]
 
     return (
       <ObjectNodeComponent

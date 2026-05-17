@@ -82,39 +82,15 @@ export function createInternalEditor(config: EditorConfig): {
         })
       }
     },
-    registerContainer: (container) => {
+    registerNode: (nodeConfig) => {
       editorActor.send({
-        type: 'register container',
-        container,
+        type: 'register',
+        node: nodeConfig.node,
       })
       return () => {
         editorActor.send({
-          type: 'unregister container',
-          container,
-        })
-      }
-    },
-    registerLeaf: (leaf) => {
-      editorActor.send({
-        type: 'register leaf',
-        leaf,
-      })
-      return () => {
-        editorActor.send({
-          type: 'unregister leaf',
-          leaf,
-        })
-      }
-    },
-    registerTextBlock: (textBlock) => {
-      editorActor.send({
-        type: 'register text-block',
-        textBlock,
-      })
-      return () => {
-        editorActor.send({
-          type: 'unregister text-block',
-          textBlock,
+          type: 'unregister',
+          node: nodeConfig.node,
         })
       }
     },

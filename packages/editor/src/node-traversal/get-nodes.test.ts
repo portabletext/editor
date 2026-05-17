@@ -801,7 +801,7 @@ describe(getNodes.name, () => {
             containers: resolveContainers(schema, [
               defineContainer({
                 type: 'accordion',
-                childField: 'value',
+                arrayField: 'value',
               }),
             ]),
           },

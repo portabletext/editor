@@ -1,7 +1,8 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import type {ReactElement} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -32,7 +33,7 @@ const schemaDefinition = defineSchema({
 
 const calloutContainer = defineContainer({
   type: 'callout',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children}) => (
     <div data-testid="callout" {...attributes}>
       {children}
@@ -79,7 +80,7 @@ describe('container rendering', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[calloutContainer]} />,
+      children: <NodePlugin nodes={[calloutContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -143,7 +144,7 @@ describe('container rendering', () => {
 
     const trackingContainer = defineContainer({
       type: 'callout',
-      childField: 'content',
+      arrayField: 'content',
       render: ({attributes, children, node}) => {
         receivedNodes.push({_type: node._type, _key: node._key})
         return (
@@ -186,7 +187,7 @@ describe('container rendering', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[trackingContainer]} />,
+      children: <NodePlugin nodes={[trackingContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -240,7 +241,7 @@ describe('table with nested rows and cells', () => {
 
   const tableContainer = defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({attributes, children}) => (
       <table data-testid="table" {...attributes}>
         <tbody>{children}</tbody>
@@ -250,7 +251,7 @@ describe('table with nested rows and cells', () => {
 
   const rowContainer = defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
     render: ({attributes, children}) => (
       <tr data-testid="row" {...attributes}>
         {children}
@@ -260,7 +261,7 @@ describe('table with nested rows and cells', () => {
 
   const cellContainer = defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => (
       <td data-testid="cell" {...attributes}>
         {children}
@@ -310,9 +311,7 @@ describe('table with nested rows and cells', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[tableContainer, rowContainer, cellContainer]}
-        />
+        <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
       ),
     })
 
@@ -378,7 +377,7 @@ describe('container with non-editable fields', () => {
 
   const cardContainer = defineContainer({
     type: 'card',
-    childField: 'body',
+    arrayField: 'body',
     render: ({attributes, children}) => (
       <div data-testid="card" {...attributes}>
         {children}
@@ -416,7 +415,7 @@ describe('container with non-editable fields', () => {
           tags: ['tag1', 'tag2'],
         },
       ],
-      children: <ContainerPlugin containers={[cardContainer]} />,
+      children: <NodePlugin nodes={[cardContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -498,11 +497,11 @@ describe('positional block-leaf override', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div data-testid="callout" {...attributes}>
                   {children}
@@ -580,13 +579,17 @@ describe('container and renderer independence', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             {
               ...calloutContainer,
-              render: ({attributes, children}) => (
-                <div {...attributes}>{children}</div>
-              ),
+              render: ({
+                attributes,
+                children,
+              }: {
+                attributes: Record<string, unknown>
+                children: ReactElement
+              }) => <div {...attributes}>{children}</div>,
             },
           ]}
         />
@@ -648,7 +651,7 @@ describe('container and renderer independence', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[]} />,
+      children: <NodePlugin nodes={[]} />,
     })
 
     await vi.waitFor(() => {
@@ -691,7 +694,7 @@ describe('code block container', () => {
 
   const codeBlockContainer = defineContainer({
     type: 'code-block',
-    childField: 'code',
+    arrayField: 'code',
     render: ({attributes, children}) => (
       <pre data-testid="code-block" {...attributes}>
         <code>{children}</code>
@@ -742,7 +745,7 @@ describe('code block container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -804,7 +807,7 @@ describe('gallery with void block objects', () => {
 
   const galleryContainer = defineContainer({
     type: 'gallery',
-    childField: 'items',
+    arrayField: 'items',
     render: ({attributes, children}) => (
       <div data-testid="gallery" {...attributes}>
         {children}
@@ -837,7 +840,7 @@ describe('gallery with void block objects', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[galleryContainer]} />,
+      children: <NodePlugin nodes={[galleryContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -935,7 +938,7 @@ describe('cell with mixed content', () => {
 
   const tableContainer = defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({attributes, children}) => (
       <table data-testid="table" {...attributes}>
         <tbody>{children}</tbody>
@@ -945,7 +948,7 @@ describe('cell with mixed content', () => {
 
   const rowContainer = defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
     render: ({attributes, children}) => (
       <tr data-testid="row" {...attributes}>
         {children}
@@ -955,7 +958,7 @@ describe('cell with mixed content', () => {
 
   const cellContainer = defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => (
       <td data-testid="cell" {...attributes}>
         {children}
@@ -1024,9 +1027,7 @@ describe('cell with mixed content', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[tableContainer, rowContainer, cellContainer]}
-        />
+        <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
       ),
     })
 
@@ -1129,7 +1130,7 @@ describe('self-referential containers', () => {
 
   const listContainer = defineContainer({
     type: 'list',
-    childField: 'items',
+    arrayField: 'items',
     render: ({attributes, children}) => (
       <ul data-testid="list" {...attributes}>
         {children}
@@ -1139,7 +1140,7 @@ describe('self-referential containers', () => {
 
   const listItemContainer = defineContainer({
     type: 'list-item',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => (
       <li data-testid="list-item" {...attributes}>
         {children}
@@ -1178,9 +1179,7 @@ describe('self-referential containers', () => {
       keyGenerator,
       schemaDefinition: listSchema,
       initialValue: value,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     await vi.waitFor(() => {

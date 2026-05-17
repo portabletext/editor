@@ -1,5 +1,5 @@
 import {defineContainer, defineSchema} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -36,7 +36,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
 
     const codeBlockContainer = defineContainer({
       type: 'code-block',
-      childField: 'lines',
+      arrayField: 'lines',
       render: ({attributes, children}) => (
         <pre data-testid="code-block" {...attributes}>
           {children}
@@ -65,7 +65,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
       initialValue,
       children: (
         <>
-          <ContainerPlugin containers={[codeBlockContainer]} />
+          <NodePlugin nodes={[codeBlockContainer]} />
           <MarkdownShortcutsPlugin
             defaultStyle={({context}) => context.schema.styles[0]?.name}
             headingStyle={({context, props}) =>
@@ -145,7 +145,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
 
     const codeBlockContainer = defineContainer({
       type: 'code-block',
-      childField: 'lines',
+      arrayField: 'lines',
       render: ({attributes, children}) => (
         <pre data-testid="code-block" {...attributes}>
           {children}
@@ -172,7 +172,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={[codeBlockContainer]} />
+          <NodePlugin nodes={[codeBlockContainer]} />
           <MarkdownShortcutsPlugin
             defaultStyle={({context}) => context.schema.styles[0]?.name}
             unorderedList={({context}) =>

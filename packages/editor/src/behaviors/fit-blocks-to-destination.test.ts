@@ -57,15 +57,15 @@ const tableSchema = compileSchema(
 
 const tableContainer = defineContainer({
   type: 'table',
-  childField: 'rows',
+  arrayField: 'rows',
   of: [
     defineContainer({
       type: 'row',
-      childField: 'cells',
+      arrayField: 'cells',
       of: [
         defineContainer({
           type: 'cell',
-          childField: 'content',
+          arrayField: 'content',
         }),
       ],
     }),

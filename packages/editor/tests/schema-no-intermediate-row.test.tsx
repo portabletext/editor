@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -72,11 +72,11 @@ describe('normalisation walks registered container chains to completion', () => 
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({attributes, children}) => (
                 <div data-testid="table" {...attributes}>
                   {children}
@@ -85,7 +85,7 @@ describe('normalisation walks registered container chains to completion', () => 
               of: [
                 defineContainer({
                   type: 'cell',
-                  childField: 'content',
+                  arrayField: 'content',
                   render: ({attributes, children}) => (
                     <div data-testid="cell" {...attributes}>
                       {children}
@@ -183,11 +183,11 @@ describe('normalisation walks registered container chains to completion', () => 
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({attributes, children}) => (
                 <div data-testid="table" {...attributes}>
                   {children}
@@ -196,7 +196,7 @@ describe('normalisation walks registered container chains to completion', () => 
               of: [
                 defineContainer({
                   type: 'row',
-                  childField: 'cells',
+                  arrayField: 'cells',
                   render: ({attributes, children}) => (
                     <div data-testid="row" {...attributes}>
                       {children}
@@ -205,7 +205,7 @@ describe('normalisation walks registered container chains to completion', () => 
                   of: [
                     defineContainer({
                       type: 'cell',
-                      childField: 'content',
+                      arrayField: 'content',
                       render: ({attributes, children}) => (
                         <div data-testid="cell" {...attributes}>
                           {children}
@@ -297,11 +297,11 @@ describe('normalisation walks registered container chains to completion', () => 
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({attributes, children}) => (
                 <div data-testid="table" {...attributes}>
                   {children}
@@ -310,7 +310,7 @@ describe('normalisation walks registered container chains to completion', () => 
               of: [
                 defineContainer({
                   type: 'row',
-                  childField: 'cells',
+                  arrayField: 'cells',
                   render: ({attributes, children}) => (
                     <div data-testid="row" {...attributes}>
                       {children}
@@ -319,7 +319,7 @@ describe('normalisation walks registered container chains to completion', () => 
                   of: [
                     defineContainer({
                       type: 'cell',
-                      childField: 'content',
+                      arrayField: 'content',
                       render: ({attributes, children}) => (
                         <div data-testid="cell" {...attributes}>
                           {children}

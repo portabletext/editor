@@ -27,7 +27,7 @@ const schema = compileSchema(schemaDefinition)
 const calloutContainers = resolveContainers(schema, [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
   }),
 ])
 

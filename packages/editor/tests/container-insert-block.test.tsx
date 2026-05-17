@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -23,7 +23,7 @@ const schemaDefinition = defineSchema({
 const calloutContainer = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -55,7 +55,7 @@ describe('insert.block inside a container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -147,7 +147,7 @@ describe('insert.block inside a container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -241,7 +241,7 @@ describe('insert.block inside a container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -331,7 +331,7 @@ describe('insert.block inside a container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -435,7 +435,7 @@ describe('insert.block inside a container', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({

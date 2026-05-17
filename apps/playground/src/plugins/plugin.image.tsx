@@ -1,5 +1,5 @@
-import {defineLeaf} from '@portabletext/editor'
-import {LeafPlugin} from '@portabletext/editor/plugins'
+import {defineBlockObject} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {LinkIcon, PencilIcon} from 'lucide-react'
 import type {JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
@@ -23,7 +23,7 @@ const cellImageStyle = tv({
   },
 })
 
-const imageLeaf = defineLeaf({
+const imageLeaf = defineBlockObject({
   type: 'image',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const image = node as {src?: string; alt?: string}
@@ -69,7 +69,7 @@ const imageLeaf = defineLeaf({
   },
 })
 
-const cellImageLeaf = defineLeaf({
+const cellImageLeaf = defineBlockObject({
   type: 'image',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const image = node as {src?: string; alt?: string}
@@ -98,5 +98,5 @@ const cellImageLeaf = defineLeaf({
 })
 
 export function ImagePlugin(): JSX.Element {
-  return <LeafPlugin leaves={[imageLeaf, cellImageLeaf]} />
+  return <NodePlugin nodes={[imageLeaf, cellImageLeaf]} />
 }

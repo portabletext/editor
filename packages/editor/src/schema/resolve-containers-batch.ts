@@ -1,9 +1,12 @@
 import type {OfDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {
+  BlockObjectConfig,
   ContainerConfig,
-  LeafConfig,
+  InlineObjectConfig,
   Container as PublicContainer,
+  SpanConfig,
+  TextBlock,
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import {buildPublicContainers} from './build-public-containers'
@@ -11,20 +14,11 @@ import type {Containers, ResolvedContainers} from './container-types'
 import {resolveContainerField} from './resolve-container-field'
 
 /**
- * Test helper: resolve a list of top-level container registrations into the
- * {@link ResolvedContainers} map shape held on `EditorContext`.
- *
- * Mirrors the per-container resolution the editor machine performs on
- * `register container` events, but in bulk for test setup. Throws on
- * unresolvable registrations rather than silently warning the way runtime
- * does -- silent test-helper failures mask real bugs.
- */
-/**
  * Test helper: resolve a list of top-level container registrations into
  * the engine's internal rich {@link ResolvedContainers} map.
  *
  * Mirrors the per-container resolution the editor machine performs on
- * `register container` events, but in bulk for test setup. Throws on
+ * `register` events, but in bulk for test setup. Throws on
  * unresolvable registrations rather than silently warning the way
  * runtime does - silent test-helper failures mask real bugs.
  */
@@ -60,7 +54,7 @@ export function resolveContainers(
 /**
  * Resolve a container registration into a {@link ContainerConfig},
  * pre-resolving nested `of` entries to their own ContainerConfigs (with
- * resolved `field`) and `LeafConfig` wrappers. Dispatch reads
+ * resolved `field`) and leaf-shaped config wrappers. Dispatch reads
  * pre-resolved data without re-walking the schema.
  *
  * `chain` is the list of ancestor type names (root-first) used to
@@ -82,7 +76,7 @@ export function resolveNestedContainer(
   const field = resolveContainerField(
     schema,
     container.type,
-    container.childField,
+    container.arrayField,
     parentOf,
   )
   if (!field) {
@@ -90,7 +84,7 @@ export function resolveNestedContainer(
       chain.length > 0
         ? ` (nested inside ${chain.map((type) => `"${type}"`).join(' inside ')})`
         : ''
-    const message = `registerContainer: field "${container.childField}" not found on type "${container.type}"${location}. Registration skipped.`
+    const message = `registerNode: field "${container.arrayField}" not found on type "${container.type}"${location}. Registration skipped.`
     if (onFailure === 'throw') {
       throw new Error(message)
     }
@@ -99,24 +93,41 @@ export function resolveNestedContainer(
   }
   const nextChain = [...chain, container.type]
   const resolvedOf = container.of
-    ? container.of.flatMap<ContainerConfig | LeafConfig | TextBlockConfig>(
-        (entry) => {
-          if (entry.kind === 'container') {
-            const resolved = resolveNestedContainer(
-              schema,
-              entry,
-              nextChain,
-              onFailure,
-              field.of,
-            )
-            return resolved ? [resolved] : []
-          }
-          if (entry.kind === 'text') {
-            return [{textBlock: entry}]
-          }
-          return [{leaf: entry}]
-        },
-      )
+    ? container.of.flatMap<
+        ContainerConfig | BlockObjectConfig | TextBlockConfig
+      >((entry) => {
+        if (entry.kind === 'container') {
+          const resolved = resolveNestedContainer(
+            schema,
+            entry,
+            nextChain,
+            onFailure,
+            field.of,
+          )
+          return resolved ? [resolved] : []
+        }
+        if (entry.kind === 'textBlock') {
+          return [resolveTextBlockConfig(entry)]
+        }
+        return [{blockObject: entry}]
+      })
     : undefined
   return {container, field, ...(resolvedOf ? {of: resolvedOf} : {})}
+}
+
+/**
+ * Resolve a TextBlock into TextBlockConfig, walking its `of` array
+ * (if present) for inline-content positional overrides.
+ */
+export function resolveTextBlockConfig(textBlock: TextBlock): TextBlockConfig {
+  const resolvedOf: ReadonlyArray<SpanConfig | InlineObjectConfig> | undefined =
+    textBlock.of
+      ? textBlock.of.flatMap<SpanConfig | InlineObjectConfig>((entry) => {
+          if (entry.kind === 'span') {
+            return [{span: entry}]
+          }
+          return [{inlineObject: entry}]
+        })
+      : undefined
+  return {textBlock, ...(resolvedOf ? {of: resolvedOf} : {})}
 }

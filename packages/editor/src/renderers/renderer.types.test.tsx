@@ -1,6 +1,12 @@
 import type {ReactElement} from 'react'
 import {describe, expect, test} from 'vitest'
-import {defineContainer, defineLeaf, defineTextBlock} from './renderer.types'
+import {
+  defineBlockObject,
+  defineContainer,
+  defineInlineObject,
+  defineSpan,
+  defineTextBlock,
+} from './renderer.types'
 
 describe(defineContainer.name, () => {
   test('returns the config with injected kind: "container"', () => {
@@ -8,13 +14,13 @@ describe(defineContainer.name, () => {
     expect(
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render,
       }),
     ).toEqual({
       kind: 'container',
       type: 'callout',
-      childField: 'content',
+      arrayField: 'content',
       render,
     })
   })
@@ -22,8 +28,9 @@ describe(defineContainer.name, () => {
   test("rejects type: 'span' at compile time", () => {
     const render = ({children}: {children: ReactElement}) => children
     defineContainer({
-      // @ts-expect-error - 'span' is always a leaf
+      // @ts-expect-error - 'span' is always a span, use defineSpan
       type: 'span',
+      arrayField: 'content',
       render,
     })
   })
@@ -33,21 +40,47 @@ describe(defineContainer.name, () => {
     defineContainer({
       // @ts-expect-error - 'block' is always a text block, use defineTextBlock
       type: 'block',
+      arrayField: 'content',
       render,
     })
   })
 })
 
-describe(defineLeaf.name, () => {
-  test('returns the config with injected kind: "leaf"', () => {
+describe(defineSpan.name, () => {
+  test('returns the config with injected kind: "span"', () => {
     const render = ({children}: {children: ReactElement}) => children
     expect(
-      defineLeaf({
+      defineSpan({
+        type: 'span',
+        render,
+      }),
+    ).toEqual({
+      kind: 'span',
+      type: 'span',
+      render,
+    })
+  })
+
+  test("rejects type: 'block' at compile time", () => {
+    const render = ({children}: {children: ReactElement}) => children
+    defineSpan({
+      // @ts-expect-error - 'block' is always a text block, use defineTextBlock
+      type: 'block',
+      render,
+    })
+  })
+})
+
+describe(defineBlockObject.name, () => {
+  test('returns the config with injected kind: "blockObject"', () => {
+    const render = ({children}: {children: ReactElement}) => children
+    expect(
+      defineBlockObject({
         type: 'image',
         render,
       }),
     ).toEqual({
-      kind: 'leaf',
+      kind: 'blockObject',
       type: 'image',
       render,
     })
@@ -55,16 +88,59 @@ describe(defineLeaf.name, () => {
 
   test("rejects type: 'block' at compile time", () => {
     const render = ({children}: {children: ReactElement}) => children
-    defineLeaf({
-      // @ts-expect-error - 'block' is always a container
+    defineBlockObject({
+      // @ts-expect-error - 'block' is always a text block
       type: 'block',
+      render,
+    })
+  })
+
+  test("rejects type: 'span' at compile time", () => {
+    const render = ({children}: {children: ReactElement}) => children
+    defineBlockObject({
+      // @ts-expect-error - 'span' is always a span
+      type: 'span',
+      render,
+    })
+  })
+})
+
+describe(defineInlineObject.name, () => {
+  test('returns the config with injected kind: "inlineObject"', () => {
+    const render = ({children}: {children: ReactElement}) => children
+    expect(
+      defineInlineObject({
+        type: 'mention',
+        render,
+      }),
+    ).toEqual({
+      kind: 'inlineObject',
+      type: 'mention',
+      render,
+    })
+  })
+
+  test("rejects type: 'block' at compile time", () => {
+    const render = ({children}: {children: ReactElement}) => children
+    defineInlineObject({
+      // @ts-expect-error - 'block' is always a text block
+      type: 'block',
+      render,
+    })
+  })
+
+  test("rejects type: 'span' at compile time", () => {
+    const render = ({children}: {children: ReactElement}) => children
+    defineInlineObject({
+      // @ts-expect-error - 'span' is always a span
+      type: 'span',
       render,
     })
   })
 })
 
 describe(defineTextBlock.name, () => {
-  test('returns the config with injected kind: "text"', () => {
+  test('returns the config with injected kind: "textBlock"', () => {
     const render = ({children}: {children: ReactElement}) => children
     expect(
       defineTextBlock({
@@ -72,17 +148,17 @@ describe(defineTextBlock.name, () => {
         render,
       }),
     ).toEqual({
-      kind: 'text',
+      kind: 'textBlock',
       type: 'block',
       render,
     })
   })
 
-  test("rejects type other than 'block' at compile time", () => {
+  test("rejects type: 'span' at compile time", () => {
     const render = ({children}: {children: ReactElement}) => children
     defineTextBlock({
-      // @ts-expect-error - type must be 'block'
-      type: 'paragraph',
+      // @ts-expect-error - 'span' is always a span
+      type: 'span',
       render,
     })
   })

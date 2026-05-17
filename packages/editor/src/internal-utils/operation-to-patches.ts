@@ -40,14 +40,14 @@ export function textPatch(
 }
 
 export function insertNodePatch(operation: InsertOperation): Array<Patch> {
-  const childFieldPath = operation.path.slice(0, -1)
+  const arrayFieldPath = operation.path.slice(0, -1)
 
-  if (childFieldPath.length === 0) {
+  if (arrayFieldPath.length === 0) {
     return [insert([operation.node], operation.position, operation.path)]
   }
 
   return [
-    setIfMissing([], childFieldPath),
+    setIfMissing([], arrayFieldPath),
     insert([operation.node], operation.position, operation.path),
   ]
 }

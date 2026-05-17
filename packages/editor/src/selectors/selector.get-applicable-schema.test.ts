@@ -45,7 +45,7 @@ const baseSchemaDef = defineSchema({
 
 const schema = compileSchema(baseSchemaDef)
 const containers = resolveContainers(schema, [
-  {kind: 'container', type: 'callout', childField: 'content'},
+  {kind: 'container', type: 'callout', arrayField: 'content'},
 ])
 
 const rootBlock1: PortableTextTextBlock = {

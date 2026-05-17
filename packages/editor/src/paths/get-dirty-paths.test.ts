@@ -58,22 +58,22 @@ const emptyContainers: Containers = new Map()
 const containerContainers: Containers = resolveContainers(schema, [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
   }),
 ])
 
 const tableContainers: Containers = resolveContainers(schema, [
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
   }),
 ])
 

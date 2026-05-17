@@ -69,7 +69,7 @@ describe(getSelectedTextBlocks.name, () => {
     const containers = resolveContainers(schema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
       }),
     ])
 

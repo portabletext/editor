@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {getSelectedBlocks} from '../src/selectors/selector.get-selected-blocks'
 import {getSelectedChildren} from '../src/selectors/selector.get-selected-children'
@@ -22,7 +22,7 @@ const schemaDefinition = defineSchema({
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -78,7 +78,7 @@ describe('range selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)
@@ -180,7 +180,7 @@ describe('range selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)

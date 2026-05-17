@@ -1,8 +1,8 @@
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import type {PortableTextSlateEditor} from '../src/types/slate-editor'
@@ -144,7 +144,7 @@ describe('Performance', () => {
     })
     const tableContainer = defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       render: ({children, node}) => (
         <table data-testid={node._key}>
           <tbody>{children}</tbody>
@@ -153,12 +153,12 @@ describe('Performance', () => {
     })
     const rowContainer = defineContainer({
       type: 'row',
-      childField: 'cells',
+      arrayField: 'cells',
       render: ({children}) => <tr>{children}</tr>,
     })
     const cellContainer = defineContainer({
       type: 'cell',
-      childField: 'content',
+      arrayField: 'content',
       render: ({children}) => <td>{children}</td>,
     })
 
@@ -166,9 +166,7 @@ describe('Performance', () => {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
         children: (
-          <ContainerPlugin
-            containers={[tableContainer, rowContainer, cellContainer]}
-          />
+          <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
         ),
       })
 
@@ -198,9 +196,7 @@ describe('Performance', () => {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
         children: (
-          <ContainerPlugin
-            containers={[tableContainer, rowContainer, cellContainer]}
-          />
+          <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
         ),
       })
 
@@ -236,9 +232,7 @@ describe('Performance', () => {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
         children: (
-          <ContainerPlugin
-            containers={[tableContainer, rowContainer, cellContainer]}
-          />
+          <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
         ),
       })
 
@@ -304,14 +298,14 @@ describe('Performance', () => {
     })
     const listContainer = defineContainer({
       type: 'list',
-      childField: 'items',
+      arrayField: 'items',
       render: ({children, node}) => (
         <ul data-testid={`list-${node._key}`}>{children}</ul>
       ),
     })
     const listItemContainer = defineContainer({
       type: 'list-item',
-      childField: 'content',
+      arrayField: 'content',
       render: ({children, node}) => (
         <li data-testid={`li-${node._key}`}>{children}</li>
       ),
@@ -398,9 +392,7 @@ describe('Performance', () => {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
         initialValue: initialValue as never,
-        children: (
-          <ContainerPlugin containers={[listContainer, listItemContainer]} />
-        ),
+        children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
       })
       await vi.waitFor(() =>
         expect(locator.getByTestId('li-item')).toBeInTheDocument(),

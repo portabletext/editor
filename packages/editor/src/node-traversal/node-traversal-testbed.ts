@@ -10,9 +10,9 @@ import {resolveContainerField} from '../schema/resolve-container-field'
  * (`table` → `rows`, `row` → `cells`, `cell` → `content`).
  */
 export const tableContainers: ReadonlyArray<Container> = [
-  {kind: 'container', type: 'table', childField: 'rows'},
-  {kind: 'container', type: 'row', childField: 'cells'},
-  {kind: 'container', type: 'cell', childField: 'content'},
+  {kind: 'container', type: 'table', arrayField: 'rows'},
+  {kind: 'container', type: 'row', arrayField: 'cells'},
+  {kind: 'container', type: 'cell', arrayField: 'content'},
 ]
 
 /**
@@ -21,7 +21,7 @@ export const tableContainers: ReadonlyArray<Container> = [
  */
 export const codeBlockContainer: Container = defineContainer({
   type: 'code-block',
-  childField: 'code',
+  arrayField: 'code',
 })
 
 /**
@@ -37,14 +37,18 @@ export function resolveTestbedContainers(
     const field = resolveContainerField(
       schema,
       container.type,
-      container.childField,
+      container.arrayField,
     )
     if (!field) {
       throw new Error(
-        `resolveTestbedContainers: field "${container.childField}" not found on type "${container.type}"`,
+        `resolveTestbedContainers: field "${container.arrayField}" not found on type "${container.type}"`,
       )
     }
-    resolved.set(container.type, {type: container.type, field})
+    resolved.set(container.type, {
+      kind: 'container',
+      type: container.type,
+      field,
+    })
   }
   return resolved
 }
