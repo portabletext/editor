@@ -149,7 +149,7 @@ type EditableProps = {
   onDOMBeforeInput?: (event: InputEvent) => void
   readOnly?: boolean
   style?: React.CSSProperties
-  renderElement?: (props: RenderElementProps) => JSX.Element
+  renderElement: (props: RenderElementProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   scrollSelectionIntoView?: (editor: DOMEditor, domRange: DOMRange) => void
