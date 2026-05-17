@@ -6,6 +6,7 @@ import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {RenderLeafConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
@@ -16,9 +17,9 @@ export function RenderInlineObject(props: {
   children: ReactElement
   element: PortableTextObject
   leafConfig?: LeafConfig
+  legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
-  renderChild?: RenderChildFunction
   schema: EditorSchema
 }) {
   const inlineObjectRef = useRef<HTMLElement>(null)
@@ -65,10 +66,10 @@ export function RenderInlineObject(props: {
   }
 
   let innerContent: ReactElement
-  if (props.renderChild && inlineObjectSchemaType) {
+  if (props.legacy.renderChild && inlineObjectSchemaType) {
     innerContent = (
       <RenderChild
-        renderChild={props.renderChild}
+        renderChild={props.legacy.renderChild}
         annotations={[]}
         editorElementRef={inlineObjectRef}
         selected={selected}

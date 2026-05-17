@@ -177,30 +177,28 @@ export const PortableTextEditable = forwardRef<
     })
   }, [rangeDecorationsActor, rangeDecorations])
 
+  const legacy = useMemo(
+    () => ({
+      renderBlock,
+      renderChild,
+      renderListItem,
+      renderStyle,
+    }),
+    [renderBlock, renderChild, renderListItem, renderStyle],
+  )
+
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (
       <RenderElement
         {...eProps}
         dropPosition={dropPosition}
+        legacy={legacy}
         readOnly={readOnly}
-        renderBlock={renderBlock}
-        renderChild={renderChild}
-        renderListItem={renderListItem}
-        renderStyle={renderStyle}
         schema={schema}
         spellCheck={spellCheck}
       />
     ),
-    [
-      dropPosition,
-      schema,
-      spellCheck,
-      readOnly,
-      renderBlock,
-      renderChild,
-      renderListItem,
-      renderStyle,
-    ],
+    [dropPosition, schema, readOnly, legacy, spellCheck],
   )
 
   const renderLeaf = useCallback(

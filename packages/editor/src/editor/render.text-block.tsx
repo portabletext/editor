@@ -17,6 +17,7 @@ import type {
   RenderStyleFunction,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {DropIndicator} from './render.drop-indicator'
 import {
   useIsFocusedContainer,
@@ -29,11 +30,9 @@ export function RenderTextBlock(props: {
   children: ReactElement
   dropPosition?: DropPosition['position']
   element: PortableTextTextBlock
+  legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
-  renderBlock?: RenderBlockFunction
-  renderListItem?: RenderListItemFunction
-  renderStyle?: RenderStyleFunction
   schema: EditorSchema
   spellCheck?: boolean
   textBlock: PortableTextTextBlock
@@ -53,7 +52,7 @@ export function RenderTextBlock(props: {
 
   let children = props.children
 
-  if (props.renderStyle && props.textBlock.style) {
+  if (props.legacy.renderStyle && props.textBlock.style) {
     const styleSchemaType =
       props.textBlock.style !== undefined
         ? subSchema.styles.find(
@@ -64,7 +63,7 @@ export function RenderTextBlock(props: {
     if (styleSchemaType) {
       children = (
         <RenderStyle
-          renderStyle={props.renderStyle}
+          renderStyle={props.legacy.renderStyle}
           block={props.textBlock}
           editorElementRef={blockRef}
           focused={focused}
@@ -83,7 +82,7 @@ export function RenderTextBlock(props: {
     }
   }
 
-  if (props.renderListItem && props.textBlock.listItem) {
+  if (props.legacy.renderListItem && props.textBlock.listItem) {
     const listItemSchemaType = subSchema.lists.find(
       (list) => list.value === props.textBlock.listItem,
     )
@@ -91,7 +90,7 @@ export function RenderTextBlock(props: {
     if (listItemSchemaType) {
       children = (
         <RenderListItem
-          renderListItem={props.renderListItem}
+          renderListItem={props.legacy.renderListItem}
           block={props.textBlock}
           editorElementRef={blockRef}
           focused={focused}
@@ -156,9 +155,9 @@ export function RenderTextBlock(props: {
     >
       {props.dropPosition === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
-        {props.renderBlock ? (
+        {props.legacy.renderBlock ? (
           <RenderBlock
-            renderBlock={props.renderBlock}
+            renderBlock={props.legacy.renderBlock}
             editorElementRef={blockRef}
             focused={focused}
             level={props.textBlock.level}
