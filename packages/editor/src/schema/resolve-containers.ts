@@ -10,8 +10,11 @@
 export type {
   ChildArrayField,
   Containers,
+  RegisteredBlockObject,
   RegisteredContainer,
-  RegisteredLeaf,
+  RegisteredInlineObject,
+  RegisteredPositional,
+  RegisteredSpan,
   ResolvedContainers,
 } from './container-types'
 export {descendToParent} from './descend-to-parent'
@@ -22,4 +25,5 @@ export {
   resolveContainers,
   resolveContainersRich,
   resolveNestedContainer,
+  resolveTextBlockConfig,
 } from './resolve-containers-batch'

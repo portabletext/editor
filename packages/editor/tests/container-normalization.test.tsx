@@ -2,7 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {PatchesPlugin} from '../src/plugins/plugin.patches'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -60,17 +60,17 @@ const schemaDefinition = defineSchema({
 const tableContainers = [
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -78,18 +78,18 @@ const tableContainers = [
 const calloutContainers = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
 
 describe('container normalization', () => {
-  test('top-level registration is inert at a position where schema declares the type without the registered childField', async () => {
+  test('top-level registration is inert at a position where schema declares the type without the registered arrayField', async () => {
     // Registration is type-keyed; activation is position-gated.
     // The test schema declares `row` twice:
     //   - root: `{name: 'row'}` (void, no fields)
     //   - inline inside `table.rows.of`: with a `cells` field
-    // A top-level `defineContainer({type: 'row', childField: 'cells'})`
+    // A top-level `defineContainer({type: 'row', arrayField: 'cells'})`
     // registers `row` as a container. At the root position, schema
     // declares `row` without `cells` - the registration is inert and
     // the top-level row stays as a bare void object. The same
@@ -116,7 +116,7 @@ describe('container normalization', () => {
           _key: rowKey,
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await vi.waitFor(() => {
@@ -163,7 +163,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <ContainerPlugin containers={tableContainers} />
+          <NodePlugin nodes={tableContainers} />
         </>
       ),
     })
@@ -297,7 +297,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <ContainerPlugin containers={calloutContainers} />
+          <NodePlugin nodes={calloutContainers} />
         </>
       ),
     })
@@ -464,7 +464,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     // Verify initial value is correct
@@ -606,7 +606,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <ContainerPlugin containers={calloutContainers} />
+          <NodePlugin nodes={calloutContainers} />
         </>
       ),
     })
@@ -736,7 +736,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await vi.waitFor(() => {
@@ -840,7 +840,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainers} />,
+      children: <NodePlugin nodes={calloutContainers} />,
     })
 
     await vi.waitFor(() => {
@@ -916,9 +916,7 @@ describe('container normalization', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[...tableContainers, ...calloutContainers]}
-        />
+        <NodePlugin nodes={[...tableContainers, ...calloutContainers]} />
       ),
     })
 
@@ -992,7 +990,7 @@ describe('container normalization', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={calloutContainers} />,
+      children: <NodePlugin nodes={calloutContainers} />,
     })
 
     // Insert a bare callout via incoming patch
@@ -1131,7 +1129,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await vi.waitFor(() => {
@@ -1219,7 +1217,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainers} />,
+      children: <NodePlugin nodes={calloutContainers} />,
     })
 
     await vi.waitFor(() => {
@@ -1308,12 +1306,12 @@ describe('container normalization', () => {
     })
 
     // Late-register a container for callout
-    editor.registerContainer(
-      defineContainer({
+    editor.registerNode({
+      node: defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
       }),
-    )
+    })
 
     // Normalization should now kick in and populate the callout
     await vi.waitFor(() => {
@@ -1365,7 +1363,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <ContainerPlugin containers={calloutContainers} />
+          <NodePlugin nodes={calloutContainers} />
         </>
       ),
     })
@@ -1481,14 +1479,14 @@ describe('container normalization', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'card',
               // 'tags' is a primitive-only array; the engine warn-and-excludes
               // it at runtime. With type narrowing dropped from v2, this is
               // a runtime-only check (no compile-time rejection).
-              childField: 'tags',
+              arrayField: 'tags',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1616,31 +1614,31 @@ describe('container normalization', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'row',
-              childField: 'cells',
+              arrayField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'cell',
-              childField: 'content',
+              arrayField: 'content',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'figure',
-              childField: 'caption',
+              arrayField: 'caption',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1750,21 +1748,21 @@ describe('container normalization', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'row',
-              childField: 'cells',
+              arrayField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'cell',
-              childField: 'content',
+              arrayField: 'content',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1830,21 +1828,21 @@ describe('container normalization', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'row',
-              childField: 'cells',
+              arrayField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer({
               type: 'cell',
-              childField: 'content',
+              arrayField: 'content',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1930,12 +1928,12 @@ describe('container normalization', () => {
       ],
     })
 
-    const unregisterCallout = editor.registerContainer(
-      defineContainer({
+    const unregisterCallout = editor.registerNode({
+      node: defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
       }),
-    )
+    })
 
     // Verify normalization happened
     await vi.waitFor(() => {
@@ -1963,7 +1961,7 @@ describe('container normalization', () => {
       ])
     })
 
-    // Unregister the container via the public registerContainer return
+    // Unregister the container via the public registerNode return
     unregisterCallout()
 
     // Send a new value with a callout with empty content
@@ -2000,7 +1998,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('calling the unregister function returned from editor.registerContainer reverts container to void', async () => {
+  test('calling the unregister function returned from editor.registerNode reverts container to void', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2024,12 +2022,12 @@ describe('container normalization', () => {
       ],
     })
 
-    const unregister = editor.registerContainer(
-      defineContainer({
+    const unregister = editor.registerNode({
+      node: defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
       }),
-    )
+    })
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
@@ -2115,7 +2113,7 @@ describe('container normalization', () => {
       keyGenerator,
       schemaDefinition,
       initialValue,
-      children: <ContainerPlugin containers={calloutContainers} />,
+      children: <NodePlugin nodes={calloutContainers} />,
     })
 
     await vi.waitFor(() => {

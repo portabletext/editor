@@ -1,9 +1,9 @@
 import {
+  defineBlockObject,
   defineContainer,
-  defineLeaf,
   defineTextBlock,
 } from '@portabletext/editor'
-import {ContainerPlugin, LeafPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {
   InfoIcon,
   LightbulbIcon,
@@ -44,7 +44,7 @@ function ToneIcon({tone}: {tone: string}): JSX.Element {
 
 const calloutContainer = defineContainer({
   type: 'callout',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children, node, selected}) => {
     const tone = typeof node.tone === 'string' ? node.tone : 'note'
     const toneStyle = toneClassName[tone] ?? defaultToneClassName
@@ -116,7 +116,7 @@ const calloutContainer = defineContainer({
   ],
 })
 
-const calloutImageLeaf = defineLeaf({
+const calloutImageLeaf = defineBlockObject({
   type: 'image',
   render: ({attributes, children, node, focused, selected}) => {
     const image = node as {src?: string; alt?: string}
@@ -148,8 +148,8 @@ const calloutImageLeaf = defineLeaf({
 export function CalloutPlugin(): JSX.Element {
   return (
     <>
-      <ContainerPlugin containers={[calloutContainer]} />
-      <LeafPlugin leaves={[calloutImageLeaf]} />
+      <NodePlugin nodes={[calloutContainer]} />
+      <NodePlugin nodes={[calloutImageLeaf]} />
     </>
   )
 }

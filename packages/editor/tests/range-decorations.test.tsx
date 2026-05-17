@@ -20,7 +20,7 @@ import {
   type RangeDecorationOnMovedDetails,
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {ContainerPlugin, EventListenerPlugin} from '../src/plugins'
+import {EventListenerPlugin, NodePlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
@@ -632,7 +632,7 @@ describe('RangeDecorations inside editable containers', () => {
 
     const calloutContainer = defineContainer({
       type: 'callout',
-      childField: 'content',
+      arrayField: 'content',
     })
 
     // A collapsed range decoration whose path points inside a container.
@@ -692,7 +692,7 @@ describe('RangeDecorations inside editable containers', () => {
       editableProps: {
         rangeDecorations,
       },
-      children: <ContainerPlugin containers={[calloutContainer]} />,
+      children: <NodePlugin nodes={[calloutContainer]} />,
     })
 
     await vi.waitFor(() =>

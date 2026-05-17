@@ -40,12 +40,12 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -143,22 +143,22 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: testRender,
       }),
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: testRender,
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -269,17 +269,17 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: testRender,
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -365,7 +365,7 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -436,12 +436,12 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -517,12 +517,12 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -597,12 +597,12 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -677,12 +677,12 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: testRender,
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -784,17 +784,17 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'section',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]
@@ -863,7 +863,7 @@ describe(getUnwrapTarget.name, () => {
     const configs = [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ]

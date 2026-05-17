@@ -23,26 +23,19 @@ export type ContainerNodeForType<TType extends string> = TType extends
 /**
  * @alpha
  *
- * Narrow the leaf node type by the registered `_type`. Spans get the
- * span shape; everything else gets the portable text object shape.
- * `'block'` is excluded -- text blocks are always containers.
- */
-export type LeafNodeForType<TType extends string> = TType extends 'span'
-  ? PortableTextSpan
-  : PortableTextObject
-
-/**
- * @alpha
- *
  * A container's render function receives a node and renders an element
  * that wraps its editable children. The render is positional: it fires for
- * nodes of `type` whose parent permits this container at `childField`.
+ * nodes of `type` whose parent permits this container at `arrayField`.
+ *
+ * `node` is `PortableTextObject` because containers cannot register the
+ * built-in `'span'` or `'block'` types (those are leaves and text blocks
+ * respectively).
  */
 export type ContainerRender = (props: {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
-  node: PortableTextTextBlock | PortableTextObject
+  node: PortableTextObject
   path: Path
   readOnly: boolean
   selected: boolean
@@ -51,21 +44,53 @@ export type ContainerRender = (props: {
 /**
  * @alpha
  *
- * A leaf's render function receives a terminal node (span, inline object,
- * or void block object) and renders an element wrapping it.
- *
- * The render must always render `children` somewhere inside the outer
- * element. For spans `children` carries the styled text. For inline
- * objects and void block objects `children` carries an engine-emitted
- * void spacer that the browser uses to anchor the caret next to the
- * element. Dropping `children` makes the caret unable to land on the
- * element.
+ * A span's render function. Receives a portable text span node and
+ * wraps it. `children` carries the styled text already decorated by
+ * `renderDecorator`/`renderAnnotation`/range decorations.
  */
-export type LeafRender = (props: {
+export type SpanRender = (props: {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
-  node: PortableTextTextBlock | PortableTextSpan | PortableTextObject
+  node: PortableTextSpan
+  path: Path
+  readOnly: boolean
+  selected: boolean
+}) => ReactElement | null
+
+/**
+ * @alpha
+ *
+ * A block object's render function. Receives a non-editable block-level
+ * portable text object. `children` carries an engine-emitted void
+ * spacer that the browser uses to anchor the caret next to the
+ * element. Dropping `children` makes the caret unable to land on the
+ * element.
+ */
+export type BlockObjectRender = (props: {
+  attributes: Record<string, unknown>
+  children: ReactElement
+  focused: boolean
+  node: PortableTextObject
+  path: Path
+  readOnly: boolean
+  selected: boolean
+}) => ReactElement | null
+
+/**
+ * @alpha
+ *
+ * An inline object's render function. Receives a non-editable inline
+ * portable text object. `children` carries an engine-emitted void
+ * spacer that the browser uses to anchor the caret next to the
+ * element. Dropping `children` makes the caret unable to land on the
+ * element.
+ */
+export type InlineObjectRender = (props: {
+  attributes: Record<string, unknown>
+  children: ReactElement
+  focused: boolean
+  node: PortableTextObject
   path: Path
   readOnly: boolean
   selected: boolean
@@ -75,168 +100,79 @@ export type LeafRender = (props: {
  * @alpha
  *
  * A container registration. Identifies a block object `_type` whose value
- * holds editable children in `childField`. The optional `of` array carries
- * nested `defineContainer` and `defineLeaf` registrations that override
- * how immediate children of this container render at this lexical scope.
+ * holds editable children in `arrayField`. The optional `of` array carries
+ * nested registrations that override how immediate children of this
+ * container render at this lexical scope.
  *
  * `of` overrides apply ONE level down only. Children at deeper levels fall
  * through to global registrations.
  *
  * The `kind` field is injected by `defineContainer` and discriminates
- * containers from leaves at runtime.
+ * containers from other registration kinds at runtime.
  */
 export type Container = {
   kind: 'container'
   type: string
-  childField: string
-  render?: ContainerRender
-  of?: ReadonlyArray<Container | Leaf | TextBlock>
+  arrayField: string
+  /**
+   * Outer render. Three modes:
+   * - omitted: fall through to global registered render (or engine default)
+   * - `null`: skip global, use engine default at this position
+   * - function: use this render
+   */
+  render?: ContainerRender | null
+  /**
+   * Block-level positional overrides. Inline-content kinds (`Span`,
+   * `InlineObject`) belong in `TextBlock.of`, not here.
+   */
+  of?: ReadonlyArray<Container | TextBlock | BlockObject>
 }
 
 /**
  * @alpha
  *
- * A leaf registration. Identifies a terminal `_type` -- span, inline
- * object, or void block object -- and renders it.
- *
- * The `kind` field is injected by `defineLeaf` and discriminates leaves
- * from containers at runtime.
- */
-export type Leaf = {
-  kind: 'leaf'
-  type: string
-  render: LeafRender
-}
-
-/**
- * @alpha
- *
- * Define a container renderer. The returned registration is mounted via
- * the `<ContainerPlugin>` wrapper at the top level, or nested inside
- * another container's `of` array as a positional override.
- *
- * `type` cannot be `'span'` (use {@link defineLeaf}) nor `'block'` (use
- * {@link defineTextBlock}). The text block is not a container.
- *
- * The `node` argument of `render` narrows to a portable text object.
- *
- * @example
- * ```ts
- * defineContainer({
- *   type: 'table',
- *   childField: 'rows',
- *   render: ({children}) => <table>{children}</table>,
- *   of: [
- *     defineContainer({
- *       type: 'row',
- *       childField: 'cells',
- *       render: ({children}) => <tr>{children}</tr>,
- *     }),
- *   ],
- * })
- * ```
- */
-export function defineContainer<const TType extends string>(config: {
-  type: TType extends 'span'
-    ? "Error: defineContainer({type: 'span'}) is forbidden -- 'span' is always a leaf, use defineLeaf"
-    : TType extends 'block'
-      ? "Error: defineContainer({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
-      : TType
-  childField: string
-  render?: (props: {
-    attributes: Record<string, unknown>
-    children: ReactElement
-    focused: boolean
-    node: ContainerNodeForType<TType>
-    path: Path
-    readOnly: boolean
-    selected: boolean
-  }) => ReactElement | null
-  of?: ReadonlyArray<Container | Leaf | TextBlock>
-}): Container {
-  return {kind: 'container', ...config} as unknown as Container
-}
-
-/**
- * @alpha
- *
- * Define a leaf renderer for a span, inline object, or void block object.
- *
- * Leaves can be nested inside a container's `of` to override how that
- * type renders inside the specific parent. `defineLeaf({type: 'block'})`
- * nested inside a container's `of` is the spelling for a positional
- * text block override; the engine routes through the block-leaf pipeline
- * so marks and decorators still render correctly.
- *
- * When `type` is `'span'` the `node` argument of `render` narrows to a
- * portable text span; when `type` is `'block'` it narrows to a text block;
- * otherwise it narrows to a portable text object.
- *
- * @example
- * ```ts
- * defineLeaf({
- *   type: 'image',
- *   render: ({attributes, children, node}) => (
- *     <span {...attributes}>{children}<img src={node.src as string} /></span>
- *   ),
- * })
- * ```
- */
-export function defineLeaf<const TType extends string>(config: {
-  type: TType extends 'block'
-    ? "Error: defineLeaf({type: 'block'}) is forbidden -- 'block' is always a container, use defineContainer"
-    : TType
-  render: (props: {
-    attributes: Record<string, unknown>
-    children: ReactElement
-    focused: boolean
-    node: LeafNodeForType<TType>
-    path: Path
-    readOnly: boolean
-    selected: boolean
-  }) => ReactElement | null
-}): Leaf {
-  return {kind: 'leaf', ...config} as unknown as Leaf
-}
-
-/**
- * @alpha
- *
- * A text block registration. The text block `_type` is `'block'`.
+ * A text block registration. The text block `_type` is `'block'` at the
+ * top level. Positional overrides nested in a container's `of` array can
+ * register a different `_type` to render at that lexical scope.
  *
  * `defineTextBlock` opts the text block into the new render pipeline.
  * The consumer's `render` callback owns the outer wrapper entirely:
- * the engine emits `data-pt-*` attributes only - no `pt-*` CSS
- * classes, no legacy `data-block-*` attributes - and the block-level
- * `renderStyle` / `renderListItem` / `renderBlock` props on
+ * the engine emits `data-pt-*` attributes only - no `pt-*` CSS classes,
+ * no legacy `data-block-*` attributes - and the block-level
+ * `renderStyle`/`renderListItem`/`renderBlock` props on
  * `<PortableTextEditable>` do not compose under this registration.
  *
  * Span-level render props - `renderDecorator`, `renderAnnotation`,
- * `renderPlaceholder`, and range decorations - keep working. They
- * fire on the spans inside `children` regardless of which text block
- * outer wrapper renders them.
- *
- * Consumers who want the legacy block-level composition keep using
- * `renderStyle` / `renderListItem` / `renderBlock` props and do not
- * register `defineTextBlock`.
- *
- * The `kind` field is injected by `defineTextBlock` and discriminates
- * text blocks from containers and leaves at runtime.
+ * `renderPlaceholder`, and range decorations - keep working. They fire
+ * on the spans inside `children` regardless of which text block outer
+ * wrapper renders them.
  */
 export type TextBlock = {
-  kind: 'text'
-  type: 'block'
-  render: TextBlockRender
+  kind: 'textBlock'
+  type: string
+  /**
+   * Outer render. Three modes:
+   * - omitted: fall through to global registered render (or engine default)
+   * - `null`: skip global, use engine default at this position
+   * - function: use this render
+   */
+  render?: TextBlockRender | null
+  /**
+   * Inline-content positional overrides. A `Span` or `InlineObject`
+   * placed here scopes the inline render to this text block (or any
+   * text block of this `type` if registered at the top level).
+   */
+  of?: ReadonlyArray<Span | InlineObject>
 }
 
 /**
  * @alpha
  *
  * Text block render function. `children` carries the rendered spans -
- * `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and
- * range decorations have already fired at the leaf level. The
- * render's job is the outer wrapper element and any block-level
- * composition (style, list-item) the consumer wants.
+ * `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range
+ * decorations have already fired at the leaf level. The render's job
+ * is the outer wrapper element and any block-level composition (style,
+ * list-item) the consumer wants.
  */
 export type TextBlockRender = (props: {
   attributes: Record<string, unknown>
@@ -251,36 +187,285 @@ export type TextBlockRender = (props: {
 /**
  * @alpha
  *
- * Define a text block renderer. The returned registration is mounted
- * via the `<TextBlockPlugin>` wrapper.
+ * A span registration. The span `_type` is `'span'` at the top level.
+ * Positional overrides nested in a container's `of` array can register
+ * a different `_type` for a span-like inline at that lexical scope
+ * (e.g. a `code-span` inside a `code-block`).
+ */
+export type Span = {
+  kind: 'span'
+  type: string
+  /**
+   * Outer render. Three modes:
+   * - omitted: fall through to global registered render (or engine default)
+   * - `null`: skip global, use engine default at this position
+   * - function: use this render
+   */
+  render?: SpanRender | null
+}
+
+/**
+ * @alpha
  *
- * Only one text block registration is supported today. Subsequent
- * registrations log a console warning and skip.
+ * A non-editable block-level object registration. Identifies a `_type`
+ * whose value renders as a block-level void node (image, embed, etc.).
+ */
+export type BlockObject = {
+  kind: 'blockObject'
+  type: string
+  /**
+   * Outer render. Three modes:
+   * - omitted: fall through to global registered render (or engine default)
+   * - `null`: skip global, use engine default at this position
+   * - function: use this render
+   */
+  render?: BlockObjectRender | null
+}
+
+/**
+ * @alpha
+ *
+ * A non-editable inline object registration. Identifies a `_type` whose
+ * value renders as an inline void node (mention, inline image, etc.).
+ */
+export type InlineObject = {
+  kind: 'inlineObject'
+  type: string
+  /**
+   * Outer render. Three modes:
+   * - omitted: fall through to global registered render (or engine default)
+   * - `null`: skip global, use engine default at this position
+   * - function: use this render
+   */
+  render?: InlineObjectRender | null
+}
+
+/**
+ * @alpha
+ *
+ * The discriminated union of every registration accepted by
+ * `editor.registerNode` and the `<NodePlugin>` component.
+ */
+export type RegistrableNode =
+  | Container
+  | TextBlock
+  | Span
+  | BlockObject
+  | InlineObject
+
+/**
+ * @alpha
+ *
+ * Define a container renderer. The returned registration is mounted via
+ * the `<NodePlugin>` component at the top level, or nested inside
+ * another container's `of` array as a positional override.
+ *
+ * `type` cannot be `'span'` (use {@link defineSpan}) nor `'block'` (use
+ * {@link defineTextBlock}). The text block is not a container.
+ *
+ * The `node` argument of `render` narrows to a portable text object.
+ *
+ * @example
+ * ```ts
+ * defineContainer({
+ *   type: 'table',
+ *   arrayField: 'rows',
+ *   render: ({children}) => (
+ *     <table>{children}</table>
+ *   ),
+ *   of: [
+ *     defineContainer({
+ *       type: 'row',
+ *       arrayField: 'cells',
+ *       render: ({children}) => (
+ *         <tr>{children}</tr>
+ *       ),
+ *     }),
+ *   ],
+ * })
+ * ```
+ */
+export function defineContainer<const TType extends string>(config: {
+  type: TType extends 'span'
+    ? "Error: defineContainer({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
+    : TType extends 'block'
+      ? "Error: defineContainer({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
+      : TType
+  arrayField: string
+  render?:
+    | ((props: {
+        attributes: Record<string, unknown>
+        children: ReactElement
+        focused: boolean
+        node: ContainerNodeForType<TType>
+        path: Path
+        readOnly: boolean
+        selected: boolean
+      }) => ReactElement | null)
+    | null
+  of?: ReadonlyArray<Container | TextBlock | BlockObject>
+}): Container {
+  return {kind: 'container', ...config} as unknown as Container
+}
+
+/**
+ * @alpha
+ *
+ * Define a span renderer. The returned registration is mounted via the
+ * `<NodePlugin>` component at the top level, or nested inside a
+ * container's `of` array as a positional override.
+ *
+ * `type` is required even though there is only one top-level span type
+ * (`'span'`) today. Keeping `type` required leaves the door open for
+ * positional overrides of span-like inlines (e.g. a `code-span` inside
+ * a `code-block` container).
+ *
+ * @example
+ * ```ts
+ * defineSpan({
+ *   type: 'span',
+ *   render: ({attributes, children}) => (
+ *     <span {...attributes}>{children}</span>
+ *   ),
+ * })
+ * ```
+ */
+export function defineSpan<const TType extends string>(config: {
+  type: TType extends 'block'
+    ? "Error: defineSpan({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
+    : TType
+  render?: SpanRender | null
+}): Span {
+  return {kind: 'span', ...config} as unknown as Span
+}
+
+/**
+ * @alpha
+ *
+ * Define a non-editable block-level object renderer for a `_type`
+ * declared in the schema's `blockObjects` array.
+ *
+ * The render must always render `children` somewhere inside the outer
+ * element. `children` carries an engine-emitted void spacer the browser
+ * uses to anchor the caret next to the element. Dropping `children`
+ * makes the caret unable to land on the element.
+ *
+ * @example
+ * ```ts
+ * defineBlockObject({
+ *   type: 'image',
+ *   render: ({attributes, children, node}) => (
+ *     <div {...attributes}>
+ *       {children}
+ *       <img src={(node as {src?: string}).src} />
+ *     </div>
+ *   ),
+ * })
+ * ```
+ */
+export function defineBlockObject<const TType extends string>(config: {
+  type: TType extends 'block'
+    ? "Error: defineBlockObject({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
+    : TType extends 'span'
+      ? "Error: defineBlockObject({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
+      : TType
+  render?: BlockObjectRender | null
+}): BlockObject {
+  return {kind: 'blockObject', ...config} as unknown as BlockObject
+}
+
+/**
+ * @alpha
+ *
+ * Define a non-editable inline object renderer for a `_type` declared
+ * in the schema's `inlineObjects` array.
+ *
+ * The render must always render `children` somewhere inside the outer
+ * element. `children` carries an engine-emitted void spacer the browser
+ * uses to anchor the caret next to the element. Dropping `children`
+ * makes the caret unable to land on the element.
+ *
+ * @example
+ * ```ts
+ * defineInlineObject({
+ *   type: 'mention',
+ *   render: ({attributes, children, node}) => (
+ *     <span {...attributes}>
+ *       {children}
+ *       @{(node as {username?: string}).username}
+ *     </span>
+ *   ),
+ * })
+ * ```
+ */
+export function defineInlineObject<const TType extends string>(config: {
+  type: TType extends 'block'
+    ? "Error: defineInlineObject({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
+    : TType extends 'span'
+      ? "Error: defineInlineObject({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
+      : TType
+  render?: InlineObjectRender | null
+}): InlineObject {
+  return {kind: 'inlineObject', ...config} as unknown as InlineObject
+}
+
+/**
+ * @alpha
+ *
+ * Define a text block renderer. The returned registration is mounted
+ * via the `<NodePlugin>` component, or nested inside a container's
+ * `of` array as a positional override.
+ *
+ * `type` is required even though the top-level text block type is
+ * always `'block'`. Keeping `type` required leaves the door open for
+ * positional overrides of text-block-like elements (e.g. a `code-line`
+ * inside a `code-block` container).
  *
  * @example
  * ```ts
  * defineTextBlock({
  *   type: 'block',
  *   render: ({attributes, children}) => (
- *     // (p {...attributes})({children})(/p)
+ *     <p {...attributes}>{children}</p>
  *   ),
  * })
  * ```
  */
-export function defineTextBlock(config: {
-  type: 'block'
-  render: TextBlockRender
+export function defineTextBlock<const TType extends string>(config: {
+  type: TType extends 'span'
+    ? "Error: defineTextBlock({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
+    : TType
+  render?: TextBlockRender | null
+  of?: ReadonlyArray<Span | InlineObject>
 }): TextBlock {
-  return {kind: 'text', ...config}
+  return {kind: 'textBlock', ...config} as unknown as TextBlock
 }
 
 /**
  * @internal
  *
- * Resolved leaf config.
+ * Resolved span config.
  */
-export type LeafConfig = {
-  leaf: Leaf
+export type SpanConfig = {
+  span: Span
+}
+
+/**
+ * @internal
+ *
+ * Resolved block-object config.
+ */
+export type BlockObjectConfig = {
+  blockObject: BlockObject
+}
+
+/**
+ * @internal
+ *
+ * Resolved inline-object config.
+ */
+export type InlineObjectConfig = {
+  inlineObject: InlineObject
 }
 
 /**
@@ -293,14 +478,17 @@ export type LeafConfig = {
 export type ContainerConfig = {
   container: Container
   field: ChildArrayField
-  of?: ReadonlyArray<ContainerConfig | LeafConfig | TextBlockConfig>
+  of?: ReadonlyArray<ContainerConfig | BlockObjectConfig | TextBlockConfig>
 }
 
 /**
  * @internal
  *
- * Resolved text block config. Held in `EditorContext.textBlocks`.
+ * Resolved text block config. The optional `of` carries resolved
+ * inline-content positional overrides (spans, inline-objects) for
+ * children rendered inside this text block.
  */
 export type TextBlockConfig = {
   textBlock: TextBlock
+  of?: ReadonlyArray<SpanConfig | InlineObjectConfig>
 }

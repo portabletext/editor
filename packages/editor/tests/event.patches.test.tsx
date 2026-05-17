@@ -12,8 +12,8 @@ import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -2495,11 +2495,11 @@ describe('event.patches', () => {
           },
         ],
         children: (
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'callout',
-                childField: 'content',
+                arrayField: 'content',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
@@ -4825,7 +4825,7 @@ describe('event.patches', () => {
     const calloutContainers = [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: ({children}) => <>{children}</>,
       }),
     ]
@@ -4833,17 +4833,17 @@ describe('event.patches', () => {
     const tableContainers = [
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: ({children}) => <>{children}</>,
       }),
     ]
@@ -4890,7 +4890,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <ContainerPlugin containers={calloutContainers} />,
+        children: <NodePlugin nodes={calloutContainers} />,
       })
 
       editor.send({
@@ -5013,7 +5013,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <ContainerPlugin containers={calloutContainers} />,
+        children: <NodePlugin nodes={calloutContainers} />,
       })
 
       editor.send({
@@ -5135,7 +5135,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <ContainerPlugin containers={tableContainers} />,
+        children: <NodePlugin nodes={tableContainers} />,
       })
 
       editor.send({
@@ -5261,7 +5261,7 @@ describe('event.patches', () => {
             content: [],
           },
         ],
-        children: <ContainerPlugin containers={calloutContainers} />,
+        children: <NodePlugin nodes={calloutContainers} />,
       })
 
       // Normalization adds a placeholder block (k5/k6) to the empty content

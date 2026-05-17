@@ -68,9 +68,9 @@ const schemaDefinition = defineSchema({
 const schema = compileSchema(schemaDefinition)
 
 const tableContainers: Containers = resolveContainers(schema, [
-  {type: 'table', childField: 'rows'},
-  {type: 'tableRow', childField: 'cells'},
-  {type: 'tableCell', childField: 'content'},
+  {type: 'table', arrayField: 'rows'},
+  {type: 'tableRow', arrayField: 'cells'},
+  {type: 'tableCell', arrayField: 'content'},
 ])
 
 function block(

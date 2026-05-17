@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -167,32 +167,32 @@ const matrixSchema = defineSchema({
 const matrixContainers = [
   defineContainer({
     type: 'code-block',
-    childField: 'lines',
+    arrayField: 'lines',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'fact-box',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -237,7 +237,7 @@ describe('container archetype permutations', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({
@@ -313,7 +313,7 @@ describe('container archetype permutations', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({
@@ -378,7 +378,7 @@ describe('container archetype permutations', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({
@@ -451,7 +451,7 @@ describe('container archetype permutations', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({
@@ -520,7 +520,7 @@ describe('container archetype permutations', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({
@@ -642,7 +642,7 @@ describe('container archetype permutations', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({
@@ -763,7 +763,7 @@ describe('container archetype permutations', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={matrixContainers} />,
+      children: <NodePlugin nodes={matrixContainers} />,
     })
 
     editor.send({

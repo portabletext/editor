@@ -2,7 +2,7 @@ import type {PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
-import type {LeafConfig} from '../renderers/renderer.types'
+import type {BlockObjectConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
@@ -10,7 +10,7 @@ import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
-import {RenderLeafConfig} from './render.leaf-config'
+import {RenderBlockObjectConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 
 export function RenderBlockObject(props: {
@@ -19,7 +19,7 @@ export function RenderBlockObject(props: {
   dropPosition?: DropPosition['position']
   children: ReactElement
   element: PortableTextObject
-  leafConfig?: LeafConfig
+  blockObjectConfig?: BlockObjectConfig
   path: Path
   readOnly: boolean
   legacy: LegacyRenderHooks
@@ -46,15 +46,15 @@ export function RenderBlockObject(props: {
     _type: props.element._type,
   }
 
-  if (props.leafConfig) {
+  if (props.blockObjectConfig) {
     const {
       'data-slate-node': _slateNode,
       'data-slate-void': _slateVoid,
       ...ptAttributes
     } = props.attributes
     return (
-      <RenderLeafConfig
-        leafConfig={props.leafConfig}
+      <RenderBlockObjectConfig
+        blockObjectConfig={props.blockObjectConfig}
         attributes={{
           ...ptAttributes,
           'data-pt-block': 'object',
@@ -65,7 +65,7 @@ export function RenderBlockObject(props: {
         selected={selected}
       >
         {props.children}
-      </RenderLeafConfig>
+      </RenderBlockObjectConfig>
     )
   }
 

@@ -10,7 +10,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Regression: `getAncestors` must descend with positional awareness
  * so the same `_type` registered under two different parents with
- * different `childField` values resolves correctly at each position.
+ * different `arrayField` values resolves correctly at each position.
  *
  * Mirrors the schema used by `get-children-positional-same-type.test.ts`:
  * - `table.rows.of: [{cell, content}]`
@@ -72,12 +72,12 @@ describe('getAncestors with same _type under different parents', () => {
     schema,
     defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       render: containerRender,
       of: [
         defineContainer({
           type: 'cell',
-          childField: 'content',
+          arrayField: 'content',
           render: containerRender,
         }),
       ],
@@ -87,12 +87,12 @@ describe('getAncestors with same _type under different parents', () => {
     schema,
     defineContainer({
       type: 'diagram',
-      childField: 'shapes',
+      arrayField: 'shapes',
       render: containerRender,
       of: [
         defineContainer({
           type: 'cell',
-          childField: 'markers',
+          arrayField: 'markers',
           render: containerRender,
         }),
       ],

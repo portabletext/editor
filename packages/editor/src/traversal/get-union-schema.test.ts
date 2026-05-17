@@ -68,24 +68,24 @@ describe(getUnionSchema.name, () => {
       {
         kind: 'container',
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       },
       {
         kind: 'container',
         type: 'code-block',
-        childField: 'lines',
+        arrayField: 'lines',
         render: testRender,
       },
     ] satisfies ReadonlyArray<Container>) {
       const field = resolveContainerField(
         schema,
         container.type,
-        container.childField,
+        container.arrayField,
       )
       if (!field) {
         throw new Error(
-          `field "${container.childField}" not found on type "${container.type}"`,
+          `field "${container.arrayField}" not found on type "${container.type}"`,
         )
       }
       containers.set(container.type, {container, field})
@@ -194,25 +194,25 @@ describe(getUnionSchema.name, () => {
       {
         kind: 'container',
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: testRender,
       },
-      {kind: 'container', type: 'row', childField: 'cells', render: testRender},
+      {kind: 'container', type: 'row', arrayField: 'cells', render: testRender},
       {
         kind: 'container',
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       },
     ] satisfies ReadonlyArray<Container>) {
       const field = resolveContainerField(
         schema,
         container.type,
-        container.childField,
+        container.arrayField,
       )
       if (!field) {
         throw new Error(
-          `field "${container.childField}" not found on type "${container.type}"`,
+          `field "${container.arrayField}" not found on type "${container.type}"`,
         )
       }
       containers.set(container.type, {container, field})

@@ -6,8 +6,8 @@ import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {getFocusBlock} from '../src/selectors/selector.get-focus-block'
 import {createTestEditor} from '../src/test/vitest'
@@ -2233,11 +2233,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2324,11 +2324,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2415,11 +2415,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2526,11 +2526,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2657,11 +2657,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2777,11 +2777,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -2894,11 +2894,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
@@ -3018,11 +3018,11 @@ describe('event.insert.block', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),

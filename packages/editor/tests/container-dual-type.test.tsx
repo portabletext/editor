@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -11,7 +11,7 @@ import {createTestEditor} from '../src/test/vitest'
  * Schema declares an inline `cell` object under `table.rows[*].cells[*]`
  * AND a separate inline `cell` object under `organism.parts[*]`. Both have
  * the same `_type: 'cell'` and the same structural shape
- * (childField: 'content').
+ * (arrayField: 'content').
  *
  * Registrations are entirely nested: `table.of.row.of.cell` and
  * `organism.of.cell`. No top-level `cell` registration exists. The PR's
@@ -92,15 +92,15 @@ describe('same _type in two different lexical positions', () => {
 
     const tableContainer = defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       of: [
         defineContainer({
           type: 'row',
-          childField: 'cells',
+          arrayField: 'cells',
           of: [
             defineContainer({
               type: 'cell',
-              childField: 'content',
+              arrayField: 'content',
             }),
           ],
         }),
@@ -109,11 +109,11 @@ describe('same _type in two different lexical positions', () => {
 
     const organismContainer = defineContainer({
       type: 'organism',
-      childField: 'parts',
+      arrayField: 'parts',
       of: [
         defineContainer({
           type: 'cell',
-          childField: 'content',
+          arrayField: 'content',
         }),
       ],
     })
@@ -125,9 +125,7 @@ describe('same _type in two different lexical positions', () => {
         {_type: 'table', _key: 't0', rows: []},
         {_type: 'organism', _key: 'o0', parts: []},
       ],
-      children: (
-        <ContainerPlugin containers={[tableContainer, organismContainer]} />
-      ),
+      children: <NodePlugin nodes={[tableContainer, organismContainer]} />,
     })
 
     await vi.waitFor(() => {

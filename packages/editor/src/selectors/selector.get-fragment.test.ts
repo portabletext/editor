@@ -29,7 +29,7 @@ const calloutSchema = compileSchema(
 
 const calloutContainer = defineContainer({
   type: 'callout',
-  childField: 'content',
+  arrayField: 'content',
 })
 
 function createCalloutSnapshot(
@@ -179,9 +179,9 @@ describe(getFragment.name, () => {
     )
 
     const defs = [
-      defineContainer({type: 'table', childField: 'rows'}),
-      defineContainer({type: 'row', childField: 'cells'}),
-      defineContainer({type: 'cell', childField: 'content'}),
+      defineContainer({type: 'table', arrayField: 'rows'}),
+      defineContainer({type: 'row', arrayField: 'cells'}),
+      defineContainer({type: 'cell', arrayField: 'content'}),
     ]
 
     const block1: PortableTextTextBlock = {
@@ -296,9 +296,9 @@ describe(getFragment.name, () => {
     )
 
     const defs = [
-      defineContainer({type: 'table', childField: 'rows'}),
-      defineContainer({type: 'row', childField: 'cells'}),
-      defineContainer({type: 'cell', childField: 'content'}),
+      defineContainer({type: 'table', arrayField: 'rows'}),
+      defineContainer({type: 'row', arrayField: 'cells'}),
+      defineContainer({type: 'cell', arrayField: 'content'}),
     ]
 
     const blockInCell1: PortableTextTextBlock = {

@@ -18,7 +18,7 @@ import {getChildFieldName} from './get-child-field-name'
  *
  * Threads the resolved {@link RegisteredContainer} for the current
  * node through recursion so positional `of` overrides apply when
- * the same `_type` is registered with different `childField`
+ * the same `_type` is registered with different `arrayField`
  * values under different parents.
  */
 function collectDescendantPaths(
@@ -44,7 +44,7 @@ function collectDescendantPaths(
 
   // Resolve through the parent's `of` positional overrides first;
   // fall back to the top-level entry. Mirrors getNodeChildren logic
-  // so positional same-`_type`-different-`childField` configurations
+  // so positional same-`_type`-different-`arrayField` configurations
   // emit correct paths.
   let resolved: RegisteredContainer | undefined
   if (parent?.of) {
@@ -149,9 +149,9 @@ export function getDirtyPaths(
 
       // When a child array field is replaced, dirty the new children
       if (Array.isArray(op.value) && typeof propertyName === 'string') {
-        const childFieldName = getChildFieldName(context, nodePath)
+        const arrayFieldName = getChildFieldName(context, nodePath)
 
-        if (childFieldName === propertyName) {
+        if (arrayFieldName === propertyName) {
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
 

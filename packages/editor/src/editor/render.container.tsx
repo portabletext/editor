@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
@@ -45,12 +45,19 @@ export function RenderContainer(props: {
 
   const augmentedAttributes = {...props.attributes, ...textBlockAttributes}
 
-  if (props.containerConfig.container.render) {
-    const rendered = props.containerConfig.container.render({
+  const render = props.containerConfig.container.render
+  if (typeof render === 'function') {
+    // Container registrations forbid the `'block'` and `'span'` types
+    // at the factory level (see `ContainerNodeForType`), so a container
+    // node here is always a `PortableTextObject`. The runtime
+    // invariant is enforced by registration; expressing it in the type
+    // graph would require threading the `_type` literal through the
+    // dispatch path.
+    const rendered = render({
       attributes: augmentedAttributes,
       children: props.children,
       focused,
-      node: props.element,
+      node: props.element as PortableTextObject,
       path: props.path,
       readOnly,
       selected,

@@ -3,7 +3,7 @@ import {assert, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -364,25 +364,25 @@ describe('event.drag.drop', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
               of: [
                 defineContainer({
                   type: 'row',
-                  childField: 'cells',
+                  arrayField: 'cells',
                   render: ({attributes, children}) => (
                     <div {...attributes}>{children}</div>
                   ),
                   of: [
                     defineContainer({
                       type: 'cell',
-                      childField: 'content',
+                      arrayField: 'content',
                       render: ({attributes, children}) => (
                         <div {...attributes}>{children}</div>
                       ),
@@ -653,25 +653,25 @@ describe('event.drag.drop', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'table',
-              childField: 'rows',
+              arrayField: 'rows',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
               of: [
                 defineContainer({
                   type: 'row',
-                  childField: 'cells',
+                  arrayField: 'cells',
                   render: ({attributes, children}) => (
                     <div {...attributes}>{children}</div>
                   ),
                   of: [
                     defineContainer({
                       type: 'cell',
-                      childField: 'content',
+                      arrayField: 'content',
                       render: ({attributes, children}) => (
                         <div {...attributes}>{children}</div>
                       ),

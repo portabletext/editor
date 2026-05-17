@@ -1,5 +1,5 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
@@ -26,7 +26,7 @@ const schemaDefinition = defineSchema({
 const containers = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -69,7 +69,7 @@ describe('stock-ticker rule (container awareness)', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={containers} />
+          <NodePlugin nodes={containers} />
           <InputRulePlugin rules={[stockTickerRule]} />
         </>
       ),

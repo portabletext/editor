@@ -38,7 +38,9 @@ export function createSlateEditor(
   editor.keyGenerator = context.keyGenerator
   editor.containers = new Map()
   editor.publicContainers = new Map()
-  editor.leaves = new Map()
+  editor.blockObjects = new Map()
+  editor.inlineObjects = new Map()
+  editor.spans = new Map()
   editor.textBlocks = new Map()
 
   editor.decoratedRanges = []

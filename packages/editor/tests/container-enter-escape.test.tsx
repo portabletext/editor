@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -17,7 +17,7 @@ const codeBlockSchema = defineSchema({
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -74,7 +74,7 @@ describe('container Enter escape', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)
@@ -172,7 +172,7 @@ describe('container Enter escape', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)

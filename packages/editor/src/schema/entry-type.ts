@@ -1,6 +1,8 @@
 import type {
+  BlockObjectConfig,
   ContainerConfig,
-  LeafConfig,
+  InlineObjectConfig,
+  SpanConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
 
@@ -8,7 +10,12 @@ import type {
  * Read the `_type` from a pre-resolved `of` entry.
  */
 export function entryType(
-  entry: ContainerConfig | LeafConfig | TextBlockConfig,
+  entry:
+    | ContainerConfig
+    | SpanConfig
+    | BlockObjectConfig
+    | InlineObjectConfig
+    | TextBlockConfig,
 ): string {
   if ('container' in entry) {
     return entry.container.type
@@ -16,5 +23,11 @@ export function entryType(
   if ('textBlock' in entry) {
     return entry.textBlock.type
   }
-  return entry.leaf.type
+  if ('span' in entry) {
+    return entry.span.type
+  }
+  if ('blockObject' in entry) {
+    return entry.blockObject.type
+  }
+  return entry.inlineObject.type
 }

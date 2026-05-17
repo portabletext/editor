@@ -61,7 +61,7 @@ describe(getDefaultStyle.name, () => {
     const containers = resolveContainers(schema, [
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ])

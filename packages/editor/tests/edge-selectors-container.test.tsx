@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {isOverlappingSelection} from '../src/selectors/selector.is-overlapping-selection'
 import {isPointAfterSelection} from '../src/selectors/selector.is-point-after-selection'
@@ -21,7 +21,7 @@ const schemaDefinition = defineSchema({
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -66,7 +66,7 @@ describe('edge selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     const snapshot = editor.getSnapshot()
@@ -155,7 +155,7 @@ describe('edge selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)
@@ -241,7 +241,7 @@ describe('edge selectors (container awareness)', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
     })
 
     await userEvent.click(locator)

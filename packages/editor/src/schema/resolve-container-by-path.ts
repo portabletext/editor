@@ -1,8 +1,10 @@
 import type {FieldDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {
+  BlockObjectConfig,
   ContainerConfig,
-  LeafConfig,
+  InlineObjectConfig,
+  SpanConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import type {Node} from '../slate/interfaces/node'
@@ -121,7 +123,13 @@ function richDescentToParent(
 
     // Resolve this node's rich config using parent's positional `of`
     // first, then the global rich map.
-    let resolved: ContainerConfig | LeafConfig | TextBlockConfig | undefined
+    let resolved:
+      | ContainerConfig
+      | SpanConfig
+      | BlockObjectConfig
+      | InlineObjectConfig
+      | TextBlockConfig
+      | undefined
     if (parent?.of) {
       for (const entry of parent.of) {
         if (entryType(entry) === node._type) {
@@ -151,10 +159,12 @@ function richDescentToParent(
 }
 
 /**
- * Resolve the rich {@link ContainerConfig} / {@link LeafConfig} /
- * {@link TextBlockConfig} for `node` at `path`. Engine-internal
- * chokepoint for "is this node a container/leaf at this position,
- * and what is its full configuration."
+ * Resolve the rich {@link ContainerConfig} or one of the leaf-shaped
+ * configs ({@link SpanConfig} / {@link BlockObjectConfig} /
+ * {@link InlineObjectConfig} / {@link TextBlockConfig}) for `node` at
+ * `path`. Engine-internal chokepoint for "is this node a container or
+ * a registered renderable at this position, and what is its full
+ * configuration."
  *
  * Reads from the editor's rich `containers` map. Not exposed on the
  * public `EditorContext`.
@@ -171,7 +181,7 @@ function richDescentToParent(
  *
  * 3. **Global fallback with position-validity.** Falls back to the
  *    top-level rich `containers` map keyed by `_type`. Activates only
- *    when schema-at-position permits the registered `childField`
+ *    when schema-at-position permits the registered `arrayField`
  *    (for containers) or simply declares `_type` (for leaves).
  *    Registration is type-keyed; activation is position-gated.
  */
@@ -179,7 +189,13 @@ export function resolveContainerByPath(
   input: RichResolutionInput,
   path: Path,
   node: Node,
-): ContainerConfig | LeafConfig | TextBlockConfig | undefined {
+):
+  | ContainerConfig
+  | SpanConfig
+  | BlockObjectConfig
+  | InlineObjectConfig
+  | TextBlockConfig
+  | undefined {
   const descent = richDescentToParent(input, path)
   const parent = descent?.parent
 
@@ -204,7 +220,7 @@ export function resolveContainerByPath(
     return undefined
   }
   const hasChildField = positionFields.some(
-    (field) => field.name === global.container.childField,
+    (field) => field.name === global.container.arrayField,
   )
   if (!hasChildField) {
     return undefined

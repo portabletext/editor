@@ -11,7 +11,7 @@ function registeredContainerFor(
   type: string,
   field: ChildArrayField,
 ): RegisteredContainer {
-  return {type, field}
+  return {kind: 'container', type, field}
 }
 
 describe(isVoidNode.name, () => {

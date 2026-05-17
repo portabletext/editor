@@ -5,7 +5,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
 import {EventListenerPlugin} from '../src/plugins'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -51,7 +51,7 @@ const recursiveListSchema = defineSchema({
 
 const listContainer = defineContainer({
   type: 'list',
-  childField: 'items',
+  arrayField: 'items',
   render: ({attributes, children}) => (
     <ul data-testid="list" {...attributes}>
       {children}
@@ -61,7 +61,7 @@ const listContainer = defineContainer({
 
 const listItemContainer = defineContainer({
   type: 'list-item',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children}) => (
     <li data-testid="list-item" {...attributes}>
       {children}
@@ -179,9 +179,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -198,9 +196,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     const outerList = editor.getSnapshot().context.value[0] as PortableTextBlock
@@ -272,7 +268,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       initialValue,
       children: (
         <>
-          <ContainerPlugin containers={[listContainer, listItemContainer]} />
+          <NodePlugin nodes={[listContainer, listItemContainer]} />
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'patch') {
@@ -452,9 +448,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     const emptyLastSpanPath = [
@@ -530,9 +524,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     const outer = editor.getSnapshot().context.value[0] as PortableTextBlock
@@ -593,9 +585,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     const outer = editor.getSnapshot().context.value[0] as PortableTextBlock
@@ -674,9 +664,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator,
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     // Walk the value to find the deepest span ('level-3') and place caret
@@ -877,9 +865,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       keyGenerator,
       schemaDefinition: recursiveListSchema,
       initialValue,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     const initialL1 = editor.getSnapshot().context.value[0] as PortableTextBlock

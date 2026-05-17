@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -11,9 +11,9 @@ import {createTestEditor} from '../src/test/vitest'
  * Two rules govern when a registered container activates at a position:
  *
  *   Rule 1 - Registration is type-keyed; activation is position-gated.
- *     A registration `defineContainer({type, childField})` activates at
+ *     A registration `defineContainer({type, arrayField})` activates at
  *     any position where the schema declares `type` with a field named
- *     `childField`. Same registration, multiple positions. Where the
+ *     `arrayField`. Same registration, multiple positions. Where the
  *     schema-at-position lacks the field, the registration is inert.
  *
  *   Rule 2 - Container chains are rooted in the editor value array.
@@ -142,11 +142,11 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'cell',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div data-testid="cell" {...attributes}>
                   {children}
@@ -158,7 +158,7 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
             // resolves its 'items' field via inline-walk fallback.
             defineContainer({
               type: 'list',
-              childField: 'items',
+              arrayField: 'items',
               render: ({attributes, children}) => (
                 <div data-testid="list" {...attributes}>
                   {children}
@@ -204,11 +204,11 @@ describe('Registration silent-skip behavior', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div data-testid="callout" {...attributes}>
                   {children}
@@ -218,7 +218,7 @@ describe('Registration silent-skip behavior', () => {
             // 'list' is not in the schema at all.
             defineContainer({
               type: 'list',
-              childField: 'items',
+              arrayField: 'items',
               render: ({attributes, children}) => (
                 <div data-testid="list" {...attributes}>
                   {children}
@@ -272,11 +272,11 @@ describe('Registration silent-skip behavior', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'callout',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div data-testid="callout" {...attributes}>
                   {children}
@@ -287,7 +287,7 @@ describe('Registration silent-skip behavior', () => {
                 // nested entry silently drops; callout still registers.
                 defineContainer({
                   type: 'chart',
-                  childField: 'series',
+                  arrayField: 'series',
                   render: ({attributes, children}) => (
                     <div data-testid="chart" {...attributes}>
                       {children}
@@ -321,7 +321,7 @@ describe('Registration silent-skip behavior', () => {
     warn.mockRestore()
   })
 
-  test('registration with a childField that does not exist on the schema type silently skips', async () => {
+  test('registration with a arrayField that does not exist on the schema type silently skips', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 
@@ -344,13 +344,13 @@ describe('Registration silent-skip behavior', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             // 'callout' is declared in the schema but its only array field
             // is 'content', not 'body'. Registration silently drops.
             defineContainer({
               type: 'callout',
-              childField: 'body',
+              arrayField: 'body',
               render: ({attributes, children}) => (
                 <div data-testid="callout-custom" {...attributes}>
                   {children}
@@ -410,11 +410,11 @@ describe('Rule 2: container chains are rooted in the editor value array', () => 
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'organism',
-              childField: 'cells',
+              arrayField: 'cells',
               render: ({attributes, children}) => (
                 <div data-testid="organism" {...attributes}>
                   {children}
@@ -423,7 +423,7 @@ describe('Rule 2: container chains are rooted in the editor value array', () => 
             }),
             defineContainer({
               type: 'cell',
-              childField: 'content',
+              arrayField: 'content',
               render: ({attributes, children}) => (
                 <div data-testid="cell" {...attributes}>
                   {children}

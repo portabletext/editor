@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -64,27 +64,27 @@ const schemaDefinition = defineSchema({
 const containers = [
   defineContainer({
     type: 'code-block',
-    childField: 'lines',
+    arrayField: 'lines',
     render: ({attributes, children}) => <pre {...attributes}>{children}</pre>,
   }),
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -127,7 +127,7 @@ describe('cross-container range delete', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -195,7 +195,7 @@ describe('cross-container range delete', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -274,7 +274,7 @@ describe('cross-container range delete', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -341,7 +341,7 @@ describe('cross-container range delete', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -425,7 +425,7 @@ describe('cross-container range delete', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -494,7 +494,7 @@ describe('cross-container range delete', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -554,7 +554,7 @@ describe('cross-container range delete', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -650,7 +650,7 @@ describe('cross-container range delete', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -740,7 +740,7 @@ describe('cross-container range delete', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -826,7 +826,7 @@ describe('cross-container range delete', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -912,7 +912,7 @@ describe('cross-container range delete', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -995,22 +995,22 @@ const tableSchemaDefinition = defineSchema({
 const tableContainers = [
   defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer({
     type: 'row',
-    childField: 'cells',
+    arrayField: 'cells',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer({
     type: 'cell',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -1134,7 +1134,7 @@ describe('cross-container range delete: deep structures', () => {
           style: 'normal',
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -1298,7 +1298,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -1435,7 +1435,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -1617,7 +1617,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -1812,7 +1812,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -1931,7 +1931,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -2122,7 +2122,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={tableContainers} />,
+      children: <NodePlugin nodes={tableContainers} />,
     })
 
     await userEvent.click(locator)
@@ -2213,7 +2213,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     const spanPath = [
@@ -2257,14 +2257,14 @@ describe('cross-container range delete: deep structures', () => {
     const containersWithCalloutBlock = [
       defineContainer({
         type: 'code-block',
-        childField: 'lines',
+        arrayField: 'lines',
         render: ({attributes, children}) => (
           <pre {...attributes}>{children}</pre>
         ),
       }),
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
@@ -2279,21 +2279,21 @@ describe('cross-container range delete: deep structures', () => {
       }),
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
       }),
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
       }),
       defineContainer({
         type: 'cell',
-        childField: 'content',
+        arrayField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
@@ -2320,7 +2320,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containersWithCalloutBlock} />,
+      children: <NodePlugin nodes={containersWithCalloutBlock} />,
     })
 
     const spanPath = [
@@ -2404,7 +2404,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     editor.send({
@@ -2540,7 +2540,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={containers} />,
+      children: <NodePlugin nodes={containers} />,
     })
 
     await userEvent.click(locator)
@@ -2587,21 +2587,21 @@ describe('cross-container range delete: deep structures', () => {
     const positionalTableContainers = [
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
         of: [
           defineContainer({
             type: 'row',
-            childField: 'cells',
+            arrayField: 'cells',
             render: ({attributes, children}) => (
               <div {...attributes}>{children}</div>
             ),
             of: [
               defineContainer({
                 type: 'cell',
-                childField: 'content',
+                arrayField: 'content',
                 render: ({attributes, children}) => (
                   <div {...attributes}>{children}</div>
                 ),
@@ -2735,7 +2735,7 @@ describe('cross-container range delete: deep structures', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={positionalTableContainers} />,
+      children: <NodePlugin nodes={positionalTableContainers} />,
     })
 
     await userEvent.click(locator)

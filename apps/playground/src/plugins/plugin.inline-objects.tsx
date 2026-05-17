@@ -1,5 +1,5 @@
-import {defineLeaf} from '@portabletext/editor'
-import {LeafPlugin} from '@portabletext/editor/plugins'
+import {defineInlineObject} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {ActivityIcon, AtSignIcon} from 'lucide-react'
 import type {JSX} from 'react'
 import {tv} from 'tailwind-variants'
@@ -40,7 +40,7 @@ const inlineImageStyle = tv({
   },
 })
 
-const stockTickerLeaf = defineLeaf({
+const stockTickerLeaf = defineInlineObject({
   type: 'stock-ticker',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const stockTicker = node as {symbol?: string}
@@ -59,7 +59,7 @@ const stockTickerLeaf = defineLeaf({
   },
 })
 
-const mentionLeaf = defineLeaf({
+const mentionLeaf = defineInlineObject({
   type: 'mention',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const mention = node as {username?: string}
@@ -78,7 +78,7 @@ const mentionLeaf = defineLeaf({
   },
 })
 
-const inlineImageLeaf = defineLeaf({
+const inlineImageLeaf = defineInlineObject({
   type: 'image',
   render: ({attributes, children, node, focused, readOnly, selected}) => {
     const image = node as {src?: string; alt?: string}
@@ -106,5 +106,5 @@ const inlineImageLeaf = defineLeaf({
 })
 
 export function InlineObjectsPlugin(): JSX.Element {
-  return <LeafPlugin leaves={[stockTickerLeaf, mentionLeaf, inlineImageLeaf]} />
+  return <NodePlugin nodes={[stockTickerLeaf, mentionLeaf, inlineImageLeaf]} />
 }

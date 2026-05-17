@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -60,7 +60,7 @@ const schemaDefinition = defineSchema({
 const calloutContainer = [
   defineContainer({
     type: 'callout',
-    childField: 'content',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -92,7 +92,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -165,7 +165,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -240,7 +240,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -329,7 +329,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     // Try to update the stock-ticker's symbol. Should noop (not throw).
@@ -412,7 +412,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     // Update mention's text and pass an undeclared 'role' field.
@@ -478,7 +478,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     // Update declared 'title' and pass an undeclared 'description' field.
@@ -533,7 +533,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -598,7 +598,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -679,7 +679,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({
@@ -773,7 +773,7 @@ describe('insert respects sub-schema', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={calloutContainer} />,
+      children: <NodePlugin nodes={calloutContainer} />,
     })
 
     editor.send({

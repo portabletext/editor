@@ -2,17 +2,17 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {LeafPlugin} from '../src/plugins/plugin.leaf'
-import {defineLeaf} from '../src/renderers/renderer.types'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineBlockObject} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
   blockObjects: [{name: 'image'}],
 })
 
-describe('defineLeaf void block-object wrapper contract', () => {
+describe('defineBlockObject void block-object wrapper contract', () => {
   test('consumer wrapping content with contentEditable=false + draggable on the inner wrapper preserves the spacer in editable context', async () => {
-    const imageLeaf = defineLeaf({
+    const imageLeaf = defineBlockObject({
       type: 'image',
       render: ({attributes, children, readOnly}) => (
         <div {...attributes} data-testid="image">
@@ -32,7 +32,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue: [{_key: 'i0', _type: 'image'}],
-      children: <LeafPlugin leaves={[imageLeaf]} />,
+      children: <NodePlugin nodes={[imageLeaf]} />,
     })
 
     await vi.waitFor(() => {
@@ -62,7 +62,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
     const spanKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    const imageLeaf = defineLeaf({
+    const imageLeaf = defineBlockObject({
       type: 'image',
       render: ({attributes, children, readOnly}) => (
         <div {...attributes}>
@@ -87,7 +87,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
         },
         {_key: imageKey, _type: 'image'},
       ],
-      children: <LeafPlugin leaves={[imageLeaf]} />,
+      children: <NodePlugin nodes={[imageLeaf]} />,
     })
 
     await userEvent.click(locator)

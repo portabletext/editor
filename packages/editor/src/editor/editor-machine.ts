@@ -20,15 +20,16 @@ import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {
-  Container,
-  Leaf,
-  LeafConfig,
-  TextBlock,
+  BlockObjectConfig,
+  InlineObjectConfig,
+  RegistrableNode,
+  SpanConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import {buildPublicContainers} from '../schema/build-public-containers'
 import {
   resolveNestedContainer,
+  resolveTextBlockConfig,
   type ResolvedContainers,
 } from '../schema/resolve-containers'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
@@ -127,28 +128,12 @@ type InternalEditorEvent =
   | {type: 'dragend'}
   | {type: 'drop'}
   | {
-      type: 'register container'
-      container: Container
+      type: 'register'
+      node: RegistrableNode
     }
   | {
-      type: 'unregister container'
-      container: Container
-    }
-  | {
-      type: 'register leaf'
-      leaf: Leaf
-    }
-  | {
-      type: 'unregister leaf'
-      leaf: Leaf
-    }
-  | {
-      type: 'register text-block'
-      textBlock: TextBlock
-    }
-  | {
-      type: 'unregister text-block'
-      textBlock: TextBlock
+      type: 'unregister'
+      node: RegistrableNode
     }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
@@ -211,9 +196,11 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
+      blockObjects: Map<string, BlockObjectConfig>
       containers: ResolvedContainers
       converters: Array<Converter>
-      leaves: Map<string, LeafConfig>
+      inlineObjects: Map<string, InlineObjectConfig>
+      spans: Map<string, SpanConfig>
       textBlocks: Map<string, TextBlockConfig>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
@@ -264,100 +251,141 @@ export const editorMachine = setup({
           : context.slateEditor
       },
     }),
-    'register container': assign(({context, event}) => {
-      assertEvent(event, 'register container')
-      if (isTypeAlreadyRegistered(context, 'container', event.container.type)) {
+    'register': assign(({context, event}) => {
+      assertEvent(event, 'register')
+      const node = event.node
+      if (node.kind === 'container') {
+        if (isTypeAlreadyRegistered(context, 'container', node.type)) {
+          return {}
+        }
+        const containerConfig = resolveNestedContainer(context.schema, node)
+        if (!containerConfig) {
+          // resolveNestedContainer has already warned with chain context.
+          return {}
+        }
+        const containers = new Map(context.containers)
+        containers.set(node.type, containerConfig)
+        if (context.slateEditor) {
+          context.slateEditor.containers = containers
+          context.slateEditor.publicContainers =
+            buildPublicContainers(containers)
+          normalize(context.slateEditor, {force: true})
+          context.slateEditor.onChange()
+        }
+        return {containers}
+      }
+      if (node.kind === 'textBlock') {
+        if (isTypeAlreadyRegistered(context, 'textBlock', node.type)) {
+          return {}
+        }
+        const textBlocks = new Map(context.textBlocks)
+        textBlocks.set(node.type, resolveTextBlockConfig(node))
+        if (context.slateEditor) {
+          context.slateEditor.textBlocks = textBlocks
+          context.slateEditor.onChange()
+        }
+        return {textBlocks}
+      }
+      if (node.kind === 'span') {
+        if (isTypeAlreadyRegistered(context, 'span', node.type)) {
+          return {}
+        }
+        const spans = new Map(context.spans)
+        spans.set(node.type, {span: node})
+        if (context.slateEditor) {
+          context.slateEditor.spans = spans
+          context.slateEditor.onChange()
+        }
+        return {spans}
+      }
+      if (node.kind === 'blockObject') {
+        if (isTypeAlreadyRegistered(context, 'blockObject', node.type)) {
+          return {}
+        }
+        const blockObjects = new Map(context.blockObjects)
+        blockObjects.set(node.type, {blockObject: node})
+        if (context.slateEditor) {
+          context.slateEditor.blockObjects = blockObjects
+          context.slateEditor.onChange()
+        }
+        return {blockObjects}
+      }
+      // inlineObject
+      if (isTypeAlreadyRegistered(context, 'inlineObject', node.type)) {
         return {}
       }
-      const containerConfig = resolveNestedContainer(
-        context.schema,
-        event.container,
-      )
-      if (!containerConfig) {
-        // resolveNestedContainer has already warned with chain context.
-        return {}
-      }
-      const containers = new Map(context.containers)
-      containers.set(event.container.type, containerConfig)
+      const inlineObjects = new Map(context.inlineObjects)
+      inlineObjects.set(node.type, {inlineObject: node})
       if (context.slateEditor) {
-        context.slateEditor.containers = containers
-        context.slateEditor.publicContainers = buildPublicContainers(containers)
-        normalize(context.slateEditor, {force: true})
+        context.slateEditor.inlineObjects = inlineObjects
         context.slateEditor.onChange()
       }
-      return {containers}
+      return {inlineObjects}
     }),
-    'unregister container': assign(({context, event}) => {
-      assertEvent(event, 'unregister container')
-      const containers = new Map(context.containers)
-      containers.delete(event.container.type)
+    'unregister': assign(({context, event}) => {
+      assertEvent(event, 'unregister')
+      const node = event.node
+      if (node.kind === 'container') {
+        const containers = new Map(context.containers)
+        containers.delete(node.type)
+        if (context.slateEditor) {
+          context.slateEditor.containers = containers
+          context.slateEditor.publicContainers =
+            buildPublicContainers(containers)
+          normalize(context.slateEditor, {force: true})
+          context.slateEditor.onChange()
+        }
+        return {containers}
+      }
+      if (node.kind === 'textBlock') {
+        const textBlocks = new Map(context.textBlocks)
+        textBlocks.delete(node.type)
+        if (context.slateEditor) {
+          context.slateEditor.textBlocks = textBlocks
+          context.slateEditor.onChange()
+        }
+        return {textBlocks}
+      }
+      if (node.kind === 'span') {
+        const spans = new Map(context.spans)
+        spans.delete(node.type)
+        if (context.slateEditor) {
+          context.slateEditor.spans = spans
+          context.slateEditor.onChange()
+        }
+        return {spans}
+      }
+      if (node.kind === 'blockObject') {
+        const blockObjects = new Map(context.blockObjects)
+        blockObjects.delete(node.type)
+        if (context.slateEditor) {
+          context.slateEditor.blockObjects = blockObjects
+          context.slateEditor.onChange()
+        }
+        return {blockObjects}
+      }
+      // inlineObject
+      const inlineObjects = new Map(context.inlineObjects)
+      inlineObjects.delete(node.type)
       if (context.slateEditor) {
-        context.slateEditor.containers = containers
-        context.slateEditor.publicContainers = buildPublicContainers(containers)
-        normalize(context.slateEditor, {force: true})
+        context.slateEditor.inlineObjects = inlineObjects
         context.slateEditor.onChange()
       }
-      return {containers}
-    }),
-    'register leaf': assign(({context, event}) => {
-      assertEvent(event, 'register leaf')
-      if (isTypeAlreadyRegistered(context, 'leaf', event.leaf.type)) {
-        return {}
-      }
-      const leaves = new Map(context.leaves)
-      leaves.set(event.leaf.type, {leaf: event.leaf})
-      if (context.slateEditor) {
-        context.slateEditor.leaves = leaves
-        context.slateEditor.onChange()
-      }
-      return {leaves}
-    }),
-    'unregister leaf': assign(({context, event}) => {
-      assertEvent(event, 'unregister leaf')
-      const leaves = new Map(context.leaves)
-      leaves.delete(event.leaf.type)
-      if (context.slateEditor) {
-        context.slateEditor.leaves = leaves
-        context.slateEditor.onChange()
-      }
-      return {leaves}
-    }),
-    'register text-block': assign(({context, event}) => {
-      assertEvent(event, 'register text-block')
-      if (
-        isTypeAlreadyRegistered(context, 'text block', event.textBlock.type)
-      ) {
-        return {}
-      }
-      const textBlocks = new Map(context.textBlocks)
-      textBlocks.set(event.textBlock.type, {textBlock: event.textBlock})
-      if (context.slateEditor) {
-        context.slateEditor.textBlocks = textBlocks
-        context.slateEditor.onChange()
-      }
-      return {textBlocks}
-    }),
-    'unregister text-block': assign(({context, event}) => {
-      assertEvent(event, 'unregister text-block')
-      const textBlocks = new Map(context.textBlocks)
-      textBlocks.delete(event.textBlock.type)
-      if (context.slateEditor) {
-        context.slateEditor.textBlocks = textBlocks
-        context.slateEditor.onChange()
-      }
-      return {textBlocks}
+      return {inlineObjects}
     }),
     'attach maps to slate editor': ({context}) => {
       // After the Slate editor is constructed, mirror the actor's
-      // container/leaf/textBlock maps onto it and trigger a force-normalize
-      // so any rules that depend on the maps (e.g. unwrap-on-empty) run
-      // against the freshly attached editor.
+      // registration maps onto it and trigger a force-normalize so any
+      // rules that depend on the maps (e.g. unwrap-on-empty) run against
+      // the freshly attached editor.
       if (context.slateEditor) {
         context.slateEditor.containers = context.containers
         context.slateEditor.publicContainers = buildPublicContainers(
           context.containers,
         )
-        context.slateEditor.leaves = context.leaves
+        context.slateEditor.blockObjects = context.blockObjects
+        context.slateEditor.inlineObjects = context.inlineObjects
+        context.slateEditor.spans = context.spans
         context.slateEditor.textBlocks = context.textBlocks
         normalize(context.slateEditor, {force: true})
         context.slateEditor.onChange()
@@ -539,7 +567,9 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     containers: new Map(),
-    leaves: new Map(),
+    blockObjects: new Map(),
+    inlineObjects: new Map(),
+    spans: new Map(),
     textBlocks: new Map(),
     converters: input.converters ?? [],
     keyGenerator: input.keyGenerator,
@@ -556,23 +586,11 @@ export const editorMachine = setup({
     'add slate editor': {
       actions: ['add slate editor to context', 'attach maps to slate editor'],
     },
-    'register container': {
-      actions: ['register container'],
+    'register': {
+      actions: ['register'],
     },
-    'unregister container': {
-      actions: ['unregister container'],
-    },
-    'register leaf': {
-      actions: ['register leaf'],
-    },
-    'unregister leaf': {
-      actions: ['unregister leaf'],
-    },
-    'register text-block': {
-      actions: ['register text-block'],
-    },
-    'unregister text-block': {
-      actions: ['unregister text-block'],
+    'unregister': {
+      actions: ['unregister'],
     },
     'update selection': {
       actions: [

@@ -1,10 +1,10 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children, selected}) => (
     <pre
       {...attributes}
@@ -17,5 +17,5 @@ const codeBlockContainer = defineContainer({
 })
 
 export function CodeBlockPlugin(): JSX.Element {
-  return <ContainerPlugin containers={[codeBlockContainer]} />
+  return <NodePlugin nodes={[codeBlockContainer]} />
 }

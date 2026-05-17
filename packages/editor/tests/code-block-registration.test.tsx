@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -11,12 +11,12 @@ import {createTestEditor} from '../src/test/vitest'
  * the schema:
  *
  * A) The schema permits `code-block` inside another container's
- *    `childField`, but no container declares `code-block` in its
+ *    `arrayField`, but no container declares `code-block` in its
  *    `of`. A plugin registers `code-block` at the top level. Does it
  *    activate when normalization walks into a `code-block` found
  *    inside the outer container?
  *
- * B) The plugin registers `code-block` with `childField: 'lines'`,
+ * B) The plugin registers `code-block` with `arrayField: 'lines'`,
  *    but the schema declares `code-block` with field `content`. The
  *    registration is invalid and the engine warns at register time.
  *    What happens to a `code-block` node that survives in the initial
@@ -80,7 +80,7 @@ function tableSchema(codeBlockField: 'lines' | 'content') {
 function tableContainers() {
   return defineContainer({
     type: 'table',
-    childField: 'rows',
+    arrayField: 'rows',
     render: ({attributes, children}) => (
       <div data-testid="table" {...attributes}>
         {children}
@@ -89,7 +89,7 @@ function tableContainers() {
     of: [
       defineContainer({
         type: 'row',
-        childField: 'cells',
+        arrayField: 'cells',
         render: ({attributes, children}) => (
           <div data-testid="row" {...attributes}>
             {children}
@@ -98,7 +98,7 @@ function tableContainers() {
         of: [
           defineContainer({
             type: 'cell',
-            childField: 'content',
+            arrayField: 'content',
             render: ({attributes, children}) => (
               <div data-testid="cell" {...attributes}>
                 {children}
@@ -151,8 +151,8 @@ describe('code-block resolution through normalisation', () => {
       schemaDefinition: tableSchema('lines'),
       initialValue: [initialValue],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             tableContainers(),
             // code-block registered at the top level only. The chain
             // table -> row -> cell -> code-block is reachable because
@@ -160,7 +160,7 @@ describe('code-block resolution through normalisation', () => {
             // entry is the global fallback.
             defineContainer({
               type: 'code-block',
-              childField: 'lines',
+              arrayField: 'lines',
               render: ({attributes, children}) => (
                 <div data-testid="code-block" {...attributes}>
                   {children}
@@ -209,13 +209,13 @@ describe('code-block resolution through normalisation', () => {
       schemaDefinition: tableSchema('content'),
       initialValue: [initialValue],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             tableContainers(),
             defineContainer({
               // Plugin asks for `lines`; schema says `content`.
               type: 'code-block',
-              childField: 'lines',
+              arrayField: 'lines',
               render: ({attributes, children}) => (
                 <div data-testid="code-block" {...attributes}>
                   {children}

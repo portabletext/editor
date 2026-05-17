@@ -3,7 +3,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineContainer, defineSchema} from '../src'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('decorator shortcut guard', () => {
@@ -62,11 +62,11 @@ describe('decorator shortcut guard', () => {
       schemaDefinition,
       initialValue: [paragraph, codeBlock],
       children: (
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               type: 'code-block',
-              childField: 'lines',
+              arrayField: 'lines',
             }),
           ]}
         />

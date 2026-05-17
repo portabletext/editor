@@ -1,10 +1,10 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
 
 const tableContainer = defineContainer({
   type: 'table',
-  childField: 'rows',
+  arrayField: 'rows',
   render: ({attributes, children, node, selected}) => (
     <table
       {...attributes}
@@ -20,28 +20,27 @@ const tableContainer = defineContainer({
   of: [
     defineContainer({
       type: 'row',
-      childField: 'cells',
+      arrayField: 'cells',
       render: ({attributes, children, selected}) => (
         <tr {...attributes} data-selected={selected ? '' : undefined}>
           {children}
         </tr>
       ),
       of: [
-        {
-          kind: 'container',
+        defineContainer({
           type: 'cell',
-          childField: 'content',
+          arrayField: 'content',
           render: ({attributes, children, selected}) => (
             <td {...attributes} data-selected={selected ? '' : undefined}>
               {children}
             </td>
           ),
-        },
+        }),
       ],
     }),
   ],
 })
 
 export function TablePlugin(): JSX.Element {
-  return <ContainerPlugin containers={[tableContainer]} />
+  return <NodePlugin nodes={[tableContainer]} />
 }

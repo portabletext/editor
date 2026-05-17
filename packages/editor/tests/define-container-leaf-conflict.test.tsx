@@ -1,9 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {LeafPlugin} from '../src/plugins/plugin.leaf'
-import {defineContainer, defineLeaf} from '../src/renderers/renderer.types'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {
+  defineBlockObject,
+  defineContainer,
+} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 const cardSchemaDefinition = defineSchema({
@@ -36,7 +38,7 @@ const factBoxSchemaDefinition = defineSchema({
   ],
 })
 
-describe('defineContainer / defineLeaf conflict resolution', () => {
+describe('defineContainer / defineBlockObject conflict resolution', () => {
   test('Same scope registered twice as container (different field) keeps the first registration', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
@@ -46,19 +48,19 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       initialValue: [],
       children: (
         <>
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'card',
-                childField: 'content',
+                arrayField: 'content',
               }),
             ]}
           />
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'card',
-                childField: 'aside',
+                arrayField: 'aside',
               }),
             ]}
           />
@@ -86,19 +88,19 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       initialValue: [],
       children: (
         <>
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'callout',
-                childField: 'content',
+                arrayField: 'content',
               }),
             ]}
           />
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'callout',
-                childField: 'content',
+                arrayField: 'content',
               }),
             ]}
           />
@@ -122,17 +124,17 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       initialValue: [],
       children: (
         <>
-          <LeafPlugin
-            leaves={[
-              defineLeaf({
+          <NodePlugin
+            nodes={[
+              defineBlockObject({
                 type: 'callout',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
           />
-          <LeafPlugin
-            leaves={[
-              defineLeaf({
+          <NodePlugin
+            nodes={[
+              defineBlockObject({
                 type: 'callout',
                 render: ({children}) => <>{children}</>,
               }),
@@ -158,17 +160,17 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       initialValue: [],
       children: (
         <>
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'fact-box',
-                childField: 'content',
+                arrayField: 'content',
               }),
             ]}
           />
-          <LeafPlugin
-            leaves={[
-              defineLeaf({
+          <NodePlugin
+            nodes={[
+              defineBlockObject({
                 type: 'fact-box',
                 render: ({children}) => <>{children}</>,
               }),
@@ -196,19 +198,19 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       initialValue: [],
       children: (
         <>
-          <LeafPlugin
-            leaves={[
-              defineLeaf({
+          <NodePlugin
+            nodes={[
+              defineBlockObject({
                 type: 'fact-box',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
           />
-          <ContainerPlugin
-            containers={[
+          <NodePlugin
+            nodes={[
               defineContainer({
                 type: 'fact-box',
-                childField: 'content',
+                arrayField: 'content',
               }),
             ]}
           />
@@ -217,7 +219,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
     })
 
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('registered as a leaf'),
+      expect.stringContaining('registered as a blockObject'),
     )
 
     expect(editor.getSnapshot().context.containers.has('fact-box')).toBe(false)

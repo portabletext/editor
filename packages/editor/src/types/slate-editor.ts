@@ -2,7 +2,12 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
-import type {LeafConfig, TextBlockConfig} from '../renderers/renderer.types'
+import type {
+  BlockObjectConfig,
+  InlineObjectConfig,
+  SpanConfig,
+  TextBlockConfig,
+} from '../renderers/renderer.types'
 import type {Containers, ResolvedContainers} from '../schema/resolve-containers'
 import type {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
@@ -37,7 +42,9 @@ export interface PortableTextSlateEditor extends DOMEditor {
    * `containers` by the editor machine's register/unregister handlers.
    */
   publicContainers: Containers
-  leaves: Map<string, LeafConfig>
+  blockObjects: Map<string, BlockObjectConfig>
+  inlineObjects: Map<string, InlineObjectConfig>
+  spans: Map<string, SpanConfig>
   textBlocks: Map<string, TextBlockConfig>
 
   /**

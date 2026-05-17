@@ -1,11 +1,11 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
 import {
+  defineBlockObject,
   defineContainer,
-  defineLeaf,
+  type BlockObject,
   type Container,
   type ContainerConfig,
-  type Leaf,
 } from '../renderers/renderer.types'
 import {buildPublicContainers} from './build-public-containers'
 import {
@@ -18,7 +18,7 @@ import {
 } from './resolve-containers'
 
 const containerRender: Container['render'] = ({children}) => children
-const leafRender: Leaf['render'] = ({children}) => children
+const leafRender: BlockObject['render'] = ({children}) => children
 
 /**
  * Test snapshots mirror the production shape closely enough for the
@@ -84,7 +84,7 @@ describe(resolveNestedContainer.name, () => {
       calloutSchema,
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
       }),
     )
@@ -138,17 +138,17 @@ describe(resolveNestedContainer.name, () => {
       tableSchema,
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: containerRender,
         of: [
           defineContainer({
             type: 'row',
-            childField: 'cells',
+            arrayField: 'cells',
             render: containerRender,
             of: [
               defineContainer({
                 type: 'cell',
-                childField: 'content',
+                arrayField: 'content',
                 render: containerRender,
               }),
             ],
@@ -221,18 +221,18 @@ describe(resolveNestedContainer.name, () => {
         tableSchema,
         defineContainer({
           type: 'table',
-          childField: 'rows',
+          arrayField: 'rows',
           render: containerRender,
           of: [
             defineContainer({
               type: 'row',
-              childField: 'cells',
+              arrayField: 'cells',
               render: containerRender,
               of: [
                 defineContainer({
                   type: 'cell',
                   // intentionally wrong field name
-                  childField: 'contents' as 'content',
+                  arrayField: 'contents' as 'content',
                   render: containerRender,
                 }),
               ],
@@ -273,7 +273,7 @@ describe(resolveContainerByPath.name, () => {
     const containers = resolveContainersRich(calloutSchema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
       }),
     ])
@@ -328,7 +328,7 @@ describe(resolveContainerByPath.name, () => {
     const containers = resolveContainersRich(schema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
       }),
     ])
@@ -399,17 +399,17 @@ describe(resolveContainerByPath.name, () => {
       tableSchema,
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: containerRender,
         of: [
           defineContainer({
             type: 'row',
-            childField: 'cells',
+            arrayField: 'cells',
             render: containerRender,
             of: [
               defineContainer({
                 type: 'cell',
-                childField: 'content',
+                arrayField: 'content',
                 render: containerRender,
               }),
             ],
@@ -498,12 +498,12 @@ describe(resolveContainerByPath.name, () => {
       dualSchema,
       defineContainer({
         type: 'table',
-        childField: 'rows',
+        arrayField: 'rows',
         render: containerRender,
         of: [
           defineContainer({
             type: 'cell',
-            childField: 'content',
+            arrayField: 'content',
             render: containerRender,
           }),
         ],
@@ -513,12 +513,12 @@ describe(resolveContainerByPath.name, () => {
       dualSchema,
       defineContainer({
         type: 'diagram',
-        childField: 'shapes',
+        arrayField: 'shapes',
         render: containerRender,
         of: [
           defineContainer({
             type: 'cell',
-            childField: 'markers',
+            arrayField: 'markers',
             render: containerRender,
           }),
         ],
@@ -596,9 +596,9 @@ describe(resolveContainerByPath.name, () => {
       schema,
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
-        of: [defineLeaf({type: 'image', render: leafRender})],
+        of: [defineBlockObject({type: 'image', render: leafRender})],
       }),
     )
     if (!calloutConfig) {
@@ -647,7 +647,7 @@ describe(resolveContainerByPath.name, () => {
     const containers = resolveContainersRich(schema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
       }),
     ])
@@ -686,7 +686,7 @@ describe(descendToParent.name, () => {
     const containers = resolveContainers(schema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
       }),
     ])
@@ -713,7 +713,7 @@ describe(descendToParent.name, () => {
     const containers = resolveContainers(schema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: containerRender,
       }),
     ])

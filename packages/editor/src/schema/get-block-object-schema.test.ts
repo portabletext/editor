@@ -52,7 +52,7 @@ describe(getBlockObjectSchema.name, () => {
     const containers = resolveContainers(schema, [
       defineContainer({
         type: 'callout',
-        childField: 'content',
+        arrayField: 'content',
         render: testRender,
       }),
     ])

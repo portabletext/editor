@@ -64,17 +64,17 @@ function tableContainers(): ResolvedContainers {
   return resolveContainersRich(schema, [
     defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       render,
     }),
     defineContainer({
       type: 'row',
-      childField: 'cells',
+      arrayField: 'cells',
       render,
     }),
     defineContainer({
       type: 'cell',
-      childField: 'content',
+      arrayField: 'content',
       render,
     }),
   ])

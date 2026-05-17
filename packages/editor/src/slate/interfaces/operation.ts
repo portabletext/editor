@@ -69,7 +69,7 @@ type SetOperation = {
  * Remove a property from a node, or remove a node from its parent.
  *
  * Property removal: path is `[...nodePath, propertyName]` (last segment is a string).
- * Node removal: path is `[...parentPath, childFieldName, {_key: nodeKey}]`
+ * Node removal: path is `[...parentPath, arrayFieldName, {_key: nodeKey}]`
  * (last segment is a keyed segment pointing to the node to remove).
  */
 type UnsetOperation = {

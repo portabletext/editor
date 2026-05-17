@@ -1,6 +1,6 @@
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -96,7 +96,7 @@ describe('Render count regression', () => {
 
     const listContainer = defineContainer({
       type: 'list',
-      childField: 'items',
+      arrayField: 'items',
       render: ({children, node}) => (
         <ul data-testid={`list-${node._key}`}>{children}</ul>
       ),
@@ -104,7 +104,7 @@ describe('Render count regression', () => {
 
     const listItemContainer = defineContainer({
       type: 'list-item',
-      childField: 'content',
+      arrayField: 'content',
       render: ({children, node}) => {
         const key = node._key
         itemCounter.counts.set(key, (itemCounter.counts.get(key) ?? 0) + 1)
@@ -118,9 +118,7 @@ describe('Render count regression', () => {
     const {editor, locator} = await createTestEditor({
       schemaDefinition,
       initialValue: initialValue as never,
-      children: (
-        <ContainerPlugin containers={[listContainer, listItemContainer]} />
-      ),
+      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
     })
 
     await vi.waitFor(() =>

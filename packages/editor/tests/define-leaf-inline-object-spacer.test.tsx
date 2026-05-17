@@ -1,8 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {LeafPlugin} from '../src/plugins/plugin.leaf'
-import {defineLeaf} from '../src/renderers/renderer.types'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {
+  defineBlockObject,
+  defineInlineObject,
+} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 const inlineSchema = defineSchema({
@@ -15,7 +18,7 @@ const blockObjectSchema = defineSchema({
 
 describe('defineLeaf void spacer', () => {
   test('the engine-emitted void spacer reaches the consumer through children for inline objects', async () => {
-    const stockTickerLeaf = defineLeaf({
+    const stockTickerLeaf = defineInlineObject({
       type: 'stock-ticker',
       render: ({attributes, children, node}) => {
         const ticker = node as {symbol?: string}
@@ -44,7 +47,7 @@ describe('defineLeaf void spacer', () => {
           style: 'normal',
         },
       ],
-      children: <LeafPlugin leaves={[stockTickerLeaf]} />,
+      children: <NodePlugin nodes={[stockTickerLeaf]} />,
     })
 
     await vi.waitFor(() => {
@@ -59,7 +62,7 @@ describe('defineLeaf void spacer', () => {
   })
 
   test('the engine-emitted void spacer reaches the consumer through children for void block objects', async () => {
-    const imageLeaf = defineLeaf({
+    const imageLeaf = defineBlockObject({
       type: 'image',
       render: ({attributes, children, node}) => {
         const image = node as {src?: string}
@@ -78,7 +81,7 @@ describe('defineLeaf void spacer', () => {
       initialValue: [
         {_key: 'i0', _type: 'image', src: 'https://example.com/x.png'},
       ],
-      children: <LeafPlugin leaves={[imageLeaf]} />,
+      children: <NodePlugin nodes={[imageLeaf]} />,
     })
 
     await vi.waitFor(() => {

@@ -65,7 +65,7 @@ const schemaDefinition = defineSchema({
 
 const listContainer = defineContainer({
   type: 'list',
-  childField: 'items',
+  arrayField: 'items',
   render: ({attributes, children}) => (
     <ul data-testid="list" {...attributes}>
       {children}
@@ -75,7 +75,7 @@ const listContainer = defineContainer({
 
 const listItemContainer = defineContainer({
   type: 'list-item',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children}) => (
     <li data-testid="list-item" {...attributes}>
       {children}
@@ -85,7 +85,7 @@ const listItemContainer = defineContainer({
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -115,9 +115,9 @@ const isListItem = (node: Node): node is ListItemNode =>
  */
 const childPath = (
   parentPath: Path,
-  childField: string,
+  arrayField: string,
   child: Keyed,
-): Path => [...parentPath, childField, {_key: child._key}]
+): Path => [...parentPath, arrayField, {_key: child._key}]
 
 /**
  * Build a new `list` value.
@@ -453,9 +453,9 @@ function StructuredListsPlugin() {
   const editor = useEditor()
   useEffect(() => {
     const unregisters = [
-      editor.registerContainer(listContainer),
-      editor.registerContainer(listItemContainer),
-      editor.registerContainer(codeBlockContainer),
+      editor.registerNode({node: listContainer}),
+      editor.registerNode({node: listItemContainer}),
+      editor.registerNode({node: codeBlockContainer}),
       editor.registerBehavior({behavior: sinkOnTab}),
       editor.registerBehavior({behavior: liftOnShiftTab}),
     ]

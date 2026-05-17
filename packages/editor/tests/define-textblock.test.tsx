@@ -1,8 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {expect, test, vi} from 'vitest'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {TextBlockPlugin} from '../src/plugins/plugin.text-block'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -38,8 +37,8 @@ test('TextBlockPlugin renders custom wrapper', async () => {
       },
     ],
     children: (
-      <TextBlockPlugin
-        textBlocks={[
+      <NodePlugin
+        nodes={[
           defineTextBlock({
             type: 'block',
             render: ({attributes, children}) => (
@@ -115,8 +114,8 @@ test('Cross-map collision: text-block then container for same type warns and ski
     ],
     children: (
       <>
-        <TextBlockPlugin
-          textBlocks={[
+        <NodePlugin
+          nodes={[
             defineTextBlock({
               type: 'block',
               render: ({attributes, children}) => (
@@ -127,8 +126,8 @@ test('Cross-map collision: text-block then container for same type warns and ski
             }),
           ]}
         />
-        <ContainerPlugin
-          containers={[
+        <NodePlugin
+          nodes={[
             defineContainer({
               // @ts-expect-error - defineContainer({type: 'block'}) is
               // forbidden at the type level; the engine's runtime check
@@ -143,7 +142,7 @@ test('Cross-map collision: text-block then container for same type warns and ski
 
   await vi.waitFor(() => {
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('already registered as a text block'),
+      expect.stringContaining('already registered as a textBlock'),
     )
   })
 

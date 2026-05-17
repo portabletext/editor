@@ -2,7 +2,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type BlockChildRenderProps} from '../src'
-import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import type {Path} from '../src/types/paths'
@@ -393,7 +393,7 @@ describe('renderChild', () => {
 
     const tableContainer = defineContainer({
       type: 'table',
-      childField: 'rows',
+      arrayField: 'rows',
       render: ({attributes, children}) => (
         <table {...attributes}>
           <tbody>{children}</tbody>
@@ -403,13 +403,13 @@ describe('renderChild', () => {
 
     const rowContainer = defineContainer({
       type: 'row',
-      childField: 'cells',
+      arrayField: 'cells',
       render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
     })
 
     const cellContainer = defineContainer({
       type: 'cell',
-      childField: 'content',
+      arrayField: 'content',
       render: ({attributes, children}) => (
         <td data-testid="cell" {...attributes}>
           {children}
@@ -452,9 +452,7 @@ describe('renderChild', () => {
         },
       ],
       children: (
-        <ContainerPlugin
-          containers={[tableContainer, rowContainer, cellContainer]}
-        />
+        <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
       ),
       editableProps: {renderChild},
     })
