@@ -52,7 +52,7 @@ export function RenderInlineObject(props: {
         leafConfig={props.leafConfig}
         attributes={{
           ...ptAttributes,
-          'data-pt-child-type': 'object',
+          'data-pt-inline': 'object',
         }}
         focused={focused}
         node={props.element}
@@ -90,7 +90,7 @@ export function RenderInlineObject(props: {
     'data-child-key': inlineObject._key,
     'data-child-name': inlineObject._type,
     'data-child-type': 'object',
-    'data-pt-child-type': 'object',
+    'data-pt-inline': 'object',
   }
 
   return (

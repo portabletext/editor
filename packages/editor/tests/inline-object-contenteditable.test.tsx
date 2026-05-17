@@ -104,7 +104,7 @@ describe('inline-object void wrapper contenteditable', () => {
     })
 
     await vi.waitFor(() => {
-      const wrapper = document.querySelector('[data-pt-child-type="object"]')
+      const wrapper = document.querySelector('[data-pt-inline="object"]')
       expect(wrapper).not.toEqual(null)
       expect(wrapper!.getAttribute('contenteditable')).toEqual('false')
     })

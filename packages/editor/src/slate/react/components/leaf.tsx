@@ -52,14 +52,14 @@ const Leaf = (props: {
   // contenteditable behaviors. (2019/05/08)
   const attributes: {
     'data-slate-leaf'?: true
-    'data-pt-mark': true
+    'data-pt-marks': true
   } = parentContainer
     ? {
-        'data-pt-mark': true,
+        'data-pt-marks': true,
       }
     : {
         'data-slate-leaf': true,
-        'data-pt-mark': true,
+        'data-pt-marks': true,
       }
 
   return renderLeaf({

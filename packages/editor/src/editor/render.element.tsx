@@ -185,7 +185,7 @@ export function RenderElement(props: {
       const {'data-slate-node': _sn, ...rest} = props.attributes
       return (
         <RenderTextBlockConfig
-          attributes={{...rest, 'data-pt-block-type': 'text'}}
+          attributes={{...rest, 'data-pt-block': 'text'}}
           textBlockConfig={effectiveTextBlockConfig}
           node={props.element}
           path={props.path}
@@ -198,7 +198,7 @@ export function RenderElement(props: {
     if (parentContainer) {
       const {'data-slate-node': _sn, ...rest} = props.attributes
       return (
-        <div {...rest} data-pt-block-type="text">
+        <div {...rest} data-pt-block="text">
           {props.children}
         </div>
       )
@@ -233,7 +233,7 @@ export function RenderElement(props: {
         ...rest
       } = props.attributes
       return (
-        <span {...rest} data-pt-child-type="object">
+        <span {...rest} data-pt-inline="object">
           {props.children}
           <span contentEditable={false}>
             [{props.element._type}: {props.element._key}]
@@ -263,7 +263,7 @@ export function RenderElement(props: {
       ...rest
     } = props.attributes
     return (
-      <div {...rest} data-pt-block-type="object">
+      <div {...rest} data-pt-block="object">
         {props.children}
         <div contentEditable={false}>
           [{props.element._type}: {props.element._key}]
@@ -308,8 +308,8 @@ function isTextBlockRegistration(
  * of a component, not inside a conditional in `RenderElement`'s body.
  */
 function RenderTextBlockConfig(props: {
-  attributes: Omit<RenderElementProps['attributes'], 'data-pt-block-type'> & {
-    'data-pt-block-type': 'text'
+  attributes: Omit<RenderElementProps['attributes'], 'data-pt-block'> & {
+    'data-pt-block': 'text'
   }
   children: ReactElement
   node: PortableTextTextBlock

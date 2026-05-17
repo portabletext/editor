@@ -96,7 +96,7 @@ export interface RenderElementProps {
   path: Path
   attributes: {
     'data-slate-node'?: 'element'
-    'data-pt-block-type'?: 'container'
+    'data-pt-block'?: 'container'
     'data-slate-void'?: true
     'data-pt-path': string
     'contentEditable'?: false
@@ -119,7 +119,7 @@ export interface RenderLeafProps {
   path: Path
   attributes: {
     'data-slate-leaf'?: true
-    'data-pt-mark': true
+    'data-pt-marks': true
   }
   /**
    * The position of the leaf within the Text node, only present when the text node is split by decorations.

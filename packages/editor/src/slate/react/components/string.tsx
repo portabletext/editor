@@ -135,13 +135,13 @@ const MemoizedText = memo(
     (props, ref) => {
       if (props.containerScope) {
         return (
-          <span data-pt-string ref={ref}>
+          <span data-pt-text ref={ref}>
             {props.children}
           </span>
         )
       }
       return (
-        <span data-slate-string data-pt-string ref={ref}>
+        <span data-slate-string data-pt-text ref={ref}>
           {props.children}
         </span>
       )
@@ -157,17 +157,20 @@ const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   const {isLineBreak = false} = props
   const containerScope = useContext(ParentContainerContext)
 
-  const value = isLineBreak ? 'n' : 'z'
+  const slateValue = isLineBreak ? 'n' : 'z'
   const attributes: {
     'data-slate-zero-width'?: string
-    'data-pt-zero-width': string
+    'data-pt-zero-width': true
+    'data-pt-line-break'?: true
   } = containerScope
     ? {
-        'data-pt-zero-width': value,
+        'data-pt-zero-width': true,
+        ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),
       }
     : {
-        'data-slate-zero-width': value,
-        'data-pt-zero-width': value,
+        'data-slate-zero-width': slateValue,
+        'data-pt-zero-width': true,
+        ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),
       }
 
   // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an

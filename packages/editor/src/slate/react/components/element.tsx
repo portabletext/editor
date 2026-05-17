@@ -64,7 +64,7 @@ const Element = (props: {
   // custom node renderer component.
   const attributes: RenderElementProps['attributes'] = isContainer
     ? {
-        'data-pt-block-type': 'container',
+        'data-pt-block': 'container',
         'data-pt-path': dataPath,
       }
     : {
