@@ -1,6 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {defineContainer} from '../renderers/renderer.types'
+import {
+  defineContainer,
+  type ContainerRenderProps,
+} from '../renderers/renderer.types'
 import {buildPublicContainers} from '../schema/build-public-containers'
 import {resolveNestedContainer} from '../schema/resolve-containers-batch'
 import type {Node} from '../slate/interfaces/node'
@@ -64,8 +67,8 @@ describe('getAncestors with same _type under different parents', () => {
     }),
   )
 
-  function containerRender() {
-    return null
+  function containerRender(props: ContainerRenderProps) {
+    return props.renderDefault(props)
   }
 
   const tableConfig = resolveNestedContainer(

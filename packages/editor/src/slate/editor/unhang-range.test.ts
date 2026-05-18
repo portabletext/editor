@@ -341,12 +341,10 @@ function buildContainerContext(...value: Array<Node>) {
     defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: () => null,
     }),
     defineContainer({
       type: 'code-block',
       arrayField: 'lines',
-      render: () => null,
     }),
   ])
   const blockIndexMap = new Map<string, number>()
