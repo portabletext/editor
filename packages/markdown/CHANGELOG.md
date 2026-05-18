@@ -1,5 +1,34 @@
 # @portabletext/markdown
 
+## 1.3.0
+
+### Minor Changes
+
+- [#2628](https://github.com/portabletext/editor/pull/2628) [`3209fbb`](https://github.com/portabletext/editor/commit/3209fbb65b169cc69a0b5496c4735fa52f414cdc) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `types.list` matcher to `markdownToPortableText` for list-as-container
+
+  Lets consumers take ownership of structural list emission on the way in, mirroring the existing `types.table` pattern. When a `types.list` matcher is provided, list tokens become `{_type: 'list', kind, items: [...]}` block-objects whose `list-item.content` arrays can hold any block - text blocks, code blocks, callouts, images, even nested lists. The default flat path (text blocks with `listItem` and `level` fields) is unchanged for consumers who don't register the matcher.
+
+  Pair with `defineContainer({type: 'list', childField: 'items'})` and `defineContainer({type: 'list-item', childField: 'content'})` in PTE v7 to get list items that hold rich content.
+
+- [#2604](https://github.com/portabletext/editor/pull/2604) [`334a99d`](https://github.com/portabletext/editor/commit/334a99d0d9e97185f7eef88b3ea7e2ed0eaed23f) Thanks [@christianhg](https://github.com/christianhg)! - feat: support GFM task lists in markdown round-trip
+
+  `markdownToPortableText` now recognizes GitHub-Flavored Markdown task list items (`- [ ] foo` and `- [x] foo`) and converts them into Portable Text blocks with `listItem: 'task'` and a boolean `checked` field. `portableTextToMarkdown` renders these blocks back to the same syntax. The default schema declares the `task` list type and a `checked` block field, so consumers using the default schema get round-tripping for free. Schemas without a `task` list type fall back to `bullet` and discard the checkbox prefix.
+
+- [#2629](https://github.com/portabletext/editor/pull/2629) [`11822d0`](https://github.com/portabletext/editor/commit/11822d0339908d7f68b1469de181fcb5a1caad39) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `types.blockquote` matcher to `markdownToPortableText` for structured blockquotes
+
+  When a `types.blockquote` matcher is provided, plain blockquotes become structural block-objects (`{_type: 'blockquote', content: [...]}`) instead of flat text blocks with `style: 'blockquote'`. This unlocks placing code blocks, images, lists, and nested blockquotes inside a quote without losing attribution. GFM alerts (`> [!NOTE]`, `> [!TIP]`, etc.) keep producing callouts via the separate `types.callout` matcher; the two never compete on the same source.
+
+  Without `types.blockquote`, the existing flat-block path runs unchanged. If the matcher returns `undefined` for a given blockquote, the parser falls back to the flat shape for that one.
+
+  Adds `DefaultBlockquoteObjectRenderer` for the round-trip back to Markdown.
+
+### Patch Changes
+
+- [#2660](https://github.com/portabletext/editor/pull/2660) [`95609ac`](https://github.com/portabletext/editor/commit/95609ac8c40c9290ccf98983441da5a4c41c91ba) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update dependency @mdit/plugin-alert to ^0.23.2
+
+- Updated dependencies [[`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7), [`c6103e0`](https://github.com/portabletext/editor/commit/c6103e005a527c8e2717d9d8ad11da49cee9e942), [`fea850c`](https://github.com/portabletext/editor/commit/fea850c5feab41097dc65f92b56e48b765257559)]:
+  - @portabletext/schema@2.2.0
+
 ## 1.2.0
 
 ### Minor Changes

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.2.0
+
+### Minor Changes
+
+- [#2529](https://github.com/portabletext/editor/pull/2529) [`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7) Thanks [@christianhg](https://github.com/christianhg)! - feat: resolve nested block sub-schemas at compile time
+
+  A nested block declaration (e.g. a callout's text block, a code-block's line, a table cell's content) inherits the surrounding schema's decorators, annotations, styles, and lists by default. Inline overrides on the nested block (e.g. a code-block line declaring an empty `decorators: []` so bold doesn't apply inside code) are now resolved when the schema compiles, so every consumer of the schema sees the final per-position rules without having to walk the tree at runtime.
+
+- [#2630](https://github.com/portabletext/editor/pull/2630) [`c6103e0`](https://github.com/portabletext/editor/commit/c6103e005a527c8e2717d9d8ad11da49cee9e942) Thanks [@christianhg](https://github.com/christianhg)! - feat: split `OfDefinition` into block, inline-object, and reference forms
+
+  Inline object declarations in an array's `of` now use `type: 'object'` with a required `name`. References use just `type: '<typeName>'` with no fields. The block form (`type: 'block'`) is unchanged.
+
+  This aligns the inline-declaration shape with Sanity's convention, where `name` is identity and `type` is meta-kind.
+
+- [#2611](https://github.com/portabletext/editor/pull/2611) [`fea850c`](https://github.com/portabletext/editor/commit/fea850c5feab41097dc65f92b56e48b765257559) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `getSubSchema` to derive the resolved sub-schema for a container's `of` declaration
+
+  Containers declare which types are allowed inside them via the `of` array on a child field. `getSubSchema(schema, of)` returns the resolved `Schema` view that applies inside such a container, so operations and validators that ask "what's allowed at this position?" can treat the result like any other top-level `Schema`.
+
+  The `{type: 'block'}` entry (if present) supplies the resolved styles, decorators, annotations, lists, and inlineObjects. Non-block `of` members become the schema's block objects.
+
 ## 2.1.1
 
 ### Patch Changes

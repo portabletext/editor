@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/sanity-bridge",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Convert a Sanity Schema to a Portable Text Schema",
   "keywords": [
     "sanity",
