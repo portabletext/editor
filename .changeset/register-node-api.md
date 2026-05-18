@@ -37,15 +37,28 @@ The structural parent decides where the `of` lives:
 Misplacing a kind (for example nesting `defineSpan` inside a container's
 `of`) is a TypeScript error.
 
-All five factories accept `render?: Render | null` with tri-state
-semantics:
+All five factories accept an optional `render` function. Omit
+it to fall through to the globally registered render (or the engine
+default if none is registered). Provide a function to override the
+render at this position. The function receives the same render props
+that come from the engine, plus a `renderDefault` callback that
+produces the engine default when invoked:
 
-- `render` omitted: at this position, fall through to the globally
-  registered render (if any), otherwise the engine default.
-- `render: null`: use the engine default at this position. A positional
-  registration can carve out a scope (its own `of` overrides apply here)
-  while opting out of the global outer render.
-- `render: someFunction`: use that render at this position.
+```tsx
+defineContainer({
+  type: 'callout',
+  arrayField: 'children',
+  render: (props) => (
+    <div className="callout-frame">{props.renderDefault(props)}</div>
+  ),
+})
+```
+
+`renderDefault` takes the same props shape the callback receives, so
+it can be invoked with modified props for fine-grained control. The
+return type is `ReactElement` - render functions must return an
+element. The pattern mirrors `renderDefault` on Sanity Studio's
+render APIs.
 
 A worked example: a `callout` container keeps the global text-block
 render but swaps the inline `mention` render inside it.
