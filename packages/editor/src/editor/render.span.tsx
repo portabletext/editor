@@ -5,6 +5,7 @@ import type {
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
+import type {SpanRenderProps} from '../renderers/renderer.types'
 import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   BlockAnnotationRenderProps,
@@ -16,7 +17,8 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {ParentContainerContext} from './parent-container-context'
-import {RenderSpanConfig, useSpanConfig} from './render.leaf-config'
+import {renderDefaultSpan} from './render.default'
+import {useSpanConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -160,18 +162,18 @@ export function RenderSpan(props: RenderSpanProps) {
   }
 
   if (spanConfig) {
-    return (
-      <RenderSpanConfig
-        spanConfig={spanConfig}
-        attributes={props.attributes}
-        focused={focused}
-        node={(child ?? props.leaf) as PortableTextSpan}
-        path={props.path}
-        selected={selected}
-      >
-        {children}
-      </RenderSpanConfig>
-    )
+    const render = spanConfig.span.render
+    const renderProps: SpanRenderProps = {
+      attributes: props.attributes,
+      children,
+      focused,
+      node: (child ?? props.leaf) as PortableTextSpan,
+      path: props.path,
+      readOnly: props.readOnly,
+      renderDefault: renderDefaultSpan,
+      selected,
+    }
+    return render ? render(renderProps) : renderDefaultSpan(renderProps)
   }
 
   return (

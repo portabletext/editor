@@ -194,6 +194,7 @@ export function RenderElement(props: {
           element={props.element}
           containerConfig={containerConfig}
           path={props.path}
+          readOnly={props.readOnly}
         >
           {props.children}
         </RenderContainer>
