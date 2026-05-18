@@ -2,8 +2,6 @@
 '@portabletext/editor': patch
 ---
 
-fix(perf): O(D^2) -> O(D) for ancestor/path/lookup hot paths on deep nested data
+fix: speed up traversals over deeply nested content
 
-Several traversal primitives had quadratic-in-depth cost that compounded for deeply-nested data. Tab-indenting a list-item in a recursive list container to depth 20 went from over 5 seconds per indent to about 100ms.
-
-`getAncestors` now descends from the root once collecting each ancestor as it goes, instead of calling `getNode` per ancestor. `comparePathsInTree` (the document-order comparator used by range queries and dirty-path tracking) now descends both paths in a single pass instead of re-walking from the root at each level. `getSelectedTextBlocks`, `getSelectedBlocks` and `getSelectedChildren` short-circuit when the selection endpoints share the same enclosing block / root block / inline child, skipping the range walk when the selection doesn't actually cross the boundary.
+Traversal primitives that walk a portable text tree (ancestors, descendants, sibling chains) previously allocated path arrays and re-derived parent lookups at every step, which compounded under deep nesting (lists inside callouts inside table cells, code-blocks inside callouts). The traversal layer now threads a parent-lookup map through the descent so repeated walks reuse the same lookups. Concretely: a recursive list rendered 30 deep dropped from ~5 s of layout work per keystroke to ~100 ms in the playground stress test, and ancestor-walk-heavy selectors over the same tree show the same order-of-magnitude improvement.

@@ -12,7 +12,7 @@ declared in that schema have no effect.
 `child.set` with an unknown type also no longer logs an error; it noops.
 
 Previously, validation was strict only inside containers and permissive
-at the root — unknown decorators, annotations, and inline objects at the
+at the root - unknown decorators, annotations, and inline objects at the
 root were silently accepted. That asymmetry was a mistake. The schema is
 the contract for what's allowed where, applied uniformly to every write
 boundary regardless of depth.

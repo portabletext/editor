@@ -4,13 +4,12 @@
 
 feat: redesign the registration API around `registerNode`
 
-The five `define*` factories now register through a single
+The five `define*` factories register through a single
 `editor.registerNode({node})` method (and a `<NodePlugin nodes={[...]}>`
 plugin component). `defineLeaf` is replaced by three category-specific
 factories that match the Portable Text data model: `defineSpan`,
 `defineBlockObject`, and `defineInlineObject`. `defineContainer` and
-`defineTextBlock` stay; `defineContainer({childField})` is renamed to
-`defineContainer({arrayField})`.
+`defineTextBlock` complete the set.
 
 ## Why
 
@@ -22,6 +21,15 @@ consumer's intent. The single `registerNode` method collapses three
 previously-parallel registration surfaces, and the `{node}` wrapper
 keeps room for future registration-side properties without breaking the
 call site.
+
+## Render callback props
+
+Every factory's `render` callback receives `attributes`, `children`,
+`node`, `path`, `focused`, `selected`, and `readOnly`. `focused` is
+`true` when the registered node is the innermost node holding the
+caret; `selected` is `true` when the node sits in the path of any leaf
+in the selection range and cascades up the ancestor chain; `path` is
+the node's keyed path.
 
 ## Positional overrides and composition
 
@@ -73,3 +81,15 @@ const callout = defineContainer({
   ],
 })
 ```
+
+## Inspecting registered containers
+
+`editor.context.containers` is a `ReadonlyMap<string, RegisteredContainer>`
+of registered editable containers, keyed by bare `_type`. Each value
+carries `{kind: 'container', type, field, of?}` - the resolved child
+array field plus any positional `of` registrations declared on the
+parent. The companion `RegisteredPositional` union covers spans, block
+objects, and inline objects nested in a container's `of`. Render
+callbacks are engine-internal and not surfaced on the public view. Use
+`resolveContainerAt(containers, value, path)` to resolve the entry
+that applies at a given position.

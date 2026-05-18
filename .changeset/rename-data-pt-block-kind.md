@@ -1,17 +1,23 @@
 ---
-"@portabletext/editor": patch
+'@portabletext/editor': minor
 ---
 
-refactor: tighten the `data-pt-*` DOM attribute namespace for v7
+feat!: rename `data-pt-block-kind` to `data-pt-block`
 
-The `data-pt-*` attributes the editor renders have been audited and renamed in preparation for v7's freeze. The namespace is owned by the editor for its own DOM bridge and consumer-facing structural targets; consumer-shaped data goes through render callbacks, not the engine namespace.
+The DOM attribute the engine writes on every block element renames from `data-pt-block-kind` to `data-pt-block`. The attribute's values stay the same (`text`, `object`, `container`). Consumers that target the engine namespace with CSS selectors or DOM queries should rename the attribute on the LHS:
 
-- `data-pt-block-type` → `data-pt-block` (values `"text"` | `"object"` | `"container"`)
-- `data-pt-child-type` → `data-pt-inline` (values `"span"` | `"object"`)
-- `data-pt-mark` → `data-pt-marks` (matches the `marks` field name on a span)
-- `data-pt-string` → `data-pt-text` (matches the Portable Text spec's "text" noun)
-- `data-pt-zero-width="z"` / `data-pt-zero-width="n"` → `data-pt-zero-width` boolean + `data-pt-line-break` boolean (cryptic single-character values replaced by descriptive boolean attributes)
+```css
+/* before */
+[data-pt-block-kind='container'] { ... }
+/* after */
+[data-pt-block='container'] { ... }
+```
 
-The naming rule going forward: `data-pt-X` is set when the element IS an X. Value is the kind discriminator when one exists; absent otherwise. `data-pt-path` remains the documented free-form data-carrier exception. Values use human-readable English words, never cryptic abbreviations.
+```ts
+// before
+element.closest('[data-pt-block-kind]')
+// after
+element.closest('[data-pt-block]')
+```
 
-Consumer CSS or DOM queries targeting the old names need to update to the new names.
+The engine's own DOM queries are routed through the new attribute. Container DOM is pure `data-pt-*` - no `data-slate-*` leakage from the underlying layer.

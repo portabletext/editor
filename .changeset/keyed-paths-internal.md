@@ -1,7 +1,9 @@
 ---
-"@portabletext/editor": minor
+'@portabletext/editor': patch
 ---
 
-feat: use keyed paths internally
+fix: route the editor on keyed paths internally
 
-The editor now identifies nodes by their `_key` rather than their position in the tree. Paths emitted in patches, paths exposed through `getSnapshot`, and paths consumers receive in behavior events all use keyed segments (`{_key: 'k0'}`) instead of numeric indices. Paths stay stable across concurrent edits, which is a prerequisite for nested editable containers (callouts, tables, code-blocks) and aligns the editor's internal model with the Sanity patch protocol's keyed addressing.
+The editor's internal path representation switches from numeric paths (`[0, 1, 2]`) to keyed paths (`[{_key: 'k0'}, ...]`). Behaviors, selectors, traversal utilities, and the rendering pipeline now consume keyed paths directly instead of converting back and forth at boundaries.
+
+Keyed paths are stable across sibling shifts: inserting a block at index 0 does not invalidate the references the renderer holds for blocks 1..N, so React's element memo short-circuits where it previously re-rendered every sibling. Patches over the wire keep their numeric form; the conversion happens once at the editor boundary.

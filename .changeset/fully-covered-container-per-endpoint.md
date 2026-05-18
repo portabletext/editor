@@ -4,4 +4,12 @@
 
 fix: remove every container the range fully covers when deleting across containers
 
-A delete range that fully covers more than one editable container (Cmd+A across multiple code-blocks, or selecting all of two callouts) used to leave one or more containers behind. The cross-container range delete now walks up from each endpoint independently and removes every container the range fully covers, regardless of how many of them sit between the endpoints.
+Cross-container range delete used to leave containers in place when the
+selection fully covered them. Two scenarios surface this: selecting a
+mix of editable containers (code-block, callout, table) and pressing
+Delete left containers between the start and end shells; Cmd+A across
+multiple containers and Delete left one or more containers behind.
+
+The delete now walks up from each endpoint independently and removes
+every container the range fully covers, regardless of how many sit
+between the endpoints.
