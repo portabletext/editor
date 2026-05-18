@@ -1,5 +1,5 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 
 /**
  * Tables. Three nested containers map to semantic <table>/<tr>/<td>
@@ -13,7 +13,7 @@ import {ContainerPlugin} from '@portabletext/editor/plugins'
 
 const cellContainer = defineContainer({
   type: 'cell',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children, selected, focused}) => (
     <td
       {...attributes}
@@ -28,7 +28,7 @@ const cellContainer = defineContainer({
 
 const rowContainer = defineContainer({
   type: 'row',
-  childField: 'cells',
+  arrayField: 'cells',
   render: ({attributes, children}) => (
     <tr {...attributes} className="pc-table-row">
       {children}
@@ -39,7 +39,7 @@ const rowContainer = defineContainer({
 
 const tableContainer = defineContainer({
   type: 'table',
-  childField: 'rows',
+  arrayField: 'rows',
   render: ({attributes, children, node, selected, focused}) => {
     const block = node as {headerRows?: number}
     return (
@@ -58,5 +58,5 @@ const tableContainer = defineContainer({
 })
 
 export function TablesPlugin() {
-  return <ContainerPlugin containers={[tableContainer]} />
+  return <NodePlugin nodes={[tableContainer]} />
 }

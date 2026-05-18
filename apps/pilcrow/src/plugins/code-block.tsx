@@ -1,9 +1,9 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 
 const codeBlockContainer = defineContainer({
   type: 'code-block',
-  childField: 'lines',
+  arrayField: 'lines',
   render: ({attributes, children, node}) => {
     const block = node as {language?: string}
     return (
@@ -20,5 +20,5 @@ const codeBlockContainer = defineContainer({
 })
 
 export function CodeBlockPlugin() {
-  return <ContainerPlugin containers={[codeBlockContainer]} />
+  return <NodePlugin nodes={[codeBlockContainer]} />
 }

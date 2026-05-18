@@ -1,5 +1,5 @@
-import {defineLeaf} from '@portabletext/editor'
-import {LeafPlugin} from '@portabletext/editor/plugins'
+import {defineBlockObject} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 
 /**
  * Horizontal rule leaf. The visible rule is 1px, which makes for an
@@ -8,7 +8,7 @@ import {LeafPlugin} from '@portabletext/editor/plugins'
  * the rule (CSS adds vertical padding offset by negative margin so
  * surrounding layout is preserved).
  */
-const horizontalRuleLeaf = defineLeaf({
+const horizontalRule = defineBlockObject({
   type: 'horizontal-rule',
   render: ({attributes, children, selected, focused}) => (
     <div
@@ -24,5 +24,5 @@ const horizontalRuleLeaf = defineLeaf({
 })
 
 export function HorizontalRulePlugin() {
-  return <LeafPlugin leaves={[horizontalRuleLeaf]} />
+  return <NodePlugin nodes={[horizontalRule]} />
 }

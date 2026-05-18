@@ -1,5 +1,5 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {createContext, useContext} from 'react'
 
 type Kind = 'bullet' | 'number' | 'task'
@@ -12,7 +12,7 @@ function isKind(value: string): value is Kind {
 
 const listItemContainer = defineContainer({
   type: 'list-item',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children, node}) => {
     const kind = useContext(ListKindContext)
     const item = node as {checked?: boolean}
@@ -34,7 +34,7 @@ const listItemContainer = defineContainer({
 
 const listContainer = defineContainer({
   type: 'list',
-  childField: 'items',
+  arrayField: 'items',
   render: ({attributes, children, node}) => {
     const list = node as {kind?: string}
     const rawKind = list.kind ?? 'bullet'
@@ -52,5 +52,5 @@ const listContainer = defineContainer({
 })
 
 export function StructuredListsPlugin() {
-  return <ContainerPlugin containers={[listContainer]} />
+  return <NodePlugin nodes={[listContainer]} />
 }

@@ -1,5 +1,5 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import type {ReactNode} from 'react'
 import {
   InfoIcon,
@@ -31,7 +31,7 @@ function isTone(value: string): value is Tone {
 
 const calloutContainer = defineContainer({
   type: 'callout',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children, node, selected, focused}) => {
     const block = node as {tone?: string}
     const rawTone = block.tone ?? 'note'
@@ -57,5 +57,5 @@ const calloutContainer = defineContainer({
 })
 
 export function CalloutPlugin() {
-  return <ContainerPlugin containers={[calloutContainer]} />
+  return <NodePlugin nodes={[calloutContainer]} />
 }
