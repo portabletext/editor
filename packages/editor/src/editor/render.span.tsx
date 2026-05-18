@@ -5,6 +5,7 @@ import type {
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
+import type {SpanRenderProps} from '../renderers/renderer.types'
 import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   BlockAnnotationRenderProps,
@@ -15,8 +16,9 @@ import type {
   RenderDecoratorFunction,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
-import {ParentContainerContext} from './parent-container-context'
-import {RenderSpanConfig, useSpanConfig} from './render.leaf-config'
+import {NewPipelineContext} from './new-pipeline-context'
+import {renderDefaultSpan} from './render.default'
+import {useSpanConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -48,7 +50,7 @@ export function RenderSpan(props: RenderSpanProps) {
   // is found (transient state), fall back to the Slate leaf for identity.
   const spanConfig = useSpanConfig(child ?? props.leaf, props.path)
 
-  const parentContainer = useContext(ParentContainerContext)
+  const isInNewPipeline = useContext(NewPipelineContext)
   const serializedPath = serializePath(props.path)
   const focused = useIsFocusedLeaf(serializedPath)
   const selected = useIsSelectedLeaf(serializedPath)
@@ -142,7 +144,7 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && props.renderChild && child && !spanConfig && !parentContainer) {
+  if (block && props.renderChild && child && !spanConfig && !isInNewPipeline) {
     children = (
       <RenderChild
         renderChild={props.renderChild}
@@ -160,18 +162,18 @@ export function RenderSpan(props: RenderSpanProps) {
   }
 
   if (spanConfig) {
-    return (
-      <RenderSpanConfig
-        spanConfig={spanConfig}
-        attributes={props.attributes}
-        focused={focused}
-        node={(child ?? props.leaf) as PortableTextSpan}
-        path={props.path}
-        selected={selected}
-      >
-        {children}
-      </RenderSpanConfig>
-    )
+    const render = spanConfig.span.render
+    const renderProps: SpanRenderProps = {
+      attributes: props.attributes,
+      children,
+      focused,
+      node: (child ?? props.leaf) as PortableTextSpan,
+      path: props.path,
+      readOnly: props.readOnly,
+      renderDefault: renderDefaultSpan,
+      selected,
+    }
+    return render ? render(renderProps) : renderDefaultSpan(renderProps)
   }
 
   return (

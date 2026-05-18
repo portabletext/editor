@@ -2,15 +2,18 @@ import type {PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
-import type {BlockObjectConfig} from '../renderers/renderer.types'
+import type {
+  BlockObjectConfig,
+  BlockObjectRenderProps,
+} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
+import {renderDefaultBlockObject} from './render.default'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
-import {RenderBlockObjectConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 
 export function RenderBlockObject(props: {
@@ -52,21 +55,21 @@ export function RenderBlockObject(props: {
       'data-slate-void': _slateVoid,
       ...ptAttributes
     } = props.attributes
-    return (
-      <RenderBlockObjectConfig
-        blockObjectConfig={props.blockObjectConfig}
-        attributes={{
-          ...ptAttributes,
-          'data-pt-block': 'object',
-        }}
-        focused={focused}
-        node={props.element}
-        path={props.path}
-        selected={selected}
-      >
-        {props.children}
-      </RenderBlockObjectConfig>
-    )
+    const render = props.blockObjectConfig.blockObject.render
+    const renderProps: BlockObjectRenderProps = {
+      attributes: {
+        ...ptAttributes,
+        'data-pt-block': 'object',
+      },
+      children: props.children,
+      focused,
+      node: props.element,
+      path: props.path,
+      readOnly: props.readOnly,
+      renderDefault: renderDefaultBlockObject,
+      selected,
+    }
+    return render ? render(renderProps) : renderDefaultBlockObject(renderProps)
   }
 
   let innerContent: ReactElement

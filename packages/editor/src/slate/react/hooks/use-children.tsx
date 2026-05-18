@@ -4,7 +4,8 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import React, {useCallback, type JSX} from 'react'
+import React, {useCallback, useContext, type JSX} from 'react'
+import {NewPipelineContext} from '../../../editor/new-pipeline-context'
 import {
   ParentContainerContext,
   useParentContainer,
@@ -76,6 +77,7 @@ const useChildren = (props: {
   editor.isNodeMapDirty = false
 
   const parentContainer = useParentContainer()
+  const parentIsInNewPipeline = useContext(NewPipelineContext)
 
   const decorationsByChild = useDecorationsByChild(
     editor,
@@ -154,6 +156,31 @@ const useChildren = (props: {
     ? node
     : undefined
 
+  /**
+   * Wrap a rendered child in `NewPipelineContext.Provider value={true}`
+   * when needed. `parentIsInNewPipeline` already true ⇒ context is
+   * inherited; no extra wrap. Otherwise, wrap when the child itself
+   * kicks off a new-pipeline subtree at this position.
+   */
+  const wrapNewPipeline = (
+    child: React.ReactNode,
+    isInNewPipelineForChild: boolean,
+    key: string,
+  ): React.ReactNode => {
+    if (parentIsInNewPipeline) {
+      // Already inside a new-pipeline subtree; the child inherits.
+      return child
+    }
+    if (!isInNewPipelineForChild) {
+      return child
+    }
+    return (
+      <NewPipelineContext.Provider value={true} key={key}>
+        {child}
+      </NewPipelineContext.Provider>
+    )
+  }
+
   const renderTextComponent = (node: PortableTextSpan, index: number) => {
     if (!textBlockParent) {
       throw new Error(
@@ -180,11 +207,6 @@ const useChildren = (props: {
     )
   }
 
-  // `inContainer` is the effective container context the dispatched
-  // children will see: either the current node's own container (when we
-  // wrap below) or the inherited parent container otherwise.
-  const inContainer = Boolean(childContainer ?? parentContainer)
-
   const renderObjectNodeComponent = (
     node: PortableTextObject,
     index: number,
@@ -197,7 +219,6 @@ const useChildren = (props: {
     return (
       <ObjectNodeComponent
         decorations={decorationsByChild[index] ?? []}
-        inContainer={inContainer}
         isInline={textBlockParent !== undefined}
         key={node._key}
         objectNode={node}
@@ -207,9 +228,69 @@ const useChildren = (props: {
     )
   }
 
+  /**
+   * Compute whether the child kicks off a new-pipeline subtree. Used
+   * by `wrapNewPipeline` to decide whether to wrap the child in
+   * `NewPipelineContext.Provider value={true}`. `parentIsInNewPipeline`
+   * short-circuits to `true` upstream of this call.
+   */
+  const isInNewPipelineForChild = (n: Node, isContainerChild: boolean) => {
+    if (isContainerChild) {
+      return true
+    }
+    if (isTextBlock({schema: editor.schema}, n)) {
+      if (editor.textBlocks.has(n._type)) {
+        return true
+      }
+      if (parentContainer?.of) {
+        for (const entry of parentContainer.of) {
+          if ('textBlock' in entry && entry.textBlock.type === n._type) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+    if (isObjectNode({schema: editor.schema}, n)) {
+      if (textBlockParent !== undefined) {
+        // Inline-object position: pipeline mode is inherited from the
+        // parent text block. An inline object never kicks off a new-
+        // pipeline subtree on its own — if the parent text block is in
+        // the new pipeline, `parentIsInNewPipeline` already short-
+        // circuits upstream; otherwise the inline object stays legacy
+        // so the DOM is consistent across the block.
+        return false
+      }
+      // Block object position
+      if (editor.blockObjects.has(n._type)) {
+        return true
+      }
+      if (parentContainer?.of) {
+        for (const entry of parentContainer.of) {
+          if ('blockObject' in entry && entry.blockObject.type === n._type) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+    if (isSpan({schema: editor.schema}, n)) {
+      // Span position: pipeline mode is inherited from the parent text
+      // block, same as inline objects above. `parentIsInNewPipeline`
+      // short-circuits upstream when the text block is itself in the
+      // new pipeline.
+      return false
+    }
+    return false
+  }
+
   const elements = children.map((n: Node, i: number) => {
     if (isTextBlock({schema: editor.schema}, n)) {
-      return renderElementComponent(n, i, false)
+      return wrapNewPipeline(
+        renderElementComponent(n, i, false),
+        isInNewPipelineForChild(n, false),
+        n._key,
+      )
     }
     // Fallback for text block nodes without `children`
     if (isTextBlockNode({schema: editor.schema}, n)) {
@@ -219,12 +300,20 @@ const useChildren = (props: {
       // Does `n` resolve as a container at this position?
       // (positional override in childContainer.container.of, or global)
       if (resolveContainerForNode(editor, childContainer, n)) {
-        return renderElementComponent(n, i, true)
+        return wrapNewPipeline(renderElementComponent(n, i, true), true, n._key)
       }
-      return renderObjectNodeComponent(n, i)
+      return wrapNewPipeline(
+        renderObjectNodeComponent(n, i),
+        isInNewPipelineForChild(n, false),
+        n._key,
+      )
     }
     if (isSpan({schema: editor.schema}, n)) {
-      return renderTextComponent(n, i)
+      return wrapNewPipeline(
+        renderTextComponent(n, i),
+        isInNewPipelineForChild(n, false),
+        n._key,
+      )
     }
     // Fallback for span nodes without `text`
     if (isSpanNode({schema: editor.schema}, n)) {
@@ -234,9 +323,16 @@ const useChildren = (props: {
   })
 
   if (childContainer && childContainer !== parentContainer) {
+    // `useChildren` is running for a node that is itself a registered
+    // container. Wrap its children in `ParentContainerContext` (so
+    // positional `of` lookups resolve against this container) AND in
+    // `NewPipelineContext.Provider value={true}` (so descendants emit
+    // the new-pipeline DOM shape).
     return (
       <ParentContainerContext value={childContainer}>
-        {elements}
+        <NewPipelineContext.Provider value={true}>
+          {elements}
+        </NewPipelineContext.Provider>
       </ParentContainerContext>
     )
   }

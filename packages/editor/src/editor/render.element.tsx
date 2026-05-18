@@ -24,6 +24,7 @@ import {
   findInlinePositionalOverride,
 } from './find-positional-override'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
+import {NewPipelineContext} from './new-pipeline-context'
 import {ParentContainerContext} from './parent-container-context'
 import {ParentTextBlockContext} from './parent-text-block-context'
 import {RenderBlockObject} from './render.block-object'
@@ -71,6 +72,7 @@ export function RenderElement(props: {
   const editorActor = useContext(EditorActorContext)
   const parentContainer = useContext(ParentContainerContext)
   const parentTextBlock = useContext(ParentTextBlockContext)
+  const isInNewPipeline = useContext(NewPipelineContext)
   const slateStatic = useSlateStatic()
   const schema = props.schema
   const type = props.element._type
@@ -194,6 +196,7 @@ export function RenderElement(props: {
           element={props.element}
           containerConfig={containerConfig}
           path={props.path}
+          readOnly={props.readOnly}
         >
           {props.children}
         </RenderContainer>
@@ -216,10 +219,10 @@ export function RenderElement(props: {
           {props.children}
         </RenderTextBlockConfig>
       )
-    } else if (parentContainer) {
-      // Default rendering at this position inside a container.
-      // Same shape as `renderDefault` returns when a registered
-      // text-block omits `render`.
+    } else if (isInNewPipeline) {
+      // Default rendering at this position inside a new-pipeline
+      // subtree. Same shape as `renderDefault` returns when a
+      // registered text-block omits `render`.
       rendered = renderDefaultTextBlock({
         attributes: {...rest, 'data-pt-block': 'text'},
         children: props.children,
@@ -258,7 +261,7 @@ export function RenderElement(props: {
   }
 
   if (isInline(slateStatic, props.path)) {
-    if (parentContainer && !inlineObjectConfig) {
+    if (isInNewPipeline && !inlineObjectConfig) {
       const {
         'data-slate-node': _sn,
         'data-slate-void': _sv,
@@ -288,7 +291,7 @@ export function RenderElement(props: {
     )
   }
 
-  if (parentContainer && !blockObjectConfig) {
+  if (isInNewPipeline && !blockObjectConfig) {
     const {
       'data-slate-node': _sn,
       'data-slate-void': _sv,
