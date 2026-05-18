@@ -52,9 +52,7 @@ describe('inline-object void wrapper contenteditable', () => {
       // The legacy pipeline is in play (no `ContainerPlugin`); confirm
       // by checking that `object-node.tsx` emitted the `data-slate-spacer`
       // variant of the inline-void spacer.
-      expect(consumerSpan!.querySelector('[data-slate-spacer]')).not.toEqual(
-        null,
-      )
+      expect(consumerSpan!.querySelector('[data-pt-spacer]')).not.toEqual(null)
       expect(consumerSpan!.getAttribute('contenteditable')).toEqual('false')
     })
   })

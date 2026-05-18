@@ -344,7 +344,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('BlockObject: placeholder has userSelect: none and contentEditable false', async () => {
+  test('BlockObject: placeholder has userSelect: none, contentEditable=false, and draggable matching readOnly', async () => {
     const image = defineBlockObject({type: 'image'})
 
     await createTestEditor({
@@ -362,6 +362,10 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
       )
       expect(placeholder).not.toEqual(undefined)
       expect(placeholder!.getAttribute('contenteditable')).toEqual('false')
+      // Mirrors legacy block-object DOM: both contentEditable+draggable on
+      // the same sibling-of-spacer wrapper. readOnly=false by default →
+      // draggable='true'.
+      expect(placeholder!.getAttribute('draggable')).toEqual('true')
       expect((placeholder! as HTMLElement).style.userSelect).toEqual('none')
     })
   })
@@ -427,7 +431,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('InlineObject: placeholder has userSelect: none and contentEditable false', async () => {
+  test('InlineObject: placeholder asymmetric contract - outer auto-has contentEditable=false, inner has draggable but no contentEditable', async () => {
     const mention = defineInlineObject({type: 'mention'})
 
     await createTestEditor({
@@ -451,11 +455,18 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     await vi.waitFor(() => {
       const wrapper = document.querySelector('[data-pt-inline="object"]')
       expect(wrapper).not.toEqual(null)
+      // Outer auto-receives contentEditable=false via object-node.tsx's
+      // isInline && !readOnly branch (Slate-applied for inline voids).
+      expect(wrapper!.getAttribute('contenteditable')).toEqual('false')
       const placeholder = Array.from(wrapper!.querySelectorAll('span')).find(
         (el) => el.textContent === '[mention: i0]',
       )
       expect(placeholder).not.toEqual(undefined)
-      expect(placeholder!.getAttribute('contenteditable')).toEqual('false')
+      // Inner sibling-of-spacer: NO contentEditable (inherits from outer
+      // via DOM contentEditable inheritance). Mirrors v6 inline-object.
+      expect(placeholder!.getAttribute('contenteditable')).toEqual(null)
+      // Inner sibling carries draggable; readOnly=false default → 'true'.
+      expect(placeholder!.getAttribute('draggable')).toEqual('true')
       expect((placeholder! as HTMLElement).style.userSelect).toEqual('none')
     })
   })

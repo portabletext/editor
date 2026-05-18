@@ -1,5 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import React, {type JSX} from 'react'
+import React, {useContext, type JSX} from 'react'
+import {NewPipelineContext} from '../../../editor/new-pipeline-context'
 import {serializePath} from '../../../paths/serialize-path'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -13,22 +14,25 @@ import type {RenderElementProps} from './editable'
  * model. The DOM still needs a hidden zero-width text node for caret
  * anchoring, which is the spacer below.
  *
- * The `inContainer` flag is resolved by `useChildren` at dispatch time and
- * passed in to avoid a `useContext(ParentContainerContext)` read here.
+ * Reads `NewPipelineContext` to decide between the new-pipeline shape
+ * (`data-pt-*` only) and the legacy shape (`data-slate-*` mixed in for
+ * backwards compatibility). The context is provided by `useChildren`
+ * (wrapping each new-pipeline child) and by the dispatch sites in
+ * `render.element.tsx` / `render.span.tsx`.
  */
 const ObjectNodeComponent = (props: {
   decorations: DecoratedRange[]
-  inContainer: boolean
   isInline: boolean
   objectNode: PortableTextObject
   path: Path
   renderElement: (props: RenderElementProps) => JSX.Element
 }) => {
-  const {inContainer, isInline, objectNode, path, renderElement} = props
+  const {isInline, objectNode, path, renderElement} = props
   const dataPath = serializePath(path)
   const readOnly = useReadOnly()
+  const isInNewPipeline = useContext(NewPipelineContext)
 
-  const attributes: RenderElementProps['attributes'] = inContainer
+  const attributes: RenderElementProps['attributes'] = isInNewPipeline
     ? {
         'data-pt-path': dataPath,
       }
@@ -44,7 +48,7 @@ const ObjectNodeComponent = (props: {
 
   const Tag = isInline ? 'span' : 'div'
 
-  const children = inContainer ? (
+  const children = isInNewPipeline ? (
     <Tag
       data-pt-spacer
       style={{
@@ -92,7 +96,6 @@ const ObjectNodeComponent = (props: {
 const MemoizedObjectNode = React.memo(ObjectNodeComponent, (prev, next) => {
   return (
     prev.objectNode === next.objectNode &&
-    prev.inContainer === next.inContainer &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
     prev.isInline === next.isInline &&

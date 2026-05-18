@@ -6,7 +6,7 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {forwardRef, memo, useContext, useRef, useState} from 'react'
-import {ParentContainerContext} from '../../../editor/parent-container-context'
+import {NewPipelineContext} from '../../../editor/new-pipeline-context'
 import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
@@ -93,7 +93,7 @@ const SlateString = (props: {
  */
 const TextString = (props: {text: string; isTrailing?: boolean}) => {
   const {text, isTrailing = false} = props
-  const containerScope = useContext(ParentContainerContext)
+  const isInNewPipeline = useContext(NewPipelineContext)
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
@@ -124,16 +124,16 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
   // We intentionally render a memoized <span> that only receives the initial text content when the component is mounted.
   // We defer to the layout effect above to update the `textContent` of the span element when needed.
   return (
-    <MemoizedText ref={ref} containerScope={containerScope !== undefined}>
+    <MemoizedText ref={ref} isInNewPipeline={isInNewPipeline}>
       {initialText}
     </MemoizedText>
   )
 }
 
 const MemoizedText = memo(
-  forwardRef<HTMLSpanElement, {children: string; containerScope: boolean}>(
+  forwardRef<HTMLSpanElement, {children: string; isInNewPipeline: boolean}>(
     (props, ref) => {
-      if (props.containerScope) {
+      if (props.isInNewPipeline) {
         return (
           <span data-pt-text ref={ref}>
             {props.children}
@@ -155,14 +155,14 @@ const MemoizedText = memo(
 
 const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   const {isLineBreak = false} = props
-  const containerScope = useContext(ParentContainerContext)
+  const isInNewPipeline = useContext(NewPipelineContext)
 
   const slateValue = isLineBreak ? 'n' : 'z'
   const attributes: {
     'data-slate-zero-width'?: string
     'data-pt-zero-width': true
     'data-pt-line-break'?: true
-  } = containerScope
+  } = isInNewPipeline
     ? {
         'data-pt-zero-width': true,
         ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),

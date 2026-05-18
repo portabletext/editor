@@ -60,6 +60,34 @@ return type is `ReactElement` - render functions must return an
 element. The pattern mirrors `renderDefault` on Sanity Studio's
 render APIs.
 
+## Engine namespace and the new render pipeline
+
+`registerNode` opts a subtree into the new render pipeline. Inside the
+new pipeline the engine emits only `data-pt-*` attributes - the
+legacy `data-slate-*` attributes are stripped. The legacy pipeline
+keeps emitting both namespaces so existing consumers stay on the same
+DOM shape. Engine-internal DOM queries target `data-pt-*` so the
+engine itself is pipeline-agnostic; consumer CSS that targets the
+released v6 attributes (`.pt-block`, `.pt-inline-object`,
+`data-block-key`, `data-child-type`, and friends) keeps working
+unchanged in the legacy pipeline.
+
+The block-level legacy render hooks (`renderBlock`, `renderListItem`,
+`renderStyle`, `renderChild`) are suppressed inside new-pipeline
+subtrees - the registered render owns the position. The span/leaf-level
+hooks (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and
+range decorations) keep firing in both pipelines because they wrap
+runs of styled text rather than emit pipeline-shaped wrappers.
+
+The engine-default `renderDefault` helpers for void block-objects and
+inline-objects mirror the legacy DOM contract. Block-objects keep the
+outer editable (Slate's void caret semantics need the spacer caret
+anchor) and put `contentEditable={false}` and `draggable={!readOnly}`
+together on the inner placeholder. Inline-objects auto-receive
+`contentEditable={false}` on the outer (engine-injected for inline
+voids) and put `draggable={!readOnly}` alone on the inner; the inner
+inherits non-editability through DOM `contentEditable` inheritance.
+
 A worked example: a `callout` container keeps the global text-block
 render but swaps the inline `mention` render inside it.
 

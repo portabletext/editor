@@ -50,7 +50,7 @@ describe('defineBlockObject void block-object wrapper contract', () => {
       expect(outer!.getAttribute('contenteditable')).toEqual(null)
 
       // The void spacer reaches the consumer through children and is NOT inside the contentEditable=false subtree.
-      const spacer = outer!.querySelector('[data-slate-spacer]')
+      const spacer = outer!.querySelector('[data-pt-spacer]')
       expect(spacer).not.toEqual(null)
       expect(inner!.contains(spacer)).toEqual(false)
     })

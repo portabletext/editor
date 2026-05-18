@@ -44,6 +44,12 @@ export function renderDefaultSpan(props: {
  * Engine-default wrapper for void block objects. Renders the zero-width
  * editor children plus a non-editable `[_type: _key]` placeholder so the
  * object is visible before a consumer provides a custom `render`.
+ *
+ * Inner sibling-of-spacer wrapper carries `contentEditable={false}` (so
+ * caret can't land in the placeholder) and `draggable={!readOnly}` (so
+ * the void block is draggable). Mirrors the legacy block-object DOM
+ * shape: outer stays editable so Slate's spacer caret anchor works;
+ * both `contentEditable` and `draggable` live on the same sibling node.
  */
 export function renderDefaultBlockObject(
   props: BlockObjectRenderProps,
@@ -51,7 +57,11 @@ export function renderDefaultBlockObject(
   return (
     <div {...props.attributes}>
       {props.children}
-      <div contentEditable={false} style={{userSelect: 'none'}}>
+      <div
+        contentEditable={false}
+        draggable={!props.readOnly}
+        style={{userSelect: 'none'}}
+      >
         [{props.node._type}: {props.node._key}]
       </div>
     </div>
@@ -62,6 +72,13 @@ export function renderDefaultBlockObject(
  * Engine-default wrapper for void inline objects. Renders the zero-width
  * editor children plus a non-editable `[_type: _key]` placeholder so the
  * object is visible before a consumer provides a custom `render`.
+ *
+ * Outer span auto-receives `contentEditable={false}` via
+ * `object-node.tsx`'s `isInline && !readOnly` branch (Slate-applied for
+ * inline voids). The inner sibling-of-spacer wrapper carries only
+ * `draggable={!readOnly}`; non-editability inherits from the outer via
+ * DOM `contentEditable` inheritance. Mirrors the legacy inline-object
+ * DOM shape.
  */
 export function renderDefaultInlineObject(
   props: InlineObjectRenderProps,
@@ -69,7 +86,7 @@ export function renderDefaultInlineObject(
   return (
     <span {...props.attributes}>
       {props.children}
-      <span contentEditable={false} style={{userSelect: 'none'}}>
+      <span draggable={!props.readOnly} style={{userSelect: 'none'}}>
         [{props.node._type}: {props.node._key}]
       </span>
     </span>

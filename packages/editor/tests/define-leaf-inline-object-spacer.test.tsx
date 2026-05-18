@@ -56,7 +56,7 @@ describe('defineLeaf void spacer', () => {
       )
       expect(consumerSpan).not.toEqual(null)
 
-      const spacer = consumerSpan!.querySelector('[data-slate-spacer]')
+      const spacer = consumerSpan!.querySelector('[data-pt-spacer]')
       expect(spacer).not.toEqual(null)
     })
   })
@@ -88,7 +88,7 @@ describe('defineLeaf void spacer', () => {
       const consumerDiv = document.querySelector('[data-testid="image"]')
       expect(consumerDiv).not.toEqual(null)
 
-      const spacer = consumerDiv!.querySelector('[data-slate-spacer]')
+      const spacer = consumerDiv!.querySelector('[data-pt-spacer]')
       expect(spacer).not.toEqual(null)
     })
   })
