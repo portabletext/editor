@@ -17,8 +17,14 @@ import {createTestEditor} from '../src/test/vitest'
  * BLOCK's `of` array, NOT a container's `of`. The natural parent of
  * an inline child is the text block that owns its `children` field.
  *
- * Same five resolution cases as block-level, but scoped through
- * `defineTextBlock.of` instead of `defineContainer.of`.
+ * Same resolution cases as block-level, but scoped through
+ * `defineTextBlock.of` instead of `defineContainer.of`:
+ *
+ *   1. Global render fires when no positional override exists.
+ *   2. Positional `render: fn` overrides global at this position.
+ *   3b. Positional `render: (props) => props.renderDefault(props)`
+ *       renders the engine default at this position.
+ *   4. Positional with no `render` falls through to global.
  */
 
 const mentionSchema = defineSchema({
@@ -150,7 +156,7 @@ describe('Inline-level positional override: defineInlineObject', () => {
     })
   })
 
-  test('3. Positional render: null uses engine default, skipping global', async () => {
+  test('3b. Positional render: (props) => props.renderDefault(props) renders engine default at this position', async () => {
     const globalMention = defineInlineObject({
       type: 'mention',
       render: ({attributes, children}) => (
@@ -159,11 +165,14 @@ describe('Inline-level positional override: defineInlineObject', () => {
         </span>
       ),
     })
-    const calloutMention = defineInlineObject({type: 'mention', render: null})
+    const calloutMentionDefault = defineInlineObject({
+      type: 'mention',
+      render: (props) => props.renderDefault(props),
+    })
     const calloutBlock = defineTextBlock({
       type: 'block',
       render: ({attributes, children}) => <p {...attributes}>{children}</p>,
-      of: [calloutMention],
+      of: [calloutMentionDefault],
     })
     const callout = defineContainer({
       type: 'callout',
@@ -186,13 +195,12 @@ describe('Inline-level positional override: defineInlineObject', () => {
     await vi.waitFor(() => {
       const calloutEl = document.querySelector('[data-testid="callout"]')
       expect(calloutEl).not.toEqual(null)
+      // Global consumer-render shadowed by the positional override.
       expect(
         calloutEl!.querySelector('[data-testid="mention-global"]'),
       ).toEqual(null)
-      // Engine default for inline-objects emits `data-pt-inline="object"`.
-      // Asserting the wrapper is present pins the "use default at this
-      // position" branch (vs the resolver silently dropping the
-      // override).
+      // `props.renderDefault(props)` produced the engine default wrapper at
+      // this position.
       expect(calloutEl!.querySelector('[data-pt-inline="object"]')).not.toEqual(
         null,
       )
@@ -358,7 +366,7 @@ describe('Inline-level positional override: defineSpan', () => {
     })
   })
 
-  test('3. Positional render: null uses engine default, skipping global', async () => {
+  test('3b. Positional render: (props) => props.renderDefault(props) renders engine default at this position', async () => {
     const globalSpan = defineSpan({
       type: 'span',
       render: ({attributes, children}) => (
@@ -367,11 +375,14 @@ describe('Inline-level positional override: defineSpan', () => {
         </span>
       ),
     })
-    const calloutSpan = defineSpan({type: 'span', render: null})
+    const calloutSpanDefault = defineSpan({
+      type: 'span',
+      render: (props) => props.renderDefault(props),
+    })
     const calloutBlock = defineTextBlock({
       type: 'block',
       render: ({attributes, children}) => <p {...attributes}>{children}</p>,
-      of: [calloutSpan],
+      of: [calloutSpanDefault],
     })
     const callout = defineContainer({
       type: 'callout',
@@ -394,13 +405,13 @@ describe('Inline-level positional override: defineSpan', () => {
     await vi.waitFor(() => {
       const calloutEl = document.querySelector('[data-testid="callout"]')
       expect(calloutEl).not.toEqual(null)
+      // Global consumer-render shadowed.
       expect(calloutEl!.querySelector('[data-testid="span-global"]')).toEqual(
         null,
       )
-      // The positional text-block render fired (the consumer's `<p>`),
-      // proving the resolver chain reached down to the inline level.
-      // The span fell through to the engine default - a leaf-carrying
-      // `<span>` with `data-pt-marks`.
+      // `props.renderDefault(props)` produced the engine default wrapper at
+      // this position - the leaf-carrying `<span>` with `data-pt-marks`
+      // is back on the DOM.
       const blockEl = calloutEl!.querySelector('p')
       expect(blockEl).not.toEqual(null)
       const leafEl = blockEl!.querySelector('[data-pt-marks]')

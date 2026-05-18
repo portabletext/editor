@@ -28,6 +28,7 @@ import {ParentContainerContext} from './parent-container-context'
 import {ParentTextBlockContext} from './parent-text-block-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
+import {renderDefaultTextBlock} from './render.default'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
 import {resolveElementDropPosition} from './resolve-element-drop-position'
@@ -110,11 +111,11 @@ export function RenderElement(props: {
   )
 
   // Compose effective container config. Block-level positional
-  // override wins. `render: null` on the override means "explicitly
-  // use default at this position" — still wins over global.
-  // `render: undefined` on a positional override falls through to
-  // global; if no global exists, the positional config itself is
-  // still the effective container (the engine default renders).
+  // override wins. `render: undefined` on a positional override falls
+  // through to global; if no global exists, the positional config
+  // itself is still the effective container (the engine default
+  // renders, because the structural commitment - it's a container
+  // with this arrayField - is separable from the rendering choice).
   const containerConfig = useMemo<ContainerConfig | undefined>(() => {
     if (blockPositionalOverride && 'container' in blockPositionalOverride) {
       if (blockPositionalOverride.container.render === undefined) {
@@ -127,8 +128,8 @@ export function RenderElement(props: {
 
   // Compose the active text-block scope value (provided via context to
   // inline children so they can read positional `of` overrides for
-  // span + inlineObject). This is independent of which render fires:
-  // a positional `render: null` still establishes a scope.
+  // span + inlineObject). Independent of which render fires - the
+  // positional registration's `of` array still scopes inline content.
   const textBlockScope = useMemo<TextBlockConfig | undefined>(() => {
     if (blockPositionalOverride && 'textBlock' in blockPositionalOverride) {
       return blockPositionalOverride
@@ -138,10 +139,9 @@ export function RenderElement(props: {
 
   // Resolve which text-block config (if any) supplies a `render` at
   // this position. Mirrors the shape used by `containerConfig` /
-  // `blockObjectConfig` / `inlineObjectConfig` / `useSpanConfig`: only
-  // `render === undefined` is resolved here (falls through to global).
-  // The `function` vs `null` split is handled at dispatch where the
-  // tagged default for this position is emitted.
+  // `blockObjectConfig` / `inlineObjectConfig` / `useSpanConfig`:
+  // `render === undefined` falls through to global; a function render
+  // is used at this position.
   const renderableTextBlockConfig = useMemo<TextBlockConfig | undefined>(() => {
     if (blockPositionalOverride && 'textBlock' in blockPositionalOverride) {
       if (blockPositionalOverride.textBlock.render === undefined) {
@@ -154,8 +154,8 @@ export function RenderElement(props: {
 
   const blockObjectConfig = useMemo<BlockObjectConfig | undefined>(() => {
     if (blockPositionalOverride && 'blockObject' in blockPositionalOverride) {
-      // Three modes: function → use; null → use default at this position;
-      // undefined → fall through to global.
+      // Positional undefined render falls through to global; function
+      // render is used at this position.
       if (blockPositionalOverride.blockObject.render === undefined) {
         // Fall through to global.
         return globalBlockObjectConfig
@@ -203,11 +203,8 @@ export function RenderElement(props: {
 
   if (isTextBlock({schema}, props.element)) {
     const {'data-slate-node': _sn, ...rest} = props.attributes
-    let rendered: ReactElement
-    if (
-      renderableTextBlockConfig &&
-      typeof renderableTextBlockConfig.textBlock.render === 'function'
-    ) {
+    let rendered: ReactElement | null
+    if (renderableTextBlockConfig?.textBlock.render) {
       rendered = (
         <RenderTextBlockConfig
           attributes={{...rest, 'data-pt-block': 'text'}}
@@ -221,11 +218,12 @@ export function RenderElement(props: {
       )
     } else if (parentContainer) {
       // Default rendering at this position inside a container.
-      rendered = (
-        <div {...rest} data-pt-block="text">
-          {props.children}
-        </div>
-      )
+      // Same shape as `renderDefault` returns when a registered
+      // text-block omits `render`.
+      rendered = renderDefaultTextBlock({
+        attributes: {...rest, 'data-pt-block': 'text'},
+        children: props.children,
+      })
     } else {
       // Legacy top-level rendering.
       rendered = (
@@ -330,9 +328,9 @@ export function RenderElement(props: {
  * `useIsSelectedContainer`) live at the top of a component, not inside
  * a conditional in `RenderElement`'s body.
  *
- * The dispatch in `RenderElement` filters out `null` / `undefined`
- * renders and emits the appropriate default itself (engine wrapper
- * inside a container, legacy renderer at top level).
+ * The dispatch in `RenderElement` filters: a `function` render flows
+ * here; a config with no `render` resolves to global or to the
+ * legacy pipeline at top level.
  */
 function RenderTextBlockConfig(props: {
   attributes: Omit<RenderElementProps['attributes'], 'data-pt-block'> & {
@@ -347,6 +345,7 @@ function RenderTextBlockConfig(props: {
   const serializedPath = serializePath(props.path)
   const focused = useIsFocusedContainer(serializedPath)
   const selected = useIsSelectedContainer(serializedPath)
+  const renderDefault = renderDefaultTextBlock
   return props.render({
     attributes: props.attributes,
     children: props.children,
@@ -354,6 +353,7 @@ function RenderTextBlockConfig(props: {
     node: props.node,
     path: props.path,
     readOnly: props.readOnly,
+    renderDefault,
     selected,
   })
 }

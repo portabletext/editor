@@ -31,7 +31,7 @@ export type ContainerNodeForType<TType extends string> = TType extends
  * built-in `'span'` or `'block'` types (those are leaves and text blocks
  * respectively).
  */
-export type ContainerRender = (props: {
+export type ContainerRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
@@ -39,7 +39,22 @@ export type ContainerRender = (props: {
   path: Path
   readOnly: boolean
   selected: boolean
-}) => ReactElement | null
+  /**
+   * Render this position with the engine's default wrapper. Call from
+   * inside a custom render to fall back to or wrap the default:
+   *
+   * ```ts
+   * render: ({renderDefault, ...rest}) => renderDefault(rest)
+   * ```
+   *
+   * The default is the engine's minimal wrapper. It does not chain
+   * back to a globally-registered render: PTE has one user layer plus
+   * positional overrides, and the engine default is the canonical
+   * fallback at any position.
+   */
+  renderDefault: (props: ContainerRenderProps) => ReactElement
+}
+export type ContainerRender = (props: ContainerRenderProps) => ReactElement
 
 /**
  * @alpha
@@ -48,7 +63,7 @@ export type ContainerRender = (props: {
  * wraps it. `children` carries the styled text already decorated by
  * `renderDecorator`/`renderAnnotation`/range decorations.
  */
-export type SpanRender = (props: {
+export type SpanRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
@@ -56,7 +71,13 @@ export type SpanRender = (props: {
   path: Path
   readOnly: boolean
   selected: boolean
-}) => ReactElement | null
+  /**
+   * Render this position with the engine's default wrapper.
+   * See {@link ContainerRenderProps.renderDefault}.
+   */
+  renderDefault: (props: SpanRenderProps) => ReactElement
+}
+export type SpanRender = (props: SpanRenderProps) => ReactElement
 
 /**
  * @alpha
@@ -67,7 +88,7 @@ export type SpanRender = (props: {
  * element. Dropping `children` makes the caret unable to land on the
  * element.
  */
-export type BlockObjectRender = (props: {
+export type BlockObjectRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
@@ -75,7 +96,13 @@ export type BlockObjectRender = (props: {
   path: Path
   readOnly: boolean
   selected: boolean
-}) => ReactElement | null
+  /**
+   * Render this position with the engine's default wrapper.
+   * See {@link ContainerRenderProps.renderDefault}.
+   */
+  renderDefault: (props: BlockObjectRenderProps) => ReactElement
+}
+export type BlockObjectRender = (props: BlockObjectRenderProps) => ReactElement
 
 /**
  * @alpha
@@ -86,7 +113,7 @@ export type BlockObjectRender = (props: {
  * element. Dropping `children` makes the caret unable to land on the
  * element.
  */
-export type InlineObjectRender = (props: {
+export type InlineObjectRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
@@ -94,7 +121,15 @@ export type InlineObjectRender = (props: {
   path: Path
   readOnly: boolean
   selected: boolean
-}) => ReactElement | null
+  /**
+   * Render this position with the engine's default wrapper.
+   * See {@link ContainerRenderProps.renderDefault}.
+   */
+  renderDefault: (props: InlineObjectRenderProps) => ReactElement
+}
+export type InlineObjectRender = (
+  props: InlineObjectRenderProps,
+) => ReactElement
 
 /**
  * @alpha
@@ -115,12 +150,12 @@ export type Container = {
   type: string
   arrayField: string
   /**
-   * Outer render. Three modes:
+   * Outer render. Two modes:
    * - omitted: fall through to global registered render (or engine default)
-   * - `null`: skip global, use engine default at this position
-   * - function: use this render
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns the engine default when called.
    */
-  render?: ContainerRender | null
+  render?: ContainerRender
   /**
    * Block-level positional overrides. Inline-content kinds (`Span`,
    * `InlineObject`) belong in `TextBlock.of`, not here.
@@ -151,12 +186,12 @@ export type TextBlock = {
   kind: 'textBlock'
   type: string
   /**
-   * Outer render. Three modes:
+   * Outer render. Two modes:
    * - omitted: fall through to global registered render (or engine default)
-   * - `null`: skip global, use engine default at this position
-   * - function: use this render
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns the engine default when called.
    */
-  render?: TextBlockRender | null
+  render?: TextBlockRender
   /**
    * Inline-content positional overrides. A `Span` or `InlineObject`
    * placed here scopes the inline render to this text block (or any
@@ -174,7 +209,7 @@ export type TextBlock = {
  * is the outer wrapper element and any block-level composition (style,
  * list-item) the consumer wants.
  */
-export type TextBlockRender = (props: {
+export type TextBlockRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
@@ -182,7 +217,13 @@ export type TextBlockRender = (props: {
   path: Path
   readOnly: boolean
   selected: boolean
-}) => ReactElement | null
+  /**
+   * Render this position with the engine's default wrapper.
+   * See {@link ContainerRenderProps.renderDefault}.
+   */
+  renderDefault: (props: TextBlockRenderProps) => ReactElement
+}
+export type TextBlockRender = (props: TextBlockRenderProps) => ReactElement
 
 /**
  * @alpha
@@ -196,12 +237,12 @@ export type Span = {
   kind: 'span'
   type: string
   /**
-   * Outer render. Three modes:
+   * Outer render. Two modes:
    * - omitted: fall through to global registered render (or engine default)
-   * - `null`: skip global, use engine default at this position
-   * - function: use this render
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns the engine default when called.
    */
-  render?: SpanRender | null
+  render?: SpanRender
 }
 
 /**
@@ -214,12 +255,12 @@ export type BlockObject = {
   kind: 'blockObject'
   type: string
   /**
-   * Outer render. Three modes:
+   * Outer render. Two modes:
    * - omitted: fall through to global registered render (or engine default)
-   * - `null`: skip global, use engine default at this position
-   * - function: use this render
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns the engine default when called.
    */
-  render?: BlockObjectRender | null
+  render?: BlockObjectRender
 }
 
 /**
@@ -232,12 +273,12 @@ export type InlineObject = {
   kind: 'inlineObject'
   type: string
   /**
-   * Outer render. Three modes:
+   * Outer render. Two modes:
    * - omitted: fall through to global registered render (or engine default)
-   * - `null`: skip global, use engine default at this position
-   * - function: use this render
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns the engine default when called.
    */
-  render?: InlineObjectRender | null
+  render?: InlineObjectRender
 }
 
 /**
@@ -292,17 +333,16 @@ export function defineContainer<const TType extends string>(config: {
       ? "Error: defineContainer({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
       : TType
   arrayField: string
-  render?:
-    | ((props: {
-        attributes: Record<string, unknown>
-        children: ReactElement
-        focused: boolean
-        node: ContainerNodeForType<TType>
-        path: Path
-        readOnly: boolean
-        selected: boolean
-      }) => ReactElement | null)
-    | null
+  render?: (props: {
+    attributes: Record<string, unknown>
+    children: ReactElement
+    focused: boolean
+    node: ContainerNodeForType<TType>
+    path: Path
+    readOnly: boolean
+    selected: boolean
+    renderDefault: (props: ContainerRenderProps) => ReactElement
+  }) => ReactElement
   of?: ReadonlyArray<Container | TextBlock | BlockObject>
 }): Container {
   return {kind: 'container', ...config} as unknown as Container
@@ -334,7 +374,7 @@ export function defineSpan<const TType extends string>(config: {
   type: TType extends 'block'
     ? "Error: defineSpan({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
     : TType
-  render?: SpanRender | null
+  render?: SpanRender
 }): Span {
   return {kind: 'span', ...config} as unknown as Span
 }
@@ -369,7 +409,7 @@ export function defineBlockObject<const TType extends string>(config: {
     : TType extends 'span'
       ? "Error: defineBlockObject({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
       : TType
-  render?: BlockObjectRender | null
+  render?: BlockObjectRender
 }): BlockObject {
   return {kind: 'blockObject', ...config} as unknown as BlockObject
 }
@@ -404,7 +444,7 @@ export function defineInlineObject<const TType extends string>(config: {
     : TType extends 'span'
       ? "Error: defineInlineObject({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
       : TType
-  render?: InlineObjectRender | null
+  render?: InlineObjectRender
 }): InlineObject {
   return {kind: 'inlineObject', ...config} as unknown as InlineObject
 }
@@ -435,7 +475,7 @@ export function defineTextBlock<const TType extends string>(config: {
   type: TType extends 'span'
     ? "Error: defineTextBlock({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
     : TType
-  render?: TextBlockRender | null
+  render?: TextBlockRender
   of?: ReadonlyArray<Span | InlineObject>
 }): TextBlock {
   return {kind: 'textBlock', ...config} as unknown as TextBlock

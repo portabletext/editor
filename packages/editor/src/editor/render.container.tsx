@@ -2,11 +2,15 @@ import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
-import type {ContainerConfig} from '../renderers/renderer.types'
+import type {
+  ContainerConfig,
+  ContainerRenderProps,
+} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateSelector} from '../slate/react/hooks/use-slate-selector'
 import {EditorActorContext} from './editor-actor-context'
+import {renderDefaultContainer} from './render.default'
 import {
   useIsFocusedContainer,
   useIsSelectedContainer,
@@ -46,27 +50,24 @@ export function RenderContainer(props: {
   const augmentedAttributes = {...props.attributes, ...textBlockAttributes}
 
   const render = props.containerConfig.container.render
-  if (typeof render === 'function') {
-    // Container registrations forbid the `'block'` and `'span'` types
-    // at the factory level (see `ContainerNodeForType`), so a container
-    // node here is always a `PortableTextObject`. The runtime
-    // invariant is enforced by registration; expressing it in the type
-    // graph would require threading the `_type` literal through the
-    // dispatch path.
-    const rendered = render({
-      attributes: augmentedAttributes,
-      children: props.children,
-      focused,
-      node: props.element as PortableTextObject,
-      path: props.path,
-      readOnly,
-      selected,
-    })
 
-    if (rendered !== null) {
-      return rendered
-    }
+  const renderDefault = renderDefaultContainer
+
+  // Container registrations forbid the `'block'` and `'span'` types
+  // at the factory level (see `ContainerNodeForType`), so a container
+  // node here is always a `PortableTextObject`. The runtime invariant
+  // is enforced by registration; expressing it in the type graph
+  // would require threading the `_type` literal through dispatch.
+  const renderProps: ContainerRenderProps = {
+    attributes: augmentedAttributes,
+    children: props.children,
+    focused,
+    node: props.element as PortableTextObject,
+    path: props.path,
+    readOnly,
+    renderDefault,
+    selected,
   }
 
-  return <div {...augmentedAttributes}>{props.children}</div>
+  return render ? render(renderProps) : renderDefault(renderProps)
 }

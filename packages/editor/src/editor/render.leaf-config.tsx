@@ -8,13 +8,21 @@ import type {ReactElement} from 'react'
 import {useContext} from 'react'
 import type {
   BlockObjectConfig,
+  BlockObjectRenderProps,
   InlineObjectConfig,
+  InlineObjectRenderProps,
   SpanConfig,
+  SpanRenderProps,
 } from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import {EditorActorContext} from './editor-actor-context'
 import {findInlinePositionalOverride} from './find-positional-override'
 import {ParentTextBlockContext} from './parent-text-block-context'
+import {
+  renderDefaultBlockObject,
+  renderDefaultInlineObject,
+  renderDefaultSpan,
+} from './render.default'
 
 /**
  * Hook: resolve the registered span config for the span at `node`, or
@@ -38,8 +46,8 @@ export function useSpanConfig(
     state.context.spans.get(node._type),
   )
   if (positional && 'span' in positional) {
-    // Three modes: function → use; null → use default at this
-    // position; undefined → fall through to global.
+    // Positional present: undefined render falls through to global;
+    // function render is used at this position.
     if (positional.span.render === undefined) {
       return globalSpan
     }
@@ -66,18 +74,18 @@ export function RenderSpanConfig(props: {
     state.matches({'edit mode': 'read only'}),
   )
   const render = props.spanConfig.span.render
-  if (typeof render !== 'function') {
-    return <span {...props.attributes}>{props.children}</span>
-  }
-  return render({
+  const renderDefault = renderDefaultSpan
+  const renderProps: SpanRenderProps = {
     attributes: props.attributes,
     children: props.children,
     focused: props.focused,
     node: props.node,
     path: props.path,
     readOnly,
+    renderDefault,
     selected: props.selected,
-  })
+  }
+  return render ? render(renderProps) : renderDefault(renderProps)
 }
 
 /**
@@ -98,20 +106,18 @@ export function RenderBlockObjectConfig(props: {
     state.matches({'edit mode': 'read only'}),
   )
   const render = props.blockObjectConfig.blockObject.render
-  if (typeof render !== 'function') {
-    // Engine default — render the children inside an attribute-tagged
-    // wrapper so consumer CSS still sees the data-pt-block attribute.
-    return <div {...props.attributes}>{props.children}</div>
-  }
-  return render({
+  const renderDefault = renderDefaultBlockObject
+  const renderProps: BlockObjectRenderProps = {
     attributes: props.attributes,
     children: props.children,
     focused: props.focused,
     node: props.node as PortableTextObject,
     path: props.path,
     readOnly,
+    renderDefault,
     selected: props.selected,
-  })
+  }
+  return render ? render(renderProps) : renderDefault(renderProps)
 }
 
 /**
@@ -132,16 +138,16 @@ export function RenderInlineObjectConfig(props: {
     state.matches({'edit mode': 'read only'}),
   )
   const render = props.inlineObjectConfig.inlineObject.render
-  if (typeof render !== 'function') {
-    return <span {...props.attributes}>{props.children}</span>
-  }
-  return render({
+  const renderDefault = renderDefaultInlineObject
+  const renderProps: InlineObjectRenderProps = {
     attributes: props.attributes,
     children: props.children,
     focused: props.focused,
     node: props.node as PortableTextObject,
     path: props.path,
     readOnly,
+    renderDefault,
     selected: props.selected,
-  })
+  }
+  return render ? render(renderProps) : renderDefault(renderProps)
 }
