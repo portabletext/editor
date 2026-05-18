@@ -12,24 +12,27 @@ import {createTestEditor} from '../src/test/vitest'
 /**
  * Block-level positional override composition.
  *
- * For each block-level kind (container, textBlock, blockObject), five
+ * For each block-level kind (container, textBlock, blockObject), the
  * resolution cases are pinned:
  *
  *   1. Global render at top-level NodePlugin fires when no positional
  *      override exists at the position.
  *   2. Positional `render: fn` in a parent container's `of` overrides
  *      any global registration at that position.
- *   3. Positional `render: null` uses engine default, skipping any
- *      global registration.
+ *   3b. Positional `render: (props) => props.renderDefault(props)`
+ *       renders the engine default at this position (canonical way to
+ *       opt into the engine default while shadowing global).
  *   4. Positional `of: [...]` with no `render` falls through to the
  *      global render when one is registered.
  *   5. Positional `of: [...]` with no `render` falls through to engine
  *      default when no global render is registered.
  *
- * `render: null` (config-time) discriminates "explicitly default" from
- * `render` absent ("fall through to global"). Positional placement is
- * the consumer's act of taking control of the resolution chain at this
- * position.
+ * Three registration-time modes of `render`:
+ * - omitted (`undefined`): no positional override registered; falls
+ *   through to global.
+ * - function: registers an override using the function. The function
+ *   receives a `renderDefault` prop that returns the engine default
+ *   when called.
  */
 
 const calloutSchema = defineSchema({
@@ -196,7 +199,7 @@ describe('Block-level positional override: defineContainer', () => {
     })
   })
 
-  test('3. Positional `render: null` uses engine default, skipping global', async () => {
+  test('3b. Positional `render: (props) => props.renderDefault(props)` renders engine default at this position', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rowGlobal = defineContainer({
       type: 'row',
@@ -210,7 +213,7 @@ describe('Block-level positional override: defineContainer', () => {
     const rowPositionalDefault = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: null,
+      render: (props) => props.renderDefault(props),
     })
     const table = defineContainer({
       type: 'table',
@@ -253,13 +256,10 @@ describe('Block-level positional override: defineContainer', () => {
     })
 
     await vi.waitFor(() => {
-      // Neither global nor positional consumer-render is on the DOM.
+      // Global consumer-render is shadowed by the positional override.
       expect(document.querySelector('[data-testid="row-global"]')).toEqual(null)
-      // The table outer is the consumer-rendered wrapper. Inside it,
-      // the row was rendered by the engine default - a plain wrapper
-      // carrying `data-pt-block="container"`. Asserting both pins the
-      // "use default at this position" branch (vs the resolver
-      // silently dropping the override).
+      // The positional render delegated to `props.renderDefault(props)` so
+      // the engine default wrapper is present at this position.
       const tableEl = document.querySelector('[data-testid="table"]')
       expect(tableEl).not.toEqual(null)
       const rowEl = tableEl!.querySelector(
@@ -504,7 +504,7 @@ describe('Block-level positional override: defineTextBlock', () => {
     })
   })
 
-  test('3. Positional `render: null` uses engine default, skipping global', async () => {
+  test('3b. Positional `render: (props) => props.renderDefault(props)` renders engine default at this position', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalBlock = defineTextBlock({
       type: 'block',
@@ -516,7 +516,7 @@ describe('Block-level positional override: defineTextBlock', () => {
     })
     const calloutBlockDefault = defineTextBlock({
       type: 'block',
-      render: null,
+      render: (props) => props.renderDefault(props),
     })
     const callout = defineContainer({
       type: 'callout',
@@ -555,13 +555,12 @@ describe('Block-level positional override: defineTextBlock', () => {
     await vi.waitFor(() => {
       const calloutEl = document.querySelector('[data-testid="callout"]')
       expect(calloutEl).not.toEqual(null)
-      // Global render is shadowed at this position.
+      // Global render shadowed by the positional override.
       expect(calloutEl!.querySelector('[data-testid="block-global"]')).toEqual(
         null,
       )
-      // Engine default renders the text block with `data-pt-block="text"`
-      // - the resolver consulted the positional `render: null` and
-      // produced the default wrapper at this position.
+      // `props.renderDefault(props)` produced the engine default wrapper at
+      // this position.
       const defaultBlock = calloutEl!.querySelector('[data-pt-block="text"]')
       expect(defaultBlock).not.toEqual(null)
       expect(defaultBlock!.textContent).toContain('inside')
@@ -761,7 +760,7 @@ describe('Block-level positional override: defineBlockObject', () => {
     })
   })
 
-  test('3. Positional `render: null` uses engine default, skipping global', async () => {
+  test('3b. Positional `render: (props) => props.renderDefault(props)` renders engine default at this position', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalImage = defineBlockObject({
       type: 'image',
@@ -773,7 +772,7 @@ describe('Block-level positional override: defineBlockObject', () => {
     })
     const calloutImageDefault = defineBlockObject({
       type: 'image',
-      render: null,
+      render: (props) => props.renderDefault(props),
     })
     const callout = defineContainer({
       type: 'callout',
@@ -802,12 +801,12 @@ describe('Block-level positional override: defineBlockObject', () => {
     await vi.waitFor(() => {
       const calloutEl = document.querySelector('[data-testid="callout"]')
       expect(calloutEl).not.toEqual(null)
+      // Global consumer-render shadowed.
       expect(calloutEl!.querySelector('[data-testid="image-global"]')).toEqual(
         null,
       )
-      // Engine default for block-objects emits a data attribute on
-      // the wrapper. Asserting the absence of the global render plus
-      // presence of the engine wrapper pins the "use default" branch.
+      // `props.renderDefault(props)` produced the engine default wrapper at
+      // this position.
       expect(calloutEl!.querySelector('[data-pt-block="object"]')).not.toEqual(
         null,
       )

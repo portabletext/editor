@@ -1,14 +1,17 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
-import type {InlineObjectConfig} from '../renderers/renderer.types'
+import type {
+  InlineObjectConfig,
+  InlineObjectRenderProps,
+} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
+import {renderDefaultInlineObject} from './render.default'
 import {RenderDefaultInlineObject} from './render.default-object'
-import {RenderInlineObjectConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -48,21 +51,21 @@ export function RenderInlineObject(props: {
       'data-slate-void': _slateVoid,
       ...ptAttributes
     } = props.attributes
-    return (
-      <RenderInlineObjectConfig
-        inlineObjectConfig={props.inlineObjectConfig}
-        attributes={{
-          ...ptAttributes,
-          'data-pt-inline': 'object',
-        }}
-        focused={focused}
-        node={props.element}
-        path={props.path}
-        selected={selected}
-      >
-        {props.children}
-      </RenderInlineObjectConfig>
-    )
+    const render = props.inlineObjectConfig.inlineObject.render
+    const renderProps: InlineObjectRenderProps = {
+      attributes: {
+        ...ptAttributes,
+        'data-pt-inline': 'object',
+      },
+      children: props.children,
+      focused,
+      node: props.element as PortableTextObject,
+      path: props.path,
+      readOnly: props.readOnly,
+      renderDefault: renderDefaultInlineObject,
+      selected,
+    }
+    return render ? render(renderProps) : renderDefaultInlineObject(renderProps)
   }
 
   let innerContent: ReactElement

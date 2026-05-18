@@ -4,13 +4,8 @@ import type {
   PortableTextSpan,
 } from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
-import type {ReactElement} from 'react'
 import {useContext} from 'react'
-import type {
-  BlockObjectConfig,
-  InlineObjectConfig,
-  SpanConfig,
-} from '../renderers/renderer.types'
+import type {SpanConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import {EditorActorContext} from './editor-actor-context'
 import {findInlinePositionalOverride} from './find-positional-override'
@@ -38,110 +33,12 @@ export function useSpanConfig(
     state.context.spans.get(node._type),
   )
   if (positional && 'span' in positional) {
-    // Three modes: function → use; null → use default at this
-    // position; undefined → fall through to global.
+    // Positional present: undefined render falls through to global;
+    // function render is used at this position.
     if (positional.span.render === undefined) {
       return globalSpan
     }
     return positional
   }
   return globalSpan
-}
-
-/**
- * Small child component that invokes the consumer's span render with
- * stable props.
- */
-export function RenderSpanConfig(props: {
-  spanConfig: SpanConfig
-  attributes: Record<string, unknown>
-  children: ReactElement
-  focused: boolean
-  node: PortableTextSpan
-  path: Path
-  selected: boolean
-}) {
-  const editorActor = useContext(EditorActorContext)
-  const readOnly = useSelector(editorActor, (state) =>
-    state.matches({'edit mode': 'read only'}),
-  )
-  const render = props.spanConfig.span.render
-  if (typeof render !== 'function') {
-    return <span {...props.attributes}>{props.children}</span>
-  }
-  return render({
-    attributes: props.attributes,
-    children: props.children,
-    focused: props.focused,
-    node: props.node,
-    path: props.path,
-    readOnly,
-    selected: props.selected,
-  })
-}
-
-/**
- * Small child component that invokes the consumer's block-object
- * render with stable props.
- */
-export function RenderBlockObjectConfig(props: {
-  blockObjectConfig: BlockObjectConfig
-  attributes: Record<string, unknown>
-  children: ReactElement
-  focused: boolean
-  node: PortableTextBlock | PortableTextObject
-  path: Path
-  selected: boolean
-}) {
-  const editorActor = useContext(EditorActorContext)
-  const readOnly = useSelector(editorActor, (state) =>
-    state.matches({'edit mode': 'read only'}),
-  )
-  const render = props.blockObjectConfig.blockObject.render
-  if (typeof render !== 'function') {
-    // Engine default — render the children inside an attribute-tagged
-    // wrapper so consumer CSS still sees the data-pt-block attribute.
-    return <div {...props.attributes}>{props.children}</div>
-  }
-  return render({
-    attributes: props.attributes,
-    children: props.children,
-    focused: props.focused,
-    node: props.node as PortableTextObject,
-    path: props.path,
-    readOnly,
-    selected: props.selected,
-  })
-}
-
-/**
- * Small child component that invokes the consumer's inline-object
- * render with stable props.
- */
-export function RenderInlineObjectConfig(props: {
-  inlineObjectConfig: InlineObjectConfig
-  attributes: Record<string, unknown>
-  children: ReactElement
-  focused: boolean
-  node: PortableTextBlock | PortableTextObject
-  path: Path
-  selected: boolean
-}) {
-  const editorActor = useContext(EditorActorContext)
-  const readOnly = useSelector(editorActor, (state) =>
-    state.matches({'edit mode': 'read only'}),
-  )
-  const render = props.inlineObjectConfig.inlineObject.render
-  if (typeof render !== 'function') {
-    return <span {...props.attributes}>{props.children}</span>
-  }
-  return render({
-    attributes: props.attributes,
-    children: props.children,
-    focused: props.focused,
-    node: props.node as PortableTextObject,
-    path: props.path,
-    readOnly,
-    selected: props.selected,
-  })
 }
