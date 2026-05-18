@@ -166,14 +166,27 @@ export function SelectionStateProvider({
       }
     }
 
+    let pendingRecompute = false
+
     const subscription = editorActor.subscribe(() => {
-      const newState = computeCurrent()
-      if (!selectionStatesEqual(stateRef.current, newState)) {
-        stateRef.current = newState
-        for (const cb of subscribersRef.current) {
-          cb()
-        }
+      // Coalesce bursts of actor updates into one selection-state
+      // recompute per microtask. The microtask drains before React's
+      // commit phase, so subscribers re-render in the same commit as
+      // the actor's state change.
+      if (pendingRecompute) {
+        return
       }
+      pendingRecompute = true
+      queueMicrotask(() => {
+        pendingRecompute = false
+        const newState = computeCurrent()
+        if (!selectionStatesEqual(stateRef.current, newState)) {
+          stateRef.current = newState
+          for (const cb of subscribersRef.current) {
+            cb()
+          }
+        }
+      })
     })
 
     return () => subscription.unsubscribe()
