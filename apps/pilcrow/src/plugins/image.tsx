@@ -1,5 +1,5 @@
-import {defineLeaf} from '@portabletext/editor'
-import {LeafPlugin} from '@portabletext/editor/plugins'
+import {defineBlockObject} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 
 /**
  * Image leaf. Markdown `![alt](src "title")` round-trips into
@@ -10,7 +10,7 @@ import {LeafPlugin} from '@portabletext/editor/plugins'
  * an `<img title>` hover tooltip per the markdown spec. Add a caption
  * later as a separate feature if the writing surface needs one.
  */
-const imageLeaf = defineLeaf({
+const image = defineBlockObject({
   type: 'image',
   render: ({attributes, children, node, selected, focused}) => {
     const image = node as {src?: string; alt?: string; title?: string}
@@ -30,5 +30,5 @@ const imageLeaf = defineLeaf({
 })
 
 export function ImagePlugin() {
-  return <LeafPlugin leaves={[imageLeaf]} />
+  return <NodePlugin nodes={[image]} />
 }

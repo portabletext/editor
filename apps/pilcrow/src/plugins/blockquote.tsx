@@ -1,9 +1,9 @@
 import {defineContainer} from '@portabletext/editor'
-import {ContainerPlugin} from '@portabletext/editor/plugins'
+import {NodePlugin} from '@portabletext/editor/plugins'
 
 const blockquoteContainer = defineContainer({
   type: 'blockquote',
-  childField: 'content',
+  arrayField: 'content',
   render: ({attributes, children}) => (
     <blockquote {...attributes} className="pc-blockquote">
       {children}
@@ -12,5 +12,5 @@ const blockquoteContainer = defineContainer({
 })
 
 export function BlockquotePlugin() {
-  return <ContainerPlugin containers={[blockquoteContainer]} />
+  return <NodePlugin nodes={[blockquoteContainer]} />
 }
