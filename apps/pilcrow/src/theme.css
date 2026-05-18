@@ -1,6 +1,62 @@
+/* Pilcrow — M0 theme.
+ * Adapted from /visual-prototypes/v1/index-resting.html + theme.css.
+ * Frame B quieted. Single page, ivory paper, hover-¶ gutter, italic floor.
+ */
+
 :root {
-  --pc-bg: #ffffff;
-  --pc-fg-faint: #e0e0e0;
+  --pc-font-serif: 'Crimson Pro', 'Iowan Old Style', Georgia, serif;
+  --pc-font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --pc-font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  --paper: #fbf7ee;
+  --page-bg: #f4f0e8;
+
+  --ink: #1c1c1c;
+  --ink-soft: #2a2a2a;
+  --ink-muted: #555555;
+  --ink-subtle: #888888;
+  --ink-faint: #b3a99a;
+
+  --rule: rgba(28, 28, 28, 0.08);
+  --rule-soft: rgba(28, 28, 28, 0.04);
+  --rule-hover: rgba(28, 28, 28, 0.15);
+
+  --tint-bg: rgba(28, 28, 28, 0.035);
+  --tint-bg-strong: rgba(28, 28, 28, 0.05);
+  --accent: #6a4a2b;
+  --selection: rgba(140, 100, 40, 0.1);
+
+  color-scheme: light;
+}
+
+/* Dark theme. Activated via `:root[data-theme="dark"]`, written by useTheme.
+ * All visual tokens invert; semantic structure (1px borders, type hierarchy,
+ * spacing, fonts) stays identical. Accent shifts cooler so brown reads on
+ * a neutral-cool surface. */
+
+:root[data-theme='dark'] {
+  --paper: #1a1a1c;
+  --page-bg: #0f0f10;
+
+  --ink: #ececec;
+  --ink-soft: #d8d8d8;
+  --ink-muted: #a8a8a8;
+  --ink-subtle: #7f7f7f;
+  --ink-faint: #555555;
+
+  --rule: rgba(236, 236, 236, 0.1);
+  --rule-soft: rgba(236, 236, 236, 0.05);
+  --rule-hover: rgba(236, 236, 236, 0.18);
+
+  --tint-bg: rgba(236, 236, 236, 0.04);
+  --tint-bg-strong: rgba(236, 236, 236, 0.06);
+  --accent: #c89a6a;
+  --selection: rgba(200, 154, 106, 0.18);
+
+  color-scheme: dark;
 }
 
 * {
@@ -15,28 +71,744 @@ body,
 }
 
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-  background: var(--pc-bg);
+  font-family: var(--pc-font-sans);
+  color: var(--ink);
+  background: var(--page-bg);
+  font-feature-settings:
+    'onum' 1,
+    'kern' 1,
+    'liga' 1;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
+
+::selection {
+  background: var(--selection);
+}
+
+/* — Page shell — */
 
 .pc-shell {
-  height: 100%;
+  min-height: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  padding: 32px 24px 48px;
 }
 
-.pc-mark {
-  font-size: 4rem;
-  color: var(--pc-fg-faint);
+.pc-page {
+  background: var(--paper);
+  width: 100%;
+  max-width: 800px;
+  border-radius: 2px;
+  position: relative;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 16px 36px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-theme='dark'] .pc-page {
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 16px 36px rgba(0, 0, 0, 0.4);
+  min-height: calc(100vh - 80px);
+}
+
+/* — Header — */
+
+.pc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 36px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.pc-logo-block {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.pc-logo {
+  font-family: var(--pc-font-serif);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.pc-doc-name {
+  font-family: var(--pc-font-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.pc-header-spacer {
+  flex: 1;
+}
+
+.pc-icon-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  color: var(--ink-subtle);
+  cursor: pointer;
+}
+
+.pc-icon-btn:hover {
+  color: var(--ink);
+  background: var(--rule-soft);
+}
+
+/* — Editor body — */
+
+.pc-doc {
+  flex: 1 1 auto;
+  padding: 32px 36px 32px 92px;
+}
+
+/* The editor mounts a contenteditable directly inside .pc-doc.
+ * Slate emits its own block wrappers; we drape pilcrow chrome over each
+ * via per-style/per-type classes from the consumer render callbacks. */
+.pc-doc [data-slate-editor='true'] {
+  outline: none;
+}
+
+/* Per-block wrapper applied by render callbacks. */
+.pc-block {
+  position: relative;
+}
+
+.pc-block-mark {
+  position: absolute;
+  left: -56px;
+  top: 0.18em;
+  font-family: var(--pc-font-serif);
+  font-size: 17px;
+  font-weight: 400;
+  color: transparent;
   user-select: none;
+  pointer-events: none;
+  transition: color 120ms;
+}
+
+.pc-block:hover .pc-block-mark,
+.pc-block[data-focused='true'] .pc-block-mark {
+  color: rgba(28, 28, 28, 0.3);
+}
+
+/* — Typography (styles + paragraphs) — */
+
+.pc-h1 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 2.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.pc-h2 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.85rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 32px 0 12px;
+  color: var(--ink);
+}
+
+.pc-h3 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.25;
+  margin: 28px 0 10px;
+  color: var(--ink);
+}
+
+.pc-h4 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  margin: 24px 0 8px;
+  color: var(--ink);
+}
+
+.pc-h5 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  margin: 20px 0 6px;
+  color: var(--ink);
+}
+
+.pc-h6 {
+  font-family: var(--pc-font-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  margin: 18px 0 6px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pc-p {
+  font-family: var(--pc-font-serif);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  color: var(--ink-soft);
+}
+
+/* — Inline marks — */
+
+.pc-strong {
+  font-weight: 700;
+}
+.pc-em {
+  font-style: italic;
+}
+.pc-strike {
+  text-decoration: line-through;
+  text-decoration-color: rgba(28, 28, 28, 0.45);
+}
+
+.pc-code {
+  font-family: var(--pc-font-mono);
+  font-size: 0.88em;
+  color: var(--ink);
+  background: var(--tint-bg);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.pc-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(28, 28, 28, 0.25);
+  text-underline-offset: 3px;
+}
+
+/* — Lists — */
+
+.pc-list {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.pc-list[data-kind='number'] {
+  list-style: decimal;
+}
+.pc-list[data-kind='bullet'] {
+  list-style: disc;
+}
+.pc-list[data-kind='task'] {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.pc-li {
+  font-family: var(--pc-font-serif);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 4px 0;
+  color: var(--ink-soft);
+}
+
+.pc-list[data-kind='task'] > .pc-li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  list-style: none;
+}
+
+.pc-list[data-kind='task'] > .pc-li > *:not(.pc-task-checkbox) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pc-task-checkbox {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--rule-hover);
+  border-radius: 2px;
+  background: var(--paper);
+  position: relative;
+  transform: translateY(2px);
+}
+
+.pc-task-checkbox[data-checked='true'] {
+  background: var(--ink-muted);
+  border-color: var(--ink-muted);
+}
+
+.pc-task-checkbox[data-checked='true']::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border: solid var(--paper);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* — Blockquote — */
+
+.pc-blockquote {
+  margin: 16px 0;
+  padding: 6px 0 6px 18px;
+  border-left: 2px solid var(--rule-hover);
+  color: var(--ink-muted);
+}
+
+.pc-blockquote .pc-blockquote {
+  margin: 8px 0;
+  border-left-color: var(--rule);
+}
+
+/* — Callout — */
+
+.pc-callout {
+  margin: 24px 0;
+  padding: 14px 18px 14px 22px;
+  background: var(--tint-bg);
+  border-left: 2px solid var(--rule-hover);
+  border-radius: 0 2px 2px 0;
+}
+
+.pc-callout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.pc-callout-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-muted);
+}
+
+.pc-callout-label {
+  font-family: var(--pc-font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.pc-callout-body {
+  margin: 0;
+}
+
+/* — Code block — */
+
+.pc-code-block {
+  margin: 24px 0;
+  background: var(--tint-bg);
+  border-left: 2px solid var(--rule-hover);
+  border-radius: 0 2px 2px 0;
+  overflow: hidden;
+  font-family: var(--pc-font-mono);
+  font-size: 13px;
+}
+
+.pc-code-block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px 6px 14px;
+  background: var(--tint-bg-strong);
+  border-bottom: 1px solid var(--rule);
+}
+
+.pc-code-block-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--pc-font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-subtle);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.pc-code-block-body {
+  padding: 14px 18px;
+  line-height: 1.55;
+  font-family: var(--pc-font-mono);
+  font-size: 13px;
+  white-space: pre;
+  color: var(--ink);
+}
+
+/* Each code line is a text block inside the body. */
+.pc-code-line {
+  font-family: var(--pc-font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* — Table — */
+
+.pc-table {
+  margin: 24px 0;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  border-collapse: collapse;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  font-feature-settings:
+    'onum' 1,
+    'kern' 1;
+  width: 100%;
+  table-layout: fixed;
+  overflow: hidden;
+}
+
+.pc-table-cell {
+  padding: 8px 12px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  vertical-align: top;
+  text-align: left;
+}
+
+.pc-table-row:not(:last-child) > .pc-table-cell {
+  border-bottom: 1px solid var(--rule);
+}
+
+.pc-table[data-header-rows='1']
+  > tbody
+  > .pc-table-row:first-child
+  > .pc-table-cell {
+  background: var(--tint-bg);
+  border-bottom-color: var(--rule-hover);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pc-table-cell:not(:last-child) {
+  border-right: 1px solid var(--rule);
+}
+
+.pc-table-cell[data-selected='true'],
+.pc-table-cell[data-focused='true'] {
+  box-shadow: inset 0 0 0 2px var(--selection);
+}
+
+/* — Image — */
+
+.pc-image {
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 4px;
+  border-radius: 2px;
+  transition: box-shadow 120ms;
+}
+
+.pc-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 2px;
+}
+
+.pc-image[data-selected='true'],
+.pc-image[data-focused='true'] {
+  box-shadow: 0 0 0 2px var(--selection);
+}
+
+/* — Horizontal rule — */
+
+.pc-hr-wrap {
+  padding: 14px 0;
+  margin: 14px 0;
+  cursor: pointer;
+  transition: background 120ms;
+  border-radius: 2px;
+}
+
+.pc-hr-wrap[data-selected='true'],
+.pc-hr-wrap[data-focused='true'] {
+  background: var(--selection);
+}
+
+.pc-hr {
+  border: 0;
+  height: 1px;
+  background: var(--rule);
+  margin: 0;
+}
+
+/* — Floor — */
+
+.pc-floor {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 36px 18px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--pc-font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.pc-floor-pilcrow {
+  color: var(--ink-faint);
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.pc-floor-sep {
+  color: var(--ink-faint);
+  font-style: normal;
+  opacity: 0.5;
+}
+
+/* — Bubble menu — */
+
+.pc-bubble-wrap {
+  position: fixed;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.pc-bubble-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.pc-bubble-side-top .pc-bubble-menu::after,
+.pc-bubble-side-bottom .pc-bubble-menu::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: var(--ink);
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+
+.pc-bubble-side-top .pc-bubble-menu::after {
+  bottom: -4px;
+}
+
+.pc-bubble-side-bottom .pc-bubble-menu::after {
+  top: -4px;
+}
+
+.pc-bubble-button {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pc-bubble-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pc-bubble-button-active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.pc-bubble-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* — Emoji picker — */
+
+.pc-emoji-picker {
+  position: fixed;
+  z-index: 50;
+  width: 280px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.pc-emoji-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pc-emoji-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.pc-emoji-picker-item-selected,
+.pc-emoji-picker-item:hover {
+  background: var(--rule);
+}
+
+.pc-emoji-picker-glyph {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pc-emoji-picker-keyword {
+  color: var(--ink-soft);
+  font-family: var(--pc-font-mono);
+  font-size: 12px;
+}
+
+.pc-emoji-picker-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.pc-emoji-picker-dismiss {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: 12px;
+}
+
+.pc-emoji-picker-dismiss:hover {
+  background: var(--rule);
+}
+
+/* — Slash menu — */
+
+.pc-slash-menu {
+  position: fixed;
+  z-index: 50;
+  width: 280px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.pc-slash-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.pc-slash-menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+}
+
+.pc-slash-menu-item-selected,
+.pc-slash-menu-item:hover {
+  background: var(--rule);
+}
+
+.pc-slash-menu-label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pc-slash-menu-desc {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.pc-slash-menu-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  font-family: var(--pc-font-sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.pc-slash-menu-dismiss {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--pc-font-sans);
+  font-size: 12px;
+}
+
+.pc-slash-menu-dismiss:hover {
+  background: var(--rule);
 }

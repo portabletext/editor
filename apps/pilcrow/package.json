@@ -11,17 +11,29 @@
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "vite",
     "lint:fix": "biome lint --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@portabletext/editor": "workspace:*",
+    "@portabletext/markdown": "workspace:*",
+    "@portabletext/plugin-emoji-picker": "workspace:*",
+    "@portabletext/plugin-typeahead-picker": "workspace:*",
+    "@portabletext/schema": "workspace:*",
+    "@portabletext/toolbar": "workspace:*",
+    "emojilib": "^4.0.2",
+    "fuse.js": "^7.1.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "shiki": "^3.23.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
     "typescript": "catalog:",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.4"
   }
 }
