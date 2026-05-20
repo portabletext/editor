@@ -42,6 +42,35 @@ function ToneIcon({tone}: {tone: string}): JSX.Element {
   }
 }
 
+const calloutImageLeaf = defineBlockObject({
+  type: 'image',
+  render: ({attributes, children, node, focused, selected}) => {
+    const image = node as {src?: string; alt?: string}
+    return (
+      <span
+        {...attributes}
+        className={[
+          'my-1 inline-flex items-center justify-center overflow-hidden rounded border border-amber-300 dark:border-amber-700',
+          selected
+            ? 'outline outline-2 outline-amber-500 dark:outline-amber-400'
+            : '',
+          focused ? 'bg-amber-100 dark:bg-amber-900/40' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <img
+          src={image.src}
+          alt={image.alt ?? ''}
+          contentEditable={false}
+          className="h-16 w-auto object-contain"
+        />
+        {children}
+      </span>
+    )
+  },
+})
+
 const calloutContainer = defineContainer({
   type: 'callout',
   arrayField: 'content',
@@ -113,43 +142,10 @@ const calloutContainer = defineContainer({
         }
       },
     }),
+    calloutImageLeaf,
   ],
 })
 
-const calloutImageLeaf = defineBlockObject({
-  type: 'image',
-  render: ({attributes, children, node, focused, selected}) => {
-    const image = node as {src?: string; alt?: string}
-    return (
-      <span
-        {...attributes}
-        className={[
-          'my-1 inline-flex items-center justify-center overflow-hidden rounded border border-amber-300 dark:border-amber-700',
-          selected
-            ? 'outline outline-2 outline-amber-500 dark:outline-amber-400'
-            : '',
-          focused ? 'bg-amber-100 dark:bg-amber-900/40' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <img
-          src={image.src}
-          alt={image.alt ?? ''}
-          contentEditable={false}
-          className="h-16 w-auto object-contain"
-        />
-        {children}
-      </span>
-    )
-  },
-})
-
 export function CalloutPlugin(): JSX.Element {
-  return (
-    <>
-      <NodePlugin nodes={[calloutContainer]} />
-      <NodePlugin nodes={[calloutImageLeaf]} />
-    </>
-  )
+  return <NodePlugin nodes={[calloutContainer]} />
 }

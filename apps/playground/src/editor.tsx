@@ -17,6 +17,7 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import {portableTextToMarkdown} from '@portabletext/markdown'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {PasteLinkPlugin} from '@portabletext/plugin-paste-link'
@@ -29,11 +30,16 @@ import {
   ActivityIcon,
   BracesIcon,
   CheckIcon,
+  CodeIcon,
   CopyIcon,
   FileJsonIcon,
+  InfoIcon,
+  LayersIcon,
+  LinkIcon,
   MousePointerIcon,
   PencilIcon,
   PencilOffIcon,
+  TableIcon,
   XIcon,
 } from 'lucide-react'
 import {useContext, useEffect, useState, type JSX} from 'react'
@@ -61,13 +67,13 @@ import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
-import {ImagePlugin} from './plugins/plugin.image'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
 import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
+import {markdownOptions} from './previews/markdown-options'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {ErrorBoundary} from './primitives/error-boundary'
@@ -158,7 +164,6 @@ export function Editor(props: {
               {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
               {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
               {featureFlags.tablePlugin ? <TablePlugin /> : null}
-              <ImagePlugin />
               <InlineObjectsPlugin />
               {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
               {featureFlags.mentionPickerPlugin ? (
@@ -356,6 +361,59 @@ const breakLineStyle = tv({
   },
 })
 
+const imageStyle = tv({
+  base: 'grid grid-cols-[auto_1fr] my-1 items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
+  variants: {
+    selected: {true: 'border-blue-300 dark:border-blue-600'},
+    focused: {true: 'bg-blue-50 dark:bg-blue-900/30'},
+  },
+})
+
+const fallbackBlockStyle = tv({
+  base: 'my-2 rounded border border-dashed border-gray-300 px-3 py-2 text-sm dark:border-gray-600',
+  variants: {
+    selected: {true: 'border-blue-300 dark:border-blue-600'},
+    focused: {true: 'bg-blue-50 dark:bg-blue-900/30'},
+  },
+})
+
+/**
+ * Read-only fallback for new-pipeline block-objects whose `NodePlugin`
+ * has been toggled off in the playground feature flags. Renders the
+ * block through `@portabletext/markdown` and shows the resulting
+ * markdown source. Honest representation: when no consumer-provided
+ * render is registered, the block is shown as the markdown it would
+ * serialize to. No content cropping; full structure preserved.
+ */
+function MarkdownFallback(props: {
+  value: unknown
+  label: string
+  icon: JSX.Element
+  selected: boolean
+  focused: boolean
+}) {
+  const markdown = portableTextToMarkdown(
+    [props.value as PortableTextBlock],
+    markdownOptions,
+  )
+  return (
+    <div
+      className={fallbackBlockStyle({
+        selected: props.selected,
+        focused: props.focused,
+      })}
+    >
+      <div className="mb-1 flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {props.icon}
+        <span>{props.label}</span>
+      </div>
+      <pre className="m-0 overflow-x-auto whitespace-pre-wrap font-mono text-xs text-gray-700 dark:text-gray-200">
+        {markdown}
+      </pre>
+    </div>
+  )
+}
+
 const RenderBlock = (props: BlockRenderProps) => {
   const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
   const editor = useEditor()
@@ -378,6 +436,97 @@ const RenderBlock = (props: BlockRenderProps) => {
           })}
         />
       </div>
+    )
+  }
+
+  if (props.schemaType.name === 'image') {
+    const image = props.value as {src?: string; alt?: string}
+    children = (
+      <div
+        className={imageStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <div className="bg-gray-100 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
+          <img
+            className="object-scale-down max-w-full"
+            src={image.src}
+            alt={image.alt ?? ''}
+          />
+        </div>
+        <div className="flex flex-col gap-1 p-1 overflow-hidden">
+          <div className="flex items-center gap-1">
+            <TooltipTrigger>
+              <Button variant="ghost" size="sm">
+                <LinkIcon className="size-3 shrink-0" />
+              </Button>
+              <Tooltip className="max-w-120">
+                <span className="wrap-anywhere">{image.src}</span>
+              </Tooltip>
+            </TooltipTrigger>
+            <span className="text-ellipsis overflow-hidden whitespace-nowrap">
+              {image.src}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <PencilIcon className="size-3 shrink-0" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {image.alt}
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (props.schemaType.name === 'callout') {
+    const tone = (props.value as unknown as {tone?: string}).tone
+    children = (
+      <MarkdownFallback
+        value={props.value}
+        label={`Callout${tone ? ` · ${tone}` : ''}`}
+        icon={<InfoIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  }
+
+  if (props.schemaType.name === 'fact-box') {
+    children = (
+      <MarkdownFallback
+        value={props.value}
+        label="Fact box"
+        icon={<LayersIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  }
+
+  if (props.schemaType.name === 'code-block') {
+    const language = (props.value as unknown as {language?: string}).language
+    children = (
+      <MarkdownFallback
+        value={props.value}
+        label={`Code block${language ? ` · ${language}` : ''}`}
+        icon={<CodeIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  }
+
+  if (props.schemaType.name === 'table') {
+    children = (
+      <MarkdownFallback
+        value={props.value}
+        label="Table"
+        icon={<TableIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
     )
   }
 
