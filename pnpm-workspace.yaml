@@ -24,6 +24,8 @@ minimumReleaseAgeExclude:
   - astro@6.1.3 || 6.1.6 || 6.1.10
   # Renovate security update: vite@7.3.2
   - vite@7.3.2
+  # Renovate security update: turbo@2.9.14
+  - turbo@2.9.14
 
 trustPolicy: no-downgrade
 
