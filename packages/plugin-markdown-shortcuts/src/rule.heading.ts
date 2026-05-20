@@ -52,6 +52,10 @@ export function createHeadingRule(config: {
         return false
       }
 
+      if (!subSchema.styles.some((s) => s.name === style)) {
+        return false
+      }
+
       return {match, style}
     },
     actions: [

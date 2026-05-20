@@ -214,6 +214,100 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
     })
   })
 
+  test('typing `# ` when the headingStyle callback returns a style not in the sub-schema does not consume the keystroke', async () => {
+    const schemaDefinition = defineSchema({
+      styles: [{name: 'normal'}, {name: 'h1'}],
+      blockObjects: [
+        {
+          name: 'code-block',
+          fields: [
+            {
+              name: 'lines',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  decorators: [{name: 'code'}],
+                  styles: [{name: 'code'}],
+                  lists: [],
+                  annotations: [],
+                  inlineObjects: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const codeBlockContainer = defineContainer({
+      type: 'code-block',
+      arrayField: 'lines',
+      render: ({attributes, children}) => (
+        <pre data-testid="code-block" {...attributes}>
+          {children}
+        </pre>
+      ),
+    })
+
+    const {editor} = await createTestEditor({
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'code-block',
+          _key: 'cb1',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'l1',
+              children: [{_type: 'span', _key: 's1', text: '', marks: []}],
+              markDefs: [],
+              style: 'code',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={[codeBlockContainer]} />
+          <MarkdownShortcutsPlugin
+            defaultStyle={({context}) => context.schema.styles[0]?.name}
+            // Buggy consumer callback: returns a style name unconditionally,
+            // even when the sub-schema at the focus does not declare it.
+            headingStyle={() => 'h1'}
+          />
+        </>
+      ),
+    })
+
+    const codeBlockElement = await vi.waitFor(() => {
+      const element = document.querySelector('[data-testid="code-block"]')
+      expect(element).not.toEqual(null)
+      return element!
+    })
+
+    await userEvent.click(codeBlockElement)
+    await userEvent.keyboard('# ')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'code-block',
+          _key: 'cb1',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'l1',
+              children: [{_type: 'span', _key: 's1', text: '# ', marks: []}],
+              markDefs: [],
+              style: 'code',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
   test('typing a markdown link when no link annotation is declared does not consume the keystroke or move the caret', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}],
