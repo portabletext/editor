@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.1.0
+
+### Minor Changes
+
+- [#2630](https://github.com/portabletext/editor/pull/2630) [`3a9fc2b`](https://github.com/portabletext/editor/commit/3a9fc2b2db364a3d46b30c02754f5cfa6bf8696c) Thanks [@christianhg](https://github.com/christianhg)! - feat: emit Sanity-aligned `OfDefinition` shape with cycle stubs
+
+  The bridge now emits inline declarations as `{type: 'object', name: 'X', fields: [...]}` (matching `@portabletext/schema`'s grammar) and cycle stubs as bare references `{type: 'X'}`. Recursive Sanity schemas (where a type's `of` array contains itself) walk through ancestor-name cycle detection: the bridge inlines until it sees the type again, then emits a bare reference. The editor's resolver picks up the reference and terminates against its own ancestor chain. Two layers, same primitive.
+
+### Patch Changes
+
+- Updated dependencies [[`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7), [`c6103e0`](https://github.com/portabletext/editor/commit/c6103e005a527c8e2717d9d8ad11da49cee9e942), [`fea850c`](https://github.com/portabletext/editor/commit/fea850c5feab41097dc65f92b56e48b765257559)]:
+  - @portabletext/schema@2.2.0
+
 ## 3.0.0
 
 ### Major Changes

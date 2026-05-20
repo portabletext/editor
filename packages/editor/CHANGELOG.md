@@ -1,5 +1,548 @@
 # Changelog
 
+## 7.0.0
+
+### Major Changes
+
+- [#2594](https://github.com/portabletext/editor/pull/2594) [`750f5f4`](https://github.com/portabletext/editor/commit/750f5f49f3c985d55a186ade1ca41e2fa6a1d31e) Thanks [@christianhg](https://github.com/christianhg)! - feat!: tighten and adjust block-offset utilities
+
+  `blockOffsetToSpanSelectionPoint`, `spanSelectionPointToBlockOffset`, `blockOffsetsToSelection`, and `childSelectionPointToBlockOffset` now take a `snapshot` argument and resolve through container-nested text blocks at any depth. Pass the editor snapshot directly instead of a `context` object.
+
+  `blockOffsetToBlockSelectionPoint`, `blockOffsetToSelectionPoint`, and `selectionPointToBlockOffset` are no longer part of the public API. They had no external consumers and only existed to feed the public utilities listed above.
+
+- [#2612](https://github.com/portabletext/editor/pull/2612) [`7d499a0`](https://github.com/portabletext/editor/commit/7d499a035758fbe730457908eab3e4089bc71d37) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `splitTextBlock`
+
+  The `splitTextBlock` utility constructed selection points from a block alone, hardcoding two-segment paths (`[{_key: block._key}, 'children', {_key: child._key}]`). Inside containers like callouts or table cells, those points didn't address the right nodes, so the function was unsafe to use anywhere except the document root. There were no internal callers and no clean way to fix the signature without taking a full path, so the utility is removed. Consumers who need to split a block into a before/after pair can compose `sliceBlocks` (or call `sliceTextBlock` internally) at the path they actually have.
+
+- [#2536](https://github.com/portabletext/editor/pull/2536) [`6d7f965`](https://github.com/portabletext/editor/commit/6d7f9655019a4b7e225363a012310feec1c33c34) Thanks [@christianhg](https://github.com/christianhg)! - fix!: widen `BlockPath`, `ChildPath`, and `AnnotationPath` to `Path`
+
+  These three types are now aliases for `Path`, the general recursive path type, so blocks, children, and annotations can live inside editable containers at any depth. The widening cascades into every event whose `at` field accepted one of the narrow aliases (`block.set`, `block.unset`, `child.set`, `child.unset`, `delete.block`, `delete.child`, `annotation.set`, `move.block`, `move.block up`, `move.block down`, `select.block`) and into selector return types that previously declared a narrow tuple or alias (`getNextSpan`, `getPreviousSpan`, `getSelectedTextBlocks`). Consumers that destructured positional segments (e.g. `path[0]._key`) must use `path.at(-1)` for a `BlockPath` (the block key sits at the end) or `path.at(-3)` for an `AnnotationPath`, each with a `KeyedSegment` guard, or reach for traversal utilities.
+
+### Minor Changes
+
+- [#2665](https://github.com/portabletext/editor/pull/2665) [`3a3bb24`](https://github.com/portabletext/editor/commit/3a3bb2467fb459fa506744c56f3a62bca78388c5) Thanks [@christianhg](https://github.com/christianhg)! - feat: `getFragment` selector returns the smallest top-level-valid fragment covering the selection
+
+  A selection inside a single table cell used to put the entire table on the clipboard. A selection inside a callout used to put the callout envelope on the clipboard too. Every register clipboard converter (`application/x-portable-text`, `text/html`, `text/markdown`, `text/plain`) and the public `editor.getFragment()` method walked the value top-down and preserved the full ancestor envelope around the selection.
+
+  A new public selector, `getFragment`, returns the smallest top-level-valid fragment covering the selection as `Array<{node: PortableTextBlock; path: BlockPath}>`. Each entry pairs a block with its full keyed path in the editor's value. The path is what the drag-preview pipeline uses to resolve DOM nodes, and what custom consumers can use for source attribution or analytics.
+  - Selection inside one text block returns just that block, sliced to the selected portion.
+  - Selection inside a container whose child field accepts top-level types (a callout's `content`, a table cell's `content`) returns the container's children directly; the envelope is dropped.
+  - Selection spanning structural children whose types aren't valid at the top level (e.g. across two cells in one row) walks upward through ancestors until the contents fit at the top level, and wraps minimally.
+  - Selection across siblings at the editor root continues to return those siblings, with boundary blocks recursively sliced. This case is unchanged.
+
+  The four register clipboard converters and `editor.getFragment()` now use `getFragment` internally. Custom converters and any external consumer that needs the clipboard-shaped view of the current selection can compose the same selector instead of re-deriving it from `getSelectedValue`.
+
+  `getSelectedValue` is unchanged - it still returns the full envelope. JSDoc on both selectors cross-link the relationship.
+
+- [#2542](https://github.com/portabletext/editor/pull/2542) [`be355f4`](https://github.com/portabletext/editor/commit/be355f49600bb7dd5e01a0b3a88ae6ac21693212) Thanks [@christianhg](https://github.com/christianhg)! - feat: make selectors container-aware
+
+  Selectors that previously used `blockIndexMap` to resolve paths at the root level now compose node-traversal primitives so they resolve at any container depth. Selection points and paths inside editable containers are handled the same way as root-level points: a path inside a callout's text block, a code-block's line, or a table cell now flows through every selector without special casing.
+
+  Selectors covered: `getActiveAnnotations`, `getActiveDecorators`, `getAnchorBlock`, `getAnchorChild`, `getAnchorSpan`, `getAnchorTextBlock`, `getFirstBlock`, `getFocusBlock`, `getFocusBlockObject`, `getFocusChild`, `getFocusInlineObject`, `getFocusListBlock`, `getFocusSpan`, `getFocusTextBlock`, `getLastBlock`, `getMarkState`, `getNextBlock`, `getNextInlineObject`, `getNextInlineObjects`, `getNextSpan`, `getPreviousBlock`, `getPreviousInlineObject`, `getPreviousInlineObjects`, `getPreviousSpan`, `getSelectedChildren`, `getSelectedSpans`, `getSelectionEndBlock`, `getSelectionEndChild`, `getSelectionStartBlock`, `getSelectionStartChild`, `getSelectionText`, `getTextAfter`, `getTextBefore`, `isOverlappingSelection`.
+
+- [#2610](https://github.com/portabletext/editor/pull/2610) [`4c80f1b`](https://github.com/portabletext/editor/commit/4c80f1b9d0c0e92d93971f64e00a8cca61edc0ea) Thanks [@christianhg](https://github.com/christianhg)! - feat: pass `focused`, `selected`, and `path` to `defineContainer` render
+
+  The render callback registered via `defineContainer` now receives `focused`, `selected`, and `path` props alongside the existing `attributes`, `children`, and `node`.
+
+  `focused` is `true` when the container is the innermost container that holds the caret. `selected` is `true` when the container is in the path of any leaf in the selection range. It cascades up the ancestor chain. `path` is the container's keyed path.
+
+- [#2536](https://github.com/portabletext/editor/pull/2536) [`27aff19`](https://github.com/portabletext/editor/commit/27aff19b6d14f49eee24f5d8419e786a972375c4) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `containers` to editor context
+
+  `EditorContext.containers` (`@alpha`) is a `ReadonlyMap<string, RegisteredContainer>` of registered editable containers, keyed by bare `_type` (e.g. `'callout'`, `'table'`). Each value carries `{type, field, of?}` - the resolved child field plus any positional `of` registrations declared on the parent. The render callback is engine-internal and not surfaced on the public view, so consumers asking "is this type a container?", "what is its child field?", or "does this parent declare a positional override at this child type?" see the data they need without reach into render-time concerns. Public exports include `Container`, `RegisteredContainer`, `RegisteredLeaf`, and `Containers`.
+
+- [#2657](https://github.com/portabletext/editor/pull/2657) [`fe9f223`](https://github.com/portabletext/editor/commit/fe9f2232e3ea549dd1e95e0b481246a54d1fc7be) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `defineTextBlock` factory for global text block render
+
+  A new `defineTextBlock({type: 'block', render})` factory registers a wrapper around the engine's default text block rendering. Register it through `NodePlugin` (see `register-node-api`).
+
+  Nest `defineTextBlock` inside a parent container's `of` array for a positional override - text blocks at that position pick up the nested render, while text blocks elsewhere keep the global registration (or engine default).
+
+  `defineTextBlock` opts into the new render pipeline: the consumer owns the outer wrapper element, and the block-level `renderStyle` / `renderListItem` / `renderBlock` props on `PortableTextEditable` do not compose under this registration. Span-level render props - `renderDecorator`, `renderAnnotation`, `renderPlaceholder` - keep working.
+
+- [#2564](https://github.com/portabletext/editor/pull/2564) [`9a36b1e`](https://github.com/portabletext/editor/commit/9a36b1e61a55bb4018d6d2d612cc903a17e109d7) Thanks [@christianhg](https://github.com/christianhg)! - feat: unwrap empty editable containers on Backspace and Delete
+
+  Pressing Backspace or Delete inside an empty editable container now unwraps the container so its empty inner block becomes a sibling at the container's parent level. The cursor follows the unwrapped block, so a second keystroke merges or deletes it like any ordinary empty text block.
+
+  When the container's parent doesn't accept the inner block (a callout sitting alone in a table cell, for example), the unwrap walks up through structural ancestors, dissolving each level that holds only the chain on its way out, until it finds an ancestor whose parent's field accepts the payload. If no level accepts every type in the payload, or if the chain hits a non-lonely ancestor along the way, the keystroke is a no-op.
+
+  The editor doesn't need to know what the container represents: code-blocks, callouts, fact-boxes, and table cells in single-cell rows all dissolve the same way once their content is empty.
+
+- [#2584](https://github.com/portabletext/editor/pull/2584) [`345b52b`](https://github.com/portabletext/editor/commit/345b52b73135499575cc8ac3915ed5434989ee76) Thanks [@christianhg](https://github.com/christianhg)! - feat: editor is a Subscribable<EditorSnapshot>
+
+  The editor now exposes `subscribe(observer)` directly, satisfying the React 18 external-store contract (`subscribe` + `getSnapshot`). `useEditorSelector(editor, selector, compare?)` forwards to `@xstate/react`'s `useSelector`, which itself wraps `useSyncExternalStoreWithSelector`. Consumers that want to bypass `@xstate/react` can pipe the editor into `useSyncExternalStore` directly.
+
+  The runtime `_internal` field is gone. Selectors and hooks consume the editor object directly.
+
+- [#2617](https://github.com/portabletext/editor/pull/2617) [`39b0534`](https://github.com/portabletext/editor/commit/39b05340c668e9a1681354bbfdcb60189422851c) Thanks [@christianhg](https://github.com/christianhg)! - feat: expose `@portabletext/editor/traversal` with `getPathSubSchema`
+
+  Adds a new entry point for traversal helpers consumers can use to introspect the editor's runtime state. Initial export is `getPathSubSchema(snapshot, path)` (`@beta`), which returns the `Schema` view that applies at a given path. Inside a registered editable container, this is the sub-schema derived from the container's `of` declaration; everywhere else it is the root schema. Useful for building UI that reflects what's allowed at the current focus.
+
+- [#2662](https://github.com/portabletext/editor/pull/2662) [`7ef0f16`](https://github.com/portabletext/editor/commit/7ef0f16f3dd73b327e5b3c75dbc3ae3ffdd4ddac) Thanks [@christianhg](https://github.com/christianhg)! - feat: expose snapshot traversal utilities from `@portabletext/editor/traversal`
+
+  Expose a batch of node-traversal helpers as `@beta` for consumers writing plugins, behaviors, and selectors against an `EditorSnapshot`:
+  - Node identity: `getNode`, `hasNode`, `getParent`, `getFirstChild`, `getLastChild`, `getText`
+  - Ancestor and descendant walks: `getAncestor`, `getAncestors`, `getChildren`, `getEnclosingBlock`, `getLeaf`
+  - Sibling walks: `getSibling`
+  - Type predicates and narrowing: `isBlock`, `getBlock`, `isInline`, `isLeaf`, `getTextBlockNode`, `getSpanNode`
+
+  These are the same traversal primitives the editor uses internally. Each takes a snapshot-shaped argument, so `editor.getSnapshot()` can be passed directly.
+
+  The existing `getPathSubSchema` and `getUnionSchema` exports are unchanged.
+
+- [#2617](https://github.com/portabletext/editor/pull/2617) [`c4eb27e`](https://github.com/portabletext/editor/commit/c4eb27e09173b8fa6618107cea5fb7ffd1c2b28f) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `getApplicableSchema` selector
+
+  Returns the set of schema member names applicable at the current selection, grouped by category. Text-only categories (decorators, annotations, lists, styles) return the union across all selected text blocks - matching the underlying operations' per-block-filter semantics. Insertion categories (block objects, inline objects) return the focus block's sub-schema, since insertion happens at one point. Selection on a void block returns empty text-only sets and the focus block's insertion sets. No selection returns empty sets.
+
+  Useful for gating toolbar buttons, slash-command items, command palettes, keyboard-shortcut hints, and other selection-aware UIs. Pair with `getUnionSchema` to render UI whose static surface is the schema's full reachable graph and whose enabled state reflects the current selection.
+
+  The result is a fresh value on every call. `compareApplicableSchema` is exported alongside as a structural comparator suitable for the third argument of `useEditorSelector`.
+
+- [#2617](https://github.com/portabletext/editor/pull/2617) [`3d78d55`](https://github.com/portabletext/editor/commit/3d78d55acd9f1771200a4f771f711b235cd287f8) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `getUnionSchema` to derive the schema reachable across all containers
+
+  Returns a `Schema` containing every named decorator, annotation, list, style, block object and inline object declared anywhere in the editor's schema graph - the root schema merged with the sub-schema of every registered container, deduped by name. Useful for rendering a static toolbar whose buttons stay stable across selection moves while still reflecting everything the schema allows somewhere. Pair with `getPathSubSchema` (or a path-based intersection across a range) to determine which of the union's members are applicable at the current selection.
+
+- [#2462](https://github.com/portabletext/editor/pull/2462) [`8ec6b97`](https://github.com/portabletext/editor/commit/8ec6b973bcb762474aa399c47a2a9f023477331e) Thanks [@christianhg](https://github.com/christianhg)! - feat: use keyed paths internally
+
+  The editor now identifies nodes by their `_key` rather than their position in the tree. Paths emitted in patches, paths exposed through `getSnapshot`, and paths consumers receive in behavior events all use keyed segments (`{_key: 'k0'}`) instead of numeric indices. Paths stay stable across concurrent edits, which is a prerequisite for nested editable containers (callouts, tables, code-blocks) and aligns the editor's internal model with the Sanity patch protocol's keyed addressing.
+
+- [#2665](https://github.com/portabletext/editor/pull/2665) [`87ff2dd`](https://github.com/portabletext/editor/commit/87ff2dd2045b33945e5d8a82bbb9b5ae0a345dfb) Thanks [@christianhg](https://github.com/christianhg)! - feat: paste fits the incoming payload to the destination schema
+
+  Deserialized payloads used to be inserted unchanged. Pasting a `table` into a context that only accepts text blocks would silently no-op for the container block. The `deserialization.success → insert.blocks` handoff now reshapes the payload first: blocks whose `_type` is accepted at the destination are kept directly, container blocks whose `_type` is rejected are descended into for accepted descendants, and blocks that have no accepted descendants are dropped.
+
+  Each clipboard or drop payload is fitted in one place; consumer behaviors don't need to repeat the work.
+
+- [#2637](https://github.com/portabletext/editor/pull/2637) [`4daf9bf`](https://github.com/portabletext/editor/commit/4daf9bfe845b15dc9a65dbde0e69937465e9f399) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote primitive operations as `@alpha` behavior events
+
+  Five primitive events expose the apply-layer surface to plugins that need to express tree mutations the synthetic tier doesn't cover: `set`, `unset`, `insert`, `remove.text` are new, and `insert.text` evolves to accept optional `at` and `offset` (existing callers raising `{type: 'insert.text', text}` keep working). Plugins composing structural moves can now raise `[unset, insert]` directly instead of working around the synthetic shape.
+
+- [#2677](https://github.com/portabletext/editor/pull/2677) [`aaf491d`](https://github.com/portabletext/editor/commit/aaf491d6b4ffd518f320cad81cb3beaa9f92222c) Thanks [@christianhg](https://github.com/christianhg)! - feat: redesign the registration API around `registerNode`
+
+  The five `define*` factories now register through a single
+  `editor.registerNode({node})` method (and a `<NodePlugin nodes={[...]}>`
+  plugin component). `defineLeaf` is replaced by three category-specific
+  factories that match the Portable Text data model: `defineSpan`,
+  `defineBlockObject`, and `defineInlineObject`. `defineContainer` and
+  `defineTextBlock` stay; `defineContainer({childField})` is renamed to
+  `defineContainer({arrayField})`.
+
+  ## Why
+
+  `defineLeaf` lumped three data-model categories under one registration:
+  spans, block-level objects, and inline objects. Authors had to know which
+  they were registering implicitly via the schema. Three factories surface
+  that distinction at the call site and let the engine type-check the
+  consumer's intent. The single `registerNode` method collapses three
+  previously-parallel registration surfaces, and the `{node}` wrapper
+  keeps room for future registration-side properties without breaking the
+  call site.
+
+  ## Positional overrides and composition
+
+  Every category can register globally (at the top level of
+  `NodePlugin.nodes`) or positionally (nested in a parent's `of` array).
+  The structural parent decides where the `of` lives:
+  - A container's children are block content. `defineContainer.of` accepts
+    `Container`, `TextBlock`, or `BlockObject` registrations.
+  - A text block's children are inline content. `defineTextBlock.of`
+    accepts `Span` or `InlineObject` registrations.
+
+  Misplacing a kind (for example nesting `defineSpan` inside a container's
+  `of`) is a TypeScript error.
+
+  All five factories accept an optional `render` function. Omit
+  it to fall through to the globally registered render (or the engine
+  default if none is registered). Provide a function to override the
+  render at this position. The function receives the same render props
+  that come from the engine, plus a `renderDefault` callback that
+  produces the engine default when invoked:
+
+  ```tsx
+  defineContainer({
+    type: 'callout',
+    arrayField: 'children',
+    render: (props) => (
+      <div className="callout-frame">{props.renderDefault(props)}</div>
+    ),
+  })
+  ```
+
+  `renderDefault` takes the same props shape the callback receives, so
+  it can be invoked with modified props for fine-grained control. The
+  return type is `ReactElement` - render functions must return an
+  element. The pattern mirrors `renderDefault` on Sanity Studio's
+  render APIs.
+
+  ## Engine namespace and the new render pipeline
+
+  `registerNode` opts a subtree into the new render pipeline. Inside the
+  new pipeline the engine emits only `data-pt-*` attributes - the
+  legacy `data-slate-*` attributes are stripped. The legacy pipeline
+  keeps emitting both namespaces so existing consumers stay on the same
+  DOM shape. Engine-internal DOM queries target `data-pt-*` so the
+  engine itself is pipeline-agnostic; consumer CSS that targets the
+  released v6 attributes (`.pt-block`, `.pt-inline-object`,
+  `data-block-key`, `data-child-type`, and friends) keeps working
+  unchanged in the legacy pipeline.
+
+  The block-level legacy render hooks (`renderBlock`, `renderListItem`,
+  `renderStyle`, `renderChild`) are suppressed inside new-pipeline
+  subtrees - the registered render owns the position. The span/leaf-level
+  hooks (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and
+  range decorations) keep firing in both pipelines because they wrap
+  runs of styled text rather than emit pipeline-shaped wrappers.
+
+  The engine-default `renderDefault` helpers for void block-objects and
+  inline-objects mirror the legacy DOM contract. Block-objects keep the
+  outer editable (Slate's void caret semantics need the spacer caret
+  anchor) and put `contentEditable={false}` and `draggable={!readOnly}`
+  together on the inner placeholder. Inline-objects auto-receive
+  `contentEditable={false}` on the outer (engine-injected for inline
+  voids) and put `draggable={!readOnly}` alone on the inner; the inner
+  inherits non-editability through DOM `contentEditable` inheritance.
+
+  A worked example: a `callout` container keeps the global text-block
+  render but swaps the inline `mention` render inside it.
+
+  ```tsx
+  const callout = defineContainer({
+    type: 'callout',
+    arrayField: 'content',
+    render: ({attributes, children}) => (
+      <aside {...attributes}>{children}</aside>
+    ),
+    of: [
+      defineTextBlock({
+        type: 'block',
+        // No `render` - keep the global text-block render here.
+        of: [
+          defineInlineObject({
+            type: 'mention',
+            render: ({attributes, children, node, readOnly}) => (
+              <span {...attributes} className="mention-compact">
+                {children}
+                <span draggable={!readOnly}>
+                  @{(node as {username?: string}).username}
+                </span>
+              </span>
+            ),
+          }),
+        ],
+      }),
+    ],
+  })
+  ```
+
+- [#2630](https://github.com/portabletext/editor/pull/2630) [`57ae20f`](https://github.com/portabletext/editor/commit/57ae20fbc67b4a41cb131b8a0cc22cbb657fd859) Thanks [@christianhg](https://github.com/christianhg)! - feat: resolve bare type references with cycle detection
+
+  The schema resolver now follows bare `{type: 'X'}` references in container fields by looking up `X` in the ancestor walk chain first, then in `schema.blockObjects`. This means types declared inline by an ancestor are referenceable from descendants. That's necessary for self-referential schemas where the recursive type isn't at the schema root (e.g. a `list` declared inline inside a `callout`, with `list-item.content` referencing `list` again).
+
+  Walks recursive schemas with ancestor-name cycle detection: walks one level past a self-reference and stops, so registrations like `defineContainer({type: 'list-item', childField: 'content', of: [{type: 'list', ...}]})` resolve without infinite candidate emission.
+
+  Inline declarations use `{type: 'object', name: 'X', fields: [...]}` (Sanity-aligned).
+
+- [#2479](https://github.com/portabletext/editor/pull/2479) [`3a75130`](https://github.com/portabletext/editor/commit/3a751303abb39a12f4f83b9d8fdbd738405a2ee3) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid internal editor selection conversion
+
+  The editor used to keep two selection representations in sync: an internal Slate-style selection on `editor`, and a portable text selection on the snapshot. This release drops the internal conversion. Selectors and behaviors read the snapshot's selection directly. `editor.selection` is now the same shape consumers see through `getSnapshot`.
+
+### Patch Changes
+
+- [#2578](https://github.com/portabletext/editor/pull/2578) [`ba16137`](https://github.com/portabletext/editor/commit/ba1613704642dbdcc0b596d9195e45c6e9814a11) Thanks [@christianhg](https://github.com/christianhg)! - fix: render the zero-width character in void spacers on Android so DOM selection can anchor to them
+
+  Tapping a block-object or inline-object on Android could land the caret somewhere other than where the user tapped. The void spacer next to each object node was rendered as an empty text node, leaving nothing for DOM selection to anchor to, so the browser retargeted the selection past the spacer. The spacer now renders the same zero-width character used elsewhere in the editor, giving the browser a stable anchor and matching iOS and desktop behavior.
+
+- [#2600](https://github.com/portabletext/editor/pull/2600) [`8a91cd2`](https://github.com/portabletext/editor/commit/8a91cd261c27ee2ee5d1be66de55cb32e7cacb6b) Thanks [@christianhg](https://github.com/christianhg)! - fix: detect "at the beginning of block" at any depth
+
+  `isAtTheBeginningOfBlock` read the focus child key from `path.at(2)` (root-only). When the selection focus pointed inside a container's text block, the lookup returned undefined and the function reported the caret was not at the start. Lists inside containers now toggle correctly when the caret is at the start of a block.
+
+- [#2522](https://github.com/portabletext/editor/pull/2522) [`9ee7aed`](https://github.com/portabletext/editor/commit/9ee7aed618a22e34bf28638e9a50ba523b4db8ba) Thanks [@christianhg](https://github.com/christianhg)! - fix: let arrow keys and character delete navigate inside editable containers
+
+  Arrow keys (left, right, up, down) and character delete (Backspace, Delete) used to skip over the inside of an editable container's content, jumping past it to the next root-level block. They now navigate through container content the same way they navigate through root-level content: arrow keys move character by character through every line, Backspace and Delete remove one character at a time.
+
+- [#2520](https://github.com/portabletext/editor/pull/2520) [`63c123d`](https://github.com/portabletext/editor/commit/63c123d533fe97e1f6ad6ceceef44fea60ca7991) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit `diffMatchPatch` patches when typing inside a container
+
+  Typing inside an editable container emitted no `diffMatchPatch`, so the change was lost when consumers persisted patches instead of full document state. The typing pipeline now emits the same `diffMatchPatch` for in-container text that it emits for root-level text.
+
+- [#2599](https://github.com/portabletext/editor/pull/2599) [`2053ff7`](https://github.com/portabletext/editor/commit/2053ff75a056f4ff69ae501acc6191c09337c9bc) Thanks [@christianhg](https://github.com/christianhg)! - fix: compare selection points at any depth
+
+  `isPointBeforeSelection` and `isPointAfterSelection` returned the wrong answer for points inside a container's text block, because the underlying point comparison only walked the root segment of each path. Pickers and other consumers that ask whether a point is before or after the current selection (emoji picker, typeahead picker) now resolve correctly inside containers.
+
+- [#2494](https://github.com/portabletext/editor/pull/2494) [`7d1ab61`](https://github.com/portabletext/editor/commit/7d1ab617fbdbd9b6c86d8976af0cf9163f4f6d5f) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `diffMatchPatch` container-aware
+
+  Incoming `diffMatchPatch` patches now resolve the target span at any depth using the full path, instead of assuming a root-level block with a `children` field at depth 2.
+
+- [#2539](https://github.com/portabletext/editor/pull/2539) [`cfdc5c3`](https://github.com/portabletext/editor/commit/cfdc5c397a9091b05678527ac9520bcd262267a0) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `getSelectedValue` and `getSelectedTextBlocks` container-aware
+
+  These selectors now return the correct portable text slice when the selection sits inside, spans across, or fully covers an editable container. Copy/cut and any consumer that introspects the selected portion receives the full structure (container shells preserved, partial content trimmed) regardless of depth.
+
+- [#2615](https://github.com/portabletext/editor/pull/2615) [`7ac3cdc`](https://github.com/portabletext/editor/commit/7ac3cdc1bef5c86c09bbc3320b23e085f71ec0b0) Thanks [@christianhg](https://github.com/christianhg)! - feat: escape an editable container when Enter is pressed on a trailing empty line with an empty previous sibling
+
+  When the caret is on the last block of an editable container, that
+  block is empty, and the previous block is also empty, pressing Enter
+  removes the empty trailing block, removes the empty previous block,
+  and inserts a fresh text block AFTER the container at the container's
+  parent level. Mirrors the familiar "double-Enter to escape" affordance
+  from rich-text editors elsewhere.
+
+- [#2481](https://github.com/portabletext/editor/pull/2481) [`3201611`](https://github.com/portabletext/editor/commit/3201611d1af144cdf51f7df72f6783dcf7e034a4) Thanks [@christianhg](https://github.com/christianhg)! - feat: support container normalization
+
+  Editable container content is now normalized the same way root-level content is: missing `_type` is restored, empty fields get a placeholder block, adjacent same-mark spans merge. Containers can no longer end up in invalid states from incoming patches or partial setup.
+
+- [#2543](https://github.com/portabletext/editor/pull/2543) [`54f47c4`](https://github.com/portabletext/editor/commit/54f47c4661848595119414176787703d097fb23f) Thanks [@christianhg](https://github.com/christianhg)! - fix: unify range-delete across container boundaries
+
+  Deleting a selection whose endpoints lie in different parents (root and inside a container, or two separate containers) now goes through the same range-delete primitive as same-parent deletes. The two paths used to disagree on which content survived; they now produce the same result modulo merge-on-delete (which only applies when both endpoints share a parent).
+
+- [#2617](https://github.com/portabletext/editor/pull/2617) [`313428b`](https://github.com/portabletext/editor/commit/313428b35be15cb63681d29ec005593f69508c59) Thanks [@christianhg](https://github.com/christianhg)! - fix: skip out-of-scope blocks when computing active marks across containers
+
+  When a selection spans both root text blocks and an editable container whose sub-schema does not declare a given decorator, style, or list, toggling that mark used to get stuck after the first toggle: the in-scope blocks would receive the mark, but the toolbar's "is active" check then voted with out-of-scope blocks too, so a second toggle could not clear the mark.
+
+  The active-mark selectors now skip blocks and spans where the mark is out of scope, matching the rule already established for cross-container mark state: a mark is active when every in-scope position carries it. `block.set` likewise gates the `level` prop on the destination block's sub-schema, so cross-container range operations no longer attach list metadata to blocks that cannot carry list items.
+
+- [#2566](https://github.com/portabletext/editor/pull/2566) [`7a1fc73`](https://github.com/portabletext/editor/commit/7a1fc738ca907ad479fadc97dca4fcffee766793) Thanks [@christianhg](https://github.com/christianhg)! - fix: cross-parent range delete also removes content between endpoints
+
+  A cross-parent range delete (one endpoint inside an editable container, the other outside, or both endpoints in different containers) used to only trim partial text at each endpoint. Anything between the two endpoints survived: trailing blocks in the start container, leading blocks in the end container, and fully-covered siblings at the lowest common ancestor of the two branches.
+
+  The cross-parent path now mirrors the same-parent cross-block path: it walks up from each endpoint's block to the branch root, dropping trailing or leading siblings at every level, drops blocks between the two branches at the LCA, then trims each endpoint's partial content. The two block shells stay in place, since they aren't siblings under a common parent and there's no cross-parent merge to perform.
+
+  Containers that the selection enters or exits keep their shells by construction. For containers fully covered at the LCA, the editor checks whether the LCA's field accepts text blocks. When it does (root, callout content, code-block lines), the covered container is dropped as a unit. When it doesn't (table rows hold only cells; table holds only rows), the container's shell is preserved and its content is cleared in place. The clear is recursive: a fully-covered row keeps its cells as shells with each cell's content replaced by a single empty text block.
+
+- [#2484](https://github.com/portabletext/editor/pull/2484) [`18876ca`](https://github.com/portabletext/editor/commit/18876caecca1f3e7c12d289e53d5665236888caf) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo
+
+- [#2658](https://github.com/portabletext/editor/pull/2658) [`d128d51`](https://github.com/portabletext/editor/commit/d128d51e378e62c204ca8d2ed7b24ade6ccdf02a) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.31.1
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`56edded`](https://github.com/portabletext/editor/commit/56edded088ab9174e1002fc9701929ac6e2900a0) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve dirty path after `_key` unset
+
+  When `_key` is unset on a node, the dirty path still references the old keyed segment which no longer resolves. The dirty path system now scans siblings for the keyless node and substitutes a numeric index.
+
+- [#2561](https://github.com/portabletext/editor/pull/2561) [`84e000f`](https://github.com/portabletext/editor/commit/84e000f7cb272b0b2a35ed85a753e148acff5e7c) Thanks [@christianhg](https://github.com/christianhg)! - fix: refresh `internalDrag.origin` on every `dragstart`
+
+  When `dragend` was missed after a successful drop (which happens consistently in some browser/layout combinations), the editor machine stayed in `dragging internally` and ignored subsequent `dragstart` events. Any later drop then read the previous gesture's drag origin while `dataTransfer` carried the new gesture's content, deleting the wrong block and duplicating the new one. `dragstart` now re-assigns `internalDrag.origin` even when the machine has not returned to `idle`.
+
+- [#2665](https://github.com/portabletext/editor/pull/2665) [`0715971`](https://github.com/portabletext/editor/commit/07159710b3c7af7b59040a470f5b55ec0c8a8f34) Thanks [@christianhg](https://github.com/christianhg)! - fix: drag preview matches the dragged fragment
+
+  Dragging an image inside a table cell used to lift the ghost element to the table because the underlying DOM lookup deduplicated to the highest ancestor in the selection range. The dragstart handler now derives the preview from the fragment that will land on the clipboard: it clones the DOM nodes that correspond to each top-level block of the fragment, so the ghost reflects what the consumer will receive on drop.
+
+- [#2638](https://github.com/portabletext/editor/pull/2638) [`1b64415`](https://github.com/portabletext/editor/commit/1b64415cd2a13e3d96aed9f86b8101b2f1907d15) Thanks [@christianhg](https://github.com/christianhg)! - fix: match drop-position by full path so the indicator is unambiguous when a deep block shares a `_key` with a root-level sibling
+
+- [#2619](https://github.com/portabletext/editor/pull/2619) [`cced43b`](https://github.com/portabletext/editor/commit/cced43bc73c7de85dc7b3a289f5b07d6cf3222be) Thanks [@christianhg](https://github.com/christianhg)! - fix: render containers with a clean data-pt-\* DOM and route the engine through it
+
+- [#2596](https://github.com/portabletext/editor/pull/2596) [`2c6d3a7`](https://github.com/portabletext/editor/commit/2c6d3a7b09bdb04012f6165246a00f71acec1d4a) Thanks [@christianhg](https://github.com/christianhg)! - fix: identify the dragged or clicked block at any depth in `getEventPosition`
+
+  The fallback that picks up the event's block when the DOM selection is missing or mismatched (introduced in #915 to align drag-handle events with the dragged block) read `eventPath.slice(0, 1)` for the block lookup, so an event fired on a text block inside a container resolved to the container's root segment instead of the inner block. Resolves the event's enclosing block via `getEnclosingBlock` so the fallback identifies the right block at any depth.
+
+- [#2476](https://github.com/portabletext/editor/pull/2476) [`80a648a`](https://github.com/portabletext/editor/commit/80a648a2326a33bc03b0ada49403d0f6419ecd03) Thanks [@christianhg](https://github.com/christianhg)! - fix: make outgoing `set` patches depth-agnostic
+
+  Outgoing `set` patches assumed the target was a root-level block. A `set` triggered inside an editable container (callout body, code-block line, table cell) emitted a patch with a path that didn't reach the actual node. The patch generator now emits the full path, so consumers receive correctly-targeted patches regardless of how deep the change occurred.
+
+- [#2499](https://github.com/portabletext/editor/pull/2499) [`1206b17`](https://github.com/portabletext/editor/commit/1206b17a66a4611c55ba8b6750db8bdd4efd5c34) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve cursor offset inside editable containers
+
+  Typing inside an editable container could move the cursor to the wrong offset after the keystroke applied. The selection-after-typing logic now uses the full path including container segments, so the cursor lands in the same position relative to the inserted text regardless of depth.
+
+- [#2618](https://github.com/portabletext/editor/pull/2618) [`fc0d815`](https://github.com/portabletext/editor/commit/fc0d8151e909606a499b6c29dd1e46aa48c483cb) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove every container the range fully covers when deleting across containers
+
+  Selecting an entire mix of editable and structural containers (e.g. a code-block, a callout and a table) and pressing Delete now removes all of them. Previously the operation removed the start and end shells but left any container fully covered between them in place.
+
+- [#2593](https://github.com/portabletext/editor/pull/2593) [`19fdca2`](https://github.com/portabletext/editor/commit/19fdca2e16c359b6f199196c2fe51abdbd6a24b2) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove every container the range fully covers when deleting across containers
+
+  A delete range that fully covers more than one editable container (Cmd+A across multiple code-blocks, or selecting all of two callouts) used to leave one or more containers behind. The cross-container range delete now walks up from each endpoint independently and removes every container the range fully covers, regardless of how many of them sit between the endpoints.
+
+- [#2586](https://github.com/portabletext/editor/pull/2586) [`47d6574`](https://github.com/portabletext/editor/commit/47d6574fa215975df6637bf14bead333cf769fa8) Thanks [@christianhg](https://github.com/christianhg)! - fix: use blockIndexMap for O(1) root-level path comparisons in getNodes
+
+  Range traversal via `getNodes` was walking sibling arrays to compare
+  root-level path positions. It now consults the editor's
+  `blockIndexMap` for the root segment, turning that comparison from
+  O(n) into O(1). Most visible on large documents where ranges or
+  selections span many root-level blocks.
+
+- [#2647](https://github.com/portabletext/editor/pull/2647) [`703e4a9`](https://github.com/portabletext/editor/commit/703e4a991f540b15ccdfbb0cab3d2d03d9298a0f) Thanks [@christianhg](https://github.com/christianhg)! - fix(editor): inline `globalScope` into `createGloballyScopedContext` and delete the dead `global-scope` helper
+
+- [#2514](https://github.com/portabletext/editor/pull/2514) [`3a7f607`](https://github.com/portabletext/editor/commit/3a7f60728f8c97d9b31290c86114ed4a8d4b1f48) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `insert.block` depth-agnostic
+
+  `editor.send({type: 'insert.block', ...})` and the Enter key inside a container now insert the new block at the right depth: a new line in a code-block lands inside the code-block's lines, a new paragraph in a callout lands inside the callout's content, splitting the existing block in two when the caret sits in the middle.
+
+- [#2588](https://github.com/portabletext/editor/pull/2588) [`c4bcc8a`](https://github.com/portabletext/editor/commit/c4bcc8a72b4276b74447928936ea83e8d93424aa) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep `insert.block` inside an editable container when the prior delete left it without text
+
+  A behavior chain that deletes a container's content and then inserts a fresh block (slash-command paths, paste-replace, format-toggle on a fresh selection) used to drop the new block at the document root instead of inside the container, because the container's editable field had become empty between the two events. `insert.block` now detects "endBlock is a registered editable container with an empty editable field" and inserts the block as the container's first child.
+
+- [#2648](https://github.com/portabletext/editor/pull/2648) [`1e93256`](https://github.com/portabletext/editor/commit/1e93256ca41f2d72cecb992ed2d871b8845c7b2c) Thanks [@christianhg](https://github.com/christianhg)! - fix: align `insert` operation with the patches spec for numeric-index paths
+
+  When an `insert` patch's path ended in a numeric index, the apply layer treated the index as the absolute destination and ignored `position`. So `{type: 'insert', path: [2], position: 'after', items: [X]}` landed at index 2 instead of index 3, diverging from `@portabletext/patches` and the Sanity content-lake spec.
+
+  This is reachable from the public `patches` event - a remote insert with `position: 'after'` on a numeric-index path now lands at the correct index.
+
+- [#2576](https://github.com/portabletext/editor/pull/2576) [`ff3bc6f`](https://github.com/portabletext/editor/commit/ff3bc6ffef691922eb5656b2f672832789868b7c) Thanks [@christianhg](https://github.com/christianhg)! - fix: treat touching selections as overlapping
+
+  Two selections that share a single point at one of their endpoints (collapsed-at-edge-of-expanded, expanded-touching-at-endpoint) are now considered overlapping for the purposes of `isOverlappingSelection`. The function is now a pure interval-overlap check. The drag-and-drop self-drop suppression that depended on the previous "touching is not overlapping" carve-out moved into the dnd behavior itself as a local helper, so the public selector's contract is consistent with mathematical overlap.
+
+- [#2586](https://github.com/portabletext/editor/pull/2586) [`47d6574`](https://github.com/portabletext/editor/commit/47d6574fa215975df6637bf14bead333cf769fa8) Thanks [@christianhg](https://github.com/christianhg)! - fix: introduce isVoidNode for container-aware void checks
+
+  Adds an `isVoidNode` function that checks whether a node is a void
+  (non-editable) object node. This replaces `isObjectNode` at call sites
+  that treat object nodes as atomic/opaque, which is incorrect for
+  editable containers. `isVoidNode` composes `isObjectNode` with
+  `isEditableContainer` to distinguish void objects from containers with
+  editable content. Behaviors and operations now correctly differentiate
+  "this is a leaf, leave it alone" from "this is a container, traverse
+  into it".
+
+- [#2587](https://github.com/portabletext/editor/pull/2587) [`d97187d`](https://github.com/portabletext/editor/commit/d97187d4a99524298c1aefacf1330e5b6a2311ed) Thanks [@christianhg](https://github.com/christianhg)! - fix: do not unset editable containers when a delete range covers all of their text
+
+  Selecting all the text inside an editable container (such as a fact-box or
+  callout) and pressing Delete previously removed the container itself, since
+  the range fully covered it. The container is now preserved with an empty
+  placeholder block inside, matching what the user expects when emptying its
+  contents. Structural containers like tables continue to be removed when the
+  range covers them end-to-end.
+
+- [#2590](https://github.com/portabletext/editor/pull/2590) [`395d017`](https://github.com/portabletext/editor/commit/395d0176f8c82453824699e67770693cf744b6bd) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve a text block's shell when delete covers all of its text and the block is registered with a custom render
+
+  When a consumer registers a custom render for a text block inside a container (e.g. `defineTextBlock({type: 'block', render})` nested in a callout's `of` array), selecting all of its text and pressing Delete used to remove the text block entirely. The shell is now preserved with an empty placeholder span inside, matching the behavior for object-level editable containers and for plain text blocks.
+
+- [#2586](https://github.com/portabletext/editor/pull/2586) [`47d6574`](https://github.com/portabletext/editor/commit/47d6574fa215975df6637bf14bead333cf769fa8) Thanks [@christianhg](https://github.com/christianhg)! - fix: guard debug calls to avoid eager serialization
+
+  The editor's debug logging was always serializing event payloads via
+  `JSON.stringify` regardless of whether debug was enabled. For an insert
+  of 1000 blocks that meant ~3000 redundant serializations per render
+  cycle in production. Debug calls now serialize lazily so the cost is
+  only paid when the relevant debug namespace is on.
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`f06e37d`](https://github.com/portabletext/editor/commit/f06e37d605aab6e4a5b2f81195528ed21273b487) Thanks [@christianhg](https://github.com/christianhg)! - fix: normalize missing `_type` on all nodes
+
+  Previously only root-level blocks had `_type` restored. Now any node missing `_type` gets normalized: children of text blocks default to the span type, everything else defaults to the text block type.
+
+- [#2621](https://github.com/portabletext/editor/pull/2621) [`add7f51`](https://github.com/portabletext/editor/commit/add7f5125489fe666aaabe6f79aad90e0f1d598d) Thanks [@christianhg](https://github.com/christianhg)! - fix: strip undefined fields when parsing block objects and inline objects
+
+- [#2653](https://github.com/portabletext/editor/pull/2653) [`57cd552`](https://github.com/portabletext/editor/commit/57cd552813b3c4a14b47406fc4d8d341eca3ef18) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): O(D^2) -> O(D) for ancestor/path/lookup hot paths on deep nested data
+
+  Several traversal primitives had quadratic-in-depth cost that compounded for deeply-nested data. Tab-indenting a list-item in a recursive list container to depth 20 went from over 5 seconds per indent to about 100ms.
+
+  `getAncestors` now descends from the root once collecting each ancestor as it goes, instead of calling `getNode` per ancestor. `comparePathsInTree` (the document-order comparator used by range queries and dirty-path tracking) now descends both paths in a single pass instead of re-walking from the root at each level. `getSelectedTextBlocks`, `getSelectedBlocks` and `getSelectedChildren` short-circuit when the selection endpoints share the same enclosing block / root block / inline child, skipping the range walk when the selection doesn't actually cross the boundary.
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`b6816f3`](https://github.com/portabletext/editor/commit/b6816f3a595f9ae03c47196e566861c11c5e71ac) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace `set_node` with primitive `set` and `unset` operations
+
+  Replace the Slate `set_node` operation with two primitive operations: `set` and `unset`. Each targets a single property at a path like `[...nodePath, propertyName]` and carries its own inverse for undo. Because each operation maps 1:1 to a Sanity patch, the translation layer collapses.
+
+- [#2597](https://github.com/portabletext/editor/pull/2597) [`a5833da`](https://github.com/portabletext/editor/commit/a5833dac088b9bea6f1de67114c4424bc2634c71) Thanks [@christianhg](https://github.com/christianhg)! - fix: render collapsed range decorations inside editable containers
+
+  The collapsed-range branch in `range-decorations-machine.ts` matched a decoration's anchor block to the iterating node by reading `path.at(0)` (root-level segment) and `path.at(2)` (root-level child). When the decoration's anchor pointed inside a callout or other editable container, the comparison failed and the decoration never rendered. Resolves the enclosing block via `getEnclosingBlock` and reads the child segment from the path tail so collapsed range decorations work at any depth.
+
+- [#2586](https://github.com/portabletext/editor/pull/2586) [`47d6574`](https://github.com/portabletext/editor/commit/47d6574fa215975df6637bf14bead333cf769fa8) Thanks [@christianhg](https://github.com/christianhg)! - fix: read schema from editor instead of actor selector
+
+  The render components were each subscribing to the editor's xstate
+  machine to read the schema, even though the schema is effectively
+  static for the lifetime of an editor. For an insert of 1000 blocks
+  that meant ~3000 unnecessary subscriptions and corresponding
+  notifications. The schema is now threaded as a prop from the top of
+  the render tree so the inner components don't subscribe at all.
+
+- [#2675](https://github.com/portabletext/editor/pull/2675) [`97f9710`](https://github.com/portabletext/editor/commit/97f97102c0249e2ff4c106fedd2a82183768f4f6) Thanks [@christianhg](https://github.com/christianhg)! - refactor: tighten the `data-pt-*` DOM attribute namespace for v7
+
+  The `data-pt-*` attributes the editor renders have been audited and renamed in preparation for v7's freeze. The namespace is owned by the editor for its own DOM bridge and consumer-facing structural targets; consumer-shaped data goes through render callbacks, not the engine namespace.
+  - `data-pt-block-type` → `data-pt-block` (values `"text"` | `"object"` | `"container"`)
+  - `data-pt-child-type` → `data-pt-inline` (values `"span"` | `"object"`)
+  - `data-pt-mark` → `data-pt-marks` (matches the `marks` field name on a span)
+  - `data-pt-string` → `data-pt-text` (matches the Portable Text spec's "text" noun)
+  - `data-pt-zero-width="z"` / `data-pt-zero-width="n"` → `data-pt-zero-width` boolean + `data-pt-line-break` boolean (cryptic single-character values replaced by descriptive boolean attributes)
+
+  The naming rule going forward: `data-pt-X` is set when the element IS an X. Value is the kind discriminator when one exists; absent otherwise. `data-pt-path` remains the documented free-form data-carrier exception. Values use human-readable English words, never cryptic abbreviations.
+
+  Consumer CSS or DOM queries targeting the old names need to update to the new names.
+
+- [#2493](https://github.com/portabletext/editor/pull/2493) [`e365150`](https://github.com/portabletext/editor/commit/e36515014c70337c35ec167a03bed78710632304) Thanks [@christianhg](https://github.com/christianhg)! - fix: rename `insert_node` to `insert` and merge `remove_node` into `unset`
+
+  The internal `insert_node` operation is now `insert`. The `remove_node` operation is merged into `unset`, where the path points to the node to remove (last segment is a keyed segment). Both `insert` and node-removal `unset` carry inverse data computed in the apply layer for undo support.
+
+- [#2586](https://github.com/portabletext/editor/pull/2586) [`47d6574`](https://github.com/portabletext/editor/commit/47d6574fa215975df6637bf14bead333cf769fa8) Thanks [@christianhg](https://github.com/christianhg)! - fix: use keyed paths in the rendering pipeline
+
+  The rendering pipeline used numeric paths (`[0, 1, 2]`) which change
+  when blocks are inserted or removed earlier in the document. That
+  caused React's element memo to invalidate on every block render even
+  when the block itself was unchanged. Keyed paths
+  (`[{_key: 'k0'}, ...]`) are stable across sibling shifts so memoized
+  elements are reused. Append and prepend of large numbers of blocks are
+  materially faster.
+
+- [#2617](https://github.com/portabletext/editor/pull/2617) [`18c4dcb`](https://github.com/portabletext/editor/commit/18c4dcbed4427aed1f9af4c1545d63e5b6ec6eac) Thanks [@christianhg](https://github.com/christianhg)! - fix: scope decorator, annotation, list, and style lookups to container sub-schema in core behaviors
+
+  Behaviors that gate on what is "available" at the current focus now read from the applicable block sub-schema instead of the root schema. Mark-continuation on `insert.text`, focused-decorator partition on `insert.break`, the annotation-stripping guard on `delete.text`, and `list item.add` (which now applies per-block when the selection crosses sub-schemas instead of bailing globally) all consult the path's sub-schema. Decorator keyboard shortcuts (Cmd+B / Cmd+I / Cmd+U / Cmd+E) intercept whenever the decorator is declared anywhere in the editor's schema graph, and the underlying `decorator.add` operation filters spans against their own block's sub-schema - so a selection that crosses blocks where some declare the decorator and others don't applies the mark to the in-scope subset and skips the rest.
+
+- [#2539](https://github.com/portabletext/editor/pull/2539) [`3f5f45e`](https://github.com/portabletext/editor/commit/3f5f45e3cc822e87a40edcb56402cb91a9dbe4d9) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `getSelectedChildren` and `getSelectedSpans` container-aware
+
+  These selectors now traverse selection ranges that enter or exit editable containers, returning every child or span the selection covers regardless of depth.
+
+- [#2513](https://github.com/portabletext/editor/pull/2513) [`28c2eef`](https://github.com/portabletext/editor/commit/28c2eef89c94af6912194f684899b25717489e7a) Thanks [@christianhg](https://github.com/christianhg)! - fix: make selection state depth-agnostic
+
+  The internal selection state machine now stores selection points as full paths instead of shallow block/child indices. Selection events fired by behaviors and operations carry the right path regardless of how deep the selection sits, so consumer-side selection observers see consistent values.
+
+- [`b7554e0`](https://github.com/portabletext/editor/commit/b7554e00225a4007d81aa9ff070b8f793339de5b) Thanks [@christianhg](https://github.com/christianhg)! - fix: subscribe per-component to selection slices, not the whole `SelectionState`
+
+  Every visible container, text block, block object, inline object and span used to read the full `SelectionState` from a single React context. When the selection moved (every keystroke), the context value reference changed and every consumer re-rendered, even when its per-component `focused`/`selected` status hadn't flipped. O(N) wrapper re-renders per keystroke where N is the number of visible blocks - the consumer's `render` callback fired for every block on every character typed.
+
+  The provider now keeps a single computed `SelectionState` on an external store and exposes four per-slice hooks (`useIsFocusedContainer`, `useIsSelectedContainer`, `useIsFocusedLeaf`, `useIsSelectedLeaf`) that each subscribe to one boolean. A character typed into one block re-renders that block; siblings stay put. The provider keeps the only `editorActor.subscribe` for selection-state purposes. Consumer wrappers subscribe to a local `Set<() => void>`, not the actor, for their selection slice. Other actor reads (e.g. `readOnly`, registries) are unchanged.
+
+- [#2586](https://github.com/portabletext/editor/pull/2586) [`47d6574`](https://github.com/portabletext/editor/commit/47d6574fa215975df6637bf14bead333cf769fa8) Thanks [@christianhg](https://github.com/christianhg)! - fix: skip rebuilding index maps for nested operations
+
+  The editor maintains a few internal index maps to speed up repeated
+  queries against the value (notably an O(1) root-key lookup). They were
+  being rebuilt eagerly for every operation, including operations
+  targeting nodes deep inside containers where the root-level structure
+  hadn't changed. Operations against deep paths now skip the rebuild,
+  which removes most of the per-operation cost on container-heavy
+  content.
+
+- [#2585](https://github.com/portabletext/editor/pull/2585) [`1e7dbd3`](https://github.com/portabletext/editor/commit/1e7dbd3646e9d926b469121c2561e470ab7b31d4) Thanks [@christianhg](https://github.com/christianhg)! - fix: stabilize `getSnapshot` field references between calls
+
+  `editor.getSnapshot()` returned a fresh shallow copy of the snapshot's selection and converters on every call, even when nothing had changed. Consumers using `useEditorSelector(editor, s => s.context.selection)` (or piping the editor through `useSyncExternalStoreWithSelector` directly) hit React's "infinite render loop" guard because every render saw a new reference. The snapshot now returns the live underlying references when the data hasn't changed, so equality checks short-circuit correctly.
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`1b305c2`](https://github.com/portabletext/editor/commit/1b305c26961eaf40ae8dbe8219188668bbd9d8ea) Thanks [@christianhg](https://github.com/christianhg)! - fix: strip reserved property guards from incoming patches
+
+  `_key`, `_type`, `children`, and `text` were previously blocked from being set or unset via incoming patches. These guards are removed. The patch goes through and normalization restores valid state if needed.
+
+- [#2661](https://github.com/portabletext/editor/pull/2661) [`bebcf8b`](https://github.com/portabletext/editor/commit/bebcf8b599e0f8ff73c95b0268c32d768504045f) Thanks [@christianhg](https://github.com/christianhg)! - fix: strip `data-slate-node` and emit `data-pt-block-type="text"` on text blocks rendered via `defineTextBlock` inside a container
+
+  A text block registered via `defineTextBlock` and nested inside a container's `of` array was passing its `attributes` straight through to the consumer's `render` callback. Because `attributes` carries `data-slate-node="element"` from the underlying Slate layer, the consumer's outer wrapper element re-emitted that legacy attribute alongside the PT namespace.
+
+  The container DOM contract is `data-pt-*` only - no `data-slate-*` leakage. The fix strips `data-slate-node` and injects `data-pt-block-type="text"` into the `attributes` handed to the text block's render callback, matching the behavior of the engine-default text-block branch inside containers.
+
+- [#2525](https://github.com/portabletext/editor/pull/2525) [`fd73b6e`](https://github.com/portabletext/editor/commit/fd73b6e654fa101273caec75967ddf99cef1f089) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit well-formed patches when undoing a merge
+
+  Undoing a block merge could emit a patch with a path missing its container field segment. The patch then crashed downstream consumers that walked the path against the document tree (Studio's mutator threw `getAttribute only applies to plain objects`). The inverse-operation builder now uses canonical paths that include every field segment, so undo patches round-trip cleanly through any patch applier.
+
+- [#2574](https://github.com/portabletext/editor/pull/2574) [`5b16936`](https://github.com/portabletext/editor/commit/5b16936601b397bd35c645dca1beacf36d4720f6) Thanks [@christianhg](https://github.com/christianhg)! - fix: delete container when selection hangs around it
+
+  A selection that "hangs" past the end of a container (the focus point sits just past the container's last block) used to leave the container in place when the selection was deleted, even though the container had no remaining content. The unhang logic now treats editable containers the same way it treats void blocks: a hanging range over a container removes the container as a unit.
+
+- [#2558](https://github.com/portabletext/editor/pull/2558) [`d6e55e3`](https://github.com/portabletext/editor/commit/d6e55e3e71742e20202c5ae68eadb70437857991) Thanks [@christianhg](https://github.com/christianhg)! - fix: unify delete primitives into `deleteRange` and `deleteCollapsed`
+
+  Internal refactor that collapses three near-overlapping delete primitives (`deleteText`, `deleteRange`, `deleteExpandedRange`) into two entry points distinguished by input shape: `deleteRange` for explicit ranges and `deleteCollapsed` for collapsed cursors. The `deleteText`/`insertText` import cycle dissolves, `operation.delete` collapses from a 380-line bespoke body into pure dispatch, and four files are removed. Drops the gzipped bundle by ~2 KB.
+
+- [#2571](https://github.com/portabletext/editor/pull/2571) [`54138bd`](https://github.com/portabletext/editor/commit/54138bd4295e6a8700cfa5becbb149aa97509452) Thanks [@christianhg](https://github.com/christianhg)! - fix: unset structural containers fully covered by a delete range
+
+  When a delete range fully covers a structural container (a callout, a fact-box, a table), the container is now removed as a unit instead of having its content trimmed in place. The selection collapses to a single point at the start of the delete range, matching the behavior consumers expect from text-block ranges.
+
+- [#2611](https://github.com/portabletext/editor/pull/2611) [`cfd6d48`](https://github.com/portabletext/editor/commit/cfd6d48e9c787844583395966ad27b8c062db1d3) Thanks [@christianhg](https://github.com/christianhg)! - fix: validate inserts against the schema at the path
+
+  The editor enforces the schema as a contract for new data crossing into
+  documents. `insert.block` and `insert.child` now validate against the
+  schema that applies at the target path. Operations introducing types not
+  declared in that schema have no effect.
+
+  `child.set` with an unknown type also no longer logs an error; it noops.
+
+  Previously, validation was strict only inside containers and permissive
+  at the root — unknown decorators, annotations, and inline objects at the
+  root were silently accepted. That asymmetry was a mistake. The schema is
+  the contract for what's allowed where, applied uniformly to every write
+  boundary regardless of depth.
+
+  Existing document data is never modified by this enforcement. A document
+  with content authored under an older or different schema continues to
+  load and render unchanged. Schema validation is for new data crossing
+  into the editor, not for cleaning up data already there.
+
+- Updated dependencies [[`95609ac`](https://github.com/portabletext/editor/commit/95609ac8c40c9290ccf98983441da5a4c41c91ba), [`3209fbb`](https://github.com/portabletext/editor/commit/3209fbb65b169cc69a0b5496c4735fa52f414cdc), [`334a99d`](https://github.com/portabletext/editor/commit/334a99d0d9e97185f7eef88b3ea7e2ed0eaed23f), [`11822d0`](https://github.com/portabletext/editor/commit/11822d0339908d7f68b1469de181fcb5a1caad39), [`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7), [`c6103e0`](https://github.com/portabletext/editor/commit/c6103e005a527c8e2717d9d8ad11da49cee9e942), [`fea850c`](https://github.com/portabletext/editor/commit/fea850c5feab41097dc65f92b56e48b765257559)]:
+  - @portabletext/markdown@1.3.0
+  - @portabletext/schema@2.2.0
+  - @portabletext/html@1.0.2
+
 ## 6.6.2
 
 ### Patch Changes
