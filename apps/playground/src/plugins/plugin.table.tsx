@@ -1,6 +1,7 @@
 import {defineContainer} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
+import {cellImageLeaf} from './plugin.image'
 
 const tableContainer = defineContainer({
   type: 'table',
@@ -35,6 +36,7 @@ const tableContainer = defineContainer({
               {children}
             </td>
           ),
+          of: [cellImageLeaf],
         }),
       ],
     }),
