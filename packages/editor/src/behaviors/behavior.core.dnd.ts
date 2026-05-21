@@ -334,13 +334,15 @@ export const coreDndBehaviors = [
         },
       })
 
-      // When the drag origin is at the top level (path length 1) -
-      // typically when the user grabs a block's chrome / drag handle -
-      // use that block AS-IS. `getFragment` would unwrap the block
-      // when its content is also root-accepted (e.g. a callout with a
-      // single paragraph inside). For deeper origins - dragging a
-      // block-object or text within a container - keep using
-      // `getFragment`, which finds the smallest root-valid fragment.
+      // `getFragment` is the clipboard projection - it unwraps single-
+      // child containers down to the smallest root-valid fragment so
+      // the result is paste-anywhere. That's correct for the deep-drag
+      // case (dragging a block-object out of a cell: the drop target
+      // is root, the fragment needs to be unwrapped). It's wrong for
+      // the top-level chrome-drag case: the user grabbed a container
+      // (callout, list, code-block) at root, and the move preserves
+      // root-to-root shape - the container should stay as a container.
+      // Pick the selector that matches the drag's level of origin.
       const isTopLevelOrigin =
         draggingEntireBlocks &&
         dragSelection.anchor.path.length === 1 &&
