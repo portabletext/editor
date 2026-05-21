@@ -138,3 +138,28 @@ describe('event.move.block up', () => {
     })
   })
 })
+
+describe('event.move.block', () => {
+  test('Scenario: Moving a block to its own position is a no-op', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [image, foo, bar],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    // Moving a block onto its own path should leave the value unchanged.
+    // Today this silently unsets the source then inserts at a path that
+    // no longer resolves, eating the block.
+    editor.send({
+      type: 'move.block',
+      at: [{_key: image._key}],
+      to: [{_key: image._key}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([image, foo, bar])
+    })
+  })
+})

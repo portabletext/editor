@@ -25,6 +25,17 @@ export const moveBlockOperationImplementation: OperationImplementation<
     )
   }
 
+  // Moving a block onto its own resolved path is a no-op. Without this
+  // guard the implementation unsets the source then tries to insert at
+  // a path that no longer points at anything (the index has shifted by
+  // one), eating the block. Consumers reaching for the raw `move.block`
+  // event with caller-supplied keys can land in this shape easily; the
+  // high-level `move.block up`/`down` events bail earlier when there
+  // is no neighbouring sibling.
+  if (originEntry.node._key === destinationEntry.node._key) {
+    return
+  }
+
   // Determine movement direction within the shared sibling array. Only
   // supports moves at the same level today (root → root or within the
   // same container field). Cross-level moves would need the behavior to
