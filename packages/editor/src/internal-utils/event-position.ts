@@ -64,15 +64,28 @@ export function getEventPosition({
   })
   const eventSelection = getSelectionFromEvent(slateEditor, event) ?? null
 
+  const onChrome =
+    !!eventBlock &&
+    !!eventBlockPath &&
+    isEventOnChrome(event, eventBlock, eventBlockPath, slateEditor)
   if (
     eventBlock &&
     eventBlockPath &&
     eventPositionBlock &&
-    !eventSelection &&
-    !isEventContainer(slateEditor, eventNode, eventPath)
+    (!eventSelection || onChrome) &&
+    // Containers normally fall through to caret-based selection (clicking
+    // a container's chrome background is a click into content). But when
+    // the event originates from a `contentEditable=false` chrome
+    // affordance the container's caret-based selection is wrong - prefer
+    // the whole-block selection.
+    (!isEventContainer(slateEditor, eventNode, eventPath) || onChrome)
   ) {
-    // If we for some reason can't find the event selection, then we default to
-    // selecting the entire block that the event originates from.
+    // If we can't find the event selection - OR the event originates from
+    // a `contentEditable={false}` chrome affordance inside the block (a
+    // drag handle, a language picker, etc.) rather than from actual
+    // content - select the entire block. `caretPositionFromPoint` would
+    // otherwise land inside the block's first content child, dragging
+    // that inner block instead of the block whose chrome was grabbed.
     return {
       block: eventPositionBlock,
       isEditor: false,
@@ -309,4 +322,46 @@ function isEventContainer(
     return true
   }
   return isEditableContainer(slateEditor, eventNode, eventPath)
+}
+
+/**
+ * Did the drag/mouse event originate from a non-editable chrome element
+ * inside the block (a drag handle, language picker, button, etc.) rather
+ * than from actual content?
+ *
+ * The discriminator: walk up from `event.target` to the block's DOM
+ * element. If we cross a `contentEditable="false"` ancestor along the
+ * way, the user grabbed chrome, not text. `caretPositionFromPoint` at the
+ * chrome's coordinates would otherwise land inside the block's first
+ * inner content node - which is the wrong drag scope for a chrome grab.
+ */
+function isEventOnChrome(
+  event: DragEvent | MouseEvent,
+  _eventBlock: Node,
+  eventBlockPath: Path,
+  slateEditor: PortableTextSlateEditor,
+): boolean {
+  const target = event.target
+  if (!target || !isDOMNode(target)) {
+    return false
+  }
+  const blockElement = getDomNode(slateEditor, eventBlockPath)
+  if (!blockElement) {
+    return false
+  }
+  // Walk up from the target. If we hit a contentEditable="false" ancestor
+  // BEFORE we hit the block element itself, the target sits inside chrome.
+  const domTarget = target as unknown as globalThis.Node
+  let cursor: globalThis.Node | null =
+    domTarget.nodeType === 1 ? domTarget : (domTarget.parentNode ?? null)
+  while (cursor && cursor !== (blockElement as unknown as globalThis.Node)) {
+    if (cursor.nodeType === 1) {
+      const element = cursor as unknown as Element
+      if (element.getAttribute('contenteditable') === 'false') {
+        return true
+      }
+    }
+    cursor = cursor.parentNode
+  }
+  return false
 }

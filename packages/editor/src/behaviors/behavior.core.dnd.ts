@@ -2,6 +2,7 @@ import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {getDragSelection} from '../selectors/drag-selection'
 import {getFragment} from '../selectors/selector.get-fragment'
+import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import {comparePoints} from '../slate/point/compare-points'
@@ -333,14 +334,32 @@ export const coreDndBehaviors = [
         },
       })
 
-      const draggedBlocks = getFragment({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: dragSelection,
-        },
-      })
-
+      // When the drag origin is at the top level (path length 1) -
+      // typically when the user grabs a block's chrome / drag handle -
+      // use that block AS-IS. `getFragment` would unwrap the block
+      // when its content is also root-accepted (e.g. a callout with a
+      // single paragraph inside). For deeper origins - dragging a
+      // block-object or text within a container - keep using
+      // `getFragment`, which finds the smallest root-valid fragment.
+      const isTopLevelOrigin =
+        draggingEntireBlocks &&
+        dragSelection.anchor.path.length === 1 &&
+        dragSelection.focus.path.length === 1
+      const draggedBlocks = isTopLevelOrigin
+        ? getSelectedBlocks({
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: dragSelection,
+            },
+          })
+        : getFragment({
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: dragSelection,
+            },
+          })
       if (!droppingOnDragOrigin) {
         return {
           dropPosition,
@@ -383,7 +402,14 @@ export const coreDndBehaviors = [
             ]),
         raise({
           type: 'insert.blocks',
-          blocks: event.data,
+          // When dragging entire root-level blocks, use the
+          // `draggedBlocks` snapshot taken at dragstart - it preserves
+          // containers whole. `event.data` came through the clipboard
+          // converter which unwraps containers (correct for paste,
+          // wrong for in-place move).
+          blocks: draggingEntireBlocks
+            ? draggedBlocks.map((block) => block.node)
+            : event.data,
           placement: draggingEntireBlocks
             ? originEvent.position.block === 'start'
               ? 'before'

@@ -21,9 +21,62 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import type {OperationImplementation} from './operation.types'
 
+function isEqualSelectionPointsFromOp(
+  a: {path: import('../slate/interfaces/path').Path; offset: number},
+  b: {path: import('../slate/interfaces/path').Path; offset: number},
+): boolean {
+  if (a.offset !== b.offset) {
+    return false
+  }
+  if (a.path.length !== b.path.length) {
+    return false
+  }
+  for (let i = 0; i < a.path.length; i++) {
+    const aSeg = a.path[i]
+    const bSeg = b.path[i]
+    if (
+      typeof aSeg === 'object' &&
+      aSeg !== null &&
+      typeof bSeg === 'object' &&
+      bSeg !== null
+    ) {
+      if ((aSeg as {_key?: string})._key !== (bSeg as {_key?: string})._key) {
+        return false
+      }
+    } else if (aSeg !== bSeg) {
+      return false
+    }
+  }
+  return true
+}
+
 export const deleteOperationImplementation: OperationImplementation<
   'delete'
 > = ({operation}) => {
+  // Block-unit fast path: when `at` is a collapsed selection on a
+  // block's path (e.g. `delete.block at: [{_key:'cl-24'}]`), the
+  // intent is "remove THIS block." Skip `resolveSelection` for this
+  // case - it walks to the deepest first text point, which causes
+  // `unsetMatchedNodesInRange` to also pick up the block's first
+  // inner child and keep only the deeper match. Containers and
+  // block-objects would get their first inner block deleted instead
+  // of themselves.
+  if (
+    operation.unit === 'block' &&
+    operation.at &&
+    operation.at.anchor.path.length > 0 &&
+    isEqualSelectionPointsFromOp(operation.at.anchor, operation.at.focus)
+  ) {
+    const blockPath = operation.at.anchor.path
+    if (isBlock(operation.editor, blockPath)) {
+      const node = getNode(operation.editor, blockPath)
+      if (node) {
+        operation.editor.apply({type: 'unset', path: blockPath})
+        return
+      }
+    }
+  }
+
   const at = operation.at
     ? resolveSelection(operation.editor, operation.at)
     : operation.editor.selection
