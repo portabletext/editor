@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.0.1
+
+### Patch Changes
+
+- [#2689](https://github.com/portabletext/editor/pull/2689) [`fdedf2d`](https://github.com/portabletext/editor/commit/fdedf2da4820dc403868fb3027d5945c92ca8a88) Thanks [@christianhg](https://github.com/christianhg)! - fix: backspace before a container lands the caret at the end of the container's content, not at its start
+
 ## 7.0.0
 
 ### Major Changes
