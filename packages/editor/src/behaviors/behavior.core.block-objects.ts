@@ -1,4 +1,6 @@
+import {isSpan} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
+import {getLeaf} from '../node-traversal/get-leaf'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
@@ -244,13 +246,26 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
       isEmptyTextBlock(snapshot.context, focusedTextBlock.node) &&
       !isTextBlockNode(snapshot.context, previousSibling.node)
     ) {
-      return {focusedTextBlock, previousSibling}
+      // Land the caret at the END of the previous sibling's deepest leaf.
+      // A span leaf gets the end of its text, anything else (void block-object,
+      // inline-object) gets focused at its own path.
+      const leaf = getLeaf(snapshot, previousSibling.path, {edge: 'end'})
+      const previousEndPoint = leaf
+        ? {
+            path: leaf.path,
+            offset: isSpan(snapshot.context, leaf.node)
+              ? leaf.node.text.length
+              : 0,
+          }
+        : {path: previousSibling.path, offset: 0}
+
+      return {focusedTextBlock, previousEndPoint}
     }
 
     return false
   },
   actions: [
-    (_, {focusedTextBlock, previousSibling}) => [
+    (_, {focusedTextBlock, previousEndPoint}) => [
       raise({
         type: 'delete.block',
         at: focusedTextBlock.path,
@@ -258,8 +273,8 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
       raise({
         type: 'select',
         at: {
-          anchor: {path: previousSibling.path, offset: 0},
-          focus: {path: previousSibling.path, offset: 0},
+          anchor: previousEndPoint,
+          focus: previousEndPoint,
         },
       }),
     ],
