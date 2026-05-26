@@ -701,10 +701,22 @@ export const Editable = forwardRef(
           // to change the selection because it is the range that will be deleted,
           // and those commands determine that for themselves.
           if (!type.startsWith('delete') || type.startsWith('deleteBy')) {
-            const [targetRange] = (event as any).getTargetRanges()
+            let [domRange] = (event as any).getTargetRanges() as [Range?]
 
-            if (targetRange) {
-              const range = ReactEditor.toSlateRange(editor, targetRange, {
+            // Fallback for iframe contexts (e.g. Grammarly in Sanity Dashboard)
+            // where `getTargetRanges()` is empty even though the DOM selection
+            // is set immediately before the `beforeinput`. The comment above
+            // about IMEs and Grammarly applies here: read the DOM selection
+            // directly so the replacement still lands at the intended range.
+            if (!domRange) {
+              const domSelection = ReactEditor.getWindow(editor).getSelection()
+              if (domSelection && domSelection.rangeCount > 0) {
+                domRange = domSelection.getRangeAt(0)
+              }
+            }
+
+            if (domRange) {
+              const range = ReactEditor.toSlateRange(editor, domRange, {
                 exactMatch: false,
                 suppressThrow: true,
               })
