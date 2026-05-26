@@ -569,4 +569,86 @@ describe('event.input.*', () => {
       backward: false,
     })
   })
+
+  test('Scenario: insertReplacementText falls back to DOM selection when getTargetRanges is empty', async () => {
+    // Repro for Grammarly in iframe-hosted Studios (Sanity Dashboard). The
+    // extension sets the DOM selection to the misspelled word and then fires
+    // a `beforeinput` event whose `getTargetRanges()` is empty (the iframe
+    // context strips it). The replacement should still land at the visually
+    // selected word.
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'wat is the problem',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const editorEl = locator.element() as HTMLElement
+    editorEl.focus()
+    const textNode = editorEl.querySelector('[data-slate-string]')!
+      .childNodes[0] as Text
+
+    document.getSelection()!.setBaseAndExtent(textNode, 18, textNode, 18)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(18)
+    })
+
+    // Simulate the extension selecting "wat" (0..3) visually in the DOM but
+    // without letting Slate's selectionchange listener catch up.
+    document.getSelection()!.setBaseAndExtent(textNode, 0, textNode, 3)
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'What')
+
+    const beforeInput = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertReplacementText',
+      data: 'What',
+      dataTransfer,
+    })
+    // Empty getTargetRanges, mirroring Grammarly in iframe context.
+    Object.defineProperty(beforeInput, 'getTargetRanges', {
+      value: () => [],
+    })
+
+    editorEl.dispatchEvent(beforeInput)
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'What is the problem',
+      ])
+    })
+
+    // The caret should land right after the inserted replacement.
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 4,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 4,
+      },
+      backward: false,
+    })
+  })
 })
