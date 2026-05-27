@@ -1,9 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {toSlateBlock} from './values'
+import {toEngineBlock} from './values'
 
-describe(toSlateBlock.name, () => {
+describe(toEngineBlock.name, () => {
   describe('text block', () => {
     describe('with span', () => {
       test('with _type', () => {
@@ -12,7 +12,7 @@ describe(toSlateBlock.name, () => {
         const spanKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,
@@ -41,7 +41,7 @@ describe(toSlateBlock.name, () => {
         const spanKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,
@@ -70,7 +70,7 @@ describe(toSlateBlock.name, () => {
         const spanKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,
@@ -101,7 +101,7 @@ describe(toSlateBlock.name, () => {
         const stockTickerKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,
@@ -134,7 +134,7 @@ describe(toSlateBlock.name, () => {
         const stockTickerKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,
@@ -167,7 +167,7 @@ describe(toSlateBlock.name, () => {
         const stockTickerKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,
@@ -200,7 +200,7 @@ describe(toSlateBlock.name, () => {
         const stockTickerKey = keyGenerator()
 
         expect(
-          toSlateBlock(
+          toEngineBlock(
             {
               _type: 'block',
               _key: blockKey,

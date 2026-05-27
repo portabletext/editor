@@ -1,3 +1,5 @@
+import type {Path} from '../engine/interfaces/path'
+import {pathEquals} from '../engine/path/path-equals'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {getAncestor} from '../node-traversal/get-ancestor'
 import {getSibling} from '../node-traversal/get-sibling'
@@ -10,8 +12,6 @@ import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
-import type {Path} from '../slate/interfaces/path'
-import {pathEquals} from '../slate/path/path-equals'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -24,7 +24,7 @@ import {defineBehavior} from './behavior.types.behavior'
  * of the last block (ArrowDown), browsers rendering `<table>`-based
  * containers move the DOM caret outside the container element. When the
  * container has a sibling at its parent level, the browser's native
- * navigation lands correctly in that sibling and Slate picks it up. But
+ * navigation lands correctly in that sibling and the engine picks it up. But
  * when no sibling exists, the caret escapes into a DOM position that
  * doesn't map back to the model, and the next keystroke produces orphan
  * text nodes.

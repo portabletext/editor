@@ -1,5 +1,5 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {comparePaths} from '../slate/path/compare-paths'
+import {comparePaths} from '../engine/path/compare-paths'
 import type {EditorSelectionPoint} from '../types/editor'
 
 /**

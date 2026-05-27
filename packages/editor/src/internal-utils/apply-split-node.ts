@@ -1,14 +1,14 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {pathEquals} from '../engine/path/path-equals'
+import {isBackwardRange} from '../engine/range/is-backward-range'
+import {resolveRangeAffinities} from '../engine/range/resolve-range-affinities'
 import {getNode} from '../node-traversal/get-node'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import {pathEquals} from '../slate/path/path-equals'
-import {isBackwardRange} from '../slate/range/is-backward-range'
-import {resolveRangeAffinities} from '../slate/range/resolve-range-affinities'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
@@ -21,7 +21,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * individual low-level operations.
  */
 export function applySplitNode(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
   position: number,
 ): void {

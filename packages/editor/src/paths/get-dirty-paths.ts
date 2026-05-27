@@ -1,13 +1,13 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Operation} from '../engine/interfaces/operation'
+import type {Path} from '../engine/interfaces/path'
+import {pathLevels} from '../engine/path/path-levels'
 import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
-import type {Operation} from '../slate/interfaces/operation'
-import type {Path} from '../slate/interfaces/path'
-import {pathLevels} from '../slate/path/path-levels'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
 

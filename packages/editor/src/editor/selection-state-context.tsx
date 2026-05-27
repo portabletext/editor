@@ -7,8 +7,8 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react'
+import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 import {getSelectionState, type SelectionState} from './get-selection-state'
@@ -102,7 +102,7 @@ export function SelectionStateProvider({
   children: React.ReactNode
 }) {
   const editorActor = useContext(EditorActorContext)
-  const slateEditor = useSlateStatic()
+  const editorEngine = useEngineStatic()
 
   // Compute the current snapshot once on every read. Cheap when nothing
   // has changed (refs are reference-equal); recomputes on actor updates
@@ -112,7 +112,7 @@ export function SelectionStateProvider({
       const actorSnapshot = editorActor.getSnapshot()
       const snapshot = getEditorSnapshot({
         editorActorSnapshot: actorSnapshot,
-        slateEditorInstance: slateEditor,
+        editorEngineInstance: editorEngine,
       })
       const selection = snapshot.context.selection
         ? {
@@ -127,15 +127,15 @@ export function SelectionStateProvider({
         {
           context: {
             schema: snapshot.context.schema,
-            containers: slateEditor.publicContainers,
+            containers: editorEngine.publicContainers,
             value: snapshot.context.value,
           },
-          blockIndexMap: slateEditor.blockIndexMap,
+          blockIndexMap: editorEngine.blockIndexMap,
         },
         selection,
       )
     },
-    [editorActor, slateEditor],
+    [editorActor, editorEngine],
   )
 
   // Seed the initial snapshot exactly once via `useState`'s lazy

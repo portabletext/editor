@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../src/editor/editor-snapshot'
+import type {Path, PathSegment} from '../src/engine/interfaces/path'
 import {safeStringify} from '../src/internal-utils/safe-json'
-import type {Path, PathSegment} from '../src/slate/interfaces/path'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {collapseSelection} from './collapse-selection'
 import {splitString} from './split-string'

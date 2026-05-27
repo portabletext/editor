@@ -1,7 +1,7 @@
 import type {PortableTextSpan} from '@portabletext/schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
 import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 
 type PlaceholderSnapshot = {

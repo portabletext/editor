@@ -1,13 +1,13 @@
-import {after} from '../slate/editor/after'
-import {before} from '../slate/editor/before'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {after} from '../engine/editor/after'
+import {before} from '../engine/editor/before'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applySelect} from './apply-selection'
 
 /**
  * Move the selection by a given distance and unit.
  */
 export function applyMove(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   options: {
     distance?: number
     unit?: 'character' | 'word' | 'line' | 'offset'

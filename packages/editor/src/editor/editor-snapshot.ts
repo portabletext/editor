@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {Converter} from '../converters/converter.types'
 import type {Containers} from '../schema/resolve-containers'
 import type {EditorSelection} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSchema} from './editor-schema'
 
 /**
@@ -57,7 +57,7 @@ export function createEditorSnapshot({
   schema,
 }: {
   converters: Array<Converter>
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema

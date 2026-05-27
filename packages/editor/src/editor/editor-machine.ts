@@ -16,6 +16,8 @@ import type {
   ExternalBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
+import {DOMEditor} from '../engine/dom/plugin/dom-editor'
+import {normalize} from '../engine/editor/normalize'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
@@ -32,11 +34,9 @@ import {
   resolveTextBlockConfig,
   type ResolvedContainers,
 } from '../schema/resolve-containers'
-import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import {normalize} from '../slate/editor/normalize'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {pathsOverlap} from '../utils/util.paths-overlap'
 import type {EditorSchema} from './editor-schema'
 import {isTypeAlreadyRegistered} from './registration-helpers'
@@ -92,11 +92,11 @@ type InternalEditorEvent =
     }
   | {
       type: 'blur'
-      editor: PortableTextSlateEditor
+      editor: PortableTextEditorEngine
     }
   | {
       type: 'focus'
-      editor: PortableTextSlateEditor
+      editor: PortableTextEditorEngine
     }
   | {
       type: 'update selection'
@@ -111,7 +111,7 @@ type InternalEditorEvent =
   | {
       type: 'behavior event'
       behaviorEvent: BehaviorEvent
-      editor: PortableTextSlateEditor
+      editor: PortableTextEditorEngine
       nativeEvent?: {preventDefault: () => void}
     }
   | MutationEvent
@@ -135,7 +135,7 @@ type InternalEditorEvent =
       type: 'unregister'
       node: RegistrableNode
     }
-  | {type: 'add slate editor'; editor: PortableTextSlateEditor}
+  | {type: 'add editor engine'; editor: PortableTextEditorEngine}
 
 /**
  * @internal
@@ -147,22 +147,22 @@ type InternalEditorEmittedEvent =
 
 export function rerouteExternalBehaviorEvent({
   event,
-  slateEditor,
+  editorEngine,
 }: {
   event: ExternalBehaviorEvent
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
 }): InternalEditorEvent {
   switch (event.type) {
     case 'blur':
       return {
         type: 'blur',
-        editor: slateEditor,
+        editor: editorEngine,
       }
 
     case 'focus':
       return {
         type: 'focus',
-        editor: slateEditor,
+        editor: editorEngine,
       }
 
     case 'insert.block object':
@@ -176,14 +176,14 @@ export function rerouteExternalBehaviorEvent({
           },
           placement: event.placement,
         },
-        editor: slateEditor,
+        editor: editorEngine,
       }
 
     default:
       return {
         type: 'behavior event',
         behaviorEvent: event,
-        editor: slateEditor,
+        editor: editorEngine,
       }
   }
 }
@@ -213,7 +213,7 @@ export const editorMachine = setup({
         origin: Pick<EventPosition, 'selection'>
       }
       dragGhost?: HTMLElement
-      slateEditor?: PortableTextSlateEditor
+      editorEngine?: PortableTextEditorEngine
     },
     events: {} as InternalEditorEvent,
     emitted: {} as InternalEditorEmittedEvent,
@@ -244,11 +244,11 @@ export const editorMachine = setup({
         return new Set([...context.behaviors])
       },
     }),
-    'add slate editor to context': assign({
-      slateEditor: ({context, event}) => {
-        return event.type === 'add slate editor'
+    'add editor engine to context': assign({
+      editorEngine: ({context, event}) => {
+        return event.type === 'add editor engine'
           ? event.editor
-          : context.slateEditor
+          : context.editorEngine
       },
     }),
     'register': assign(({context, event}) => {
@@ -265,12 +265,12 @@ export const editorMachine = setup({
         }
         const containers = new Map(context.containers)
         containers.set(node.type, containerConfig)
-        if (context.slateEditor) {
-          context.slateEditor.containers = containers
-          context.slateEditor.publicContainers =
+        if (context.editorEngine) {
+          context.editorEngine.containers = containers
+          context.editorEngine.publicContainers =
             buildPublicContainers(containers)
-          normalize(context.slateEditor, {force: true})
-          context.slateEditor.onChange()
+          normalize(context.editorEngine, {force: true})
+          context.editorEngine.onChange()
         }
         return {containers}
       }
@@ -280,9 +280,9 @@ export const editorMachine = setup({
         }
         const textBlocks = new Map(context.textBlocks)
         textBlocks.set(node.type, resolveTextBlockConfig(node))
-        if (context.slateEditor) {
-          context.slateEditor.textBlocks = textBlocks
-          context.slateEditor.onChange()
+        if (context.editorEngine) {
+          context.editorEngine.textBlocks = textBlocks
+          context.editorEngine.onChange()
         }
         return {textBlocks}
       }
@@ -292,9 +292,9 @@ export const editorMachine = setup({
         }
         const spans = new Map(context.spans)
         spans.set(node.type, {span: node})
-        if (context.slateEditor) {
-          context.slateEditor.spans = spans
-          context.slateEditor.onChange()
+        if (context.editorEngine) {
+          context.editorEngine.spans = spans
+          context.editorEngine.onChange()
         }
         return {spans}
       }
@@ -304,9 +304,9 @@ export const editorMachine = setup({
         }
         const blockObjects = new Map(context.blockObjects)
         blockObjects.set(node.type, {blockObject: node})
-        if (context.slateEditor) {
-          context.slateEditor.blockObjects = blockObjects
-          context.slateEditor.onChange()
+        if (context.editorEngine) {
+          context.editorEngine.blockObjects = blockObjects
+          context.editorEngine.onChange()
         }
         return {blockObjects}
       }
@@ -316,9 +316,9 @@ export const editorMachine = setup({
       }
       const inlineObjects = new Map(context.inlineObjects)
       inlineObjects.set(node.type, {inlineObject: node})
-      if (context.slateEditor) {
-        context.slateEditor.inlineObjects = inlineObjects
-        context.slateEditor.onChange()
+      if (context.editorEngine) {
+        context.editorEngine.inlineObjects = inlineObjects
+        context.editorEngine.onChange()
       }
       return {inlineObjects}
     }),
@@ -328,67 +328,67 @@ export const editorMachine = setup({
       if (node.kind === 'container') {
         const containers = new Map(context.containers)
         containers.delete(node.type)
-        if (context.slateEditor) {
-          context.slateEditor.containers = containers
-          context.slateEditor.publicContainers =
+        if (context.editorEngine) {
+          context.editorEngine.containers = containers
+          context.editorEngine.publicContainers =
             buildPublicContainers(containers)
-          normalize(context.slateEditor, {force: true})
-          context.slateEditor.onChange()
+          normalize(context.editorEngine, {force: true})
+          context.editorEngine.onChange()
         }
         return {containers}
       }
       if (node.kind === 'textBlock') {
         const textBlocks = new Map(context.textBlocks)
         textBlocks.delete(node.type)
-        if (context.slateEditor) {
-          context.slateEditor.textBlocks = textBlocks
-          context.slateEditor.onChange()
+        if (context.editorEngine) {
+          context.editorEngine.textBlocks = textBlocks
+          context.editorEngine.onChange()
         }
         return {textBlocks}
       }
       if (node.kind === 'span') {
         const spans = new Map(context.spans)
         spans.delete(node.type)
-        if (context.slateEditor) {
-          context.slateEditor.spans = spans
-          context.slateEditor.onChange()
+        if (context.editorEngine) {
+          context.editorEngine.spans = spans
+          context.editorEngine.onChange()
         }
         return {spans}
       }
       if (node.kind === 'blockObject') {
         const blockObjects = new Map(context.blockObjects)
         blockObjects.delete(node.type)
-        if (context.slateEditor) {
-          context.slateEditor.blockObjects = blockObjects
-          context.slateEditor.onChange()
+        if (context.editorEngine) {
+          context.editorEngine.blockObjects = blockObjects
+          context.editorEngine.onChange()
         }
         return {blockObjects}
       }
       // inlineObject
       const inlineObjects = new Map(context.inlineObjects)
       inlineObjects.delete(node.type)
-      if (context.slateEditor) {
-        context.slateEditor.inlineObjects = inlineObjects
-        context.slateEditor.onChange()
+      if (context.editorEngine) {
+        context.editorEngine.inlineObjects = inlineObjects
+        context.editorEngine.onChange()
       }
       return {inlineObjects}
     }),
-    'attach maps to slate editor': ({context}) => {
-      // After the Slate editor is constructed, mirror the actor's
+    'attach maps to editor engine': ({context}) => {
+      // After the editor engine is constructed, mirror the actor's
       // registration maps onto it and trigger a force-normalize so any
       // rules that depend on the maps (e.g. unwrap-on-empty) run against
       // the freshly attached editor.
-      if (context.slateEditor) {
-        context.slateEditor.containers = context.containers
-        context.slateEditor.publicContainers = buildPublicContainers(
+      if (context.editorEngine) {
+        context.editorEngine.containers = context.containers
+        context.editorEngine.publicContainers = buildPublicContainers(
           context.containers,
         )
-        context.slateEditor.blockObjects = context.blockObjects
-        context.slateEditor.inlineObjects = context.inlineObjects
-        context.slateEditor.spans = context.spans
-        context.slateEditor.textBlocks = context.textBlocks
-        normalize(context.slateEditor, {force: true})
-        context.slateEditor.onChange()
+        context.editorEngine.blockObjects = context.blockObjects
+        context.editorEngine.inlineObjects = context.inlineObjects
+        context.editorEngine.spans = context.spans
+        context.editorEngine.textBlocks = context.textBlocks
+        normalize(context.editorEngine, {force: true})
+        context.editorEngine.onChange()
       }
     },
     'emit patch event': emit(({event}) => {
@@ -467,26 +467,26 @@ export const editorMachine = setup({
       }
     },
     'handle focus': ({context}) => {
-      const slateEditor = context.slateEditor
+      const editorEngine = context.editorEngine
 
-      if (!slateEditor) {
-        console.error('No Slate editor found to focus')
+      if (!editorEngine) {
+        console.error('No editor engine found to focus')
         return
       }
 
       try {
-        const currentSelection = slateEditor.selection
+        const currentSelection = editorEngine.selection
 
-        DOMEditor.focus(slateEditor)
+        DOMEditor.focus(editorEngine)
 
         if (currentSelection) {
-          slateEditor.select(currentSelection)
+          editorEngine.select(currentSelection)
 
-          // Tell Slate to use this selection for DOM sync
-          slateEditor.pendingSelection = slateEditor.selection
+          // Tell the engine to use this selection for DOM sync
+          editorEngine.pendingSelection = editorEngine.selection
 
           // Trigger the DOM sync
-          slateEditor.onChange()
+          editorEngine.onChange()
         }
       } catch (error) {
         console.error(
@@ -524,7 +524,7 @@ export const editorMachine = setup({
             self.send(
               rerouteExternalBehaviorEvent({
                 event: eventSentBack,
-                slateEditor: event.editor,
+                editorEngine: event.editor,
               }),
             )
           },
@@ -546,19 +546,19 @@ export const editorMachine = setup({
     }),
   },
   guards: {
-    'slate is busy': ({context}) => {
-      if (!context.slateEditor) {
+    'engine is busy': ({context}) => {
+      if (!context.editorEngine) {
         return false
       }
 
-      return context.slateEditor.operations.length > 0
+      return context.editorEngine.operations.length > 0
     },
-    'slate is normalizing node': ({context}) => {
-      if (!context.slateEditor) {
+    'engine is normalizing node': ({context}) => {
+      if (!context.editorEngine) {
         return false
       }
 
-      return context.slateEditor.isNormalizingNode
+      return context.editorEngine.isNormalizingNode
     },
   },
 }).createMachine({
@@ -583,8 +583,8 @@ export const editorMachine = setup({
   on: {
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
-    'add slate editor': {
-      actions: ['add slate editor to context', 'attach maps to slate editor'],
+    'add editor engine': {
+      actions: ['add editor engine to context', 'attach maps to editor engine'],
     },
     'register': {
       actions: ['register'],
@@ -685,7 +685,7 @@ export const editorMachine = setup({
             },
             'focus': {
               target: '.focusing',
-              actions: [assign({slateEditor: ({event}) => event.editor})],
+              actions: [assign({editorEngine: ({event}) => event.editor})],
             },
           },
           initial: 'idle',
@@ -734,7 +734,7 @@ export const editorMachine = setup({
                   ],
                   always: [
                     {
-                      guard: 'slate is busy',
+                      guard: 'engine is busy',
                       target: 'busy',
                     },
                     {
@@ -919,7 +919,7 @@ export const editorMachine = setup({
                       on: {
                         'internal.patch': [
                           {
-                            guard: 'slate is normalizing node',
+                            guard: 'engine is normalizing node',
                             actions: 'defer event',
                           },
                           {
@@ -929,7 +929,7 @@ export const editorMachine = setup({
                         ],
                         'mutation': [
                           {
-                            guard: 'slate is normalizing node',
+                            guard: 'engine is normalizing node',
                             actions: 'defer event',
                           },
                           {

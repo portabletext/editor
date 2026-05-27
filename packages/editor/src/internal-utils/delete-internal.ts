@@ -1,3 +1,13 @@
+import {pointRef} from '../engine/editor/point-ref'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import type {Range} from '../engine/interfaces/range'
+import {isVoidNode} from '../engine/node/is-void-node'
+import {commonPath} from '../engine/path/common-path'
+import {parentPath} from '../engine/path/parent-path'
+import {pathEquals} from '../engine/path/path-equals'
+import {rangeEdges} from '../engine/range/range-edges'
+import type {TextUnit} from '../engine/types/types'
 import {getChildren} from '../node-traversal/get-children'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getFirstChild} from '../node-traversal/get-first-child'
@@ -7,17 +17,7 @@ import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {resolveContainerByPath} from '../schema/resolve-container-by-path'
-import {pointRef} from '../slate/editor/point-ref'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import type {Range} from '../slate/interfaces/range'
-import {isVoidNode} from '../slate/node/is-void-node'
-import {commonPath} from '../slate/path/common-path'
-import {parentPath} from '../slate/path/parent-path'
-import {pathEquals} from '../slate/path/path-equals'
-import {rangeEdges} from '../slate/range/range-edges'
-import type {TextUnit} from '../slate/types/types'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {applyMergeNode} from './apply-merge-node'
 import {createPlaceholderBlock} from './create-placeholder-block'
@@ -66,7 +66,7 @@ export interface ApplyDeleteOptions {
  * surviving end block.
  */
 export function applyDelete(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   range: Range,
   options: ApplyDeleteOptions,
 ): void {
@@ -135,7 +135,7 @@ interface MutateOptions {
  *   shells alone (no cross-parent merge).
  */
 function mutateRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   range: Range,
   options: MutateOptions,
 ): string | null {
@@ -181,7 +181,7 @@ function mutateRange(
  * splice), and either endpoint inside a void inline object (unset).
  */
 function deleteSameBlockRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   start: Point,
   end: Point,
   capture: boolean,
@@ -231,7 +231,7 @@ function deleteSameBlockRange(
  * either end is a void block, which is removed atomically).
  */
 function deleteSameParentCrossBlockRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startBlockPath: Path,
   endBlockPath: Path,
   start: Point,
@@ -323,7 +323,7 @@ function deleteSameParentCrossBlockRange(
  * blocks strictly between the two branches at the LCA itself.
  */
 function deleteCrossParentRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startBlockPath: Path,
   endBlockPath: Path,
   start: Point,
@@ -434,7 +434,7 @@ function deleteCrossParentRange(
 
 /** Remove text in `[startOffset, endOffset)` from the span at `path`. */
 function removeTextRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
   startOffset: number,
   endOffset: number,
@@ -454,7 +454,7 @@ function removeTextRange(
 
 /** Remove text from `offset` to the end of the span at `path`. */
 function removeTextFromOffset(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
   offset: number,
   capture: boolean,
@@ -470,7 +470,7 @@ function removeTextFromOffset(
 
 /** Remove text from offset 0 up to (but not including) `offset`. */
 function removeTextUpToOffset(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
   offset: number,
 ): void {
@@ -494,7 +494,7 @@ function removeTextUpToOffset(
  * `endChildPath`. Both paths must share the same parent.
  */
 function removeChildrenBetween(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startChildPath: Path,
   endChildPath: Path,
 ): void {
@@ -519,7 +519,7 @@ function removeChildrenBetween(
  * function recurses into each.
  */
 function clearContainerContents(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   containerPath: Path,
 ): void {
   const node = getNode(editor, containerPath)?.node
@@ -560,7 +560,7 @@ function clearContainerContents(
 
 /** Remove every sibling that comes after `startChildPath`. */
 function removeTrailingChildren(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
   let cursor = getSibling(editor, startChildPath, 'next')
@@ -572,7 +572,7 @@ function removeTrailingChildren(
 
 /** Clear contents of every sibling that comes after `startChildPath`. */
 function clearTrailingSiblings(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
   let cursor = getSibling(editor, startChildPath, 'next')
@@ -585,7 +585,7 @@ function clearTrailingSiblings(
 
 /** Remove every sibling that comes before `startChildPath`. */
 function removePrecedingSiblings(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
   let cursor = getSibling(editor, startChildPath, 'previous')
@@ -597,7 +597,7 @@ function removePrecedingSiblings(
 
 /** Clear contents of every sibling that comes before `startChildPath`. */
 function clearPrecedingSiblings(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
   let cursor = getSibling(editor, startChildPath, 'previous')
@@ -615,7 +615,7 @@ function clearPrecedingSiblings(
  * root level.
  */
 function parentAcceptsTextBlock(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
 ): boolean {
   const enclosing = getEnclosingContainer(editor, path)
@@ -631,7 +631,7 @@ function parentAcceptsTextBlock(
  * the entire block content is consumed.
  */
 function removeAllChildren(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   blockPath: Path,
 ): void {
   let firstChild = getFirstChild(editor, blockPath)
@@ -646,7 +646,7 @@ function removeAllChildren(
  * first child.
  */
 function removeLeadingChildrenOf(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   blockPath: Path,
   endChildPath: Path,
 ): void {
@@ -669,7 +669,7 @@ function removeLeadingChildrenOf(
  * `endBlockPath`. Both paths must share the same parent.
  */
 function removeBlocksBetween(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startBlockPath: Path,
   endBlockPath: Path,
 ): void {
@@ -687,7 +687,7 @@ function removeBlocksBetween(
  * formatting (style, listItem) survives.
  */
 function mergeBlock(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   startBlockPath: Path,
   endBlockPath: Path,
   removeEmptyStartBlock: boolean,
@@ -730,7 +730,7 @@ function mergeBlock(
   applyMergeNode(editor, endBlockPath, startBlock.node.children.length)
 }
 
-function removeNodeAt(editor: PortableTextSlateEditor, path: Path): void {
+function removeNodeAt(editor: PortableTextEditorEngine, path: Path): void {
   if (!getNode(editor, path)) {
     return
   }

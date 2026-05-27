@@ -1,5 +1,5 @@
+import {rangesOverlap} from '../engine/range/ranges-overlap'
 import {hasNode} from '../node-traversal/has-node'
-import {rangesOverlap} from '../slate/range/ranges-overlap'
 import type {EditorSelection} from '../types/editor'
 import type {EditorSelector} from './../editor/editor-selector'
 

@@ -1,7 +1,7 @@
+import type {Path} from '../engine/interfaces/path'
+import {isObjectNode} from '../engine/node/is-object-node'
 import {getAncestors} from '../node-traversal/get-ancestors'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
-import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
 import type {RegisteredContainer} from './container-types'
 import {resolveContainerAt} from './resolve-container-at'
 

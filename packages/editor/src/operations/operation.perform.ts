@@ -1,5 +1,5 @@
-import {isNormalizing} from '../slate/editor/is-normalizing'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {isNormalizing} from '../engine/editor/is-normalizing'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {addAnnotationOperationImplementation} from './operation.annotation.add'
 import {removeAnnotationOperationImplementation} from './operation.annotation.remove'
 import {blockSetOperationImplementation} from './operation.block.set'

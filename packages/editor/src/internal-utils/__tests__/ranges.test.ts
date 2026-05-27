@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
-import type {InsertTextOperation} from '../../slate/interfaces/operation'
-import type {Range} from '../../slate/interfaces/range'
+import type {InsertTextOperation} from '../../engine/interfaces/operation'
+import type {Range} from '../../engine/interfaces/range'
 import {moveRangeByOperation} from '../move-range-by-operation'
 
 describe('moveRangeByOperation', () => {

@@ -17,22 +17,22 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {Node} from '../engine/interfaces/node'
 import {getNode} from '../node-traversal/get-node'
 import {getValue} from '../node-traversal/get-value'
-import type {Node} from '../slate/interfaces/node'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
 import {isEqualToEmptyEditor} from './values'
 
 /**
- * Creates a function that can apply a patch onto a PortableTextSlateEditor.
+ * Creates a function that can apply a patch onto a PortableTextEditorEngine.
  */
 export function createApplyPatch(
   context: Pick<EditorContext, 'schema' | 'keyGenerator'> & {
     initialValue: Array<PortableTextBlock> | undefined
   },
-): (editor: PortableTextSlateEditor, patch: Patch) => boolean {
-  return (editor: PortableTextSlateEditor, patch: Patch): boolean => {
+): (editor: PortableTextEditorEngine, patch: Patch) => boolean {
+  return (editor: PortableTextEditorEngine, patch: Patch): boolean => {
     let changed = false
 
     try {
@@ -63,7 +63,7 @@ export function createApplyPatch(
 
 function diffMatchPatch(
   editor: Pick<
-    PortableTextSlateEditor,
+    PortableTextEditorEngine,
     | 'children'
     | 'apply'
     | 'selection'
@@ -122,7 +122,7 @@ function insertPatch(
   context: Pick<EditorContext, 'schema' | 'keyGenerator'> & {
     initialValue: Array<PortableTextBlock> | undefined
   },
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   patch: InsertPatch,
 ) {
   const {items, position} = patch
@@ -185,7 +185,7 @@ function insertPatch(
 }
 
 function setPatch(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   patch: SetPatch | SetIfMissingPatch,
 ) {
   // For setIfMissing, check if the value at the target path already exists.
@@ -208,7 +208,7 @@ function setPatch(
   return true
 }
 
-function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
+function unsetPatch(editor: PortableTextEditorEngine, patch: UnsetPatch) {
   if (patch.path.length === 0) {
     applyDeselect(editor)
   }

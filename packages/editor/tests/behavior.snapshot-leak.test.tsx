@@ -6,7 +6,7 @@ import {createTestEditor} from '../src/test/vitest'
 
 /**
  * Behaviors are the consumer-facing extension surface. The snapshot they
- * receive must not expose internal slate-engine state. Capture the actual
+ * receive must not expose internal engine state. Capture the actual
  * snapshot object that lands inside a guard and an action, then assert
  * the exact set of own keys.
  */

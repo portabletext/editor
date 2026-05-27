@@ -8,12 +8,12 @@ export default defineConfig({
   plugins: [
     react({
       babel: (id) => {
-        const isVendoredSlate =
-          id.includes('/src/slate/') ||
-          id.includes('/src/slate-dom/') ||
-          id.includes('/src/slate-react/')
+        const isVendoredEngine =
+          id.includes('/src/engine/') ||
+          id.includes('/src/engine-dom/') ||
+          id.includes('/src/engine-react/')
         return {
-          plugins: isVendoredSlate
+          plugins: isVendoredEngine
             ? []
             : [['babel-plugin-react-compiler', {target: '19'}]],
         }

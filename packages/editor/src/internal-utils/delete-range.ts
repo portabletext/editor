@@ -1,13 +1,13 @@
+import {after} from '../engine/editor/after'
+import {before} from '../engine/editor/before'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Range} from '../engine/interfaces/range'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import {rangeEdges} from '../engine/range/range-edges'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
-import {after} from '../slate/editor/after'
-import {before} from '../slate/editor/before'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Range} from '../slate/interfaces/range'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import {isCollapsedRange} from '../slate/range/is-collapsed-range'
-import {rangeEdges} from '../slate/range/range-edges'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDelete, type SelectionMode} from './delete-internal'
 
 interface DeleteRangeOptions {
@@ -39,7 +39,7 @@ interface DeleteRangeOptions {
  * `deleteCollapsed` instead. It expands the cursor into a range first.
  */
 export function deleteRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   range: Range,
   options: DeleteRangeOptions,
 ): void {
@@ -64,7 +64,7 @@ export function deleteRange(
  * `null` for collapsed input.
  */
 function resolveExplicitRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   at: Range,
 ): Range | null {
   if (isCollapsedRange(at)) {

@@ -7,38 +7,38 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import type {Node, NodeEntry} from '../engine/interfaces/node'
+import type {Operation} from '../engine/interfaces/operation'
+import type {Range} from '../engine/interfaces/range'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import {rangeIncludes} from '../engine/range/range-includes'
+import {rangeIntersection} from '../engine/range/range-intersection'
 import {isDeepEqual} from '../internal-utils/equality'
 import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
-import type {Node, NodeEntry} from '../slate/interfaces/node'
-import type {Operation} from '../slate/interfaces/operation'
-import type {Range} from '../slate/interfaces/range'
-import {isCollapsedRange} from '../slate/range/is-collapsed-range'
-import {rangeIncludes} from '../slate/range/range-includes'
-import {rangeIntersection} from '../slate/range/range-intersection'
 import type {RangeDecoration} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
-const slateOperationCallback: CallbackLogicFunction<
+const engineOperationCallback: CallbackLogicFunction<
   AnyEventObject,
-  {type: 'slate operation'; operation: Operation},
-  {slateEditor: PortableTextSlateEditor}
+  {type: 'engine operation'; operation: Operation},
+  {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
-  const originalApply = input.slateEditor.apply
+  const originalApply = input.editorEngine.apply
 
-  input.slateEditor.apply = (op) => {
+  input.editorEngine.apply = (op) => {
     if (op.type !== 'set_selection') {
-      sendBack({type: 'slate operation', operation: op})
+      sendBack({type: 'engine operation', operation: op})
     }
 
     originalApply(op)
   }
 
   return () => {
-    input.slateEditor.apply = originalApply
+    input.editorEngine.apply = originalApply
   }
 }
 
@@ -51,7 +51,7 @@ export const rangeDecorationsMachine = setup({
       skipSetup: boolean
       readOnly: boolean
       schema: EditorSchema
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
       decorate: {fn: (nodeEntry: NodeEntry) => Array<Range>}
     },
     input: {} as {
@@ -59,7 +59,7 @@ export const rangeDecorationsMachine = setup({
       readOnly: boolean
       schema: EditorSchema
       skipSetup: boolean
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
     },
     events: {} as
       | {
@@ -70,7 +70,7 @@ export const rangeDecorationsMachine = setup({
           rangeDecorations: Array<RangeDecoration>
         }
       | {
-          type: 'slate operation'
+          type: 'engine operation'
           operation: Operation
         }
       | {
@@ -107,7 +107,7 @@ export const rangeDecorationsMachine = setup({
         })
       }
 
-      context.slateEditor.decoratedRanges = rangeDecorationState
+      context.editorEngine.decoratedRanges = rangeDecorationState
     },
     'update range decorations': ({context, event}) => {
       if (event.type !== 'range decorations updated') {
@@ -132,17 +132,17 @@ export const rangeDecorationsMachine = setup({
         })
       }
 
-      context.slateEditor.decoratedRanges = rangeDecorationState
+      context.editorEngine.decoratedRanges = rangeDecorationState
     },
 
     'move range decorations': ({context, event}) => {
-      if (event.type !== 'slate operation') {
+      if (event.type !== 'engine operation') {
         return
       }
 
       const rangeDecorationState: Array<DecoratedRange> = []
 
-      for (const decoratedRange of context.slateEditor.decoratedRanges) {
+      for (const decoratedRange of context.editorEngine.decoratedRanges) {
         const currentSelection = decoratedRange.rangeDecoration.selection
 
         if (!currentSelection) {
@@ -178,7 +178,7 @@ export const rangeDecorationsMachine = setup({
         }
       }
 
-      context.slateEditor.decoratedRanges = rangeDecorationState
+      context.editorEngine.decoratedRanges = rangeDecorationState
     },
     'assign readOnly': assign({
       readOnly: ({context, event}) => {
@@ -192,25 +192,25 @@ export const rangeDecorationsMachine = setup({
     'update decorate': assign({
       decorate: ({context}) => {
         return {
-          fn: createDecorate(context.schema, context.slateEditor),
+          fn: createDecorate(context.schema, context.editorEngine),
         }
       },
     }),
   },
   actors: {
-    'slate operation listener': fromCallback(slateOperationCallback),
+    'engine operation listener': fromCallback(engineOperationCallback),
   },
   guards: {
     'has pending range decorations': ({context}) =>
       context.pendingRangeDecorations.length > 0,
     'has range decorations': ({context}) =>
-      context.slateEditor.decoratedRanges.length > 0,
+      context.editorEngine.decoratedRanges.length > 0,
     'has different decorations': ({context, event}) => {
       if (event.type !== 'range decorations updated') {
         return false
       }
 
-      const existingRangeDecorations = context.slateEditor.decoratedRanges.map(
+      const existingRangeDecorations = context.editorEngine.decoratedRanges.map(
         (decoratedRange) => ({
           anchor: decoratedRange.rangeDecoration.selection?.anchor,
           focus: decoratedRange.rangeDecoration.selection?.focus,
@@ -244,14 +244,14 @@ export const rangeDecorationsMachine = setup({
     decoratedRanges: [],
     skipSetup: input.skipSetup,
     schema: input.schema,
-    slateEditor: input.slateEditor,
+    editorEngine: input.editorEngine,
     decorate: {
-      fn: createDecorate(input.schema, input.slateEditor),
+      fn: createDecorate(input.schema, input.editorEngine),
     },
   }),
   invoke: {
-    src: 'slate operation listener',
-    input: ({context}) => ({slateEditor: context.slateEditor}),
+    src: 'engine operation listener',
+    input: ({context}) => ({editorEngine: context.editorEngine}),
   },
   on: {
     'update read only': {
@@ -300,7 +300,7 @@ export const rangeDecorationsMachine = setup({
       states: {
         'idle': {
           on: {
-            'slate operation': {
+            'engine operation': {
               target: 'moving range decorations',
               guard: and(['has range decorations', 'not read only']),
             },
@@ -319,13 +319,13 @@ export const rangeDecorationsMachine = setup({
 
 function createDecorate(
   schema: EditorSchema,
-  slateEditor: PortableTextSlateEditor,
+  editorEngine: PortableTextEditorEngine,
 ) {
   return function decorate([node, path]: NodeEntry): Array<Range> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = slateEditor.children[0]
+    const firstBlock = editorEngine.children[0]
     const editorOnlyContainsEmptyParagraph =
-      slateEditor.children.length === 1 &&
+      editorEngine.children.length === 1 &&
       firstBlock &&
       isEmptyTextBlock({schema}, firstBlock) &&
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
@@ -353,18 +353,18 @@ function createDecorate(
     }
 
     if (
-      !isTextBlock({schema: slateEditor.schema}, node) ||
+      !isTextBlock({schema: editorEngine.schema}, node) ||
       node.children.length === 0
     ) {
       return []
     }
 
-    return slateEditor.decoratedRanges.filter((decoratedRange) => {
+    return editorEngine.decoratedRanges.filter((decoratedRange) => {
       // Special case in order to only return one decoration for collapsed ranges
       if (isCollapsedRange(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level.
         const anchorBlock = getEnclosingBlock(
-          slateEditor,
+          editorEngine,
           decoratedRange.anchor.path,
         )
         const anchorChildSegment = decoratedRange.anchor.path.at(-1)
@@ -388,8 +388,8 @@ function createDecorate(
             anchor: {path, offset: 0},
             focus: {path, offset: 0},
           },
-          slateEditor,
-        ) || rangeIncludes(decoratedRange, path, slateEditor)
+          editorEngine,
+        ) || rangeIncludes(decoratedRange, path, editorEngine)
       )
     })
   }

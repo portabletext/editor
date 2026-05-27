@@ -1,8 +1,8 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import type {Node} from '../engine/interfaces/node'
 import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers, type Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import {getDirtyPaths} from './get-dirty-paths'
 
 const schemaDefinition = defineSchema({

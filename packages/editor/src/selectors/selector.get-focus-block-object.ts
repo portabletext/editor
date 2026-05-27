@@ -1,7 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {isEditableContainer} from '../schema/is-editable-container'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import type {BlockPath} from '../types/paths'
 import {getFocusBlock} from './selector.get-focus-block'
 

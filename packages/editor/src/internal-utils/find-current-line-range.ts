@@ -1,9 +1,9 @@
-import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import {positions as editorPositions} from '../slate/editor/positions'
-import {range as editorRange} from '../slate/editor/range'
-import type {Editor} from '../slate/interfaces/editor'
-import type {Range} from '../slate/interfaces/range'
-import {rangeEnd} from '../slate/range/range-end'
+import {DOMEditor} from '../engine/dom/plugin/dom-editor'
+import {positions as editorPositions} from '../engine/editor/positions'
+import {range as editorRange} from '../engine/editor/range'
+import type {Editor} from '../engine/interfaces/editor'
+import type {Range} from '../engine/interfaces/range'
+import {rangeEnd} from '../engine/range/range-end'
 
 /**
  * Compute the visual line range that ends at `parentRange`'s end point.

@@ -1,4 +1,4 @@
-import type {Path} from '../slate/interfaces/path'
+import type {Path} from '../engine/interfaces/path'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {getChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'

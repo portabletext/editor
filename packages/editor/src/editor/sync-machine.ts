@@ -13,6 +13,12 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
+import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
+import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
+import {start} from '../engine/editor/start'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Node} from '../engine/interfaces/node'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {deleteRange} from '../internal-utils/delete-range'
@@ -24,17 +30,11 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {validateValue} from '../internal-utils/validateValue'
-import {toSlateBlock} from '../internal-utils/values'
+import {toEngineBlock} from '../internal-utils/values'
 import {hasNode} from '../node-traversal/has-node'
-import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
-import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
-import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
-import {start} from '../slate/editor/start'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Node} from '../slate/interfaces/node'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
@@ -67,7 +67,7 @@ const syncValueCallback: CallbackLogicFunction<
       readOnly: boolean
       schema: EditorSchema
     }
-    slateEditor: PortableTextSlateEditor
+    editorEngine: PortableTextEditorEngine
     streamBlocks: boolean
     value: Array<PortableTextBlock> | undefined
   }
@@ -75,7 +75,7 @@ const syncValueCallback: CallbackLogicFunction<
   updateValue({
     context: input.context,
     sendBack,
-    slateEditor: input.slateEditor,
+    editorEngine: input.editorEngine,
     value: input.value,
     streamBlocks: input.streamBlocks,
   })
@@ -105,7 +105,7 @@ export const syncMachine = setup({
       keyGenerator: () => string
       schema: EditorSchema
       readOnly: boolean
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
       pendingValue: Array<PortableTextBlock> | undefined
       previousValue: Array<PortableTextBlock> | undefined
     },
@@ -114,7 +114,7 @@ export const syncMachine = setup({
       keyGenerator: () => string
       schema: EditorSchema
       readOnly: boolean
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
     },
     events: {} as
       | {
@@ -171,15 +171,15 @@ export const syncMachine = setup({
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
       const isBusy =
-        context.slateEditor.isDeferringMutations ||
-        context.slateEditor.isProcessingRemoteChanges
+        context.editorEngine.isDeferringMutations ||
+        context.editorEngine.isProcessingRemoteChanges
 
       debug.syncValue(
         safeStringify({
           isBusy,
-          isDeferringMutations: context.slateEditor.isDeferringMutations,
+          isDeferringMutations: context.editorEngine.isDeferringMutations,
           isProcessingRemoteChanges:
-            context.slateEditor.isProcessingRemoteChanges,
+            context.editorEngine.isProcessingRemoteChanges,
         }),
       )
 
@@ -244,7 +244,7 @@ export const syncMachine = setup({
     keyGenerator: input.keyGenerator,
     schema: input.schema,
     readOnly: input.readOnly,
-    slateEditor: input.slateEditor,
+    editorEngine: input.editorEngine,
     pendingValue: undefined,
     previousValue: undefined,
   }),
@@ -378,7 +378,7 @@ export const syncMachine = setup({
               readOnly: context.readOnly,
               schema: context.schema,
             },
-            slateEditor: context.slateEditor,
+            editorEngine: context.editorEngine,
             streamBlocks: !context.initialValueSynced,
             value: context.pendingValue,
           }
@@ -422,7 +422,7 @@ export const syncMachine = setup({
 async function updateValue({
   context,
   sendBack,
-  slateEditor,
+  editorEngine,
   streamBlocks,
   value,
 }: {
@@ -433,7 +433,7 @@ async function updateValue({
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
@@ -441,11 +441,11 @@ async function updateValue({
   let isChanged = false
   let isValid = true
 
-  const hadSelection = !!slateEditor.selection
+  const hadSelection = !!editorEngine.selection
 
   if (!value || value.length === 0) {
     clearEditor({
-      slateEditor,
+      editorEngine,
       doneSyncing,
     })
 
@@ -462,7 +462,7 @@ async function updateValue({
         }
 
         isChanged = removeExtraBlocks({
-          slateEditor,
+          editorEngine,
           value,
         })
 
@@ -478,7 +478,7 @@ async function updateValue({
               sendBack,
               block: currentBlock,
               index: currentBlockIndex,
-              slateEditor,
+              editorEngine,
               value,
             })
 
@@ -501,7 +501,7 @@ async function updateValue({
       }
 
       isChanged = removeExtraBlocks({
-        slateEditor,
+        editorEngine,
         value,
       })
 
@@ -513,7 +513,7 @@ async function updateValue({
           sendBack,
           block,
           index,
-          slateEditor,
+          editorEngine,
           value,
         })
 
@@ -543,7 +543,7 @@ async function updateValue({
     debug.syncValue('remote value changed, syncing local value')
 
     try {
-      slateEditor.onChange()
+      editorEngine.onChange()
     } catch (err) {
       console.error(err)
 
@@ -562,11 +562,11 @@ async function updateValue({
 
     if (
       hadSelection &&
-      !slateEditor.selection &&
-      slateEditor.children.length > 0
+      !editorEngine.selection &&
+      editorEngine.children.length > 0
     ) {
-      applySelect(slateEditor, start(slateEditor, []))
-      slateEditor.onChange()
+      applySelect(editorEngine, start(editorEngine, []))
+      editorEngine.onChange()
     }
 
     sendBack({type: 'value changed', value})
@@ -594,28 +594,28 @@ async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
  * Remove all blocks and insert a placeholder block
  */
 function clearEditor({
-  slateEditor,
+  editorEngine,
   doneSyncing,
 }: {
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   doneSyncing: boolean
 }) {
-  withoutNormalizing(slateEditor, () => {
-    pluginWithoutHistory(slateEditor, () => {
-      withRemoteChanges(slateEditor, () => {
-        withoutPatching(slateEditor, () => {
+  withoutNormalizing(editorEngine, () => {
+    pluginWithoutHistory(editorEngine, () => {
+      withRemoteChanges(editorEngine, () => {
+        withoutPatching(editorEngine, () => {
           if (doneSyncing) {
             return
           }
 
-          const childrenLength = slateEditor.children.length
+          const childrenLength = editorEngine.children.length
 
-          slateEditor.children.forEach((_, index) => {
-            const removeNode = slateEditor.children[childrenLength - 1 - index]
+          editorEngine.children.forEach((_, index) => {
+            const removeNode = editorEngine.children[childrenLength - 1 - index]
             if (!removeNode) {
               return
             }
-            slateEditor.apply({
+            editorEngine.apply({
               type: 'unset',
               path: [{_key: removeNode._key}],
             })
@@ -631,26 +631,26 @@ function clearEditor({
  * remove blocks that have become superfluous
  */
 function removeExtraBlocks({
-  slateEditor,
+  editorEngine,
   value,
 }: {
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
 }) {
   let isChanged = false
 
-  withoutNormalizing(slateEditor, () => {
-    withRemoteChanges(slateEditor, () => {
-      withoutPatching(slateEditor, () => {
-        const childrenLength = slateEditor.children.length
+  withoutNormalizing(editorEngine, () => {
+    withRemoteChanges(editorEngine, () => {
+      withoutPatching(editorEngine, () => {
+        const childrenLength = editorEngine.children.length
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const removeNode = slateEditor.children[i]
+            const removeNode = editorEngine.children[i]
             if (!removeNode) {
               continue
             }
-            slateEditor.apply({
+            editorEngine.apply({
               type: 'unset',
               path: [{_key: removeNode._key}],
             })
@@ -670,7 +670,7 @@ function syncBlock({
   sendBack,
   block,
   index,
-  slateEditor,
+  editorEngine,
   value,
 }: {
   context: {
@@ -682,13 +682,13 @@ function syncBlock({
   sendBack: (event: SyncValueEvent) => void
   block: PortableTextBlock
   index: number
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
 }) {
-  const oldSlateBlock = slateEditor.children.at(index)
-  const oldBlock = slateEditor.children.at(index)
+  const oldEngineBlock = editorEngine.children.at(index)
+  const oldBlock = editorEngine.children.at(index)
 
-  if (!oldSlateBlock || !oldBlock) {
+  if (!oldEngineBlock || !oldBlock) {
     // Insert the new block
     const validation = validateValue(
       [block],
@@ -702,17 +702,17 @@ function syncBlock({
     )
 
     if (validation.valid || validation.resolution?.autoResolve) {
-      const slateBlock = toSlateBlock(block, {
+      const engineBlock = toEngineBlock(block, {
         schemaTypes: context.schema,
       })
 
-      withoutNormalizing(slateEditor, () => {
-        withRemoteChanges(slateEditor, () => {
-          withoutPatching(slateEditor, () => {
-            slateEditor.apply({
+      withoutNormalizing(editorEngine, () => {
+        withRemoteChanges(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
+            editorEngine.apply({
               type: 'insert',
-              path: [slateEditor.children.length],
-              node: slateBlock,
+              path: [editorEngine.children.length],
+              node: engineBlock,
               position: 'before',
             })
           })
@@ -787,13 +787,13 @@ function syncBlock({
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
       debug.syncValue('Updating block', oldBlock, block)
 
-      withoutNormalizing(slateEditor, () => {
-        withRemoteChanges(slateEditor, () => {
-          withoutPatching(slateEditor, () => {
+      withoutNormalizing(editorEngine, () => {
+        withRemoteChanges(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
             updateBlock({
               context,
-              slateEditor,
-              oldSlateBlock,
+              editorEngine,
+              oldEngineBlock,
               block,
               index,
             })
@@ -803,12 +803,12 @@ function syncBlock({
     } else {
       debug.syncValue('Replacing block', oldBlock, block)
 
-      withoutNormalizing(slateEditor, () => {
-        withRemoteChanges(slateEditor, () => {
-          withoutPatching(slateEditor, () => {
+      withoutNormalizing(editorEngine, () => {
+        withRemoteChanges(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
             replaceBlock({
               context,
-              slateEditor,
+              editorEngine,
               block,
               index,
             })
@@ -837,7 +837,7 @@ function syncBlock({
 
 function replaceBlock({
   context,
-  slateEditor,
+  editorEngine,
   block,
   index,
 }: {
@@ -847,19 +847,19 @@ function replaceBlock({
     readOnly: boolean
     schema: EditorSchema
   }
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   block: PortableTextBlock
   index: number
 }) {
-  const slateBlock = toSlateBlock(block, {
+  const engineBlock = toEngineBlock(block, {
     schemaTypes: context.schema,
   })
 
   // While replacing the block and the current selection focus is on the replaced block,
   // temporarily deselect the editor then optimistically try to restore the selection afterwards.
-  const currentSelection = slateEditor.selection
+  const currentSelection = editorEngine.selection
   const focusBlockSegment = currentSelection?.focus.path[0]
-  const blockAtIndex = slateEditor.children[index]
+  const blockAtIndex = editorEngine.children[index]
   const selectionFocusOnBlock =
     currentSelection &&
     isKeyedSegment(focusBlockSegment) &&
@@ -867,39 +867,39 @@ function replaceBlock({
     focusBlockSegment._key === blockAtIndex._key
 
   if (selectionFocusOnBlock) {
-    applyDeselect(slateEditor)
+    applyDeselect(editorEngine)
   }
 
-  const oldNode = slateEditor.children[index]
+  const oldNode = editorEngine.children[index]
   if (!oldNode) {
     return
   }
-  slateEditor.apply({
+  editorEngine.apply({
     type: 'unset',
     path: [{_key: oldNode._key}],
   })
-  slateEditor.apply({
+  editorEngine.apply({
     type: 'insert',
     path: [index],
-    node: slateBlock,
+    node: engineBlock,
     position: 'before',
   })
 
-  slateEditor.onChange()
+  editorEngine.onChange()
 
   if (
     selectionFocusOnBlock &&
-    hasNode(slateEditor, currentSelection.anchor.path) &&
-    hasNode(slateEditor, currentSelection.focus.path)
+    hasNode(editorEngine, currentSelection.anchor.path) &&
+    hasNode(editorEngine, currentSelection.focus.path)
   ) {
-    applySelect(slateEditor, currentSelection)
+    applySelect(editorEngine, currentSelection)
   }
 }
 
 function updateBlock({
   context,
-  slateEditor,
-  oldSlateBlock,
+  editorEngine,
+  oldEngineBlock,
   block,
   index: _index,
 }: {
@@ -909,28 +909,28 @@ function updateBlock({
     readOnly: boolean
     schema: EditorSchema
   }
-  slateEditor: PortableTextSlateEditor
-  oldSlateBlock: Node
+  editorEngine: PortableTextEditorEngine
+  oldEngineBlock: Node
   block: PortableTextBlock
   index: number
 }) {
-  const slateBlock = toSlateBlock(block, {
+  const engineBlock = toEngineBlock(block, {
     schemaTypes: context.schema,
   })
 
   // Update the root props on the block.
   // Strip children (managed by dedicated operations below).
-  const {children: _children, ...blockProps} = slateBlock as unknown as Record<
+  const {children: _children, ...blockProps} = engineBlock as unknown as Record<
     string,
     unknown
   >
 
-  setNodeProperties(slateEditor, blockProps, [{_key: oldSlateBlock._key}])
+  setNodeProperties(editorEngine, blockProps, [{_key: oldEngineBlock._key}])
 
   // Remove properties present on the old node but absent from the new block.
   // Skip children/text (structural, managed by dedicated operations).
-  const oldRecord = oldSlateBlock as unknown as Record<string, unknown>
-  const newRecord = slateBlock as unknown as Record<string, unknown>
+  const oldRecord = oldEngineBlock as unknown as Record<string, unknown>
+  const newRecord = engineBlock as unknown as Record<string, unknown>
   const removedProperties: Record<string, unknown> = {}
 
   for (const key of Object.keys(oldRecord)) {
@@ -944,21 +944,21 @@ function updateBlock({
   }
 
   if (Object.keys(removedProperties).length > 0) {
-    setNodeProperties(slateEditor, removedProperties, [
-      {_key: oldSlateBlock._key},
+    setNodeProperties(editorEngine, removedProperties, [
+      {_key: oldEngineBlock._key},
     ])
   }
 
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
-    isTextBlock({schema: slateEditor.schema}, slateBlock) &&
-    isTextBlock({schema: slateEditor.schema}, oldSlateBlock)
+    isTextBlock({schema: editorEngine.schema}, engineBlock) &&
+    isTextBlock({schema: editorEngine.schema}, oldEngineBlock)
   ) {
     // Detect cases where incremental remove/insert would break due to
     // stale keyed path references. Use a single set to replace the
     // children array atomically instead.
-    const oldKeys = oldSlateBlock.children.map((c) => c._key)
-    const newKeys = slateBlock.children.map((c) => c._key)
+    const oldKeys = oldEngineBlock.children.map((c) => c._key)
+    const newKeys = engineBlock.children.map((c) => c._key)
     const oldKeySet = new Set(oldKeys)
     const hasSharedKeys = newKeys.some((key) => oldKeySet.has(key))
     const isPureReorder =
@@ -970,33 +970,33 @@ function updateBlock({
 
     if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
       debug.syncValue('Replacing children via set')
-      setNodeProperties(slateEditor, {children: slateBlock.children}, [
-        {_key: oldSlateBlock._key},
+      setNodeProperties(editorEngine, {children: engineBlock.children}, [
+        {_key: oldEngineBlock._key},
       ])
-      slateEditor.onChange()
+      editorEngine.onChange()
       return
     }
 
-    const oldBlockChildrenLength = oldSlateBlock.children.length
+    const oldBlockChildrenLength = oldEngineBlock.children.length
 
-    if (slateBlock.children.length < oldBlockChildrenLength) {
+    if (engineBlock.children.length < oldBlockChildrenLength) {
       // Remove any children that have become superfluous
       Array.from(
-        Array(oldBlockChildrenLength - slateBlock.children.length),
+        Array(oldBlockChildrenLength - engineBlock.children.length),
       ).forEach((_, i) => {
         const childIndex = oldBlockChildrenLength - 1 - i
 
         if (childIndex > 0) {
           debug.syncValue('Removing child')
 
-          const childNode = oldSlateBlock.children[childIndex]
+          const childNode = oldEngineBlock.children[childIndex]
           if (!childNode) {
             return
           }
-          slateEditor.apply({
+          editorEngine.apply({
             type: 'unset',
             path: [
-              {_key: oldSlateBlock._key},
+              {_key: oldEngineBlock._key},
               'children',
               {_key: childNode._key},
             ],
@@ -1005,146 +1005,148 @@ function updateBlock({
       })
     }
 
-    slateBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
-      const oldBlockChild = oldSlateBlock.children.at(currentBlockChildIndex)
-      const isChildChanged =
-        !oldBlockChild ||
-        !isEqualChild(
-          currentBlockChild,
-          oldBlockChild,
-          slateEditor.schema.span.name,
-        )
-      const isTextChanged =
-        oldBlockChild &&
-        isSpan({schema: slateEditor.schema}, oldBlockChild) &&
-        currentBlockChild.text !== oldBlockChild.text
-      const path = [
-        {_key: oldSlateBlock._key},
-        'children',
-        {_key: currentBlockChild._key},
-      ]
-
-      if (isChildChanged) {
-        // Update if this is the same child (same key and type)
-        if (
-          currentBlockChild._key === oldBlockChild?._key &&
-          currentBlockChild._type === oldBlockChild?._type
-        ) {
-          debug.syncValue(
-            'Updating changed child',
+    engineBlock.children.forEach(
+      (currentBlockChild, currentBlockChildIndex) => {
+        const oldBlockChild = oldEngineBlock.children.at(currentBlockChildIndex)
+        const isChildChanged =
+          !oldBlockChild ||
+          !isEqualChild(
             currentBlockChild,
             oldBlockChild,
+            editorEngine.schema.span.name,
           )
+        const isTextChanged =
+          oldBlockChild &&
+          isSpan({schema: editorEngine.schema}, oldBlockChild) &&
+          currentBlockChild.text !== oldBlockChild.text
+        const path = [
+          {_key: oldEngineBlock._key},
+          'children',
+          {_key: currentBlockChild._key},
+        ]
 
-          const {text: _text, ...childProps} =
-            currentBlockChild as unknown as Record<string, unknown>
+        if (isChildChanged) {
+          // Update if this is the same child (same key and type)
+          if (
+            currentBlockChild._key === oldBlockChild?._key &&
+            currentBlockChild._type === oldBlockChild?._type
+          ) {
+            debug.syncValue(
+              'Updating changed child',
+              currentBlockChild,
+              oldBlockChild,
+            )
 
-          setNodeProperties(slateEditor, childProps, path)
+            const {text: _text, ...childProps} =
+              currentBlockChild as unknown as Record<string, unknown>
 
-          const isSpanNode =
-            isSpan({schema: context.schema}, currentBlockChild) &&
-            isSpan({schema: context.schema}, oldBlockChild)
+            setNodeProperties(editorEngine, childProps, path)
 
-          if (isSpanNode && isTextChanged) {
-            if (oldBlockChild.text.length > 0) {
-              deleteRange(
-                slateEditor,
-                {
-                  focus: {path, offset: 0},
-                  anchor: {path, offset: oldBlockChild.text.length},
-                },
-                {
-                  selection: 'preserve',
-                  removeEmptyStartBlock: true,
-                },
+            const isSpanNode =
+              isSpan({schema: context.schema}, currentBlockChild) &&
+              isSpan({schema: context.schema}, oldBlockChild)
+
+            if (isSpanNode && isTextChanged) {
+              if (oldBlockChild.text.length > 0) {
+                deleteRange(
+                  editorEngine,
+                  {
+                    focus: {path, offset: 0},
+                    anchor: {path, offset: oldBlockChild.text.length},
+                  },
+                  {
+                    selection: 'preserve',
+                    removeEmptyStartBlock: true,
+                  },
+                )
+              }
+
+              editorEngine.apply({
+                type: 'insert_text',
+                path,
+                offset: 0,
+                text: currentBlockChild.text,
+              })
+
+              editorEngine.onChange()
+            } else if (!isSpanNode) {
+              debug.syncValue(
+                'Updating changed inline object child',
+                currentBlockChild,
               )
             }
+          } else if (oldBlockChild) {
+            debug.syncValue('Replacing child', currentBlockChild)
 
-            slateEditor.apply({
-              type: 'insert_text',
-              path,
-              offset: 0,
-              text: currentBlockChild.text,
-            })
-
-            slateEditor.onChange()
-          } else if (!isSpanNode) {
-            debug.syncValue(
-              'Updating changed inline object child',
-              currentBlockChild,
-            )
-          }
-        } else if (oldBlockChild) {
-          debug.syncValue('Replacing child', currentBlockChild)
-
-          const oldChild = oldSlateBlock.children[currentBlockChildIndex]
-          if (!oldChild) {
-            return
-          }
-          slateEditor.apply({
-            type: 'unset',
-            path: [
-              {_key: oldSlateBlock._key},
-              'children',
-              {_key: oldChild._key},
-            ],
-          })
-          const prevSibling =
-            currentBlockChildIndex > 0
-              ? oldSlateBlock.children[currentBlockChildIndex - 1]
-              : undefined
-          if (prevSibling) {
-            slateEditor.apply({
-              type: 'insert',
+            const oldChild = oldEngineBlock.children[currentBlockChildIndex]
+            if (!oldChild) {
+              return
+            }
+            editorEngine.apply({
+              type: 'unset',
               path: [
-                {_key: oldSlateBlock._key},
+                {_key: oldEngineBlock._key},
                 'children',
-                {_key: prevSibling._key},
+                {_key: oldChild._key},
               ],
-              node: currentBlockChild,
-              position: 'after',
             })
-          } else {
-            slateEditor.apply({
-              type: 'insert',
-              path: [{_key: oldSlateBlock._key}, 'children', 0],
-              node: currentBlockChild,
-              position: 'before',
-            })
+            const prevSibling =
+              currentBlockChildIndex > 0
+                ? oldEngineBlock.children[currentBlockChildIndex - 1]
+                : undefined
+            if (prevSibling) {
+              editorEngine.apply({
+                type: 'insert',
+                path: [
+                  {_key: oldEngineBlock._key},
+                  'children',
+                  {_key: prevSibling._key},
+                ],
+                node: currentBlockChild,
+                position: 'after',
+              })
+            } else {
+              editorEngine.apply({
+                type: 'insert',
+                path: [{_key: oldEngineBlock._key}, 'children', 0],
+                node: currentBlockChild,
+                position: 'before',
+              })
+            }
+
+            editorEngine.onChange()
+          } else if (!oldBlockChild) {
+            // Insert it if it didn't exist before
+            debug.syncValue('Inserting new child', currentBlockChild)
+
+            const prevChild =
+              currentBlockChildIndex > 0
+                ? engineBlock.children[currentBlockChildIndex - 1]
+                : undefined
+            if (prevChild) {
+              editorEngine.apply({
+                type: 'insert',
+                path: [
+                  {_key: oldEngineBlock._key},
+                  'children',
+                  {_key: prevChild._key},
+                ],
+                node: currentBlockChild,
+                position: 'after',
+              })
+            } else {
+              editorEngine.apply({
+                type: 'insert',
+                path: [{_key: oldEngineBlock._key}, 'children', 0],
+                node: currentBlockChild,
+                position: 'before',
+              })
+            }
+
+            editorEngine.onChange()
           }
-
-          slateEditor.onChange()
-        } else if (!oldBlockChild) {
-          // Insert it if it didn't exist before
-          debug.syncValue('Inserting new child', currentBlockChild)
-
-          const prevChild =
-            currentBlockChildIndex > 0
-              ? slateBlock.children[currentBlockChildIndex - 1]
-              : undefined
-          if (prevChild) {
-            slateEditor.apply({
-              type: 'insert',
-              path: [
-                {_key: oldSlateBlock._key},
-                'children',
-                {_key: prevChild._key},
-              ],
-              node: currentBlockChild,
-              position: 'after',
-            })
-          } else {
-            slateEditor.apply({
-              type: 'insert',
-              path: [{_key: oldSlateBlock._key}, 'children', 0],
-              node: currentBlockChild,
-              position: 'before',
-            })
-          }
-
-          slateEditor.onChange()
         }
-      }
-    })
+      },
+    )
   }
 }

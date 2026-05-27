@@ -3,17 +3,17 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
+import {withoutPatching} from '../src/engine-plugins/engine-plugin.without-patching'
+import {normalize} from '../src/engine/editor/normalize'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {defineContainer, type Container} from '../src/renderers/renderer.types'
 import {buildPublicContainers} from '../src/schema/build-public-containers'
 import {
   resolveContainersRich,
   type ResolvedContainers,
 } from '../src/schema/resolve-containers'
-import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
-import {normalize} from '../src/slate/editor/normalize'
 import {createTestEditor} from '../src/test/vitest'
-import type {PortableTextSlateEditor} from '../src/types/slate-editor'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -408,7 +408,7 @@ describe('tables', () => {
   describe('normalization', () => {
     test('text blocks inside containers get missing .markDefs', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+      const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
@@ -452,22 +452,22 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
       })
 
       // Set containers so normalization traverses into containers
       const _resolvedContainers = tableContainers()
 
-      slateEditorRef.current!.containers = _resolvedContainers
+      editorEngineRef.current!.containers = _resolvedContainers
 
-      slateEditorRef.current!.publicContainers =
+      editorEngineRef.current!.publicContainers =
         buildPublicContainers(_resolvedContainers)
 
       // Force normalization with containers set
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
+      withoutPatching(editorEngineRef.current!, () => {
+        normalize(editorEngineRef.current!, {force: true})
       })
-      slateEditorRef.current!.onChange()
+      editorEngineRef.current!.onChange()
 
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
@@ -478,7 +478,7 @@ describe('tables', () => {
 
     test('text blocks inside containers get missing .style', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+      const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
@@ -522,20 +522,20 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
       })
 
       const _resolvedContainers = tableContainers()
 
-      slateEditorRef.current!.containers = _resolvedContainers
+      editorEngineRef.current!.containers = _resolvedContainers
 
-      slateEditorRef.current!.publicContainers =
+      editorEngineRef.current!.publicContainers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
+      withoutPatching(editorEngineRef.current!, () => {
+        normalize(editorEngineRef.current!, {force: true})
       })
-      slateEditorRef.current!.onChange()
+      editorEngineRef.current!.onChange()
 
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
@@ -546,7 +546,7 @@ describe('tables', () => {
 
     test('spans inside containers get missing .marks', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+      const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
@@ -590,20 +590,20 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
       })
 
       const _resolvedContainers = tableContainers()
 
-      slateEditorRef.current!.containers = _resolvedContainers
+      editorEngineRef.current!.containers = _resolvedContainers
 
-      slateEditorRef.current!.publicContainers =
+      editorEngineRef.current!.publicContainers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
+      withoutPatching(editorEngineRef.current!, () => {
+        normalize(editorEngineRef.current!, {force: true})
       })
-      slateEditorRef.current!.onChange()
+      editorEngineRef.current!.onChange()
 
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
@@ -617,7 +617,7 @@ describe('tables', () => {
 
     test('duplicate keys inside containers are fixed', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+      const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
@@ -676,20 +676,20 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
       })
 
       const _resolvedContainers = tableContainers()
 
-      slateEditorRef.current!.containers = _resolvedContainers
+      editorEngineRef.current!.containers = _resolvedContainers
 
-      slateEditorRef.current!.publicContainers =
+      editorEngineRef.current!.publicContainers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
+      withoutPatching(editorEngineRef.current!, () => {
+        normalize(editorEngineRef.current!, {force: true})
       })
-      slateEditorRef.current!.onChange()
+      editorEngineRef.current!.onChange()
 
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
@@ -715,7 +715,7 @@ describe('tables', () => {
 
     test('empty text blocks inside containers get a span inserted', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+      const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
@@ -752,20 +752,20 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
       })
 
       const _resolvedContainers = tableContainers()
 
-      slateEditorRef.current!.containers = _resolvedContainers
+      editorEngineRef.current!.containers = _resolvedContainers
 
-      slateEditorRef.current!.publicContainers =
+      editorEngineRef.current!.publicContainers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
+      withoutPatching(editorEngineRef.current!, () => {
+        normalize(editorEngineRef.current!, {force: true})
       })
-      slateEditorRef.current!.onChange()
+      editorEngineRef.current!.onChange()
 
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
@@ -779,7 +779,7 @@ describe('tables', () => {
 
     test('text blocks with missing children inside containers get restored', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+      const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
@@ -815,20 +815,20 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
       })
 
       const _resolvedContainers = tableContainers()
 
-      slateEditorRef.current!.containers = _resolvedContainers
+      editorEngineRef.current!.containers = _resolvedContainers
 
-      slateEditorRef.current!.publicContainers =
+      editorEngineRef.current!.publicContainers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
+      withoutPatching(editorEngineRef.current!, () => {
+        normalize(editorEngineRef.current!, {force: true})
       })
-      slateEditorRef.current!.onChange()
+      editorEngineRef.current!.onChange()
 
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value

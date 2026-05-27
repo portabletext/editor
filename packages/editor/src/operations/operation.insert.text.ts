@@ -1,10 +1,10 @@
 import {isSpan} from '@portabletext/schema'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {applySelect} from '../internal-utils/apply-selection'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {isLeaf} from '../node-traversal/is-leaf'
-import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<

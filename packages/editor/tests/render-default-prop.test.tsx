@@ -456,7 +456,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
       const wrapper = document.querySelector('[data-pt-inline="object"]')
       expect(wrapper).not.toEqual(null)
       // Outer auto-receives contentEditable=false via object-node.tsx's
-      // isInline && !readOnly branch (Slate-applied for inline voids).
+      // isInline && !readOnly branch (engine-applied for inline voids).
       expect(wrapper!.getAttribute('contenteditable')).toEqual('false')
       const placeholder = Array.from(wrapper!.querySelectorAll('span')).find(
         (el) => el.textContent === '[mention: i0]',

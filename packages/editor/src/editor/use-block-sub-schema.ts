@@ -1,6 +1,6 @@
 import type {Schema} from '@portabletext/schema'
-import type {Path} from '../slate/interfaces/path'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
+import type {Path} from '../engine/interfaces/path'
+import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 
 /**
@@ -11,6 +11,6 @@ import {getPathSubSchema} from '../traversal/get-path-sub-schema'
  * schema view when no container ancestor exists.
  */
 export function useBlockSubSchema(path: Path): Schema {
-  const editor = useSlateStatic()
+  const editor = useEngineStatic()
   return getPathSubSchema(editor, path)
 }

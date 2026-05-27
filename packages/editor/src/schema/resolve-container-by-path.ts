@@ -1,5 +1,7 @@
 import type {FieldDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
 import type {
   BlockObjectConfig,
   ContainerConfig,
@@ -7,15 +9,13 @@ import type {
   SpanConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {ChildArrayField, ResolvedContainers} from './container-types'
 import {entryType} from './entry-type'
 
 /**
  * Input shape required for rich positional resolution. Provided by
- * the slate editor (via .containers / .schema / .children) and by
+ * the editor engine (via .containers / .schema / .children) and by
  * test fixtures constructing a minimal editor-shaped object.
  */
 export type RichResolutionInput = {

@@ -5,14 +5,14 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
+import type {Node} from '../engine/interfaces/node'
+import type {Operation} from '../engine/interfaces/operation'
+import type {Path} from '../engine/interfaces/path'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {pathEquals} from '../engine/path/path-equals'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
-import type {Node} from '../slate/interfaces/node'
-import type {Operation} from '../slate/interfaces/operation'
-import type {Path} from '../slate/interfaces/path'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import {pathEquals} from '../slate/path/path-equals'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {debug} from './debug'
 
 /**
@@ -24,7 +24,7 @@ import {debug} from './debug'
  * the same node need adjustment (diffMatchPatch).
  */
 export function transformOperation(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   patch: Patch,
   operation: Operation,
 ): Operation[] {
@@ -156,7 +156,7 @@ export function transformOperation(
 
 function findOperationTargetBlock(
   snapshot: TraversalSnapshot,
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   operation: Operation,
 ): Node | undefined {
   if (operation.type === 'set_selection' && editor.selection) {

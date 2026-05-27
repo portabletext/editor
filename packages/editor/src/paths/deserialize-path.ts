@@ -1,4 +1,4 @@
-import type {Path} from '../slate/interfaces/path'
+import type {Path} from '../engine/interfaces/path'
 
 const KEYED_SEGMENT_PATTERN = /\[_key=="(.+?)"\]/
 

@@ -1,14 +1,14 @@
+import {after} from '../engine/editor/after'
+import {before} from '../engine/editor/before'
+import {end as editorEnd} from '../engine/editor/end'
+import {start as editorStart} from '../engine/editor/start'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Point} from '../engine/interfaces/point'
+import type {Range} from '../engine/interfaces/range'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import type {TextUnit} from '../engine/types/types'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
-import {after} from '../slate/editor/after'
-import {before} from '../slate/editor/before'
-import {end as editorEnd} from '../slate/editor/end'
-import {start as editorStart} from '../slate/editor/start'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Point} from '../slate/interfaces/point'
-import type {Range} from '../slate/interfaces/range'
-import {isCollapsedRange} from '../slate/range/is-collapsed-range'
-import type {TextUnit} from '../slate/types/types'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDelete, type SelectionMode} from './delete-internal'
 
 interface DeleteCollapsedOptions {
@@ -43,7 +43,7 @@ interface DeleteCollapsedOptions {
  * keystroke rather than the full grapheme cluster.
  */
 export function deleteCollapsed(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   point: Point,
   options: DeleteCollapsedOptions,
 ): void {

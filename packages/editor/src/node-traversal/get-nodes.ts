@@ -1,11 +1,11 @@
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren, getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'

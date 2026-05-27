@@ -4,10 +4,10 @@ import type {
 } from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
+import type {Path} from '../engine/interfaces/path'
+import type {RenderElementProps} from '../engine/react/components/editable'
+import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
 import {serializePath} from '../paths/serialize-path'
-import type {Path} from '../slate/interfaces/path'
-import type {RenderElementProps} from '../slate/react/components/editable'
-import {useSlateSelector} from '../slate/react/hooks/use-slate-selector'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,
@@ -44,7 +44,7 @@ export function RenderTextBlock(props: {
   const serializedPath = serializePath(props.path)
   const selected = useIsSelectedContainer(serializedPath)
   const focused = useIsFocusedContainer(serializedPath)
-  const listIndex = useSlateSelector((editor) =>
+  const listIndex = useEngineSelector((editor) =>
     editor.listIndexMap.get(props.textBlock._key),
   )
   const subSchema = useBlockSubSchema(props.path)

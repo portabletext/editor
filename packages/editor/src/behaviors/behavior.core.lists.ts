@@ -1,4 +1,5 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
+import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {getFocusListBlock} from '../selectors/selector.get-focus-list-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
@@ -8,7 +9,6 @@ import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blo
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {isListBlock} from '../utils/parse-blocks'
 import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'

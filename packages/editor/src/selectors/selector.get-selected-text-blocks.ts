@@ -1,8 +1,8 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {Path} from '../engine/interfaces/path'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNodes} from '../node-traversal/get-nodes'
-import type {Path} from '../slate/interfaces/path'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 
