@@ -65,6 +65,7 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 export const DefaultTableRenderer: PortableTextTypeRenderer<{
   _type: 'table'
   headerRows: number | undefined
+  alignment: Array<'left' | 'center' | 'right' | null> | undefined
   rows: Array<{
     _key: string
     cells: Array<{
@@ -82,6 +83,7 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
       value: Array<{_type: string; children?: Array<unknown>}>
     }>
   }>
+  const alignment = value.alignment
 
   const headerRow = rows.at(0)
 
@@ -128,8 +130,21 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   // First row is the header, padded to the table's column count
   lines.push(renderRow(headerRow.cells))
 
-  // Delimiter row, sized to the column count
-  const separators = Array.from({length: columnCount}, () => ' --- ')
+  // Delimiter row, sized to the column count. Each cell's colons encode the
+  // column's alignment as defined by `value.alignment[columnIndex]`.
+  const separators = Array.from({length: columnCount}, (_, index) => {
+    const align = alignment?.at(index)
+    if (align === 'left') {
+      return ' :--- '
+    }
+    if (align === 'center') {
+      return ' :---: '
+    }
+    if (align === 'right') {
+      return ' ---: '
+    }
+    return ' --- '
+  })
   lines.push(`|${separators.join('|')}|`)
 
   // Remaining rows are the body

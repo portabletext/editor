@@ -126,6 +126,7 @@ const defaultTableObjectDefinition = {
   name: 'table',
   fields: [
     {name: 'headerRows', type: 'number'},
+    {name: 'alignment', type: 'array'},
     {name: 'rows', type: 'array'},
   ],
 } as const satisfies BlockObjectDefinition
