@@ -82,7 +82,6 @@ const syntheticBehaviorEventTypes = [
   'insert.child',
   'insert.text',
   'move.backward',
-  'move.block',
   'move.forward',
   'remove.text',
   'select',
@@ -239,11 +238,6 @@ export type SyntheticBehaviorEvent =
       distance: number
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
-      at: BlockPath
-      to: BlockPath
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.forward'>
       distance: number
     }
@@ -375,6 +369,7 @@ const abstractBehaviorEventTypes = [
   'list item.add',
   'list item.remove',
   'list item.toggle',
+  'move.block',
   'move.block down',
   'move.block up',
   'select.block',
@@ -555,6 +550,11 @@ type AbstractBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'list item.toggle'>
       listItem: string
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
+      at: BlockPath
+      to: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>

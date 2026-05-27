@@ -16,7 +16,6 @@ import {insertBlockOperationImplementation} from './operation.insert.block'
 import {insertChildOperationImplementation} from './operation.insert.child'
 import {insertTextOperationImplementation} from './operation.insert.text'
 import {moveBackwardOperationImplementation} from './operation.move.backward'
-import {moveBlockOperationImplementation} from './operation.move.block'
 import {moveForwardOperationImplementation} from './operation.move.forward'
 import {removeTextOperationImplementation} from './operation.remove.text'
 import {selectOperationImplementation} from './operation.select'
@@ -45,7 +44,6 @@ const operationImplementations: OperationImplementations = {
   'insert.child': insertChildOperationImplementation,
   'insert.text': insertTextOperationImplementation,
   'move.backward': moveBackwardOperationImplementation,
-  'move.block': moveBlockOperationImplementation,
   'move.forward': moveForwardOperationImplementation,
   'remove.text': removeTextOperationImplementation,
   'select': selectOperationImplementation,
