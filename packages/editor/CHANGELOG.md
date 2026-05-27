@@ -1,5 +1,24 @@
 # Changelog
 
+## 7.0.3
+
+### Patch Changes
+
+- [#2698](https://github.com/portabletext/editor/pull/2698) [`44d5d47`](https://github.com/portabletext/editor/commit/44d5d471ecb95373a7c06d476dd72b5756ad1ba0) Thanks [@christianhg](https://github.com/christianhg)! - fix: dedupe `'selection'` emissions by semantic equality
+
+  `'selection'` events could fire twice in a row with the same anchor, focus, and direction when an internal selection reference changed without the caret actually moving (for example after applying a remote patch on the span the caret is inside). Consumers wiring `'selection'` to focus state would race against their own caret-driven UI. The guard now compares the selection by value.
+
+- [#2696](https://github.com/portabletext/editor/pull/2696) [`6ed97e9`](https://github.com/portabletext/editor/commit/6ed97e98b1e6900ad8c48daf7e4c4f265d86bf1d) Thanks [@christianhg](https://github.com/christianhg)! - fix: guard `move.block` against destination paths that resolve to the origin
+
+  Previously, sending `move.block` with `at` and `to` resolving to the same block decomposed into an `unset` followed by an `insert` against a path that no longer resolved, throwing inside the apply layer. The operation pipeline swallowed the throw with `console.error` while leaving the partial state (the unset block was gone) committed, so the source block was eaten.
+
+  `move.block` is now decomposed at the behavior layer into an abstract behavior that raises `unset` and `insert` in one batch. The same-resolved-path case short-circuits in the behavior's guard, so no apply ever runs. The operation handler is gone.
+
+  `move.block up` and `move.block down` keep restoring the pre-move selection themselves, so consumer-visible behavior for those events is unchanged.
+
+- Updated dependencies [[`491d5ff`](https://github.com/portabletext/editor/commit/491d5ffedbbce814967289af44010fdd7ca017f7), [`8247ec5`](https://github.com/portabletext/editor/commit/8247ec551022d4ae077c40aff475f16533b9ac12)]:
+  - @portabletext/markdown@1.3.2
+
 ## 7.0.2
 
 ### Patch Changes
