@@ -48,7 +48,7 @@ export function renderDefaultSpan(props: {
  * Inner sibling-of-spacer wrapper carries `contentEditable={false}` (so
  * caret can't land in the placeholder) and `draggable={!readOnly}` (so
  * the void block is draggable). Mirrors the legacy block-object DOM
- * shape: outer stays editable so Slate's spacer caret anchor works;
+ * shape: outer stays editable so the engine's spacer caret anchor works;
  * both `contentEditable` and `draggable` live on the same sibling node.
  */
 export function renderDefaultBlockObject(
@@ -74,7 +74,7 @@ export function renderDefaultBlockObject(
  * object is visible before a consumer provides a custom `render`.
  *
  * Outer span auto-receives `contentEditable={false}` via
- * `object-node.tsx`'s `isInline && !readOnly` branch (Slate-applied for
+ * `object-node.tsx`'s `isInline && !readOnly` branch (engine-applied for
  * inline voids). The inner sibling-of-spacer wrapper carries only
  * `draggable={!readOnly}`; non-editability inherits from the outer via
  * DOM `contentEditable` inheritance. Mirrors the legacy inline-object

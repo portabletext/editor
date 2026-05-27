@@ -25,7 +25,7 @@ const shiftLeft = createKeyboardShortcut({
 
 export const abstractKeyboardBehaviors = [
   /**
-   * When Backspace is pressed on an inline object, Slate will raise a
+   * When Backspace is pressed on an inline object, the engine raises a
    * `delete.backward` event with `unit: 'block'`. This is wrong and this
    * Behavior adjusts that.
    */
@@ -39,7 +39,7 @@ export const abstractKeyboardBehaviors = [
   }),
 
   /**
-   * When Delete is pressed on an inline object, Slate will raise a
+   * When Delete is pressed on an inline object, the engine raises a
    * `delete.forward` event with `unit: 'block'`. This is wrong and this
    * Behavior adjusts that.
    */

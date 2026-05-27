@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import type {Path} from '../slate/interfaces/path'
+import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
 import {getNodes} from './get-nodes'
 import type {TraversalSnapshot} from './traversal-snapshot'

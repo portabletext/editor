@@ -4,10 +4,10 @@ import type {
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Node} from '../slate/interfaces/node'
+import type {Node} from '../engine/interfaces/node'
 import {isEqualValues} from './equality'
 
-export function toSlateBlock(
+export function toEngineBlock(
   block: PortableTextBlock,
   {schemaTypes}: {schemaTypes: EditorSchema},
 ): Node {

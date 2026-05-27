@@ -1,19 +1,19 @@
 import {isTextBlock} from '@portabletext/schema'
+import {end as editorEnd} from '../engine/editor/end'
+import {start as editorStart} from '../engine/editor/start'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import type {Range} from '../engine/interfaces/range'
+import {parentPath} from '../engine/path/parent-path'
+import {isAfterPoint} from '../engine/point/is-after-point'
+import {isBeforePoint} from '../engine/point/is-before-point'
+import {pointEquals} from '../engine/point/point-equals'
+import {rangeEdges} from '../engine/range/range-edges'
 import {getAncestor} from '../node-traversal/get-ancestor'
 import {getNode} from '../node-traversal/get-node'
 import {isEditableContainer} from '../schema/is-editable-container'
-import {end as editorEnd} from '../slate/editor/end'
-import {start as editorStart} from '../slate/editor/start'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import type {Range} from '../slate/interfaces/range'
-import {parentPath} from '../slate/path/parent-path'
-import {isAfterPoint} from '../slate/point/is-after-point'
-import {isBeforePoint} from '../slate/point/is-before-point'
-import {pointEquals} from '../slate/point/point-equals'
-import {rangeEdges} from '../slate/range/range-edges'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 /**
  * Find every container that is fully covered by `range`, walking up
@@ -33,7 +33,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * so the start path stays valid.
  */
 export function getFullyCoveredContainers(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   range: Range,
 ): {start: Path | undefined; end: Path | undefined} {
   const [start, end] = rangeEdges(range, editor)
@@ -48,7 +48,7 @@ export function getFullyCoveredContainers(
 }
 
 function isFullyCovered(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   node: Node,
   path: Path,
   rangeStart: Point,
@@ -92,7 +92,7 @@ function isFullyCovered(
 }
 
 function parentFieldAcceptsTextBlock(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
 ): boolean {
   const parent = parentPath(path)
@@ -107,7 +107,7 @@ function parentFieldAcceptsTextBlock(
 }
 
 function fieldAcceptsTextBlock(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   node: Node,
   _path: Path,
 ): boolean {

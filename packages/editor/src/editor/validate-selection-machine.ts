@@ -1,17 +1,17 @@
 import {setup} from 'xstate'
+import {DOMEditor} from '../engine/dom/plugin/dom-editor'
+import {start} from '../engine/editor/start'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
-import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import {start} from '../slate/editor/start'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 const validateSelectionSetup = setup({
   types: {
     context: {} as {
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
     },
     input: {} as {
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
     },
     events: {} as {
       type: 'validate selection'
@@ -20,20 +20,20 @@ const validateSelectionSetup = setup({
   },
   guards: {
     'pending operations': ({context}) =>
-      context.slateEditor.operations.length > 0,
+      context.editorEngine.operations.length > 0,
   },
 })
 
 const validateSelectionAction = validateSelectionSetup.createAction(
   ({context, event}) => {
-    validateSelection(context.slateEditor, event.editorElement)
+    validateSelection(context.editorEngine, event.editorElement)
   },
 )
 
 export const validateSelectionMachine = validateSelectionSetup.createMachine({
   id: 'validate selection',
   context: ({input}) => ({
-    slateEditor: input.slateEditor,
+    editorEngine: input.editorEngine,
   }),
   initial: 'idle',
   states: {
@@ -76,33 +76,33 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
 })
 
 // This function will handle unexpected DOM changes inside the Editable rendering,
-// and make sure that we can maintain a stable slateEditor.selection when that happens.
+// and make sure that we can maintain a stable editorEngine.selection when that happens.
 //
 // For example, if this Editable is rendered inside something that might re-render
 // this component (hidden contexts) while the user is still actively changing the
 // contentEditable, this could interfere with the intermediate DOM selection,
 // which again could be picked up by DOMEditor's event listeners.
-// If that range is invalid at that point, the slate.editorSelection could be
-// set either wrong, or invalid, to which slateEditor will throw exceptions
+// If that range is invalid at that point, the engine's selection could be
+// set either wrong, or invalid, to which editorEngine will throw exceptions
 // that are impossible to recover properly from or result in a wrong selection.
 //
 // Also the other way around, when the DOMEditor will try to create a DOM Range
-// from the current slateEditor.selection, it may throw unrecoverable errors
+// from the current editorEngine.selection, it may throw unrecoverable errors
 // if the current editor.selection is invalid according to the DOM.
 // If this is the case, default to selecting the top of the document, if the
 // user already had a selection.
 function validateSelection(
-  slateEditor: PortableTextSlateEditor,
+  editorEngine: PortableTextEditorEngine,
   editorElement: HTMLDivElement,
 ) {
-  if (!slateEditor.selection) {
+  if (!editorEngine.selection) {
     return
   }
 
   let root: Document | ShadowRoot | undefined
 
   try {
-    root = DOMEditor.findDocumentOrShadowRoot(slateEditor)
+    root = DOMEditor.findDocumentOrShadowRoot(editorEngine)
   } catch {}
 
   if (!root) {
@@ -114,14 +114,17 @@ function validateSelection(
   if (editorElement !== root.activeElement) {
     return
   }
-  const window = DOMEditor.getWindow(slateEditor)
+  const window = DOMEditor.getWindow(editorEngine)
   const domSelection = window.getSelection()
   if (!domSelection || domSelection.rangeCount === 0) {
     return
   }
   const existingDOMRange = domSelection.getRangeAt(0)
   try {
-    const newDOMRange = DOMEditor.toDOMRange(slateEditor, slateEditor.selection)
+    const newDOMRange = DOMEditor.toDOMRange(
+      editorEngine,
+      editorEngine.selection,
+    )
     if (
       newDOMRange.startOffset !== existingDOMRange.startOffset ||
       newDOMRange.endOffset !== existingDOMRange.endOffset
@@ -135,11 +138,11 @@ function validateSelection(
   } catch {
     debug.selection(`Could not resolve selection, selecting top document`)
     // Deselect the editor
-    applyDeselect(slateEditor)
+    applyDeselect(editorEngine)
     // Select top document if there is a top block to select
-    if (slateEditor.children.length > 0) {
-      applySelect(slateEditor, start(slateEditor, []))
+    if (editorEngine.children.length > 0) {
+      applySelect(editorEngine, start(editorEngine, []))
     }
-    slateEditor.onChange()
+    editorEngine.onChange()
   }
 }

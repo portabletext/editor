@@ -1,24 +1,24 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {end as editorEnd} from '../engine/editor/end'
+import {start as editorStart} from '../engine/editor/start'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import type {Range} from '../engine/interfaces/range'
+import {isPoint} from '../engine/point/is-point'
+import {pointEquals} from '../engine/point/point-equals'
+import {isRange} from '../engine/range/is-range'
 import {getChildren} from '../node-traversal/get-children'
 import {getLeaf} from '../node-traversal/get-leaf'
 import {getNode} from '../node-traversal/get-node'
 import {isBlock} from '../node-traversal/is-block'
-import {end as editorEnd} from '../slate/editor/end'
-import {start as editorStart} from '../slate/editor/start'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import type {Range} from '../slate/interfaces/range'
-import {isPoint} from '../slate/point/is-point'
-import {pointEquals} from '../slate/point/point-equals'
-import {isRange} from '../slate/range/is-range'
 import type {EditorSelection} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 type ResolveSelectionEditor = Pick<
-  PortableTextSlateEditor,
+  PortableTextEditorEngine,
   'children' | 'schema' | 'publicContainers' | 'blockIndexMap'
 >
 
@@ -166,7 +166,7 @@ function resolveSelectionPoint(
  * Set the editor selection to the given target.
  */
 export function applySelect(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   target: Range | Point | Path,
 ): void {
   const range = toRange(editor, target)
@@ -205,7 +205,7 @@ export function applySelect(
 /**
  * Clear the editor selection.
  */
-export function applyDeselect(editor: PortableTextSlateEditor): void {
+export function applyDeselect(editor: PortableTextEditorEngine): void {
   const {selection} = editor
 
   if (selection) {
@@ -218,7 +218,7 @@ export function applyDeselect(editor: PortableTextSlateEditor): void {
 }
 
 function toRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   target: Range | Point | Path,
 ): Range {
   if (isRange(target)) {

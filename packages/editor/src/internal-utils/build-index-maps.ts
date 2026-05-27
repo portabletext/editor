@@ -1,5 +1,5 @@
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {isTextBlockNode} from '../engine/node/is-text-block-node'
 
 // Maps for each list type, keeping track of the current list count for each
 // level.

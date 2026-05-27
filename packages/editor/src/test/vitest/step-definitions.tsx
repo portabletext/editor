@@ -416,7 +416,7 @@ export const stepDefinitions = [
 
       // Delay to allow the browser to process the event.
       // Firefox needs more time than Chromium to process keyboard events
-      // through the beforeinput -> DOM mutation -> Slate operation pipeline.
+      // through the beforeinput -> DOM mutation -> engine operation pipeline.
       await new Promise((resolve) => setTimeout(resolve, 100))
     },
   ),

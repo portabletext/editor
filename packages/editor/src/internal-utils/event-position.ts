@@ -1,17 +1,17 @@
 import {getDomNode} from '../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../editor/editor-machine'
+import {DOMEditor} from '../engine/dom/plugin/dom-editor'
+import {isDOMNode} from '../engine/dom/utils/dom'
+import {isEditor} from '../engine/editor/is-editor'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNode} from '../node-traversal/get-node'
 import {isEditableContainer} from '../schema/is-editable-container'
-import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import {isDOMNode} from '../slate/dom/utils/dom'
-import {isEditor} from '../slate/editor/is-editor'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import type {EditorSelection} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
@@ -35,18 +35,18 @@ export type EventPositionBlock = EventPosition['block']
 
 export function getEventPosition({
   editorActor,
-  slateEditor,
+  editorEngine,
   event,
 }: {
   editorActor: EditorActor
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   event: DragEvent | MouseEvent
 }): EventPosition | undefined {
   if (editorActor.getSnapshot().matches({setup: 'setting up'})) {
     return undefined
   }
 
-  const eventResult = getEventNode({slateEditor, event})
+  const eventResult = getEventNode({editorEngine, event})
 
   if (!eventResult) {
     return undefined
@@ -54,22 +54,22 @@ export function getEventPosition({
 
   const {node: eventNode, path: eventPath} = eventResult
 
-  const eventBlockEntry = getEnclosingBlock(slateEditor, eventPath)
+  const eventBlockEntry = getEnclosingBlock(editorEngine, eventPath)
   const eventBlock = eventBlockEntry?.node
   const eventBlockPath = eventBlockEntry?.path
   const eventPositionBlock = getEventPositionBlock({
     nodePath: eventPath,
-    slateEditor,
+    editorEngine,
     event,
   })
-  const eventSelection = getSelectionFromEvent(slateEditor, event) ?? null
+  const eventSelection = getSelectionFromEvent(editorEngine, event) ?? null
 
   if (
     eventBlock &&
     eventBlockPath &&
     eventPositionBlock &&
     !eventSelection &&
-    !isEventContainer(slateEditor, eventNode, eventPath)
+    !isEventContainer(editorEngine, eventNode, eventPath)
   ) {
     // If we for some reason can't find the event selection, then we default to
     // selecting the entire block that the event originates from.
@@ -79,14 +79,14 @@ export function getEventPosition({
       isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
-          context: slateEditor,
+          context: editorEngine,
           block: {
             node: eventBlock,
             path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
-          context: slateEditor,
+          context: editorEngine,
           block: {
             node: eventBlock,
             path: eventBlockPath,
@@ -101,7 +101,7 @@ export function getEventPosition({
   }
 
   const eventSelectionFocusBlock = getEnclosingBlock(
-    slateEditor,
+    editorEngine,
     eventSelection.focus.path,
   )
 
@@ -124,14 +124,14 @@ export function getEventPosition({
       isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
-          context: slateEditor,
+          context: editorEngine,
           block: {
             node: eventBlock,
             path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
-          context: slateEditor,
+          context: editorEngine,
           block: {
             node: eventBlock,
             path: eventBlockPath,
@@ -146,19 +146,19 @@ export function getEventPosition({
     isEditor: isEditor(eventNode),
     isContainer: isEditor(eventNode)
       ? false
-      : isEditableContainer(slateEditor, eventNode, eventPath),
+      : isEditableContainer(editorEngine, eventNode, eventPath),
     selection: eventSelection,
   }
 }
 
 function getEventNode({
-  slateEditor,
+  editorEngine,
   event,
 }: {
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   event: DragEvent | MouseEvent
 }) {
-  if (!DOMEditor.hasTarget(slateEditor, event.target)) {
+  if (!DOMEditor.hasTarget(editorEngine, event.target)) {
     return undefined
   }
 
@@ -167,9 +167,9 @@ function getEventNode({
 
     if (path) {
       if (path.length === 0) {
-        return {node: slateEditor, path}
+        return {node: editorEngine, path}
       } else {
-        const nodeEntry = getNode(slateEditor, path)
+        const nodeEntry = getNode(editorEngine, path)
         if (nodeEntry) {
           return {node: nodeEntry.node, path}
         }
@@ -184,20 +184,20 @@ function getEventNode({
 
 function getEventPositionBlock({
   nodePath,
-  slateEditor,
+  editorEngine,
   event,
 }: {
   nodePath: Path
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   event: DragEvent | MouseEvent
 }): EventPositionBlock | undefined {
-  const firstBlockEntry = getNode(slateEditor, [0])
+  const firstBlockEntry = getNode(editorEngine, [0])
 
   if (!firstBlockEntry) {
     return undefined
   }
 
-  const firstBlockElement = getDomNode(slateEditor, firstBlockEntry.path)
+  const firstBlockElement = getDomNode(editorEngine, firstBlockEntry.path)
 
   if (!firstBlockElement) {
     return undefined
@@ -209,16 +209,16 @@ function getEventPositionBlock({
     return 'start'
   }
 
-  const lastBlock = slateEditor.children.at(-1)
+  const lastBlock = editorEngine.children.at(-1)
   const lastBlockEntry = lastBlock
-    ? getNode(slateEditor, [{_key: lastBlock._key}])
+    ? getNode(editorEngine, [{_key: lastBlock._key}])
     : undefined
 
   if (!lastBlockEntry) {
     return undefined
   }
 
-  const lastBlockElement = getDomNode(slateEditor, lastBlockEntry.path)
+  const lastBlockElement = getDomNode(editorEngine, lastBlockEntry.path)
 
   if (!lastBlockElement) {
     return undefined
@@ -230,7 +230,7 @@ function getEventPositionBlock({
     return 'end'
   }
 
-  const element = getDomNode(slateEditor, nodePath)
+  const element = getDomNode(editorEngine, nodePath)
 
   if (!element) {
     return undefined
@@ -245,7 +245,7 @@ function getEventPositionBlock({
 }
 
 function getSelectionFromEvent(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   event: DragEvent | MouseEvent,
 ) {
   if (!event.target) {
@@ -290,7 +290,7 @@ function getSelectionFromEvent(
   }
 
   try {
-    return DOMEditor.toSlateRange(editor, domRange, {
+    return DOMEditor.toEditorSelection(editor, domRange, {
       exactMatch: false,
       // It can still throw even with this option set to true
       suppressThrow: false,
@@ -301,12 +301,12 @@ function getSelectionFromEvent(
 }
 
 function isEventContainer(
-  slateEditor: PortableTextSlateEditor,
-  eventNode: Node | PortableTextSlateEditor,
+  editorEngine: PortableTextEditorEngine,
+  eventNode: Node | PortableTextEditorEngine,
   eventPath: Path,
 ): boolean {
   if (isEditor(eventNode)) {
     return true
   }
-  return isEditableContainer(slateEditor, eventNode, eventPath)
+  return isEditableContainer(editorEngine, eventNode, eventPath)
 }

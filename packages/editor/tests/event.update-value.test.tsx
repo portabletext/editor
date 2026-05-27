@@ -725,7 +725,7 @@ describe('event.update value', () => {
       ],
     })
 
-    // Slate normalizes inline objects by adding empty spans around them
+    // The engine normalizes inline objects by adding empty spans around them
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {

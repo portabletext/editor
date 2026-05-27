@@ -1,6 +1,6 @@
 import type {KeyboardEvent} from 'react'
+import type {Editor} from '../engine/interfaces/editor'
 import {isHotkey} from '../internal-utils/is-hotkey'
-import type {Editor} from '../slate/interfaces/editor'
 import type {HotkeyOptions} from '../types/options'
 import type {EditorActor} from './editor-machine'
 import type {PortableTextEditor} from './PortableTextEditor'

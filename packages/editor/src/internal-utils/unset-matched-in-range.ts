@@ -1,10 +1,10 @@
+import {pathRef} from '../engine/editor/path-ref'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
-import {pathRef} from '../slate/editor/path-ref'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 /**
  * Apply `unset` to every node matching `predicate` between `from` and
@@ -15,7 +15,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * that survives the previous unsets' shifts.
  */
 export function unsetMatchedNodesInRange(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   from: Path,
   to: Path,
   predicate: (node: Node, path: Path) => boolean,

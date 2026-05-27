@@ -1,8 +1,8 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {Operation} from '../slate/interfaces/operation'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {Operation} from '../engine/interfaces/operation'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {transformOperation} from './transform-operation'
 
 const testSchema = compileSchema(defineSchema({}))
@@ -18,13 +18,13 @@ function createMockEditor(
     focus: {path: Array<{_key: string} | string | number>; offset: number}
     anchor: {path: Array<{_key: string} | string | number>; offset: number}
   },
-): PortableTextSlateEditor {
+): PortableTextEditorEngine {
   return {
     children,
     selection: selection ?? null,
     schema: testSchema,
     containers: new Map(),
-  } as unknown as PortableTextSlateEditor
+  } as unknown as PortableTextEditorEngine
 }
 
 describe('transformOperation', () => {

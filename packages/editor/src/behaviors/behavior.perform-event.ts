@@ -2,12 +2,12 @@ import type {Converter} from '../converters/converter.types'
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import {createEditorSnapshot} from '../editor/editor-snapshot'
+import {withPerformingBehaviorOperation} from '../engine-plugins/engine-plugin.performing-behavior-operation'
+import {withoutNormalizingConditional} from '../engine-plugins/engine-plugin.without-normalizing-conditional'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
 import {performOperation} from '../operations/operation.perform'
-import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.performing-behavior-operation'
-import {withoutNormalizingConditional} from '../slate-plugins/slate-plugin.without-normalizing-conditional'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {abstractBehaviors} from './behavior.abstract'
 import type {BehaviorAction} from './behavior.types.action'
@@ -48,7 +48,7 @@ export function performEvent({
   behaviors: Array<Behavior>
   remainingEventBehaviors: Array<Behavior>
   event: BehaviorEvent
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   converters: Array<Converter>
   keyGenerator: () => string
   readOnly: boolean

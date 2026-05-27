@@ -1,11 +1,11 @@
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
-import type {PortableTextSlateEditor} from '../src/types/slate-editor'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 
 describe('Performance', () => {
   describe('Baseline', () => {
@@ -435,16 +435,16 @@ describe('Performance', () => {
   })
 
   test('onChange is batched', async () => {
-    const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
     let onChangeCount = 0
 
     const {editor} = await createTestEditor({
-      children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+      children: <InternalEditorEngineRefPlugin ref={editorEngineRef} />,
     })
 
-    const originalOnChange = slateEditorRef.current!.onChange
+    const originalOnChange = editorEngineRef.current!.onChange
 
-    slateEditorRef.current!.onChange = () => {
+    editorEngineRef.current!.onChange = () => {
       onChangeCount++
 
       originalOnChange()
@@ -470,7 +470,7 @@ describe('Performance', () => {
 
     // We expect 2 calls:
     // 1. From performEvent (our batched call at the end of top-level event processing)
-    // 2. From Slate-React's internal change detection
+    // 2. From the engine React layer's internal change detection
     expect(onChangeCount).toBe(2)
   })
 })

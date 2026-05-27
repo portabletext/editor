@@ -20,7 +20,7 @@ import type {
  * entry, so path-driven resolution (see `resolveContainerAt`) can
  * find same-`_type`-different-shape positional entries. The only
  * thing stripped from the rich tree is the render callback - render
- * is engine-internal and lives on `slateEditor.containers`.
+ * is engine-internal and lives on `editorEngine.containers`.
  */
 export function buildPublicContainers(
   resolved: ResolvedContainers,

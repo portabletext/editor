@@ -4,8 +4,8 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {ReactElement} from 'react'
+import type {Path} from '../engine/interfaces/path'
 import type {ChildArrayField} from '../schema/resolve-containers'
-import type {Path} from '../slate/interfaces/path'
 
 /**
  * @alpha

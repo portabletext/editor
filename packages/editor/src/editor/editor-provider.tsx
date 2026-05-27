@@ -1,8 +1,8 @@
 import type React from 'react'
 import {useEffect, useState} from 'react'
 import type {EditorConfig} from '../editor'
+import {Engine} from '../engine/react/components/engine'
 import {stopActor} from '../internal-utils/stop-actor'
-import {Slate} from '../slate/react/components/slate'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
@@ -56,8 +56,8 @@ export function EditorProvider(props: EditorProviderProps) {
 
     internalEditor.actors.editorActor.start()
     internalEditor.actors.editorActor.send({
-      type: 'add slate editor',
-      editor: internalEditor.slateEditor,
+      type: 'add editor engine',
+      editor: internalEditor.editorEngine,
     })
     internalEditor.actors.mutationActor.start()
     internalEditor.actors.relayActor.start()
@@ -79,11 +79,11 @@ export function EditorProvider(props: EditorProviderProps) {
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
-          <Slate editor={internalEditor.slateEditor}>
+          <Engine editor={internalEditor.editorEngine}>
             <PortableTextEditorContext.Provider value={portableTextEditor}>
               {props.children}
             </PortableTextEditorContext.Provider>
-          </Slate>
+          </Engine>
         </RelayActorContext.Provider>
       </EditorActorContext.Provider>
     </EditorContext.Provider>

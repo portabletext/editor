@@ -12,18 +12,18 @@ import {
   type KeyboardEvent,
   type TextareaHTMLAttributes,
 } from 'react'
+import {DOMEditor} from '../engine/dom/plugin/dom-editor'
+import {start} from '../engine/editor/start'
+import {
+  Editable as EngineEditable,
+  type RenderElementProps,
+  type RenderLeafProps,
+} from '../engine/react/components/editable'
+import {useEngine} from '../engine/react/hooks/use-engine'
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {safeStringify} from '../internal-utils/safe-json'
-import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import {start} from '../slate/editor/start'
-import {
-  Editable as SlateEditable,
-  type RenderElementProps,
-  type RenderLeafProps,
-} from '../slate/react/components/editable'
-import {useSlate} from '../slate/react/hooks/use-slate'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -140,10 +140,10 @@ export const PortableTextEditable = forwardRef<
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
-  const slateEditor = useSlate()
+  const editorEngine = useEngine()
   const validateSelectionActor = useActorRef(validateSelectionMachine, {
     input: {
-      slateEditor,
+      editorEngine,
     },
   })
 
@@ -152,7 +152,7 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
       readOnly,
       schema,
-      slateEditor,
+      editorEngine,
       skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
     },
   })
@@ -238,26 +238,26 @@ export const PortableTextEditable = forwardRef<
       if (debug.selection.enabled) {
         debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
       }
-      const resolvedSelection = resolveSelection(slateEditor, propsSelection)
+      const resolvedSelection = resolveSelection(editorEngine, propsSelection)
       if (resolvedSelection) {
         if (debug.selection.enabled) {
           debug.selection(
             `Resolved selection from props ${safeStringify(resolvedSelection)}`,
           )
         }
-        slateEditor.select(resolvedSelection)
+        editorEngine.select(resolvedSelection)
         // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
         // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
-        if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
+        if (!editorEngine.operations.some((o) => o.type === 'set_selection')) {
           editorActor.send({
             type: 'update selection',
             selection: resolvedSelection,
           })
         }
-        slateEditor.onChange()
+        editorEngine.onChange()
       }
     }
-  }, [editorActor, propsSelection, slateEditor])
+  }, [editorActor, propsSelection, editorEngine])
 
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
@@ -294,7 +294,7 @@ export const PortableTextEditable = forwardRef<
   // Handle from props onCopy function
   const handleCopy = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): void | DOMEditor => {
-      if (!DOMEditor.hasSelectableTarget(slateEditor, event.target)) {
+      if (!DOMEditor.hasSelectableTarget(editorEngine, event.target)) {
         return
       }
 
@@ -305,11 +305,11 @@ export const PortableTextEditable = forwardRef<
           event.preventDefault()
         }
       } else if (event.nativeEvent.clipboardData) {
-        // Prevent Slate from handling the event
+        // Prevent the engine from handling the event
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = slateEditor.selection ?? undefined
+        const selection = editorEngine.selection ?? undefined
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -326,17 +326,17 @@ export const PortableTextEditable = forwardRef<
             },
             position,
           },
-          editor: slateEditor,
+          editor: editorEngine,
           nativeEvent: event,
         })
       }
     },
-    [onCopy, editorActor, slateEditor],
+    [onCopy, editorActor, editorEngine],
   )
 
   const handleCut = useCallback(
     (event: ClipboardEvent<HTMLDivElement>) => {
-      if (!DOMEditor.hasSelectableTarget(slateEditor, event.target)) {
+      if (!DOMEditor.hasSelectableTarget(editorEngine, event.target)) {
         return
       }
 
@@ -347,7 +347,7 @@ export const PortableTextEditable = forwardRef<
           event.preventDefault()
         }
       } else if (event.nativeEvent.clipboardData) {
-        // Prevent Slate from handling the event
+        // Prevent the engine from handling the event
         event.stopPropagation()
         event.preventDefault()
 
@@ -368,19 +368,19 @@ export const PortableTextEditable = forwardRef<
             },
             position,
           },
-          editor: slateEditor,
+          editor: editorEngine,
           nativeEvent: event,
         })
       }
     },
-    [onCut, editorActor, slateEditor],
+    [onCut, editorActor, editorEngine],
   )
 
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      const value = slateEditor.children
-      const ptRange = slateEditor.selection
+      const value = editorEngine.children
+      const ptRange = editorEngine.selection
       const path = ptRange?.focus.path || []
       const onPasteResult = onPaste?.({
         event,
@@ -389,7 +389,7 @@ export const PortableTextEditable = forwardRef<
         schemaTypes: portableTextEditor.schemaTypes,
       })
 
-      if (onPasteResult || !slateEditor.selection) {
+      if (onPasteResult || !editorEngine.selection) {
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
@@ -424,7 +424,7 @@ export const PortableTextEditable = forwardRef<
                   },
                   position,
                 },
-                editor: slateEditor,
+                editor: editorEngine,
                 nativeEvent: event,
               })
             } else if (result.insert) {
@@ -445,7 +445,7 @@ export const PortableTextEditable = forwardRef<
                   }),
                   placement: 'auto',
                 },
-                editor: slateEditor,
+                editor: editorEngine,
               })
             } else {
               console.warn(
@@ -463,7 +463,7 @@ export const PortableTextEditable = forwardRef<
             relayActor.send({type: 'done loading'})
           })
       } else if (event.nativeEvent.clipboardData) {
-        // Prevent Slate from handling the event
+        // Prevent the engine from handling the event
         event.preventDefault()
         event.stopPropagation()
 
@@ -484,14 +484,14 @@ export const PortableTextEditable = forwardRef<
             },
             position,
           },
-          editor: slateEditor,
+          editor: editorEngine,
           nativeEvent: event,
         })
       }
 
       debug.behaviors('No result from custom paste handler, pasting normally')
     },
-    [editorActor, onPaste, portableTextEditor, relayActor, slateEditor],
+    [editorActor, onPaste, portableTextEditor, relayActor, editorEngine],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
@@ -504,19 +504,19 @@ export const PortableTextEditable = forwardRef<
         relayActor.send({type: 'focused', event})
 
         if (
-          !slateEditor.selection &&
-          slateEditor.children.length === 1 &&
+          !editorEngine.selection &&
+          editorEngine.children.length === 1 &&
           isEmptyTextBlock(
             editorActor.getSnapshot().context,
-            slateEditor.children.at(0),
+            editorEngine.children.at(0),
           )
         ) {
-          slateEditor.select(start(slateEditor, []))
-          slateEditor.onChange()
+          editorEngine.select(start(editorEngine, []))
+          editorEngine.onChange()
         }
       }
     },
-    [editorActor, onFocus, relayActor, slateEditor],
+    [editorActor, onFocus, relayActor, editorEngine],
   )
 
   const handleClick = useCallback(
@@ -531,7 +531,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -542,12 +542,12 @@ export const PortableTextEditable = forwardRef<
             type: 'mouse.click',
             position,
           },
-          editor: slateEditor,
+          editor: editorEngine,
           nativeEvent: event,
         })
       }
     },
-    [onClick, editorActor, slateEditor],
+    [onClick, editorActor, editorEngine],
   )
 
   const handleOnBlur: FocusEventHandler<HTMLDivElement> = useCallback(
@@ -580,7 +580,7 @@ export const PortableTextEditable = forwardRef<
       if (!event.isDefaultPrevented()) {
         performHotkey({
           editorActor,
-          editor: slateEditor,
+          editor: editorEngine,
           portableTextEditor,
           hotkeys: hotkeys ?? {},
           event,
@@ -601,12 +601,12 @@ export const PortableTextEditable = forwardRef<
               shiftKey: event.shiftKey,
             },
           },
-          editor: slateEditor,
+          editor: editorEngine,
           nativeEvent: event,
         })
       }
     },
-    [props, hotkeys, editorActor, portableTextEditor, slateEditor],
+    [props, hotkeys, editorActor, portableTextEditor, editorEngine],
   )
 
   const handleKeyUp = useCallback(
@@ -628,16 +628,16 @@ export const PortableTextEditable = forwardRef<
               shiftKey: event.shiftKey,
             },
           },
-          editor: slateEditor,
+          editor: editorEngine,
           nativeEvent: event,
         })
       }
     },
-    [props, editorActor, slateEditor],
+    [props, editorActor, editorEngine],
   )
 
-  const scrollSelectionIntoViewToSlate = useMemo(() => {
-    // Use slate-react default scroll into view
+  const scrollSelectionIntoViewToEngine = useMemo(() => {
+    // Use the engine's default scroll-into-view
     if (scrollSelectionIntoView === undefined) {
       return undefined
     }
@@ -645,14 +645,14 @@ export const PortableTextEditable = forwardRef<
     if (scrollSelectionIntoView === null) {
       return noop
     }
-    // Translate PortableTextEditor prop fn to Slate plugin fn
+    // Translate PortableTextEditor prop fn to an engine plugin fn
     return (_editor: DOMEditor, domRange: Range) => {
       scrollSelectionIntoView(portableTextEditor, domRange)
     }
   }, [portableTextEditor, scrollSelectionIntoView])
 
   useEffect(() => {
-    const window = DOMEditor.getWindow(slateEditor)
+    const window = DOMEditor.getWindow(editorEngine)
 
     const onDragEnd = () => {
       editorActor.send({type: 'dragend'})
@@ -668,11 +668,11 @@ export const PortableTextEditable = forwardRef<
       window.document.removeEventListener('dragend', onDragEnd)
       window.document.removeEventListener('drop', onDrop)
     }
-  }, [slateEditor, editorActor])
+  }, [editorEngine, editorActor])
 
   const handleDragStart = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (readOnly || !DOMEditor.hasTarget(slateEditor, event.target)) {
+      if (readOnly || !DOMEditor.hasTarget(editorEngine, event.target)) {
         return
       }
 
@@ -684,7 +684,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -709,13 +709,13 @@ export const PortableTextEditable = forwardRef<
           },
           position,
         },
-        editor: slateEditor,
+        editor: editorEngine,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [readOnly, onDragStart, editorActor, slateEditor],
+    [readOnly, onDragStart, editorActor, editorEngine],
   )
 
   const handleDrag = useCallback(
@@ -728,7 +728,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -744,13 +744,13 @@ export const PortableTextEditable = forwardRef<
             dataTransfer: event.dataTransfer,
           },
         },
-        editor: slateEditor,
+        editor: editorEngine,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [onDrag, editorActor, slateEditor],
+    [onDrag, editorActor, editorEngine],
   )
 
   const handleDragEnd = useCallback(
@@ -769,13 +769,13 @@ export const PortableTextEditable = forwardRef<
             dataTransfer: event.dataTransfer,
           },
         },
-        editor: slateEditor,
+        editor: editorEngine,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [onDragEnd, editorActor, slateEditor],
+    [onDragEnd, editorActor, editorEngine],
   )
 
   const handleDragEnter = useCallback(
@@ -788,7 +788,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -805,13 +805,13 @@ export const PortableTextEditable = forwardRef<
           },
           position,
         },
-        editor: slateEditor,
+        editor: editorEngine,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [onDragEnter, editorActor, slateEditor],
+    [onDragEnter, editorActor, editorEngine],
   )
 
   const handleDragOver = useCallback(
@@ -824,7 +824,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -842,14 +842,14 @@ export const PortableTextEditable = forwardRef<
           dragOrigin: editorActor.getSnapshot().context.internalDrag?.origin,
           position,
         },
-        editor: slateEditor,
+        editor: editorEngine,
         nativeEvent: event,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [onDragOver, editorActor, slateEditor],
+    [onDragOver, editorActor, editorEngine],
   )
 
   const handleDrop = useCallback(
@@ -862,7 +862,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -881,14 +881,14 @@ export const PortableTextEditable = forwardRef<
           dragOrigin: editorActor.getSnapshot().context.internalDrag?.origin,
           position,
         },
-        editor: slateEditor,
+        editor: editorEngine,
         nativeEvent: event,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [onDrop, editorActor, slateEditor],
+    [onDrop, editorActor, editorEngine],
   )
 
   const handleDragLeave = useCallback(
@@ -901,7 +901,7 @@ export const PortableTextEditable = forwardRef<
 
       const position = getEventPosition({
         editorActor,
-        slateEditor,
+        editorEngine,
         event: event.nativeEvent,
       })
 
@@ -917,13 +917,13 @@ export const PortableTextEditable = forwardRef<
             dataTransfer: event.dataTransfer,
           },
         },
-        editor: slateEditor,
+        editor: editorEngine,
       })
 
-      // Prevent Slate from handling the event
+      // Prevent the engine from handling the event
       return true
     },
-    [onDragLeave, editorActor, slateEditor],
+    [onDragLeave, editorActor, editorEngine],
   )
 
   const callbackRef = useCallback(
@@ -968,7 +968,7 @@ export const PortableTextEditable = forwardRef<
 
   return hasInvalidValue ? null : (
     <SelectionStateProvider>
-      <SlateEditable
+      <EngineEditable
         {...restProps}
         ref={callbackRef}
         editorActor={editorActor}
@@ -996,7 +996,7 @@ export const PortableTextEditable = forwardRef<
         renderElement={renderElement}
         renderLeaf={renderLeaf}
         renderText={renderText}
-        scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
+        scrollSelectionIntoView={scrollSelectionIntoViewToEngine}
       />
     </SelectionStateProvider>
   )

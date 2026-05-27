@@ -1,7 +1,7 @@
 import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {Path} from '../engine/interfaces/path'
 import {findSibling} from '../node-traversal/find-sibling'
-import type {Path} from '../slate/interfaces/path'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**

@@ -1,6 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isSpanNode} from '../slate/node/is-span-node'
+import {isSpanNode} from '../engine/node/is-span-node'
 import type {ChildPath} from '../types/paths'
 import {getFocusChild} from './selector.get-focus-child'
 

@@ -1,9 +1,9 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import type {Path} from '../src/engine/interfaces/path'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
-import type {Path} from '../src/slate/interfaces/path'
 import {createTestEditor} from '../src/test/vitest'
 
 const calloutSchema = defineSchema({

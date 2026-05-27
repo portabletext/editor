@@ -1,12 +1,12 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, it} from 'vitest'
-import {toSlateBlock} from '../values'
+import {toEngineBlock} from '../values'
 
 const schemaTypes = compileSchema(defineSchema({}))
 
-describe(toSlateBlock.name, () => {
+describe(toEngineBlock.name, () => {
   it('given type is custom with no custom properties, should be a leaf node', () => {
-    const result = toSlateBlock(
+    const result = toEngineBlock(
       {
         _type: 'image',
         _key: '123',
@@ -21,7 +21,7 @@ describe(toSlateBlock.name, () => {
   })
 
   it('given type is block', () => {
-    const result = toSlateBlock(
+    const result = toEngineBlock(
       {
         _type: schemaTypes.block.name,
         _key: '123',
@@ -49,7 +49,7 @@ describe(toSlateBlock.name, () => {
   })
 
   it('given type is block and has custom in children', () => {
-    const result = toSlateBlock(
+    const result = toEngineBlock(
       {
         _type: schemaTypes.block.name,
         _key: '123',

@@ -1,12 +1,12 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
+import type {Path} from '../engine/interfaces/path'
+import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
 import type {
   InlineObjectConfig,
   InlineObjectRenderProps,
 } from '../renderers/renderer.types'
-import type {Path} from '../slate/interfaces/path'
-import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'

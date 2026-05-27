@@ -1,9 +1,9 @@
 import {applyAll, set} from '@portabletext/patches'
+import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
 import {getBlockObjectSchema} from '../schema/get-block-object-schema'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -18,9 +18,9 @@ export const blockSetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
-  const slateBlock = blockEntry.node
+  const engineBlock = blockEntry.node
 
-  if (isTextBlockNode(context, slateBlock)) {
+  if (isTextBlockNode(context, engineBlock)) {
     const subSchema = getPathSubSchema(snapshot, blockEntry.path)
     const filteredProps: Record<string, unknown> = {}
 
@@ -81,7 +81,7 @@ export const blockSetOperationImplementation: OperationImplementation<
   } else {
     const schemaDefinition = getBlockObjectSchema(
       snapshot,
-      slateBlock,
+      engineBlock,
       blockEntry.path,
     )
     const filteredProps: Record<string, unknown> = {}
@@ -105,8 +105,8 @@ export const blockSetOperationImplementation: OperationImplementation<
       set(value, [key]),
     )
 
-    const updatedSlateBlock = applyAll(slateBlock, patches)
+    const updatedEngineBlock = applyAll(engineBlock, patches)
 
-    setNodeProperties(operation.editor, updatedSlateBlock, blockEntry.path)
+    setNodeProperties(operation.editor, updatedEngineBlock, blockEntry.path)
   }
 }

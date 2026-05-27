@@ -1,6 +1,6 @@
+import {isDOMElement, type DOMNode} from '../engine/dom/utils/dom'
+import type {Path} from '../engine/interfaces/path'
 import {deserializePath} from '../paths/deserialize-path'
-import {isDOMElement, type DOMNode} from '../slate/dom/utils/dom'
-import type {Path} from '../slate/interfaces/path'
 
 /**
  * Reads the closest `data-pt-path` attribute from a given DOM node and returns

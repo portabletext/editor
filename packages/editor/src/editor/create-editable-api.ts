@@ -6,7 +6,14 @@ import {
   type PortableTextObject,
 } from '@portabletext/schema'
 import {getDomNode} from '../dom-traversal/get-dom-node'
-import {isListItemActive, isStyleActive} from '../internal-utils/slate-utils'
+import type {Path as InternalPath} from '../engine/interfaces/path'
+import {parentPath} from '../engine/path/parent-path'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import {isExpandedRange} from '../engine/range/is-expanded-range'
+import {rangeEnd} from '../engine/range/range-end'
+import {rangeIncludes} from '../engine/range/range-includes'
+import {rangeStart} from '../engine/range/range-start'
+import {isListItemActive, isStyleActive} from '../internal-utils/engine-utils'
 import {getLeaf} from '../node-traversal/get-leaf'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
@@ -19,26 +26,19 @@ import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFragment} from '../selectors/selector.get-fragment'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import type {Path as InternalPath} from '../slate/interfaces/path'
-import {parentPath} from '../slate/path/parent-path'
-import {isCollapsedRange} from '../slate/range/is-collapsed-range'
-import {isExpandedRange} from '../slate/range/is-expanded-range'
-import {rangeEnd} from '../slate/range/range-end'
-import {rangeIncludes} from '../slate/range/range-includes'
-import {rangeStart} from '../slate/range/range-start'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorSelection,
 } from '../types/editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {Path} from '../types/paths'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import {getEditorSnapshot} from './editor-selector'
 
 export function createEditableAPI(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   editorActor: EditorActor,
 ) {
   const editableApi: EditableAPI = {
@@ -87,7 +87,7 @@ export function createEditableAPI(
     isMarkActive: (mark: string): boolean => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: editor,
+        editorEngineInstance: editor,
       })
 
       const activeDecorators = getActiveDecorators(snapshot)
@@ -97,7 +97,7 @@ export function createEditableAPI(
     marks: (): string[] => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: editor,
+        editorEngineInstance: editor,
       })
 
       const activeAnnotations = getActiveAnnotationsMarks(snapshot)
@@ -290,7 +290,7 @@ export function createEditableAPI(
     ): boolean => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: editor,
+        editorEngineInstance: editor,
       })
 
       return isActiveAnnotation(annotationType)(snapshot)
@@ -298,7 +298,7 @@ export function createEditableAPI(
     addAnnotation: (type, value) => {
       const snapshotBefore = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: editor,
+        editorEngineInstance: editor,
       })
       const selectedValueBefore = getSelectedValue(snapshotBefore)
       const focusSpanBefore = getFocusSpan(snapshotBefore)
@@ -321,7 +321,7 @@ export function createEditableAPI(
 
       const snapshotAfter = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: editor,
+        editorEngineInstance: editor,
       })
 
       const selectedValueAfter = getSelectedValue(snapshotAfter)
@@ -434,7 +434,7 @@ export function createEditableAPI(
     getFragment: () => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: editor,
+        editorEngineInstance: editor,
       })
 
       return getFragment(snapshot).map((entry) => entry.node)

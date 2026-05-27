@@ -1,6 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import type {Path} from '../slate/interfaces/path'
-import {isVoidNode} from '../slate/node/is-void-node'
+import type {Path} from '../engine/interfaces/path'
+import {isVoidNode} from '../engine/node/is-void-node'
 import {getAncestor} from './get-ancestor'
 import type {TraversalSnapshot} from './traversal-snapshot'
 

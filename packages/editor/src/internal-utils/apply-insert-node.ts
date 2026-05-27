@@ -1,15 +1,15 @@
 import {isSpan} from '@portabletext/schema'
+import {end} from '../engine/editor/end'
+import {isEdge} from '../engine/editor/is-edge'
+import {isEnd} from '../engine/editor/is-end'
+import {pathRef} from '../engine/editor/path-ref'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import {isObjectNode} from '../engine/node/is-object-node'
 import {getNode} from '../node-traversal/get-node'
-import {end} from '../slate/editor/end'
-import {isEdge} from '../slate/editor/is-edge'
-import {isEnd} from '../slate/editor/is-end'
-import {pathRef} from '../slate/editor/path-ref'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import {isObjectNode} from '../slate/node/is-object-node'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
 
@@ -18,7 +18,7 @@ import {applySplitNode} from './apply-split-node'
  * inserted node.
  */
 export function applyInsertNodeAtPath(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   node: Node,
   path: Path,
 ): void {
@@ -36,7 +36,7 @@ export function applyInsertNodeAtPath(
  * and optionally select the end of the inserted node.
  */
 export function applyInsertNodeAtPoint(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   node: Node,
   at: Point,
 ): void {

@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {Path} from '../engine/interfaces/path'
 import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
 import {resolveContainerAt} from '../schema/resolve-container-at'
-import type {Path} from '../slate/interfaces/path'
 import type {BlockPath} from '../types/paths'
 import {getSelectedValue} from './selector.get-selected-value'
 

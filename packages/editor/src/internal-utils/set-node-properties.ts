@@ -1,6 +1,6 @@
+import type {Path} from '../engine/interfaces/path'
 import {getNode} from '../node-traversal/get-node'
-import type {Path} from '../slate/interfaces/path'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
@@ -13,7 +13,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * mutations that reference the new key.
  */
 export function setNodeProperties(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   props: Record<string, unknown> | object,
   path: Path,
 ): void {

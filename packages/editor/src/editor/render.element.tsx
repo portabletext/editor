@@ -6,6 +6,9 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
+import type {Path} from '../engine/interfaces/path'
+import type {RenderElementProps} from '../engine/react/components/editable'
+import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {isInline} from '../node-traversal/is-inline'
 import {serializePath} from '../paths/serialize-path'
 import type {
@@ -14,9 +17,6 @@ import type {
   InlineObjectConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
-import type {Path} from '../slate/interfaces/path'
-import type {RenderElementProps} from '../slate/react/components/editable'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorSchema} from './editor-schema'
 import {
@@ -73,7 +73,7 @@ export function RenderElement(props: {
   const parentContainer = useContext(ParentContainerContext)
   const parentTextBlock = useContext(ParentTextBlockContext)
   const isInNewPipeline = useContext(NewPipelineContext)
-  const slateStatic = useSlateStatic()
+  const engineStatic = useEngineStatic()
   const schema = props.schema
   const type = props.element._type
 
@@ -260,7 +260,7 @@ export function RenderElement(props: {
     return rendered
   }
 
-  if (isInline(slateStatic, props.path)) {
+  if (isInline(engineStatic, props.path)) {
     if (isInNewPipeline && !inlineObjectConfig) {
       const {
         'data-slate-node': _sn,

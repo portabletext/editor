@@ -1,7 +1,7 @@
-import type {Operation} from '../slate/interfaces/operation'
-import type {Range} from '../slate/interfaces/range'
-import {pointEquals} from '../slate/point/point-equals'
-import {transformPoint} from '../slate/point/transform-point'
+import type {Operation} from '../engine/interfaces/operation'
+import type {Range} from '../engine/interfaces/range'
+import {pointEquals} from '../engine/point/point-equals'
+import {transformPoint} from '../engine/point/transform-point'
 
 export function moveRangeByOperation(
   range: Range,

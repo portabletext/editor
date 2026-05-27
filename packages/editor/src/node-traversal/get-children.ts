@@ -1,12 +1,12 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import {isObjectNode} from '../engine/node/is-object-node'
 import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {TraversalSnapshot} from './traversal-snapshot'
 

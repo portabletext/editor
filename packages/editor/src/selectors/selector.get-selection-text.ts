@@ -1,9 +1,9 @@
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {Node} from '../engine/interfaces/node'
 import {getNodeChildren} from '../node-traversal/get-children'
 import type {RegisteredContainer} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import {getSelectedValue} from './selector.get-selected-value'
 
 /**

@@ -1,10 +1,10 @@
 import {isTextBlock} from '@portabletext/schema'
+import type {Path} from '../engine/interfaces/path'
 import {getAncestors} from '../node-traversal/get-ancestors'
 import {getNodes} from '../node-traversal/get-nodes'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import {serializePath} from '../paths/serialize-path'
 import {isEditableContainer} from '../schema/is-editable-container'
-import type {Path} from '../slate/interfaces/path'
 
 export type SelectionState = {
   /**

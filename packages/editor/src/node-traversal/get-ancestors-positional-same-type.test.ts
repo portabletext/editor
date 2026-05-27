@@ -1,12 +1,12 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import type {Node} from '../engine/interfaces/node'
 import {
   defineContainer,
   type ContainerRenderProps,
 } from '../renderers/renderer.types'
 import {buildPublicContainers} from '../schema/build-public-containers'
 import {resolveNestedContainer} from '../schema/resolve-containers-batch'
-import type {Node} from '../slate/interfaces/node'
 import {getAncestors} from './get-ancestors'
 import type {TraversalSnapshot} from './traversal-snapshot'
 

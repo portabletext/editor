@@ -1,9 +1,9 @@
+import {pluginUndoing} from '../engine-plugins/engine-plugin.undoing'
+import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {inverseOperation} from '../engine/operation/inverse-operation'
 import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'
-import {pluginUndoing} from '../slate-plugins/slate-plugin.undoing'
-import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import {inverseOperation} from '../slate/operation/inverse-operation'
 import type {OperationImplementation} from './operation.types'
 
 export const historyUndoOperationImplementation: OperationImplementation<

@@ -4,7 +4,7 @@ import {
   type PortableTextObject,
   type Schema,
 } from '@portabletext/schema'
-import type {Node} from '../slate/interfaces/node'
+import type {Node} from '../engine/interfaces/node'
 
 export function isEqualValues(
   context: {schema: Schema},

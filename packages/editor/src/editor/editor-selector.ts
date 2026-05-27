@@ -1,7 +1,7 @@
 import {useSelector} from '@xstate/react'
 import type {AnyActorRef} from 'xstate'
 import type {Editor} from '../editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
 
@@ -56,22 +56,22 @@ export function useEditorSelector<TSelected>(
 
 export function getEditorSnapshot({
   editorActorSnapshot,
-  slateEditorInstance,
+  editorEngineInstance,
 }: {
   editorActorSnapshot: ReturnType<EditorActor['getSnapshot']>
-  slateEditorInstance: PortableTextSlateEditor
+  editorEngineInstance: PortableTextEditorEngine
 }): EditorSnapshot {
   return {
-    blockIndexMap: slateEditorInstance.blockIndexMap,
+    blockIndexMap: editorEngineInstance.blockIndexMap,
     context: {
-      containers: slateEditorInstance.publicContainers,
+      containers: editorEngineInstance.publicContainers,
       converters: editorActorSnapshot.context.converters,
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
-      selection: slateEditorInstance.selection,
-      value: slateEditorInstance.children,
+      selection: editorEngineInstance.selection,
+      value: editorEngineInstance.children,
     },
-    decoratorState: slateEditorInstance.decoratorState,
+    decoratorState: editorEngineInstance.decoratorState,
   }
 }

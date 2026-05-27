@@ -1,4 +1,5 @@
 import {isSpan} from '@portabletext/schema'
+import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,
@@ -6,7 +7,6 @@ import {
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -87,7 +87,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     }
 
     // This makes sure the selection is set correctly when event handling is run
-    // through Slate's Android input handling
+    // through the engine's Android input handling
     operation.editor.pendingSelection = operation.editor.selection
 
     return

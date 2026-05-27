@@ -1,6 +1,6 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import type {CSSProperties} from 'react'
-import type {RenderLeafProps} from '../slate/react/components/editable'
+import type {RenderLeafProps} from '../engine/react/components/editable'
 import type {
   RangeDecoration,
   RenderAnnotationFunction,

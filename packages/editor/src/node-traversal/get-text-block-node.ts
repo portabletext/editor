@@ -1,5 +1,5 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
-import type {Path} from '../slate/interfaces/path'
+import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
 

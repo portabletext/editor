@@ -6,10 +6,10 @@ import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
-import {createSlateEditor} from './create-slate-editor'
+import {createEditorEngine} from './create-editor-engine'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
@@ -27,7 +27,7 @@ export function createInternalEditor(config: EditorConfig): {
   }
   editor: Editor
   editable: EditableAPI
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   subscriptions: Array<() => () => void>
 } {
   debug.setup('creating new editor instance')
@@ -37,25 +37,25 @@ export function createInternalEditor(config: EditorConfig): {
     input: editorConfigToMachineInput(config),
   })
   const relayActor = createActor(relayMachine)
-  const slateEditor = createSlateEditor({
+  const editorEngine = createEditorEngine({
     editorActor,
     relayActor,
     subscriptions,
   })
-  const editable = createEditableAPI(slateEditor, editorActor)
+  const editable = createEditableAPI(editorEngine, editorActor)
   const {mutationActor, syncActor} = createActors({
     editorActor,
     relayActor,
-    slateEditor,
+    editorEngine,
     subscriptions,
   })
 
   const editor: Editor = {
-    dom: createEditorDom((event) => editorActor.send(event), slateEditor),
+    dom: createEditorDom((event) => editorActor.send(event), editorEngine),
     getSnapshot: () =>
       getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
+        editorEngineInstance: editorEngine,
       }),
     registerBehavior: (behaviorConfig) => {
       const priority = createEditorPriority({
@@ -109,7 +109,7 @@ export function createInternalEditor(config: EditorConfig): {
           editorActor.send(
             rerouteExternalBehaviorEvent({
               event,
-              slateEditor,
+              editorEngine,
             }),
           )
       }
@@ -156,7 +156,7 @@ export function createInternalEditor(config: EditorConfig): {
     },
     editor,
     editable,
-    slateEditor,
+    editorEngine,
     subscriptions,
   }
 }
@@ -176,7 +176,7 @@ function editorConfigToMachineInput(config: EditorConfig) {
 function createActors(config: {
   editorActor: EditorActor
   relayActor: RelayActor
-  slateEditor: PortableTextSlateEditor
+  editorEngine: PortableTextEditorEngine
   subscriptions: Array<() => () => void>
 }): {
   mutationActor: MutationActor
@@ -190,7 +190,7 @@ function createActors(config: {
         .getSnapshot()
         .matches({'edit mode': 'read only'}),
       schema: config.editorActor.getSnapshot().context.schema,
-      slateEditor: config.slateEditor,
+      editorEngine: config.editorEngine,
     },
   })
 
@@ -202,7 +202,7 @@ function createActors(config: {
         .getSnapshot()
         .matches({'edit mode': 'read only'}),
       schema: config.editorActor.getSnapshot().context.schema,
-      slateEditor: config.slateEditor,
+      editorEngine: config.editorEngine,
     },
   })
 
@@ -241,7 +241,7 @@ function createActors(config: {
           config.editorActor.send({
             ...event,
             type: 'internal.patch',
-            value: config.slateEditor.children,
+            value: config.editorEngine.children,
           })
           break
 

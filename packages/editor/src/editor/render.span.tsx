@@ -4,9 +4,9 @@ import type {
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
+import type {RenderLeafProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
 import type {SpanRenderProps} from '../renderers/renderer.types'
-import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
@@ -47,7 +47,7 @@ export function RenderSpan(props: RenderSpanProps) {
 
   const subSchema = useBlockSubSchema(props.path)
   // Span leafs are looked up against the resolved span child. When no child
-  // is found (transient state), fall back to the Slate leaf for identity.
+  // is found (transient state), fall back to the engine leaf for identity.
   const spanConfig = useSpanConfig(child ?? props.leaf, props.path)
 
   const isInNewPipeline = useContext(NewPipelineContext)

@@ -1,7 +1,7 @@
 import {isTextBlock} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
 import {getAncestor} from './get-ancestor'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
 

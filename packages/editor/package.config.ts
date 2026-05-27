@@ -1,7 +1,7 @@
 import {defineConfig} from '@sanity/pkg-utils'
 
 /**
- * The slate-fork lives at `src/slate/`. Historically excluded
+ * The slate-fork lives at `src/engine/`. Historically excluded
  * wholesale from react-compiler; we are un-excluding it in tiers as
  * code is audited safe for the compiler.
  *
@@ -21,19 +21,19 @@ import {defineConfig} from '@sanity/pkg-utils'
  * with `eslint.config.js` (the react-hooks ignores).
  */
 const TIER_1_PATHS = [
-  '/src/slate/path/path-equals.ts',
-  '/src/slate/path/parent-path.ts',
-  '/src/slate/text/text-equals.ts',
-  '/src/slate/text/get-text-decorations.ts',
-  '/src/slate/node/is-text-block-node.ts',
-  '/src/slate/node/is-object-node.ts',
-  '/src/slate/node/is-span-node.ts',
-  '/src/slate/editor/is-editor.ts',
-  '/src/slate/editor/start.ts',
-  '/src/slate/editor/end.ts',
-  '/src/slate/dom/utils/range-list.ts',
-  '/src/slate/dom/utils/environment.ts',
-  '/src/slate/react/utils/direction.ts',
+  '/src/engine/path/path-equals.ts',
+  '/src/engine/path/parent-path.ts',
+  '/src/engine/text/text-equals.ts',
+  '/src/engine/text/get-text-decorations.ts',
+  '/src/engine/node/is-text-block-node.ts',
+  '/src/engine/node/is-object-node.ts',
+  '/src/engine/node/is-span-node.ts',
+  '/src/engine/editor/is-editor.ts',
+  '/src/engine/editor/start.ts',
+  '/src/engine/editor/end.ts',
+  '/src/engine/dom/utils/range-list.ts',
+  '/src/engine/dom/utils/environment.ts',
+  '/src/engine/react/utils/direction.ts',
 ]
 
 /**
@@ -42,12 +42,12 @@ const TIER_1_PATHS = [
  * un-exclusion plan.
  */
 const TIER_2_PATHS = [
-  '/src/slate/react/hooks/use-slate-static.tsx',
-  '/src/slate/react/hooks/use-isomorphic-layout-effect.ts',
-  '/src/slate/react/hooks/use-generic-selector.tsx',
-  '/src/slate/react/hooks/use-read-only.ts',
-  '/src/slate/react/hooks/use-decorations.ts',
-  '/src/slate/react/hooks/use-decorations-by-child.ts',
+  '/src/engine/react/hooks/use-engine-static.tsx',
+  '/src/engine/react/hooks/use-isomorphic-layout-effect.ts',
+  '/src/engine/react/hooks/use-generic-selector.tsx',
+  '/src/engine/react/hooks/use-read-only.ts',
+  '/src/engine/react/hooks/use-decorations.ts',
+  '/src/engine/react/hooks/use-decorations-by-child.ts',
 ]
 
 /**
@@ -55,11 +55,11 @@ const TIER_2_PATHS = [
  * the un-exclusion plan.
  */
 const TIER_3_PATHS = [
-  '/src/slate/react/components/element.tsx',
-  '/src/slate/react/components/text.tsx',
-  '/src/slate/react/components/leaf.tsx',
-  '/src/slate/react/components/object-node.tsx',
-  '/src/slate/react/components/string.tsx',
+  '/src/engine/react/components/element.tsx',
+  '/src/engine/react/components/text.tsx',
+  '/src/engine/react/components/leaf.tsx',
+  '/src/engine/react/components/object-node.tsx',
+  '/src/engine/react/components/string.tsx',
 ]
 
 const UN_EXCLUDED_SLATE_PATHS = [
@@ -95,7 +95,7 @@ export default defineConfig({
   reactCompilerOptions: {
     target: '19',
     sources: (filename: string) => {
-      if (!filename.includes('/src/slate/')) {
+      if (!filename.includes('/src/engine/')) {
         return true
       }
       return UN_EXCLUDED_SLATE_PATHS.some((path) => filename.endsWith(path))

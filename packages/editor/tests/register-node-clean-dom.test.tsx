@@ -16,7 +16,7 @@ import {createTestEditor} from '../src/test/vitest'
  * through `registerNode` (the new pipeline) must emit ZERO
  * `data-slate-*` attributes. The engine's legacy pipeline still emits
  * `data-slate-*` for backwards compatibility with consumers that walk
- * Slate-shaped DOM; the new pipeline strictly emits `data-pt-*` only.
+ * engine-shaped legacy DOM; the new pipeline strictly emits `data-pt-*` only.
  *
  * One assertion per kind. If any of these fail, a registration
  * mechanism is leaking legacy attrs into the new pipeline.

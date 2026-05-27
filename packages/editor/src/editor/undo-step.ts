@@ -1,6 +1,6 @@
-import type {Operation} from '../slate/interfaces/operation'
-import {pathEquals} from '../slate/path/path-equals'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {Operation} from '../engine/interfaces/operation'
+import {pathEquals} from '../engine/path/path-equals'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 type UndoStep = {
   operations: Array<Operation>
@@ -16,7 +16,7 @@ export function createUndoSteps({
 }: {
   steps: Array<UndoStep>
   op: Operation
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   currentUndoStepId: string | undefined
   previousUndoStepId: string | undefined
 }): Array<UndoStep> {
@@ -124,7 +124,7 @@ export function createUndoSteps({
 function createNewStep(
   steps: Array<UndoStep>,
   op: Operation,
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
 ): Array<UndoStep> {
   const operations =
     editor.selection === null

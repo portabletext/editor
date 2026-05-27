@@ -1,8 +1,8 @@
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {getChildren} from '../node-traversal/get-children'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {getUnwrapTarget} from './get-unwrap-target'
 
 /**
@@ -24,7 +24,7 @@ import {getUnwrapTarget} from './get-unwrap-target'
  * Points outside the origin are left alone.
  */
 export function unwrapContainer(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   originPath: Path,
   position: 'before' | 'after',
 ): void {

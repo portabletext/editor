@@ -36,7 +36,7 @@ export class PortableTextEditor {
    */
   public schemaTypes: Schema
   /*
-   * The editor API (currently implemented with Slate).
+   * The editor API (the engine).
    */
   private editable: EditableAPI
 

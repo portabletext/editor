@@ -1,4 +1,5 @@
 import type {Dispatch, SetStateAction} from 'react'
+import type {Path} from '../engine/interfaces/path'
 import type {EventPositionBlock} from '../internal-utils/event-position'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
@@ -6,7 +7,6 @@ import {getDragSelection} from '../selectors/drag-selection'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
-import type {Path} from '../slate/interfaces/path'
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

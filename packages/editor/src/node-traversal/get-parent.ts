@@ -1,6 +1,6 @@
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
-import {parentPath} from '../slate/path/parent-path'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import {parentPath} from '../engine/path/parent-path'
 import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
 

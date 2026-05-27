@@ -4,7 +4,7 @@ import type {
 } from '../behaviors/behavior.types.event'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 export type OperationSnapshot = {
   context: TraversalSnapshot['context'] & {
@@ -27,7 +27,7 @@ export type Operation = OmitFromUnion<
   'type',
   AbstractBehaviorEventType
 > & {
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
 }
 
 export type OperationImplementations = {

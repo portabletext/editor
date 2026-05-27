@@ -1,5 +1,5 @@
+import type {Editor} from '../engine/interfaces/editor'
 import {serializePath} from '../paths/serialize-path'
-import type {Editor} from '../slate/interfaces/editor'
 import type {Path} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 

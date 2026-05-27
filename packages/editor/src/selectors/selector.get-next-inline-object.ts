@@ -1,7 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isObjectNode} from '../engine/node/is-object-node'
 import {findSibling} from '../node-traversal/find-sibling'
-import {isObjectNode} from '../slate/node/is-object-node'
 import type {ChildPath} from '../types/paths'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 

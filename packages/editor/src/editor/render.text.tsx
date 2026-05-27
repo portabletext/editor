@@ -1,5 +1,5 @@
 import {useContext} from 'react'
-import type {Editable} from '../slate/react/components/editable'
+import type {Editable} from '../engine/react/components/editable'
 import {ParentContainerContext} from './parent-container-context'
 
 export type RenderTextProps = Parameters<

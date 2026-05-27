@@ -1,5 +1,5 @@
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'

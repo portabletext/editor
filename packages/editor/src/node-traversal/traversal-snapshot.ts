@@ -1,6 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Node} from '../engine/interfaces/node'
 import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 
 /**
  * Snapshot-shaped input for traversal utilities.

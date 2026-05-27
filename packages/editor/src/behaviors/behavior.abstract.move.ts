@@ -1,8 +1,8 @@
+import {parentPath} from '../engine/path/parent-path'
+import {pathEquals} from '../engine/path/path-equals'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
-import {parentPath} from '../slate/path/parent-path'
-import {pathEquals} from '../slate/path/path-equals'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

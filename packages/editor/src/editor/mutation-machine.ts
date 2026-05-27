@@ -13,9 +13,9 @@ import {
   setup,
   type AnyEventObject,
 } from 'xstate'
+import {isNormalizing} from '../engine/editor/is-normalizing'
 import {debug} from '../internal-utils/debug'
-import {isNormalizing} from '../slate/editor/is-normalizing'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSchema} from './editor-schema'
 import type {PatchEvent} from './relay-machine'
 
@@ -35,7 +35,7 @@ export const mutationMachine = setup({
       pendingPatchEvents: Array<PatchEvent>
       readOnly: boolean
       schema: EditorSchema
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
     },
     events: {} as
       | {
@@ -60,7 +60,7 @@ export const mutationMachine = setup({
     input: {} as {
       readOnly: boolean
       schema: EditorSchema
-      slateEditor: PortableTextSlateEditor
+      editorEngine: PortableTextEditorEngine
     },
     emitted: {} as
       | {
@@ -80,7 +80,7 @@ export const mutationMachine = setup({
       return {type: 'patch' as const, patch: event.patch}
     }),
     'set is deferring mutations': ({context}) => {
-      context.slateEditor.isDeferringMutations = true
+      context.editorEngine.isDeferringMutations = true
     },
     'emit mutations': enqueueActions(({context, enqueue}) => {
       for (const bulk of context.pendingMutations) {
@@ -90,7 +90,7 @@ export const mutationMachine = setup({
           snapshot: bulk.value,
         })
       }
-      context.slateEditor.isDeferringMutations = false
+      context.editorEngine.isDeferringMutations = false
     }),
     'clear pending mutations': assign({
       pendingMutations: [],
@@ -144,12 +144,12 @@ export const mutationMachine = setup({
   actors: {
     'type listener': fromCallback<
       AnyEventObject,
-      {slateEditor: PortableTextSlateEditor},
+      {editorEngine: PortableTextEditorEngine},
       {type: 'typing'} | {type: 'not typing'}
     >(({input, sendBack}) => {
-      const originalApply = input.slateEditor.apply
+      const originalApply = input.editorEngine.apply
 
-      input.slateEditor.apply = (op) => {
+      input.editorEngine.apply = (op) => {
         if (op.type === 'insert_text' || op.type === 'remove_text') {
           sendBack({type: 'typing'})
         } else {
@@ -159,7 +159,7 @@ export const mutationMachine = setup({
       }
 
       return () => {
-        input.slateEditor.apply = originalApply
+        input.editorEngine.apply = originalApply
       }
     }),
     'mutation interval': fromCallback(({sendBack}) => {
@@ -178,7 +178,7 @@ export const mutationMachine = setup({
   },
   guards: {
     'is read-only': ({context}) => context.readOnly,
-    'slate is normalizing': ({context}) => isNormalizing(context.slateEditor),
+    'engine is normalizing': ({context}) => isNormalizing(context.editorEngine),
   },
   delays: {
     'type debounce': 250,
@@ -190,7 +190,7 @@ export const mutationMachine = setup({
     pendingPatchEvents: [],
     readOnly: input.readOnly,
     schema: input.schema,
-    slateEditor: input.slateEditor,
+    editorEngine: input.editorEngine,
   }),
   on: {
     'update readOnly': {
@@ -203,7 +203,7 @@ export const mutationMachine = setup({
       initial: 'idle',
       invoke: {
         src: 'type listener',
-        input: ({context}) => ({slateEditor: context.slateEditor}),
+        input: ({context}) => ({editorEngine: context.editorEngine}),
       },
       states: {
         idle: {
@@ -301,7 +301,7 @@ export const mutationMachine = setup({
           },
           on: {
             'emit changes': {
-              guard: and([not('is read-only'), 'slate is normalizing']),
+              guard: and([not('is read-only'), 'engine is normalizing']),
               target: 'idle',
               actions: [
                 'emit pending patch events',

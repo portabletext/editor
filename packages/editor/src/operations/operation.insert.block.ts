@@ -1,36 +1,36 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {end as editorEnd} from '../engine/editor/end'
+import {pathRef} from '../engine/editor/path-ref'
+import {rangeRef} from '../engine/editor/range-ref'
+import {start as editorStart} from '../engine/editor/start'
+import type {Node} from '../engine/interfaces/node'
+import type {InsertOperation} from '../engine/interfaces/operation'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import type {Range} from '../engine/interfaces/range'
+import {parentPath} from '../engine/path/parent-path'
+import {pathEquals} from '../engine/path/path-equals'
+import {siblingPath} from '../engine/path/sibling-path'
+import {pointEquals} from '../engine/point/point-equals'
+import {isExpandedRange} from '../engine/range/is-expanded-range'
+import {rangeEdges} from '../engine/range/range-edges'
+import {rangeEnd} from '../engine/range/range-end'
+import {rangeStart} from '../engine/range/range-start'
 import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {deleteRange} from '../internal-utils/delete-range'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {toSlateBlock} from '../internal-utils/values'
+import {toEngineBlock} from '../internal-utils/values'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {end as editorEnd} from '../slate/editor/end'
-import {pathRef} from '../slate/editor/path-ref'
-import {rangeRef} from '../slate/editor/range-ref'
-import {start as editorStart} from '../slate/editor/start'
-import type {Node} from '../slate/interfaces/node'
-import type {InsertOperation} from '../slate/interfaces/operation'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import type {Range} from '../slate/interfaces/range'
-import {parentPath} from '../slate/path/parent-path'
-import {pathEquals} from '../slate/path/path-equals'
-import {siblingPath} from '../slate/path/sibling-path'
-import {pointEquals} from '../slate/point/point-equals'
-import {isExpandedRange} from '../slate/range/is-expanded-range'
-import {rangeEdges} from '../slate/range/range-edges'
-import {rangeEnd} from '../slate/range/range-end'
-import {rangeStart} from '../slate/range/range-start'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import type {EditorSelection} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -112,7 +112,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
     return
   }
 
-  const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})
+  const block = toEngineBlock(parsedBlock, {schemaTypes: context.schema})
 
   const target = resolveTarget({
     editor,
@@ -145,7 +145,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
  * no mutations on the editor.
  */
 function resolveTarget(args: {
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   block: Node
   at: Range | undefined
   placement: 'auto' | 'before' | 'after'
@@ -256,7 +256,7 @@ function resolveTarget(args: {
 // ---------------------------------------------------------------------------
 
 function dispatchInsert(args: {
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   context: OperationSnapshot['context']
   block: Node
   target: InsertTarget
@@ -363,7 +363,7 @@ function dispatchInsert(args: {
  * of the inserted block.
  */
 function insertBlockIntoEmptyEditor(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   block: Node,
 ): Path {
   applyInsertNodeAtPath(editor, block, [0])
@@ -376,7 +376,7 @@ function insertBlockIntoEmptyEditor(
  * is valid at any depth.
  */
 function insertSiblingBlock(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   block: Node,
   siblingNodePath: Path,
   position: 'before' | 'after',
@@ -402,7 +402,7 @@ function insertSiblingBlock(
  * inserted block.
  */
 function replaceBlock(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   block: Node,
   targetPath: Path,
 ): Path {
@@ -416,7 +416,7 @@ function replaceBlock(
  * halves. Returns the path of the inserted block.
  */
 function splitBlockAndInsert(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   block: Node,
   blockPath: Path,
   splitAt: Point,
@@ -456,7 +456,7 @@ function splitBlockAndInsert(
  * captured before the insert.
  */
 function mergeTextBlockFragment(args: {
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   context: OperationSnapshot['context']
   block: Node
   at: Point
@@ -523,7 +523,7 @@ function mergeTextBlockFragment(args: {
  * active when the operation started.
  */
 function applyPostInsertSelection(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   insertedBlockPath: Path,
   select: 'start' | 'end' | 'none',
   selectionAtEntry: EditorSelection,
@@ -563,7 +563,7 @@ function applyPostInsertSelection(
  * fragment pseudo-behavior can restore the caret correctly.
  */
 function executeDeleteThenInsert(args: {
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   context: OperationSnapshot['context']
   block: Node
   range: Range
@@ -680,7 +680,7 @@ function executeDeleteThenInsert(args: {
  * if one is left behind.
  */
 function removeAdjacentEmptyTextBlock(args: {
-  editor: PortableTextSlateEditor
+  editor: PortableTextEditorEngine
   context: OperationSnapshot['context']
   insertedPath: Path
 }): void {
@@ -790,7 +790,7 @@ function adjustFragmentKeys(args: {
  * selection stays valid through deferred normalization.
  */
 function insertFragmentChildren(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   block: Node,
   at: Point,
 ): string | undefined {

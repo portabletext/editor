@@ -1,6 +1,6 @@
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
-import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../slate/interfaces/path'
 import {resolveContainerAt} from './resolve-container-at'
 
 /**

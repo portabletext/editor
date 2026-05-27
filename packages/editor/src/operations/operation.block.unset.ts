@@ -1,7 +1,7 @@
+import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -14,9 +14,9 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
-  const slateBlock = blockEntry.node
+  const engineBlock = blockEntry.node
 
-  if (isTextBlockNode(context, slateBlock)) {
+  if (isTextBlockNode(context, engineBlock)) {
     const propsToRemove = operation.props.filter(
       (prop) => prop !== '_type' && prop !== '_key',
     )

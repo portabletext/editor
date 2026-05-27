@@ -1,8 +1,8 @@
+import type {Path} from '../engine/interfaces/path'
 import {getChildren} from '../node-traversal/get-children'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
-import type {Path} from '../slate/interfaces/path'
 
 /**
  * Walk up from `originPath` (an empty editable container) looking for

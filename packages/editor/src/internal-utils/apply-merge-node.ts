@@ -1,15 +1,15 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Path} from '../engine/interfaces/path'
+import type {Point} from '../engine/interfaces/point'
+import type {Range} from '../engine/interfaces/range'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {pathEquals} from '../engine/path/path-equals'
+import {isBackwardRange} from '../engine/range/is-backward-range'
+import {isRange} from '../engine/range/is-range'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
-import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Path} from '../slate/interfaces/path'
-import type {Point} from '../slate/interfaces/point'
-import type {Range} from '../slate/interfaces/range'
-import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import {pathEquals} from '../slate/path/path-equals'
-import {isBackwardRange} from '../slate/range/is-backward-range'
-import {isRange} from '../slate/range/is-range'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
@@ -25,7 +25,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * For element nodes: moves children into the previous sibling, then removes the node.
  */
 export function applyMergeNode(
-  editor: PortableTextSlateEditor,
+  editor: PortableTextEditorEngine,
   path: Path,
   position: number,
 ): void {
