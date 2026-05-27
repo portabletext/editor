@@ -138,3 +138,107 @@ describe('event.move.block up', () => {
     })
   })
 })
+
+describe('event.move.block', () => {
+  test('Scenario: Moving a block onto its own path is a no-op', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [image, foo, bar],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: image._key}],
+      to: [{_key: image._key}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([image, foo, bar])
+    })
+  })
+
+  test('Scenario: Moving a block forward past multiple siblings', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [image, foo, bar],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    // Move image from index 0 to bar's index 2.
+    editor.send({
+      type: 'move.block',
+      at: [{_key: image._key}],
+      to: [{_key: bar._key}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([foo, bar, image])
+    })
+  })
+
+  test('Scenario: Moving a block backward past multiple siblings', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [foo, bar, image],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    // Move image from index 2 to foo's index 0.
+    editor.send({
+      type: 'move.block',
+      at: [{_key: image._key}],
+      to: [{_key: foo._key}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([image, foo, bar])
+    })
+  })
+
+  test('Scenario: Swapping two adjacent blocks via direct move forward', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [foo, bar],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: foo._key}],
+      to: [{_key: bar._key}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+    })
+  })
+
+  test('Scenario: Swapping two adjacent blocks via direct move backward', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [foo, bar],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: bar._key}],
+      to: [{_key: foo._key}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+    })
+  })
+})
