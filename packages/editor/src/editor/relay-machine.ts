@@ -3,7 +3,6 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import {assign, emit, setup, type ActorRefFrom} from 'xstate'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'
-import {isEqualSelections} from '../utils/util.is-equal-selections'
 
 /**
  * @public
@@ -129,8 +128,7 @@ export const relayMachine = setup({
         ],
       },
       {
-        guard: ({context, event}) =>
-          !isEqualSelections(context.prevSelection, event.selection),
+        guard: ({context, event}) => context.prevSelection !== event.selection,
         actions: [
           assign({
             prevSelection: ({event}) => event.selection,
