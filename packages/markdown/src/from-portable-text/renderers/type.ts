@@ -52,6 +52,10 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
  * Portable Text side and is ignored on the way out so that the emitted
  * Markdown is always a valid GFM table.
  *
+ * Asymmetric tables (rows of varying cell counts) are widened to match
+ * the row with the most cells. Narrower rows are padded with empty cells
+ * so a GFM parser doesn't silently drop the extra cells in wider rows.
+ *
  * @public
  */
 export const DefaultTableRenderer: PortableTextTypeRenderer<{
@@ -100,20 +104,35 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
 
   const lines: string[] = []
 
-  // First row is the header
-  const headerCells = headerRow.cells.map((cell) => getCellText(cell.value))
-  lines.push(`| ${headerCells.join(' | ')} |`)
+  // GFM requires every row to have the same number of cells as the header row
+  // and the delimiter row. Parsers silently drop excess cells from body rows
+  // that are wider than the header, so we widen the table to the widest row
+  // and pad narrower rows with empty cells to keep all data visible.
+  const columnCount = rows.reduce(
+    (max, row) => Math.max(max, row.cells.length),
+    0,
+  )
 
-  // Delimiter row, sized to the header
-  const separators = headerRow.cells.map(() => ' --- ')
+  const renderRow = (cells: typeof headerRow.cells): string => {
+    const texts = cells.map((cell) => getCellText(cell.value))
+    while (texts.length < columnCount) {
+      texts.push('')
+    }
+    return `| ${texts.join(' | ')} |`
+  }
+
+  // First row is the header, padded to the table's column count
+  lines.push(renderRow(headerRow.cells))
+
+  // Delimiter row, sized to the column count
+  const separators = Array.from({length: columnCount}, () => ' --- ')
   lines.push(`|${separators.join('|')}|`)
 
   // Remaining rows are the body
   for (let i = 1; i < rows.length; i++) {
     const row = rows.at(i)
     if (row) {
-      const cellTexts = row.cells.map((cell) => getCellText(cell.value))
-      lines.push(`| ${cellTexts.join(' | ')} |`)
+      lines.push(renderRow(row.cells))
     }
   }
 
