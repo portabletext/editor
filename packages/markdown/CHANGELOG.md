@@ -1,5 +1,17 @@
 # @portabletext/markdown
 
+## 1.3.2
+
+### Patch Changes
+
+- [#2694](https://github.com/portabletext/editor/pull/2694) [`491d5ff`](https://github.com/portabletext/editor/commit/491d5ffedbbce814967289af44010fdd7ca017f7) Thanks [@christianhg](https://github.com/christianhg)! - fix: `DefaultTableRenderer` widens asymmetric tables to fit the widest row
+
+  When rows had different cell counts the delimiter row was sized to the header, so a GFM parser silently dropped cells from any body row that was wider than the header. The renderer now sizes the delimiter to the widest row and pads narrower rows with empty cells so all data survives the round-trip.
+
+- [#2697](https://github.com/portabletext/editor/pull/2697) [`8247ec5`](https://github.com/portabletext/editor/commit/8247ec551022d4ae077c40aff475f16533b9ac12) Thanks [@christianhg](https://github.com/christianhg)! - fix: `DefaultTableRenderer` escapes characters that would break a GFM table row
+
+  A `|` in a cell's text used to end the cell, causing all cells to the right to shift. A `\n` inside a multi-line block-object (such as a code block) used to end the row, causing all cells after the first line break to be lost. The renderer now escapes literal pipes as `\|` and replaces newlines with `<br>` so every cell in the source Portable Text survives the round-trip through `markdownToPortableText`.
+
 ## 1.3.1
 
 ### Patch Changes
