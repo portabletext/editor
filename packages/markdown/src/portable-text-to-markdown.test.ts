@@ -2050,6 +2050,149 @@ describe(portableTextToMarkdown.name, () => {
         ).toBe(markdownOut)
       })
     })
+
+    describe('table with a pipe in cell text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'a | b',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'c',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('escapes the pipe so it stays inside the cell', () => {
+        const markdownOut = ['| a \\| b | c |', '| --- | --- |'].join('\n')
+
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+    })
+
+    describe('table with a multi-line block-object in a cell', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'code',
+                      _key: keyGenerator(),
+                      language: 'js',
+                      code: 'const x = 1\nconst y = 2',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('replaces newlines with <br> so the row stays intact', () => {
+        const result = portableTextToMarkdown(portableText, {
+          types: {
+            table: DefaultTableRenderer,
+            code: DefaultCodeBlockRenderer,
+          },
+        })
+
+        expect(result).toBe(
+          [
+            '| Header |',
+            '| --- |',
+            '| ```js<br>const x = 1<br>const y = 2<br>``` |',
+          ].join('\n'),
+        )
+      })
+    })
   })
 
   describe('callouts', () => {
