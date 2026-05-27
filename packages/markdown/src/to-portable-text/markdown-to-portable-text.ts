@@ -78,6 +78,7 @@ type Options = {
     html?: ObjectMatcher<{html: string}>
     table?: ObjectMatcher<{
       headerRows: number | undefined
+      alignment: Array<'left' | 'center' | 'right' | null> | undefined
       rows: Array<{
         _key: string
         _type: 'row'
@@ -185,6 +186,23 @@ const defaultOptions = {
     callout: buildObjectMatcher(defaultCalloutObjectDefinition),
   },
 } as const satisfies Options
+
+/**
+ * Reads GFM column alignment from a markdown-it cell token's `style`
+ * attribute. Tolerates other CSS declarations sharing the value.
+ */
+export function extractAlignmentFromStyleAttr(
+  styleAttr: string | null,
+): 'left' | 'center' | 'right' | null {
+  if (!styleAttr) {
+    return null
+  }
+  const match = styleAttr.match(/text-align\s*:\s*(left|center|right)/)
+  if (!match) {
+    return null
+  }
+  return match[1] as 'left' | 'center' | 'right'
+}
 
 /**
  * Flattens a table structure by lifting all blocks from all cells.
@@ -344,6 +362,7 @@ export function markdownToPortableText(
       }>
     }>
     headerRows: number
+    alignment: Array<'left' | 'center' | 'right' | null>
   } | null = null
   let currentTableRow: Array<{
     _type: 'cell'
@@ -1099,7 +1118,7 @@ export function markdownToPortableText(
       // Tables
       case 'table_open':
         flushBlock()
-        currentTable = {rows: [], headerRows: 0}
+        currentTable = {rows: [], headerRows: 0, alignment: []}
         break
 
       case 'table_close': {
@@ -1109,6 +1128,7 @@ export function markdownToPortableText(
 
         // Only create table object if table type is defined
         if (consolidatedOptions.types.table) {
+          const hasAlignment = currentTable.alignment.some((a) => a !== null)
           const tableObject = consolidatedOptions.types.table({
             context: {
               schema: consolidatedOptions.schema,
@@ -1120,6 +1140,7 @@ export function markdownToPortableText(
                 currentTable.headerRows > 0
                   ? currentTable.headerRows
                   : undefined,
+              alignment: hasAlignment ? currentTable.alignment : undefined,
             },
             isInline: false,
           })
@@ -1175,6 +1196,14 @@ export function markdownToPortableText(
 
       case 'th_open':
       case 'td_open': {
+        // Alignment is per-column, set on every cell of that column. Read
+        // from the header so each column contributes exactly one entry.
+        if (currentTable && inTableHead && token.type === 'th_open') {
+          currentTable.alignment.push(
+            extractAlignmentFromStyleAttr(token.attrGet('style')),
+          )
+        }
+
         // Start a new block for the table cell
         const style = consolidatedOptions.block.normal({
           context: {schema: consolidatedOptions.schema},

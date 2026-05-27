@@ -3336,6 +3336,7 @@ describe(markdownToPortableText.name, () => {
       name: 'table',
       fields: [
         {name: 'headerRows', type: 'number'},
+        {name: 'alignment', type: 'array'},
         {name: 'rows', type: 'array'},
       ],
     } as const satisfies BlockObjectDefinition
@@ -4590,6 +4591,58 @@ describe(markdownToPortableText.name, () => {
           markDefs: [],
         },
       ])
+    })
+
+    test('table with column alignment', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| L | C | R | D |',
+        '| :--- | :---: | ---: | --- |',
+        '| 1 | 2 | 3 | 4 |',
+      ].join('\n')
+
+      const result = markdownToPortableText(
+        markdown,
+        getTableTestOptions(keyGenerator),
+      )
+      expect((result.at(0) as {alignment?: unknown}).alignment).toEqual([
+        'left',
+        'center',
+        'right',
+        null,
+      ])
+    })
+
+    test('table with one aligned column among unaligned columns', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| A | B | C |',
+        '| --- | --- | ---: |',
+        '| 1 | 2 | 3 |',
+      ].join('\n')
+
+      const result = markdownToPortableText(
+        markdown,
+        getTableTestOptions(keyGenerator),
+      )
+      expect((result.at(0) as {alignment?: unknown}).alignment).toEqual([
+        null,
+        null,
+        'right',
+      ])
+    })
+
+    test('table with no alignment omits the alignment field', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['| A | B |', '| --- | --- |', '| 1 | 2 |'].join('\n')
+
+      const result = markdownToPortableText(
+        markdown,
+        getTableTestOptions(keyGenerator),
+      )
+      expect(result.at(0) as Record<string, unknown>).not.toHaveProperty(
+        'alignment',
+      )
     })
   })
 
