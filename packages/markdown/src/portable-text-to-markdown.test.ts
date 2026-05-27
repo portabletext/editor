@@ -1410,6 +1410,406 @@ describe(portableTextToMarkdown.name, () => {
         ).toBe(markdownOut)
       })
     })
+
+    describe('table without designated header row', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 3',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 4',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('headerRows undefined promotes the first row to header', () => {
+        const markdownOut = [
+          '| Cell 1 | Cell 2 |',
+          '| --- | --- |',
+          '| Cell 3 | Cell 4 |',
+        ].join('\n')
+
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+
+      test('headerRows 0 promotes the first row to header', () => {
+        const table = portableText.at(0)
+        if (!table) {
+          throw new Error('expected a table block')
+        }
+        const withZeroHeaderRows = [{...table, headerRows: 0}]
+        const markdownOut = [
+          '| Cell 1 | Cell 2 |',
+          '| --- | --- |',
+          '| Cell 3 | Cell 4 |',
+        ].join('\n')
+
+        expect(
+          portableTextToMarkdown(withZeroHeaderRows, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+    })
+
+    describe('table with multiple header rows', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          headerRows: 2,
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Subheader 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Subheader 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('only the first row becomes the header, the rest are body rows', () => {
+        const markdownOut = [
+          '| Header 1 | Header 2 |',
+          '| --- | --- |',
+          '| Subheader 1 | Subheader 2 |',
+          '| Cell 1 | Cell 2 |',
+        ].join('\n')
+
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+    })
+
+    describe('table with no rows', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [],
+        },
+      ]
+
+      test('emits nothing', () => {
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe('')
+      })
+    })
+
+    describe('table with a single row', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Cell 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('emits header + delimiter, no body', () => {
+        const markdownOut = ['| Cell 1 | Cell 2 |', '| --- | --- |'].join('\n')
+
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+    })
   })
 
   describe('callouts', () => {

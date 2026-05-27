@@ -45,6 +45,13 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 }
 
 /**
+ * Renders a Portable Text table block-object back to Markdown. Because
+ * GFM allows exactly one header row, the first row is always emitted as
+ * the header, followed by the delimiter row, followed by the remaining
+ * rows as body rows. The PT `headerRows` field is informational on the
+ * Portable Text side and is ignored on the way out so that the emitted
+ * Markdown is always a valid GFM table.
+ *
  * @public
  */
 export const DefaultTableRenderer: PortableTextTypeRenderer<{
@@ -58,7 +65,6 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     }>
   }>
 }> = ({value, renderNode}) => {
-  const headerRows = value.headerRows || 0
   const rows = value.rows as Array<{
     _key: string
     _type: 'row'
@@ -68,7 +74,12 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
       value: Array<{_type: string; children?: Array<unknown>}>
     }>
   }>
-  const lines: string[] = []
+
+  const headerRow = rows.at(0)
+
+  if (!headerRow) {
+    return ''
+  }
 
   // Helper to extract text from cell blocks
   const getCellText = (
@@ -87,24 +98,19 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
       .trim()
   }
 
-  // Add header rows
-  for (let i = 0; i < headerRows; i++) {
-    const row = rows[i]
-    if (row) {
-      const cellTexts = row.cells.map((cell) => getCellText(cell.value))
-      lines.push(`| ${cellTexts.join(' | ')} |`)
-    }
-  }
+  const lines: string[] = []
 
-  // Add separator line if there are headers
-  if (headerRows > 0 && rows[0]) {
-    const separators = rows[0].cells.map(() => ' --- ')
-    lines.push(`|${separators.join('|')}|`)
-  }
+  // First row is the header
+  const headerCells = headerRow.cells.map((cell) => getCellText(cell.value))
+  lines.push(`| ${headerCells.join(' | ')} |`)
 
-  // Add body rows
-  for (let i = headerRows; i < rows.length; i++) {
-    const row = rows[i]
+  // Delimiter row, sized to the header
+  const separators = headerRow.cells.map(() => ' --- ')
+  lines.push(`|${separators.join('|')}|`)
+
+  // Remaining rows are the body
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows.at(i)
     if (row) {
       const cellTexts = row.cells.map((cell) => getCellText(cell.value))
       lines.push(`| ${cellTexts.join(' | ')} |`)
