@@ -1,5 +1,13 @@
 # @portabletext/markdown
 
+## 1.3.1
+
+### Patch Changes
+
+- [#2692](https://github.com/portabletext/editor/pull/2692) [`c440b2f`](https://github.com/portabletext/editor/commit/c440b2f09fa466d7c18971e71c1010c08edc7bb5) Thanks [@christianhg](https://github.com/christianhg)! - fix: `DefaultTableRenderer` always emits a valid GFM table
+
+  The first row is always rendered as the header, followed by the delimiter row, followed by the remaining rows as body. The `headerRows` field on the Portable Text table is ignored on serialization so that the emitted Markdown round-trips through any GFM parser. Tables with no rows render as an empty string.
+
 ## 1.3.0
 
 ### Minor Changes

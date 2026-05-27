@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/toolbar",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "description": "Utilities for building a toolbar for the Portable Text Editor",
   "keywords": [
     "portabletext",
@@ -73,7 +73,7 @@
     "vitest": "^4.1.4"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^7.0.1",
+    "@portabletext/editor": "workspace:^7.0.2",
     "react": "^19.2.5"
   },
   "engines": {

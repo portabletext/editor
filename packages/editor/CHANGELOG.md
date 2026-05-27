@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`c440b2f`](https://github.com/portabletext/editor/commit/c440b2f09fa466d7c18971e71c1010c08edc7bb5)]:
+  - @portabletext/markdown@1.3.1
+
 ## 7.0.1
 
 ### Patch Changes
