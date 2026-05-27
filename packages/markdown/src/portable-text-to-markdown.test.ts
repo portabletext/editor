@@ -1810,6 +1810,246 @@ describe(portableTextToMarkdown.name, () => {
         ).toBe(markdownOut)
       })
     })
+
+    describe('asymmetric table with a wider body row', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Body 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Body 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Body 3',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('the header row is padded so no body cells are dropped', () => {
+        const markdownOut = [
+          '| Header 1 |  |  |',
+          '| --- | --- | --- |',
+          '| Body 1 | Body 2 | Body 3 |',
+        ].join('\n')
+
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+    })
+
+    describe('asymmetric table with a wider header row', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header 2',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header 3',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Body 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('the body row is padded so it lines up under the header', () => {
+        const markdownOut = [
+          '| Header 1 | Header 2 | Header 3 |',
+          '| --- | --- | --- |',
+          '| Body 1 |  |  |',
+        ].join('\n')
+
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              table: DefaultTableRenderer,
+            },
+          }),
+        ).toBe(markdownOut)
+      })
+    })
   })
 
   describe('callouts', () => {
