@@ -2,6 +2,7 @@ import {describe, expect, test} from 'vitest'
 import {
   escapeImageAndLinkText,
   escapeImageAndLinkTitle,
+  escapeTableCell,
   unescapeImageAndLinkText,
 } from './escape'
 
@@ -56,5 +57,37 @@ describe(escapeImageAndLinkTitle.name, () => {
 
   test('leaves other characters unchanged', () => {
     expect(escapeImageAndLinkTitle('Hello World!')).toBe('Hello World!')
+  })
+})
+
+describe(escapeTableCell.name, () => {
+  test('escapes literal pipe', () => {
+    expect(escapeTableCell('a | b')).toBe('a \\| b')
+  })
+
+  test('escapes multiple pipes', () => {
+    expect(escapeTableCell('a | b | c')).toBe('a \\| b \\| c')
+  })
+
+  test('replaces newlines with <br>', () => {
+    expect(escapeTableCell('line 1\nline 2')).toBe('line 1<br>line 2')
+  })
+
+  test('leaves already-escaped pipes intact', () => {
+    expect(escapeTableCell('a \\| b')).toBe('a \\| b')
+  })
+
+  test('leaves backslashes alone', () => {
+    expect(escapeTableCell('a\\b')).toBe('a\\b')
+  })
+
+  test('preserves link-text escapes alongside pipe escaping', () => {
+    expect(
+      escapeTableCell('[link \\[with brackets\\]](https://example.com)'),
+    ).toBe('[link \\[with brackets\\]](https://example.com)')
+  })
+
+  test('leaves plain text unchanged', () => {
+    expect(escapeTableCell('hello world')).toBe('hello world')
   })
 })

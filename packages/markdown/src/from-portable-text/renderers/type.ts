@@ -1,5 +1,9 @@
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
-import {escapeImageAndLinkText, escapeImageAndLinkTitle} from '../../escape'
+import {
+  escapeImageAndLinkText,
+  escapeImageAndLinkTitle,
+  escapeTableCell,
+} from '../../escape'
 import type {PortableTextTypeRenderer} from '../types'
 
 /**
@@ -114,7 +118,7 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   )
 
   const renderRow = (cells: typeof headerRow.cells): string => {
-    const texts = cells.map((cell) => getCellText(cell.value))
+    const texts = cells.map((cell) => escapeTableCell(getCellText(cell.value)))
     while (texts.length < columnCount) {
       texts.push('')
     }
