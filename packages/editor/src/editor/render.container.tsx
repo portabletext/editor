@@ -1,12 +1,12 @@
 import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import type {ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
-import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
 import type {
   ContainerConfig,
   ContainerRenderProps,
 } from '../renderers/renderer.types'
+import type {RenderElementProps} from './render-props-types'
 import {renderDefaultContainer} from './render.default'
 import {
   useIsFocusedContainer,

@@ -4,7 +4,6 @@ import type {
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
-import type {RenderLeafProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
 import type {SpanRenderProps} from '../renderers/renderer.types'
 import type {
@@ -17,6 +16,7 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {NewPipelineContext} from './new-pipeline-context'
+import type {RenderLeafProps} from './render-props-types'
 import {renderDefaultSpan} from './render.default'
 import {useSpanConfig} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'

@@ -1,10 +1,8 @@
 import {useContext} from 'react'
-import type {Editable} from '../engine/react/components/editable'
 import {ParentContainerContext} from './parent-container-context'
+import type {RenderTextProps} from './render-props-types'
 
-export type RenderTextProps = Parameters<
-  NonNullable<React.ComponentProps<typeof Editable>['renderText']>
->[0]
+export type {RenderTextProps}
 
 export function RenderText(props: RenderTextProps) {
   const parentContainer = useContext(ParentContainerContext)

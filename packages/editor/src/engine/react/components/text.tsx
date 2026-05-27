@@ -4,6 +4,10 @@ import type {
 } from '@portabletext/schema'
 import React, {useContext, type JSX} from 'react'
 import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import type {
+  RenderLeafProps,
+  RenderTextProps,
+} from '../../../editor/render-props-types'
 import {serializePath} from '../../../paths/serialize-path'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -11,7 +15,6 @@ import type {DecoratedRange} from '../../interfaces/text'
 import {pathEquals} from '../../path/path-equals'
 import {getTextDecorations} from '../../text/get-text-decorations'
 import {useDecorations} from '../hooks/use-decorations'
-import type {RenderLeafProps, RenderTextProps} from './editable'
 import Leaf from './leaf'
 
 const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />

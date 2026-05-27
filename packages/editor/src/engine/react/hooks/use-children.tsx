@@ -10,6 +10,11 @@ import {
   ParentContainerContext,
   useParentContainer,
 } from '../../../editor/parent-container-context'
+import type {
+  RenderElementProps,
+  RenderLeafProps,
+  RenderTextProps,
+} from '../../../editor/render-props-types'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor} from '../../interfaces/editor'
@@ -19,11 +24,6 @@ import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
 import {isSpanNode} from '../../node/is-span-node'
 import {isTextBlockNode} from '../../node/is-text-block-node'
-import type {
-  RenderElementProps,
-  RenderLeafProps,
-  RenderTextProps,
-} from '../components/editable'
 import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'

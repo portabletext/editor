@@ -5,7 +5,6 @@ import type {
 import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
-import type {RenderElementProps} from '../engine/react/components/editable'
 import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
 import {serializePath} from '../paths/serialize-path'
 import type {
@@ -18,6 +17,7 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
+import type {RenderElementProps} from './render-props-types'
 import {DropIndicator} from './render.drop-indicator'
 import {
   useIsFocusedContainer,

@@ -5,10 +5,10 @@ import type {
 } from '@portabletext/schema'
 import React, {useContext, type JSX} from 'react'
 import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import type {RenderLeafProps} from '../../../editor/render-props-types'
 import type {Path} from '../../interfaces/path'
 import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
-import type {RenderLeafProps} from './editable'
 import EngineString from './string'
 
 const defaultRenderLeaf = (props: RenderLeafProps) => <DefaultLeaf {...props} />

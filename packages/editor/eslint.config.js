@@ -61,6 +61,15 @@ export default tseslint.config([
     'src/engine/**',
     // Un-ignore Tier 1 pure utilities so react-hooks rules apply.
     ...UN_IGNORED_ENGINE_PATHS.map((path) => `!${path}`),
+    // `Editable.tsx` is the DOM↔engine bridge. The engine has long-lived
+    // mutable instance fields (`editor.focused`, `editor.composing`,
+    // `editor.userSelection`, `editor.domElement`, etc.) that this file
+    // assigns to as part of translating raw DOM events into engine state.
+    // These mutations aren't accidental React; they're the bridge's job.
+    // Historically the bridge lived under `src/engine/**` (wholesale
+    // ignored). After merging the two-layer Editable into one file in
+    // `src/editor/`, the same exemption applies.
+    'src/editor/Editable.tsx',
   ]),
   reactHooks.configs.flat.recommended,
   {
