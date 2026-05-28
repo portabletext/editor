@@ -6,7 +6,9 @@ import {isAncestorPath} from '../path/is-ancestor-path'
 import {pathEquals} from '../path/path-equals'
 
 /**
- * Transform a point by an operation.
+ * Transform a point by an operation. Returns the same `point` reference when
+ * the operation doesn't actually move the point, so callers can use referential
+ * equality to detect "nothing changed."
  *
  * With keyed paths, most operations don't affect paths at all:
  * - insert: no-op (new node has its own key, doesn't shift siblings)
@@ -27,31 +29,38 @@ export function transformPoint(
   }
 
   const {affinity = 'forward'} = options
-  let {path, offset}: {path: Path; offset: number} = point
 
   switch (op.type) {
     case 'insert_text': {
       if (
-        pathEquals(op.path, path) &&
-        (op.offset < offset || (op.offset === offset && affinity === 'forward'))
+        pathEquals(op.path, point.path) &&
+        (op.offset < point.offset ||
+          (op.offset === point.offset && affinity === 'forward'))
       ) {
-        offset += op.text.length
+        return {path: point.path, offset: point.offset + op.text.length}
       }
 
-      break
+      return point
     }
 
     case 'remove_text': {
-      if (pathEquals(op.path, path) && op.offset <= offset) {
-        offset -= Math.min(offset - op.offset, op.text.length)
+      if (pathEquals(op.path, point.path) && op.offset <= point.offset) {
+        return {
+          path: point.path,
+          offset:
+            point.offset - Math.min(point.offset - op.offset, op.text.length),
+        }
       }
 
-      break
+      return point
     }
 
     case 'set': {
       const propertyName = op.path[op.path.length - 1]
       const nodePath = op.path.slice(0, -1)
+
+      let path: Path = point.path
+      let offset: number = point.offset
 
       // When _key is set to a new value, update any point referencing the old key
       if (propertyName === '_key' && typeof op.value === 'string') {
@@ -61,19 +70,20 @@ export function transformPoint(
             : undefined
 
         if (oldKey) {
-          const newPath: Path = [...path]
-          let changed = false
+          let newPath: Path | undefined = undefined
 
-          for (let i = 0; i < newPath.length; i++) {
-            const segment = newPath[i]
+          for (let i = 0; i < path.length; i++) {
+            const segment = path[i]
 
             if (isKeyedSegment(segment) && segment._key === oldKey) {
+              if (newPath === undefined) {
+                newPath = [...path]
+              }
               newPath[i] = {_key: op.value}
-              changed = true
             }
           }
 
-          if (changed) {
+          if (newPath !== undefined) {
             path = newPath
           }
         }
@@ -88,33 +98,42 @@ export function transformPoint(
         }
       }
 
-      break
+      if (path === point.path && offset === point.offset) {
+        return point
+      }
+
+      return {path, offset}
     }
 
     case 'unset': {
       const lastSegment = op.path[op.path.length - 1]
 
       if (isKeyedSegment(lastSegment)) {
-        if (pathEquals(op.path, path) || isAncestorPath(op.path, path)) {
+        if (
+          pathEquals(op.path, point.path) ||
+          isAncestorPath(op.path, point.path)
+        ) {
           return null
         }
-        break
+        return point
       }
 
       const propertyName = lastSegment
       const nodePath = op.path.slice(0, -1)
 
-      if (propertyName === 'text' && pathEquals(nodePath, path)) {
-        offset = 0
+      if (
+        propertyName === 'text' &&
+        pathEquals(nodePath, point.path) &&
+        point.offset !== 0
+      ) {
+        return {path: point.path, offset: 0}
       }
 
-      break
+      return point
     }
 
     // set_selection: no transform needed
     default:
       return point
   }
-
-  return {path, offset}
 }
