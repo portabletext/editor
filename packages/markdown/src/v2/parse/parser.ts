@@ -201,6 +201,14 @@ export function parseToPortableText(
   let paragraphStartLine = 0
   let blockquoteLines: Array<string> = []
   let listStack: Array<{kind: 'bullet' | 'number' | 'task'; indent: number; level: number}> = []
+  // Buffered list items when types.list is registered: each entry is a
+  // top-level item that becomes the items[] of one list block-object.
+  let pendingList: {kind: 'bullet' | 'number' | 'task'; items: Array<{
+    _key: string
+    _type: 'list-item'
+    checked?: boolean
+    content: Array<unknown>
+  }>} | null = null
 
   const flushParagraph = () => {
     if (paragraphLines.length === 0) return
@@ -290,6 +298,15 @@ export function parseToPortableText(
 
   const flushList = () => {
     listStack = []
+    if (pendingList && resolved.types.list) {
+      const value = resolved.types.list({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {kind: pendingList.kind, items: pendingList.items as Array<unknown>},
+        isInline: false,
+      })
+      if (value) out.push(value)
+    }
+    pendingList = null
   }
 
   while (true) {
@@ -358,6 +375,38 @@ export function parseToPortableText(
       flushParagraph()
       flushBlockquote()
       const kind = token.listKind ?? 'bullet'
+
+      // Container path: when types.list is registered we buffer items
+      // into a single list block-object instead of emitting them flat.
+      if (resolved.types.list) {
+        if (!pendingList || pendingList.kind !== kind) {
+          // Different kind starts a new list (flush the current one).
+          if (pendingList) {
+            const value = resolved.types.list({
+              context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+              value: {kind: pendingList.kind, items: pendingList.items as Array<unknown>},
+              isInline: false,
+            })
+            if (value) out.push(value)
+          }
+          pendingList = {kind, items: []}
+        }
+        // Allocate the list-item key BEFORE the inner block/span keys to
+        // match v1 (list-item k0, block k1, span k2). Multi-block list items
+        // (lazy continuation, item-with-code-block, etc.) are out of scope
+        // for the spike; one text block per item.
+        const itemKey = resolved.keyGenerator()
+        const block = makeTextBlock('normal', token.text, resolved, token.location.line)
+        const item: {_key: string; _type: 'list-item'; checked?: boolean; content: Array<unknown>} = {
+          _key: itemKey,
+          _type: 'list-item',
+          content: block ? [block] : [],
+        }
+        if (kind === 'task') item.checked = token.taskChecked ?? false
+        pendingList.items.push(item)
+        continue
+      }
+
       while (listStack.length > 0) {
         const top = listStack[listStack.length - 1]
         if (top && top.indent >= token.indent) {
