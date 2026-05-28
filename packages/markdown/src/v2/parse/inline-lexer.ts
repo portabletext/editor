@@ -84,38 +84,26 @@ export function lexInline(source: string, startLine = 1): Array<InlineToken> {
   while (i < source.length) {
     const ch = source[i] ?? ''
 
-    // Hard break: trailing `\` or two trailing spaces followed by newline
+    // Hard break: trailing `\` or two trailing spaces followed by newline.
+    // Portable Text doesn't model hard breaks as a distinct construct; the
+    // `\n` lives in the text of the surrounding span, matching v1's shape.
+    // We accumulate the `\n` into the text buffer and skip the marker chars.
     if (ch === '\\' && source[i + 1] === '\n') {
-      flushText()
-      tokens.push({
-        type: InlineTokenType.HardBreak,
-        text: '',
-        location: {line, column},
-      })
+      pushText('\n')
       i += 2
       line += 1
       column = 1
       continue
     }
     if (ch === ' ' && source[i + 1] === ' ' && source[i + 2] === '\n') {
-      flushText()
-      tokens.push({
-        type: InlineTokenType.HardBreak,
-        text: '',
-        location: {line, column},
-      })
+      pushText('\n')
       i += 3
       line += 1
       column = 1
       continue
     }
     if (ch === '\n') {
-      flushText()
-      tokens.push({
-        type: InlineTokenType.SoftBreak,
-        text: '\n',
-        location: {line, column},
-      })
+      pushText('\n')
       i += 1
       line += 1
       column = 1

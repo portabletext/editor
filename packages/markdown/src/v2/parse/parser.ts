@@ -5,10 +5,16 @@
  * `lexInline`, emitting Portable Text blocks directly. There is no
  * intermediate AST.
  *
- * Spike scope: paragraph, heading, fenced code, thematic break, blockquote
- * (flat path with `style: 'blockquote'`), bullet/ordered list (flat path
- * with `listItem` + `level`). Inline: strong/em/code/link/autolink/
- * hardbreak. See /specs/portabletext-markdown-v2.md §8.1.
+ * Spike scope: paragraph, heading h1-h6, fenced code, thematic break,
+ * blockquote (flat path with `style: 'blockquote'`), bullet/ordered list
+ * (flat path with `listItem` + `level`). Inline: strong/em/code/link/
+ * autolink/hardbreak. See /specs/portabletext-markdown-v2.md §8.1.
+ *
+ * The parser is matcher-aware: every node consults the corresponding
+ * matcher option (`block.normal`, `block.h1`, `marks.strong`, …) to learn
+ * what `style` / `listItem` / decorator / annotation `_type` to emit.
+ * Matchers returning `undefined` cause the node to fall back to plain
+ * text (heading semantics dropped, decorator dropped, list-item dropped).
  *
  * @internal
  */
@@ -18,58 +24,179 @@ import type {
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
+  Schema,
 } from '@portabletext/schema'
+import {
+  blockquoteStyleDefinition,
+  defaultCodeDecoratorDefinition,
+  defaultEmDecoratorDefinition,
+  defaultHorizontalRuleObjectDefinition,
+  defaultLinkObjectDefinition,
+  defaultOrderedListItemDefinition,
+  defaultSchema,
+  defaultStrikeThroughDecoratorDefinition,
+  defaultStrongDecoratorDefinition,
+  defaultTaskListItemDefinition,
+  defaultUnorderedListItemDefinition,
+  defaultCodeObjectDefinition,
+  h1StyleDefinition,
+  h2StyleDefinition,
+  h3StyleDefinition,
+  h4StyleDefinition,
+  h5StyleDefinition,
+  h6StyleDefinition,
+  normalStyleDefinition,
+} from '../../default-schema'
 import {defaultKeyGenerator} from '../../key-generator'
+import {
+  buildAnnotationMatcher,
+  buildDecoratorMatcher,
+  buildListItemMatcher,
+  buildObjectMatcher,
+  buildStyleMatcher,
+  type AnnotationMatcher,
+  type DecoratorMatcher,
+  type ListItemMatcher,
+  type ObjectMatcher,
+  type StyleMatcher,
+} from '../../to-portable-text/matchers'
 import {InlineTokenType, lexInline, type InlineToken} from './inline-lexer'
 import {BlockLexer, BlockTokenType} from './lexer'
 
 export interface ParseOptions {
+  schema?: Schema
   keyGenerator?: () => string
+  marks?: {
+    strong?: DecoratorMatcher
+    em?: DecoratorMatcher
+    code?: DecoratorMatcher
+    strikeThrough?: DecoratorMatcher
+    link?: AnnotationMatcher<{href: string; title: string | undefined}>
+  }
+  block?: {
+    normal?: StyleMatcher
+    blockquote?: StyleMatcher
+    h1?: StyleMatcher
+    h2?: StyleMatcher
+    h3?: StyleMatcher
+    h4?: StyleMatcher
+    h5?: StyleMatcher
+    h6?: StyleMatcher
+  }
+  listItem?: {
+    number?: ListItemMatcher
+    bullet?: ListItemMatcher
+    task?: ListItemMatcher
+  }
+  types?: {
+    code?: ObjectMatcher<{language: string | undefined; code: string}>
+    horizontalRule?: ObjectMatcher
+    image?: ObjectMatcher<{
+      src: string
+      alt: string
+      title: string | undefined
+    }>
+    html?: ObjectMatcher<{html: string}>
+    table?: ObjectMatcher<{
+      headerRows: number | undefined
+      rows: Array<unknown>
+    }>
+    callout?: ObjectMatcher<{tone: string; content: Array<PortableTextBlock>}>
+    blockquote?: ObjectMatcher<{content: Array<PortableTextBlock>}>
+    list?: ObjectMatcher<{kind: string; items: Array<unknown>}>
+  }
+  html?: {
+    inline?: 'skip' | 'text'
+  }
+}
+
+interface ResolvedOptions {
+  schema: Schema
+  keyGenerator: () => string
+  marks: {
+    strong: DecoratorMatcher
+    em: DecoratorMatcher
+    code: DecoratorMatcher
+    strikeThrough: DecoratorMatcher
+    link: AnnotationMatcher<{href: string; title: string | undefined}>
+  }
+  block: {
+    normal: StyleMatcher
+    blockquote: StyleMatcher
+    h1: StyleMatcher
+    h2: StyleMatcher
+    h3: StyleMatcher
+    h4: StyleMatcher
+    h5: StyleMatcher
+    h6: StyleMatcher
+  }
+  listItem: {
+    number: ListItemMatcher
+    bullet: ListItemMatcher
+    task: ListItemMatcher
+  }
+  types: {
+    code: ObjectMatcher<{language: string | undefined; code: string}>
+    horizontalRule: ObjectMatcher
+  }
+}
+
+function resolveOptions(options: ParseOptions): ResolvedOptions {
+  return {
+    schema: options.schema ?? defaultSchema,
+    keyGenerator: options.keyGenerator ?? defaultKeyGenerator,
+    marks: {
+      strong: options.marks?.strong ?? buildDecoratorMatcher(defaultStrongDecoratorDefinition),
+      em: options.marks?.em ?? buildDecoratorMatcher(defaultEmDecoratorDefinition),
+      code: options.marks?.code ?? buildDecoratorMatcher(defaultCodeDecoratorDefinition),
+      strikeThrough: options.marks?.strikeThrough ?? buildDecoratorMatcher(defaultStrikeThroughDecoratorDefinition),
+      link: options.marks?.link ?? buildAnnotationMatcher(defaultLinkObjectDefinition),
+    },
+    block: {
+      normal: options.block?.normal ?? buildStyleMatcher(normalStyleDefinition),
+      blockquote: options.block?.blockquote ?? buildStyleMatcher(blockquoteStyleDefinition),
+      h1: options.block?.h1 ?? buildStyleMatcher(h1StyleDefinition),
+      h2: options.block?.h2 ?? buildStyleMatcher(h2StyleDefinition),
+      h3: options.block?.h3 ?? buildStyleMatcher(h3StyleDefinition),
+      h4: options.block?.h4 ?? buildStyleMatcher(h4StyleDefinition),
+      h5: options.block?.h5 ?? buildStyleMatcher(h5StyleDefinition),
+      h6: options.block?.h6 ?? buildStyleMatcher(h6StyleDefinition),
+    },
+    listItem: {
+      number: options.listItem?.number ?? buildListItemMatcher(defaultOrderedListItemDefinition),
+      bullet: options.listItem?.bullet ?? buildListItemMatcher(defaultUnorderedListItemDefinition),
+      task: options.listItem?.task ?? buildListItemMatcher(defaultTaskListItemDefinition),
+    },
+    types: {
+      code: options.types?.code ?? buildObjectMatcher(defaultCodeObjectDefinition),
+      horizontalRule: options.types?.horizontalRule ?? buildObjectMatcher(defaultHorizontalRuleObjectDefinition),
+    },
+  }
 }
 
 export function parseToPortableText(
   markdown: string,
   options: ParseOptions = {},
 ): Array<PortableTextBlock | PortableTextObject> {
+  const resolved = resolveOptions(options)
   const lexer = new BlockLexer(markdown)
-  const keyGenerator = options.keyGenerator ?? defaultKeyGenerator
   const out: Array<PortableTextBlock | PortableTextObject> = []
 
-  // Paragraph accumulator: paragraph tokens consecutive without a blank line
-  // are joined as one text block with soft-break newlines between them.
   let paragraphLines: Array<string> = []
   let paragraphStartLine = 0
-
-  // Blockquote accumulator: contiguous `> ` lines are joined as paragraphs
-  // with `style: 'blockquote'`. Blank-quote lines (`>` with no body) split
-  // a multi-paragraph quote.
   let blockquoteLines: Array<string> = []
-
-  // List accumulator: contiguous list items at the same indent form one
-  // list. Different indents become different levels via the parser.
-  // Spike: track only the current open list kind + indent stack.
-  let listStack: Array<{
-    kind: 'bullet' | 'number'
-    indent: number
-    level: number
-  }> = []
+  let listStack: Array<{kind: 'bullet' | 'number' | 'task'; indent: number; level: number}> = []
 
   const flushParagraph = () => {
     if (paragraphLines.length === 0) return
     const body = paragraphLines.join('\n')
-    const block = makeTextBlock(
-      'normal',
-      body,
-      keyGenerator,
-      paragraphStartLine,
-    )
-    out.push(block)
+    const block = makeTextBlock('normal', body, resolved, paragraphStartLine)
+    if (block) out.push(block)
     paragraphLines = []
   }
 
   const flushBlockquote = () => {
     if (blockquoteLines.length === 0) return
-    // Each paragraph inside the quote is split by blank-quote lines.
     const paragraphs: Array<Array<string>> = [[]]
     for (const line of blockquoteLines) {
       if (line === '') paragraphs.push([])
@@ -77,13 +204,8 @@ export function parseToPortableText(
     }
     for (const lines of paragraphs) {
       if (lines.length === 0) continue
-      const block = makeTextBlock(
-        'blockquote',
-        lines.join('\n'),
-        keyGenerator,
-        0,
-      )
-      out.push(block)
+      const block = makeTextBlock('blockquote', lines.join('\n'), resolved, 0)
+      if (block) out.push(block)
     }
     blockquoteLines = []
   }
@@ -107,13 +229,9 @@ export function parseToPortableText(
       flushParagraph()
       flushBlockquote()
       flushList()
-      const block = makeTextBlock(
-        `h${token.level}`,
-        token.text,
-        keyGenerator,
-        token.location.line,
-      )
-      out.push(block)
+      const headingStyle = ('h' + (token.level ?? 1)) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+      const block = makeTextBlock(headingStyle, token.text, resolved, token.location.line)
+      if (block) out.push(block)
       continue
     }
 
@@ -121,10 +239,12 @@ export function parseToPortableText(
       flushParagraph()
       flushBlockquote()
       flushList()
-      out.push({
-        _type: 'horizontal-rule',
-        _key: keyGenerator(),
-      } as PortableTextObject)
+      const value = resolved.types.horizontalRule({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {},
+        isInline: false,
+      })
+      if (value) out.push(value)
       continue
     }
 
@@ -134,33 +254,24 @@ export function parseToPortableText(
       flushList()
       const language = token.info ?? ''
       const codeLines: Array<string> = []
-      // Manually consume the source line that contained the open fence by
-      // reading from the lexer until FenceClose.
-      // The lexer emitted the FenceOpen; we now need to put it into
-      // fenced-code mode and pull lines.
       lexer.enterFencedCode(detectMarker(markdown, token.location.line))
       while (true) {
         const next = lexer.next()
-        if (
-          next.type === BlockTokenType.FenceClose ||
-          next.type === BlockTokenType.Eof
-        )
-          break
+        if (next.type === BlockTokenType.FenceClose || next.type === BlockTokenType.Eof) break
         if (next.type === BlockTokenType.CodeLine) codeLines.push(next.text)
       }
-      out.push({
-        _type: 'code',
-        _key: keyGenerator(),
-        language: language || undefined,
-        code: codeLines.join('\n'),
-      } as unknown as PortableTextObject)
+      const value = resolved.types.code({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {language: language || undefined, code: codeLines.join('\n')},
+        isInline: false,
+      })
+      if (value) out.push(value)
       continue
     }
 
     if (token.type === BlockTokenType.BlockquotePrefix) {
       flushParagraph()
       flushList()
-      // Body may be empty (blank quote line, used as paragraph splitter inside the quote).
       blockquoteLines.push(token.text)
       continue
     }
@@ -169,10 +280,6 @@ export function parseToPortableText(
       flushParagraph()
       flushBlockquote()
       const kind = token.listKind ?? 'bullet'
-      // Determine level by comparing indent against the stack. Pop any frames
-      // whose indent is >= the new item's indent: same indent means a sibling
-      // (replace the previous frame), greater means a closed deeper level.
-      // The remaining stack depth is the new item's level - 1.
       while (listStack.length > 0) {
         const top = listStack[listStack.length - 1]
         if (top && top.indent >= token.indent) {
@@ -181,15 +288,17 @@ export function parseToPortableText(
       }
       const level = listStack.length + 1
       listStack.push({kind, indent: token.indent, level})
-      const block = makeTextBlock(
-        'normal',
-        token.text,
-        keyGenerator,
-        token.location.line,
-      )
-      block.listItem = kind
-      block.level = level
-      out.push(block)
+      const block = makeTextBlock('normal', token.text, resolved, token.location.line)
+      if (block) {
+        const listItemName = resolved.listItem[kind]({
+          context: {schema: resolved.schema},
+        })
+        if (listItemName) {
+          ;(block as PortableTextTextBlock).listItem = listItemName
+          ;(block as PortableTextTextBlock).level = level
+        }
+        out.push(block)
+      }
       continue
     }
 
@@ -209,17 +318,30 @@ export function parseToPortableText(
 }
 
 function makeTextBlock(
-  style: string,
+  styleKey: 'normal' | 'blockquote' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
   body: string,
-  keyGenerator: () => string,
+  options: ResolvedOptions,
   startLine: number,
-): PortableTextTextBlock {
+): PortableTextTextBlock | undefined {
+  const styleName = options.block[styleKey]({
+    context: {schema: options.schema},
+  })
+  // If the style matcher doesn't resolve (e.g. h1 with no h1 schema), we
+  // fall back to the 'normal' style matcher. If that also doesn't resolve,
+  // the block is dropped (defensive — should never happen with default
+  // schema).
+  const resolvedStyle =
+    styleName ?? options.block.normal({context: {schema: options.schema}})
+  if (!resolvedStyle) return undefined
+
+  // Allocate block key BEFORE span keys to match v1's order.
+  const blockKey = options.keyGenerator()
   const inline = lexInline(body, startLine)
-  const {children, markDefs} = foldInlineToSpans(inline, keyGenerator)
+  const {children, markDefs} = foldInlineToSpans(inline, options)
   return {
     _type: 'block',
-    _key: keyGenerator(),
-    style,
+    _key: blockKey,
+    style: resolvedStyle,
     children,
     markDefs,
   } as PortableTextTextBlock
@@ -232,7 +354,7 @@ interface SpanState {
 
 function foldInlineToSpans(
   tokens: ReadonlyArray<InlineToken>,
-  keyGenerator: () => string,
+  options: ResolvedOptions,
 ): {
   children: Array<PortableTextSpan>
   markDefs: Array<{_type: string; _key: string; [key: string]: unknown}>
@@ -240,17 +362,18 @@ function foldInlineToSpans(
   const children: Array<PortableTextSpan> = []
   const markDefs: Array<{_type: string; _key: string; [key: string]: unknown}> =
     []
-  const decoratorStack: Array<'strong' | 'em'> = []
-  // Stack of active annotation keys (links).
+  // Each entry: the schema-resolved decorator name; undefined means the
+  // decorator's matcher returned undefined and the span shouldn't carry a
+  // mark (text continues unmarked).
+  const decoratorStack: Array<string | undefined> = []
   const annotationStack: Array<string> = []
   let current: SpanState = {text: '', marks: []}
 
   const flush = () => {
-    if (current.text.length === 0 && children.length > 0) return
     if (current.text.length === 0) return
     children.push({
       _type: 'span',
-      _key: keyGenerator(),
+      _key: options.keyGenerator(),
       text: current.text,
       marks: current.marks.slice(),
     } as PortableTextSpan)
@@ -258,7 +381,8 @@ function foldInlineToSpans(
   }
 
   const updateMarks = () => {
-    current.marks = [...decoratorStack, ...annotationStack]
+    const active = decoratorStack.filter((d): d is string => Boolean(d))
+    current.marks = [...active, ...annotationStack]
   }
 
   for (const t of tokens) {
@@ -267,26 +391,14 @@ function foldInlineToSpans(
         current.text += t.text
         break
       }
-      case InlineTokenType.SoftBreak: {
-        // In Portable Text, a soft break is a literal \n inside a span.
-        current.text += '\n'
-        break
-      }
+      case InlineTokenType.SoftBreak:
       case InlineTokenType.HardBreak: {
-        // Flush, push a span with text `\n` (the marker the existing v1
-        // toolkit treats as hard break), continue with same marks.
-        flush()
-        children.push({
-          _type: 'span',
-          _key: keyGenerator(),
-          text: '\n',
-          marks: current.marks.slice(),
-        } as PortableTextSpan)
+        current.text += '\n'
         break
       }
       case InlineTokenType.StrongOpen: {
         flush()
-        decoratorStack.push('strong')
+        decoratorStack.push(options.marks.strong({context: {schema: options.schema}}))
         updateMarks()
         break
       }
@@ -298,7 +410,7 @@ function foldInlineToSpans(
       }
       case InlineTokenType.EmOpen: {
         flush()
-        decoratorStack.push('em')
+        decoratorStack.push(options.marks.em({context: {schema: options.schema}}))
         updateMarks()
         break
       }
@@ -310,43 +422,65 @@ function foldInlineToSpans(
       }
       case InlineTokenType.CodeSpan: {
         flush()
+        const codeMark = options.marks.code({context: {schema: options.schema}})
         children.push({
           _type: 'span',
-          _key: keyGenerator(),
+          _key: options.keyGenerator(),
           text: t.text,
-          marks: [...current.marks, 'code'],
+          marks: codeMark ? [...current.marks, codeMark] : [...current.marks],
         } as PortableTextSpan)
         break
       }
       case InlineTokenType.LinkOpen: {
         flush()
-        const key = keyGenerator()
-        markDefs.push({
-          _type: 'link',
-          _key: key,
-          href: t.href ?? '',
-          ...(t.title ? {title: t.title} : {}),
+        const annotation = options.marks.link({
+          context: {schema: options.schema, keyGenerator: options.keyGenerator},
+          value: {href: t.href ?? '', title: t.title},
         })
-        annotationStack.push(key)
-        updateMarks()
+        if (annotation) {
+          markDefs.push(annotation as {_type: string; _key: string; [key: string]: unknown})
+          annotationStack.push(annotation._key)
+          updateMarks()
+        } else {
+          // Treat as plain text: push an undefined-marker so the close knows
+          // to no-op. We use empty string as a sentinel that updateMarks
+          // ignores via filter+annotationStack equality.
+          annotationStack.push('')
+          updateMarks()
+        }
         break
       }
       case InlineTokenType.LinkClose: {
         flush()
-        annotationStack.pop()
+        const popped = annotationStack.pop()
+        if (popped === '') {
+          // No annotation was added; nothing to remove from marks.
+        }
         updateMarks()
         break
       }
       case InlineTokenType.Autolink: {
         flush()
-        const key = keyGenerator()
-        markDefs.push({_type: 'link', _key: key, href: t.href ?? ''})
-        children.push({
-          _type: 'span',
-          _key: keyGenerator(),
-          text: t.text,
-          marks: [...current.marks, key],
-        } as PortableTextSpan)
+        const annotation = options.marks.link({
+          context: {schema: options.schema, keyGenerator: options.keyGenerator},
+          value: {href: t.href ?? '', title: undefined},
+        })
+        if (annotation) {
+          markDefs.push(annotation as {_type: string; _key: string; [key: string]: unknown})
+          children.push({
+            _type: 'span',
+            _key: options.keyGenerator(),
+            text: t.text,
+            marks: [...current.marks, annotation._key],
+          } as PortableTextSpan)
+        } else {
+          children.push({
+            _type: 'span',
+            _key: options.keyGenerator(),
+            text: t.text,
+            marks: [...current.marks],
+          } as PortableTextSpan)
+        }
         break
       }
     }
@@ -356,18 +490,25 @@ function foldInlineToSpans(
   if (children.length === 0) {
     children.push({
       _type: 'span',
-      _key: keyGenerator(),
+      _key: options.keyGenerator(),
       text: '',
       marks: [],
     } as PortableTextSpan)
   }
+
+  // Annotation stack uses '' as a sentinel for "no annotation"; strip those
+  // from any per-span marks before returning (defensive — updateMarks
+  // already excludes them).
+  for (const child of children) {
+    if (child._type === 'span') {
+      child.marks = (child.marks ?? []).filter((m) => m !== '')
+    }
+  }
+
   return {children, markDefs}
 }
 
 function detectMarker(source: string, line: number): string {
-  // Re-scan the source line to recover the fence marker run (length matters
-  // for matching the close). For the spike we assume the fence is on a line
-  // by itself, possibly preceded by up to 3 spaces.
   const lines = source.replace(/\r\n?/g, '\n').split('\n')
   const raw = lines[line - 1] ?? ''
   const m = raw.match(/^\s{0,3}(`{3,}|~{3,})/)

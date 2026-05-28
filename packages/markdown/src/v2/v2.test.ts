@@ -19,9 +19,9 @@ describe('markdownToPortableTextV2 (spike)', () => {
     expect(markdownToPortableTextV2('hello world', {keyGenerator})).toEqual([
       {
         _type: 'block',
-        _key: 'k1',
+        _key: 'k0',
         style: 'normal',
-        children: [{_type: 'span', _key: 'k0', text: 'hello world', marks: []}],
+        children: [{_type: 'span', _key: 'k1', text: 'hello world', marks: []}],
         markDefs: [],
       },
     ])
@@ -32,9 +32,9 @@ describe('markdownToPortableTextV2 (spike)', () => {
     expect(markdownToPortableTextV2('# Title', {keyGenerator})).toEqual([
       {
         _type: 'block',
-        _key: 'k1',
+        _key: 'k0',
         style: 'h1',
-        children: [{_type: 'span', _key: 'k0', text: 'Title', marks: []}],
+        children: [{_type: 'span', _key: 'k1', text: 'Title', marks: []}],
         markDefs: [],
       },
     ])
@@ -117,9 +117,9 @@ describe('markdownToPortableTextV2 (spike)', () => {
     expect(markdownToPortableTextV2('> hi', {keyGenerator})).toEqual([
       {
         _type: 'block',
-        _key: 'k1',
+        _key: 'k0',
         style: 'blockquote',
-        children: [{_type: 'span', _key: 'k0', text: 'hi', marks: []}],
+        children: [{_type: 'span', _key: 'k1', text: 'hi', marks: []}],
         markDefs: [],
       },
     ])

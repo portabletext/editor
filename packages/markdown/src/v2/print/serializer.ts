@@ -2,11 +2,10 @@
  * Serializer for `@portabletext/markdown` v2 (spike).
  *
  * Recursive walk over a PT array, emitting markdown directly. Dispatches on
- * `_type` and (for text blocks) `style` / `listItem`.
- *
- * Spike scope: paragraph, heading (h1-h6), fenced code (`code` block-object),
- * thematic break (`horizontal-rule`), blockquote (flat path), bullet/ordered
- * list (flat path). Inline: strong/em/code/link.
+ * `_type` and (for text blocks) `style` / `listItem`. Block-object kinds
+ * (code, image, hr, table, callout, blockquote-as-object, list-as-object)
+ * route through the v1 `Default*Renderer` exports for the spike. As v2's
+ * own per-node print functions land they replace the v1 calls one-for-one.
  *
  * The block-spacing rules (spec §6) are owned here: the serializer joins
  * blocks with the right gap based on what's adjacent.
@@ -20,6 +19,18 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import {
+  DefaultCalloutRenderer,
+  DefaultCodeBlockRenderer,
+  DefaultHorizontalRuleRenderer,
+  DefaultHtmlRenderer,
+  DefaultImageRenderer,
+  DefaultTableRenderer,
+  DefaultListRenderer,
+  DefaultBlockquoteObjectRenderer,
+} from '../../from-portable-text/renderers/type'
+import {DefaultListItemRenderer} from '../../from-portable-text/renderers/list-item'
+import {escapeImageAndLinkText, escapeImageAndLinkTitle} from '../../escape'
 
 type PtNode = PortableTextBlock | PortableTextObject
 
@@ -28,7 +39,7 @@ export function serializeToMarkdown(blocks: ReadonlyArray<PtNode>): string {
   for (let i = 0; i < blocks.length; i += 1) {
     const block = blocks[i]
     if (!block) continue
-    const rendered = renderBlock(block)
+    const rendered = renderBlock(block, i, blocks)
     if (i === blocks.length - 1) {
       out.push(rendered)
       continue
@@ -42,48 +53,81 @@ export function serializeToMarkdown(blocks: ReadonlyArray<PtNode>): string {
 
 function spacing(current: PtNode, next: PtNode | undefined): string {
   if (!next) return ''
-  if (isListItem(current) && isListItem(next)) {
-    if (
-      (current as PortableTextTextBlock).listItem ===
-      (next as PortableTextTextBlock).listItem
-    ) {
-      return '\n'
-    }
-    return '\n'
-  }
-  if (isBlockquoteFlat(current) && isBlockquoteFlat(next)) {
-    return '\n>\n'
-  }
+  if (isListItem(current) && isListItem(next)) return '\n'
+  if (isBlockquoteFlat(current) && isBlockquoteFlat(next)) return '\n>\n'
   return '\n\n'
 }
 
-function renderBlock(block: PtNode): string {
+function renderBlock(block: PtNode, index: number, blocks: ReadonlyArray<PtNode>): string {
   if (block._type === 'block') {
-    return renderTextBlock(block as PortableTextTextBlock)
+    return renderTextBlock(block as PortableTextTextBlock, index)
   }
+  const renderNode = makeRenderNodeForChildren(blocks)
   if (block._type === 'horizontal-rule') {
-    return '---'
+    return DefaultHorizontalRuleRenderer({
+      value: block,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'code') {
-    const v = block as unknown as {language?: string; code: string}
-    return `\`\`\`${v.language ?? ''}\n${v.code}\n\`\`\``
+    return DefaultCodeBlockRenderer({value: block as never, index, isInline: false, renderNode})
+  }
+  if (block._type === 'image') {
+    return DefaultImageRenderer({value: block as never, index, isInline: false, renderNode})
+  }
+  if (block._type === 'html') {
+    return DefaultHtmlRenderer({value: block as never, index, isInline: false, renderNode})
+  }
+  if (block._type === 'table') {
+    return DefaultTableRenderer({value: block as never, index, isInline: false, renderNode})
+  }
+  if (block._type === 'callout') {
+    return DefaultCalloutRenderer({value: block as never, index, isInline: false, renderNode})
+  }
+  if (block._type === 'blockquote') {
+    return DefaultBlockquoteObjectRenderer({value: block as never, index, isInline: false, renderNode})
+  }
+  if (block._type === 'list') {
+    return DefaultListRenderer({value: block as never, index, isInline: false, renderNode})
   }
   // Unknown block-object: fall back to fenced JSON. Keeps the round-trip
   // signal honest while we surface "what is this?" to the consumer.
   return `\`\`\`json\n${JSON.stringify(block, null, 2)}\n\`\`\``
 }
 
-function renderTextBlock(block: PortableTextTextBlock): string {
+// renderNode passed to v1 renderers so they can recursively render nested
+// content (e.g. blockquote.content, callout.content, list.items.content,
+// table.rows.cells.value). For a single-level dispatch, the renderer
+// receives this thunk and routes back through serializeToMarkdown.
+function makeRenderNodeForChildren(_blocks: ReadonlyArray<PtNode>): (opts: {
+  node: PtNode
+  index: number
+  isInline: boolean
+  renderNode: unknown
+}) => string {
+  const renderNode = (opts: {node: PtNode; index: number; isInline: boolean}) => {
+    return renderBlock(opts.node, opts.index, [opts.node])
+  }
+  return renderNode as never
+}
+
+function renderTextBlock(block: PortableTextTextBlock, index: number): string {
   const inline = renderChildren(block.children ?? [], block.markDefs ?? [])
   const style = block.style ?? 'normal'
 
   if (block.listItem) {
-    const level = block.level ?? 1
-    const indent = '   '.repeat(level - 1)
-    if (block.listItem === 'number') {
-      return `${indent}1. ${inline}`
-    }
-    return `${indent}- ${inline}`
+    return DefaultListItemRenderer({
+      value: block as never,
+      index,
+      listIndex: typeof (block as PortableTextTextBlock & {_listIndex?: number})._listIndex === 'number'
+        ? (block as PortableTextTextBlock & {_listIndex?: number})._listIndex
+        : index + 1,
+      isInline: false,
+      renderNode: (() => '') as never,
+      children: inline,
+    })
   }
 
   if (style === 'normal') return inline
@@ -110,10 +154,6 @@ function renderChildren(
   }>,
 ): string {
   let out = ''
-  // We treat decorators as immediate wrappers; annotations look up markDefs.
-  // The simplest correct strategy is to emit each span with all its marks
-  // applied in source order. v1 uses `buildMarksTree` from
-  // `@portabletext/toolkit`; for the spike we inline a minimal tree builder.
   const tree = buildMarksTree(children as ReadonlyArray<PortableTextSpan>)
   for (const node of tree) {
     out += renderInline(node, markDefs)
@@ -125,9 +165,7 @@ type InlineTree =
   | {kind: 'text'; text: string}
   | {kind: 'mark'; mark: string; children: Array<InlineTree>}
 
-function buildMarksTree(
-  spans: ReadonlyArray<PortableTextSpan>,
-): Array<InlineTree> {
+function buildMarksTree(spans: ReadonlyArray<PortableTextSpan>): Array<InlineTree> {
   const nodes: Array<InlineTree> = []
   let currentParent = nodes
   const parentStack: Array<Array<InlineTree>> = [nodes]
@@ -137,7 +175,6 @@ function buildMarksTree(
     if (span._type !== 'span') continue
     const spanMarks = span.marks ?? []
 
-    // Pop marks no longer active.
     let commonLen = 0
     while (
       commonLen < markStack.length &&
@@ -151,7 +188,6 @@ function buildMarksTree(
       parentStack.pop()
       currentParent = parentStack[parentStack.length - 1] ?? nodes
     }
-    // Push new marks.
     for (let i = commonLen; i < spanMarks.length; i += 1) {
       const m = spanMarks[i] ?? ''
       const node: InlineTree = {kind: 'mark', mark: m, children: []}
@@ -174,18 +210,23 @@ function renderInline(
     title?: string
   }>,
 ): string {
-  if (node.kind === 'text') return node.text
+  if (node.kind === 'text') {
+    // Portable Text represents both soft and hard breaks as a literal `\n`
+    // in the span text. Markdown's hard-break syntax is two trailing spaces
+    // + newline, so we substitute on the way out.
+    return node.text.replace(/\n/g, '  \n')
+  }
   const inner = node.children.map((c) => renderInline(c, markDefs)).join('')
   const m = node.mark
   if (m === 'strong') return `**${inner}**`
   if (m === 'em') return `_${inner}_`
   if (m === 'code') return `\`${inner}\``
   if (m === 'strike-through') return `~~${inner}~~`
-  // Annotation: look up markDef
   const def = markDefs.find((d) => d._key === m)
   if (def?._type === 'link') {
-    const title = def.title ? ` "${def.title}"` : ''
-    return `[${inner}](${def.href ?? ''}${title})`
+    const text = escapeImageAndLinkText(inner)
+    const title = def.title ? ` "${escapeImageAndLinkTitle(def.title)}"` : ''
+    return `[${text}](${def.href ?? ''}${title})`
   }
   return inner
 }
@@ -195,7 +236,5 @@ function isListItem(b: PtNode): boolean {
 }
 
 function isBlockquoteFlat(b: PtNode): boolean {
-  return (
-    b._type === 'block' && (b as PortableTextTextBlock).style === 'blockquote'
-  )
+  return b._type === 'block' && (b as PortableTextTextBlock).style === 'blockquote'
 }
