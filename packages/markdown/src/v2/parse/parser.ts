@@ -680,30 +680,35 @@ function foldInlineToSpans(
         break
       }
       case InlineTokenType.LinkOpen: {
+        // Flush the pre-link text first so its span key is allocated
+        // before the markDef key (matches v1's allocation order).
         flush()
         const annotation = options.marks.link({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},
           value: {href: t.href ?? '', title: t.title},
         })
         if (annotation) {
-          markDefs.push(annotation as {_type: string; _key: string; [key: string]: unknown})
+          markDefs.push(
+            annotation as {_type: string; _key: string; [key: string]: unknown},
+          )
           annotationStack.push(annotation._key)
           updateMarks()
         } else {
-          // Treat as plain text: push an undefined-marker so the close knows
-          // to no-op. We use empty string as a sentinel that updateMarks
-          // ignores via filter+annotationStack equality.
+          // No annotation: pass the link label through as plain text in the
+          // current span. LinkClose will be a no-op.
           annotationStack.push('')
-          updateMarks()
         }
         break
       }
       case InlineTokenType.LinkClose: {
-        flush()
-        const popped = annotationStack.pop()
-        if (popped === '') {
-          // No annotation was added; nothing to remove from marks.
+        // Flush the link's inner text WITH the link mark still active,
+        // then pop the annotation and refresh current.marks so the post-
+        // link text accumulates without it.
+        const top = annotationStack[annotationStack.length - 1]
+        if (top && top !== '') {
+          flush()
         }
+        annotationStack.pop()
         updateMarks()
         break
       }
