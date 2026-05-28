@@ -415,10 +415,12 @@ function foldInlineToSpans(
   const children: Array<PortableTextSpan> = []
   const markDefs: Array<{_type: string; _key: string; [key: string]: unknown}> =
     []
-  // Each entry: the schema-resolved decorator name; undefined means the
-  // decorator's matcher returned undefined and the span shouldn't carry a
-  // mark (text continues unmarked).
-  const decoratorStack: Array<string | undefined> = []
+  // Each entry: the schema-resolved decorator name (or undefined for
+  // `unknown`) and the original markdown marker text. When the matcher
+  // returns undefined, we leak the marker into the span text on both
+  // open and close so `**foo**` becomes literal `**foo**` text rather
+  // than just `foo`.
+  const decoratorStack: Array<{name: string | undefined; marker: string}> = []
   const annotationStack: Array<string> = []
   let current: SpanState = {text: '', marks: []}
 
@@ -434,7 +436,9 @@ function foldInlineToSpans(
   }
 
   const updateMarks = () => {
-    const active = decoratorStack.filter((d): d is string => Boolean(d))
+    const active = decoratorStack
+      .map((d) => d.name)
+      .filter((d): d is string => Boolean(d))
     current.marks = [...active, ...annotationStack]
   }
 
@@ -450,27 +454,69 @@ function foldInlineToSpans(
         break
       }
       case InlineTokenType.StrongOpen: {
-        flush()
-        decoratorStack.push(options.marks.strong({context: {schema: options.schema}}))
-        updateMarks()
+        const name = options.marks.strong({context: {schema: options.schema}})
+        const marker = '**'
+        if (!name) {
+          current.text += marker
+        } else {
+          flush()
+        }
+        decoratorStack.push({name, marker})
+        if (name) updateMarks()
         break
       }
       case InlineTokenType.StrongClose: {
-        flush()
-        decoratorStack.pop()
-        updateMarks()
+        const popped = decoratorStack.pop()
+        if (popped && !popped.name) {
+          current.text += popped.marker
+        } else {
+          flush()
+          updateMarks()
+        }
         break
       }
       case InlineTokenType.EmOpen: {
-        flush()
-        decoratorStack.push(options.marks.em({context: {schema: options.schema}}))
-        updateMarks()
+        const name = options.marks.em({context: {schema: options.schema}})
+        const marker = '_'
+        if (!name) {
+          current.text += marker
+        } else {
+          flush()
+        }
+        decoratorStack.push({name, marker})
+        if (name) updateMarks()
         break
       }
       case InlineTokenType.EmClose: {
-        flush()
-        decoratorStack.pop()
-        updateMarks()
+        const popped = decoratorStack.pop()
+        if (popped && !popped.name) {
+          current.text += popped.marker
+        } else {
+          flush()
+          updateMarks()
+        }
+        break
+      }
+      case InlineTokenType.StrikeOpen: {
+        const name = options.marks.strikeThrough({context: {schema: options.schema}})
+        const marker = '~~'
+        if (!name) {
+          current.text += marker
+        } else {
+          flush()
+        }
+        decoratorStack.push({name, marker})
+        if (name) updateMarks()
+        break
+      }
+      case InlineTokenType.StrikeClose: {
+        const popped = decoratorStack.pop()
+        if (popped && !popped.name) {
+          current.text += popped.marker
+        } else {
+          flush()
+          updateMarks()
+        }
         break
       }
       case InlineTokenType.CodeSpan: {

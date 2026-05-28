@@ -30,6 +30,8 @@ export const InlineTokenType = {
   StrongClose: 'strong-close',
   EmOpen: 'em-open',
   EmClose: 'em-close',
+  StrikeOpen: 'strike-open',
+  StrikeClose: 'strike-close',
   CodeSpan: 'code-span',
   LinkOpen: 'link-open',
   LinkClose: 'link-close',
@@ -207,6 +209,26 @@ export function lexInline(source: string, startLine = 1): Array<InlineToken> {
           location: {line, column},
         })
         advance(link.consumed)
+        continue
+      }
+    }
+
+    // Strikethrough: `~~...~~`.
+    if (ch === '~' && source[i + 1] === '~') {
+      const marker = '~~'
+      const top = emphasisStack[emphasisStack.length - 1]
+      if (top && top.marker === marker) {
+        flushText()
+        emphasisStack.pop()
+        tokens.push({type: InlineTokenType.StrikeClose, text: '', location: {line, column}})
+        advance(2)
+        continue
+      }
+      if (i + 2 < source.length && source[i + 2] !== ' ' && source[i + 2] !== '\n') {
+        flushText()
+        emphasisStack.push({marker, tokenIndex: tokens.length})
+        tokens.push({type: InlineTokenType.StrikeOpen, text: '', location: {line, column}})
+        advance(2)
         continue
       }
     }
