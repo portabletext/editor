@@ -255,6 +255,22 @@ export function parseToPortableText(
       return
     }
 
+    // Container path: when types.blockquote is registered, the entire
+    // quote becomes one block-object whose content is the (recursively
+    // parsed) inner blocks. Each inner text block stays at style 'normal'.
+    if (resolved.types.blockquote) {
+      const innerSource = blockquoteLines.join('\n')
+      blockquoteLines = []
+      const innerBlocks = parseToPortableText(innerSource, options)
+      const value = resolved.types.blockquote({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {content: innerBlocks as Array<PortableTextBlock>},
+        isInline: false,
+      })
+      if (value) out.push(value)
+      return
+    }
+
     // If any line still has a leading blockquote / list marker, the body
     // is a nested structure: recursively parse it and propagate the inner
     // blocks unchanged (so style/listItem survive). Otherwise use the flat
@@ -360,7 +376,14 @@ export function parseToPortableText(
         value: {language: language || undefined, code: codeLines.join('\n')},
         isInline: false,
       })
-      if (value) out.push(value)
+      if (value) {
+        out.push(value)
+      } else {
+        // No code matcher: fall back to a normal-style paragraph
+        // containing the code body as plain text. Matches v1.
+        const block = makeTextBlock('normal', codeLines.join('\n'), resolved, token.location.line)
+        if (block) out.push(block)
+      }
       continue
     }
 
