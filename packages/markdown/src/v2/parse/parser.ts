@@ -780,19 +780,19 @@ function foldInlineToSpans(
         break
       }
       case InlineTokenType.Image: {
-        flush()
         const imageValue = options.types.image?.({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},
           value: {src: t.src ?? '', alt: t.alt ?? '', title: t.title},
           isInline: true,
         })
         if (imageValue) {
-          // Mark this span with a sentinel so the parent paragraph-flushing
-          // logic can hoist a single-image-only paragraph to a block image.
-          // For inline, the image goes inline alongside spans as an inline
-          // object. Caller treats foldInlineToSpans output as children, so
-          // we splice the inline-object into children directly.
+          flush()
           ;(children as Array<PortableTextSpan | PortableTextObject>).push(imageValue as PortableTextObject)
+        } else {
+          // No image matcher: re-emit the original markdown text into the
+          // current text buffer so it survives.
+          const titlePart = t.title ? ` "${t.title}"` : ''
+          current.text += `![${t.alt ?? ''}](${t.src ?? ''}${titlePart})`
         }
         break
       }
