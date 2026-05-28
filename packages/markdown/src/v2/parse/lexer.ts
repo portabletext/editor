@@ -34,6 +34,7 @@ export const BlockTokenType = {
   CodeLine: 'code-line',
   ThematicBreak: 'thematic-break',
   BlockquotePrefix: 'blockquote-prefix',
+  HtmlBlock: 'html-block',
   ListItemStart: 'list-item-start',
   TableRow: 'table-row',
   BlankLine: 'blank-line',
@@ -237,6 +238,18 @@ export class BlockLexer {
         listKind: 'number',
         listStart: Number(ordered[1]),
         text: ordered[4] ?? '',
+        indent,
+        location: {line: lineNumber, column: indent + 1},
+      }
+    }
+
+    // HTML block (CommonMark type-6 only — simple element name).
+    // We recognize a line that starts with `<` followed by an ASCII tag
+    // name. The block continues until a blank line.
+    if (trimmed.startsWith('<') && /^<\/?[a-zA-Z][a-zA-Z0-9-]*/.test(trimmed)) {
+      return {
+        type: BlockTokenType.HtmlBlock,
+        text: raw,
         indent,
         location: {line: lineNumber, column: indent + 1},
       }

@@ -466,6 +466,33 @@ export function parseToPortableText(
       continue
     }
 
+    if (token.type === BlockTokenType.HtmlBlock) {
+      flushParagraph()
+      flushBlockquote()
+      flushList()
+      const lines: Array<string> = [token.text]
+      while (true) {
+        const peek = lexer.peek()
+        if (peek.type !== BlockTokenType.HtmlBlock) break
+        lexer.next()
+        lines.push(peek.text)
+      }
+      const htmlValue = resolved.types.html?.({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {html: lines.join('\n')},
+        isInline: false,
+      })
+      if (htmlValue) {
+        out.push(htmlValue)
+      } else {
+        // No html matcher: fall back to a normal paragraph with the
+        // HTML as literal text.
+        const block = makeTextBlock('normal', lines.join('\n'), resolved, token.location.line)
+        if (block) out.push(block)
+      }
+      continue
+    }
+
     if (token.type === BlockTokenType.TableRow) {
       flushParagraph()
       flushBlockquote()
@@ -627,21 +654,14 @@ function foldInlineToSpans(
       }
       case InlineTokenType.StrongOpen: {
         const name = options.marks.strong({context: {schema: options.schema}})
-        const marker = '**'
-        if (!name) {
-          current.text += marker
-        } else {
-          flush()
-        }
-        decoratorStack.push({name, marker})
+        if (name) flush()
+        decoratorStack.push({name, marker: '**'})
         if (name) updateMarks()
         break
       }
       case InlineTokenType.StrongClose: {
         const popped = decoratorStack.pop()
-        if (popped && !popped.name) {
-          current.text += popped.marker
-        } else {
+        if (popped?.name) {
           flush()
           updateMarks()
         }
@@ -649,21 +669,14 @@ function foldInlineToSpans(
       }
       case InlineTokenType.EmOpen: {
         const name = options.marks.em({context: {schema: options.schema}})
-        const marker = '_'
-        if (!name) {
-          current.text += marker
-        } else {
-          flush()
-        }
-        decoratorStack.push({name, marker})
+        if (name) flush()
+        decoratorStack.push({name, marker: '_'})
         if (name) updateMarks()
         break
       }
       case InlineTokenType.EmClose: {
         const popped = decoratorStack.pop()
-        if (popped && !popped.name) {
-          current.text += popped.marker
-        } else {
+        if (popped?.name) {
           flush()
           updateMarks()
         }
@@ -671,21 +684,14 @@ function foldInlineToSpans(
       }
       case InlineTokenType.StrikeOpen: {
         const name = options.marks.strikeThrough({context: {schema: options.schema}})
-        const marker = '~~'
-        if (!name) {
-          current.text += marker
-        } else {
-          flush()
-        }
-        decoratorStack.push({name, marker})
+        if (name) flush()
+        decoratorStack.push({name, marker: '~~'})
         if (name) updateMarks()
         break
       }
       case InlineTokenType.StrikeClose: {
         const popped = decoratorStack.pop()
-        if (popped && !popped.name) {
-          current.text += popped.marker
-        } else {
+        if (popped?.name) {
           flush()
           updateMarks()
         }
