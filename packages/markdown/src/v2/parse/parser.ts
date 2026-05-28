@@ -28,9 +28,12 @@ import type {
 } from '@portabletext/schema'
 import {
   blockquoteStyleDefinition,
+  defaultCalloutObjectDefinition,
   defaultCodeDecoratorDefinition,
   defaultEmDecoratorDefinition,
   defaultHorizontalRuleObjectDefinition,
+  defaultHtmlObjectDefinition,
+  defaultImageObjectDefinition,
   defaultLinkObjectDefinition,
   defaultOrderedListItemDefinition,
   defaultSchema,
@@ -176,10 +179,10 @@ function resolveOptions(options: ParseOptions): ResolvedOptions {
     types: {
       code: options.types?.code ?? buildObjectMatcher(defaultCodeObjectDefinition),
       horizontalRule: options.types?.horizontalRule ?? buildObjectMatcher(defaultHorizontalRuleObjectDefinition),
-      image: options.types?.image,
-      html: options.types?.html,
+      image: options.types?.image ?? buildObjectMatcher(defaultImageObjectDefinition),
+      html: options.types?.html ?? buildObjectMatcher(defaultHtmlObjectDefinition),
       table: options.types?.table,
-      callout: options.types?.callout,
+      callout: options.types?.callout ?? buildObjectMatcher(defaultCalloutObjectDefinition),
       blockquote: options.types?.blockquote,
       list: options.types?.list,
     },
@@ -220,6 +223,30 @@ export function parseToPortableText(
 
   const flushBlockquote = () => {
     if (blockquoteLines.length === 0) return
+    // GFM alert / callout: `> [!NOTE]\n> body` parses to a callout
+    // block-object with `tone: 'note'` and `content` array. When a
+    // `types.callout` matcher is provided we consume the alert syntax;
+    // otherwise the lines fall through to a flat blockquote.
+    const firstLine = blockquoteLines[0] ?? ''
+    const alertMatch = firstLine.match(/^\[!([A-Z]+)\]\s*$/)
+    if (alertMatch && resolved.types.callout) {
+      const tone = alertMatch[1]?.toLowerCase() ?? 'note'
+      const rest = blockquoteLines.slice(1)
+      blockquoteLines = []
+      // Each remaining line becomes a text block with style blockquote.
+      const content = rest
+        .filter((line) => line !== '')
+        .map((line) => makeTextBlock('blockquote', line, resolved, 0))
+        .filter((b): b is PortableTextTextBlock => Boolean(b))
+      const callout = resolved.types.callout({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {tone, content: content as Array<PortableTextBlock>},
+        isInline: false,
+      })
+      if (callout) out.push(callout)
+      return
+    }
+
     // If any line still has a leading blockquote / list marker, the body
     // is a nested structure: recursively parse it and propagate the inner
     // blocks unchanged (so style/listItem survive). Otherwise use the flat
@@ -399,23 +426,26 @@ export function parseToPortableText(
         if (block) out.push(block)
         continue
       }
-      const buildCell = (text: string): unknown => ({
-        _type: 'cell',
-        _key: resolved.keyGenerator(),
-        value: [makeTextBlock('normal', text, resolved, token.location.line)],
-      })
-      const rows = [
-        {
+      const buildCell = (text: string): unknown => {
+        // Build content first so the inner block keys are allocated
+        // before the cell key, matching v1's depth-first allocation
+        // order (block, span, ..., cell, ..., row).
+        const value = [makeTextBlock('normal', text, resolved, token.location.line)]
+        return {
+          _type: 'cell',
+          _key: resolved.keyGenerator(),
+          value,
+        }
+      }
+      const buildRow = (cells: Array<string>): unknown => {
+        const built = cells.map(buildCell)
+        return {
           _key: resolved.keyGenerator(),
           _type: 'row',
-          cells: headerCells.map(buildCell),
-        },
-        ...bodyRows.map((bodyCells) => ({
-          _key: resolved.keyGenerator(),
-          _type: 'row',
-          cells: bodyCells.map(buildCell),
-        })),
-      ]
+          cells: built,
+        }
+      }
+      const rows = [buildRow(headerCells), ...bodyRows.map(buildRow)]
       const tableValue = matcher({
         context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
         value: {headerRows: 1, rows: rows as never},
