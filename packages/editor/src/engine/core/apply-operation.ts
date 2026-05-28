@@ -507,15 +507,28 @@ export function applyOperation(editor: Editor, op: Operation): void {
   }
 
   if (transformSelection && editor.selection) {
-    const selection = {...editor.selection}
+    const anchor = transformPoint(editor.selection.anchor, op)
+    const focus = transformPoint(editor.selection.focus, op)
 
-    for (const [point, key] of rangePoints(selection)) {
-      selection[key] = transformPoint(point, op)!
-    }
-
-    editor.selection = {
-      ...selection,
-      backward: isBackwardRange(selection, editor),
+    if (!anchor || !focus) {
+      // The operation removed the host node of one of the selection's
+      // endpoints. The selection is no longer valid.
+      editor.selection = null
+    } else if (
+      anchor !== editor.selection.anchor ||
+      focus !== editor.selection.focus
+    ) {
+      // `transformPoint` returns the same reference when the operation doesn't
+      // move the point. If neither endpoint moved, the selection is identity-
+      // stable and we leave `editor.selection` alone. This lets internal sync
+      // paths (e.g. remote patches arriving via `update value`) run set/unset/
+      // insert_text operations without forcing downstream consumers to re-derive
+      // selection-keyed state for no semantic reason.
+      editor.selection = {
+        anchor,
+        focus,
+        backward: isBackwardRange({anchor, focus}, editor),
+      }
     }
   }
 }
