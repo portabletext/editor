@@ -191,23 +191,62 @@ export function parseToPortableText(
     if (paragraphLines.length === 0) return
     const body = paragraphLines.join('\n')
     const block = makeTextBlock('normal', body, resolved, paragraphStartLine)
-    if (block) out.push(block)
     paragraphLines = []
+    if (!block) return
+    // If the paragraph contains exactly one non-span child (a block-object
+    // produced by an inline image), hoist that as a block instead of
+    // wrapping it in a text block.
+    const children = block.children ?? []
+    const nonSpan = children.filter((c) => (c as {_type: string})._type !== 'span')
+    const onlySpans = children.length === nonSpan.length + children.filter((c) => (c as {_type: string})._type === 'span' && ((c as {text: string}).text === '' || (c as {text: string}).text === undefined)).length
+    if (nonSpan.length === 1 && (onlySpans || children.length === 1)) {
+      out.push(nonSpan[0] as PortableTextObject)
+      return
+    }
+    out.push(block)
   }
 
   const flushBlockquote = () => {
     if (blockquoteLines.length === 0) return
+    // If any line still has a leading blockquote / list marker, the body
+    // is a nested structure: recursively parse it and propagate the inner
+    // blocks unchanged (so style/listItem survive). Otherwise use the flat
+    // path: split on blank-quote lines into paragraphs, each tagged with
+    // style 'blockquote'.
+    const isNested = blockquoteLines.some(
+      (line) => /^(?:>|[-*+]\s|\d+[.)]\s)/.test(line.trimStart()),
+    )
+    if (isNested) {
+      const innerSource = blockquoteLines.join('\n')
+      blockquoteLines = []
+      const inner = parseToPortableText(innerSource, options)
+      for (const node of inner) {
+        if (node._type === 'block') {
+          const textBlock = node as PortableTextTextBlock
+          if (!textBlock.listItem && textBlock.style === 'normal') {
+            const restyledName = resolved.block.blockquote({
+              context: {schema: resolved.schema},
+            })
+            if (restyledName) {
+              ;(textBlock as PortableTextTextBlock).style = restyledName
+            }
+          }
+        }
+        out.push(node)
+      }
+      return
+    }
     const paragraphs: Array<Array<string>> = [[]]
     for (const line of blockquoteLines) {
       if (line === '') paragraphs.push([])
       else (paragraphs[paragraphs.length - 1] ?? []).push(line)
     }
+    blockquoteLines = []
     for (const lines of paragraphs) {
       if (lines.length === 0) continue
       const block = makeTextBlock('blockquote', lines.join('\n'), resolved, 0)
       if (block) out.push(block)
     }
-    blockquoteLines = []
   }
 
   const flushList = () => {
@@ -290,12 +329,26 @@ export function parseToPortableText(
       listStack.push({kind, indent: token.indent, level})
       const block = makeTextBlock('normal', token.text, resolved, token.location.line)
       if (block) {
-        const listItemName = resolved.listItem[kind]({
+        // For task items we try the task matcher first; if undefined (the
+        // schema doesn't declare a task list type), fall back to bullet.
+        let listItemName = resolved.listItem[kind]({
           context: {schema: resolved.schema},
         })
+        if (!listItemName && kind === 'task') {
+          listItemName = resolved.listItem.bullet({
+            context: {schema: resolved.schema},
+          })
+        }
         if (listItemName) {
           ;(block as PortableTextTextBlock).listItem = listItemName
           ;(block as PortableTextTextBlock).level = level
+          // For task items, attach `checked` only when the task list type
+          // resolved (i.e. the schema knows about task lists). On bullet
+          // fallback we drop `checked` to keep the block-shape minimal.
+          if (kind === 'task' && resolved.listItem.task({context: {schema: resolved.schema}})) {
+            ;(block as PortableTextTextBlock & {checked?: boolean}).checked =
+              token.taskChecked ?? false
+          }
         }
         out.push(block)
       }
@@ -457,6 +510,23 @@ function foldInlineToSpans(
           // No annotation was added; nothing to remove from marks.
         }
         updateMarks()
+        break
+      }
+      case InlineTokenType.Image: {
+        flush()
+        const imageValue = options.types.image?.({
+          context: {schema: options.schema, keyGenerator: options.keyGenerator},
+          value: {src: t.src ?? '', alt: t.alt ?? '', title: t.title},
+          isInline: true,
+        })
+        if (imageValue) {
+          // Mark this span with a sentinel so the parent paragraph-flushing
+          // logic can hoist a single-image-only paragraph to a block image.
+          // For inline, the image goes inline alongside spans as an inline
+          // object. Caller treats foldInlineToSpans output as children, so
+          // we splice the inline-object into children directly.
+          ;(children as Array<PortableTextSpan | PortableTextObject>).push(imageValue as PortableTextObject)
+        }
         break
       }
       case InlineTokenType.Autolink: {

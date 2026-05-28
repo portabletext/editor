@@ -34,6 +34,7 @@ export const InlineTokenType = {
   LinkOpen: 'link-open',
   LinkClose: 'link-close',
   Autolink: 'autolink',
+  Image: 'image',
   HardBreak: 'hard-break',
   SoftBreak: 'soft-break',
 } as const
@@ -46,6 +47,8 @@ export interface InlineToken {
   text: string
   href?: string
   title?: string
+  alt?: string
+  src?: string
   location: SourceLocation
 }
 
@@ -166,7 +169,25 @@ export function lexInline(source: string, startLine = 1): Array<InlineToken> {
       // Fall through: treat as literal
     }
 
-    // Link: [label](href "title")
+    // Image: ![alt](src "title")
+    if (ch === '!' && source[i + 1] === '[') {
+      const img = matchLink(source, i + 1)
+      if (img) {
+        flushText()
+        tokens.push({
+          type: InlineTokenType.Image,
+          text: '',
+          alt: img.label,
+          src: img.href,
+          title: img.title,
+          location: {line, column},
+        })
+        advance(img.consumed + 1)
+        continue
+      }
+    }
+
+        // Link: [label](href "title")
     if (ch === '[') {
       const link = matchLink(source, i)
       if (link) {

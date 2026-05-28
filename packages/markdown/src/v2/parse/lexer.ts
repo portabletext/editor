@@ -53,7 +53,9 @@ export interface BlockToken {
   /** Fence info string (e.g. 'typescript'); only set for `FenceOpen`. */
   info?: string
   /** List marker kind; only set for `ListItemStart`. */
-  listKind?: 'bullet' | 'number'
+  listKind?: 'bullet' | 'number' | 'task'
+  /** For task list items, whether the box is checked. */
+  taskChecked?: boolean
   /** Ordered list start number; only set for `ListItemStart` with `number`. */
   listStart?: number
   /** Indent (spaces) preceding this line's content. Used by the parser to
@@ -199,13 +201,26 @@ export class BlockLexer {
       }
     }
 
-    // Bullet list item
+    // Bullet list item (and GFM task lists, which are bullets with a
+    // `[x]` / `[X]` / `[ ]` prefix on the body).
     const bullet = trimmed.match(BULLET_ITEM)
     if (bullet) {
+      const body = bullet[3] ?? ''
+      const taskMatch = body.match(/^\[([ xX])\] ?(.*)$/)
+      if (taskMatch) {
+        return {
+          type: BlockTokenType.ListItemStart,
+          listKind: 'task',
+          taskChecked: taskMatch[1] !== ' ',
+          text: taskMatch[2] ?? '',
+          indent,
+          location: {line: lineNumber, column: indent + 1},
+        }
+      }
       return {
         type: BlockTokenType.ListItemStart,
         listKind: 'bullet',
-        text: bullet[3] ?? '',
+        text: body,
         indent,
         location: {line: lineNumber, column: indent + 1},
       }
