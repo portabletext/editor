@@ -35,6 +35,7 @@ export const BlockTokenType = {
   ThematicBreak: 'thematic-break',
   BlockquotePrefix: 'blockquote-prefix',
   ListItemStart: 'list-item-start',
+  TableRow: 'table-row',
   BlankLine: 'blank-line',
   Eof: 'eof',
 } as const
@@ -58,6 +59,8 @@ export interface BlockToken {
   taskChecked?: boolean
   /** Ordered list start number; only set for `ListItemStart` with `number`. */
   listStart?: number
+  /** Pre-split table-row cells (only set for TableRow tokens). */
+  cells?: Array<string>
   /** Indent (spaces) preceding this line's content. Used by the parser to
    * decide list nesting and lazy-continuation. */
   indent: number
@@ -234,6 +237,41 @@ export class BlockLexer {
         listKind: 'number',
         listStart: Number(ordered[1]),
         text: ordered[4] ?? '',
+        indent,
+        location: {line: lineNumber, column: indent + 1},
+      }
+    }
+
+    // GFM table row: line starts with `|` and contains `|`. The lexer
+    // only tokenizes the row shape; the parser inspects two consecutive
+    // table-row tokens (the second being the delimiter row) to commit to
+    // a table.
+    if (trimmed.startsWith('|') && trimmed.includes('|', 1)) {
+      // Strip leading and trailing pipes and split on unescaped pipes.
+      let body = trimmed
+      if (body.endsWith('|')) body = body.slice(0, -1)
+      if (body.startsWith('|')) body = body.slice(1)
+      const cells: Array<string> = []
+      let current = ''
+      for (let i = 0; i < body.length; i += 1) {
+        const ch = body[i]
+        if (ch === '\\' && body[i + 1] === '|') {
+          current += '|'
+          i += 1
+          continue
+        }
+        if (ch === '|') {
+          cells.push(current.trim())
+          current = ''
+          continue
+        }
+        current += ch
+      }
+      cells.push(current.trim())
+      return {
+        type: BlockTokenType.TableRow,
+        text: trimmed,
+        cells,
         indent,
         location: {line: lineNumber, column: indent + 1},
       }

@@ -138,6 +138,12 @@ interface ResolvedOptions {
   types: {
     code: ObjectMatcher<{language: string | undefined; code: string}>
     horizontalRule: ObjectMatcher
+    image?: ObjectMatcher<{src: string; alt: string; title: string | undefined}>
+    html?: ObjectMatcher<{html: string}>
+    table?: ObjectMatcher<{headerRows: number | undefined; rows: Array<unknown>}>
+    callout?: ObjectMatcher<{tone: string; content: Array<PortableTextBlock>}>
+    blockquote?: ObjectMatcher<{content: Array<PortableTextBlock>}>
+    list?: ObjectMatcher<{kind: string; items: Array<unknown>}>
   }
 }
 
@@ -170,6 +176,12 @@ function resolveOptions(options: ParseOptions): ResolvedOptions {
     types: {
       code: options.types?.code ?? buildObjectMatcher(defaultCodeObjectDefinition),
       horizontalRule: options.types?.horizontalRule ?? buildObjectMatcher(defaultHorizontalRuleObjectDefinition),
+      image: options.types?.image,
+      html: options.types?.html,
+      table: options.types?.table,
+      callout: options.types?.callout,
+      blockquote: options.types?.blockquote,
+      list: options.types?.list,
     },
   }
 }
@@ -352,6 +364,64 @@ export function parseToPortableText(
         }
         out.push(block)
       }
+      continue
+    }
+
+    if (token.type === BlockTokenType.TableRow) {
+      flushParagraph()
+      flushBlockquote()
+      flushList()
+      // Peek: a delimiter row (`| --- |`) confirms this is a GFM table.
+      // Otherwise we treat the row as a paragraph line.
+      const next = lexer.peek()
+      const isDelim =
+        next.type === BlockTokenType.TableRow &&
+        (next.cells ?? []).every((c) => /^:?-+:?$/.test(c))
+      if (!isDelim) {
+        if (paragraphLines.length === 0) paragraphStartLine = token.location.line
+        paragraphLines.push(token.text)
+        continue
+      }
+      // Consume the delimiter row and any subsequent table-row tokens.
+      lexer.next()
+      const headerCells = token.cells ?? []
+      const bodyRows: Array<Array<string>> = []
+      while (true) {
+        const peek = lexer.peek()
+        if (peek.type !== BlockTokenType.TableRow) break
+        lexer.next()
+        bodyRows.push(peek.cells ?? [])
+      }
+      const matcher = resolved.types.table
+      if (!matcher) {
+        // No table matcher: fall back to plain paragraph of the source.
+        const block = makeTextBlock('normal', token.text, resolved, token.location.line)
+        if (block) out.push(block)
+        continue
+      }
+      const buildCell = (text: string): unknown => ({
+        _type: 'cell',
+        _key: resolved.keyGenerator(),
+        value: [makeTextBlock('normal', text, resolved, token.location.line)],
+      })
+      const rows = [
+        {
+          _key: resolved.keyGenerator(),
+          _type: 'row',
+          cells: headerCells.map(buildCell),
+        },
+        ...bodyRows.map((bodyCells) => ({
+          _key: resolved.keyGenerator(),
+          _type: 'row',
+          cells: bodyCells.map(buildCell),
+        })),
+      ]
+      const tableValue = matcher({
+        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+        value: {headerRows: 1, rows: rows as never},
+        isInline: false,
+      })
+      if (tableValue) out.push(tableValue)
       continue
     }
 
