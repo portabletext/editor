@@ -393,7 +393,14 @@ export function parseToPortableText(
         value: {},
         isInline: false,
       })
-      if (value) out.push(value)
+      if (value) {
+        out.push(value)
+      } else {
+        // No horizontal-rule matcher: fall back to a paragraph containing
+        // the literal `---` text.
+        const block = makeTextBlock('normal', '---', resolved, token.location.line)
+        if (block) out.push(block)
+      }
       continue
     }
 
@@ -558,9 +565,15 @@ export function parseToPortableText(
       }
       const matcher = resolved.types.table
       if (!matcher) {
-        // No table matcher: fall back to plain paragraph of the source.
-        const block = makeTextBlock('normal', token.text, resolved, token.location.line)
-        if (block) out.push(block)
+        // No table matcher: emit each header cell + body row cell as a
+        // separate paragraph (the delimiter row is dropped).
+        const allRows = [headerCells, ...bodyRows]
+        for (const row of allRows) {
+          for (const cell of row) {
+            const cellBlock = makeTextBlock('normal', cell, resolved, token.location.line)
+            if (cellBlock) out.push(cellBlock)
+          }
+        }
         continue
       }
       const buildCell = (text: string): unknown => {
