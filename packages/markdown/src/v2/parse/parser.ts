@@ -237,22 +237,40 @@ export function parseToPortableText(
     // otherwise the lines fall through to a flat blockquote.
     const firstLine = blockquoteLines[0] ?? ''
     const alertMatch = firstLine.match(/^\[!([A-Z]+)\]\s*$/)
-    if (alertMatch && resolved.types.callout) {
-      const tone = alertMatch[1]?.toLowerCase() ?? 'note'
-      const rest = blockquoteLines.slice(1)
-      blockquoteLines = []
-      // Each remaining line becomes a text block with style blockquote.
-      const content = rest
-        .filter((line) => line !== '')
-        .map((line) => makeTextBlock('blockquote', line, resolved, 0))
-        .filter((b): b is PortableTextTextBlock => Boolean(b))
-      const callout = resolved.types.callout({
-        context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
-        value: {tone, content: content as Array<PortableTextBlock>},
-        isInline: false,
-      })
-      if (callout) out.push(callout)
-      return
+    if (alertMatch) {
+      let committed = false
+      // Probe the schema before invoking the matcher — the default
+      // buildObjectMatcher allocates a _key as soon as it's called,
+      // even if it ultimately returns undefined. Pre-checking lets us
+      // skip the wasted allocation when the schema doesn't declare a
+      // `callout` block-object.
+      const hasCalloutSchema = resolved.schema.blockObjects.some(
+        (b) => b.name === 'callout',
+      )
+      if (resolved.types.callout && hasCalloutSchema) {
+        const tone = alertMatch[1]?.toLowerCase() ?? 'note'
+        const rest = blockquoteLines.slice(1)
+        const content = rest
+          .filter((line) => line !== '')
+          .map((line) => makeTextBlock('blockquote', line, resolved, 0))
+          .filter((b): b is PortableTextTextBlock => Boolean(b))
+        const callout = resolved.types.callout({
+          context: {schema: resolved.schema, keyGenerator: resolved.keyGenerator},
+          value: {tone, content: content as Array<PortableTextBlock>},
+          isInline: false,
+        })
+        if (callout) {
+          out.push(callout)
+          blockquoteLines = []
+          committed = true
+        }
+      }
+      if (committed) return
+      // Callout matcher returned undefined (or wasn't registered): drop
+      // the `[!XXX]` line and process the remaining lines as a flat
+      // blockquote.
+      blockquoteLines = blockquoteLines.slice(1)
+      if (blockquoteLines.length === 0) return
     }
 
     // Container path: when types.blockquote is registered, the entire
@@ -320,7 +338,27 @@ export function parseToPortableText(
         value: {kind: pendingList.kind, items: pendingList.items as Array<unknown>},
         isInline: false,
       })
-      if (value) out.push(value)
+      if (value) {
+        out.push(value)
+      } else {
+        // Matcher returned undefined: re-emit the buffered items as
+        // flat list-item text blocks so the document keeps the list
+        // structure.
+        for (const item of pendingList.items) {
+          for (const block of item.content) {
+            const b = block as PortableTextTextBlock
+            if (b && b._type === 'block') {
+              ;(b as PortableTextTextBlock).listItem =
+                pendingList.kind === 'task' ? 'bullet' : pendingList.kind
+              ;(b as PortableTextTextBlock).level = 1
+              if (pendingList.kind === 'task' && item.checked !== undefined) {
+                ;(b as PortableTextTextBlock & {checked?: boolean}).checked = item.checked
+              }
+              out.push(b)
+            }
+          }
+        }
+      }
     }
     pendingList = null
   }
