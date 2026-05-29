@@ -190,7 +190,31 @@ export function eventsToPortableText(
                 }
                 const subListEvents = events.slice(k, listEnd + 1)
                 const subListOut = eventsToPortableText(subListEvents, options)
+                // Re-style inner text blocks (including those inside
+                // list-item content) as 'blockquote' to match v1's
+                // callout shape.
+                const blockquoteStyleName = options.block.blockquote({
+                  context: {schema: options.schema},
+                })
+                const restyle = (b: PortableTextBlock | PortableTextObject): void => {
+                  if (b._type === 'block') {
+                    const tb = b as PortableTextTextBlock
+                    if (tb.style === 'normal' && blockquoteStyleName) {
+                      tb.style = blockquoteStyleName
+                    }
+                  }
+                  // Recurse into list block-objects' items[].content[].
+                  const list = b as {items?: Array<{content?: Array<unknown>}>}
+                  if (list.items) {
+                    for (const item of list.items) {
+                      for (const inner of item.content ?? []) {
+                        restyle(inner as PortableTextBlock | PortableTextObject)
+                      }
+                    }
+                  }
+                }
                 for (const b of subListOut) {
+                  restyle(b)
                   calloutContent.push(b as PortableTextBlock)
                 }
                 k = listEnd + 1
