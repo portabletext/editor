@@ -1,26 +1,29 @@
 /**
  * v1-compatible adapter on top of the v2 spike parser/serializer.
  *
- * markdown-to-PT routes through v2's parser. PT-to-markdown delegates
- * to v1's serializer for now — replacing v1's renderer dispatch with
- * v2's own per-node print functions is queued for the next pass.
+ * Day 5: markdown-to-PT routes through the BlockSpec engine
+ * (parseToBlockEvents → eventsToPortableText). pt-to-markdown
+ * still delegates to v1's serializer; that swap is a separate
+ * later pass.
  *
- * Lives only during the spike. Once v2 is feature-complete this file
- * is deleted and the entry points move to `markdown-to-portable-text.ts`
- * / `portable-text-to-markdown.ts`.
+ * Lives only during the spike. Once v2 is feature-complete this
+ * file is deleted.
  *
  * @internal
  */
 
 import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import {portableTextToMarkdown as v1PortableTextToMarkdown} from '../from-portable-text/portable-text-to-markdown'
-import {parseToPortableText, type ParseOptions} from './parse/parser'
+import {parseToBlockEvents} from './parse/block-parser'
+import {eventsToPortableText} from './parse/events-to-portable-text'
+import {resolveOptions, type ParseOptions} from './parse/parser'
 
 export function markdownToPortableText(
   markdown: string,
   options: ParseOptions = {},
 ): Array<PortableTextBlock | PortableTextObject> {
-  return parseToPortableText(markdown, options)
+  const events = parseToBlockEvents(markdown)
+  return eventsToPortableText(events, resolveOptions(options))
 }
 
 export function portableTextToMarkdown(
