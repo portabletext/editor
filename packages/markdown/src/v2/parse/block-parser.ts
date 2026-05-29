@@ -90,7 +90,10 @@ const isBlankLine = (line: Line): boolean => {
 const paragraphSpec: BlockSpec = {
   name: 'paragraph',
   continue: (_c, line) => !isBlankLine(line),
-  open: (line, _parent, ctx) => {
+  open: (line, parent, ctx) => {
+    // Never open a new paragraph if the tip is already one — line content
+    // will be absorbed by the existing paragraph in step 3.
+    if (parent.spec.name === 'paragraph') return false
     ctx.push({
       spec: paragraphSpec,
       indent: line.cursor,
@@ -580,7 +583,27 @@ export class BlockParser {
       let opened = true
       while (opened) {
         opened = false
+        const currentTip = this.ctx.tip()
         for (const spec of this.specs) {
+          // If tip is paragraph and a non-paragraph block-starter
+          // would match, close paragraph first so the new block
+          // becomes a sibling, not a child.
+          if (currentTip.spec.name === 'paragraph' && spec.name !== 'paragraph') {
+            const savedCursor = line.cursor
+            // Probe by attempting open with a temporary handle.
+            // Cheap check: peek-match against tail without mutating.
+            const tail = line.raw.slice(line.cursor)
+            const looksLikeBlock =
+              spec.name === 'list' && detectListMarker(tail) !== undefined ||
+              spec.name === 'blockquote' && /^[ ]{0,3}>/.test(tail) ||
+              spec.name === 'heading' && /^[ ]{0,3}#{1,6}(?:\s|$)/.test(tail) ||
+              spec.name === 'thematic_break' && /^[ ]{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(tail) ||
+              spec.name === 'fenced_code' && /^[ ]{0,3}(`{3,}|~{3,})/.test(tail)
+            if (looksLikeBlock) {
+              this.closeAllFrom(this.containers.length - 1)
+              line.cursor = savedCursor
+            }
+          }
           if (spec.open(line, this.ctx.tip(), this.ctx)) {
             opened = true
             break
