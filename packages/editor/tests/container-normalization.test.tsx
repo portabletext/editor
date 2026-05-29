@@ -2177,4 +2177,561 @@ describe('container normalization', () => {
       ])
     })
   })
+  test('partial nested subtree inserted via patches normalizes leaves to placeholder blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={tableContainers} />,
+    })
+
+    // Insert a partially-formed table: rows + cells are scaffolded, but each
+    // cell's `content` field is missing entirely. Normalization should walk
+    // descendants of the insertion and fill each cell's content with a
+    // placeholder block.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'table',
+              _key: 'table-0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'row-0',
+                  cells: [
+                    {_type: 'cell', _key: 'cell-0'},
+                    {_type: 'cell', _key: 'cell-1'},
+                  ],
+                },
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'table',
+          _key: 'table-0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k6',
+                      children: [
+                        {_type: 'span', _key: 'k7', text: '', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'cell-1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k4',
+                      children: [
+                        {_type: 'span', _key: 'k5', text: '', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('partial nested subtree inserted via insert.block event normalizes leaves to placeholder blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={tableContainers} />,
+    })
+
+    // Same shape as the patches test above, but inserted via the
+    // `insert.block` event instead. The contract for normalization should not
+    // depend on the origin of the operation.
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'table',
+        _key: 'table-0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'row-0',
+            cells: [
+              {_type: 'cell', _key: 'cell-0'},
+              {_type: 'cell', _key: 'cell-1'},
+            ],
+          },
+        ],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'table',
+          _key: 'table-0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k6',
+                      children: [
+                        {_type: 'span', _key: 'k7', text: '', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'cell-1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k4',
+                      children: [
+                        {_type: 'span', _key: 'k5', text: '', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('partial row inserted into existing table via patches normalizes cell content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={tableContainers} />,
+    })
+
+    // Insert a partial row directly into the table's `rows` field via a
+    // remote patch. The row's only cell has no `content` field at all;
+    // normalization should fill it.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: tableKey}, 'rows', {_key: 'row-0'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'row',
+              _key: 'row-1',
+              cells: [{_type: 'cell', _key: 'cell-1'}],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'row-1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k4', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('partial row inserted into existing table via insert.block normalizes cell content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={tableContainers} />,
+    })
+
+    // Same shape but via insert.block targeting the reference row's path.
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'row',
+        _key: 'row-1',
+        cells: [{_type: 'cell', _key: 'cell-1'}],
+      },
+      placement: 'after',
+      at: {
+        anchor: {path: [{_key: tableKey}, 'rows', {_key: 'row-0'}], offset: 0},
+        focus: {path: [{_key: tableKey}, 'rows', {_key: 'row-0'}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'row-1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k4', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('partial row inserted at nested path with nested-\`of\` registration normalizes cell content', async () => {
+    // Mirrors plugin-table's exact setup: single top-level container with
+    // nested-`of` children, partial row inserted at a NESTED path.
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+
+    const nestedTableContainer = defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: ({children}) => <>{children}</>,
+      of: [
+        defineContainer({
+          type: 'row',
+          arrayField: 'cells',
+          render: ({children}) => <>{children}</>,
+          of: [
+            defineContainer({
+              type: 'cell',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ],
+        }),
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[nestedTableContainer]} />,
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'row',
+        _key: 'row-1',
+        cells: [{_type: 'cell', _key: 'cell-1'}],
+      },
+      placement: 'after',
+      at: {
+        anchor: {path: [{_key: tableKey}, 'rows', {_key: 'row-0'}], offset: 0},
+        focus: {path: [{_key: tableKey}, 'rows', {_key: 'row-0'}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'row-1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k4', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })
