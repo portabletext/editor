@@ -446,6 +446,47 @@ const htmlBlockSpec: BlockSpec = {
   },
 }
 
+
+/**
+ * Table spec. A line starting with `|` opens a table_row container.
+ * The events-to-portable-text fold collects contiguous rows and, when
+ * the second row matches a delimiter pattern (`| --- | --- |`),
+ * commits the group as a table block-object via `types.table`.
+ *
+ * Per-line approach: tableRowSpec opens one container per row and
+ * emits its raw text as one inline_run. The fold owns the
+ * commit-to-table-or-paragraph decision.
+ */
+const tableRowSpec: BlockSpec = {
+  name: 'table_row',
+  continue: () => false,  // single line
+  open: (line, _parent, ctx) => {
+    const tail = line.raw.slice(line.cursor)
+    if (!/^[ ]{0,3}\|/.test(tail)) return false
+    ctx.push({
+      spec: tableRowSpec,
+      indent: line.cursor,
+      data: {raw: tail},
+      startLine: line.number,
+    })
+    ctx.emit({
+      kind: 'open',
+      spec: 'table_row',
+      data: {raw: tail},
+      location: {line: line.number, column: line.cursor + 1},
+    })
+    line.cursor = line.raw.length
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({
+      kind: 'close',
+      spec: 'table_row',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
+  },
+}
+
 const docSpec: BlockSpec = {
   name: 'doc',
   continue: () => true,
@@ -463,6 +504,7 @@ export class BlockParser {
     thematicBreakSpec,
     headingSpec,
     htmlBlockSpec,
+    tableRowSpec,
   ]
   private containers: Container[] = []
   private events: BlockEvent[] = []

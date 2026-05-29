@@ -140,6 +140,95 @@ export function eventsToPortableText(
         i = j + 1
         continue
       }
+      if (event.spec === 'table_row') {
+        // Collect contiguous table_row events; commit as table if the
+        // second row is a delimiter; else emit each cell as a paragraph
+        // (fallback) or pass through as plain text.
+        const rows: Array<{raw: string; line: number}> = []
+        let j = i
+        while (j < events.length) {
+          const e = events[j]!
+          if (e.kind === 'open' && e.spec === 'table_row') {
+            rows.push({raw: (e.data?.['raw'] as string) || '', line: e.location.line})
+          } else if (e.kind === 'close' && e.spec === 'table_row') {
+            // ok
+          } else if (!(e.kind === 'inline_run')) {
+            break
+          }
+          // Continue scanning for more table_rows.
+          if (e.kind === 'close' && e.spec === 'table_row') {
+            // Peek for next event: is it another open table_row?
+            const next = events[j + 1]
+            if (!next || next.kind !== 'open' || next.spec !== 'table_row') {
+              j++
+              break
+            }
+          }
+          j++
+        }
+        // Parse cells: split on `|` excluding outer pipes.
+        const parseRowCells = (raw: string): string[] => {
+          const trimmed = raw.trim().replace(/^\|/, '').replace(/\|$/, '')
+          return trimmed.split('|').map(s => s.trim())
+        }
+        const headerCells = parseRowCells(rows[0]?.raw ?? '')
+        // Delimiter detection.
+        const delimiterRow = rows[1]?.raw
+        const isDelimiterRow = delimiterRow && /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/.test(delimiterRow)
+        if (!isDelimiterRow) {
+          // Not a table: emit each header cell + body row cell as a paragraph.
+          const allRowCells = rows.map(r => parseRowCells(r.raw))
+          for (const rowCells of allRowCells) {
+            for (const cell of rowCells) {
+              const cellBlock = makeTextBlock('normal', cell, options, rows[0]?.line ?? 1)
+              if (cellBlock) out.push(cellBlock)
+            }
+          }
+          i = j
+          continue
+        }
+        const bodyRows = rows.slice(2).map(r => parseRowCells(r.raw))
+        const matcher = options.types.table
+        if (!matcher) {
+          const allRowCells = [headerCells, ...bodyRows]
+          for (const rowCells of allRowCells) {
+            for (const cell of rowCells) {
+              const cellBlock = makeTextBlock('normal', cell, options, rows[0]?.line ?? 1)
+              if (cellBlock) out.push(cellBlock)
+            }
+          }
+          i = j
+          continue
+        }
+        const buildCellBlocks = (text: string) => {
+          const block = makeTextBlock('normal', text, options, rows[0]?.line ?? 1)
+          return block ? [block] : []
+        }
+        const cells = (texts: string[]) =>
+          texts.map(t => ({
+            _type: 'cell',
+            _key: options.keyGenerator(),
+            value: buildCellBlocks(t),
+          }))
+        const tableValue = matcher({
+          context: {schema: options.schema, keyGenerator: options.keyGenerator},
+          value: {
+            headerRows: 1,
+            rows: [
+              {_type: 'row', _key: options.keyGenerator(), cells: cells(headerCells)},
+              ...bodyRows.map((bc) => ({
+                _type: 'row',
+                _key: options.keyGenerator(),
+                cells: cells(bc),
+              })),
+            ],
+          },
+          isInline: false,
+        })
+        if (tableValue) out.push(tableValue as PortableTextObject)
+        i = j
+        continue
+      }
       if (event.spec === 'thematic_break') {
         const value = options.types.horizontalRule({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},

@@ -234,6 +234,27 @@ describe('block-parser Day 1 skeleton', () => {
     })
   })
 
+
+  describe('tables (Day 4)', () => {
+    test('simple table emits table_row events', () => {
+      const md = ['| A | B |', '|---|---|', '| 1 | 2 |'].join('\n')
+      const events = parseToBlockEvents(md)
+      const rowOpens = events.filter(e => e.kind === 'open' && (e as {spec: string}).spec === 'table_row')
+      expect(rowOpens).toHaveLength(3)
+    })
+
+    test('no table matcher emits cell-per-paragraph', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const md = ['| A | B |', '|---|---|', '| 1 | 2 |'].join('\n')
+      const result = parse(md, {keyGenerator: keys})
+      // 4 cells = 4 paragraphs
+      expect(result).toHaveLength(4)
+      expect(((result[0]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('A')
+      expect(((result[1]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('B')
+      expect(((result[2]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('1')
+      expect(((result[3]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('2')
+    })
+  })
   describe('event stream', () => {
     test('paragraph emits +para inline_run -para', () => {
       const events = parseToBlockEvents('foo')
