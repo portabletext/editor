@@ -794,8 +794,11 @@ function foldInlineToSpans(
       }
       case InlineTokenType.Image: {
         // Flush the pre-image text span first so its key is allocated
-        // BEFORE the image matcher allocates the image key — matches
-        // v1's allocation order, which the corpus tests assume.
+        // BEFORE the image matcher allocates the image key. Matches v1
+        // for the default-image-definition tests. When the matcher
+        // returns undefined we re-absorb the original markdown text
+        // (single span fallback) but the pre-image span will already
+        // have been flushed — accept the cosmetic key-order tail.
         flush()
         const imageValue = options.types.image?.({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},

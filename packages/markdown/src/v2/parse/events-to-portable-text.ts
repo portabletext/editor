@@ -56,10 +56,9 @@ export function eventsToPortableText(
   let pendingItem: {marker: string; checked?: boolean} | undefined
 
   // types.list container path: when the matcher is registered we buffer
-  // top-level list items here. Each open/close list at depth 1 commits.
-  let pendingList: PendingList | undefined
-  let pendingListItem: PendingListItem | undefined
-
+  // every nesting level of lists. Stacks parallel listStack so nested
+  // lists become nested list block-objects.
+  const pendingListStack: Array<{list: PendingList; item: PendingListItem | undefined}> = []
   const useListContainer = Boolean(options.types.list)
   const useBlockquoteContainer = Boolean(options.types.blockquote)
 
@@ -68,8 +67,9 @@ export function eventsToPortableText(
   const blockquoteBuffers: Array<Array<PortableTextBlock | PortableTextObject>> = []
 
   const sinkOpen = (b: PortableTextBlock | PortableTextObject): void => {
-    if (pendingListItem) {
-      pendingListItem.content.push(b)
+    const topPending = pendingListStack[pendingListStack.length - 1]
+    if (topPending?.item) {
+      topPending.item.content.push(b)
       return
     }
     if (blockquoteBuffers.length > 0) {
@@ -105,9 +105,8 @@ export function eventsToPortableText(
     if (event.kind === 'open') {
       if (event.spec === 'list') {
         const kind = (event.data?.['kind'] as 'bullet' | 'number' | 'task') ?? 'bullet'
-        // Container path: outermost list opens the pendingList buffer.
-        if (useListContainer && listStack.length === 0) {
-          pendingList = {kind, items: []}
+        if (useListContainer) {
+          pendingListStack.push({list: {kind, items: []}, item: undefined})
         }
         listStack.push({kind, level: listStack.length + 1})
         i++
@@ -118,9 +117,9 @@ export function eventsToPortableText(
           marker: event.data?.['marker'] as string,
           checked: event.data?.['checked'] as boolean | undefined,
         }
-        // Container path: open a new pendingListItem buffer.
-        if (useListContainer && pendingList && listStack.length === 1) {
-          pendingListItem = {
+        const topFrame = pendingListStack[pendingListStack.length - 1]
+        if (useListContainer && topFrame) {
+          topFrame.item = {
             _key: options.keyGenerator(),
             _type: 'list-item',
             ...(pendingItem.checked !== undefined ? {checked: pendingItem.checked} : {}),
@@ -306,13 +305,30 @@ export function eventsToPortableText(
         }
         // Allocate keys deep-first: cell content → cell key → row key.
         // (Matches v1 to keep corpus key-order stable.)
-        const buildCell = (text: string) => {
+        // Cell-content image hoist: a cell whose paragraph contains
+        // exactly one non-span child (an inline image upgraded to a
+        // block-object) emits the bare image without the wrapping
+        // text block.
+        const buildCellValue = (text: string) => {
           const block = makeTextBlock('normal', text, options, rows[0]?.line ?? 1)
+          if (!block) return []
+          const childs = (block.children ?? []) as Array<{_type: string; text?: string}>
+          const nonSpan = childs.filter((c) => c._type !== 'span')
+          const emptySpans = childs.filter(
+            (c) => c._type === 'span' && ((c.text ?? '') === ''),
+          )
+          if (nonSpan.length === 1 && nonSpan.length + emptySpans.length === childs.length) {
+            return [nonSpan[0] as PortableTextObject]
+          }
+          return [block]
+        }
+        const buildCell = (text: string) => {
+          const value = buildCellValue(text)
           const cellKey = options.keyGenerator()
           return {
             _type: 'cell',
             _key: cellKey,
-            value: block ? [block] : [],
+            value,
           }
         }
         const buildRow = (cellTexts: string[]) => {
@@ -353,42 +369,44 @@ export function eventsToPortableText(
     if (event.kind === 'close') {
       if (event.spec === 'list') {
         listStack.pop()
-        // Container path: commit the pendingList when outermost list closes.
-        if (useListContainer && listStack.length === 0 && pendingList) {
-          const value = options.types.list!({
-            context: {schema: options.schema, keyGenerator: options.keyGenerator},
-            value: {kind: pendingList.kind, items: pendingList.items},
-            isInline: false,
-          })
-          if (value) {
-            // sink without sinkOpen's list-item routing (we're closing the list).
-            if (blockquoteBuffers.length > 0) {
-              blockquoteBuffers[blockquoteBuffers.length - 1]!.push(value)
-            } else {
-              out.push(value)
+        if (useListContainer) {
+          const closing = pendingListStack.pop()
+          if (closing) {
+            const value = options.types.list!({
+              context: {schema: options.schema, keyGenerator: options.keyGenerator},
+              value: {kind: closing.list.kind, items: closing.list.items},
+              isInline: false,
+            })
+            const sink = (b: PortableTextBlock | PortableTextObject) => {
+              const parentFrame = pendingListStack[pendingListStack.length - 1]
+              if (parentFrame?.item) {
+                parentFrame.item.content.push(b)
+              } else if (blockquoteBuffers.length > 0) {
+                blockquoteBuffers[blockquoteBuffers.length - 1]!.push(b)
+              } else {
+                out.push(b)
+              }
             }
-          } else {
-            // Fall back to flat list items.
-            for (const item of pendingList.items) {
-              for (const b of item.content) {
-                if (b._type === 'block') {
-                  const tb = b as PortableTextTextBlock
-                  ;(tb as PortableTextTextBlock & {listItem?: string}).listItem =
-                    pendingList.kind === 'task' ? 'bullet' : pendingList.kind
-                  ;(tb as PortableTextTextBlock & {level?: number}).level = 1
-                  if (pendingList.kind === 'task' && item.checked !== undefined) {
-                    ;(tb as PortableTextTextBlock & {checked?: boolean}).checked = item.checked
+            if (value) {
+              sink(value)
+            } else {
+              // Matcher returned undefined: fall back to flat blocks.
+              for (const item of closing.list.items) {
+                for (const b of item.content) {
+                  if (b._type === 'block') {
+                    const tb = b as PortableTextTextBlock
+                    ;(tb as PortableTextTextBlock & {listItem?: string}).listItem =
+                      closing.list.kind === 'task' ? 'bullet' : closing.list.kind
+                    ;(tb as PortableTextTextBlock & {level?: number}).level = 1
+                    if (closing.list.kind === 'task' && item.checked !== undefined) {
+                      ;(tb as PortableTextTextBlock & {checked?: boolean}).checked = item.checked
+                    }
                   }
-                }
-                if (blockquoteBuffers.length > 0) {
-                  blockquoteBuffers[blockquoteBuffers.length - 1]!.push(b)
-                } else {
-                  out.push(b)
+                  sink(b)
                 }
               }
             }
           }
-          pendingList = undefined
         }
       } else if (event.spec === 'blockquote') {
         if (useBlockquoteContainer) {
@@ -403,10 +421,10 @@ export function eventsToPortableText(
           blockquoteDepth--
         }
       } else if (event.spec === 'list_item') {
-        // Commit pendingListItem to pendingList.
-        if (useListContainer && pendingListItem && pendingList && listStack.length === 1) {
-          pendingList.items.push(pendingListItem)
-          pendingListItem = undefined
+        const topFrame = pendingListStack[pendingListStack.length - 1]
+        if (useListContainer && topFrame?.item) {
+          topFrame.list.items.push(topFrame.item)
+          topFrame.item = undefined
         }
         pendingItem = undefined
       }
