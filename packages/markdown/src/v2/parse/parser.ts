@@ -749,19 +749,33 @@ function foldInlineToSpans(
         break
       }
       case InlineTokenType.CodeSpan: {
-        flush()
         const codeMark = options.marks.code({context: {schema: options.schema}})
-        children.push({
-          _type: 'span',
-          _key: options.keyGenerator(),
-          text: t.text,
-          marks: codeMark ? [...current.marks, codeMark] : [...current.marks],
-        } as PortableTextSpan)
+        if (codeMark) {
+          flush()
+          children.push({
+            _type: 'span',
+            _key: options.keyGenerator(),
+            text: t.text,
+            marks: [...current.marks, codeMark],
+          } as PortableTextSpan)
+        } else {
+          // No code decorator defined: re-emit the code text into the
+          // current span (matches v1).
+          current.text += t.text
+        }
         break
       }
       case InlineTokenType.LinkOpen: {
+        // Schema-probe BEFORE invoking the matcher: if no annotation is
+        // declared at all, skip the matcher entirely (the link label
+        // re-absorbs as plain text in the current span).
+        const hasAnyAnnotation = options.schema.annotations.length > 0
+        if (!hasAnyAnnotation) {
+          annotationStack.push('')
+          break
+        }
         // Flush the pre-link text first so its span key is allocated
-        // before the markDef key (matches v1's allocation order).
+        // BEFORE the markDef key (matches v1's allocation order).
         flush()
         const annotation = options.marks.link({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},
@@ -774,8 +788,6 @@ function foldInlineToSpans(
           annotationStack.push(annotation._key)
           updateMarks()
         } else {
-          // No annotation: pass the link label through as plain text in the
-          // current span. LinkClose will be a no-op.
           annotationStack.push('')
         }
         break
@@ -793,12 +805,23 @@ function foldInlineToSpans(
         break
       }
       case InlineTokenType.Image: {
-        // Flush the pre-image text span first so its key is allocated
-        // BEFORE the image matcher allocates the image key. Matches v1
-        // for the default-image-definition tests. When the matcher
-        // returns undefined we re-absorb the original markdown text
-        // (single span fallback) but the pre-image span will already
-        // have been flushed — accept the cosmetic key-order tail.
+        // Schema-probe BEFORE invoking the image matcher. When NO
+        // image-like schema entry exists (any inline OR any block
+        // object), the markdown text re-absorbs into the current
+        // span as plain text. Consumer custom matchers may route the
+        // image into any schema entry (e.g. 'photo'), so we accept
+        // any non-empty inline/block-object array as "consumer wants
+        // images."
+        const hasAnyImageSchema =
+          options.schema.inlineObjects.length > 0 ||
+          options.schema.blockObjects.length > 0
+        if (!hasAnyImageSchema) {
+          const titlePart = t.title ? ` "${t.title}"` : ''
+          current.text += `![${t.alt ?? ''}](${t.src ?? ''}${titlePart})`
+          break
+        }
+        // Flush pre-image text span so its key is allocated before the
+        // image matcher's key (matches v1).
         flush()
         const imageValue = options.types.image?.({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},
