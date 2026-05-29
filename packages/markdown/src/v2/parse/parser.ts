@@ -113,7 +113,7 @@ export interface ParseOptions {
   }
 }
 
-interface ResolvedOptions {
+export interface ResolvedOptions {
   schema: Schema
   keyGenerator: () => string
   marks: {
@@ -150,7 +150,7 @@ interface ResolvedOptions {
   }
 }
 
-function resolveOptions(options: ParseOptions): ResolvedOptions {
+export function resolveOptions(options: ParseOptions): ResolvedOptions {
   return {
     schema: options.schema ?? defaultSchema,
     keyGenerator: options.keyGenerator ?? defaultKeyGenerator,
@@ -620,7 +620,7 @@ export function parseToPortableText(
   return out
 }
 
-function makeTextBlock(
+export function makeTextBlock(
   styleKey: 'normal' | 'blockquote' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
   body: string,
   options: ResolvedOptions,
