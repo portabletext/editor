@@ -353,8 +353,18 @@ export function eventsToPortableText(
         if (value) {
           sinkOpen(value as PortableTextObject)
         } else {
-          const block = makeTextBlock('normal', html, options, event.location.line)
-          if (block) sinkOpen(block)
+          // Fallback: emit the raw html as a single-span text block.
+          // Skip the inline lexer (which strips inline HTML tags by
+          // default) so the html content survives verbatim.
+          const blockKey = options.keyGenerator()
+          const spanKey = options.keyGenerator()
+          sinkOpen({
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            children: [{_type: 'span', _key: spanKey, text: html, marks: []}],
+            markDefs: [],
+          } as unknown as PortableTextBlock)
         }
         i = j + 1
         continue

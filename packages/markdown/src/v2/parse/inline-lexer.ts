@@ -59,7 +59,12 @@ export interface InlineToken {
  * `SoftBreak` tokens unless they're preceded by two trailing spaces or a
  * backslash, in which case they become `HardBreak`.
  */
-export function lexInline(source: string, startLine = 1): Array<InlineToken> {
+export interface LexInlineOptions {
+  /** How to handle inline HTML tags. 'skip' (default) strips tags but keeps inner text; 'text' keeps tags as literal text. */
+  inlineHtml?: 'skip' | 'text'
+}
+
+export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOptions = {}): Array<InlineToken> {
   const tokens: Array<InlineToken> = []
   let i = 0
   let line = startLine
@@ -163,6 +168,18 @@ export function lexInline(source: string, startLine = 1): Array<InlineToken> {
             href: inner,
             location: {line, column},
           })
+          const consumed = close - i + 1
+          advance(consumed)
+          continue
+        }
+        // Inline HTML tag (open/close): default behavior is to strip
+        // the tag and keep inner text (matches v1 default 'skip').
+        // When configured to 'text', let the tag pass through as
+        // literal characters.
+        if (
+          (lexOptions.inlineHtml ?? 'skip') === 'skip' &&
+          /^\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s[^>]*)?\/?$/.test(inner)
+        ) {
           const consumed = close - i + 1
           advance(consumed)
           continue

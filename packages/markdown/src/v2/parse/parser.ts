@@ -114,6 +114,7 @@ export interface ParseOptions {
 }
 
 export interface ResolvedOptions {
+  html?: {inline?: 'skip' | 'text'}
   schema: Schema
   keyGenerator: () => string
   marks: {
@@ -186,6 +187,7 @@ export function resolveOptions(options: ParseOptions): ResolvedOptions {
       blockquote: options.types?.blockquote,
       list: options.types?.list,
     },
+    html: options.html,
   }
 }
 
@@ -639,7 +641,7 @@ export function makeTextBlock(
 
   // Allocate block key BEFORE span keys to match v1's order.
   const blockKey = options.keyGenerator()
-  const inline = lexInline(body, startLine)
+  const inline = lexInline(body, startLine, {inlineHtml: options.html?.inline})
   const {children, markDefs} = foldInlineToSpans(inline, options)
   return {
     _type: 'block',
