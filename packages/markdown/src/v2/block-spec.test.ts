@@ -90,6 +90,90 @@ describe('block-parser Day 1 skeleton', () => {
     })
   })
 
+
+  describe('blockquote (Day 2)', () => {
+    test('flat blockquote', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('> foo', {keyGenerator: keys})
+      expect(result).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'blockquote',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+      ])
+    })
+
+    test('multi-line blockquote', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('> foo\n> bar', {keyGenerator: keys})
+      expect(result).toHaveLength(1)
+      expect(((result[0]! as unknown) as {style: string}).style).toBe('blockquote')
+      expect(((result[0]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('foo\nbar')
+    })
+  })
+
+  describe('list (Day 2)', () => {
+    test('simple bullet list', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('- foo', {keyGenerator: keys})
+      expect(result).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          listItem: 'bullet',
+          level: 1,
+        },
+      ])
+    })
+
+    test('simple ordered list', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('1. foo', {keyGenerator: keys})
+      expect(result).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          listItem: 'number',
+          level: 1,
+        },
+      ])
+    })
+
+    test('task list', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('- [x] foo', {keyGenerator: keys})
+      expect(result).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          listItem: 'bullet',
+          level: 1,
+          checked: true,
+        },
+      ])
+    })
+
+    test('multiple items', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('- foo\n- bar', {keyGenerator: keys})
+      expect(result).toHaveLength(2)
+      expect(((result[0]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('foo')
+      expect(((result[1]! as unknown) as {children: Array<{text: string}>}).children[0]!.text).toBe('bar')
+    })
+  })
+
   describe('event stream', () => {
     test('paragraph emits +para inline_run -para', () => {
       const events = parseToBlockEvents('foo')

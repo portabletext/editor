@@ -176,6 +176,172 @@ const thematicBreakSpec: BlockSpec = {
   },
 }
 
+
+const isBlockquoteLine = (line: Line): boolean => {
+  const tail = line.raw.slice(line.cursor)
+  return /^[ ]{0,3}>/.test(tail)
+}
+
+/** Spec: blockquote (`> ` prefix). Continues while line starts with `>`. */
+const blockquoteSpec: BlockSpec = {
+  name: 'blockquote',
+  continue: (_c, line) => {
+    if (!isBlockquoteLine(line)) return false
+    // Advance past the `> ` prefix so inner specs see the line content.
+    const tail = line.raw.slice(line.cursor)
+    const m = tail.match(/^[ ]{0,3}>[ ]?/)
+    if (m) line.cursor += m[0].length
+    return true
+  },
+  open: (line, _parent, ctx) => {
+    if (!isBlockquoteLine(line)) return false
+    ctx.push({
+      spec: blockquoteSpec,
+      indent: line.cursor,
+      data: {},
+      startLine: line.number,
+    })
+    ctx.emit({kind: 'open', spec: 'blockquote', location: {line: line.number, column: line.cursor + 1}})
+    // Advance past the `> ` prefix.
+    const tail = line.raw.slice(line.cursor)
+    const m = tail.match(/^[ ]{0,3}>[ ]?/)
+    if (m) line.cursor += m[0].length
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({
+      kind: 'close',
+      spec: 'blockquote',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
+  },
+}
+
+interface ListMarkerInfo {
+  kind: 'bullet' | 'number' | 'task'
+  marker: string         // e.g. "-", "1.", "+"
+  checked?: boolean      // for task
+  markerWidth: number    // columns consumed by marker + trailing space
+}
+
+const detectListMarker = (text: string): ListMarkerInfo | undefined => {
+  // Try task first: "- [ ] " or "- [x] " / "- [X] "
+  const task = text.match(/^([-*+])[ \t]+\[([ xX])\][ \t]+/)
+  if (task) {
+    return {
+      kind: 'task',
+      marker: task[1] ?? '-',
+      checked: task[2] === 'x' || task[2] === 'X',
+      markerWidth: task[0].length,
+    }
+  }
+  // Bullet: "- ", "* ", "+ "
+  const bullet = text.match(/^([-*+])[ \t]+/)
+  if (bullet) {
+    return {kind: 'bullet', marker: bullet[1] ?? '-', markerWidth: bullet[0].length}
+  }
+  // Ordered: "1. " or "1) "
+  const ordered = text.match(/^(\d{1,9})([.)])[ \t]+/)
+  if (ordered) {
+    return {
+      kind: 'number',
+      marker: (ordered[1] ?? '1') + (ordered[2] ?? '.'),
+      markerWidth: ordered[0].length,
+    }
+  }
+  return undefined
+}
+
+/** Spec: list. A container that holds list_item children. */
+const listSpec: BlockSpec = {
+  name: 'list',
+  continue: (c, line) => {
+    // A list continues if the next line is blank OR begins another item of
+    // the same kind OR is lazy-continuation of an open inner item.
+    if (/^[ \t]*$/.test(line.raw.slice(line.cursor))) return true
+    const tail = line.raw.slice(line.cursor)
+    const marker = detectListMarker(tail.trimStart())
+    if (marker && marker.kind === (c.data['kind'] as string)) return true
+    // Lazy continuation: indent >= the open item's indent.
+    const itemIndent = c.data['lastItemIndent'] as number | undefined
+    if (itemIndent !== undefined && tail.match(/^[ \t]*/)![0].length >= itemIndent) return true
+    return false
+  },
+  open: (line, _parent, ctx) => {
+    const tail = line.raw.slice(line.cursor)
+    const marker = detectListMarker(tail)
+    if (!marker) return false
+    ctx.push({
+      spec: listSpec,
+      indent: line.cursor,
+      data: {kind: marker.kind, lastItemIndent: line.cursor + marker.markerWidth},
+      startLine: line.number,
+    })
+    ctx.emit({
+      kind: 'open',
+      spec: 'list',
+      data: {kind: marker.kind},
+      location: {line: line.number, column: line.cursor + 1},
+    })
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({
+      kind: 'close',
+      spec: 'list',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
+  },
+}
+
+/** Spec: list_item. The container that holds the item's blocks. */
+const listItemSpec: BlockSpec = {
+  name: 'list_item',
+  continue: (c, line) => {
+    // The item continues if the line is blank OR indented enough to be in
+    // the item's content frame.
+    const tail = line.raw.slice(line.cursor)
+    if (/^[ \t]*$/.test(tail)) return true
+    const leading = tail.match(/^[ \t]*/)![0].length
+    if (leading >= (c.indent - line.cursor)) {
+      // Advance past the item's continuation indent.
+      line.cursor += (c.indent - line.cursor)
+      return true
+    }
+    return false
+  },
+  open: (line, parent, ctx) => {
+    if (parent.spec.name !== 'list') return false
+    const tail = line.raw.slice(line.cursor)
+    const marker = detectListMarker(tail)
+    if (!marker) return false
+    if (marker.kind !== (parent.data['kind'] as string)) return false
+    const indent = line.cursor + marker.markerWidth
+    ctx.push({
+      spec: listItemSpec,
+      indent,
+      data: {marker: marker.marker, checked: marker.checked},
+      startLine: line.number,
+    })
+    parent.data['lastItemIndent'] = indent
+    ctx.emit({
+      kind: 'open',
+      spec: 'list_item',
+      data: {marker: marker.marker, checked: marker.checked},
+      location: {line: line.number, column: line.cursor + 1},
+    })
+    line.cursor += marker.markerWidth
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({
+      kind: 'close',
+      spec: 'list_item',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
+  },
+}
+
 const docSpec: BlockSpec = {
   name: 'doc',
   continue: () => true,
@@ -184,7 +350,7 @@ const docSpec: BlockSpec = {
 }
 
 export class BlockParser {
-  private specs: BlockSpec[] = [thematicBreakSpec, headingSpec]
+  private specs: BlockSpec[] = [blockquoteSpec, listItemSpec, listSpec, thematicBreakSpec, headingSpec]
   private containers: Container[] = []
   private events: BlockEvent[] = []
 
@@ -251,14 +417,17 @@ export class BlockParser {
     // 3. Consume remaining line content into the tip.
     const tail = line.raw.slice(line.cursor)
     if (tail.length === 0) return
-    const tip = this.ctx.tip()
+    let tip = this.ctx.tip()
+    // If the tip is a container that doesn't itself hold text (doc, list,
+    // list_item, blockquote, callout), open a paragraph inside it to
+    // absorb the line content.
+    const textBearing = new Set<string>(['paragraph', 'heading'])
+    if (!textBearing.has(tip.spec.name)) {
+      paragraphSpec.open(line, tip, this.ctx)
+      tip = this.ctx.tip()
+    }
     if (tip.spec.name === 'paragraph') {
       ;(tip.data['lines'] as Array<string>).push(tail)
-    } else if (tip.spec.name === 'doc') {
-      // Open a paragraph and feed it.
-      paragraphSpec.open(line, tip, this.ctx)
-      const newTip = this.ctx.tip()
-      ;(newTip.data['lines'] as Array<string>).push(tail)
     }
   }
 
