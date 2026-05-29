@@ -180,6 +180,28 @@ export function eventsToPortableText(
             continue
           }
         }
+        // Image-only paragraph inside a list item: emit the image
+        // directly without allocating a wasted block key. At top
+        // level, makeTextBlock + paragraph-flush hoist preserves the
+        // v1 key allocation (block_key wasted, image_key follows).
+        const imageOnlyMatch = text.trim().match(
+          /^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]*)")?\)$/,
+        )
+        const inListItem = listStack.length > 0
+        if (imageOnlyMatch && options.types.image && inListItem) {
+          const [, alt, src, title] = imageOnlyMatch
+          const imageValue = options.types.image({
+            context: {schema: options.schema, keyGenerator: options.keyGenerator},
+            value: {src: src ?? '', alt: alt ?? '', title: title || undefined},
+            isInline: false,
+          })
+          if (imageValue) {
+            sinkOpen(imageValue as PortableTextObject)
+            pendingItem = undefined
+            i = nextIndex
+            continue
+          }
+        }
         const styleKey = blockquoteDepth > 0 && !useBlockquoteContainer ? 'blockquote' : 'normal'
         const block = makeTextBlock(styleKey, text, options, line)
         if (block) {

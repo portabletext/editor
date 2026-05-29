@@ -265,9 +265,12 @@ const listSpec: BlockSpec = {
     const tail = line.raw.slice(line.cursor)
     const marker = detectListMarker(tail.trimStart())
     if (marker && marker.kind === (c.data['kind'] as string)) return true
-    // Lazy continuation: indent >= the open item's indent.
+    // Lazy continuation: the line's absolute indent (cursor + leading
+    // whitespace in the current frame) is at least the open item's
+    // content-frame column.
     const itemIndent = c.data['lastItemIndent'] as number | undefined
-    if (itemIndent !== undefined && tail.match(/^[ \t]*/)![0].length >= itemIndent) return true
+    const absoluteLeading = line.cursor + (tail.match(/^[ \t]*/)![0].length)
+    if (itemIndent !== undefined && absoluteLeading >= itemIndent) return true
     return false
   },
   open: (line, _parent, ctx) => {
