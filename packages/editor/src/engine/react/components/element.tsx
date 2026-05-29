@@ -4,6 +4,11 @@ import type {
 } from '@portabletext/schema'
 import React, {useContext, type JSX} from 'react'
 import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import type {
+  RenderElementProps,
+  RenderLeafProps,
+  RenderTextProps,
+} from '../../../editor/render-props-types'
 import {getText} from '../../../node-traversal/get-text'
 import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
 import {serializePath} from '../../../paths/serialize-path'
@@ -16,11 +21,6 @@ import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import {useEngineStatic} from '../hooks/use-engine-static'
 import getDirection from '../utils/direction'
-import type {
-  RenderElementProps,
-  RenderLeafProps,
-  RenderTextProps,
-} from './editable'
 
 /**
  * Element wrapper. Receives a node that already has children (a text block

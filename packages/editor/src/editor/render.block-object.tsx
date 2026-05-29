@@ -2,7 +2,6 @@ import type {PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
-import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
 import type {
   BlockObjectConfig,
@@ -11,6 +10,7 @@ import type {
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
+import type {RenderElementProps} from './render-props-types'
 import {renderDefaultBlockObject} from './render.default'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'

@@ -83,18 +83,6 @@ export const isDOMSelection = (value: any): value is DOMSelection => {
 }
 
 /**
- * Checks whether a paste event is a plaintext-only event.
- */
-
-export const isPlainTextOnlyPaste = (event: ClipboardEvent) => {
-  return (
-    event.clipboardData &&
-    event.clipboardData.getData('text/plain') !== '' &&
-    event.clipboardData.types.length === 1
-  )
-}
-
-/**
  * Normalize a DOM point so that it always refers to a text node.
  */
 

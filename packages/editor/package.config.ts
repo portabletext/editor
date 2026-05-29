@@ -95,6 +95,17 @@ export default defineConfig({
   reactCompilerOptions: {
     target: '19',
     sources: (filename: string) => {
+      // `Editable.tsx` is the DOM↔engine bridge. The engine has long-lived
+      // mutable instance fields (`editor.focused`, `editor.composing`,
+      // `editor.userSelection`, `editor.domElement`, etc.) that this file
+      // assigns to as part of translating raw DOM events into engine
+      // state. These mutations aren't accidental React; they're the
+      // bridge's job. Historically the bridge lived under `src/engine/`
+      // (wholesale excluded). After merging the two-layer Editable into
+      // one file in `src/editor/`, the same exemption applies.
+      if (filename.endsWith('/src/editor/Editable.tsx')) {
+        return false
+      }
       if (!filename.includes('/src/engine/')) {
         return true
       }

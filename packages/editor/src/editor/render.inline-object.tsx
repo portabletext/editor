@@ -1,7 +1,6 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
-import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
 import type {
   InlineObjectConfig,
@@ -10,6 +9,7 @@ import type {
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
+import type {RenderElementProps} from './render-props-types'
 import {renderDefaultInlineObject} from './render.default'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
