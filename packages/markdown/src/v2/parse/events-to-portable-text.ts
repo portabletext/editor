@@ -145,40 +145,65 @@ export function eventsToPortableText(
         // newlines so the marker may appear on line 1 of `text`.
         const calloutFirstLine = text.split('\n', 1)[0] ?? ''
         const alertMatch = calloutFirstLine.match(/^\[!([A-Z]+)\]\s*$/)
-        if (alertMatch && blockquoteDepth > 0 && options.types.callout) {
+        if (alertMatch && blockquoteDepth > 0) {
           const tone = alertMatch[1]!.toLowerCase()
-          const calloutContent: Array<PortableTextBlock> = []
-          // Drop the [!XXX] line and add the rest of the same paragraph
-          // as the first content block.
           const restOfFirst = text.split('\n').slice(1).join('\n')
-          if (restOfFirst.length > 0) {
-            const ib = makeTextBlock('blockquote', restOfFirst, options, line)
-            if (ib) calloutContent.push(ib)
-          }
-          let k = nextIndex
-          while (k < events.length) {
-            const ek = events[k]!
-            if (ek.kind === 'close' && ek.spec === 'blockquote') break
-            if (ek.kind === 'open' && ek.spec === 'paragraph') {
-              const inner = collectInline(events, k + 1, 'paragraph')
-              const ib = makeTextBlock('blockquote', inner.text, options, inner.line)
+          // Schema-probe before invoking the callout matcher (which
+          // allocates a key on entry). When the schema lacks a
+          // callout block-object, drop the [!XXX] marker line and
+          // emit the remainder as a flat blockquote-styled paragraph
+          // (matches v1 fallback).
+          const hasCalloutSchema = options.schema.blockObjects.some(
+            (b) => b.name === 'callout',
+          )
+          if (hasCalloutSchema && options.types.callout) {
+            const calloutContent: Array<PortableTextBlock> = []
+            if (restOfFirst.length > 0) {
+              const ib = makeTextBlock('blockquote', restOfFirst, options, line)
               if (ib) calloutContent.push(ib)
-              k = inner.nextIndex
+            }
+            let k = nextIndex
+            while (k < events.length) {
+              const ek = events[k]!
+              if (ek.kind === 'close' && ek.spec === 'blockquote') break
+              if (ek.kind === 'open' && ek.spec === 'paragraph') {
+                const inner = collectInline(events, k + 1, 'paragraph')
+                const ib = makeTextBlock('blockquote', inner.text, options, inner.line)
+                if (ib) calloutContent.push(ib)
+                k = inner.nextIndex
+                continue
+              }
+              k++
+            }
+            const callout = options.types.callout({
+              context: {schema: options.schema, keyGenerator: options.keyGenerator},
+              value: {tone, content: calloutContent},
+              isInline: false,
+            })
+            if (callout) {
+              blockquoteDepth--
+              sinkOpen(callout as PortableTextObject)
+              i = k + 1
               continue
             }
-            k++
           }
-          const callout = options.types.callout({
-            context: {schema: options.schema, keyGenerator: options.keyGenerator},
-            value: {tone, content: calloutContent},
-            isInline: false,
-          })
-          if (callout) {
-            blockquoteDepth--  // skip the blockquote close
-            sinkOpen(callout as PortableTextObject)
-            i = k + 1  // past blockquote close
-            continue
+          // No callout schema: drop [!XXX], emit remainder as flat
+          // blockquote-styled paragraph (or normal, if no blockquote
+          // style is declared).
+          if (restOfFirst.length > 0) {
+            const blockquoteStyleName = options.block.blockquote({
+              context: {schema: options.schema},
+            })
+            const styleKey = blockquoteStyleName ? 'blockquote' : 'normal'
+            const block = makeTextBlock(styleKey, restOfFirst, options, line)
+            if (block) {
+              decorateListContext(block, listStack, pendingItem, useListContainer, options)
+              flushParagraphBlock(block)
+            }
           }
+          pendingItem = undefined
+          i = nextIndex
+          continue
         }
         // Image-only paragraph inside a list item: emit the image
         // directly without allocating a wasted block key. At top
