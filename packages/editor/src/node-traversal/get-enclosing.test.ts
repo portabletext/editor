@@ -101,6 +101,6 @@ describe(getEnclosing.name, () => {
         isTextBlock({schema: testbed.schema}, node),
     )
     // Type-narrowed access: TS sees `entry.node` as textBlock1's type
-    expect(entry?.node.children).toBeDefined()
+    expect(entry?.node.children).toEqual(testbed.textBlock1.children)
   })
 })
