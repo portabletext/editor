@@ -272,8 +272,11 @@ const listSpec: BlockSpec = {
   },
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
-    const marker = detectListMarker(tail)
+    const leading = tail.match(/^[ \t]{0,3}/)?.[0].length ?? 0
+    const marker = detectListMarker(tail.slice(leading))
     if (!marker) return false
+    // Advance past the optional leading indent so listItem sees the marker.
+    line.cursor += leading
     ctx.push({
       spec: listSpec,
       indent: line.cursor,
@@ -428,17 +431,20 @@ const htmlBlockSpec: BlockSpec = {
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
     if (!/^<\/?[a-zA-Z][a-zA-Z0-9-]*/.test(tail.trimStart())) return false
+    // Record any extra leading-space indent inside the current container
+    // (e.g. an html_block under a list item often has 1+ extra spaces);
+    // continuation lines strip up to that many columns.
+    const htmlIndent = tail.match(/^[ ]{0,3}/)?.[0].length ?? 0
     ctx.push({
       spec: htmlBlockSpec,
       indent: line.cursor,
-      data: {},
+      data: {_htmlIndent: htmlIndent},
       startLine: line.number,
     })
     ctx.emit({kind: 'open', spec: 'html_block', location: {line: line.number, column: line.cursor + 1}})
-    // Emit the opening line as the first verbatim line and consume it.
     ctx.emit({
       kind: 'verbatim_line',
-      text: tail,
+      text: tail.replace(new RegExp('^[ ]{0,' + htmlIndent + '}'), ''),
       location: {line: line.number, column: line.cursor + 1},
     })
     line.cursor = line.raw.length
@@ -593,12 +599,13 @@ export class BlockParser {
             // Probe by attempting open with a temporary handle.
             // Cheap check: peek-match against tail without mutating.
             const tail = line.raw.slice(line.cursor)
+            const trimmedTail = tail.trimStart()
             const looksLikeBlock =
-              spec.name === 'list' && detectListMarker(tail) !== undefined ||
-              spec.name === 'blockquote' && /^[ ]{0,3}>/.test(tail) ||
-              spec.name === 'heading' && /^[ ]{0,3}#{1,6}(?:\s|$)/.test(tail) ||
-              spec.name === 'thematic_break' && /^[ ]{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(tail) ||
-              spec.name === 'fenced_code' && /^[ ]{0,3}(`{3,}|~{3,})/.test(tail)
+              spec.name === 'list' && detectListMarker(trimmedTail) !== undefined ||
+              spec.name === 'blockquote' && /^>/.test(trimmedTail) ||
+              spec.name === 'heading' && /^#{1,6}(?:\s|$)/.test(trimmedTail) ||
+              spec.name === 'thematic_break' && /^([-*_])(?:\s*\1){2,}\s*$/.test(trimmedTail) ||
+              spec.name === 'fenced_code' && /^(`{3,}|~{3,})/.test(trimmedTail)
             if (looksLikeBlock) {
               this.closeAllFrom(this.containers.length - 1)
               line.cursor = savedCursor
@@ -644,11 +651,13 @@ export class BlockParser {
       return
     }
     if (tip.spec.name === 'html_block') {
-      const tailH = line.raw.slice(line.cursor)
-      if (tailH.length > 0) {
+      const htmlIndent = (tip.data['_htmlIndent'] as number) ?? 0
+      const rawTail = line.raw.slice(line.cursor)
+      const stripped = rawTail.replace(new RegExp('^[ ]{0,' + htmlIndent + '}'), '')
+      if (stripped.length > 0 || rawTail.length > 0) {
         this.ctx.emit({
           kind: 'verbatim_line',
-          text: tailH,
+          text: stripped,
           location: {line: line.number, column: line.cursor + 1},
         })
       }
