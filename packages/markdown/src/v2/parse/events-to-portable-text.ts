@@ -145,7 +145,8 @@ export function eventsToPortableText(
         // newlines so the marker may appear on line 1 of `text`.
         const calloutFirstLine = text.split('\n', 1)[0] ?? ''
         const alertMatch = calloutFirstLine.match(/^\[!([A-Z]+)\]\s*$/)
-        if (alertMatch && blockquoteDepth > 0) {
+        const insideBlockquote = blockquoteDepth > 0 || blockquoteBuffers.length > 0
+        if (alertMatch && insideBlockquote) {
           const tone = alertMatch[1]!.toLowerCase()
           const restOfFirst = text.split('\n').slice(1).join('\n')
           // Schema-probe before invoking the callout matcher (which
@@ -173,6 +174,28 @@ export function eventsToPortableText(
                 k = inner.nextIndex
                 continue
               }
+              // List inside the callout: recurse a sub-fold for just
+              // the list events (preserves types.list container shape).
+              if (ek.kind === 'open' && ek.spec === 'list') {
+                let listEnd = k + 1
+                let listDepth = 1
+                while (listEnd < events.length) {
+                  const ee = events[listEnd]!
+                  if (ee.kind === 'open' && ee.spec === 'list') listDepth++
+                  if (ee.kind === 'close' && ee.spec === 'list') {
+                    listDepth--
+                    if (listDepth === 0) break
+                  }
+                  listEnd++
+                }
+                const subListEvents = events.slice(k, listEnd + 1)
+                const subListOut = eventsToPortableText(subListEvents, options)
+                for (const b of subListOut) {
+                  calloutContent.push(b as PortableTextBlock)
+                }
+                k = listEnd + 1
+                continue
+              }
               k++
             }
             const callout = options.types.callout({
@@ -181,12 +204,16 @@ export function eventsToPortableText(
               isInline: false,
             })
             if (callout) {
-              blockquoteDepth--
+              if (insideBlockquote) {
+                if (blockquoteBuffers.length > 0) blockquoteBuffers.pop()
+                else blockquoteDepth--
+              }
               sinkOpen(callout as PortableTextObject)
               i = k + 1
               continue
             }
           }
+          // (closing of hasCalloutSchema branch above)
           // No callout schema: drop [!XXX], emit remainder as flat
           // blockquote-styled paragraph (or normal, if no blockquote
           // style is declared).
@@ -463,7 +490,24 @@ export function eventsToPortableText(
             value: {content: inner as Array<PortableTextBlock>},
             isInline: false,
           })
-          if (value) sinkOpen(value as PortableTextObject)
+          if (value) {
+            sinkOpen(value as PortableTextObject)
+          } else {
+            // Matcher returned undefined: fall back to flat blockquote-
+            // styled blocks (re-style normal-styled children).
+            for (const b of inner) {
+              if (b._type === 'block') {
+                const tb = b as PortableTextTextBlock
+                if (!tb.listItem && tb.style === 'normal') {
+                  const restyled = options.block.blockquote({
+                    context: {schema: options.schema},
+                  })
+                  if (restyled) tb.style = restyled
+                }
+              }
+              sinkOpen(b)
+            }
+          }
         } else {
           blockquoteDepth--
         }
