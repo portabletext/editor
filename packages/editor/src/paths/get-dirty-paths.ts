@@ -3,7 +3,9 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Operation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
+import {parentPath} from '../engine/path/parent-path'
 import {pathLevels} from '../engine/path/path-levels'
+import {resolveContainerAt} from '../schema/resolve-container-at'
 import type {
   Containers,
   RegisteredContainer,
@@ -110,7 +112,17 @@ export function getDirtyPaths(
             const childNode = child as Node
             const childPath: Path = [{_key: childNode._key}]
             levels.push(childPath)
-            collectDescendantPaths(context, childNode, childPath, levels)
+            // Seed the walker with the child's own registration so it
+            // can recurse into the child's container fields. At root,
+            // a child is registered globally if at all.
+            const childRegistration = context.containers.get(childNode._type)
+            collectDescendantPaths(
+              context,
+              childNode,
+              childPath,
+              levels,
+              childRegistration,
+            )
           }
         }
         return levels
@@ -130,7 +142,23 @@ export function getDirtyPaths(
           !Array.isArray(op.value)
         ) {
           const valueNode = op.value as Node
-          collectDescendantPaths(context, valueNode, op.path, levels)
+          // The replacement node's own registration scopes descent. Resolve
+          // positionally via its path so nested-only registrations are
+          // recognized.
+          const valueRegistration = resolveContainerAt(
+            context.containers,
+            context.value,
+            op.path,
+          )
+          collectDescendantPaths(
+            context,
+            valueNode,
+            op.path,
+            levels,
+            valueRegistration && 'field' in valueRegistration
+              ? valueRegistration
+              : undefined,
+          )
         }
         return levels
       }
@@ -152,6 +180,17 @@ export function getDirtyPaths(
         const arrayFieldName = getChildFieldName(context, nodePath)
 
         if (arrayFieldName === propertyName) {
+          // Each child's parent is the node at nodePath. Resolve
+          // positionally so nested-only registrations are recognized.
+          const parentRegistration = resolveContainerAt(
+            context.containers,
+            context.value,
+            nodePath,
+          )
+          const seed =
+            parentRegistration && 'field' in parentRegistration
+              ? parentRegistration
+              : undefined
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
 
@@ -170,7 +209,7 @@ export function getDirtyPaths(
               {_key: childNode._key},
             ]
             levels.push(childPath)
-            collectDescendantPaths(context, childNode, childPath, levels)
+            collectDescendantPaths(context, childNode, childPath, levels, seed)
           }
         }
       }
@@ -265,8 +304,23 @@ export function getDirtyPaths(
       // Use index-based child paths to avoid dedup collisions when
       // children have duplicate keys (pre-normalization). Walk all
       // child array fields via the schema so container descendants
-      // are also dirtied.
-      collectDescendantPaths(context, node, nodePath, levels)
+      // are also dirtied. Seed the walker with the inserted node's
+      // parent registration resolved positionally - flat type-keyed
+      // lookup misses nested-only registrations.
+      const parentRegistration = resolveContainerAt(
+        context.containers,
+        context.value,
+        parentPath(nodePath),
+      )
+      collectDescendantPaths(
+        context,
+        node,
+        nodePath,
+        levels,
+        parentRegistration && 'field' in parentRegistration
+          ? parentRegistration
+          : undefined,
+      )
 
       return levels
     }
