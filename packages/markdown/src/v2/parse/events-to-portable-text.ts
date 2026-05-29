@@ -141,13 +141,21 @@ export function eventsToPortableText(
       }
       if (event.spec === 'paragraph') {
         const {text, line, nextIndex} = collectInline(events, i + 1, 'paragraph')
-        // Callout detection: `> [!NOTE]` as first line of an open blockquote
-        // becomes a callout via types.callout when registered.
-        const alertMatch = text.match(/^\[!([A-Z]+)\]\s*$/)
+        // Callout detection: `> [!NOTE]` as the first \n-separated line
+        // of an open blockquote's first paragraph. Paragraphs absorb soft
+        // newlines so the marker may appear on line 1 of `text`.
+        const calloutFirstLine = text.split('\n', 1)[0] ?? ''
+        const alertMatch = calloutFirstLine.match(/^\[!([A-Z]+)\]\s*$/)
         if (alertMatch && blockquoteDepth > 0 && options.types.callout) {
           const tone = alertMatch[1]!.toLowerCase()
-          // Collect subsequent paragraphs inside the same blockquote as content.
           const calloutContent: Array<PortableTextBlock> = []
+          // Drop the [!XXX] line and add the rest of the same paragraph
+          // as the first content block.
+          const restOfFirst = text.split('\n').slice(1).join('\n')
+          if (restOfFirst.length > 0) {
+            const ib = makeTextBlock('blockquote', restOfFirst, options, line)
+            if (ib) calloutContent.push(ib)
+          }
           let k = nextIndex
           while (k < events.length) {
             const ek = events[k]!
