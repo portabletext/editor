@@ -91,6 +91,55 @@ export function eventsToPortableText(
         i = nextIndex
         continue
       }
+      if (event.spec === 'fenced_code' || event.spec === 'code_block') {
+        const lang = event.spec === 'fenced_code' ? ((event.data?.['lang'] as string) || undefined) : undefined
+        const lines: string[] = []
+        let j = i + 1
+        while (j < events.length) {
+          const e = events[j]!
+          if (e.kind === 'close' && e.spec === event.spec) break
+          if (e.kind === 'verbatim_line') lines.push(e.text)
+          j++
+        }
+        const code = lines.join('\n')
+        const value = options.types.code({
+          context: {schema: options.schema, keyGenerator: options.keyGenerator},
+          value: {language: lang, code},
+          isInline: false,
+        })
+        if (value) {
+          out.push(value as PortableTextObject)
+        } else {
+          const block = makeTextBlock('normal', code, options, event.location.line)
+          if (block) out.push(block)
+        }
+        i = j + 1
+        continue
+      }
+      if (event.spec === 'html_block') {
+        const lines: string[] = []
+        let j = i + 1
+        while (j < events.length) {
+          const e = events[j]!
+          if (e.kind === 'close' && e.spec === 'html_block') break
+          if (e.kind === 'verbatim_line') lines.push(e.text)
+          j++
+        }
+        const html = lines.join('\n')
+        const value = options.types.html?.({
+          context: {schema: options.schema, keyGenerator: options.keyGenerator},
+          value: {html},
+          isInline: false,
+        })
+        if (value) {
+          out.push(value as PortableTextObject)
+        } else {
+          const block = makeTextBlock('normal', html, options, event.location.line)
+          if (block) out.push(block)
+        }
+        i = j + 1
+        continue
+      }
       if (event.spec === 'thematic_break') {
         const value = options.types.horizontalRule({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},

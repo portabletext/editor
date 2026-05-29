@@ -342,6 +342,110 @@ const listItemSpec: BlockSpec = {
   },
 }
 
+const fencedCodeSpec: BlockSpec = {
+  name: 'fenced_code',
+  continue: (c, line) => {
+    const tail = line.raw.slice(line.cursor)
+    const fenceChar = c.data['fenceChar'] as string
+    const fenceLen = c.data['fenceLen'] as number
+    const escapedFence = fenceChar === '`' ? '`' : '~'
+    const closeFence = new RegExp('^[ ]{0,3}' + escapedFence + '{' + fenceLen + ',}[ \\t]*$')
+    if (closeFence.test(tail)) {
+      line.cursor = line.raw.length
+      ;(c.data['_pendingClose'] as {flag: boolean}).flag = true
+      return true
+    }
+    return true
+  },
+  open: (line, _parent, ctx) => {
+    const tail = line.raw.slice(line.cursor)
+    const m = tail.match(/^[ ]{0,3}(`{3,}|~{3,})[ \t]*([^\s`]*)?[ \t]*$/)
+    if (!m) return false
+    const fence = m[1]!
+    const lang = m[2] ?? ''
+    ctx.push({
+      spec: fencedCodeSpec,
+      indent: line.cursor,
+      data: {
+        fenceChar: fence[0]!,
+        fenceLen: fence.length,
+        lang,
+        _pendingClose: {flag: false},
+        _isOpening: true,
+        _fenceIndent: (tail.match(/^[ ]{0,3}/)?.[0].length ?? 0),
+      },
+      startLine: line.number,
+    })
+    ctx.emit({kind: 'open', spec: 'fenced_code', data: {lang}, location: {line: line.number, column: line.cursor + 1}})
+    line.cursor = line.raw.length
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({kind: 'close', spec: 'fenced_code', location: {line: container.startLine, column: container.indent + 1}})
+  },
+}
+
+const indentedCodeSpec: BlockSpec = {
+  name: 'code_block',
+  continue: (_c, line) => {
+    const tail = line.raw.slice(line.cursor)
+    if (/^[ \t]*$/.test(tail)) return true
+    const leading = tail.match(/^[ \t]*/)![0].length
+    if (leading >= 4) {
+      line.cursor += 4
+      return true
+    }
+    return false
+  },
+  open: (line, _parent, ctx) => {
+    const tail = line.raw.slice(line.cursor)
+    const leading = tail.match(/^[ \t]*/)![0].length
+    if (leading < 4) return false
+    if (/^[ \t]*$/.test(tail)) return false
+    ctx.push({
+      spec: indentedCodeSpec,
+      indent: line.cursor + 4,
+      data: {},
+      startLine: line.number,
+    })
+    ctx.emit({kind: 'open', spec: 'code_block', location: {line: line.number, column: line.cursor + 1}})
+    line.cursor += 4
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({kind: 'close', spec: 'code_block', location: {line: container.startLine, column: container.indent + 1}})
+  },
+}
+
+const htmlBlockSpec: BlockSpec = {
+  name: 'html_block',
+  continue: (_c, line) => {
+    return !/^[ \t]*$/.test(line.raw.slice(line.cursor))
+  },
+  open: (line, _parent, ctx) => {
+    const tail = line.raw.slice(line.cursor)
+    if (!/^<\/?[a-zA-Z][a-zA-Z0-9-]*/.test(tail.trimStart())) return false
+    ctx.push({
+      spec: htmlBlockSpec,
+      indent: line.cursor,
+      data: {},
+      startLine: line.number,
+    })
+    ctx.emit({kind: 'open', spec: 'html_block', location: {line: line.number, column: line.cursor + 1}})
+    // Emit the opening line as the first verbatim line and consume it.
+    ctx.emit({
+      kind: 'verbatim_line',
+      text: tail,
+      location: {line: line.number, column: line.cursor + 1},
+    })
+    line.cursor = line.raw.length
+    return true
+  },
+  close: (container, ctx) => {
+    ctx.emit({kind: 'close', spec: 'html_block', location: {line: container.startLine, column: container.indent + 1}})
+  },
+}
+
 const docSpec: BlockSpec = {
   name: 'doc',
   continue: () => true,
@@ -350,7 +454,16 @@ const docSpec: BlockSpec = {
 }
 
 export class BlockParser {
-  private specs: BlockSpec[] = [blockquoteSpec, listItemSpec, listSpec, thematicBreakSpec, headingSpec]
+  private specs: BlockSpec[] = [
+    blockquoteSpec,
+    listItemSpec,
+    listSpec,
+    fencedCodeSpec,
+    indentedCodeSpec,
+    thematicBreakSpec,
+    headingSpec,
+    htmlBlockSpec,
+  ]
   private containers: Container[] = []
   private events: BlockEvent[] = []
 
@@ -392,6 +505,20 @@ export class BlockParser {
       }
       i++
     }
+    // Verbatim close handling: if a fenced_code's continue() flagged
+    //    _pendingClose, we close now BEFORE the blank-line skip (the line
+    //    cursor was advanced past the close fence so isBlankLine sees an
+    //    empty tail).
+    {
+      const t = this.ctx.tip()
+      if (t.spec.name === 'fenced_code') {
+        const pending = t.data['_pendingClose'] as {flag: boolean} | undefined
+        if (pending?.flag) {
+          this.closeAllFrom(this.containers.length - 1)
+          return
+        }
+      }
+    }
     // 2. From the deepest open container, try each spec's open() until one
     //    matches or text content starts.
     if (isBlankLine(line)) {
@@ -403,31 +530,77 @@ export class BlockParser {
       }
       return
     }
-    // Try block-starting specs.
-    let opened = true
-    while (opened) {
-      opened = false
-      for (const spec of this.specs) {
-        if (spec.open(line, this.ctx.tip(), this.ctx)) {
-          opened = true
-          break
+    // Try block-starting specs. Skip when inside a verbatim container
+    // since every line there is literal content.
+    const tipBeforeOpen = this.ctx.tip()
+    const verbatimNames = new Set<string>(['fenced_code', 'code_block', 'html_block'])
+    if (!verbatimNames.has(tipBeforeOpen.spec.name)) {
+      let opened = true
+      while (opened) {
+        opened = false
+        for (const spec of this.specs) {
+          if (spec.open(line, this.ctx.tip(), this.ctx)) {
+            opened = true
+            break
+          }
         }
       }
     }
     // 3. Consume remaining line content into the tip.
+    let tip = this.ctx.tip()
+
+    // Verbatim containers absorb every line as a literal verbatim_line.
+    if (tip.spec.name === 'fenced_code') {
+      const pending = tip.data['_pendingClose'] as {flag: boolean} | undefined
+      if (pending?.flag) {
+        this.closeAllFrom(this.containers.length - 1)
+        return
+      }
+      if (tip.data['_isOpening']) {
+        tip.data['_isOpening'] = false
+        return
+      }
+      const fenceIndent = (tip.data['_fenceIndent'] as number) ?? 0
+      const rawTail = line.raw.slice(line.cursor)
+      const stripped = rawTail.replace(new RegExp('^[ ]{0,' + fenceIndent + '}'), '')
+      this.ctx.emit({
+        kind: 'verbatim_line',
+        text: stripped,
+        location: {line: line.number, column: line.cursor + 1},
+      })
+      return
+    }
+    if (tip.spec.name === 'code_block') {
+      this.ctx.emit({
+        kind: 'verbatim_line',
+        text: line.raw.slice(line.cursor),
+        location: {line: line.number, column: line.cursor + 1},
+      })
+      return
+    }
+    if (tip.spec.name === 'html_block') {
+      const tailH = line.raw.slice(line.cursor)
+      if (tailH.length > 0) {
+        this.ctx.emit({
+          kind: 'verbatim_line',
+          text: tailH,
+          location: {line: line.number, column: line.cursor + 1},
+        })
+      }
+      return
+    }
+
     const tail = line.raw.slice(line.cursor)
     if (tail.length === 0) return
-    let tip = this.ctx.tip()
-    // If the tip is a container that doesn't itself hold text (doc, list,
-    // list_item, blockquote, callout), open a paragraph inside it to
-    // absorb the line content.
     const textBearing = new Set<string>(['paragraph', 'heading'])
     if (!textBearing.has(tip.spec.name)) {
       paragraphSpec.open(line, tip, this.ctx)
       tip = this.ctx.tip()
     }
     if (tip.spec.name === 'paragraph') {
-      ;(tip.data['lines'] as Array<string>).push(tail)
+      // Strip leading whitespace that survived container-prefix advancing.
+      // Extra indent inside a list_item / blockquote is normalized away.
+      ;(tip.data['lines'] as Array<string>).push(tail.replace(/^[ \t]+/, ''))
     }
   }
 

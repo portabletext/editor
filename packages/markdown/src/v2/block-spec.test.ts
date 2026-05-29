@@ -174,6 +174,66 @@ describe('block-parser Day 1 skeleton', () => {
     })
   })
 
+
+  describe('code blocks (Day 3)', () => {
+    test('fenced code with language', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('\`\`\`js\nconst foo\n\`\`\`', {keyGenerator: keys})
+      expect(result).toHaveLength(1)
+      expect(((result[0] as unknown) as {_type: string})._type).toBe('code')
+      expect(((result[0] as unknown) as {code: string}).code).toBe('const foo')
+      expect(((result[0] as unknown) as {language?: string}).language).toBe('js')
+    })
+
+    test('fenced code without language', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('\`\`\`\nfoo\nbar\n\`\`\`', {keyGenerator: keys})
+      expect(((result[0] as unknown) as {code: string}).code).toBe('foo\nbar')
+    })
+
+    test('indented code block', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('    foo\n    bar', {keyGenerator: keys})
+      expect(result).toHaveLength(1)
+      expect(((result[0] as unknown) as {_type: string})._type).toBe('code')
+      expect(((result[0] as unknown) as {code: string}).code).toBe('foo\nbar')
+    })
+  })
+
+  describe('html block (Day 3)', () => {
+    test('block HTML', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const result = parse('<div class="custom">Content</div>', {keyGenerator: keys})
+      expect(result).toHaveLength(1)
+      expect(((result[0] as unknown) as {_type: string})._type).toBe('html')
+      expect(((result[0] as unknown) as {html: string}).html).toBe('<div class="custom">Content</div>')
+    })
+  })
+
+  describe('lazy continuation: list with code block (Day 3 ★)', () => {
+    test('fenced code inside list item', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const md = ['1. foo', '', '    \`\`\`js', '    const foo', '    \`\`\`', '', '    bar'].join('\n')
+      const result = parse(md, {keyGenerator: keys})
+      expect(result.map(r => ((r as unknown) as {_type: string})._type)).toEqual(['block', 'code', 'block'])
+      const firstBlock = result[0] as {listItem?: string; level?: number; children: Array<{text: string}>}
+      expect(firstBlock.listItem).toBe('number')
+      expect(firstBlock.level).toBe(1)
+      expect(firstBlock.children[0]!.text).toBe('foo')
+      expect(((result[1] as unknown) as {code: string}).code).toBe('const foo')
+      const lastBlock = result[2] as {listItem?: string; level?: number; children: Array<{text: string}>}
+      expect(lastBlock.listItem).toBe('number')
+      expect(lastBlock.children[0]!.text).toBe('bar')
+    })
+
+    test('indented code block inside list item', () => {
+      const keys = (() => { let i = 0; return () => 'k' + i++ })()
+      const md = ['1. foo', '', '       const foo = "bar"', '', '    bar'].join('\n')
+      const result = parse(md, {keyGenerator: keys})
+      expect(result.map(r => ((r as unknown) as {_type: string})._type)).toEqual(['block', 'code', 'block'])
+    })
+  })
+
   describe('event stream', () => {
     test('paragraph emits +para inline_run -para', () => {
       const events = parseToBlockEvents('foo')
