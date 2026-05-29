@@ -319,10 +319,17 @@ export function eventsToPortableText(
           value: {language: lang, code},
           isInline: false,
         })
-        if (value) {
+        // Treat a matcher result with no non-metadata fields as "no
+        // matching schema" — fall back to a flat text block.
+        const isUseful =
+          value &&
+          Object.keys(value).some((k) => k !== '_key' && k !== '_type')
+        if (isUseful) {
           sinkOpen(value as PortableTextObject)
         } else {
           const block = makeTextBlock('normal', code, options, event.location.line)
+          // Don't decorate the code-fallback block with listItem/level —
+          // v1 treats the fallback as breaking out of list context.
           if (block) sinkOpen(block)
         }
         i = j + 1
@@ -392,12 +399,25 @@ export function eventsToPortableText(
         const bodyRows = rows.slice(2).map((r) => parseRowCells(r.raw))
         const matcher = options.types.table
         if (!matcher) {
-          for (const rowCells of [headerCells, ...bodyRows]) {
-            for (const cell of rowCells) {
-              const cellBlock = makeTextBlock('normal', cell, options, rows[0]?.line ?? 1)
-              if (cellBlock) sinkOpen(cellBlock)
+          // Build the full row/cell structure to allocate the same keys
+          // v1 allocates, then dump cells as paragraphs (the cell and
+          // row keys go unused but the keyGenerator advances).
+          const emitRow = (cellTexts: string[]) => {
+            const cellOuts: Array<{block: PortableTextBlock | undefined}> = []
+            for (const cellText of cellTexts) {
+              const block = makeTextBlock('normal', cellText, options, rows[0]?.line ?? 1)
+              options.keyGenerator()  // wasted cell key (v1 builds {_type:'cell',_key,value})
+              cellOuts.push({block})
+            }
+            options.keyGenerator()  // wasted row key
+            for (const c of cellOuts) {
+              if (c.block) sinkOpen(c.block)
             }
           }
+          emitRow(headerCells)
+          for (const bc of bodyRows) emitRow(bc)
+          // wasted table key
+          options.keyGenerator()
           i = j
           continue
         }
