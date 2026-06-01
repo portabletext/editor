@@ -115,6 +115,7 @@ export interface ParseOptions {
 
 export interface ResolvedOptions {
   html?: {inline?: 'skip' | 'text'}
+  linkReferences?: import('./link-references').LinkReferenceMap
   schema: Schema
   keyGenerator: () => string
   marks: {
@@ -641,7 +642,7 @@ export function makeTextBlock(
 
   // Allocate block key BEFORE span keys to match v1's order.
   const blockKey = options.keyGenerator()
-  const inline = lexInline(body, startLine, {inlineHtml: options.html?.inline})
+  const inline = lexInline(body, startLine, {inlineHtml: options.html?.inline, linkReferences: options.linkReferences})
   const {children, markDefs} = foldInlineToSpans(inline, options)
   return {
     _type: 'block',

@@ -62,6 +62,8 @@ export interface InlineToken {
 export interface LexInlineOptions {
   /** How to handle inline HTML tags. 'skip' (default) strips tags but keeps inner text; 'text' keeps tags as literal text. */
   inlineHtml?: 'skip' | 'text'
+  /** Reference definitions (\`[ref]: url "title"\`) collected from the source. Used to resolve \`[text][ref]\` style links. */
+  linkReferences?: import('./link-references').LinkReferenceMap
 }
 
 export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOptions = {}): Array<InlineToken> {
@@ -186,6 +188,31 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
         }
       }
       // Fall through: treat as literal
+    }
+
+    // Reference-style link: [text][ref] or [text][] or [text] (collapsed/shortcut)
+    if (ch === '[' && lexOptions.linkReferences) {
+      const ref = matchReferenceLink(source, i, lexOptions.linkReferences)
+      if (ref) {
+        flushText()
+        tokens.push({
+          type: InlineTokenType.LinkOpen,
+          text: '',
+          href: ref.href,
+          title: ref.title,
+          location: {line, column},
+        })
+        // Re-lex the label text and emit as inner tokens, then close.
+        const inner = lexInline(ref.label, line, lexOptions)
+        for (const tok of inner) tokens.push(tok)
+        tokens.push({
+          type: InlineTokenType.LinkClose,
+          text: '',
+          location: {line, column},
+        })
+        advance(ref.consumed)
+        continue
+      }
     }
 
     // Image: ![alt](src "title")
@@ -394,6 +421,57 @@ function matchLink(source: string, start: number): LinkMatch | null {
     title: title === undefined ? undefined : unescapeMarkdown(title),
     consumed: j - start + 1,
   }
+}
+
+/**
+ * Match a reference-style link: \`[text][ref]\`, \`[text][]\`, or just \`[text]\` (shortcut).
+ * Returns the label, resolved href + title, and total characters consumed.
+ */
+function matchReferenceLink(
+  source: string,
+  start: number,
+  refs: import('./link-references').LinkReferenceMap,
+): {label: string; href: string; title: string | undefined; consumed: number} | null {
+  if (source[start] !== '[') return null
+  // Find matching ] for the label
+  let depth = 1
+  let i = start + 1
+  while (i < source.length && depth > 0) {
+    const c = source[i]
+    if (c === '\\' && i + 1 < source.length) {
+      i += 2
+      continue
+    }
+    if (c === '[') depth += 1
+    else if (c === ']') {
+      depth -= 1
+      if (depth === 0) break
+    }
+    i += 1
+  }
+  if (depth !== 0) return null
+  const labelEnd = i
+  const label = source.slice(start + 1, labelEnd)
+  // What follows the closing ]?
+  let next = labelEnd + 1
+  let refLabel = label
+  let consumed = next - start
+  if (source[next] === '[') {
+    // Full or collapsed: [text][ref] or [text][]
+    let refEnd = next + 1
+    while (refEnd < source.length && source[refEnd] !== ']') refEnd += 1
+    if (refEnd >= source.length) return null
+    const explicitRef = source.slice(next + 1, refEnd)
+    if (explicitRef.length > 0) refLabel = explicitRef
+    consumed = refEnd - start + 1
+  } else if (source[next] === '(') {
+    // This is a regular inline link, not a reference. Let matchLink handle it.
+    return null
+  }
+  const key = refLabel.toLowerCase().trim().replace(/\s+/g, ' ')
+  const entry = refs[key]
+  if (!entry) return null
+  return {label: unescapeMarkdown(label), href: entry.href, title: entry.title, consumed}
 }
 
 /**
