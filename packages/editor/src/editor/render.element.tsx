@@ -3,11 +3,11 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
-import {useSelector} from '@xstate/react'
-import {useContext, useMemo, type ReactElement} from 'react'
+import {useCallback, useContext, useMemo, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
+import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {isInline} from '../node-traversal/is-inline'
 import {serializePath} from '../paths/serialize-path'
@@ -17,7 +17,6 @@ import type {
   InlineObjectConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
-import {EditorActorContext} from './editor-actor-context'
 import type {EditorSchema} from './editor-schema'
 import {
   findBlockPositionalOverride,
@@ -45,10 +44,10 @@ import {
  * re-renders unless one of the slots actually changes.
  */
 function tupleRefEqual<T extends readonly unknown[]>(
-  previous: T,
+  previous: T | null,
   next: T,
 ): boolean {
-  if (previous.length !== next.length) {
+  if (previous === null || previous.length !== next.length) {
     return false
   }
   for (let i = 0; i < previous.length; i++) {
@@ -69,7 +68,6 @@ export function RenderElement(props: {
   readOnly: boolean
   schema: EditorSchema
 }) {
-  const editorActor = useContext(EditorActorContext)
   const parentContainer = useContext(ParentContainerContext)
   const parentTextBlock = useContext(ParentTextBlockContext)
   const isInNewPipeline = useContext(NewPipelineContext)
@@ -100,15 +98,17 @@ export function RenderElement(props: {
     globalBlockObjectConfig,
     globalInlineObjectConfig,
     textBlockConfig,
-  ] = useSelector(
-    editorActor,
-    (state) =>
-      [
-        state.context.containers.get(type),
-        state.context.blockObjects.get(type),
-        state.context.inlineObjects.get(type),
-        state.context.textBlocks.get(type),
-      ] as const,
+  ] = useEngineSelector(
+    useCallback(
+      (engine) =>
+        [
+          engine.containers.get(type),
+          engine.blockObjects.get(type),
+          engine.inlineObjects.get(type),
+          engine.textBlocks.get(type),
+        ] as const,
+      [type],
+    ),
     tupleRefEqual,
   )
 

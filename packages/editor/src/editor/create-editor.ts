@@ -13,7 +13,6 @@ import {createEditorEngine} from './create-editor-engine'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
-import {getEditorSnapshot} from './editor-selector'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
@@ -52,11 +51,7 @@ export function createInternalEditor(config: EditorConfig): {
 
   const editor: Editor = {
     dom: createEditorDom((event) => editorActor.send(event), editorEngine),
-    getSnapshot: () =>
-      getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editorEngine,
-      }),
+    getSnapshot: () => editorEngine.snapshot,
     registerBehavior: (behaviorConfig) => {
       const priority = createEditorPriority({
         name: 'custom',
