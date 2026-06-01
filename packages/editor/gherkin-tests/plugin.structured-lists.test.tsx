@@ -9,12 +9,12 @@ import {defaultKeyboardShortcuts} from '../src/editor/default-keyboard-shortcuts
 import type {EditorSnapshot} from '../src/editor/editor-snapshot'
 import type {Node} from '../src/engine/interfaces/node'
 import type {Path} from '../src/engine/interfaces/path'
-import {getAncestor} from '../src/node-traversal/get-ancestor'
-import {getSibling} from '../src/node-traversal/get-sibling'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {parameterTypes} from '../src/test'
 import {createTestEditor, stepDefinitions} from '../src/test/vitest'
 import type {Context} from '../src/test/vitest/step-context'
+import {getAncestor} from '../src/traversal/get-ancestor'
+import {getSibling} from '../src/traversal/get-sibling'
 import pluginStructuredListsFeature from './plugin.structured-lists.feature?raw'
 
 // ---------------------------------------------------------------------------
@@ -178,12 +178,12 @@ function resolveFocus(snapshot: EditorSnapshot) {
     return undefined
   }
 
-  const listItem = getAncestor(snapshot, focusPath, isListItem)
+  const listItem = getAncestor(snapshot, focusPath, {match: isListItem})
   if (!listItem) {
     return undefined
   }
 
-  const list = getAncestor(snapshot, listItem.path, isList)
+  const list = getAncestor(snapshot, listItem.path, {match: isList})
   if (!list) {
     return undefined
   }
@@ -277,7 +277,9 @@ const sinkOnTab = defineBehavior({
       return {raises}
     }
 
-    const prevSibling = getSibling(snapshot, listItem.path, 'previous')
+    const prevSibling = getSibling(snapshot, listItem.path, {
+      direction: 'previous',
+    })
     if (!prevSibling || !isListItem(prevSibling.node)) {
       return false
     }
@@ -375,11 +377,13 @@ const liftOnShiftTab = defineBehavior({
     const {listItem, list, itemIndex} = focus
     const keyGen = snapshot.context.keyGenerator
 
-    const parentListItem = getAncestor(snapshot, list.path, isListItem)
+    const parentListItem = getAncestor(snapshot, list.path, {match: isListItem})
     if (!parentListItem) {
       return false
     }
-    const parentList = getAncestor(snapshot, parentListItem.path, isList)
+    const parentList = getAncestor(snapshot, parentListItem.path, {
+      match: isList,
+    })
     if (!parentList) {
       return false
     }

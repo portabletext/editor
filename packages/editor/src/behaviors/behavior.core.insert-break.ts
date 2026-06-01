@@ -1,8 +1,5 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
-import {getNodes} from '../node-traversal/get-nodes'
-import {getBlock, isBlock} from '../node-traversal/is-block'
 import {getDefaultStyle} from '../selectors/selector.get-default-style'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
@@ -11,7 +8,10 @@ import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {getBlock, isBlock} from '../traversal/is-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -181,7 +181,7 @@ const breakingEntireBlocks = defineBehavior({
       for (const entry of getNodes(snapshot, {
         from: selectionStartBlock.path,
         to: selectionEndBlock.path,
-        match: (_node, path) => isBlock(snapshot, path),
+        match: (_, path) => isBlock(snapshot, path),
       })) {
         const block = getBlock(snapshot, entry.path)
         if (block) {

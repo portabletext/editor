@@ -1,24 +1,24 @@
-import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
+import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
- * Get the text block node at a given path.
+ * Get the span node at a given path.
  *
  * @beta
  */
-export function getTextBlockNode(
+export function getSpan(
   snapshot: TraversalSnapshot,
   path: Path,
-): {node: PortableTextTextBlock; path: Path} | undefined {
+): {node: PortableTextSpan; path: Path} | undefined {
   const entry = getNode(snapshot, path)
 
   if (!entry) {
     return undefined
   }
 
-  if (!isTextBlock({schema: snapshot.context.schema}, entry.node)) {
+  if (!isSpan({schema: snapshot.context.schema}, entry.node)) {
     return undefined
   }
 

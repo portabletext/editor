@@ -11,15 +11,15 @@ import type {
   InsertTextOperation,
   RemoveTextOperation,
 } from '../engine/interfaces/operation'
-import {getSpanNode} from '../node-traversal/get-span-node'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getSpan} from '../traversal/get-span'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 
 export function textPatch(
   snapshot: TraversalSnapshot,
   operation: InsertTextOperation | RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const span = getSpanNode(snapshot, operation.path)
+  const span = getSpan(snapshot, operation.path)
   if (!span) {
     return []
   }
@@ -31,7 +31,7 @@ export function textPatch(
     },
     blockIndexMap: new Map(),
   }
-  const prevSpan = getSpanNode(beforeSnapshot, operation.path)
+  const prevSpan = getSpan(beforeSnapshot, operation.path)
   const patch = diffMatchPatch(prevSpan?.node.text ?? '', span.node.text, [
     ...operation.path,
     'text',

@@ -1,9 +1,9 @@
-import {isSpan} from '@portabletext/schema'
-import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
-import {getNodes} from '../../../node-traversal/get-nodes'
-import {getSibling} from '../../../node-traversal/get-sibling'
-import {getSpanNode} from '../../../node-traversal/get-span-node'
-import {hasNode} from '../../../node-traversal/has-node'
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getNodes} from '../../../traversal/get-nodes'
+import {getParent} from '../../../traversal/get-parent'
+import {getSibling} from '../../../traversal/get-sibling'
+import {getSpan} from '../../../traversal/get-span'
+import {hasNode} from '../../../traversal/has-node'
 import {after} from '../../editor/after'
 import type {Editor} from '../../interfaces/editor'
 import type {Operation} from '../../interfaces/operation'
@@ -38,7 +38,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     return false
   }
 
-  const nodeEntry = getSpanNode(editor, path)
+  const nodeEntry = getSpan(editor, path)
   if (!nodeEntry) {
     return false
   }
@@ -50,12 +50,12 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     )
   }
 
-  const nextSibling = getSibling(editor, path, 'next')
+  const nextSibling = getSibling(editor, path, {direction: 'next'})
   if (!nextSibling) {
     return false
   }
 
-  const nextNodeEntry = getSpanNode(editor, nextSibling.path)
+  const nextNodeEntry = getSpan(editor, nextSibling.path)
   return !!nextNodeEntry && nextNodeEntry.node.text.startsWith(diff.text)
 }
 
@@ -176,13 +176,15 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
     return null
   }
 
-  const leafEntry = getSpanNode(editor, path)
+  const leafEntry = getSpan(editor, path)
   if (!leafEntry) {
     return null
   }
   let leaf = leafEntry.node
 
-  const parentBlock = getAncestorTextBlock(editor, path)
+  const parentBlock = getParent(editor, path, {
+    match: (node) => isTextBlock({schema: editor.schema}, node),
+  })
 
   if (!parentBlock) {
     return null

@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
-import {createNodeTraversalTestbed} from '../node-traversal/node-traversal-testbed'
 import {serializePath} from '../paths/serialize-path'
+import {createNodeTraversalTestbed} from '../traversal/node-traversal-testbed'
 import {getSelectionState} from './get-selection-state'
 
 describe(getSelectionState.name, () => {

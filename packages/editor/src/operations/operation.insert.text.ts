@@ -1,10 +1,9 @@
-import {isSpan} from '@portabletext/schema'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {applySelect} from '../internal-utils/apply-selection'
-import {getNode} from '../node-traversal/get-node'
-import {getSibling} from '../node-traversal/get-sibling'
-import {getSpanNode} from '../node-traversal/get-span-node'
-import {isLeaf} from '../node-traversal/is-leaf'
+import {getNode} from '../traversal/get-node'
+import {getSibling} from '../traversal/get-sibling'
+import {getSpan} from '../traversal/get-span'
+import {isLeafObject} from '../traversal/is-leaf-object'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<
@@ -48,14 +47,11 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   // If the selection is at a non-span leaf (inline object or block object),
   // try to move to the adjacent span.
-  if (
-    isLeaf(editor, nodeEntry.path) &&
-    !isSpan({schema: editor.schema}, node)
-  ) {
-    const nextSibling = getSibling(editor, nodeEntry.path, 'next')
+  if (isLeafObject(editor, node, nodeEntry.path)) {
+    const nextSibling = getSibling(editor, nodeEntry.path, {direction: 'next'})
 
     if (nextSibling) {
-      const nextNodeEntry = getSpanNode(editor, nextSibling.path)
+      const nextNodeEntry = getSpan(editor, nextSibling.path)
 
       if (nextNodeEntry) {
         path = nextSibling.path

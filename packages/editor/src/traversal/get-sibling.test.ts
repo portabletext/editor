@@ -6,31 +6,39 @@ describe(getSibling.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('empty path returns undefined', () => {
-    expect(getSibling(testbed.snapshot, [], 'next')).toBeUndefined()
-    expect(getSibling(testbed.snapshot, [], 'previous')).toBeUndefined()
+    expect(
+      getSibling(testbed.snapshot, [], {direction: 'next'}),
+    ).toBeUndefined()
+    expect(
+      getSibling(testbed.snapshot, [], {direction: 'previous'}),
+    ).toBeUndefined()
   })
 
   test('next sibling of first top-level block', () => {
-    const entry = getSibling(testbed.snapshot, [{_key: 'k3'}], 'next')
+    const entry = getSibling(testbed.snapshot, [{_key: 'k3'}], {
+      direction: 'next',
+    })
     expect(entry?.node).toBe(testbed.image)
     expect(entry?.path).toEqual([{_key: 'k4'}])
   })
 
   test('previous sibling of second top-level block', () => {
-    const entry = getSibling(testbed.snapshot, [{_key: 'k4'}], 'previous')
+    const entry = getSibling(testbed.snapshot, [{_key: 'k4'}], {
+      direction: 'previous',
+    })
     expect(entry?.node).toBe(testbed.textBlock1)
     expect(entry?.path).toEqual([{_key: 'k3'}])
   })
 
   test('next sibling of last top-level block returns undefined', () => {
     expect(
-      getSibling(testbed.snapshot, [{_key: 'k26'}], 'next'),
+      getSibling(testbed.snapshot, [{_key: 'k26'}], {direction: 'next'}),
     ).toBeUndefined()
   })
 
   test('previous sibling of first top-level block returns undefined', () => {
     expect(
-      getSibling(testbed.snapshot, [{_key: 'k3'}], 'previous'),
+      getSibling(testbed.snapshot, [{_key: 'k3'}], {direction: 'previous'}),
     ).toBeUndefined()
   })
 
@@ -38,7 +46,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k0'}],
-      'next',
+      {direction: 'next'},
     )
     expect(entry?.node).toBe(testbed.stockTicker1)
     expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k1'}])
@@ -48,7 +56,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k2'}],
-      'previous',
+      {direction: 'previous'},
     )
     expect(entry?.node).toBe(testbed.stockTicker1)
     expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k1'}])
@@ -56,21 +64,17 @@ describe(getSibling.name, () => {
 
   test('next sibling of last span in text block returns undefined', () => {
     expect(
-      getSibling(
-        testbed.snapshot,
-        [{_key: 'k3'}, 'children', {_key: 'k2'}],
-        'next',
-      ),
+      getSibling(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k2'}], {
+        direction: 'next',
+      }),
     ).toBeUndefined()
   })
 
   test('previous sibling of first span in text block returns undefined', () => {
     expect(
-      getSibling(
-        testbed.snapshot,
-        [{_key: 'k3'}, 'children', {_key: 'k0'}],
-        'previous',
-      ),
+      getSibling(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}], {
+        direction: 'previous',
+      }),
     ).toBeUndefined()
   })
 
@@ -86,7 +90,7 @@ describe(getSibling.name, () => {
         'content',
         {_key: 'k14'},
       ],
-      'next',
+      {direction: 'next'},
     )
     expect(entry?.node).toBe(testbed.cellBlock2)
     expect(entry?.path).toEqual([
@@ -112,7 +116,7 @@ describe(getSibling.name, () => {
         'content',
         {_key: 'k16'},
       ],
-      'previous',
+      {direction: 'previous'},
     )
     expect(entry?.node).toBe(testbed.cellBlock1)
     expect(entry?.path).toEqual([
@@ -139,7 +143,7 @@ describe(getSibling.name, () => {
           'content',
           {_key: 'k16'},
         ],
-        'next',
+        {direction: 'next'},
       ),
     ).toBeUndefined()
   })
@@ -148,7 +152,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k17'}],
-      'next',
+      {direction: 'next'},
     )
     expect(entry?.node).toBe(testbed.cell2)
     expect(entry?.path).toEqual([
@@ -164,7 +168,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k20'}],
-      'previous',
+      {direction: 'previous'},
     )
     expect(entry?.node).toBe(testbed.cell1)
     expect(entry?.path).toEqual([
@@ -180,7 +184,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k21'}],
-      'next',
+      {direction: 'next'},
     )
     expect(entry?.node).toBe(testbed.row2)
     expect(entry?.path).toEqual([{_key: 'k26'}, 'rows', {_key: 'k25'}])
@@ -190,7 +194,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k25'}],
-      'previous',
+      {direction: 'previous'},
     )
     expect(entry?.node).toBe(testbed.row1)
     expect(entry?.path).toEqual([{_key: 'k26'}, 'rows', {_key: 'k21'}])
@@ -210,7 +214,7 @@ describe(getSibling.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      'next',
+      {direction: 'next'},
     )
     expect(entry?.node).toBe(testbed.stockTicker2)
     expect(entry?.path).toEqual([
@@ -240,7 +244,7 @@ describe(getSibling.name, () => {
         'children',
         {_key: 'k13'},
       ],
-      'previous',
+      {direction: 'previous'},
     )
     expect(entry?.node).toBe(testbed.cellSpan1)
     expect(entry?.path).toEqual([
@@ -258,10 +262,14 @@ describe(getSibling.name, () => {
 
   test('out of bounds path returns undefined', () => {
     expect(
-      getSibling(testbed.snapshot, [{_key: 'nonexistent'}], 'next'),
+      getSibling(testbed.snapshot, [{_key: 'nonexistent'}], {
+        direction: 'next',
+      }),
     ).toBeUndefined()
     expect(
-      getSibling(testbed.snapshot, [{_key: 'nonexistent'}], 'previous'),
+      getSibling(testbed.snapshot, [{_key: 'nonexistent'}], {
+        direction: 'previous',
+      }),
     ).toBeUndefined()
   })
 
@@ -269,7 +277,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k11'}, 'code', {_key: 'k8'}],
-      'next',
+      {direction: 'next'},
     )
     expect(entry?.node).toBe(testbed.codeLine2)
     expect(entry?.path).toEqual([{_key: 'k11'}, 'code', {_key: 'k10'}])
@@ -279,7 +287,7 @@ describe(getSibling.name, () => {
     const entry = getSibling(
       testbed.snapshot,
       [{_key: 'k11'}, 'code', {_key: 'k10'}],
-      'previous',
+      {direction: 'previous'},
     )
     expect(entry?.node).toBe(testbed.codeLine1)
     expect(entry?.path).toEqual([{_key: 'k11'}, 'code', {_key: 'k8'}])

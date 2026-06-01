@@ -1,5 +1,5 @@
-import {getNode} from '../node-traversal/get-node'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getNode} from '../traversal/get-node'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 

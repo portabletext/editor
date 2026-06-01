@@ -10,20 +10,20 @@ import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-bl
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {setNodeProperties} from '../../internal-utils/set-node-properties'
-import {getChildren} from '../../node-traversal/get-children'
-import {getNode} from '../../node-traversal/get-node'
-import {getParent} from '../../node-traversal/get-parent'
-import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
+import {getChildren} from '../../traversal/get-children'
+import {getNode} from '../../traversal/get-node'
+import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
+import {getTextBlock} from '../../traversal/get-text-block'
+import {isObject} from '../../traversal/is-object'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {createSpanNode} from '../node/create-span-node'
-import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
 import {isTextBlockNode} from '../node/is-text-block-node'
 import {parentPath} from '../path/parent-path'
@@ -263,7 +263,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    */
   if (isSpan({schema: editor.schema}, node)) {
     const blockPath = parentPath(path)
-    const blockEntry = getTextBlockNode(editor, blockPath)
+    const blockEntry = getTextBlock(editor, blockPath)
     if (!blockEntry) {
       return
     }
@@ -323,7 +323,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    */
   if (isSpan({schema: editor.schema}, node)) {
     const blockPath = parentPath(path)
-    const blockEntry2 = getTextBlockNode(editor, blockPath)
+    const blockEntry2 = getTextBlock(editor, blockPath)
 
     if (blockEntry2) {
       const block = blockEntry2.node
@@ -415,7 +415,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Container normalization: ensure the child array field exists and is
   // non-empty.
-  if (isObjectNode({schema: editor.schema}, node)) {
+  if (isObject(editor, node)) {
     const resolved = resolveContainerByPath(editor, path, node)
     const arrayField =
       resolved && 'container' in resolved ? resolved.field : undefined
@@ -481,7 +481,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // The sibling-level handler above catches duplicates when each child is
   // visited individually, but container children may not be visited if
   // containers gates traversal. Handle it at the parent level as well.
-  if (isObjectNode({schema: editor.schema}, node)) {
+  if (isObject(editor, node)) {
     const children = [...getChildren(editor, path)]
 
     if (children.length > 1) {
@@ -544,7 +544,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         node: child,
         position: 'before',
       })
-      const refetched = getTextBlockNode(editor, path)?.node
+      const refetched = getTextBlock(editor, path)?.node
       if (!refetched) {
         return
       }
@@ -564,7 +564,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
             editor.apply({type: 'unset', path: childPath})
-            const refetched = getTextBlockNode(editor, path)?.node
+            const refetched = getTextBlock(editor, path)?.node
             if (!refetched) {
               return
             }
@@ -573,7 +573,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           } else if (prev.text === '') {
             const prevPath = [...path, 'children', {_key: prev._key}]
             editor.apply({type: 'unset', path: prevPath})
-            const refetched = getTextBlockNode(editor, path)?.node
+            const refetched = getTextBlock(editor, path)?.node
             if (!refetched) {
               return
             }
@@ -581,7 +581,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           } else if (textEquals(child, prev, {loose: true})) {
             applyMergeNode(editor, childPath, prev.text.length)
-            const refetched = getTextBlockNode(editor, path)?.node
+            const refetched = getTextBlock(editor, path)?.node
             if (!refetched) {
               return
             }
@@ -589,7 +589,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           }
         }
-      } else if (isObjectNode({schema: editor.schema}, child)) {
+      } else if (isObject(editor, child)) {
         if (prev == null || !isSpan({schema: editor.schema}, prev)) {
           const newChild = createSpanNode(editor)
           editor.apply({
@@ -598,7 +598,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             node: newChild,
             position: 'before',
           })
-          const refetched = getTextBlockNode(editor, path)?.node
+          const refetched = getTextBlock(editor, path)?.node
           if (!refetched) {
             return
           }
@@ -613,7 +613,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             node: newChild,
             position: 'after',
           })
-          const refetched = getTextBlockNode(editor, path)?.node
+          const refetched = getTextBlock(editor, path)?.node
           if (!refetched) {
             return
           }

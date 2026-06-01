@@ -1,8 +1,8 @@
 import {parentPath} from '../engine/path/parent-path'
 import {pathEquals} from '../engine/path/path-equals'
-import {getChildren} from '../node-traversal/get-children'
-import {getNode} from '../node-traversal/get-node'
-import {getSibling} from '../node-traversal/get-sibling'
+import {getChildren} from '../traversal/get-children'
+import {getNode} from '../traversal/get-node'
+import {getSibling} from '../traversal/get-sibling'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -62,7 +62,9 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block up',
     guard: ({snapshot, event}) => {
-      const previousSibling = getSibling(snapshot, event.at, 'previous')
+      const previousSibling = getSibling(snapshot, event.at, {
+        direction: 'previous',
+      })
 
       if (previousSibling) {
         return {
@@ -94,7 +96,7 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block down',
     guard: ({snapshot, event}) => {
-      const nextSibling = getSibling(snapshot, event.at, 'next')
+      const nextSibling = getSibling(snapshot, event.at, {direction: 'next'})
 
       if (nextSibling) {
         return {

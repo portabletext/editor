@@ -1,7 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isObjectNode} from '../engine/node/is-object-node'
-import {findSibling} from '../node-traversal/find-sibling'
+import {getSibling} from '../traversal/get-sibling'
+import {isObject} from '../traversal/is-object'
 import type {ChildPath} from '../types/paths'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
@@ -20,13 +20,10 @@ export const getPreviousInlineObject: EditorSelector<
     return undefined
   }
 
-  const sibling = findSibling(
-    snapshot,
-    point.path,
-    'previous',
-    (entry): entry is {node: PortableTextObject; path: ChildPath} =>
-      isObjectNode({schema: snapshot.context.schema}, entry.node),
-  )
+  const sibling = getSibling(snapshot, point.path, {
+    direction: 'previous',
+    match: (node): node is PortableTextObject => isObject(snapshot, node),
+  })
 
   return sibling
 }

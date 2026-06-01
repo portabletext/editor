@@ -1,5 +1,6 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {isBlockPath} from '../types/paths'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
@@ -100,7 +101,9 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     // the mark cannot apply) don't disqualify the mark across the
     // selection.
     const spanInfo = selectedSpans.map((span) => {
-      const block = getAncestorTextBlock(snapshot, span.path)
+      const block = getParent(snapshot, span.path, {
+        match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+      })
       return {
         marks: span.node.marks ?? [],
         decoratorNames: getPathSubSchema(snapshot, span.path).decorators.map(

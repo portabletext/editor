@@ -11,12 +11,12 @@ import {
   useParentContainer,
 } from '../../../editor/parent-container-context'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
+import {isObject} from '../../../traversal/is-object'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {isObjectNode} from '../../node/is-object-node'
 import {isSpanNode} from '../../node/is-span-node'
 import {isTextBlockNode} from '../../node/is-text-block-node'
 import type {
@@ -98,7 +98,7 @@ const useChildren = (props: {
     children = node.children
   } else if (isTextBlock({schema: editor.schema}, node)) {
     children = node.children
-  } else if (isObjectNode({schema: editor.schema}, node)) {
+  } else if (isObject(editor, node)) {
     const containerConfig = resolveContainerForNode(
       editor,
       parentContainer,
@@ -251,7 +251,7 @@ const useChildren = (props: {
       }
       return false
     }
-    if (isObjectNode({schema: editor.schema}, n)) {
+    if (isObject(editor, n)) {
       if (textBlockParent !== undefined) {
         // Inline-object position: pipeline mode is inherited from the
         // parent text block. An inline object never kicks off a new-
@@ -296,7 +296,7 @@ const useChildren = (props: {
     if (isTextBlockNode({schema: editor.schema}, n)) {
       return null
     }
-    if (isObjectNode({schema: editor.schema}, n)) {
+    if (isObject(editor, n)) {
       // Does `n` resolve as a container at this position?
       // (positional override in childContainer.container.of, or global)
       if (resolveContainerForNode(editor, childContainer, n)) {

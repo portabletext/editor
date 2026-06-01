@@ -1,6 +1,6 @@
 import type {OfDefinition} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {descendToParent} from './descend-to-parent'
 
 /**

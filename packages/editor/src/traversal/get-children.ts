@@ -2,11 +2,11 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {isObjectNode} from '../engine/node/is-object-node'
 import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {isTypedObject} from '../utils/asserters'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -76,7 +76,6 @@ export function getChildren(
  * The returned `parent` is the resolved container entry for `node`
  * itself (used by the caller to thread further descent).
  *
- * @beta
  */
 export function getNodeChildren(
   context: {
@@ -101,7 +100,11 @@ export function getNodeChildren(
     }
   }
 
-  if (isObjectNode(context, node)) {
+  if (
+    isTypedObject(node) &&
+    node._type !== context.schema.block.name &&
+    node._type !== context.schema.span.name
+  ) {
     const resolved = resolveNodeContainer(context.containers, parent, node)
 
     if (!resolved) {

@@ -1,8 +1,8 @@
 import {isSpan} from '@portabletext/schema'
-import {isObjectNode} from '../engine/node/is-object-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getNode} from '../node-traversal/get-node'
+import {getNode} from '../traversal/get-node'
+import {isObject} from '../traversal/is-object'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -40,7 +40,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (isObjectNode({schema: operation.editor.schema}, child)) {
+  if (isObject(operation.editor, child)) {
     const unsetProps: Record<string, unknown> = {}
     for (const prop of operation.props) {
       if (prop === '_type') {

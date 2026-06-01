@@ -1,4 +1,4 @@
-import {isSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isEdge} from '../engine/editor/is-edge'
 import {isEnd} from '../engine/editor/is-end'
 import {isStart} from '../engine/editor/is-start'
@@ -12,8 +12,8 @@ import {rangeStart} from '../engine/range/range-start'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNodes} from '../node-traversal/get-nodes'
+import {getNodes} from '../traversal/get-nodes'
+import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import type {OperationImplementation} from './operation.types'
 
@@ -115,7 +115,9 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       return
     }
 
-    const blockEntry = getAncestorTextBlock(snapshot, at.focus.path)
+    const blockEntry = getParent(snapshot, at.focus.path, {
+      match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+    })
     if (!blockEntry) {
       return
     }

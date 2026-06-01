@@ -1,7 +1,7 @@
 import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../engine/interfaces/path'
-import {findSibling} from '../node-traversal/find-sibling'
+import {getSibling} from '../traversal/get-sibling'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
@@ -19,11 +19,8 @@ export const getNextSpan: EditorSelector<
     return undefined
   }
 
-  return findSibling(
-    snapshot,
-    point.path,
-    'next',
-    (entry): entry is {node: PortableTextSpan; path: Path} =>
-      isSpan(snapshot.context, entry.node),
-  )
+  return getSibling(snapshot, point.path, {
+    direction: 'next',
+    match: (node): node is PortableTextSpan => isSpan(snapshot.context, node),
+  })
 }

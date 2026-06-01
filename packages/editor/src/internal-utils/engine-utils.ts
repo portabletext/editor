@@ -1,7 +1,7 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {Editor} from '../engine/interfaces/editor'
 import {rangeEdges} from '../engine/range/range-edges'
-import {getNodes} from '../node-traversal/get-nodes'
+import {getNodes} from '../traversal/get-nodes'
 import {isListBlock} from '../utils/parse-blocks'
 
 export function isListItemActive({

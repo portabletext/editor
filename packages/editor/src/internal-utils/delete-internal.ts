@@ -2,21 +2,21 @@ import {pointRef} from '../engine/editor/point-ref'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
-import {isVoidNode} from '../engine/node/is-void-node'
 import {commonPath} from '../engine/path/common-path'
 import {parentPath} from '../engine/path/parent-path'
 import {pathEquals} from '../engine/path/path-equals'
 import {rangeEdges} from '../engine/range/range-edges'
 import type {TextUnit} from '../engine/types/types'
-import {getChildren} from '../node-traversal/get-children'
-import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
-import {getFirstChild} from '../node-traversal/get-first-child'
-import {getNode} from '../node-traversal/get-node'
-import {getSibling} from '../node-traversal/get-sibling'
-import {getSpanNode} from '../node-traversal/get-span-node'
-import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {resolveContainerByPath} from '../schema/resolve-container-by-path'
+import {getChildren} from '../traversal/get-children'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {getFirstChild} from '../traversal/get-first-child'
+import {getNode} from '../traversal/get-node'
+import {getSibling} from '../traversal/get-sibling'
+import {getSpan} from '../traversal/get-span'
+import {getTextBlock} from '../traversal/get-text-block'
+import {isLeafObject} from '../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {applyMergeNode} from './apply-merge-node'
@@ -197,7 +197,7 @@ function deleteSameBlockRange(
   }
 
   const startEntry = getNode(editor, start.path)
-  if (startEntry && isVoidNode(editor, startEntry.node, start.path)) {
+  if (startEntry && isLeafObject(editor, startEntry.node, start.path)) {
     editor.apply({type: 'unset', path: start.path})
     return null
   }
@@ -210,12 +210,12 @@ function deleteSameBlockRange(
   )
   removeChildrenBetween(editor, start.path, end.path)
 
-  const adjustedEnd = getSibling(editor, start.path, 'next')
+  const adjustedEnd = getSibling(editor, start.path, {direction: 'next'})
   if (!adjustedEnd) {
     return removed
   }
 
-  if (isVoidNode(editor, adjustedEnd.node, adjustedEnd.path)) {
+  if (isLeafObject(editor, adjustedEnd.node, adjustedEnd.path)) {
     editor.apply({type: 'unset', path: adjustedEnd.path})
     return removed
   }
@@ -242,9 +242,10 @@ function deleteSameParentCrossBlockRange(
   const endBlockNode = getNode(editor, endBlockPath)
   const startIsVoid =
     startBlockNode != null &&
-    isVoidNode(editor, startBlockNode.node, startBlockPath)
+    isLeafObject(editor, startBlockNode.node, startBlockPath)
   const endIsVoid =
-    endBlockNode != null && isVoidNode(editor, endBlockNode.node, endBlockPath)
+    endBlockNode != null &&
+    isLeafObject(editor, endBlockNode.node, endBlockPath)
 
   // Trim the start block's tail (unless start is void or the range begins
   // at the block boundary).
@@ -291,7 +292,9 @@ function deleteSameParentCrossBlockRange(
   }
 
   // Both text: trim the end block, then merge it into the start.
-  const adjustedEndBlock = getSibling(editor, startBlockPath, 'next')
+  const adjustedEndBlock = getSibling(editor, startBlockPath, {
+    direction: 'next',
+  })
   const adjustedEndBlockPath = adjustedEndBlock?.path ?? startBlockPath
 
   if (!pathEquals(end.path, endBlockPath)) {
@@ -378,11 +381,11 @@ function deleteCrossParentRange(
   if (lcaAcceptsTextBlock) {
     removeChildrenBetween(editor, startBranchRoot, endBranchRoot)
   } else {
-    let cursor = getSibling(editor, startBranchRoot, 'next')
+    let cursor = getSibling(editor, startBranchRoot, {direction: 'next'})
     while (cursor && !pathEquals(cursor.path, endBranchRoot)) {
       const cursorPath = cursor.path
       clearContainerContents(editor, cursorPath)
-      cursor = getSibling(editor, cursorPath, 'next')
+      cursor = getSibling(editor, cursorPath, {direction: 'next'})
     }
   }
 
@@ -440,7 +443,7 @@ function removeTextRange(
   endOffset: number,
   capture: boolean,
 ): string | null {
-  const span = getSpanNode(editor, path)
+  const span = getSpan(editor, path)
   if (!span) {
     return null
   }
@@ -459,7 +462,7 @@ function removeTextFromOffset(
   offset: number,
   capture: boolean,
 ): string | null {
-  const span = getSpanNode(editor, path)
+  const span = getSpan(editor, path)
   if (!span || offset >= span.node.text.length) {
     return null
   }
@@ -477,7 +480,7 @@ function removeTextUpToOffset(
   if (offset <= 0) {
     return
   }
-  const span = getSpanNode(editor, path)
+  const span = getSpan(editor, path)
   if (!span) {
     return
   }
@@ -498,10 +501,10 @@ function removeChildrenBetween(
   startChildPath: Path,
   endChildPath: Path,
 ): void {
-  let cursor = getSibling(editor, startChildPath, 'next')
+  let cursor = getSibling(editor, startChildPath, {direction: 'next'})
   while (cursor && !pathEquals(cursor.path, endChildPath)) {
     removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startChildPath, 'next')
+    cursor = getSibling(editor, startChildPath, {direction: 'next'})
   }
 }
 
@@ -563,10 +566,10 @@ function removeTrailingChildren(
   editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
-  let cursor = getSibling(editor, startChildPath, 'next')
+  let cursor = getSibling(editor, startChildPath, {direction: 'next'})
   while (cursor) {
     removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startChildPath, 'next')
+    cursor = getSibling(editor, startChildPath, {direction: 'next'})
   }
 }
 
@@ -575,11 +578,11 @@ function clearTrailingSiblings(
   editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
-  let cursor = getSibling(editor, startChildPath, 'next')
+  let cursor = getSibling(editor, startChildPath, {direction: 'next'})
   while (cursor) {
     const cursorPath = cursor.path
     clearContainerContents(editor, cursorPath)
-    cursor = getSibling(editor, cursorPath, 'next')
+    cursor = getSibling(editor, cursorPath, {direction: 'next'})
   }
 }
 
@@ -588,10 +591,10 @@ function removePrecedingSiblings(
   editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
-  let cursor = getSibling(editor, startChildPath, 'previous')
+  let cursor = getSibling(editor, startChildPath, {direction: 'previous'})
   while (cursor) {
     removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startChildPath, 'previous')
+    cursor = getSibling(editor, startChildPath, {direction: 'previous'})
   }
 }
 
@@ -600,11 +603,11 @@ function clearPrecedingSiblings(
   editor: PortableTextEditorEngine,
   startChildPath: Path,
 ): void {
-  let cursor = getSibling(editor, startChildPath, 'previous')
+  let cursor = getSibling(editor, startChildPath, {direction: 'previous'})
   while (cursor) {
     const cursorPath = cursor.path
     clearContainerContents(editor, cursorPath)
-    cursor = getSibling(editor, cursorPath, 'previous')
+    cursor = getSibling(editor, cursorPath, {direction: 'previous'})
   }
 }
 
@@ -673,10 +676,10 @@ function removeBlocksBetween(
   startBlockPath: Path,
   endBlockPath: Path,
 ): void {
-  let cursor = getSibling(editor, startBlockPath, 'next')
+  let cursor = getSibling(editor, startBlockPath, {direction: 'next'})
   while (cursor && !pathEquals(cursor.path, endBlockPath)) {
     removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startBlockPath, 'next')
+    cursor = getSibling(editor, startBlockPath, {direction: 'next'})
   }
 }
 
@@ -695,8 +698,8 @@ function mergeBlock(
   if (pathEquals(startBlockPath, endBlockPath)) {
     return
   }
-  const startBlock = getTextBlockNode(editor, startBlockPath)
-  const endBlock = getTextBlockNode(editor, endBlockPath)
+  const startBlock = getTextBlock(editor, startBlockPath)
+  const endBlock = getTextBlock(editor, endBlockPath)
   if (!startBlock || !endBlock) {
     return
   }

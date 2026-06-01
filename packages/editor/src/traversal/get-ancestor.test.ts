@@ -9,12 +9,14 @@ describe(getAncestor.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('empty path returns undefined', () => {
-    expect(getAncestor(testbed.snapshot, [], () => true)).toBeUndefined()
+    expect(
+      getAncestor(testbed.snapshot, [], {match: () => true}),
+    ).toBeUndefined()
   })
 
   test('top-level block returns undefined', () => {
     expect(
-      getAncestor(testbed.snapshot, [{_key: 'k3'}], () => true),
+      getAncestor(testbed.snapshot, [{_key: 'k3'}], {match: () => true}),
     ).toBeUndefined()
   })
 
@@ -22,7 +24,7 @@ describe(getAncestor.name, () => {
     const entry = getAncestor(
       testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k0'}],
-      (node) => isTextBlock({schema: testbed.schema}, node),
+      {match: (node) => isTextBlock({schema: testbed.schema}, node)},
     )
     expect(entry?.node).toBe(testbed.textBlock1)
     expect(entry?.path).toEqual([{_key: 'k3'}])
@@ -42,7 +44,7 @@ describe(getAncestor.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      (node) => isTextBlock({schema: testbed.schema}, node),
+      {match: (node) => isTextBlock({schema: testbed.schema}, node)},
     )
     expect(entry?.node).toBe(testbed.cellBlock1)
     expect(entry?.path).toEqual([
@@ -70,7 +72,7 @@ describe(getAncestor.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      (node) => node._type === 'cell',
+      {match: (node) => node._type === 'cell'},
     )
     expect(entry?.node).toBe(testbed.cell1)
     expect(entry?.path).toEqual([
@@ -96,7 +98,7 @@ describe(getAncestor.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      (node) => node._type === 'row',
+      {match: (node) => node._type === 'row'},
     )
     expect(entry?.node).toBe(testbed.row1)
     expect(entry?.path).toEqual([{_key: 'k26'}, 'rows', {_key: 'k21'}])
@@ -116,7 +118,7 @@ describe(getAncestor.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      (node) => node._type === 'table',
+      {match: (node) => node._type === 'table'},
     )
     expect(entry?.node).toBe(testbed.table)
     expect(entry?.path).toEqual([{_key: 'k26'}])
@@ -124,11 +126,9 @@ describe(getAncestor.name, () => {
 
   test('no matching ancestor returns undefined', () => {
     expect(
-      getAncestor(
-        testbed.snapshot,
-        [{_key: 'k3'}, 'children', {_key: 'k0'}],
-        (node) => node._type === 'table',
-      ),
+      getAncestor(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}], {
+        match: (node) => node._type === 'table',
+      }),
     ).toBeUndefined()
   })
 
@@ -146,11 +146,13 @@ describe(getAncestor.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      (_node: Node, path: Path) =>
-        path.filter(
-          (segment) =>
-            typeof segment === 'object' || typeof segment === 'number',
-        ).length === 2,
+      {
+        match: (_node: Node, path: Path) =>
+          path.filter(
+            (segment) =>
+              typeof segment === 'object' || typeof segment === 'number',
+          ).length === 2,
+      },
     )
     expect(entry?.node).toBe(testbed.row1)
     expect(entry?.path).toEqual([{_key: 'k26'}, 'rows', {_key: 'k21'}])
@@ -171,7 +173,7 @@ describe(getAncestor.name, () => {
           'children',
           {_key: 'k12'},
         ],
-        (node) => node._type === 'span',
+        {match: (node) => node._type === 'span'},
       ),
     ).toBeUndefined()
   })
@@ -180,7 +182,7 @@ describe(getAncestor.name, () => {
     const entry = getAncestor(
       testbed.snapshot,
       [{_key: 'k11'}, 'code', {_key: 'k8'}, 'children', {_key: 'k7'}],
-      (node) => node._type === 'code-block',
+      {match: (node) => node._type === 'code-block'},
     )
     expect(entry?.node).toBe(testbed.codeBlock)
     expect(entry?.path).toEqual([{_key: 'k11'}])
@@ -200,8 +202,10 @@ describe(getAncestor.name, () => {
         'children',
         {_key: 'k12'},
       ],
-      (node) =>
-        isTextBlock({schema: testbed.schema}, node) || node._type === 'table',
+      {
+        match: (node) =>
+          isTextBlock({schema: testbed.schema}, node) || node._type === 'table',
+      },
     )
     // Should return cellBlock1 (nearest), not table (furthest)
     expect(entry?.node).toBe(testbed.cellBlock1)
@@ -214,5 +218,60 @@ describe(getAncestor.name, () => {
       'content',
       {_key: 'k14'},
     ])
+  })
+
+  test("mode: 'highest' returns outermost matching ancestor", () => {
+    const entry = getAncestor(
+      testbed.snapshot,
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+        'children',
+        {_key: 'k12'},
+      ],
+      {
+        match: (node) =>
+          isTextBlock({schema: testbed.schema}, node) || node._type === 'table',
+        mode: 'highest',
+      },
+    )
+    // Should return table (outermost), not cellBlock1 (innermost)
+    expect(entry?.node).toBe(testbed.table)
+    expect(entry?.path).toEqual([{_key: 'k26'}])
+  })
+
+  test("mode: 'highest' returns undefined when no ancestor matches", () => {
+    expect(
+      getAncestor(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}], {
+        match: (node) => node._type === 'table',
+        mode: 'highest',
+      }),
+    ).toBeUndefined()
+  })
+
+  test("mode: 'lowest' matches default behavior", () => {
+    const path: Path = [
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+      'content',
+      {_key: 'k14'},
+      'children',
+      {_key: 'k12'},
+    ]
+    const match = (node: Node) =>
+      isTextBlock({schema: testbed.schema}, node) || node._type === 'table'
+
+    const lowest = getAncestor(testbed.snapshot, path, {match, mode: 'lowest'})
+    const defaulted = getAncestor(testbed.snapshot, path, {match})
+
+    expect(lowest).toEqual(defaulted)
   })
 })

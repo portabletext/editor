@@ -1,11 +1,11 @@
 import {isSpan} from '@portabletext/schema'
-import {isObjectNode} from '../engine/node/is-object-node'
 import {parentPath} from '../engine/path/parent-path'
 import {siblingPath} from '../engine/path/sibling-path'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getNode} from '../node-traversal/get-node'
+import {getNode} from '../traversal/get-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {isObject} from '../traversal/is-object'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -58,7 +58,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (isObjectNode({schema: operation.editor.schema}, child)) {
+  if (isObject(operation.editor, child)) {
     const blockPath = parentPath(childPath)
     const {inlineObjects} = getPathSubSchema(snapshot, blockPath)
     const definition = inlineObjects.find(

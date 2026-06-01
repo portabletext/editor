@@ -1,7 +1,7 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {getSibling} from '../../node-traversal/get-sibling'
-import {getSpanNode} from '../../node-traversal/get-span-node'
 import {getDirtyPaths} from '../../paths/get-dirty-paths'
+import {getSibling} from '../../traversal/get-sibling'
+import {getSpan} from '../../traversal/get-span'
 import {normalize} from '../editor/normalize'
 import type {Editor} from '../interfaces/editor'
 import {PathRef} from '../interfaces/path-ref'
@@ -59,12 +59,9 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
       })
 
       if (previousSelectionIsCollapsed && newSelectionIsCollapsed) {
-        const focusSpanEntry = getSpanNode(editor, op.properties.focus.path)
+        const focusSpanEntry = getSpan(editor, op.properties.focus.path)
         const focusSpan: PortableTextSpan | undefined = focusSpanEntry?.node
-        const newFocusSpanEntry = getSpanNode(
-          editor,
-          op.newProperties.focus.path,
-        )
+        const newFocusSpanEntry = getSpan(editor, op.newProperties.focus.path)
         const newFocusSpan: PortableTextSpan | undefined =
           newFocusSpanEntry?.node
 
@@ -80,16 +77,12 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
         let movedToPreviousSpan = false
 
         if (sameParent && focusSpan && newFocusSpan) {
-          const nextSibling = getSibling(
-            editor,
-            op.properties.focus.path,
-            'next',
-          )
-          const previousSibling = getSibling(
-            editor,
-            op.properties.focus.path,
-            'previous',
-          )
+          const nextSibling = getSibling(editor, op.properties.focus.path, {
+            direction: 'next',
+          })
+          const previousSibling = getSibling(editor, op.properties.focus.path, {
+            direction: 'previous',
+          })
 
           movedToNextSpan =
             nextSibling !== undefined &&

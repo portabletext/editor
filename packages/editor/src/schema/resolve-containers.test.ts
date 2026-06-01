@@ -23,7 +23,7 @@ const leafRender: BlockObject['render'] = ({children}) => children
 /**
  * Test snapshots mirror the production shape closely enough for the
  * traversal helpers to descend. Tests use numeric paths via getAncestors;
- * the helpers compose isObjectNode + getAncestors over snapshot.context.
+ * the helpers compose isObject + getAncestors over snapshot.context.
  */
 function makeSnapshot(args: {
   schema: ReturnType<typeof compileSchema>

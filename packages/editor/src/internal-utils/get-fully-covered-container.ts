@@ -10,9 +10,9 @@ import {isAfterPoint} from '../engine/point/is-after-point'
 import {isBeforePoint} from '../engine/point/is-before-point'
 import {pointEquals} from '../engine/point/point-equals'
 import {rangeEdges} from '../engine/range/range-edges'
-import {getAncestor} from '../node-traversal/get-ancestor'
-import {getNode} from '../node-traversal/get-node'
 import {isEditableContainer} from '../schema/is-editable-container'
+import {getAncestor} from '../traversal/get-ancestor'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 /**
@@ -38,12 +38,12 @@ export function getFullyCoveredContainers(
 ): {start: Path | undefined; end: Path | undefined} {
   const [start, end] = rangeEdges(range, editor)
   return {
-    start: getAncestor(editor, start.path, (node, path) =>
-      isFullyCovered(editor, node, path, start, end),
-    )?.path,
-    end: getAncestor(editor, end.path, (node, path) =>
-      isFullyCovered(editor, node, path, start, end),
-    )?.path,
+    start: getAncestor(editor, start.path, {
+      match: (node, path) => isFullyCovered(editor, node, path, start, end),
+    })?.path,
+    end: getAncestor(editor, end.path, {
+      match: (node, path) => isFullyCovered(editor, node, path, start, end),
+    })?.path,
   }
 }
 

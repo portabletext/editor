@@ -1,13 +1,13 @@
-import {isSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNode} from '../node-traversal/get-node'
-import {getSibling} from '../node-traversal/get-sibling'
+import {getNode} from '../traversal/get-node'
+import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {getSibling} from '../traversal/get-sibling'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
@@ -22,7 +22,9 @@ export const insertChildOperationImplementation: OperationImplementation<
     throw new Error('Unable to insert child without a focus')
   }
 
-  const focusBlockEntry = getAncestorTextBlock(operation.editor, focus.path)
+  const focusBlockEntry = getParent(operation.editor, focus.path, {
+    match: (node) => isTextBlock({schema: operation.editor.schema}, node),
+  })
 
   if (!focusBlockEntry) {
     throw new Error('Unable to insert child without a focus block')
@@ -73,7 +75,9 @@ export const insertChildOperationImplementation: OperationImplementation<
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, span, focus)
     } else {
-      const nextSibling = getSibling(operation.editor, focusChildPath, 'next')
+      const nextSibling = getSibling(operation.editor, focusChildPath, {
+        direction: 'next',
+      })
       if (nextSibling) {
         applyInsertNodeAtPath(operation.editor, span, nextSibling.path)
       } else {
@@ -119,7 +123,9 @@ export const insertChildOperationImplementation: OperationImplementation<
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, inlineNode, focus)
     } else {
-      const nextSibling = getSibling(operation.editor, focusChildPath, 'next')
+      const nextSibling = getSibling(operation.editor, focusChildPath, {
+        direction: 'next',
+      })
       if (nextSibling) {
         applyInsertNodeAtPath(operation.editor, inlineNode, nextSibling.path)
       } else {

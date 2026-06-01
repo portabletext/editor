@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNode} from '../node-traversal/get-node'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getNode} from '../traversal/get-node'
+import {getParent} from '../traversal/get-parent'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import type {ChildPath} from '../types/paths'
@@ -104,7 +104,9 @@ export function spanSelectionPointToBlockOffset({
     return undefined
   }
 
-  const textBlock = getAncestorTextBlock(snapshot, selectionPoint.path)
+  const textBlock = getParent(snapshot, selectionPoint.path, {
+    match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+  })
 
   if (!textBlock) {
     return undefined

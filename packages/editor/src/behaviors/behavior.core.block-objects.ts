@@ -1,11 +1,11 @@
 import {isSpan} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
-import {getLeaf} from '../node-traversal/get-leaf'
-import {getSibling} from '../node-traversal/get-sibling'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {getLeaf} from '../traversal/get-leaf'
+import {getSibling} from '../traversal/get-sibling'
 import {isListBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -34,7 +34,9 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const nextBlock = getSibling(snapshot, focusedBlockObject.path, 'next')
+    const nextBlock = getSibling(snapshot, focusedBlockObject.path, {
+      direction: 'next',
+    })
 
     return !nextBlock
   },
@@ -72,11 +74,9 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const previousBlock = getSibling(
-      snapshot,
-      focusedBlockObject.path,
-      'previous',
-    )
+    const previousBlock = getSibling(snapshot, focusedBlockObject.path, {
+      direction: 'previous',
+    })
 
     return !previousBlock
   },
@@ -138,11 +138,9 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const previousSibling = getSibling(
-      snapshot,
-      focusedBlockObject.path,
-      'previous',
-    )
+    const previousSibling = getSibling(snapshot, focusedBlockObject.path, {
+      direction: 'previous',
+    })
 
     return (
       (event.position.isEditor || event.position.isContainer) &&
@@ -192,7 +190,9 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const nextSibling = getSibling(snapshot, focusedBlockObject.path, 'next')
+    const nextSibling = getSibling(snapshot, focusedBlockObject.path, {
+      direction: 'next',
+    })
 
     return (
       (event.position.isEditor || event.position.isContainer) &&
@@ -228,11 +228,9 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
       return false
     }
 
-    const previousSibling = getSibling(
-      snapshot,
-      focusedTextBlock.path,
-      'previous',
-    )
+    const previousSibling = getSibling(snapshot, focusedTextBlock.path, {
+      direction: 'previous',
+    })
 
     if (!previousSibling) {
       return false
@@ -291,7 +289,9 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
       return false
     }
 
-    const nextSibling = getSibling(snapshot, focusedTextBlock.path, 'next')
+    const nextSibling = getSibling(snapshot, focusedTextBlock.path, {
+      direction: 'next',
+    })
 
     if (!nextSibling) {
       return false

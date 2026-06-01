@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import {getLeaf} from '../../node-traversal/get-leaf'
+import {getLeaf} from '../../traversal/get-leaf'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Path} from '../interfaces/path'

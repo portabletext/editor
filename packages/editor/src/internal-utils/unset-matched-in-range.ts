@@ -2,8 +2,8 @@ import {pathRef} from '../engine/editor/path-ref'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
-import {getNode} from '../node-traversal/get-node'
-import {getNodes} from '../node-traversal/get-nodes'
+import {getNode} from '../traversal/get-node'
+import {getNodes} from '../traversal/get-nodes'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 /**
