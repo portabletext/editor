@@ -21,6 +21,7 @@
 import type {
   PortableTextBlock,
   PortableTextObject,
+  PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {BlockEvent} from './events'
@@ -81,38 +82,40 @@ export function eventsToPortableText(
     out.push(b)
   }
 
-  const flushParagraphBlock = (block: PortableTextBlock | undefined): void => {
+  const flushParagraphBlock = (
+    block: PortableTextTextBlock | undefined,
+  ): void => {
     if (!block) {
       return
     }
-    const tb = block as PortableTextTextBlock
-    const children = tb.children ?? []
-    const nonSpan = children.filter(
-      (c) => (c as {_type: string})._type !== 'span',
-    )
+    const children = block.children ?? []
+    const isSpanChild = (
+      child: PortableTextSpan | PortableTextObject,
+    ): child is PortableTextSpan => child._type === 'span'
+    const isObjectChild = (
+      child: PortableTextSpan | PortableTextObject,
+    ): child is PortableTextObject => child._type !== 'span'
+    const nonSpan = children.filter(isObjectChild)
     if (nonSpan.length === 0) {
       sinkOpen(block)
       return
     }
     const emptySpans = children.filter(
-      (c) =>
-        (c as {_type: string})._type === 'span' &&
-        ((c as {text: string}).text ?? '') === '',
+      (c) => isSpanChild(c) && (c.text ?? '') === '',
     )
     // Image-only paragraph: hoist the single non-span child.
     if (
       nonSpan.length === 1 &&
       nonSpan.length + emptySpans.length === children.length
     ) {
-      sinkOpen(nonSpan[0] as PortableTextObject)
+      sinkOpen(nonSpan[0]!)
       return
     }
     // Mixed paragraph (text + inline objects): split only when the
     // schema lacks an inline image entry (the inline matcher returned
     // a value via the block-matcher fallback). When the schema has
     // inline image support, keep the children inline.
-    const hasInlineImageObject = options.schema.inlineObjects.length > 0
-    if (hasInlineImageObject) {
+    if (options.schema.inlineObjects.length > 0) {
       sinkOpen(block)
       return
     }
@@ -126,12 +129,10 @@ export function eventsToPortableText(
       if (currentRun.length === 0) {
         return
       }
-      const nonEmpty = currentRun.some(
-        (c) =>
-          (c as {_type: string})._type === 'span' &&
-          ((c as {text: string}).text ?? '') !== '',
+      const hasNonEmpty = currentRun.some(
+        (c) => isSpanChild(c) && (c.text ?? '') !== '',
       )
-      if (!nonEmpty) {
+      if (!hasNonEmpty) {
         currentRun = []
         return
       }
@@ -139,50 +140,34 @@ export function eventsToPortableText(
       let renumberedSpans: typeof currentRun
       if (firstSplit) {
         // First split keeps the original block + span keys.
-        blockKey = tb._key
+        blockKey = block._key
         renumberedSpans = currentRun
       } else {
         // Subsequent splits re-use the first span's _key as the new
         // block key and renumber the spans with fresh keys. This
         // preserves the keyGenerator's monotonic ordering (block
         // before span).
-        const firstSpan = currentRun.find(
-          (ch) => (ch as {_type: string})._type === 'span',
-        ) as {_key: string} | undefined
+        const firstSpan = currentRun.find(isSpanChild)
         blockKey = firstSpan ? firstSpan._key : options.keyGenerator()
-        let used = false
-        renumberedSpans = currentRun.map((ch) => {
-          if ((ch as {_type: string})._type === 'span') {
-            if (!used) {
-              used = true
-              return {
-                ...(ch as object),
-                _key: options.keyGenerator(),
-              } as typeof ch
-            }
-            return {
-              ...(ch as object),
-              _key: options.keyGenerator(),
-            } as typeof ch
-          }
-          return ch
-        })
+        renumberedSpans = currentRun.map((ch) =>
+          isSpanChild(ch) ? {...ch, _key: options.keyGenerator()} : ch,
+        )
       }
       firstSplit = false
-      sinkOpen({
+      const splitBlock: PortableTextTextBlock = {
         _type: 'block',
         _key: blockKey,
-        style: tb.style,
+        style: block.style,
         children: [...renumberedSpans],
-        markDefs: tb.markDefs ?? [],
-      } as unknown as PortableTextBlock)
+        markDefs: block.markDefs ?? [],
+      }
+      sinkOpen(splitBlock)
       currentRun = []
     }
     for (const ch of children) {
-      const isObj = (ch as {_type: string})._type !== 'span'
-      if (isObj) {
+      if (isObjectChild(ch)) {
         emitRun()
-        sinkOpen(ch as PortableTextObject)
+        sinkOpen(ch)
       } else {
         currentRun.push(ch)
       }
@@ -196,8 +181,7 @@ export function eventsToPortableText(
 
     if (event.kind === 'open') {
       if (event.spec === 'list') {
-        const kind =
-          (event.data?.['kind'] as 'bullet' | 'number' | 'task') ?? 'bullet'
+        const kind = event.data?.kind ?? 'bullet'
         if (useListContainer) {
           pendingListStack.push({list: {kind, items: []}, item: undefined})
         }
@@ -207,8 +191,8 @@ export function eventsToPortableText(
       }
       if (event.spec === 'list_item') {
         pendingItem = {
-          marker: event.data?.['marker'] as string,
-          checked: event.data?.['checked'] as boolean | undefined,
+          marker: event.data?.marker ?? '',
+          checked: event.data?.checked,
         }
         const topFrame = pendingListStack[pendingListStack.length - 1]
         if (useListContainer && topFrame) {
@@ -355,7 +339,7 @@ export function eventsToPortableText(
                   blockquoteDepth--
                 }
               }
-              sinkOpen(callout as PortableTextObject)
+              sinkOpen(callout)
               i = k + 1
               continue
             }
@@ -521,7 +505,7 @@ export function eventsToPortableText(
             isInline: false,
           })
           if (imageValue) {
-            sinkOpen(imageValue as PortableTextObject)
+            sinkOpen(imageValue)
             pendingItem = undefined
             i = nextIndex
             continue
@@ -548,8 +532,10 @@ export function eventsToPortableText(
         continue
       }
       if (event.spec === 'heading') {
-        const level = (event.data?.['level'] as number) ?? 1
-        const styleKey = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+        const level = Math.min(6, Math.max(1, event.data?.level ?? 1))
+        const styleKey = (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const)[
+          level - 1
+        ]!
         const {text, line, nextIndex} = collectInline(events, i + 1, 'heading')
         const block =
           makeTextBlock(styleKey, text, options, line) ??
@@ -571,7 +557,7 @@ export function eventsToPortableText(
       if (event.spec === 'fenced_code' || event.spec === 'code_block') {
         const lang =
           event.spec === 'fenced_code'
-            ? (event.data?.['lang'] as string) || undefined
+            ? event.data?.lang || undefined
             : undefined
         const lines: string[] = []
         let j = i + 1
@@ -608,7 +594,7 @@ export function eventsToPortableText(
               v === code,
           )
         if (isUseful) {
-          sinkOpen(value as PortableTextObject)
+          sinkOpen(value)
         } else {
           const block = makeTextBlock(
             'normal',
@@ -645,20 +631,21 @@ export function eventsToPortableText(
           isInline: false,
         })
         if (value) {
-          sinkOpen(value as PortableTextObject)
+          sinkOpen(value)
         } else {
           // Fallback: emit the raw html as a single-span text block.
           // Skip the inline lexer (which strips inline HTML tags by
           // default) so the html content survives verbatim.
           const blockKey = options.keyGenerator()
           const spanKey = options.keyGenerator()
-          sinkOpen({
+          const htmlFallback: PortableTextTextBlock = {
             _type: 'block',
             _key: blockKey,
             style: 'normal',
             children: [{_type: 'span', _key: spanKey, text: html, marks: []}],
             markDefs: [],
-          } as unknown as PortableTextBlock)
+          }
+          sinkOpen(htmlFallback)
         }
         i = j + 1
         continue
@@ -670,7 +657,7 @@ export function eventsToPortableText(
           const e = events[j]!
           if (e.kind === 'open' && e.spec === 'table_row') {
             rows.push({
-              raw: (e.data?.['raw'] as string) || '',
+              raw: e.data?.raw || '',
               line: e.location.line,
             })
           } else if (e.kind === 'close' && e.spec === 'table_row') {
@@ -803,7 +790,7 @@ export function eventsToPortableText(
           isInline: false,
         })
         if (tableValue) {
-          sinkOpen(tableValue as PortableTextObject)
+          sinkOpen(tableValue)
         }
         i = j
         continue
@@ -815,7 +802,7 @@ export function eventsToPortableText(
           isInline: false,
         })
         if (value) {
-          sinkOpen(value as PortableTextObject)
+          sinkOpen(value)
         } else {
           const block = makeTextBlock(
             'normal',
@@ -863,21 +850,17 @@ export function eventsToPortableText(
               for (const item of closing.list.items) {
                 for (const b of item.content) {
                   if (b._type === 'block') {
-                    const tb = b as PortableTextTextBlock
-                    ;(
-                      tb as PortableTextTextBlock & {listItem?: string}
-                    ).listItem =
+                    const tb = b as PortableTextTextBlock & {checked?: boolean}
+                    tb.listItem =
                       closing.list.kind === 'task'
                         ? 'bullet'
                         : closing.list.kind
-                    ;(tb as PortableTextTextBlock & {level?: number}).level = 1
+                    tb.level = 1
                     if (
                       closing.list.kind === 'task' &&
                       item.checked !== undefined
                     ) {
-                      ;(
-                        tb as PortableTextTextBlock & {checked?: boolean}
-                      ).checked = item.checked
+                      tb.checked = item.checked
                     }
                   }
                   sink(b)
@@ -898,7 +881,7 @@ export function eventsToPortableText(
             isInline: false,
           })
           if (value) {
-            sinkOpen(value as PortableTextObject)
+            sinkOpen(value)
           } else {
             // Matcher returned undefined: fall back to flat blockquote-
             // styled blocks (re-style normal-styled children).
@@ -938,7 +921,7 @@ export function eventsToPortableText(
 }
 
 function decorateListContext(
-  block: PortableTextTextBlock,
+  block: PortableTextTextBlock & {checked?: boolean},
   listStack: ListContext[],
   pendingItem: {marker: string; checked?: boolean} | undefined,
   useListContainer: boolean,
@@ -961,20 +944,13 @@ function decorateListContext(
   if (!listItemName) {
     return
   }
-  ;(
-    block as PortableTextTextBlock & {
-      listItem?: string
-      level?: number
-      checked?: boolean
-    }
-  ).listItem = listItemName
-  ;(block as PortableTextTextBlock & {level?: number}).level = innermost.level
+  block.listItem = listItemName
+  block.level = innermost.level
   if (innermost.kind === 'task' && pendingItem?.checked !== undefined) {
-    // Only emit checked when a task list item is actually declared in the schema.
+    // Only emit `checked` when a task list item is actually declared in the schema.
     const taskName = options.listItem.task({context: {schema: options.schema}})
     if (taskName) {
-      ;(block as PortableTextTextBlock & {checked?: boolean}).checked =
-        pendingItem.checked
+      block.checked = pendingItem.checked
     }
   }
 }

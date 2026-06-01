@@ -302,7 +302,7 @@ export function makeTextBlock(
     style: resolvedStyle,
     children,
     markDefs,
-  } as PortableTextTextBlock
+  } satisfies PortableTextTextBlock
 }
 
 interface SpanState {
@@ -314,12 +314,11 @@ function foldInlineToSpans(
   tokens: ReadonlyArray<InlineToken>,
   options: ResolvedOptions,
 ): {
-  children: Array<PortableTextSpan>
-  markDefs: Array<{_type: string; _key: string; [key: string]: unknown}>
+  children: Array<PortableTextSpan | PortableTextObject>
+  markDefs: Array<PortableTextObject>
 } {
-  const children: Array<PortableTextSpan> = []
-  const markDefs: Array<{_type: string; _key: string; [key: string]: unknown}> =
-    []
+  const children: Array<PortableTextSpan | PortableTextObject> = []
+  const markDefs: Array<PortableTextObject> = []
   // Each entry: the schema-resolved decorator name (or undefined for
   // `unknown`) and the original markdown marker text. When the matcher
   // returns undefined, we leak the marker into the span text on both
@@ -338,7 +337,7 @@ function foldInlineToSpans(
       _key: options.keyGenerator(),
       text: current.text,
       marks: current.marks.slice(),
-    } as PortableTextSpan)
+    } satisfies PortableTextSpan)
     current = {text: '', marks: current.marks.slice()}
   }
 
@@ -428,7 +427,7 @@ function foldInlineToSpans(
             _key: options.keyGenerator(),
             text: t.text,
             marks: [...current.marks, codeMark],
-          } as PortableTextSpan)
+          } satisfies PortableTextSpan)
         } else {
           // No code decorator defined: re-emit the code text into the
           // current span (matches v1).
@@ -453,9 +452,7 @@ function foldInlineToSpans(
           value: {href: t.href ?? '', title: t.title},
         })
         if (annotation) {
-          markDefs.push(
-            annotation as {_type: string; _key: string; [key: string]: unknown},
-          )
+          markDefs.push(annotation)
           annotationStack.push(annotation._key)
           updateMarks()
         } else {
@@ -524,10 +521,8 @@ function foldInlineToSpans(
               typeof v === 'string' &&
               v.length > 0,
           )
-        if (imageIsUseful) {
-          ;(children as Array<PortableTextSpan | PortableTextObject>).push(
-            imageValue as PortableTextObject,
-          )
+        if (imageIsUseful && imageValue) {
+          children.push(imageValue)
         } else {
           // Useless or undefined: re-emit raw markdown into text buffer.
           const titlePart = t.title ? ` "${t.title}"` : ''
@@ -542,22 +537,20 @@ function foldInlineToSpans(
           value: {href: t.href ?? '', title: undefined},
         })
         if (annotation) {
-          markDefs.push(
-            annotation as {_type: string; _key: string; [key: string]: unknown},
-          )
+          markDefs.push(annotation)
           children.push({
             _type: 'span',
             _key: options.keyGenerator(),
             text: t.text,
             marks: [...current.marks, annotation._key],
-          } as PortableTextSpan)
+          } satisfies PortableTextSpan)
         } else {
           children.push({
             _type: 'span',
             _key: options.keyGenerator(),
             text: t.text,
             marks: [...current.marks],
-          } as PortableTextSpan)
+          } satisfies PortableTextSpan)
         }
         break
       }
@@ -571,17 +564,21 @@ function foldInlineToSpans(
       _key: options.keyGenerator(),
       text: '',
       marks: [],
-    } as PortableTextSpan)
+    } satisfies PortableTextSpan)
   }
 
   // Annotation stack uses '' as a sentinel for "no annotation"; strip those
   // from any per-span marks before returning (defensive — updateMarks
   // already excludes them).
   for (const child of children) {
-    if (child._type === 'span') {
+    if (isSpanChild(child)) {
       child.marks = (child.marks ?? []).filter((m) => m !== '')
     }
   }
 
   return {children, markDefs}
 }
+
+const isSpanChild = (
+  child: PortableTextSpan | PortableTextObject,
+): child is PortableTextSpan => child._type === 'span'

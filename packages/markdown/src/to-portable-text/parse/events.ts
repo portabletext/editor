@@ -32,11 +32,33 @@ export interface SourceLoc {
   column: number
 }
 
+/**
+ * Per-spec data carried on `open` events. Each field is populated by one
+ * spec only; the wide shape avoids a discriminated union with a per-kind
+ * generic on `BlockEvent`.
+ */
+export interface BlockEventData {
+  /** `heading`: 1-6. */
+  level?: number
+  /** `heading`: raw text after `#`s. */
+  text?: string
+  /** `list`: marker kind. */
+  kind?: 'bullet' | 'number' | 'task'
+  /** `list_item`: marker character(s) (`-`, `*`, `+`, or `1.` etc). */
+  marker?: string
+  /** `list_item`: task-list checkbox state. */
+  checked?: boolean
+  /** `fenced_code`: language tag after the opening fence. */
+  lang?: string
+  /** `table_row`: raw row text (kept verbatim through the event stream). */
+  raw?: string
+}
+
 export type BlockEvent =
   | {
       kind: 'open'
       spec: BlockKind
-      data?: Record<string, unknown>
+      data?: BlockEventData
       location: SourceLoc
     }
   | {kind: 'close'; spec: BlockKind; location: SourceLoc}

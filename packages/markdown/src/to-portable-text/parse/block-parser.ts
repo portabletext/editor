@@ -45,12 +45,57 @@ interface Line {
   cursor: number
 }
 
+/**
+ * Per-spec mutable state carried on each open container. Each field is
+ * touched by one spec only; the wide shape avoids per-name generics on
+ * `Container` while keeping field access fully typed.
+ */
+interface ContainerData {
+  /** `paragraph`, `html_block`, `code_block`: line buffer (joined on close). */
+  lines?: Array<string>
+  /** `list`: marker kind, set at open. */
+  kind?: 'bullet' | 'number' | 'task'
+  /** `list`: indent of the last list_item that opened — used to decide
+   *  whether a new line continues the same item or opens a sibling. */
+  lastItemIndent?: number
+  /** `list_item`: marker character(s) (`-`, `*`, `+`, or `1.` etc). */
+  marker?: string
+  /** `list_item`: task-list checkbox state. */
+  checked?: boolean
+  /** `fenced_code`: the fence character (` or ~). */
+  fenceChar?: string
+  /** `fenced_code`: number of fence chars on the opening line. */
+  fenceLen?: number
+  /** `fenced_code`: language tag after the opening fence. */
+  lang?: string
+  /** `heading`: 1-6, set at open. */
+  level?: number
+  /** `heading`: raw text after the leading `#`s. */
+  text?: string
+  /** `table_row`: raw row text. */
+  raw?: string
+  /** `fenced_code`: indent of the opening fence (used to strip leading
+   *  whitespace from each content line). */
+  _fenceIndent?: number
+  /** `fenced_code`: skip the first parse-line iteration (its cursor sits
+   *  on the opening fence itself). */
+  _isOpening?: boolean
+  /** `html_block`: indent of the opening line (used to strip leading
+   *  whitespace from each verbatim line). */
+  _htmlIndent?: number
+  /** Cross-spec: shared flag a spec can set during `continue` to signal
+   *  it should be closed before the next iteration. The wrapping object
+   *  lets a spec mutate it from `continue` even when callers hold a
+   *  reference. */
+  _pendingClose?: {flag: boolean}
+}
+
 interface Container {
   spec: BlockSpec
   /** Column at which this container's content starts. */
   indent: number
   /** Spec-specific state. */
-  data: Record<string, unknown>
+  data: ContainerData
   /** Source line where this container opened. */
   startLine: number
 }
@@ -98,7 +143,7 @@ const paragraphSpec: BlockSpec = {
     ctx.push({
       spec: paragraphSpec,
       indent: line.cursor,
-      data: {lines: [] as Array<string>},
+      data: {lines: []},
       startLine: line.number,
     })
     ctx.emit({
@@ -109,7 +154,7 @@ const paragraphSpec: BlockSpec = {
     return true
   },
   close: (container, ctx) => {
-    const lines = container.data['lines'] as Array<string>
+    const lines = container.data.lines!
     ctx.emit({
       kind: 'inline_run',
       text: lines.join('\n'),
@@ -297,12 +342,12 @@ const listSpec: BlockSpec = {
     const tail = line.raw.slice(line.cursor)
     const leading = tail.match(/^[ \t]*/)![0].length
     const absoluteLeading = line.cursor + leading
-    const itemIndent = c.data['lastItemIndent'] as number | undefined
+    const itemIndent = c.data.lastItemIndent
     if (itemIndent !== undefined && absoluteLeading >= itemIndent) {
       return true
     }
     const marker = detectListMarker(tail.trimStart())
-    if (marker && marker.kind === (c.data['kind'] as string)) {
+    if (marker && marker.kind === c.data.kind!) {
       return true
     }
     return false
@@ -357,7 +402,7 @@ const listItemSpec: BlockSpec = {
     // If a list marker sits at exactly the column of the item's own
     // indent (i.e. at sibling level), close this item so a new sibling
     // item can open under the same list.
-    const itemStart = c.indent - (c.data['marker'] as string).length
+    const itemStart = c.indent - c.data.marker!.length
     if (absoluteLeading === itemStart) {
       const marker = detectListMarker(tail.trimStart())
       if (marker) {
@@ -389,7 +434,7 @@ const listItemSpec: BlockSpec = {
     if (!marker) {
       return false
     }
-    if (marker.kind !== (parent.data['kind'] as string)) {
+    if (marker.kind !== parent.data.kind!) {
       return false
     }
     line.cursor = cursorAfterLeading
@@ -400,7 +445,7 @@ const listItemSpec: BlockSpec = {
       data: {marker: marker.marker, checked: marker.checked},
       startLine: line.number,
     })
-    parent.data['lastItemIndent'] = indent
+    parent.data.lastItemIndent = indent
     ctx.emit({
       kind: 'open',
       spec: 'list_item',
@@ -423,15 +468,15 @@ const fencedCodeSpec: BlockSpec = {
   name: 'fenced_code',
   continue: (c, line) => {
     const tail = line.raw.slice(line.cursor)
-    const fenceChar = c.data['fenceChar'] as string
-    const fenceLen = c.data['fenceLen'] as number
+    const fenceChar = c.data.fenceChar!
+    const fenceLen = c.data.fenceLen!
     const escapedFence = fenceChar === '`' ? '`' : '~'
     const closeFence = new RegExp(
       `^[ ]{0,3}${escapedFence}{${fenceLen},}[ \\t]*$`,
     )
     if (closeFence.test(tail)) {
       line.cursor = line.raw.length
-      ;(c.data['_pendingClose'] as {flag: boolean}).flag = true
+      c.data._pendingClose!.flag = true
       return true
     }
     return true
@@ -672,7 +717,7 @@ class BlockParser {
     {
       const t = this.ctx.tip()
       if (t.spec.name === 'fenced_code') {
-        const pending = t.data['_pendingClose'] as {flag: boolean} | undefined
+        const pending = t.data._pendingClose
         if (pending?.flag) {
           this.closeAllFrom(this.containers.length - 1)
           return
@@ -750,16 +795,16 @@ class BlockParser {
 
     // Verbatim containers absorb every line as a literal verbatim_line.
     if (tip.spec.name === 'fenced_code') {
-      const pending = tip.data['_pendingClose'] as {flag: boolean} | undefined
+      const pending = tip.data._pendingClose
       if (pending?.flag) {
         this.closeAllFrom(this.containers.length - 1)
         return
       }
-      if (tip.data['_isOpening']) {
-        tip.data['_isOpening'] = false
+      if (tip.data._isOpening) {
+        tip.data._isOpening = false
         return
       }
-      const fenceIndent = (tip.data['_fenceIndent'] as number) ?? 0
+      const fenceIndent = tip.data._fenceIndent ?? 0
       const rawTail = line.raw.slice(line.cursor)
       const stripped = rawTail.replace(new RegExp(`^[ ]{0,${fenceIndent}}`), '')
       this.ctx.emit({
@@ -778,7 +823,7 @@ class BlockParser {
       return
     }
     if (tip.spec.name === 'html_block') {
-      const htmlIndent = (tip.data['_htmlIndent'] as number) ?? 0
+      const htmlIndent = tip.data._htmlIndent ?? 0
       const rawTail = line.raw.slice(line.cursor)
       const stripped = rawTail.replace(new RegExp(`^[ ]{0,${htmlIndent}}`), '')
       if (stripped.length > 0 || rawTail.length > 0) {
@@ -803,7 +848,7 @@ class BlockParser {
     if (tip.spec.name === 'paragraph') {
       // Strip leading whitespace that survived container-prefix advancing.
       // Extra indent inside a list_item / blockquote is normalized away.
-      ;(tip.data['lines'] as Array<string>).push(tail.replace(/^[ \t]+/, ''))
+      tip.data.lines!.push(tail.replace(/^[ \t]+/, ''))
     }
   }
 
