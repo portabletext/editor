@@ -44,11 +44,11 @@ export type {
   PortableTextTypeRenderer,
   PortableTextTypeRendererOptions,
 } from './from-portable-text/types'
-export {markdownToPortableText} from './markdown-to-portable-text'
+export {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 export type {
   AnnotationMatcher,
   DecoratorMatcher,
   ListItemMatcher,
   ObjectMatcher,
   StyleMatcher,
-} from './matchers'
+} from './to-portable-text/matchers'

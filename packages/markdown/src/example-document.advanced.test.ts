@@ -9,8 +9,8 @@ import {
   DefaultCodeBlockRenderer,
   DefaultTableRenderer,
 } from './from-portable-text/renderers/type'
-import {markdownToPortableText} from './markdown-to-portable-text'
-import {buildObjectMatcher} from './matchers'
+import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
+import {buildObjectMatcher} from './to-portable-text/matchers'
 
 const exampleDocumentMarkdown = fs.readFileSync(
   path.resolve(__dirname, 'example-document.advanced.md'),

@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
-import {parseToBlockEvents} from './parse/block-parser'
-import {eventsToPortableText} from './parse/events-to-portable-text'
-import {resolveOptions} from './parse/parser'
+import {parseToBlockEvents} from './to-portable-text/parse/block-parser'
+import {eventsToPortableText} from './to-portable-text/parse/events-to-portable-text'
+import {resolveOptions} from './to-portable-text/parse/parser'
 
 const parse = (input: string, options = {}) =>
   eventsToPortableText(parseToBlockEvents(input), resolveOptions(options))

@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {markdownToPortableText} from './markdown-to-portable-text'
+import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 
 const keyGen = () => {
   let i = 0
@@ -37,7 +37,8 @@ describe('GFM autolinks', () => {
       keyGenerator: keyGen(),
     })
     expect(
-      (result[0] as unknown as {markDefs: Array<{href: string}>}).markDefs[0]?.href,
+      (result[0] as unknown as {markDefs: Array<{href: string}>}).markDefs[0]
+        ?.href,
     ).toBe('http://www.example.com')
   })
 
@@ -46,7 +47,8 @@ describe('GFM autolinks', () => {
       keyGenerator: keyGen(),
     })
     expect(
-      (result[0] as unknown as {markDefs: Array<{href: string}>}).markDefs[0]?.href,
+      (result[0] as unknown as {markDefs: Array<{href: string}>}).markDefs[0]
+        ?.href,
     ).toBe('mailto:hello@example.com')
   })
 
@@ -54,7 +56,8 @@ describe('GFM autolinks', () => {
     const result = markdownToPortableText('Visit https://example.com.', {
       keyGenerator: keyGen(),
     })
-    const spans = (result[0] as unknown as {children: Array<{text: string}>}).children
+    const spans = (result[0] as unknown as {children: Array<{text: string}>})
+      .children
     expect(spans.map((s) => s.text)).toEqual([
       'Visit ',
       'https://example.com',
@@ -67,21 +70,26 @@ describe('GFM autolinks', () => {
       keyGenerator: keyGen(),
     })
     // No left boundary; the URL is treated as plain text.
-    expect((result[0] as unknown as {markDefs: Array<unknown>}).markDefs).toEqual([])
+    expect(
+      (result[0] as unknown as {markDefs: Array<unknown>}).markDefs,
+    ).toEqual([])
   })
 
   test('does not linkify inside a code span', () => {
     const result = markdownToPortableText('Try `https://example.com` here', {
       keyGenerator: keyGen(),
     })
-    expect((result[0] as unknown as {markDefs: Array<unknown>}).markDefs).toEqual([])
+    expect(
+      (result[0] as unknown as {markDefs: Array<unknown>}).markDefs,
+    ).toEqual([])
   })
 
   test('unmatched trailing paren dropped from URL', () => {
     const result = markdownToPortableText('(see https://example.com)', {
       keyGenerator: keyGen(),
     })
-    const spans = (result[0] as unknown as {children: Array<{text: string}>}).children
+    const spans = (result[0] as unknown as {children: Array<{text: string}>})
+      .children
     expect(spans.map((s) => s.text)).toEqual([
       '(see ',
       'https://example.com',
