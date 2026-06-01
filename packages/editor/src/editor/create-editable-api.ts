@@ -35,7 +35,6 @@ import type {
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {Path} from '../types/paths'
 import type {EditorActor} from './editor-machine'
-import {getEditorSnapshot} from './editor-selector'
 
 export function createEditableAPI(
   editor: PortableTextEditorEngine,
@@ -85,20 +84,14 @@ export function createEditableAPI(
       })
     },
     isMarkActive: (mark: string): boolean => {
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editor,
-      })
+      const snapshot = editor.snapshot
 
       const activeDecorators = getActiveDecorators(snapshot)
 
       return activeDecorators.includes(mark)
     },
     marks: (): string[] => {
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editor,
-      })
+      const snapshot = editor.snapshot
 
       const activeAnnotations = getActiveAnnotationsMarks(snapshot)
       const activeDecorators = getActiveDecorators(snapshot)
@@ -212,7 +205,7 @@ export function createEditableAPI(
       }
     },
     isVoid: (element: PortableTextBlock | PortableTextChild): boolean => {
-      const schema = editorActor.getSnapshot().context.schema
+      const schema = editor.schema
       return ![schema.block.name, schema.span.name].includes(element._type)
     },
     findByPath: (
@@ -288,18 +281,12 @@ export function createEditableAPI(
     isAnnotationActive: (
       annotationType: PortableTextObject['_type'],
     ): boolean => {
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editor,
-      })
+      const snapshot = editor.snapshot
 
       return isActiveAnnotation(annotationType)(snapshot)
     },
     addAnnotation: (type, value) => {
-      const snapshotBefore = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editor,
-      })
+      const snapshotBefore = editor.snapshot
       const selectedValueBefore = getSelectedValue(snapshotBefore)
       const focusSpanBefore = getFocusSpan(snapshotBefore)
       const markDefsBefore = selectedValueBefore.flatMap((block) => {
@@ -319,10 +306,7 @@ export function createEditableAPI(
         editor,
       })
 
-      const snapshotAfter = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editor,
-      })
+      const snapshotAfter = editor.snapshot
 
       const selectedValueAfter = getSelectedValue(snapshotAfter)
       const focusBlockAfter = getFocusBlock(snapshotAfter)
@@ -432,10 +416,7 @@ export function createEditableAPI(
       })
     },
     getFragment: () => {
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        editorEngineInstance: editor,
-      })
+      const snapshot = editor.snapshot
 
       return getFragment(snapshot).map((entry) => entry.node)
     },

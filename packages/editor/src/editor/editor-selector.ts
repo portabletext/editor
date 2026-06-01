@@ -2,7 +2,6 @@ import {useSelector} from '@xstate/react'
 import type {AnyActorRef} from 'xstate'
 import type {Editor} from '../editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
-import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
 
 function defaultCompare<T>(a: T, b: T) {
@@ -55,20 +54,18 @@ export function useEditorSelector<TSelected>(
 }
 
 export function getEditorSnapshot({
-  editorActorSnapshot,
   editorEngineInstance,
 }: {
-  editorActorSnapshot: ReturnType<EditorActor['getSnapshot']>
   editorEngineInstance: PortableTextEditorEngine
 }): EditorSnapshot {
   return {
     blockIndexMap: editorEngineInstance.blockIndexMap,
     context: {
       containers: editorEngineInstance.publicContainers,
-      converters: editorActorSnapshot.context.converters,
-      keyGenerator: editorActorSnapshot.context.keyGenerator,
-      readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
-      schema: editorActorSnapshot.context.schema,
+      converters: editorEngineInstance.converters,
+      keyGenerator: editorEngineInstance.keyGenerator,
+      readOnly: editorEngineInstance.readOnly,
+      schema: editorEngineInstance.schema,
       selection: editorEngineInstance.selection,
       value: editorEngineInstance.children,
     },

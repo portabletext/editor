@@ -21,25 +21,16 @@ import {normalize} from '../engine/editor/normalize'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {
-  BlockObjectConfig,
-  InlineObjectConfig,
-  RegistrableNode,
-  SpanConfig,
-  TextBlockConfig,
-} from '../renderers/renderer.types'
-import {buildPublicContainers} from '../schema/build-public-containers'
-import {
-  resolveNestedContainer,
-  resolveTextBlockConfig,
-  type ResolvedContainers,
-} from '../schema/resolve-containers'
+import type {RegistrableNode} from '../renderers/renderer.types'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {pathsOverlap} from '../utils/util.paths-overlap'
 import type {EditorSchema} from './editor-schema'
-import {isTypeAlreadyRegistered} from './registration-helpers'
+import {
+  registerNodeOnEngine,
+  unregisterNodeOnEngine,
+} from './register-node-on-engine'
 import type {
   EditorEmittedEvent,
   MutationEvent,
@@ -196,18 +187,13 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
-      blockObjects: Map<string, BlockObjectConfig>
-      containers: ResolvedContainers
-      converters: Array<Converter>
-      inlineObjects: Map<string, InlineObjectConfig>
-      spans: Map<string, SpanConfig>
-      textBlocks: Map<string, TextBlockConfig>
+      initialConverters: Array<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
+      pendingRegistrations: Array<RegistrableNode>
       schema: EditorSchema
       initialReadOnly: boolean
-      selection: EditorSelection
       initialValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
         origin: Pick<EventPosition, 'selection'>
@@ -251,145 +237,46 @@ export const editorMachine = setup({
           : context.editorEngine
       },
     }),
-    'register': assign(({context, event}) => {
+    'register': ({context, event}) => {
       assertEvent(event, 'register')
-      const node = event.node
-      if (node.kind === 'container') {
-        if (isTypeAlreadyRegistered(context, 'container', node.type)) {
-          return {}
-        }
-        const containerConfig = resolveNestedContainer(context.schema, node)
-        if (!containerConfig) {
-          // resolveNestedContainer has already warned with chain context.
-          return {}
-        }
-        const containers = new Map(context.containers)
-        containers.set(node.type, containerConfig)
-        if (context.editorEngine) {
-          context.editorEngine.containers = containers
-          context.editorEngine.publicContainers =
-            buildPublicContainers(containers)
-          normalize(context.editorEngine, {force: true})
-          context.editorEngine.onChange()
-        }
-        return {containers}
+      if (!context.editorEngine) {
+        // Engine isn't attached yet (a child plugin's useEffect ran
+        // before EditorProvider's). Buffer the registration; it will
+        // be drained by `attach maps to editor engine` once the engine
+        // is attached.
+        context.pendingRegistrations.push(event.node)
+        return
       }
-      if (node.kind === 'textBlock') {
-        if (isTypeAlreadyRegistered(context, 'textBlock', node.type)) {
-          return {}
-        }
-        const textBlocks = new Map(context.textBlocks)
-        textBlocks.set(node.type, resolveTextBlockConfig(node))
-        if (context.editorEngine) {
-          context.editorEngine.textBlocks = textBlocks
-          context.editorEngine.onChange()
-        }
-        return {textBlocks}
-      }
-      if (node.kind === 'span') {
-        if (isTypeAlreadyRegistered(context, 'span', node.type)) {
-          return {}
-        }
-        const spans = new Map(context.spans)
-        spans.set(node.type, {span: node})
-        if (context.editorEngine) {
-          context.editorEngine.spans = spans
-          context.editorEngine.onChange()
-        }
-        return {spans}
-      }
-      if (node.kind === 'blockObject') {
-        if (isTypeAlreadyRegistered(context, 'blockObject', node.type)) {
-          return {}
-        }
-        const blockObjects = new Map(context.blockObjects)
-        blockObjects.set(node.type, {blockObject: node})
-        if (context.editorEngine) {
-          context.editorEngine.blockObjects = blockObjects
-          context.editorEngine.onChange()
-        }
-        return {blockObjects}
-      }
-      // inlineObject
-      if (isTypeAlreadyRegistered(context, 'inlineObject', node.type)) {
-        return {}
-      }
-      const inlineObjects = new Map(context.inlineObjects)
-      inlineObjects.set(node.type, {inlineObject: node})
-      if (context.editorEngine) {
-        context.editorEngine.inlineObjects = inlineObjects
-        context.editorEngine.onChange()
-      }
-      return {inlineObjects}
-    }),
-    'unregister': assign(({context, event}) => {
+      registerNodeOnEngine(context.editorEngine, event.node)
+    },
+    'unregister': ({context, event}) => {
       assertEvent(event, 'unregister')
-      const node = event.node
-      if (node.kind === 'container') {
-        const containers = new Map(context.containers)
-        containers.delete(node.type)
-        if (context.editorEngine) {
-          context.editorEngine.containers = containers
-          context.editorEngine.publicContainers =
-            buildPublicContainers(containers)
-          normalize(context.editorEngine, {force: true})
-          context.editorEngine.onChange()
+      if (!context.editorEngine) {
+        // Engine isn't attached yet; drop any matching pending
+        // registration (cleanup path on unmount-before-attach).
+        const index = context.pendingRegistrations.indexOf(event.node)
+        if (index >= 0) {
+          context.pendingRegistrations.splice(index, 1)
         }
-        return {containers}
+        return
       }
-      if (node.kind === 'textBlock') {
-        const textBlocks = new Map(context.textBlocks)
-        textBlocks.delete(node.type)
-        if (context.editorEngine) {
-          context.editorEngine.textBlocks = textBlocks
-          context.editorEngine.onChange()
-        }
-        return {textBlocks}
-      }
-      if (node.kind === 'span') {
-        const spans = new Map(context.spans)
-        spans.delete(node.type)
-        if (context.editorEngine) {
-          context.editorEngine.spans = spans
-          context.editorEngine.onChange()
-        }
-        return {spans}
-      }
-      if (node.kind === 'blockObject') {
-        const blockObjects = new Map(context.blockObjects)
-        blockObjects.delete(node.type)
-        if (context.editorEngine) {
-          context.editorEngine.blockObjects = blockObjects
-          context.editorEngine.onChange()
-        }
-        return {blockObjects}
-      }
-      // inlineObject
-      const inlineObjects = new Map(context.inlineObjects)
-      inlineObjects.delete(node.type)
-      if (context.editorEngine) {
-        context.editorEngine.inlineObjects = inlineObjects
-        context.editorEngine.onChange()
-      }
-      return {inlineObjects}
-    }),
+      unregisterNodeOnEngine(context.editorEngine, event.node)
+    },
     'attach maps to editor engine': ({context}) => {
-      // After the editor engine is constructed, mirror the actor's
-      // registration maps onto it and trigger a force-normalize so any
-      // rules that depend on the maps (e.g. unwrap-on-empty) run against
-      // the freshly attached editor.
-      if (context.editorEngine) {
-        context.editorEngine.containers = context.containers
-        context.editorEngine.publicContainers = buildPublicContainers(
-          context.containers,
-        )
-        context.editorEngine.blockObjects = context.blockObjects
-        context.editorEngine.inlineObjects = context.inlineObjects
-        context.editorEngine.spans = context.spans
-        context.editorEngine.textBlocks = context.textBlocks
-        normalize(context.editorEngine, {force: true})
-        context.editorEngine.onChange()
+      // After the editor engine is constructed, drain any registrations
+      // that arrived from child components' useEffects (which fire
+      // before EditorProvider's). Each drained registration mutates
+      // the engine and triggers normalize+onChange.
+      if (!context.editorEngine) {
+        return
       }
+      const engine = context.editorEngine
+      for (const node of context.pendingRegistrations) {
+        registerNodeOnEngine(engine, node)
+      }
+      context.pendingRegistrations.length = 0
+      normalize(engine, {force: true})
+      engine.onChange()
     },
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
@@ -399,8 +286,20 @@ export const editorMachine = setup({
       assertEvent(event, 'mutation')
       return event
     }),
-    'emit read only': emit({type: 'read only'}),
-    'emit editable': emit({type: 'editable'}),
+    'emit read only': enqueueActions(({context, enqueue}) => {
+      if (context.editorEngine) {
+        context.editorEngine.readOnly = true
+        context.editorEngine.onChange()
+      }
+      enqueue.emit({type: 'read only'})
+    }),
+    'emit editable': enqueueActions(({context, enqueue}) => {
+      if (context.editorEngine) {
+        context.editorEngine.readOnly = false
+        context.editorEngine.onChange()
+      }
+      enqueue.emit({type: 'editable'})
+    }),
     'defer event': assign({
       pendingEvents: ({context, event}) => {
         assertEvent(event, ['internal.patch', 'mutation'])
@@ -510,10 +409,10 @@ export const editorMachine = setup({
           remainingEventBehaviors: behaviors,
           event: event.behaviorEvent,
           editor: event.editor,
-          converters: context.converters,
-          keyGenerator: context.keyGenerator,
-          schema: context.schema,
-          readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
+          converters: event.editor.converters,
+          keyGenerator: event.editor.keyGenerator,
+          schema: event.editor.schema,
+          readOnly: event.editor.readOnly,
           nativeEvent: event.nativeEvent,
           sendBack: (eventSentBack) => {
             if (eventSentBack.type === 'set drag ghost') {
@@ -566,17 +465,12 @@ export const editorMachine = setup({
   context: ({input}) => ({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
-    containers: new Map(),
-    blockObjects: new Map(),
-    inlineObjects: new Map(),
-    spans: new Map(),
-    textBlocks: new Map(),
-    converters: input.converters ?? [],
+    initialConverters: input.converters ?? [],
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
+    pendingRegistrations: [],
     schema: input.schema,
-    selection: null,
     initialReadOnly: input.readOnly ?? false,
     initialValue: input.initialValue,
   }),
@@ -593,10 +487,7 @@ export const editorMachine = setup({
       actions: ['unregister'],
     },
     'update selection': {
-      actions: [
-        assign({selection: ({event}) => event.selection}),
-        emit(({event}) => ({...event, type: 'selection'})),
-      ],
+      actions: [emit(({event}) => ({...event, type: 'selection'}))],
     },
     'set drag ghost': {
       actions: assign({dragGhost: ({event}) => event.ghost}),

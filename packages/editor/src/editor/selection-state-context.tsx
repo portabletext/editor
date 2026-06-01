@@ -10,7 +10,6 @@ import {
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {EditorActorContext} from './editor-actor-context'
-import {getEditorSnapshot} from './editor-selector'
 import {getSelectionState, type SelectionState} from './get-selection-state'
 
 const emptySet = new Set<string>()
@@ -109,11 +108,7 @@ export function SelectionStateProvider({
   // (handled in the subscription effect below).
   const computeCurrent = useMemo(
     () => () => {
-      const actorSnapshot = editorActor.getSnapshot()
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: actorSnapshot,
-        editorEngineInstance: editorEngine,
-      })
+      const snapshot = editorEngine.snapshot
       const selection = snapshot.context.selection
         ? {
             anchorPath: snapshot.context.selection.anchor.path,
@@ -135,7 +130,7 @@ export function SelectionStateProvider({
         selection,
       )
     },
-    [editorActor, editorEngine],
+    [editorEngine],
   )
 
   // Seed the initial snapshot exactly once via `useState`'s lazy

@@ -4,9 +4,9 @@ import {withDOM} from '../engine/dom/plugin/with-dom'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
-import {buildPublicContainers} from '../schema/build-public-containers'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
+import {getEditorSnapshot} from './editor-selector'
 import type {RelayActor} from './relay-machine'
 
 type EditorEngineConfig = {
@@ -25,7 +25,9 @@ export function createEditorEngine(
   const placeholderBlock = createPlaceholderBlock({
     context: {
       schema: context.schema,
-      containers: buildPublicContainers(context.containers),
+      // No containers registered at engine-init time. NodePlugin
+      // registrations run later, after the engine is attached.
+      containers: new Map(),
       value: [],
       keyGenerator: context.keyGenerator,
     },
@@ -36,6 +38,8 @@ export function createEditorEngine(
 
   editor.schema = context.schema
   editor.keyGenerator = context.keyGenerator
+  editor.converters = context.initialConverters
+  editor.readOnly = context.initialReadOnly
   editor.containers = new Map()
   editor.publicContainers = new Map()
   editor.blockObjects = new Map()
@@ -79,6 +83,25 @@ export function createEditorEngine(
       listIndexMap: editorEngine.listIndexMap,
     },
   )
+
+  // Initialize the stored snapshot synchronously so the engine satisfies the
+  // `Subscribable<EditorSnapshot>` contract from first read. Refreshed on
+  // every editor-actor notification below.
+  editorEngine.snapshot = getEditorSnapshot({
+    editorEngineInstance: editorEngine,
+  })
+
+  config.subscriptions.push(() => {
+    const subscription = config.editorActor.subscribe(() => {
+      editorEngine.snapshot = getEditorSnapshot({
+        editorEngineInstance: editorEngine,
+      })
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  })
 
   return editorEngine
 }

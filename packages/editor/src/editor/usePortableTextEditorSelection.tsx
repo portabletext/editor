@@ -1,4 +1,5 @@
 import {startTransition, useContext, useEffect, useState} from 'react'
+import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import type {EditorSelection} from '../types/editor'
 import {EditorActorContext} from './editor-actor-context'
 
@@ -9,8 +10,9 @@ import {EditorActorContext} from './editor-actor-context'
  */
 export const usePortableTextEditorSelection = (): EditorSelection => {
   const editorActor = useContext(EditorActorContext)
+  const editorEngine = useEngineStatic()
   const [selection, setSelection] = useState<EditorSelection>(
-    editorActor.getSnapshot().context.selection,
+    editorEngine.selection,
   )
 
   useEffect(() => {

@@ -136,11 +136,11 @@ export const PortableTextEditable = forwardRef<
 
   const editorActor = useContext(EditorActorContext)
   const relayActor = useContext(RelayActorContext)
-  const schema = editorActor.getSnapshot().context.schema
+  const editorEngine = useEngine()
+  const schema = editorEngine.schema
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
-  const editorEngine = useEngine()
   const validateSelectionActor = useActorRef(validateSelectionMachine, {
     input: {
       editorEngine,
@@ -351,7 +351,7 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = editorActor.getSnapshot().context.selection
+        const selection = editorEngine.selection
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -407,7 +407,7 @@ export const PortableTextEditable = forwardRef<
                 'No result from custom paste handler, pasting normally',
               )
 
-              const selection = editorActor.getSnapshot().context.selection
+              const selection = editorEngine.selection
               const position = selection ? {selection} : undefined
 
               if (!position) {
@@ -433,9 +433,8 @@ export const PortableTextEditable = forwardRef<
                 behaviorEvent: {
                   type: 'insert.blocks',
                   blocks: parseBlocks({
-                    keyGenerator:
-                      editorActor.getSnapshot().context.keyGenerator,
-                    schema: editorActor.getSnapshot().context.schema,
+                    keyGenerator: editorEngine.keyGenerator,
+                    schema: editorEngine.schema,
                     blocks: result.insert,
                     options: {
                       normalize: false,
@@ -467,7 +466,7 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
         event.stopPropagation()
 
-        const selection = editorActor.getSnapshot().context.selection
+        const selection = editorEngine.selection
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -506,17 +505,14 @@ export const PortableTextEditable = forwardRef<
         if (
           !editorEngine.selection &&
           editorEngine.children.length === 1 &&
-          isEmptyTextBlock(
-            editorActor.getSnapshot().context,
-            editorEngine.children.at(0),
-          )
+          isEmptyTextBlock(editorEngine, editorEngine.children.at(0))
         ) {
           editorEngine.select(start(editorEngine, []))
           editorEngine.onChange()
         }
       }
     },
-    [editorActor, onFocus, relayActor, editorEngine],
+    [onFocus, relayActor, editorEngine],
   )
 
   const handleClick = useCallback(
