@@ -388,5 +388,18 @@ function matchLink(source: string, start: number): LinkMatch | null {
     while (source[j] === ' ' || source[j] === '\t') j += 1
   }
   if (source[j] !== ')') return null
-  return {label, href, title, consumed: j - start + 1}
+  return {
+    label: unescapeMarkdown(label),
+    href,
+    title: title === undefined ? undefined : unescapeMarkdown(title),
+    consumed: j - start + 1,
+  }
+}
+
+/**
+ * Unescape standard markdown escapes (X → X) for ASCII punctuation.
+ * Used on link/image labels and titles before exposing them as alt/title.
+ */
+function unescapeMarkdown(text: string): string {
+  return text.replace(/\\([!-/:-@\[-`{-~])/g, '$1')
 }
