@@ -1,7 +1,7 @@
 import type {Path} from '../engine/interfaces/path'
-import {isObjectNode} from '../engine/node/is-object-node'
-import {getAncestors} from '../node-traversal/get-ancestors'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getAncestors} from '../traversal/get-ancestors'
+import {isObject} from '../traversal/is-object'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {RegisteredContainer} from './container-types'
 import {resolveContainerAt} from './resolve-container-at'
 
@@ -23,7 +23,7 @@ export function descendToParent(
 ): {parent: RegisteredContainer; parentPath: Path} | undefined {
   const ancestors = getAncestors(snapshot, path)
   for (const ancestor of ancestors) {
-    if (!isObjectNode({schema: snapshot.context.schema}, ancestor.node)) {
+    if (!isObject(snapshot, ancestor.node)) {
       continue
     }
     const resolved = resolveContainerAt(

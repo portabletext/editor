@@ -1,4 +1,4 @@
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'

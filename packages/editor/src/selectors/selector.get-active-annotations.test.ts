@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import {resolveTestbedContainers} from '../node-traversal/node-traversal-testbed'
+import {resolveTestbedContainers} from '../traversal/node-traversal-testbed'
 import {getActiveAnnotations} from './selector.get-active-annotations'
 
 test('getActiveAnnotations: respects sub-schema annotations inside a container', () => {

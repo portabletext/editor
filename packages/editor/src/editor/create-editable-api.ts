@@ -14,11 +14,6 @@ import {rangeEnd} from '../engine/range/range-end'
 import {rangeIncludes} from '../engine/range/range-includes'
 import {rangeStart} from '../engine/range/range-start'
 import {isListItemActive, isStyleActive} from '../internal-utils/engine-utils'
-import {getLeaf} from '../node-traversal/get-leaf'
-import {getNode} from '../node-traversal/get-node'
-import {getNodes} from '../node-traversal/get-nodes'
-import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {getBlock, isBlock} from '../node-traversal/is-block'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -26,7 +21,12 @@ import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFragment} from '../selectors/selector.get-fragment'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {getLeaf} from '../traversal/get-leaf'
+import {getNode} from '../traversal/get-node'
+import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {getTextBlock} from '../traversal/get-text-block'
+import {getBlock, isBlock} from '../traversal/is-block'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -257,7 +257,7 @@ export function createEditableAPI(
             node.marks.length > 0,
         })
         for (const {node: span, path: spanPath} of spans) {
-          const blockEntry = getTextBlockNode(editor, parentPath(spanPath))
+          const blockEntry = getTextBlock(editor, parentPath(spanPath))
           if (!blockEntry) {
             continue
           }

@@ -18,10 +18,10 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
-import {getNode} from '../node-traversal/get-node'
-import {getValue} from '../node-traversal/get-value'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
+import {getValue} from './get-value'
 import {isEqualToEmptyEditor} from './values'
 
 /**

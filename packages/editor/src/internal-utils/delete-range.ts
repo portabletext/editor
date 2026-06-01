@@ -5,8 +5,10 @@ import type {Range} from '../engine/interfaces/range'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeEdges} from '../engine/range/range-edges'
-import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
-import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
+import {getAncestor} from '../traversal/get-ancestor'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {getNode} from '../traversal/get-node'
+import {isLeafObject} from '../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDelete, type SelectionMode} from './delete-internal'
 
@@ -78,7 +80,15 @@ function resolveExplicitRange(
   let clampedStart = start
   let clampedEnd = end
 
-  const startObjectNode = getHighestObjectNode(editor, start.path)
+  const startEntry = getNode(editor, start.path)
+  const startObjectNode =
+    startEntry && isLeafObject(editor, startEntry.node, start.path)
+      ? startEntry
+      : getAncestor(editor, start.path, {
+          match: (node, ancestorPath) =>
+            isLeafObject(editor, node, ancestorPath),
+          mode: 'highest',
+        })
   if (startObjectNode && startBlock) {
     const beforePoint = before(editor, start)
     if (beforePoint && isAncestorPath(startBlock.path, beforePoint.path)) {
@@ -86,7 +96,15 @@ function resolveExplicitRange(
     }
   }
 
-  const endObjectNode = getHighestObjectNode(editor, end.path)
+  const endEntry = getNode(editor, end.path)
+  const endObjectNode =
+    endEntry && isLeafObject(editor, endEntry.node, end.path)
+      ? endEntry
+      : getAncestor(editor, end.path, {
+          match: (node, ancestorPath) =>
+            isLeafObject(editor, node, ancestorPath),
+          mode: 'highest',
+        })
   if (endObjectNode && endBlock) {
     const afterPoint = after(editor, end)
     if (afterPoint && isAncestorPath(endBlock.path, afterPoint.path)) {

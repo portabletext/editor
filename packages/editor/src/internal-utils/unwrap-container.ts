@@ -1,7 +1,7 @@
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
-import {getChildren} from '../node-traversal/get-children'
+import {getChildren} from '../traversal/get-children'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {getUnwrapTarget} from './get-unwrap-target'
 

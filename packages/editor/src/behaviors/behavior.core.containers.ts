@@ -1,9 +1,6 @@
 import type {Path} from '../engine/interfaces/path'
 import {pathEquals} from '../engine/path/path-equals'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
-import {getAncestor} from '../node-traversal/get-ancestor'
-import {getSibling} from '../node-traversal/get-sibling'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {getFirstBlock} from '../selectors/selector.get-first-block'
@@ -12,6 +9,9 @@ import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {getAncestor} from '../traversal/get-ancestor'
+import {getSibling} from '../traversal/get-sibling'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -63,9 +63,9 @@ function isAtContainerDeadEnd(
     return false
   }
 
-  const container = getAncestor(snapshot, focusTextBlock.path, (node, path) =>
-    isEditableContainer(snapshot, node, path),
-  )
+  const container = getAncestor(snapshot, focusTextBlock.path, {
+    match: (node, path) => isEditableContainer(snapshot, node, path),
+  })
 
   if (!container) {
     return false
@@ -87,11 +87,9 @@ function isAtContainerDeadEnd(
     return false
   }
 
-  const sibling = getSibling(
-    snapshot,
-    container.path,
-    edge === 'end' ? 'next' : 'previous',
-  )
+  const sibling = getSibling(snapshot, container.path, {
+    direction: edge === 'end' ? 'next' : 'previous',
+  })
 
   return sibling === undefined
 }
@@ -124,7 +122,9 @@ const breakingOutOfContainer = defineBehavior({
       return false
     }
 
-    const previousBlock = getSibling(snapshot, focusTextBlock.path, 'previous')
+    const previousBlock = getSibling(snapshot, focusTextBlock.path, {
+      direction: 'previous',
+    })
     if (
       !previousBlock ||
       !isEmptyTextBlock(snapshot.context, previousBlock.node)
@@ -170,18 +170,20 @@ function getEscapeTarget(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Path | undefined {
-  return getAncestor(snapshot, path, (node, ancestorPath) => {
-    if (!isEditableContainer(snapshot, node, ancestorPath)) {
-      return false
-    }
-    const enclosing = getEnclosingContainer(snapshot, ancestorPath)
-    if (!enclosing) {
-      // The container is at root level; the editor root accepts text blocks.
-      return true
-    }
-    return enclosing.of.some(
-      (member) => member.type === snapshot.context.schema.block.name,
-    )
+  return getAncestor(snapshot, path, {
+    match: (node, ancestorPath) => {
+      if (!isEditableContainer(snapshot, node, ancestorPath)) {
+        return false
+      }
+      const enclosing = getEnclosingContainer(snapshot, ancestorPath)
+      if (!enclosing) {
+        // The container is at root level; the editor root accepts text blocks.
+        return true
+      }
+      return enclosing.of.some(
+        (member) => member.type === snapshot.context.schema.block.name,
+      )
+    },
   })?.path
 }
 

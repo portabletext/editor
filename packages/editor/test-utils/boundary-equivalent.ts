@@ -1,9 +1,9 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../src/editor/editor-schema'
 import type {Node} from '../src/engine/interfaces/node'
-import {getSibling} from '../src/node-traversal/get-sibling'
-import {getSpanNode} from '../src/node-traversal/get-span-node'
 import type {Containers} from '../src/schema/resolve-containers'
+import {getSibling} from '../src/traversal/get-sibling'
+import {getSpan} from '../src/traversal/get-span'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {isEqualSelectionPoints} from '../src/utils/util.is-equal-selection-points'
 
@@ -70,7 +70,7 @@ function pointVariants(
   context: Context,
   point: EditorSelectionPoint,
 ): Array<EditorSelectionPoint> {
-  const span = getSpanNode(context, point.path)
+  const span = getSpan(context, point.path)
 
   if (!span) {
     return [point]
@@ -79,14 +79,14 @@ function pointVariants(
   const variants: Array<EditorSelectionPoint> = [point]
 
   if (point.offset === 0) {
-    const previous = getSibling(context, span.path, 'previous')
+    const previous = getSibling(context, span.path, {direction: 'previous'})
     if (previous && isSpan({schema: context.context.schema}, previous.node)) {
       variants.push({path: previous.path, offset: previous.node.text.length})
     }
   }
 
   if (point.offset === span.node.text.length) {
-    const next = getSibling(context, span.path, 'next')
+    const next = getSibling(context, span.path, {direction: 'next'})
     if (next && isSpan({schema: context.context.schema}, next.node)) {
       variants.push({path: next.path, offset: 0})
     }

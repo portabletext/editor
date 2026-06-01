@@ -3,6 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -17,10 +18,11 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
-import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
-import {getNode} from '../../../node-traversal/get-node'
-import {getText} from '../../../node-traversal/get-text'
-import {getVoidAncestor} from '../../../node-traversal/get-void-ancestor'
+import {getAncestor} from '../../../traversal/get-ancestor'
+import {getNode} from '../../../traversal/get-node'
+import {getParent} from '../../../traversal/get-parent'
+import {getText} from '../../../traversal/get-text'
+import {isLeafObject} from '../../../traversal/is-leaf-object'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
@@ -60,7 +62,6 @@ import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
 import {isTextBlockNode} from '../../node/is-text-block-node'
-import {isVoidNode} from '../../node/is-void-node'
 import {pathEquals} from '../../path/path-equals'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
@@ -662,7 +663,9 @@ export const Editable = forwardRef(
                 window?.getComputedStyle(node.parentElement)?.whiteSpace ===
                   'pre'
               ) {
-                const block = getAncestorTextBlock(editor, anchor.path)
+                const block = getParent(editor, anchor.path, {
+                  match: (node) => isTextBlock({schema: editor.schema}, node),
+                })
 
                 if (block) {
                   const blockText = getText(editor, block.path)
@@ -1176,7 +1179,7 @@ export const Editable = forwardRef(
                           {schema: editor.schema},
                           relatedNode,
                         ) ||
-                          isVoidNode(editor, relatedNode, relatedPath))
+                          isLeafObject(editor, relatedNode, relatedPath))
                       ) {
                         return
                       }
@@ -1228,7 +1231,10 @@ export const Editable = forwardRef(
                       let blockPath = path
 
                       if (!isTextBlockNode({schema: editor.schema}, node)) {
-                        const block = getAncestorTextBlock(editor, path)
+                        const block = getParent(editor, path, {
+                          match: (node) =>
+                            isTextBlock({schema: editor.schema}, node),
+                        })
 
                         blockPath = block?.path ?? path.slice(0, 1)
                       }
@@ -1247,14 +1253,20 @@ export const Editable = forwardRef(
                     const startEntry = getNode(editor, start.path)
                     const startVoidNode =
                       startEntry &&
-                      isVoidNode(editor, startEntry.node, start.path)
+                      isLeafObject(editor, startEntry.node, start.path)
                         ? startEntry
-                        : getVoidAncestor(editor, start.path)
+                        : getAncestor(editor, start.path, {
+                            match: (node, ancestorPath) =>
+                              isLeafObject(editor, node, ancestorPath),
+                          })
                     const endEntry = getNode(editor, end.path)
                     const endVoidNode =
-                      endEntry && isVoidNode(editor, endEntry.node, end.path)
+                      endEntry && isLeafObject(editor, endEntry.node, end.path)
                         ? endEntry
-                        : getVoidAncestor(editor, end.path)
+                        : getAncestor(editor, end.path, {
+                            match: (node, ancestorPath) =>
+                              isLeafObject(editor, node, ancestorPath),
+                          })
 
                     if (
                       startVoidNode &&
@@ -1727,7 +1739,7 @@ export const Editable = forwardRef(
 
                           if (
                             currentNodeEntry &&
-                            isVoidNode(
+                            isLeafObject(
                               editor,
                               currentNodeEntry.node,
                               selection.anchor.path,

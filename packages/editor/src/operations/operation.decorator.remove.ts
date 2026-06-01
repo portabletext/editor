@@ -13,10 +13,9 @@ import {rangeStart} from '../engine/range/range-start'
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNode} from '../node-traversal/get-node'
-import {getNodes} from '../node-traversal/get-nodes'
-import {isLeaf} from '../node-traversal/is-leaf'
+import {getNode} from '../traversal/get-node'
+import {getNodes} from '../traversal/get-nodes'
+import {getParent} from '../traversal/get-parent'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -39,11 +38,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
 
     withoutNormalizing(editor, () => {
       // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
-      const decoratorLeafEntry = getNode(editor, at!.anchor.path)
-      const decoratorLeaf =
-        decoratorLeafEntry && isLeaf(editor, decoratorLeafEntry.path)
-          ? decoratorLeafEntry.node
-          : undefined
+      const decoratorLeaf = getNode(editor, at!.anchor.path)?.node
       if (
         !(
           decoratorLeaf &&
@@ -100,7 +95,9 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       }
     }) // end withoutNormalizing
   } else {
-    const textBlockEntry = getAncestorTextBlock(snapshot, at.focus.path)
+    const textBlockEntry = getParent(snapshot, at.focus.path, {
+      match: (node) => isTextBlock({schema: editor.schema}, node),
+    })
     if (!textBlockEntry) {
       return
     }

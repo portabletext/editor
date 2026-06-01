@@ -7,7 +7,9 @@ import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import type {TextUnit} from '../engine/types/types'
-import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
+import {getAncestor} from '../traversal/get-ancestor'
+import {getNode} from '../traversal/get-node'
+import {isLeafObject} from '../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDelete, type SelectionMode} from './delete-internal'
 
@@ -48,7 +50,15 @@ export function deleteCollapsed(
   options: DeleteCollapsedOptions,
 ): void {
   withoutNormalizing(editor, () => {
-    const furthestObjectNode = getHighestObjectNode(editor, point.path)
+    const pointEntry = getNode(editor, point.path)
+    const furthestObjectNode =
+      pointEntry && isLeafObject(editor, pointEntry.node, point.path)
+        ? pointEntry
+        : getAncestor(editor, point.path, {
+            match: (node, ancestorPath) =>
+              isLeafObject(editor, node, ancestorPath),
+            mode: 'highest',
+          })
     if (furthestObjectNode) {
       editor.apply({type: 'unset', path: furthestObjectNode.path})
       return

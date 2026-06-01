@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getSibling} from '../node-traversal/get-sibling'
-import {getBlock} from '../node-traversal/is-block'
+import {getSibling} from '../traversal/get-sibling'
+import {getBlock} from '../traversal/is-block'
 import type {BlockPath} from '../types/paths'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
@@ -23,7 +23,9 @@ export const getPreviousBlock: EditorSelector<
     return undefined
   }
 
-  const previous = getSibling(snapshot, selectionStartBlock.path, 'previous')
+  const previous = getSibling(snapshot, selectionStartBlock.path, {
+    direction: 'previous',
+  })
 
   if (!previous) {
     return undefined

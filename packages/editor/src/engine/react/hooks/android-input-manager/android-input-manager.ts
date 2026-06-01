@@ -1,8 +1,9 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
-import {getNode} from '../../../../node-traversal/get-node'
-import {getNodes} from '../../../../node-traversal/get-nodes'
-import {getSpanNode} from '../../../../node-traversal/get-span-node'
+import {getNode} from '../../../../traversal/get-node'
+import {getNodes} from '../../../../traversal/get-nodes'
+import {getSpan} from '../../../../traversal/get-span'
+import {isLeafObject} from '../../../../traversal/is-leaf-object'
 import {DOMEditor} from '../../../dom/plugin/dom-editor'
 import {
   applyStringDiff,
@@ -23,7 +24,6 @@ import type {Editor} from '../../../interfaces/editor'
 import type {Path} from '../../../interfaces/path'
 import type {Point} from '../../../interfaces/point'
 import type {Range} from '../../../interfaces/range'
-import {isVoidNode} from '../../../node/is-void-node'
 import {pathEquals} from '../../../path/path-equals'
 import {isPoint} from '../../../point/is-point'
 import {isCollapsedRange} from '../../../range/is-collapsed-range'
@@ -267,7 +267,7 @@ export function createAndroidInputManager({
 
     const pendingDiffs = editor.pendingDiffs
 
-    const targetEntry = getSpanNode(editor, path)
+    const targetEntry = getSpan(editor, path)
 
     if (!targetEntry) {
       return
@@ -384,7 +384,7 @@ export function createAndroidInputManager({
       const leafResult =
         leafNodeEntry &&
         (isSpan({schema: editor.schema}, leafNodeEntry.node) ||
-          isVoidNode(editor, leafNodeEntry.node, start.path))
+          isLeafObject(editor, leafNodeEntry.node, start.path))
           ? leafNodeEntry
           : undefined
 
@@ -517,7 +517,7 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && isCollapsedRange(targetRange)) {
-          const targetNodeEntry = getSpanNode(editor, anchor.path)
+          const targetNodeEntry = getSpan(editor, anchor.path)
 
           if (
             targetNodeEntry &&

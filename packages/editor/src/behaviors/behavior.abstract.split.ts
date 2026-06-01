@@ -1,9 +1,10 @@
+import {isTextBlock} from '@portabletext/schema'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {isEqualSelectionPoints} from '../utils'
 import {parseBlock} from '../utils/parse-blocks'
@@ -55,8 +56,12 @@ export const abstractSplitBehaviors = [
         return false
       }
 
-      const startBlock = getAncestorTextBlock(snapshot, startPoint.path)
-      const endBlock = getAncestorTextBlock(snapshot, endPoint.path)
+      const startBlock = getParent(snapshot, startPoint.path, {
+        match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+      })
+      const endBlock = getParent(snapshot, endPoint.path, {
+        match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+      })
 
       if (!startBlock || !endBlock) {
         return false

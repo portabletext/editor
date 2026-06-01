@@ -9,7 +9,6 @@ import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
-import {isInline} from '../node-traversal/is-inline'
 import {serializePath} from '../paths/serialize-path'
 import type {
   BlockObjectConfig,
@@ -17,6 +16,7 @@ import type {
   InlineObjectConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
+import {isInline} from '../traversal/is-inline'
 import type {EditorSchema} from './editor-schema'
 import {
   findBlockPositionalOverride,

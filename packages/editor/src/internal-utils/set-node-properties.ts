@@ -1,5 +1,5 @@
 import type {Path} from '../engine/interfaces/path'
-import {getNode} from '../node-traversal/get-node'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 

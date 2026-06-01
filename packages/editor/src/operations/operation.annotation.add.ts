@@ -15,10 +15,9 @@ import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getChildren} from '../node-traversal/get-children'
-import {getNode} from '../node-traversal/get-node'
-import {getNodes} from '../node-traversal/get-nodes'
-import {isLeaf} from '../node-traversal/is-leaf'
+import {getChildren} from '../traversal/get-children'
+import {getNode} from '../traversal/get-node'
+import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -127,11 +126,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       // Split text nodes at range boundaries
       const splitRange = at ?? editor.selection
       if (splitRange && isRange(splitRange)) {
-        const splitLeafEntry = getNode(editor, splitRange.anchor.path)
-        const splitLeaf =
-          splitLeafEntry && isLeaf(editor, splitLeafEntry.path)
-            ? splitLeafEntry.node
-            : undefined
+        const splitLeaf = getNode(editor, splitRange.anchor.path)?.node
         if (
           !(
             splitLeaf &&

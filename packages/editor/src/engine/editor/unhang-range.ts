@@ -1,12 +1,12 @@
-import {isSpan} from '@portabletext/schema'
-import {getAncestorTextBlock} from '../../node-traversal/get-ancestor-text-block'
-import {getNodes} from '../../node-traversal/get-nodes'
-import {getSibling} from '../../node-traversal/get-sibling'
-import type {TraversalSnapshot} from '../../node-traversal/traversal-snapshot'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isEditableContainer} from '../../schema/is-editable-container'
+import {getNodes} from '../../traversal/get-nodes'
+import {getParent} from '../../traversal/get-parent'
+import {getSibling} from '../../traversal/get-sibling'
+import {isLeafObject} from '../../traversal/is-leaf-object'
+import type {TraversalSnapshot} from '../../traversal/traversal-snapshot'
 import type {Path} from '../interfaces/path'
 import type {Range} from '../interfaces/range'
-import {isVoidNode} from '../node/is-void-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {isBeforePath} from '../path/is-before-path'
 import {isCollapsedRange} from '../range/is-collapsed-range'
@@ -35,12 +35,14 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
     start.offset !== 0 ||
     end.offset !== 0 ||
     isCollapsedRange(range) ||
-    getSibling(snapshot, end.path, 'previous') !== undefined
+    getSibling(snapshot, end.path, {direction: 'previous'}) !== undefined
   ) {
     return range
   }
 
-  const endBlock = getAncestorTextBlock(snapshot, end.path)
+  const endBlock = getParent(snapshot, end.path, {
+    match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+  })
   const blockPath: Path = endBlock ? endBlock.path : []
 
   // If a void block or editable container sits strictly between the
@@ -51,7 +53,7 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
     from: start.path,
     to: end.path,
     match: (candidate, candidatePath) =>
-      isVoidNode(snapshot, candidate, candidatePath) ||
+      isLeafObject(snapshot, candidate, candidatePath) ||
       isEditableContainer(snapshot, candidate, candidatePath),
   })) {
     if (!isAncestorPath(path, start.path) && !isAncestorPath(path, end.path)) {

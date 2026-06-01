@@ -1,6 +1,6 @@
 import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getParent} from '../traversal/get-parent'
 import {isKeyedSegment} from './util.is-keyed-segment'
 import {isSelectionCollapsed} from './util.is-selection-collapsed'
 
@@ -28,7 +28,9 @@ export function isAtTheBeginningOfBlock({
   // from the last keyed segment of the focus path; the field name (`children`,
   // or whatever the container declares) is irrelevant.
   const focusPath = snapshot.context.selection.focus.path
-  const ancestorTextBlock = getAncestorTextBlock(snapshot, focusPath)
+  const ancestorTextBlock = getParent(snapshot, focusPath, {
+    match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+  })
 
   if (!ancestorTextBlock || ancestorTextBlock.node._key !== block._key) {
     return false

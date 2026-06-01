@@ -1,11 +1,11 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {getNodeChildren} from '../node-traversal/get-children'
 import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {getNodeChildren} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**

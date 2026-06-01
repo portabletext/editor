@@ -23,12 +23,12 @@ import {deleteRange} from '../internal-utils/delete-range'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toEngineBlock} from '../internal-utils/values'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
-import {getSibling} from '../node-traversal/get-sibling'
-import {getSpanNode} from '../node-traversal/get-span-node'
-import {getTextBlockNode} from '../node-traversal/get-text-block-node'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {getSibling} from '../traversal/get-sibling'
+import {getSpan} from '../traversal/get-span'
+import {getTextBlock} from '../traversal/get-text-block'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {parseBlock} from '../utils/parse-blocks'
@@ -424,14 +424,14 @@ function splitBlockAndInsert(
   const blockPathRef = pathRef(editor, blockPath, {affinity: 'backward'})
 
   if (splitAt.offset > 0) {
-    const spanEntry = getSpanNode(editor, splitAt.path)
+    const spanEntry = getSpan(editor, splitAt.path)
     if (spanEntry && splitAt.offset < spanEntry.node.text.length) {
       applySplitNode(editor, splitAt.path, splitAt.offset)
     }
   }
 
   const currentBlockPath = blockPathRef.current ?? blockPath
-  const blockEntry = getTextBlockNode(editor, currentBlockPath)
+  const blockEntry = getTextBlock(editor, currentBlockPath)
 
   if (blockEntry) {
     const childSegment = splitAt.path[blockPath.length + 1]
@@ -466,7 +466,7 @@ function mergeTextBlockFragment(args: {
 }): void {
   const {editor, context, block, at, endBlockPath, select, wasCrossBlock} = args
 
-  const endBlockEntry = getTextBlockNode(editor, endBlockPath)
+  const endBlockEntry = getTextBlock(editor, endBlockPath)
 
   if (!endBlockEntry) {
     return
@@ -606,7 +606,9 @@ function executeDeleteThenInsert(args: {
     return
   }
 
-  const resolvedBlock = getAncestorTextBlock(editor, collapsedPoint.path)
+  const resolvedBlock = getParent(editor, collapsedPoint.path, {
+    match: (node) => isTextBlock({schema: editor.schema}, node),
+  })
   const blockIsText = isTextBlock({schema: editor.schema}, block)
 
   // For `select: 'none'`, the desired restored selection is the collapsed
@@ -687,7 +689,7 @@ function removeAdjacentEmptyTextBlock(args: {
   const {editor, context, insertedPath} = args
 
   for (const direction of ['next', 'previous'] as const) {
-    const sibling = getSibling(editor, insertedPath, direction)
+    const sibling = getSibling(editor, insertedPath, {direction})
     if (sibling && isEmptyTextBlock(context, sibling.node)) {
       editor.apply({type: 'unset', path: sibling.path})
       return
@@ -799,7 +801,7 @@ function insertFragmentChildren(
   }
 
   if (at.offset > 0) {
-    const textNodeEntry = getSpanNode(editor, at.path)
+    const textNodeEntry = getSpan(editor, at.path)
 
     if (textNodeEntry) {
       applySplitNode(editor, at.path, at.offset)
@@ -811,7 +813,7 @@ function insertFragmentChildren(
 
   if (at.offset === 0 && block.children.length === 1) {
     const firstChild = block.children[0]!
-    const existingEntry = getSpanNode(editor, at.path)
+    const existingEntry = getSpan(editor, at.path)
 
     if (existingEntry && isSpan({schema: editor.schema}, firstChild)) {
       if (firstChild.text.length > 0) {

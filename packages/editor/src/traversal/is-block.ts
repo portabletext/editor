@@ -48,12 +48,9 @@ export function getBlock(
     return undefined
   }
 
-  // Narrow the type: a block is never a span (spans always have a text block
-  // parent, so isBlock returns false for them).
   if (isSpanNode({schema: snapshot.context.schema}, entry.node)) {
     return undefined
   }
 
-  // Node minus PortableTextSpan = PortableTextTextBlock | PortableTextObject = PortableTextBlock
   return {node: entry.node, path: entry.path}
 }

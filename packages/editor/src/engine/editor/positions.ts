@@ -1,11 +1,11 @@
 import {isSpan} from '@portabletext/schema'
-import {getNodes} from '../../node-traversal/get-nodes'
 import {isEditableContainer} from '../../schema/is-editable-container'
+import {getNodes} from '../../traversal/get-nodes'
+import {isLeafObject} from '../../traversal/is-leaf-object'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
 import {isTextBlockNode} from '../node/is-text-block-node'
-import {isVoidNode} from '../node/is-void-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {pathEquals} from '../path/path-equals'
 import {rangeEdges} from '../range/range-edges'
@@ -117,7 +117,7 @@ export function* positions(
       }
     }
 
-    if (isVoidNode(editor, node, nodePath)) {
+    if (isLeafObject(editor, node, nodePath)) {
       yield {path: nodePath, offset: 0}
       continue
     }

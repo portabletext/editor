@@ -7,8 +7,8 @@ import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {pathEquals} from '../engine/path/path-equals'
 import {isBackwardRange} from '../engine/range/is-backward-range'
 import {isRange} from '../engine/range/is-range'
-import {getNode} from '../node-traversal/get-node'
-import {getSibling} from '../node-traversal/get-sibling'
+import {getNode} from '../traversal/get-node'
+import {getSibling} from '../traversal/get-sibling'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
@@ -36,7 +36,7 @@ export function applyMergeNode(
   }
 
   const node = nodeEntry.node
-  const prevSibling = getSibling(editor, path, 'previous')
+  const prevSibling = getSibling(editor, path, {direction: 'previous'})
 
   if (!prevSibling) {
     return

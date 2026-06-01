@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -15,12 +16,15 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Walks from root to the target in a single pass collecting each ancestor
  * as it goes.
  *
+ * Every ancestor is a `PortableTextBlock` — only text blocks and object
+ * nodes can contain children.
+ *
  * @beta
  */
 export function getAncestors(
   snapshot: TraversalSnapshot,
   path: Path,
-): Array<{node: Node; path: Path}> {
+): Array<{node: PortableTextBlock; path: Path}> {
   // Collect keyed-segment indices to know where each ancestor's path ends.
   const keyedIndices: Array<number> = []
   for (let i = 0; i < path.length; i++) {
@@ -41,7 +45,7 @@ export function getAncestors(
     | import('../schema/resolve-containers').RegisteredContainer
     | undefined
 
-  const ancestorsByDepth: Array<{node: Node; path: Path}> = []
+  const ancestorsByDepth: Array<{node: PortableTextBlock; path: Path}> = []
   const resolvedPath: Path = []
 
   // Descend once. We walk only as far as the second-to-last keyed segment;
@@ -100,8 +104,10 @@ export function getAncestors(
       return []
     }
 
+    // An ancestor has children, so it is never a span. The narrowing
+    // from `Node` to `PortableTextBlock` (text block | object) is safe.
     ancestorsByDepth.push({
-      node,
+      node: node as PortableTextBlock,
       path: resolvedPath.slice(),
     })
 

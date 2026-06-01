@@ -1,6 +1,6 @@
+import {isTextBlock} from '@portabletext/schema'
 import {range as editorRange} from '../engine/editor/range'
 import {unhangRange} from '../engine/editor/unhang-range'
-import {isObjectNode} from '../engine/node/is-object-node'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {commonPath} from '../engine/path/common-path'
 import {pathEquals} from '../engine/path/path-equals'
@@ -12,13 +12,15 @@ import {deleteRange} from '../internal-utils/delete-range'
 import {findCurrentLineRange} from '../internal-utils/find-current-line-range'
 import {unsetMatchedNodesInRange} from '../internal-utils/unset-matched-in-range'
 import {unwrapContainer} from '../internal-utils/unwrap-container'
-import {getAncestor} from '../node-traversal/get-ancestor'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNode} from '../node-traversal/get-node'
-import {isBlock} from '../node-traversal/is-block'
-import {isEmptyContainer} from '../node-traversal/is-empty-container'
-import {isInline} from '../node-traversal/is-inline'
 import {isEditableContainer} from '../schema/is-editable-container'
+import {getAncestor} from '../traversal/get-ancestor'
+import {getChildren} from '../traversal/get-children'
+import {getNode} from '../traversal/get-node'
+import {getParent} from '../traversal/get-parent'
+import {isBlock} from '../traversal/is-block'
+import {isInline} from '../traversal/is-inline'
+import {isObject} from '../traversal/is-object'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import type {OperationImplementation} from './operation.types'
 
 export const deleteOperationImplementation: OperationImplementation<
@@ -39,7 +41,7 @@ export const deleteOperationImplementation: OperationImplementation<
       operation.editor,
       start.path,
       end.path,
-      (_node, path) => isBlock(operation.editor, path),
+      (_, path) => isBlock(operation.editor, path),
     )
     return
   }
@@ -49,14 +51,16 @@ export const deleteOperationImplementation: OperationImplementation<
       operation.editor,
       start.path,
       end.path,
-      (_node, path) => isInline(operation.editor, path),
+      (_, path) => isInline(operation.editor, path),
     )
     return
   }
 
   if (operation.direction === 'backward' && operation.unit === 'line') {
     const parentBlockEntry = pathEquals(at.anchor.path, at.focus.path)
-      ? getAncestorTextBlock(operation.editor, at.anchor.path)
+      ? getParent(operation.editor, at.anchor.path, {
+          match: (node) => isTextBlock({schema: operation.editor.schema}, node),
+        })
       : (() => {
           const fromPath = commonPath(at.anchor.path, at.focus.path)
           const nodeEntry = getNode(operation.editor, fromPath)
@@ -66,7 +70,10 @@ export const deleteOperationImplementation: OperationImplementation<
           ) {
             return nodeEntry
           }
-          return getAncestorTextBlock(operation.editor, fromPath)
+          return getParent(operation.editor, fromPath, {
+            match: (node) =>
+              isTextBlock({schema: operation.editor.schema}, node),
+          })
         })()
 
     if (parentBlockEntry) {
@@ -96,16 +103,20 @@ export const deleteOperationImplementation: OperationImplementation<
     : 'collapse-to-start'
 
   if (isCollapsedRange(at)) {
-    const enclosingContainer = getAncestor(
-      operation.editor,
-      at.anchor.path,
-      (node, path) =>
-        isObjectNode(operation.editor, node) &&
+    const enclosingContainer = getAncestor(operation.editor, at.anchor.path, {
+      match: (node, path) =>
+        isObject(operation.editor, node) &&
         isEditableContainer(operation.editor, node, path),
-    )
+    })
+    const enclosingContainerChildren = enclosingContainer
+      ? getChildren(operation.editor, enclosingContainer.path)
+      : undefined
+    const [firstChild] = enclosingContainerChildren ?? []
     if (
       enclosingContainer &&
-      isEmptyContainer(operation.editor, enclosingContainer.path)
+      enclosingContainerChildren?.length === 1 &&
+      firstChild &&
+      isEmptyTextBlock(operation.editor.context, firstChild.node)
     ) {
       unwrapContainer(
         operation.editor,

@@ -1,9 +1,10 @@
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import {safeStringify} from '../../../internal-utils/safe-json'
-import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
-import {getNode} from '../../../node-traversal/get-node'
-import {hasNode} from '../../../node-traversal/has-node'
+import {getAncestor} from '../../../traversal/get-ancestor'
+import {getNode} from '../../../traversal/get-node'
+import {hasNode} from '../../../traversal/has-node'
+import {isLeafObject} from '../../../traversal/is-leaf-object'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import type {BaseEditor, Editor} from '../../interfaces/editor'
@@ -11,7 +12,6 @@ import type {Operation} from '../../interfaces/operation'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
 import type {RangeRef} from '../../interfaces/range-ref'
-import {isVoidNode} from '../../node/is-void-node'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
 import type {TextDiff} from '../utils/diff-text'
@@ -356,7 +356,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     let domPoint: DOMPoint | undefined
 
-    if (nodeEntry && isVoidNode(editor, nodeEntry.node, point.path)) {
+    if (nodeEntry && isLeafObject(editor, nodeEntry.node, point.path)) {
       const spacer = el.querySelector('[data-pt-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
@@ -380,12 +380,15 @@ export const DOMEditor: DOMEditorInterface = {
     const pointPath = editorPath(editor, point)
     const pointEntry = getNode(editor, pointPath)
     const pointObjectNode =
-      pointEntry && isVoidNode(editor, pointEntry.node, pointPath)
+      pointEntry && isLeafObject(editor, pointEntry.node, pointPath)
         ? pointEntry
-        : getAncestorObjectNode(editor, point.path)
+        : getAncestor(editor, point.path, {
+            match: (node, ancestorPath) =>
+              isLeafObject(editor, node, ancestorPath),
+          })
     if (
       pointObjectNode &&
-      isVoidNode(editor, pointObjectNode.node, pointObjectNode.path)
+      isLeafObject(editor, pointObjectNode.node, pointObjectNode.path)
     ) {
       point = {path: point.path, offset: 0}
     }
@@ -754,7 +757,7 @@ export const DOMEditor: DOMEditorInterface = {
       const parentPath = path.slice(0, -1)
       const parentEntry = getNode(editor, parentPath)
 
-      if (parentEntry && isVoidNode(editor, parentEntry.node, parentPath)) {
+      if (parentEntry && isLeafObject(editor, parentEntry.node, parentPath)) {
         return {path: parentPath, offset: 0}
       }
     }

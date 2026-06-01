@@ -17,11 +17,10 @@ import {rangeStart} from '../engine/range/range-start'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getChildren} from '../node-traversal/get-children'
-import {getNode} from '../node-traversal/get-node'
-import {getNodes} from '../node-traversal/get-nodes'
-import {isLeaf} from '../node-traversal/is-leaf'
+import {getChildren} from '../traversal/get-children'
+import {getNode} from '../traversal/get-node'
+import {getNodes} from '../traversal/get-nodes'
+import {getParent} from '../traversal/get-parent'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -40,10 +39,9 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
   }
 
   if (isCollapsedRange(effectiveSelection)) {
-    const blockEntry = getAncestorTextBlock(
-      snapshot,
-      effectiveSelection.focus.path,
-    )
+    const blockEntry = getParent(snapshot, effectiveSelection.focus.path, {
+      match: (node) => isTextBlock({schema: editor.schema}, node),
+    })
 
     if (!blockEntry) {
       return
@@ -147,11 +145,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       // Split text nodes at range boundaries
       const splitRange = at ?? editor.selection
       if (splitRange && isRange(splitRange)) {
-        const splitLeafEntry = getNode(editor, splitRange.anchor.path)
-        const splitLeaf =
-          splitLeafEntry && isLeaf(editor, splitLeafEntry.path)
-            ? splitLeafEntry.node
-            : undefined
+        const splitLeaf = getNode(editor, splitRange.anchor.path)?.node
         if (
           !(
             splitLeaf &&

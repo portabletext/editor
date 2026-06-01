@@ -1,6 +1,6 @@
-import {getSibling} from '../node-traversal/get-sibling'
-import {getBlock} from '../node-traversal/is-block'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getSibling} from '../traversal/get-sibling'
+import {getBlock} from '../traversal/is-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -67,7 +67,9 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const previousSibling = getSibling(snapshot, focusBlockPath, 'previous')
+      const previousSibling = getSibling(snapshot, focusBlockPath, {
+        direction: 'previous',
+      })
 
       if (!previousSibling) {
         return false
@@ -94,7 +96,9 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const nextSibling = getSibling(snapshot, focusBlockPath, 'next')
+      const nextSibling = getSibling(snapshot, focusBlockPath, {
+        direction: 'next',
+      })
 
       if (!nextSibling) {
         return false

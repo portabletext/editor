@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import type {BlockPath} from '../types/paths'
 
 /**

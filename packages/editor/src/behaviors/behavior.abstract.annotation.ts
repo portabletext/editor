@@ -1,6 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
-import {getNode} from '../node-traversal/get-node'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {getNode} from '../traversal/get-node'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'

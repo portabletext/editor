@@ -1,4 +1,4 @@
-import {getLeaf} from '../../node-traversal/get-leaf'
+import {getLeaf} from '../../traversal/get-leaf'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'

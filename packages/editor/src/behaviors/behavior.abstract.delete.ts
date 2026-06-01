@@ -1,10 +1,10 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
-import {getSibling} from '../node-traversal/get-sibling'
 import {getFocusChild} from '../selectors/selector.get-focus-child'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
+import {getSibling} from '../traversal/get-sibling'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -57,7 +57,7 @@ export const abstractDeleteBehaviors = [
       const previousSibling = getSibling(
         adjustedSnapshot,
         focusTextBlock.path,
-        'previous',
+        {direction: 'previous'},
       )
 
       if (!previousSibling) {
@@ -148,11 +148,9 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextSibling = getSibling(
-        adjustedSnapshot,
-        focusTextBlock.path,
-        'next',
-      )
+      const nextSibling = getSibling(adjustedSnapshot, focusTextBlock.path, {
+        direction: 'next',
+      })
 
       if (!nextSibling) {
         return false
@@ -216,11 +214,9 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextSibling = getSibling(
-        adjustedSnapshot,
-        focusTextBlock.path,
-        'next',
-      )
+      const nextSibling = getSibling(adjustedSnapshot, focusTextBlock.path, {
+        direction: 'next',
+      })
 
       if (!nextSibling) {
         return false

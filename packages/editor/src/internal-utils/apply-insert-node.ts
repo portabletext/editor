@@ -7,8 +7,8 @@ import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
-import {isObjectNode} from '../engine/node/is-object-node'
-import {getNode} from '../node-traversal/get-node'
+import {getNode} from '../traversal/get-node'
+import {isObject} from '../traversal/is-object'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
@@ -43,9 +43,7 @@ export function applyInsertNodeAtPoint(
   withoutNormalizing(editor, () => {
     const match = isSpan({schema: editor.schema}, node)
       ? (n: Node) => isSpan({schema: editor.schema}, n)
-      : (n: Node) =>
-          isSpan({schema: editor.schema}, n) ||
-          isObjectNode({schema: editor.schema}, n)
+      : (n: Node) => isSpan({schema: editor.schema}, n) || isObject(editor, n)
 
     const nodeEntry = getNode(editor, at.path)
     const entry = nodeEntry && match(nodeEntry.node) ? nodeEntry : undefined

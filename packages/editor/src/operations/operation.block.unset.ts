@@ -1,7 +1,7 @@
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getNode} from '../node-traversal/get-node'
+import {getNode} from '../traversal/get-node'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<

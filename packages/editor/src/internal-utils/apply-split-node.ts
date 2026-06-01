@@ -7,7 +7,7 @@ import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {pathEquals} from '../engine/path/path-equals'
 import {isBackwardRange} from '../engine/range/is-backward-range'
 import {resolveRangeAffinities} from '../engine/range/resolve-range-affinities'
-import {getNode} from '../node-traversal/get-node'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
