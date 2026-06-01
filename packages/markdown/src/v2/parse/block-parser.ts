@@ -259,18 +259,18 @@ const detectListMarker = (text: string): ListMarkerInfo | undefined => {
 const listSpec: BlockSpec = {
   name: 'list',
   continue: (c, line) => {
-    // A list continues if the next line is blank OR begins another item of
-    // the same kind OR is lazy-continuation of an open inner item.
     if (/^[ \t]*$/.test(line.raw.slice(line.cursor))) return true
     const tail = line.raw.slice(line.cursor)
-    const marker = detectListMarker(tail.trimStart())
-    if (marker && marker.kind === (c.data['kind'] as string)) return true
-    // Lazy continuation: the line's absolute indent (cursor + leading
-    // whitespace in the current frame) is at least the open item's
-    // content-frame column.
+    const leading = tail.match(/^[ \t]*/)![0].length
+    const absoluteLeading = line.cursor + leading
     const itemIndent = c.data['lastItemIndent'] as number | undefined
-    const absoluteLeading = line.cursor + (tail.match(/^[ \t]*/)![0].length)
-    if (itemIndent !== undefined && absoluteLeading >= itemIndent) return true
+    if (itemIndent !== undefined && absoluteLeading >= itemIndent) {
+      return true
+    }
+    const marker = detectListMarker(tail.trimStart())
+    if (marker && marker.kind === (c.data['kind'] as string)) {
+      return true
+    }
     return false
   },
   open: (line, _parent, ctx) => {
@@ -312,6 +312,15 @@ const listItemSpec: BlockSpec = {
     const tail = line.raw.slice(line.cursor)
     if (/^[ \t]*$/.test(tail)) return true
     const leading = tail.match(/^[ \t]*/)![0].length
+    const absoluteLeading = line.cursor + leading
+    // If a list marker sits at exactly the column of the item's own
+    // indent (i.e. at sibling level), close this item so a new sibling
+    // item can open under the same list.
+    const itemStart = c.indent - (c.data['marker'] as string).length
+    if (absoluteLeading === itemStart) {
+      const marker = detectListMarker(tail.trimStart())
+      if (marker) return false
+    }
     if (leading >= (c.indent - line.cursor)) {
       // Advance past the item's continuation indent.
       line.cursor += (c.indent - line.cursor)
@@ -322,9 +331,17 @@ const listItemSpec: BlockSpec = {
   open: (line, parent, ctx) => {
     if (parent.spec.name !== 'list') return false
     const tail = line.raw.slice(line.cursor)
-    const marker = detectListMarker(tail)
+    // Allow optional leading whitespace up to the parent list's frame:
+    // a sibling item at the same list's indent column may sit a few
+    // spaces past line.cursor if a containing list_item continue
+    // didn't fully consume the whitespace.
+    const leading = tail.match(/^[ \t]*/)![0].length
+    const cursorAfterLeading = line.cursor + leading
+    if (cursorAfterLeading !== parent.indent) return false
+    const marker = detectListMarker(tail.slice(leading))
     if (!marker) return false
     if (marker.kind !== (parent.data['kind'] as string)) return false
+    line.cursor = cursorAfterLeading
     const indent = line.cursor + marker.markerWidth
     ctx.push({
       spec: listItemSpec,
