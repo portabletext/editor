@@ -623,6 +623,21 @@ export function parseToPortableText(
   return out
 }
 
+/**
+ * Build inline children (spans + inline objects) for a text run without
+ * allocating a block wrapper key. Used when merging an inline run into
+ * an existing block (e.g. absorbing a list_item's adjacent paragraph
+ * into a merged block).
+ */
+export function makeInlineChildren(
+  body: string,
+  options: ResolvedOptions,
+): Array<PortableTextSpan | PortableTextObject> {
+  const inline = lexInline(body, 1, {inlineHtml: options.html?.inline, linkReferences: options.linkReferences})
+  const {children} = foldInlineToSpans(inline, options)
+  return children
+}
+
 export function makeTextBlock(
   styleKey: 'normal' | 'blockquote' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
   body: string,

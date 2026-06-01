@@ -25,6 +25,7 @@ import type {
 } from '@portabletext/schema'
 import type {BlockEvent} from './events'
 import {
+  makeInlineChildren,
   makeTextBlock,
   type ResolvedOptions,
 } from './parser'
@@ -82,20 +83,93 @@ export function eventsToPortableText(
   const flushParagraphBlock = (block: PortableTextBlock | undefined): void => {
     if (!block) return
     const tb = block as PortableTextTextBlock
-    // Image hoist: paragraph containing exactly one non-span child (an
-    // inline image converted to a block-object) is hoisted as a block.
     const children = tb.children ?? []
     const nonSpan = children.filter((c) => (c as {_type: string})._type !== 'span')
+    if (nonSpan.length === 0) {
+      sinkOpen(block)
+      return
+    }
     const emptySpans = children.filter(
       (c) =>
         (c as {_type: string})._type === 'span' &&
         (((c as {text: string}).text ?? '') === ''),
     )
+    // Image-only paragraph: hoist the single non-span child.
     if (nonSpan.length === 1 && nonSpan.length + emptySpans.length === children.length) {
       sinkOpen(nonSpan[0] as PortableTextObject)
       return
     }
-    sinkOpen(block)
+    // Mixed paragraph (text + inline objects): split only when the
+    // schema lacks an inline image entry (the inline matcher returned
+    // a value via the block-matcher fallback). When the schema has
+    // inline image support, keep the children inline.
+    const hasInlineImageObject = options.schema.inlineObjects.length > 0
+    if (hasInlineImageObject) {
+      sinkOpen(block)
+      return
+    }
+    // SPLIT around the non-span children. Surrounding text spans
+    // become their own blocks, the inline objects become standalone
+    // blocks. Reuses the original block's _key for the first text
+    // block, allocates new keys for subsequent splits.
+    let currentRun: typeof children = []
+    let firstSplit = true
+    const emitRun = () => {
+      if (currentRun.length === 0) return
+      const nonEmpty = currentRun.some(
+        (c) => (c as {_type: string})._type === 'span' && ((c as {text: string}).text ?? '') !== '',
+      )
+      if (!nonEmpty) {
+        currentRun = []
+        return
+      }
+      let blockKey: string
+      let renumberedSpans: typeof currentRun
+      if (firstSplit) {
+        // First split keeps the original block + span keys.
+        blockKey = tb._key
+        renumberedSpans = currentRun
+      } else {
+        // Subsequent splits re-use the first span's _key as the new
+        // block key and renumber the spans with fresh keys. This
+        // preserves the keyGenerator's monotonic ordering (block
+        // before span).
+        const firstSpan = currentRun.find(
+          (ch) => (ch as {_type: string})._type === 'span',
+        ) as {_key: string} | undefined
+        blockKey = firstSpan ? firstSpan._key : options.keyGenerator()
+        let used = false
+        renumberedSpans = currentRun.map((ch) => {
+          if ((ch as {_type: string})._type === 'span') {
+            if (!used) {
+              used = true
+              return {...(ch as object), _key: options.keyGenerator()} as typeof ch
+            }
+            return {...(ch as object), _key: options.keyGenerator()} as typeof ch
+          }
+          return ch
+        })
+      }
+      firstSplit = false
+      sinkOpen({
+        _type: 'block',
+        _key: blockKey,
+        style: tb.style,
+        children: [...renumberedSpans],
+        markDefs: tb.markDefs ?? [],
+      } as unknown as PortableTextBlock)
+      currentRun = []
+    }
+    for (const ch of children) {
+      const isObj = (ch as {_type: string})._type !== 'span'
+      if (isObj) {
+        emitRun()
+        sinkOpen(ch as PortableTextObject)
+      } else {
+        currentRun.push(ch)
+      }
+    }
+    emitRun()
   }
 
   let i = 0
@@ -265,11 +339,98 @@ export function eventsToPortableText(
         const inListItem = listStack.length > 0
         if (imageOnlyMatch && options.types.image && inListItem) {
           const [, alt, src, title] = imageOnlyMatch
-          // Pre-allocate a wasted key for the paragraph-wrapper-that-
-          // gets-hoisted-out shape (matches v1 for "lists > with
-          // multiple block elements"). Only when there's an open
-          // previous block-object in the same list item (heuristic:
-          // last emitted block is NOT a text block).
+          // v1 collapses image-only paragraphs into the surrounding
+          // text block only when the schema has an inline image entry
+          // but NO block image entry. With both, the image is emitted
+          // standalone (block-level).
+          const hasInlineImage = options.schema.inlineObjects.length > 0
+          const hasBlockImage = options.schema.blockObjects.some(
+            (b) => b.name === 'image',
+          )
+          const shouldMergeInline = hasInlineImage && !hasBlockImage
+          // No matcher target at all → merge with v1's text-concat behavior.
+          const shouldMergeText = !hasInlineImage && !hasBlockImage
+          if (shouldMergeInline) {
+            // Merge into previous text block in same list_item if
+            // possible. The probe consumed no real keys (placeholder
+            // generator), so the real call here is the first allocation.
+            const lastEmitted = out[out.length - 1] as
+              | {_type: string; children?: unknown[]; listItem?: string; level?: number}
+              | undefined
+            const mergeable =
+              lastEmitted &&
+              lastEmitted._type === 'block'
+            const imageValue = options.types.image({
+              context: {schema: options.schema, keyGenerator: options.keyGenerator},
+              value: {src: src ?? '', alt: alt ?? '', title: title || undefined},
+              isInline: true,
+            }) as PortableTextObject
+            if (mergeable) {
+              ;(lastEmitted!.children as unknown[]).push(imageValue)
+              let j = nextIndex
+              while (j < events.length) {
+                const ej = events[j]!
+                if (ej.kind === 'close' && ej.spec === 'list_item') break
+                if (ej.kind === 'open' && ej.spec === 'paragraph') {
+                  const sub = collectInline(events, j + 1, 'paragraph')
+                  // Build the inline children WITHOUT allocating a
+                  // surrounding block key (we're merging into the
+                  // existing block).
+                  const inlineChildren = makeInlineChildren(sub.text, options)
+                  for (const ch of inlineChildren) {
+                    ;(lastEmitted!.children as unknown[]).push(ch)
+                  }
+                  j = sub.nextIndex
+                  continue
+                }
+                break
+              }
+              pendingItem = undefined
+              i = j
+              continue
+            }
+          }
+          if (shouldMergeText) {
+            // No image schema at all: concatenate the raw markdown
+            // text into the previous block's span, then keep absorbing
+            // subsequent paragraphs.
+            const lastEmitted = out[out.length - 1] as
+              | {_type: string; children?: Array<{_type: string; text?: string}>; listItem?: string}
+              | undefined
+            if (
+              lastEmitted &&
+              lastEmitted._type === 'block' &&
+              lastEmitted.listItem !== undefined &&
+              lastEmitted.children &&
+              lastEmitted.children.length > 0
+            ) {
+              const lastSpan = lastEmitted.children[lastEmitted.children.length - 1]!
+              if (lastSpan._type === 'span') {
+                const titlePart = title ? ` "${title}"` : ''
+                lastSpan.text =
+                  (lastSpan.text ?? '') +
+                  `![${alt ?? ''}](${src ?? ''}${titlePart})`
+              }
+              let j = nextIndex
+              while (j < events.length) {
+                const ej = events[j]!
+                if (ej.kind === 'close' && ej.spec === 'list_item') break
+                if (ej.kind === 'open' && ej.spec === 'paragraph') {
+                  const sub = collectInline(events, j + 1, 'paragraph')
+                  const last = lastEmitted.children[lastEmitted.children.length - 1]!
+                  if (last._type === 'span') {
+                    last.text = (last.text ?? '') + sub.text
+                  }
+                  j = sub.nextIndex
+                  continue
+                }
+                break
+              }
+              pendingItem = undefined
+              i = j
+              continue
+            }
+          }
           const lastEmitted = out[out.length - 1] as {_type: string} | undefined
           const previousWasBlockObject = lastEmitted && lastEmitted._type !== 'block'
           if (previousWasBlockObject) options.keyGenerator()
