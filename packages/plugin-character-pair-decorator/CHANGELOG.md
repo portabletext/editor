@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.0.28
+
+### Patch Changes
+
+- [#2713](https://github.com/portabletext/editor/pull/2713) [`80279c9`](https://github.com/portabletext/editor/commit/80279c931fe27db7480da0481bc2bbd126863f63) Thanks [@christianhg](https://github.com/christianhg)! - fix: Backspace no longer triggers `history.undo` after typing past an auto-decorated pair
+
 ## 7.0.27
 
 ### Patch Changes

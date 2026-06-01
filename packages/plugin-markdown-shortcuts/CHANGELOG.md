@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.0.28
+
+### Patch Changes
+
+- Updated dependencies [[`80279c9`](https://github.com/portabletext/editor/commit/80279c931fe27db7480da0481bc2bbd126863f63)]:
+  - @portabletext/plugin-character-pair-decorator@7.0.28
+
 ## 7.0.27
 
 ### Patch Changes
