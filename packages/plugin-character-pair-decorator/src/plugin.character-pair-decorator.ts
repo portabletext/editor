@@ -1,11 +1,6 @@
 import type {BlockOffset, Editor, EditorContext} from '@portabletext/editor'
 import {useEditor} from '@portabletext/editor'
-import {
-  defineBehavior,
-  effect,
-  forward,
-  raise,
-} from '@portabletext/editor/behaviors'
+import {defineBehavior, effect, raise} from '@portabletext/editor/behaviors'
 import * as utils from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
 import {isDeepEqual} from 'remeda'
@@ -99,49 +94,34 @@ const selectionListenerCallback: CallbackLogicFunction<
   DecoratorPairEvent,
   {editor: Editor}
 > = ({sendBack, input}) => {
-  const unregister = input.editor.registerBehavior({
-    behavior: defineBehavior({
-      on: 'select',
-      guard: ({snapshot, event}) => {
-        if (!event.at) {
-          return {blockOffsets: undefined}
-        }
+  // Listen for the emitted 'selection' event which fires after ANY cursor
+  // movement (typing, clicking, pasting, etc.) - not just explicit 'select'
+  // behavior events.
+  const subscription = input.editor.on('selection', (event) => {
+    if (!event.selection) {
+      sendBack({type: 'selection', blockOffsets: undefined})
+      return
+    }
 
-        const anchor = utils.spanSelectionPointToBlockOffset({
-          context: snapshot.context,
-          selectionPoint: event.at.anchor,
-        })
-        const focus = utils.spanSelectionPointToBlockOffset({
-          context: snapshot.context,
-          selectionPoint: event.at.focus,
-        })
+    const snapshot = input.editor.getSnapshot()
+    const anchor = utils.spanSelectionPointToBlockOffset({
+      context: snapshot.context,
+      selectionPoint: event.selection.anchor,
+    })
+    const focus = utils.spanSelectionPointToBlockOffset({
+      context: snapshot.context,
+      selectionPoint: event.selection.focus,
+    })
 
-        if (!anchor || !focus) {
-          return {blockOffsets: undefined}
-        }
+    if (!anchor || !focus) {
+      sendBack({type: 'selection', blockOffsets: undefined})
+      return
+    }
 
-        return {
-          blockOffsets: {
-            anchor,
-            focus,
-          },
-        }
-      },
-      actions: [
-        ({event}, {blockOffsets}) => [
-          {
-            type: 'effect',
-            effect: () => {
-              sendBack({type: 'selection', blockOffsets})
-            },
-          },
-          forward(event),
-        ],
-      ],
-    }),
+    sendBack({type: 'selection', blockOffsets: {anchor, focus}})
   })
 
-  return unregister
+  return () => subscription.unsubscribe()
 }
 
 const deleteBackwardListenerCallback: CallbackLogicFunction<
