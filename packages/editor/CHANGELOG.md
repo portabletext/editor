@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.0.5
+
+### Patch Changes
+
+- [#2707](https://github.com/portabletext/editor/pull/2707) [`e0e974e`](https://github.com/portabletext/editor/commit/e0e974e2ece2590dfd7c7fa908d25290300899fc) Thanks [@christianhg](https://github.com/christianhg)! - fix: seed positional context at `collectDescendantPaths` entry points
+
 ## 7.0.4
 
 ### Patch Changes
