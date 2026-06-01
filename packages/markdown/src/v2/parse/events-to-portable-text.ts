@@ -319,11 +319,22 @@ export function eventsToPortableText(
           value: {language: lang, code},
           isInline: false,
         })
-        // Treat a matcher result with no non-metadata fields as "no
-        // matching schema" — fall back to a flat text block.
+        // Treat a matcher result without a non-empty string field
+        // carrying the actual code content as "no matching schema"
+        // — fall back to a flat text block. We can't know which schema
+        // field is the code carrier, but the heuristic is: it must
+        // exist, be a string, and equal (or contain) the source code.
         const isUseful =
           value &&
-          Object.keys(value).some((k) => k !== '_key' && k !== '_type')
+          Object.entries(value).some(
+            ([k, v]) =>
+              k !== '_key' &&
+              k !== '_type' &&
+              k !== 'language' &&
+              typeof v === 'string' &&
+              v.length > 0 &&
+              v === code,
+          )
         if (isUseful) {
           sinkOpen(value as PortableTextObject)
         } else {
