@@ -359,6 +359,36 @@ export function lexInline(
       }
     }
 
+    // GFM autolink: bare URL or email address in plain text becomes a
+    // link annotation. Only fires at left boundaries (start of source,
+    // after whitespace, or after `(*_~`).
+    {
+      const prev = lastEmittedChar(textBuffer) || (i === 0 ? '' : '?')
+      const auto = matchAutolink(source, i, prev === '?' ? '' : prev)
+      if (auto) {
+        flushText()
+        tokens.push({
+          type: InlineTokenType.LinkOpen,
+          text: '',
+          href: auto.href,
+          title: undefined,
+          location: {line, column},
+        })
+        tokens.push({
+          type: InlineTokenType.Text,
+          text: auto.url,
+          location: {line, column},
+        })
+        tokens.push({
+          type: InlineTokenType.LinkClose,
+          text: '',
+          location: {line, column: column + auto.consumed},
+        })
+        advance(auto.consumed)
+        continue
+      }
+    }
+
     // Default: accumulate as text
     pushText(ch)
     i += 1
@@ -556,3 +586,75 @@ function matchReferenceLink(
 function unescapeMarkdown(text: string): string {
   return text.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
+
+
+function lastEmittedChar(textBuffer: string): string {
+  return textBuffer.length > 0 ? textBuffer[textBuffer.length - 1]! : ''
+}
+
+/**
+ * GFM autolink scanner. Returns the match shape or null if not at a boundary.
+ *
+ * Matches:
+ *   - http(s)://...   ftp://...
+ *   - www....         (href is prefixed with http://)
+ *   - email addresses
+ *
+ * Trims trailing punctuation per GFM: `?!.,:*_~` and unmatched `)`.
+ */
+function matchAutolink(
+  source: string,
+  start: number,
+  prevChar: string,
+): {url: string; href: string; consumed: number} | null {
+  // Left boundary: start of source, after whitespace, or one of `(*_~`.
+  if (prevChar !== '' && !/[\s(*_~]/.test(prevChar)) {
+    return null
+  }
+
+  // Try URL schemes first.
+  const scheme = source
+    .slice(start)
+    .match(/^(?:https?:\/\/|ftp:\/\/|www\.)[^\s<]+/i)
+  if (scheme) {
+    let raw = scheme[0]
+    // Trim trailing GFM punctuation.
+    while (raw.length > 0 && /[?!.,:*_~]$/.test(raw)) {
+      raw = raw.slice(0, -1)
+    }
+    // Balance `(`/`)`: drop unmatched trailing `)`.
+    while (raw.endsWith(')')) {
+      const opens = (raw.match(/\(/g) ?? []).length
+      const closes = (raw.match(/\)/g) ?? []).length
+      if (closes > opens) {
+        raw = raw.slice(0, -1)
+      } else {
+        break
+      }
+    }
+    if (raw.length === 0) {
+      return null
+    }
+    const href = /^www\./i.test(raw) ? `http://${raw}` : raw
+    return {url: raw, href, consumed: raw.length}
+  }
+
+  // Try email.
+  const email = source
+    .slice(start)
+    .match(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)
+  if (email) {
+    let raw = email[0]
+    // Trim trailing punctuation per GFM: `.`, `-`, `_`.
+    while (raw.length > 0 && /[.\-_]$/.test(raw)) {
+      raw = raw.slice(0, -1)
+    }
+    if (!raw.includes('@')) {
+      return null
+    }
+    return {url: raw, href: `mailto:${raw}`, consumed: raw.length}
+  }
+
+  return null
+}
+

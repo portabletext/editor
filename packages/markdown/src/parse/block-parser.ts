@@ -733,6 +733,13 @@ class BlockParser {
           }
           if (spec.open(line, this.ctx.tip(), this.ctx)) {
             opened = true
+            // Verbatim containers (fenced_code, code_block, html_block)
+            // consume the rest of the line as literal content. Stop the
+            // open-loop so the cursor at e.g. `# ...` after a code_block
+            // open doesn't get re-parsed as a heading.
+            if (verbatimNames.has(this.ctx.tip().spec.name)) {
+              opened = false
+            }
             break
           }
         }

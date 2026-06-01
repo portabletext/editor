@@ -694,13 +694,13 @@ export function eventsToPortableText(
           delimiterRow &&
           /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/.test(delimiterRow)
         if (!isDelimiterRow) {
-          for (const row of rows) {
-            for (const cell of parseRowCells(row.raw)) {
-              const cellBlock = makeTextBlock('normal', cell, options, row.line)
-              if (cellBlock) {
-                sinkOpen(cellBlock)
-              }
-            }
+          // No delimiter row → not a table. Per CommonMark these contiguous
+          // `|`-prefixed lines are a single paragraph with the raw text
+          // preserved (verbatim, including the leading `|`).
+          const joined = rows.map((r) => r.raw).join('\n')
+          const block = makeTextBlock('normal', joined, options, rows[0]?.line ?? 1)
+          if (block) {
+            sinkOpen(block)
           }
           i = j
           continue
