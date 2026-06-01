@@ -6,6 +6,12 @@ export default defineConfig({
   test: {
     projects: [
       {
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts'],
+        },
+      },
+      {
         plugins: [
           react({
             babel: {plugins: [['babel-plugin-react-compiler', {target: '19'}]]},
@@ -13,6 +19,7 @@ export default defineConfig({
         ],
         test: {
           name: 'browser',
+          include: ['src/**/*.test.tsx'],
           browser: {
             enabled: true,
             headless: true,

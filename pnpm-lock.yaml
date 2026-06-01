@@ -660,6 +660,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@portabletext/schema':
+        specifier: workspace:*
+        version: link:../schema
       '@sanity/tsconfig':
         specifier: ^2.1.0
         version: 2.1.0
@@ -684,6 +687,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^7.1.1
         version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
+      racejar:
+        specifier: workspace:*
+        version: link:../racejar
       react:
         specifier: ^19.2.5
         version: 19.2.5

@@ -49,7 +49,9 @@
     "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
     "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
     "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
-    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\"",
+    "test:unit": "vitest run --project unit",
+    "test:unit:watch": "vitest watch --project unit"
   },
   "dependencies": {
     "@xstate/react": "^6.1.0",
@@ -58,6 +60,7 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
+    "@portabletext/schema": "workspace:*",
     "@sanity/tsconfig": "^2.1.0",
     "@types/react": "^19.2.14",
     "@vitejs/plugin-react": "^5.2.0",
@@ -66,6 +69,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "racejar": "workspace:*",
     "react": "^19.2.5",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
