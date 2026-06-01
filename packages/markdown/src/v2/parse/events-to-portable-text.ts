@@ -265,6 +265,14 @@ export function eventsToPortableText(
         const inListItem = listStack.length > 0
         if (imageOnlyMatch && options.types.image && inListItem) {
           const [, alt, src, title] = imageOnlyMatch
+          // Pre-allocate a wasted key for the paragraph-wrapper-that-
+          // gets-hoisted-out shape (matches v1 for "lists > with
+          // multiple block elements"). Only when there's an open
+          // previous block-object in the same list item (heuristic:
+          // last emitted block is NOT a text block).
+          const lastEmitted = out[out.length - 1] as {_type: string} | undefined
+          const previousWasBlockObject = lastEmitted && lastEmitted._type !== 'block'
+          if (previousWasBlockObject) options.keyGenerator()
           const imageValue = options.types.image({
             context: {schema: options.schema, keyGenerator: options.keyGenerator},
             value: {src: src ?? '', alt: alt ?? '', title: title || undefined},
