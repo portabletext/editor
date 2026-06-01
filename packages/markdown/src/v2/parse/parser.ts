@@ -826,16 +826,37 @@ function foldInlineToSpans(
         // Flush pre-image text span so its key is allocated before the
         // image matcher's key (matches v1).
         flush()
-        const imageValue = options.types.image?.({
+        // Try inline image matcher first. If schema lacks an inline
+        // image entry, fall back to the BLOCK image matcher so v1's
+        // single-key allocation is preserved.
+        let imageValue = options.types.image?.({
           context: {schema: options.schema, keyGenerator: options.keyGenerator},
           value: {src: t.src ?? '', alt: t.alt ?? '', title: t.title},
           isInline: true,
         })
-        if (imageValue) {
+        if (!imageValue) {
+          imageValue = options.types.image?.({
+            context: {schema: options.schema, keyGenerator: options.keyGenerator},
+            value: {src: t.src ?? '', alt: t.alt ?? '', title: t.title},
+            isInline: false,
+          })
+        }
+        // Useful = matcher returned an object that carries the src.
+        const imageIsUseful =
+          imageValue &&
+          Object.entries(imageValue).some(
+            ([k, v]) =>
+              k !== '_key' &&
+              k !== '_type' &&
+              k !== 'alt' &&
+              k !== 'title' &&
+              typeof v === 'string' &&
+              v.length > 0,
+          )
+        if (imageIsUseful) {
           ;(children as Array<PortableTextSpan | PortableTextObject>).push(imageValue as PortableTextObject)
         } else {
-          // No image matcher: re-emit the original markdown text into the
-          // current text buffer so it survives.
+          // Useless or undefined: re-emit raw markdown into text buffer.
           const titlePart = t.title ? ` "${t.title}"` : ''
           current.text += `![${t.alt ?? ''}](${t.src ?? ''}${titlePart})`
         }

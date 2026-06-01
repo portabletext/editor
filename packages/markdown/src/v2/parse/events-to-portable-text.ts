@@ -257,9 +257,8 @@ export function eventsToPortableText(
           continue
         }
         // Image-only paragraph inside a list item: emit the image
-        // directly without allocating a wasted block key. At top
-        // level, makeTextBlock + paragraph-flush hoist preserves the
-        // v1 key allocation (block_key wasted, image_key follows).
+        // directly without allocating a wasted block key (in-list v1
+        // behavior doesn't waste the block key).
         const imageOnlyMatch = text.trim().match(
           /^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]*)")?\)$/,
         )
@@ -278,6 +277,7 @@ export function eventsToPortableText(
             continue
           }
         }
+
         const styleKey = blockquoteDepth > 0 && !useBlockquoteContainer ? 'blockquote' : 'normal'
         const block = makeTextBlock(styleKey, text, options, line)
         if (block) {
