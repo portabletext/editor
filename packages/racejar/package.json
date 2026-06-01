@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.3.0",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
@@ -73,7 +73,7 @@
   },
   "peerDependencies": {
     "@jest/globals": "^30.3.0",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "vitest": "^4.1.7"
   },
   "engines": {
