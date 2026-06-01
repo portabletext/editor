@@ -1,16 +1,12 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
-
-const keyGen = () => {
-  let i = 0
-  return () => `k${i++}`
-}
 
 describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
   test('bare https URL becomes a link', () => {
     expect(
       markdownToPortableText('Visit https://example.com today', {
-        keyGenerator: keyGen(),
+        keyGenerator: createTestKeyGenerator(),
       }),
     ).toEqual([
       {
@@ -34,7 +30,9 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
 
   test('www. prefix linkifies with implicit http://', () => {
     expect(
-      markdownToPortableText('See www.example.com', {keyGenerator: keyGen()}),
+      markdownToPortableText('See www.example.com', {
+        keyGenerator: createTestKeyGenerator(),
+      }),
     ).toEqual([
       {
         _type: 'block',
@@ -57,7 +55,7 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
   test('email address becomes a mailto link', () => {
     expect(
       markdownToPortableText('Email hello@example.com here', {
-        keyGenerator: keyGen(),
+        keyGenerator: createTestKeyGenerator(),
       }),
     ).toEqual([
       {
@@ -84,7 +82,7 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
   test('trailing punctuation is excluded from the URL', () => {
     expect(
       markdownToPortableText('Visit https://example.com.', {
-        keyGenerator: keyGen(),
+        keyGenerator: createTestKeyGenerator(),
       }),
     ).toEqual([
       {
@@ -109,7 +107,7 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
   test('does not linkify mid-word (no left boundary)', () => {
     expect(
       markdownToPortableText('foohttps://example.com', {
-        keyGenerator: keyGen(),
+        keyGenerator: createTestKeyGenerator(),
       }),
     ).toEqual([
       {
@@ -132,7 +130,7 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
   test('does not linkify inside a code span', () => {
     expect(
       markdownToPortableText('Try `https://example.com` here', {
-        keyGenerator: keyGen(),
+        keyGenerator: createTestKeyGenerator(),
       }),
     ).toEqual([
       {
@@ -157,7 +155,7 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
   test('unmatched trailing paren is dropped from the URL', () => {
     expect(
       markdownToPortableText('(see https://example.com)', {
-        keyGenerator: keyGen(),
+        keyGenerator: createTestKeyGenerator(),
       }),
     ).toEqual([
       {
@@ -183,7 +181,7 @@ describe(`${markdownToPortableText.name} (GFM autolinks)`, () => {
     expect(
       markdownToPortableText(
         'See https://en.wikipedia.org/wiki/Markdown_(language) today',
-        {keyGenerator: keyGen()},
+        {keyGenerator: createTestKeyGenerator()},
       ),
     ).toEqual([
       {

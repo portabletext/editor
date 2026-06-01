@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {parseToBlockEvents} from './to-portable-text/parse/block-parser'
 import {eventsToPortableText} from './to-portable-text/parse/events-to-portable-text'
@@ -6,18 +7,13 @@ import {
   type ParseOptions,
 } from './to-portable-text/parse/parser'
 
-const keyGen = () => {
-  let i = 0
-  return () => `k${i++}`
-}
-
 const parse = (input: string, options: ParseOptions = {}) =>
   eventsToPortableText(parseToBlockEvents(input), resolveOptions(options))
 
 describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
   describe('paragraph', () => {
     test('single line', () => {
-      expect(parse('foo', {keyGenerator: keyGen()})).toEqual([
+      expect(parse('foo', {keyGenerator: createTestKeyGenerator()})).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -29,7 +25,9 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     })
 
     test('two paragraphs separated by blank line', () => {
-      expect(parse('foo\n\nbar', {keyGenerator: keyGen()})).toEqual([
+      expect(
+        parse('foo\n\nbar', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -48,7 +46,9 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     })
 
     test('multi-line paragraph joins with newline', () => {
-      expect(parse('foo\nbar', {keyGenerator: keyGen()})).toEqual([
+      expect(
+        parse('foo\nbar', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -62,7 +62,9 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
 
   describe('heading', () => {
     test('h1', () => {
-      expect(parse('# Title', {keyGenerator: keyGen()})).toEqual([
+      expect(
+        parse('# Title', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -76,7 +78,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     test('h1 through h6', () => {
       expect(
         parse('# h1\n## h2\n### h3\n#### h4\n##### h5\n###### h6', {
-          keyGenerator: keyGen(),
+          keyGenerator: createTestKeyGenerator(),
         }),
       ).toEqual([
         {
@@ -127,7 +129,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     test('heading falls back to normal when style matcher returns undefined', () => {
       expect(
         parse('# foo', {
-          keyGenerator: keyGen(),
+          keyGenerator: createTestKeyGenerator(),
           block: {h1: () => undefined},
         }),
       ).toEqual([
@@ -144,19 +146,19 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
 
   describe('thematic_break', () => {
     test('---', () => {
-      expect(parse('---', {keyGenerator: keyGen()})).toEqual([
+      expect(parse('---', {keyGenerator: createTestKeyGenerator()})).toEqual([
         {_key: 'k0', _type: 'horizontal-rule'},
       ])
     })
 
     test('***', () => {
-      expect(parse('***', {keyGenerator: keyGen()})).toEqual([
+      expect(parse('***', {keyGenerator: createTestKeyGenerator()})).toEqual([
         {_key: 'k0', _type: 'horizontal-rule'},
       ])
     })
 
     test('___', () => {
-      expect(parse('___', {keyGenerator: keyGen()})).toEqual([
+      expect(parse('___', {keyGenerator: createTestKeyGenerator()})).toEqual([
         {_key: 'k0', _type: 'horizontal-rule'},
       ])
     })
@@ -164,7 +166,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     test('thematic_break falls back to literal text when matcher undefined', () => {
       expect(
         parse('---', {
-          keyGenerator: keyGen(),
+          keyGenerator: createTestKeyGenerator(),
           types: {horizontalRule: () => undefined},
         }),
       ).toEqual([
@@ -181,7 +183,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
 
   describe('blockquote', () => {
     test('flat blockquote', () => {
-      expect(parse('> foo', {keyGenerator: keyGen()})).toEqual([
+      expect(parse('> foo', {keyGenerator: createTestKeyGenerator()})).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -193,7 +195,9 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     })
 
     test('multi-line blockquote', () => {
-      expect(parse('> foo\n> bar', {keyGenerator: keyGen()})).toEqual([
+      expect(
+        parse('> foo\n> bar', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -207,7 +211,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
 
   describe('list', () => {
     test('simple bullet list', () => {
-      expect(parse('- foo', {keyGenerator: keyGen()})).toEqual([
+      expect(parse('- foo', {keyGenerator: createTestKeyGenerator()})).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -221,21 +225,25 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
     })
 
     test('simple ordered list', () => {
-      expect(parse('1. foo', {keyGenerator: keyGen()})).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-          listItem: 'number',
-          level: 1,
-        },
-      ])
+      expect(parse('1. foo', {keyGenerator: createTestKeyGenerator()})).toEqual(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            listItem: 'number',
+            level: 1,
+          },
+        ],
+      )
     })
 
     test('multiple items', () => {
-      expect(parse('- foo\n- bar', {keyGenerator: keyGen()})).toEqual([
+      expect(
+        parse('- foo\n- bar', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -260,28 +268,34 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
 
   describe('code blocks', () => {
     test('fenced code with language', () => {
-      expect(parse('```js\nconst foo\n```', {keyGenerator: keyGen()})).toEqual([
+      expect(
+        parse('```js\nconst foo\n```', {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
         {_key: 'k0', _type: 'code', language: 'js', code: 'const foo'},
       ])
     })
 
     test('fenced code without language', () => {
-      expect(parse('```\nfoo\nbar\n```', {keyGenerator: keyGen()})).toEqual([
-        {_key: 'k0', _type: 'code', code: 'foo\nbar'},
-      ])
+      expect(
+        parse('```\nfoo\nbar\n```', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([{_key: 'k0', _type: 'code', code: 'foo\nbar'}])
     })
 
     test('indented code block', () => {
-      expect(parse('    foo\n    bar', {keyGenerator: keyGen()})).toEqual([
-        {_key: 'k0', _type: 'code', code: 'foo\nbar'},
-      ])
+      expect(
+        parse('    foo\n    bar', {keyGenerator: createTestKeyGenerator()}),
+      ).toEqual([{_key: 'k0', _type: 'code', code: 'foo\nbar'}])
     })
   })
 
   describe('html block', () => {
     test('block HTML', () => {
       expect(
-        parse('<div class="custom">Content</div>', {keyGenerator: keyGen()}),
+        parse('<div class="custom">Content</div>', {
+          keyGenerator: createTestKeyGenerator(),
+        }),
       ).toEqual([
         {
           _key: 'k0',
@@ -303,7 +317,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
         '',
         '    bar',
       ].join('\n')
-      expect(parse(md, {keyGenerator: keyGen()})).toEqual([
+      expect(parse(md, {keyGenerator: createTestKeyGenerator()})).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -330,7 +344,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
       const md = ['1. foo', '', '       const foo = "bar"', '', '    bar'].join(
         '\n',
       )
-      expect(parse(md, {keyGenerator: keyGen()})).toEqual([
+      expect(parse(md, {keyGenerator: createTestKeyGenerator()})).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -366,7 +380,7 @@ describe(`${parseToBlockEvents.name} + ${eventsToPortableText.name}`, () => {
 
     test('no table matcher emits one paragraph per cell', () => {
       const md = ['| A | B |', '|---|---|', '| 1 | 2 |'].join('\n')
-      expect(parse(md, {keyGenerator: keyGen()})).toEqual([
+      expect(parse(md, {keyGenerator: createTestKeyGenerator()})).toEqual([
         {
           _type: 'block',
           _key: 'k0',
