@@ -26,6 +26,6 @@ jobs:
 
       - uses: rexxars/bundle-stats@v1
         with:
-          packages: "packages/editor"
-          build-command: pnpm build --filter @portabletext/editor...
+          packages: "packages/editor, packages/markdown"
+          build-command: pnpm build --filter @portabletext/editor... --filter @portabletext/markdown...
           ignore: "test, test/vitest"
