@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.0.6
+
+### Patch Changes
+
+- [#2717](https://github.com/portabletext/editor/pull/2717) [`f0a46d1`](https://github.com/portabletext/editor/commit/f0a46d1362395ff2d10b07c12577212ce5946086) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop `useEditorSelector` from triggering `Maximum update depth exceeded`
+
 ## 7.0.5
 
 ### Patch Changes
