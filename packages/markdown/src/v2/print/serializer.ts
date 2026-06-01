@@ -19,18 +19,19 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import {escapeImageAndLinkText, escapeImageAndLinkTitle} from '../../escape'
+import {DefaultListItemRenderer} from '../../from-portable-text/renderers/list-item'
 import {
+  DefaultBlockquoteObjectRenderer,
   DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
   DefaultHtmlRenderer,
   DefaultImageRenderer,
-  DefaultTableRenderer,
   DefaultListRenderer,
-  DefaultBlockquoteObjectRenderer,
+  DefaultTableRenderer,
 } from '../../from-portable-text/renderers/type'
-import {DefaultListItemRenderer} from '../../from-portable-text/renderers/list-item'
-import {escapeImageAndLinkText, escapeImageAndLinkTitle} from '../../escape'
+import type {RenderNode} from '../../from-portable-text/types'
 
 type PtNode = PortableTextBlock | PortableTextObject
 
@@ -38,7 +39,9 @@ export function serializeToMarkdown(blocks: ReadonlyArray<PtNode>): string {
   const out: Array<string> = []
   for (let i = 0; i < blocks.length; i += 1) {
     const block = blocks[i]
-    if (!block) continue
+    if (!block) {
+      continue
+    }
     const rendered = renderBlock(block, i, blocks)
     if (i === blocks.length - 1) {
       out.push(rendered)
@@ -52,13 +55,23 @@ export function serializeToMarkdown(blocks: ReadonlyArray<PtNode>): string {
 }
 
 function spacing(current: PtNode, next: PtNode | undefined): string {
-  if (!next) return ''
-  if (isListItem(current) && isListItem(next)) return '\n'
-  if (isBlockquoteFlat(current) && isBlockquoteFlat(next)) return '\n>\n'
+  if (!next) {
+    return ''
+  }
+  if (isListItem(current) && isListItem(next)) {
+    return '\n'
+  }
+  if (isBlockquoteFlat(current) && isBlockquoteFlat(next)) {
+    return '\n>\n'
+  }
   return '\n\n'
 }
 
-function renderBlock(block: PtNode, index: number, blocks: ReadonlyArray<PtNode>): string {
+function renderBlock(
+  block: PtNode,
+  index: number,
+  blocks: ReadonlyArray<PtNode>,
+): string {
   if (block._type === 'block') {
     return renderTextBlock(block as PortableTextTextBlock, index)
   }
@@ -72,25 +85,60 @@ function renderBlock(block: PtNode, index: number, blocks: ReadonlyArray<PtNode>
     })
   }
   if (block._type === 'code') {
-    return DefaultCodeBlockRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultCodeBlockRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'image') {
-    return DefaultImageRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultImageRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'html') {
-    return DefaultHtmlRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultHtmlRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'table') {
-    return DefaultTableRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultTableRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'callout') {
-    return DefaultCalloutRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultCalloutRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'blockquote') {
-    return DefaultBlockquoteObjectRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultBlockquoteObjectRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   if (block._type === 'list') {
-    return DefaultListRenderer({value: block as never, index, isInline: false, renderNode})
+    return DefaultListRenderer({
+      value: block as never,
+      index,
+      isInline: false,
+      renderNode,
+    })
   }
   // Unknown block-object: fall back to fenced JSON. Keeps the round-trip
   // signal honest while we surface "what is this?" to the consumer.
@@ -101,16 +149,13 @@ function renderBlock(block: PtNode, index: number, blocks: ReadonlyArray<PtNode>
 // content (e.g. blockquote.content, callout.content, list.items.content,
 // table.rows.cells.value). For a single-level dispatch, the renderer
 // receives this thunk and routes back through serializeToMarkdown.
-function makeRenderNodeForChildren(_blocks: ReadonlyArray<PtNode>): (opts: {
-  node: PtNode
-  index: number
-  isInline: boolean
-  renderNode: unknown
-}) => string {
-  const renderNode = (opts: {node: PtNode; index: number; isInline: boolean}) => {
-    return renderBlock(opts.node, opts.index, [opts.node])
+function makeRenderNodeForChildren(_blocks: ReadonlyArray<PtNode>): RenderNode {
+  const renderNode: RenderNode = (opts) => {
+    return renderBlock(opts.node as unknown as PtNode, opts.index, [
+      opts.node as unknown as PtNode,
+    ])
   }
-  return renderNode as never
+  return renderNode
 }
 
 function renderTextBlock(block: PortableTextTextBlock, index: number): string {
@@ -121,16 +166,20 @@ function renderTextBlock(block: PortableTextTextBlock, index: number): string {
     return DefaultListItemRenderer({
       value: block as never,
       index,
-      listIndex: typeof (block as PortableTextTextBlock & {_listIndex?: number})._listIndex === 'number'
-        ? (block as PortableTextTextBlock & {_listIndex?: number})._listIndex
-        : index + 1,
+      listIndex:
+        typeof (block as PortableTextTextBlock & {_listIndex?: number})
+          ._listIndex === 'number'
+          ? (block as PortableTextTextBlock & {_listIndex?: number})._listIndex
+          : index + 1,
       isInline: false,
       renderNode: (() => '') as never,
       children: inline,
     })
   }
 
-  if (style === 'normal') return inline
+  if (style === 'normal') {
+    return inline
+  }
   if (style === 'blockquote') {
     return inline
       .split('\n')
@@ -165,14 +214,18 @@ type InlineTree =
   | {kind: 'text'; text: string}
   | {kind: 'mark'; mark: string; children: Array<InlineTree>}
 
-function buildMarksTree(spans: ReadonlyArray<PortableTextSpan>): Array<InlineTree> {
+function buildMarksTree(
+  spans: ReadonlyArray<PortableTextSpan>,
+): Array<InlineTree> {
   const nodes: Array<InlineTree> = []
   let currentParent = nodes
   const parentStack: Array<Array<InlineTree>> = [nodes]
   const markStack: Array<string> = []
 
   for (const span of spans) {
-    if (span._type !== 'span') continue
+    if (span._type !== 'span') {
+      continue
+    }
     const spanMarks = span.marks ?? []
 
     let commonLen = 0
@@ -218,10 +271,18 @@ function renderInline(
   }
   const inner = node.children.map((c) => renderInline(c, markDefs)).join('')
   const m = node.mark
-  if (m === 'strong') return `**${inner}**`
-  if (m === 'em') return `_${inner}_`
-  if (m === 'code') return `\`${inner}\``
-  if (m === 'strike-through') return `~~${inner}~~`
+  if (m === 'strong') {
+    return `**${inner}**`
+  }
+  if (m === 'em') {
+    return `_${inner}_`
+  }
+  if (m === 'code') {
+    return `\`${inner}\``
+  }
+  if (m === 'strike-through') {
+    return `~~${inner}~~`
+  }
   const def = markDefs.find((d) => d._key === m)
   if (def?._type === 'link') {
     const text = escapeImageAndLinkText(inner)
@@ -236,5 +297,7 @@ function isListItem(b: PtNode): boolean {
 }
 
 function isBlockquoteFlat(b: PtNode): boolean {
-  return b._type === 'block' && (b as PortableTextTextBlock).style === 'blockquote'
+  return (
+    b._type === 'block' && (b as PortableTextTextBlock).style === 'blockquote'
+  )
 }

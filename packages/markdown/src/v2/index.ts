@@ -9,5 +9,3 @@
 
 export {markdownToPortableTextV2} from './markdown-to-portable-text'
 export {portableTextToMarkdownV2} from './portable-text-to-markdown'
-export {ErrorCode, ParseError} from './errors'
-export type {MarkdownV2Options} from './types'

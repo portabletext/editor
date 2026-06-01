@@ -24,11 +24,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {BlockEvent} from './events'
-import {
-  makeInlineChildren,
-  makeTextBlock,
-  type ResolvedOptions,
-} from './parser'
+import {makeInlineChildren, makeTextBlock, type ResolvedOptions} from './parser'
 
 interface ListContext {
   kind: 'bullet' | 'number' | 'task'
@@ -59,13 +55,18 @@ export function eventsToPortableText(
   // types.list container path: when the matcher is registered we buffer
   // every nesting level of lists. Stacks parallel listStack so nested
   // lists become nested list block-objects.
-  const pendingListStack: Array<{list: PendingList; item: PendingListItem | undefined}> = []
+  const pendingListStack: Array<{
+    list: PendingList
+    item: PendingListItem | undefined
+  }> = []
   const useListContainer = Boolean(options.types.list)
   const useBlockquoteContainer = Boolean(options.types.blockquote)
 
   // Buffer for blockquote inner blocks when types.blockquote is set.
   // Stack so nested blockquotes work.
-  const blockquoteBuffers: Array<Array<PortableTextBlock | PortableTextObject>> = []
+  const blockquoteBuffers: Array<
+    Array<PortableTextBlock | PortableTextObject>
+  > = []
 
   const sinkOpen = (b: PortableTextBlock | PortableTextObject): void => {
     const topPending = pendingListStack[pendingListStack.length - 1]
@@ -81,10 +82,14 @@ export function eventsToPortableText(
   }
 
   const flushParagraphBlock = (block: PortableTextBlock | undefined): void => {
-    if (!block) return
+    if (!block) {
+      return
+    }
     const tb = block as PortableTextTextBlock
     const children = tb.children ?? []
-    const nonSpan = children.filter((c) => (c as {_type: string})._type !== 'span')
+    const nonSpan = children.filter(
+      (c) => (c as {_type: string})._type !== 'span',
+    )
     if (nonSpan.length === 0) {
       sinkOpen(block)
       return
@@ -92,10 +97,13 @@ export function eventsToPortableText(
     const emptySpans = children.filter(
       (c) =>
         (c as {_type: string})._type === 'span' &&
-        (((c as {text: string}).text ?? '') === ''),
+        ((c as {text: string}).text ?? '') === '',
     )
     // Image-only paragraph: hoist the single non-span child.
-    if (nonSpan.length === 1 && nonSpan.length + emptySpans.length === children.length) {
+    if (
+      nonSpan.length === 1 &&
+      nonSpan.length + emptySpans.length === children.length
+    ) {
       sinkOpen(nonSpan[0] as PortableTextObject)
       return
     }
@@ -115,9 +123,13 @@ export function eventsToPortableText(
     let currentRun: typeof children = []
     let firstSplit = true
     const emitRun = () => {
-      if (currentRun.length === 0) return
+      if (currentRun.length === 0) {
+        return
+      }
       const nonEmpty = currentRun.some(
-        (c) => (c as {_type: string})._type === 'span' && ((c as {text: string}).text ?? '') !== '',
+        (c) =>
+          (c as {_type: string})._type === 'span' &&
+          ((c as {text: string}).text ?? '') !== '',
       )
       if (!nonEmpty) {
         currentRun = []
@@ -143,9 +155,15 @@ export function eventsToPortableText(
           if ((ch as {_type: string})._type === 'span') {
             if (!used) {
               used = true
-              return {...(ch as object), _key: options.keyGenerator()} as typeof ch
+              return {
+                ...(ch as object),
+                _key: options.keyGenerator(),
+              } as typeof ch
             }
-            return {...(ch as object), _key: options.keyGenerator()} as typeof ch
+            return {
+              ...(ch as object),
+              _key: options.keyGenerator(),
+            } as typeof ch
           }
           return ch
         })
@@ -178,7 +196,8 @@ export function eventsToPortableText(
 
     if (event.kind === 'open') {
       if (event.spec === 'list') {
-        const kind = (event.data?.['kind'] as 'bullet' | 'number' | 'task') ?? 'bullet'
+        const kind =
+          (event.data?.['kind'] as 'bullet' | 'number' | 'task') ?? 'bullet'
         if (useListContainer) {
           pendingListStack.push({list: {kind, items: []}, item: undefined})
         }
@@ -196,7 +215,9 @@ export function eventsToPortableText(
           topFrame.item = {
             _key: options.keyGenerator(),
             _type: 'list-item',
-            ...(pendingItem.checked !== undefined ? {checked: pendingItem.checked} : {}),
+            ...(pendingItem.checked !== undefined
+              ? {checked: pendingItem.checked}
+              : {}),
             content: [],
           }
         }
@@ -213,13 +234,18 @@ export function eventsToPortableText(
         continue
       }
       if (event.spec === 'paragraph') {
-        const {text, line, nextIndex} = collectInline(events, i + 1, 'paragraph')
+        const {text, line, nextIndex} = collectInline(
+          events,
+          i + 1,
+          'paragraph',
+        )
         // Callout detection: `> [!NOTE]` as the first \n-separated line
         // of an open blockquote's first paragraph. Paragraphs absorb soft
         // newlines so the marker may appear on line 1 of `text`.
         const calloutFirstLine = text.split('\n', 1)[0] ?? ''
         const alertMatch = calloutFirstLine.match(/^\[!([A-Z]+)\]\s*$/)
-        const insideBlockquote = blockquoteDepth > 0 || blockquoteBuffers.length > 0
+        const insideBlockquote =
+          blockquoteDepth > 0 || blockquoteBuffers.length > 0
         if (alertMatch && insideBlockquote) {
           const tone = alertMatch[1]!.toLowerCase()
           const restOfFirst = text.split('\n').slice(1).join('\n')
@@ -235,16 +261,27 @@ export function eventsToPortableText(
             const calloutContent: Array<PortableTextBlock> = []
             if (restOfFirst.length > 0) {
               const ib = makeTextBlock('blockquote', restOfFirst, options, line)
-              if (ib) calloutContent.push(ib)
+              if (ib) {
+                calloutContent.push(ib)
+              }
             }
             let k = nextIndex
             while (k < events.length) {
               const ek = events[k]!
-              if (ek.kind === 'close' && ek.spec === 'blockquote') break
+              if (ek.kind === 'close' && ek.spec === 'blockquote') {
+                break
+              }
               if (ek.kind === 'open' && ek.spec === 'paragraph') {
                 const inner = collectInline(events, k + 1, 'paragraph')
-                const ib = makeTextBlock('blockquote', inner.text, options, inner.line)
-                if (ib) calloutContent.push(ib)
+                const ib = makeTextBlock(
+                  'blockquote',
+                  inner.text,
+                  options,
+                  inner.line,
+                )
+                if (ib) {
+                  calloutContent.push(ib)
+                }
                 k = inner.nextIndex
                 continue
               }
@@ -255,10 +292,14 @@ export function eventsToPortableText(
                 let listDepth = 1
                 while (listEnd < events.length) {
                   const ee = events[listEnd]!
-                  if (ee.kind === 'open' && ee.spec === 'list') listDepth++
+                  if (ee.kind === 'open' && ee.spec === 'list') {
+                    listDepth++
+                  }
                   if (ee.kind === 'close' && ee.spec === 'list') {
                     listDepth--
-                    if (listDepth === 0) break
+                    if (listDepth === 0) {
+                      break
+                    }
                   }
                   listEnd++
                 }
@@ -270,7 +311,9 @@ export function eventsToPortableText(
                 const blockquoteStyleName = options.block.blockquote({
                   context: {schema: options.schema},
                 })
-                const restyle = (b: PortableTextBlock | PortableTextObject): void => {
+                const restyle = (
+                  b: PortableTextBlock | PortableTextObject,
+                ): void => {
                   if (b._type === 'block') {
                     const tb = b as PortableTextTextBlock
                     if (tb.style === 'normal' && blockquoteStyleName) {
@@ -297,14 +340,20 @@ export function eventsToPortableText(
               k++
             }
             const callout = options.types.callout({
-              context: {schema: options.schema, keyGenerator: options.keyGenerator},
+              context: {
+                schema: options.schema,
+                keyGenerator: options.keyGenerator,
+              },
               value: {tone, content: calloutContent},
               isInline: false,
             })
             if (callout) {
               if (insideBlockquote) {
-                if (blockquoteBuffers.length > 0) blockquoteBuffers.pop()
-                else blockquoteDepth--
+                if (blockquoteBuffers.length > 0) {
+                  blockquoteBuffers.pop()
+                } else {
+                  blockquoteDepth--
+                }
               }
               sinkOpen(callout as PortableTextObject)
               i = k + 1
@@ -322,7 +371,13 @@ export function eventsToPortableText(
             const styleKey = blockquoteStyleName ? 'blockquote' : 'normal'
             const block = makeTextBlock(styleKey, restOfFirst, options, line)
             if (block) {
-              decorateListContext(block, listStack, pendingItem, useListContainer, options)
+              decorateListContext(
+                block,
+                listStack,
+                pendingItem,
+                useListContainer,
+                options,
+              )
               flushParagraphBlock(block)
             }
           }
@@ -333,9 +388,9 @@ export function eventsToPortableText(
         // Image-only paragraph inside a list item: emit the image
         // directly without allocating a wasted block key (in-list v1
         // behavior doesn't waste the block key).
-        const imageOnlyMatch = text.trim().match(
-          /^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]*)")?\)$/,
-        )
+        const imageOnlyMatch = text
+          .trim()
+          .match(/^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]*)")?\)$/)
         const inListItem = listStack.length > 0
         if (imageOnlyMatch && options.types.image && inListItem) {
           const [, alt, src, title] = imageOnlyMatch
@@ -355,14 +410,24 @@ export function eventsToPortableText(
             // possible. The probe consumed no real keys (placeholder
             // generator), so the real call here is the first allocation.
             const lastEmitted = out[out.length - 1] as
-              | {_type: string; children?: unknown[]; listItem?: string; level?: number}
+              | {
+                  _type: string
+                  children?: unknown[]
+                  listItem?: string
+                  level?: number
+                }
               | undefined
-            const mergeable =
-              lastEmitted &&
-              lastEmitted._type === 'block'
+            const mergeable = lastEmitted && lastEmitted._type === 'block'
             const imageValue = options.types.image({
-              context: {schema: options.schema, keyGenerator: options.keyGenerator},
-              value: {src: src ?? '', alt: alt ?? '', title: title || undefined},
+              context: {
+                schema: options.schema,
+                keyGenerator: options.keyGenerator,
+              },
+              value: {
+                src: src ?? '',
+                alt: alt ?? '',
+                title: title || undefined,
+              },
               isInline: true,
             }) as PortableTextObject
             if (mergeable) {
@@ -370,7 +435,9 @@ export function eventsToPortableText(
               let j = nextIndex
               while (j < events.length) {
                 const ej = events[j]!
-                if (ej.kind === 'close' && ej.spec === 'list_item') break
+                if (ej.kind === 'close' && ej.spec === 'list_item') {
+                  break
+                }
                 if (ej.kind === 'open' && ej.spec === 'paragraph') {
                   const sub = collectInline(events, j + 1, 'paragraph')
                   // Build the inline children WITHOUT allocating a
@@ -395,7 +462,11 @@ export function eventsToPortableText(
             // text into the previous block's span, then keep absorbing
             // subsequent paragraphs.
             const lastEmitted = out[out.length - 1] as
-              | {_type: string; children?: Array<{_type: string; text?: string}>; listItem?: string}
+              | {
+                  _type: string
+                  children?: Array<{_type: string; text?: string}>
+                  listItem?: string
+                }
               | undefined
             if (
               lastEmitted &&
@@ -404,7 +475,8 @@ export function eventsToPortableText(
               lastEmitted.children &&
               lastEmitted.children.length > 0
             ) {
-              const lastSpan = lastEmitted.children[lastEmitted.children.length - 1]!
+              const lastSpan =
+                lastEmitted.children[lastEmitted.children.length - 1]!
               if (lastSpan._type === 'span') {
                 const titlePart = title ? ` "${title}"` : ''
                 lastSpan.text =
@@ -414,10 +486,13 @@ export function eventsToPortableText(
               let j = nextIndex
               while (j < events.length) {
                 const ej = events[j]!
-                if (ej.kind === 'close' && ej.spec === 'list_item') break
+                if (ej.kind === 'close' && ej.spec === 'list_item') {
+                  break
+                }
                 if (ej.kind === 'open' && ej.spec === 'paragraph') {
                   const sub = collectInline(events, j + 1, 'paragraph')
-                  const last = lastEmitted.children[lastEmitted.children.length - 1]!
+                  const last =
+                    lastEmitted.children[lastEmitted.children.length - 1]!
                   if (last._type === 'span') {
                     last.text = (last.text ?? '') + sub.text
                   }
@@ -432,10 +507,16 @@ export function eventsToPortableText(
             }
           }
           const lastEmitted = out[out.length - 1] as {_type: string} | undefined
-          const previousWasBlockObject = lastEmitted && lastEmitted._type !== 'block'
-          if (previousWasBlockObject) options.keyGenerator()
+          const previousWasBlockObject =
+            lastEmitted && lastEmitted._type !== 'block'
+          if (previousWasBlockObject) {
+            options.keyGenerator()
+          }
           const imageValue = options.types.image({
-            context: {schema: options.schema, keyGenerator: options.keyGenerator},
+            context: {
+              schema: options.schema,
+              keyGenerator: options.keyGenerator,
+            },
             value: {src: src ?? '', alt: alt ?? '', title: title || undefined},
             isInline: false,
           })
@@ -447,10 +528,19 @@ export function eventsToPortableText(
           }
         }
 
-        const styleKey = blockquoteDepth > 0 && !useBlockquoteContainer ? 'blockquote' : 'normal'
+        const styleKey =
+          blockquoteDepth > 0 && !useBlockquoteContainer
+            ? 'blockquote'
+            : 'normal'
         const block = makeTextBlock(styleKey, text, options, line)
         if (block) {
-          decorateListContext(block, listStack, pendingItem, useListContainer, options)
+          decorateListContext(
+            block,
+            listStack,
+            pendingItem,
+            useListContainer,
+            options,
+          )
           flushParagraphBlock(block)
         }
         pendingItem = undefined
@@ -459,13 +549,19 @@ export function eventsToPortableText(
       }
       if (event.spec === 'heading') {
         const level = (event.data?.['level'] as number) ?? 1
-        const styleKey = (`h${level}`) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+        const styleKey = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
         const {text, line, nextIndex} = collectInline(events, i + 1, 'heading')
         const block =
           makeTextBlock(styleKey, text, options, line) ??
           makeTextBlock('normal', text, options, line)
         if (block) {
-          decorateListContext(block, listStack, pendingItem, useListContainer, options)
+          decorateListContext(
+            block,
+            listStack,
+            pendingItem,
+            useListContainer,
+            options,
+          )
           sinkOpen(block)
         }
         pendingItem = undefined
@@ -473,13 +569,20 @@ export function eventsToPortableText(
         continue
       }
       if (event.spec === 'fenced_code' || event.spec === 'code_block') {
-        const lang = event.spec === 'fenced_code' ? ((event.data?.['lang'] as string) || undefined) : undefined
+        const lang =
+          event.spec === 'fenced_code'
+            ? (event.data?.['lang'] as string) || undefined
+            : undefined
         const lines: string[] = []
         let j = i + 1
         while (j < events.length) {
           const e = events[j]!
-          if (e.kind === 'close' && e.spec === event.spec) break
-          if (e.kind === 'verbatim_line') lines.push(e.text)
+          if (e.kind === 'close' && e.spec === event.spec) {
+            break
+          }
+          if (e.kind === 'verbatim_line') {
+            lines.push(e.text)
+          }
           j++
         }
         const code = lines.join('\n')
@@ -507,10 +610,17 @@ export function eventsToPortableText(
         if (isUseful) {
           sinkOpen(value as PortableTextObject)
         } else {
-          const block = makeTextBlock('normal', code, options, event.location.line)
+          const block = makeTextBlock(
+            'normal',
+            code,
+            options,
+            event.location.line,
+          )
           // Don't decorate the code-fallback block with listItem/level —
           // v1 treats the fallback as breaking out of list context.
-          if (block) sinkOpen(block)
+          if (block) {
+            sinkOpen(block)
+          }
         }
         i = j + 1
         continue
@@ -520,8 +630,12 @@ export function eventsToPortableText(
         let j = i + 1
         while (j < events.length) {
           const e = events[j]!
-          if (e.kind === 'close' && e.spec === 'html_block') break
-          if (e.kind === 'verbatim_line') lines.push(e.text)
+          if (e.kind === 'close' && e.spec === 'html_block') {
+            break
+          }
+          if (e.kind === 'verbatim_line') {
+            lines.push(e.text)
+          }
           j++
         }
         const html = lines.join('\n')
@@ -555,7 +669,10 @@ export function eventsToPortableText(
         while (j < events.length) {
           const e = events[j]!
           if (e.kind === 'open' && e.spec === 'table_row') {
-            rows.push({raw: (e.data?.['raw'] as string) || '', line: e.location.line})
+            rows.push({
+              raw: (e.data?.['raw'] as string) || '',
+              line: e.location.line,
+            })
           } else if (e.kind === 'close' && e.spec === 'table_row') {
             const next = events[j + 1]
             if (!next || next.kind !== 'open' || next.spec !== 'table_row') {
@@ -580,7 +697,9 @@ export function eventsToPortableText(
           for (const row of rows) {
             for (const cell of parseRowCells(row.raw)) {
               const cellBlock = makeTextBlock('normal', cell, options, row.line)
-              if (cellBlock) sinkOpen(cellBlock)
+              if (cellBlock) {
+                sinkOpen(cellBlock)
+              }
             }
           }
           i = j
@@ -595,17 +714,26 @@ export function eventsToPortableText(
           const emitRow = (cellTexts: string[]) => {
             const cellOuts: Array<{block: PortableTextBlock | undefined}> = []
             for (const cellText of cellTexts) {
-              const block = makeTextBlock('normal', cellText, options, rows[0]?.line ?? 1)
-              options.keyGenerator()  // wasted cell key (v1 builds {_type:'cell',_key,value})
+              const block = makeTextBlock(
+                'normal',
+                cellText,
+                options,
+                rows[0]?.line ?? 1,
+              )
+              options.keyGenerator() // wasted cell key (v1 builds {_type:'cell',_key,value})
               cellOuts.push({block})
             }
-            options.keyGenerator()  // wasted row key
+            options.keyGenerator() // wasted row key
             for (const c of cellOuts) {
-              if (c.block) sinkOpen(c.block)
+              if (c.block) {
+                sinkOpen(c.block)
+              }
             }
           }
           emitRow(headerCells)
-          for (const bc of bodyRows) emitRow(bc)
+          for (const bc of bodyRows) {
+            emitRow(bc)
+          }
           // wasted table key
           options.keyGenerator()
           i = j
@@ -618,14 +746,27 @@ export function eventsToPortableText(
         // block-object) emits the bare image without the wrapping
         // text block.
         const buildCellValue = (text: string) => {
-          const block = makeTextBlock('normal', text, options, rows[0]?.line ?? 1)
-          if (!block) return []
-          const childs = (block.children ?? []) as Array<{_type: string; text?: string}>
+          const block = makeTextBlock(
+            'normal',
+            text,
+            options,
+            rows[0]?.line ?? 1,
+          )
+          if (!block) {
+            return []
+          }
+          const childs = (block.children ?? []) as Array<{
+            _type: string
+            text?: string
+          }>
           const nonSpan = childs.filter((c) => c._type !== 'span')
           const emptySpans = childs.filter(
-            (c) => c._type === 'span' && ((c.text ?? '') === ''),
+            (c) => c._type === 'span' && (c.text ?? '') === '',
           )
-          if (nonSpan.length === 1 && nonSpan.length + emptySpans.length === childs.length) {
+          if (
+            nonSpan.length === 1 &&
+            nonSpan.length + emptySpans.length === childs.length
+          ) {
             return [nonSpan[0] as PortableTextObject]
           }
           return [block]
@@ -653,7 +794,9 @@ export function eventsToPortableText(
           value: {headerRows: 1, rows: rowsBuilt},
           isInline: false,
         })
-        if (tableValue) sinkOpen(tableValue as PortableTextObject)
+        if (tableValue) {
+          sinkOpen(tableValue as PortableTextObject)
+        }
         i = j
         continue
       }
@@ -666,8 +809,15 @@ export function eventsToPortableText(
         if (value) {
           sinkOpen(value as PortableTextObject)
         } else {
-          const block = makeTextBlock('normal', '---', options, event.location.line)
-          if (block) sinkOpen(block)
+          const block = makeTextBlock(
+            'normal',
+            '---',
+            options,
+            event.location.line,
+          )
+          if (block) {
+            sinkOpen(block)
+          }
         }
         i = findClose(events, i + 1, 'thematic_break') + 1
         continue
@@ -681,7 +831,10 @@ export function eventsToPortableText(
           const closing = pendingListStack.pop()
           if (closing) {
             const value = options.types.list!({
-              context: {schema: options.schema, keyGenerator: options.keyGenerator},
+              context: {
+                schema: options.schema,
+                keyGenerator: options.keyGenerator,
+              },
               value: {kind: closing.list.kind, items: closing.list.items},
               isInline: false,
             })
@@ -703,11 +856,20 @@ export function eventsToPortableText(
                 for (const b of item.content) {
                   if (b._type === 'block') {
                     const tb = b as PortableTextTextBlock
-                    ;(tb as PortableTextTextBlock & {listItem?: string}).listItem =
-                      closing.list.kind === 'task' ? 'bullet' : closing.list.kind
+                    ;(
+                      tb as PortableTextTextBlock & {listItem?: string}
+                    ).listItem =
+                      closing.list.kind === 'task'
+                        ? 'bullet'
+                        : closing.list.kind
                     ;(tb as PortableTextTextBlock & {level?: number}).level = 1
-                    if (closing.list.kind === 'task' && item.checked !== undefined) {
-                      ;(tb as PortableTextTextBlock & {checked?: boolean}).checked = item.checked
+                    if (
+                      closing.list.kind === 'task' &&
+                      item.checked !== undefined
+                    ) {
+                      ;(
+                        tb as PortableTextTextBlock & {checked?: boolean}
+                      ).checked = item.checked
                     }
                   }
                   sink(b)
@@ -720,7 +882,10 @@ export function eventsToPortableText(
         if (useBlockquoteContainer) {
           const inner = blockquoteBuffers.pop() ?? []
           const value = options.types.blockquote!({
-            context: {schema: options.schema, keyGenerator: options.keyGenerator},
+            context: {
+              schema: options.schema,
+              keyGenerator: options.keyGenerator,
+            },
             value: {content: inner as Array<PortableTextBlock>},
             isInline: false,
           })
@@ -736,7 +901,9 @@ export function eventsToPortableText(
                   const restyled = options.block.blockquote({
                     context: {schema: options.schema},
                   })
-                  if (restyled) tb.style = restyled
+                  if (restyled) {
+                    tb.style = restyled
+                  }
                 }
               }
               sinkOpen(b)
@@ -769,8 +936,12 @@ function decorateListContext(
   useListContainer: boolean,
   options: ResolvedOptions,
 ): void {
-  if (listStack.length === 0) return
-  if (useListContainer) return
+  if (listStack.length === 0) {
+    return
+  }
+  if (useListContainer) {
+    return
+  }
   const innermost = listStack[listStack.length - 1]!
   let listItemName = options.listItem[innermost.kind]({
     context: {schema: options.schema},
@@ -779,14 +950,23 @@ function decorateListContext(
   if (!listItemName && innermost.kind === 'task') {
     listItemName = options.listItem.bullet({context: {schema: options.schema}})
   }
-  if (!listItemName) return
-  ;(block as PortableTextTextBlock & {listItem?: string; level?: number; checked?: boolean}).listItem = listItemName
+  if (!listItemName) {
+    return
+  }
+  ;(
+    block as PortableTextTextBlock & {
+      listItem?: string
+      level?: number
+      checked?: boolean
+    }
+  ).listItem = listItemName
   ;(block as PortableTextTextBlock & {level?: number}).level = innermost.level
   if (innermost.kind === 'task' && pendingItem?.checked !== undefined) {
     // Only emit checked when a task list item is actually declared in the schema.
     const taskName = options.listItem.task({context: {schema: options.schema}})
     if (taskName) {
-      ;(block as PortableTextTextBlock & {checked?: boolean}).checked = pendingItem.checked
+      ;(block as PortableTextTextBlock & {checked?: boolean}).checked =
+        pendingItem.checked
     }
   }
 }
@@ -805,7 +985,9 @@ function collectInline(
       return {text: buffer.join('\n'), line, nextIndex: i + 1}
     }
     if (e.kind === 'inline_run') {
-      if (buffer.length === 0) line = e.location.line
+      if (buffer.length === 0) {
+        line = e.location.line
+      }
       buffer.push(e.text)
     }
     i++
@@ -817,7 +999,9 @@ function findClose(events: BlockEvent[], start: number, spec: string): number {
   let i = start
   while (i < events.length) {
     const e = events[i]!
-    if (e.kind === 'close' && e.spec === spec) return i
+    if (e.kind === 'close' && e.spec === spec) {
+      return i
+    }
     i++
   }
   return events.length

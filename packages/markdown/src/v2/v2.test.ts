@@ -72,7 +72,7 @@ describe('markdownToPortableTextV2 (spike)', () => {
 
   test('inline code', () => {
     resetKeys()
-    const result = markdownToPortableTextV2('use \`foo()\`', {keyGenerator})
+    const result = markdownToPortableTextV2('use `foo()`', {keyGenerator})
     expect((result[0] as {children: Array<unknown>}).children).toEqual([
       {_type: 'span', _key: expect.any(String), text: 'use ', marks: []},
       {_type: 'span', _key: expect.any(String), text: 'foo()', marks: ['code']},
@@ -83,7 +83,7 @@ describe('markdownToPortableTextV2 (spike)', () => {
     resetKeys()
     const result = markdownToPortableTextV2('[click](https://example.com)', {
       keyGenerator,
-    }) as Array<{
+    }) as unknown as Array<{
       children: Array<{text: string; marks: Array<string>}>
       markDefs: Array<{_type: string; href: string; _key: string}>
     }>
@@ -106,7 +106,7 @@ describe('markdownToPortableTextV2 (spike)', () => {
   test('fenced code block', () => {
     resetKeys()
     expect(
-      markdownToPortableTextV2('\`\`\`ts\nconst x = 1\n\`\`\`', {keyGenerator}),
+      markdownToPortableTextV2('```ts\nconst x = 1\n```', {keyGenerator}),
     ).toEqual([
       {_type: 'code', _key: 'k0', language: 'ts', code: 'const x = 1'},
     ])
@@ -234,7 +234,7 @@ describe('portableTextToMarkdownV2 (spike)', () => {
           code: 'const x = 1',
         } as never,
       ]),
-    ).toBe('\`\`\`ts\nconst x = 1\n\`\`\`')
+    ).toBe('```ts\nconst x = 1\n```')
   })
 
   test('hr', () => {
@@ -276,9 +276,9 @@ describe('round-trip (spike)', () => {
       '- one',
       '- two',
       '',
-      '\`\`\`ts',
+      '```ts',
       'const x = 1',
-      '\`\`\`',
+      '```',
       '',
       '> a quote',
       '',

@@ -10,7 +10,6 @@ import {
 } from '@portabletext/toolkit'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from '../default-schema'
-import {portableTextToMarkdown} from './adapter'
 import {DefaultListItemRenderer} from '../from-portable-text/renderers/list-item'
 import {
   DefaultBlockquoteObjectRenderer,
@@ -20,8 +19,8 @@ import {
   DefaultListRenderer,
   DefaultTableRenderer,
 } from '../from-portable-text/renderers/type'
-import {markdownToPortableText} from './adapter'
 import {buildObjectMatcher} from '../to-portable-text/matchers'
+import {markdownToPortableText, portableTextToMarkdown} from './adapter'
 
 describe(portableTextToMarkdown.name, () => {
   test('empty array', () => {

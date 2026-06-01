@@ -22,7 +22,10 @@
  * @internal
  */
 
-import type {SourceLocation} from '../errors'
+interface SourceLocation {
+  line: number
+  column: number
+}
 
 export const InlineTokenType = {
   Text: 'text',
@@ -66,7 +69,11 @@ export interface LexInlineOptions {
   linkReferences?: import('./link-references').LinkReferenceMap
 }
 
-export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOptions = {}): Array<InlineToken> {
+export function lexInline(
+  source: string,
+  startLine = 1,
+  lexOptions: LexInlineOptions = {},
+): Array<InlineToken> {
   const tokens: Array<InlineToken> = []
   let i = 0
   let line = startLine
@@ -75,7 +82,9 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
   let textLoc: SourceLocation = {line, column}
 
   const flushText = () => {
-    if (textBuffer.length === 0) return
+    if (textBuffer.length === 0) {
+      return
+    }
     tokens.push({
       type: InlineTokenType.Text,
       text: textBuffer,
@@ -85,7 +94,9 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
   }
 
   const pushText = (ch: string) => {
-    if (textBuffer.length === 0) textLoc = {line, column}
+    if (textBuffer.length === 0) {
+      textLoc = {line, column}
+    }
     textBuffer += ch
   }
 
@@ -125,7 +136,9 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
     // Inline code span
     if (ch === '`') {
       let runLen = 0
-      while (source[i + runLen] === '`') runLen += 1
+      while (source[i + runLen] === '`') {
+        runLen += 1
+      }
       const marker = '`'.repeat(runLen)
       // Find closing run of the same length.
       let scan = i + runLen
@@ -142,7 +155,7 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
             })
             const consumed = scan + runLen - i
             advance(consumed)
-            i = i // already advanced
+            // i already advanced via advance()
             break
           }
         }
@@ -150,7 +163,9 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
       }
       if (scan >= source.length) {
         // No closing run; treat as literal text.
-        for (let k = 0; k < runLen; k += 1) pushText('`')
+        for (let k = 0; k < runLen; k += 1) {
+          pushText('`')
+        }
         i += runLen
         column += runLen
       }
@@ -204,7 +219,9 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
         })
         // Re-lex the label text and emit as inner tokens, then close.
         const inner = lexInline(ref.label, line, lexOptions)
-        for (const tok of inner) tokens.push(tok)
+        for (const tok of inner) {
+          tokens.push(tok)
+        }
         tokens.push({
           type: InlineTokenType.LinkClose,
           text: '',
@@ -233,7 +250,7 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
       }
     }
 
-        // Link: [label](href "title")
+    // Link: [label](href "title")
     if (ch === '[') {
       const link = matchLink(source, i)
       if (link) {
@@ -264,14 +281,26 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
       if (top && top.marker === marker) {
         flushText()
         emphasisStack.pop()
-        tokens.push({type: InlineTokenType.StrikeClose, text: '', location: {line, column}})
+        tokens.push({
+          type: InlineTokenType.StrikeClose,
+          text: '',
+          location: {line, column},
+        })
         advance(2)
         continue
       }
-      if (i + 2 < source.length && source[i + 2] !== ' ' && source[i + 2] !== '\n') {
+      if (
+        i + 2 < source.length &&
+        source[i + 2] !== ' ' &&
+        source[i + 2] !== '\n'
+      ) {
         flushText()
         emphasisStack.push({marker, tokenIndex: tokens.length})
-        tokens.push({type: InlineTokenType.StrikeOpen, text: '', location: {line, column}})
+        tokens.push({
+          type: InlineTokenType.StrikeOpen,
+          text: '',
+          location: {line, column},
+        })
         advance(2)
         continue
       }
@@ -322,7 +351,7 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
     // Backslash escape
     if (ch === '\\' && i + 1 < source.length) {
       const next = source[i + 1] ?? ''
-      if (/[!\"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/.test(next)) {
+      if (/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/.test(next)) {
         pushText(next)
         i += 2
         column += 2
@@ -342,7 +371,9 @@ export function lexInline(source: string, startLine = 1, lexOptions: LexInlineOp
   // This is a minimal recovery; a stricter mode would throw `UnbalancedEmphasis`.
   for (const entry of emphasisStack) {
     const t = tokens[entry.tokenIndex]
-    if (!t) continue
+    if (!t) {
+      continue
+    }
     t.type = InlineTokenType.Text
     t.text = entry.marker
   }
@@ -376,21 +407,30 @@ function matchLink(source: string, start: number): LinkMatch | null {
       i += 2
       continue
     }
-    if (ch === '[') depth += 1
-    else if (ch === ']') {
+    if (ch === '[') {
+      depth += 1
+    } else if (ch === ']') {
       depth -= 1
-      if (depth === 0) break
+      if (depth === 0) {
+        break
+      }
     }
     i += 1
   }
-  if (depth !== 0) return null
+  if (depth !== 0) {
+    return null
+  }
   const labelEnd = i
-  if (source[labelEnd + 1] !== '(') return null
+  if (source[labelEnd + 1] !== '(') {
+    return null
+  }
   const label = source.slice(start + 1, labelEnd)
   // Parse href + optional title inside (...)
   let j = labelEnd + 2
   // Skip spaces
-  while (source[j] === ' ') j += 1
+  while (source[j] === ' ') {
+    j += 1
+  }
   let href = ''
   while (
     j < source.length &&
@@ -402,19 +442,29 @@ function matchLink(source: string, start: number): LinkMatch | null {
     j += 1
   }
   // Skip spaces
-  while (source[j] === ' ' || source[j] === '\t') j += 1
+  while (source[j] === ' ' || source[j] === '\t') {
+    j += 1
+  }
   let title: string | undefined
   if (source[j] === '"' || source[j] === "'") {
     const quote = source[j]
     const titleStart = j + 1
     j = titleStart
-    while (j < source.length && source[j] !== quote) j += 1
-    if (j >= source.length) return null
+    while (j < source.length && source[j] !== quote) {
+      j += 1
+    }
+    if (j >= source.length) {
+      return null
+    }
     title = source.slice(titleStart, j)
     j += 1
-    while (source[j] === ' ' || source[j] === '\t') j += 1
+    while (source[j] === ' ' || source[j] === '\t') {
+      j += 1
+    }
   }
-  if (source[j] !== ')') return null
+  if (source[j] !== ')') {
+    return null
+  }
   return {
     label: unescapeMarkdown(label),
     href,
@@ -431,8 +481,15 @@ function matchReferenceLink(
   source: string,
   start: number,
   refs: import('./link-references').LinkReferenceMap,
-): {label: string; href: string; title: string | undefined; consumed: number} | null {
-  if (source[start] !== '[') return null
+): {
+  label: string
+  href: string
+  title: string | undefined
+  consumed: number
+} | null {
+  if (source[start] !== '[') {
+    return null
+  }
   // Find matching ] for the label
   let depth = 1
   let i = start + 1
@@ -442,27 +499,38 @@ function matchReferenceLink(
       i += 2
       continue
     }
-    if (c === '[') depth += 1
-    else if (c === ']') {
+    if (c === '[') {
+      depth += 1
+    } else if (c === ']') {
       depth -= 1
-      if (depth === 0) break
+      if (depth === 0) {
+        break
+      }
     }
     i += 1
   }
-  if (depth !== 0) return null
+  if (depth !== 0) {
+    return null
+  }
   const labelEnd = i
   const label = source.slice(start + 1, labelEnd)
   // What follows the closing ]?
-  let next = labelEnd + 1
+  const next = labelEnd + 1
   let refLabel = label
   let consumed = next - start
   if (source[next] === '[') {
     // Full or collapsed: [text][ref] or [text][]
     let refEnd = next + 1
-    while (refEnd < source.length && source[refEnd] !== ']') refEnd += 1
-    if (refEnd >= source.length) return null
+    while (refEnd < source.length && source[refEnd] !== ']') {
+      refEnd += 1
+    }
+    if (refEnd >= source.length) {
+      return null
+    }
     const explicitRef = source.slice(next + 1, refEnd)
-    if (explicitRef.length > 0) refLabel = explicitRef
+    if (explicitRef.length > 0) {
+      refLabel = explicitRef
+    }
     consumed = refEnd - start + 1
   } else if (source[next] === '(') {
     // This is a regular inline link, not a reference. Let matchLink handle it.
@@ -470,8 +538,15 @@ function matchReferenceLink(
   }
   const key = refLabel.toLowerCase().trim().replace(/\s+/g, ' ')
   const entry = refs[key]
-  if (!entry) return null
-  return {label: unescapeMarkdown(label), href: entry.href, title: entry.title, consumed}
+  if (!entry) {
+    return null
+  }
+  return {
+    label: unescapeMarkdown(label),
+    href: entry.href,
+    title: entry.title,
+    consumed,
+  }
 }
 
 /**
@@ -479,5 +554,5 @@ function matchReferenceLink(
  * Used on link/image labels and titles before exposing them as alt/title.
  */
 function unescapeMarkdown(text: string): string {
-  return text.replace(/\\([!-/:-@\[-`{-~])/g, '$1')
+  return text.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }

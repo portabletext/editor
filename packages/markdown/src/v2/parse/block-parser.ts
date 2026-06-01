@@ -36,7 +36,7 @@
 
 import type {BlockEvent, BlockKind} from './events'
 
-export interface Line {
+interface Line {
   /** Raw line text without the trailing newline. */
   raw: string
   /** Line number, 1-based. */
@@ -45,7 +45,7 @@ export interface Line {
   cursor: number
 }
 
-export interface Container {
+interface Container {
   spec: BlockSpec
   /** Column at which this container's content starts. */
   indent: number
@@ -55,7 +55,7 @@ export interface Container {
   startLine: number
 }
 
-export interface BlockSpec {
+interface BlockSpec {
   name: BlockKind
   /**
    * Can this open container extend onto `line`? Called with the line's
@@ -74,7 +74,7 @@ export interface BlockSpec {
 }
 
 /** Context passed to spec callbacks. */
-export interface BlockParserContext {
+interface BlockParserContext {
   push: (container: Container) => void
   emit: (event: BlockEvent) => void
   /** Tip of the open-container stack. */
@@ -85,7 +85,6 @@ const isBlankLine = (line: Line): boolean => {
   return /^[ \t]*$/.test(line.raw.slice(line.cursor))
 }
 
-
 /** Spec: paragraph (fallback). Continues while line is not blank. */
 const paragraphSpec: BlockSpec = {
   name: 'paragraph',
@@ -93,14 +92,20 @@ const paragraphSpec: BlockSpec = {
   open: (line, parent, ctx) => {
     // Never open a new paragraph if the tip is already one — line content
     // will be absorbed by the existing paragraph in step 3.
-    if (parent.spec.name === 'paragraph') return false
+    if (parent.spec.name === 'paragraph') {
+      return false
+    }
     ctx.push({
       spec: paragraphSpec,
       indent: line.cursor,
       data: {lines: [] as Array<string>},
       startLine: line.number,
     })
-    ctx.emit({kind: 'open', spec: 'paragraph', location: {line: line.number, column: line.cursor + 1}})
+    ctx.emit({
+      kind: 'open',
+      spec: 'paragraph',
+      location: {line: line.number, column: line.cursor + 1},
+    })
     return true
   },
   close: (container, ctx) => {
@@ -110,7 +115,11 @@ const paragraphSpec: BlockSpec = {
       text: lines.join('\n'),
       location: {line: container.startLine, column: container.indent + 1},
     })
-    ctx.emit({kind: 'close', spec: 'paragraph', location: {line: container.startLine, column: container.indent + 1}})
+    ctx.emit({
+      kind: 'close',
+      spec: 'paragraph',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
   },
 }
 
@@ -121,7 +130,9 @@ const headingSpec: BlockSpec = {
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
     const m = tail.match(/^(#{1,6})[ \t]+(.*?)[ \t]*$/)
-    if (!m) return false
+    if (!m) {
+      return false
+    }
     const level = m[1]!.length
     const text = m[2] ?? ''
     ctx.push({
@@ -159,14 +170,20 @@ const thematicBreakSpec: BlockSpec = {
   continue: () => false,
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
-    if (!/^[ ]{0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/.test(tail)) return false
+    if (!/^[ ]{0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/.test(tail)) {
+      return false
+    }
     ctx.push({
       spec: thematicBreakSpec,
       indent: line.cursor,
       data: {},
       startLine: line.number,
     })
-    ctx.emit({kind: 'open', spec: 'thematic_break', location: {line: line.number, column: line.cursor + 1}})
+    ctx.emit({
+      kind: 'open',
+      spec: 'thematic_break',
+      location: {line: line.number, column: line.cursor + 1},
+    })
     line.cursor = line.raw.length
     return true
   },
@@ -179,7 +196,6 @@ const thematicBreakSpec: BlockSpec = {
   },
 }
 
-
 const isBlockquoteLine = (line: Line): boolean => {
   const tail = line.raw.slice(line.cursor)
   return /^[ ]{0,3}>/.test(tail)
@@ -189,26 +205,38 @@ const isBlockquoteLine = (line: Line): boolean => {
 const blockquoteSpec: BlockSpec = {
   name: 'blockquote',
   continue: (_c, line) => {
-    if (!isBlockquoteLine(line)) return false
+    if (!isBlockquoteLine(line)) {
+      return false
+    }
     // Advance past the `> ` prefix so inner specs see the line content.
     const tail = line.raw.slice(line.cursor)
     const m = tail.match(/^[ ]{0,3}>[ ]?/)
-    if (m) line.cursor += m[0].length
+    if (m) {
+      line.cursor += m[0].length
+    }
     return true
   },
   open: (line, _parent, ctx) => {
-    if (!isBlockquoteLine(line)) return false
+    if (!isBlockquoteLine(line)) {
+      return false
+    }
     ctx.push({
       spec: blockquoteSpec,
       indent: line.cursor,
       data: {},
       startLine: line.number,
     })
-    ctx.emit({kind: 'open', spec: 'blockquote', location: {line: line.number, column: line.cursor + 1}})
+    ctx.emit({
+      kind: 'open',
+      spec: 'blockquote',
+      location: {line: line.number, column: line.cursor + 1},
+    })
     // Advance past the `> ` prefix.
     const tail = line.raw.slice(line.cursor)
     const m = tail.match(/^[ ]{0,3}>[ ]?/)
-    if (m) line.cursor += m[0].length
+    if (m) {
+      line.cursor += m[0].length
+    }
     return true
   },
   close: (container, ctx) => {
@@ -222,9 +250,9 @@ const blockquoteSpec: BlockSpec = {
 
 interface ListMarkerInfo {
   kind: 'bullet' | 'number' | 'task'
-  marker: string         // e.g. "-", "1.", "+"
-  checked?: boolean      // for task
-  markerWidth: number    // columns consumed by marker + trailing space
+  marker: string // e.g. "-", "1.", "+"
+  checked?: boolean // for task
+  markerWidth: number // columns consumed by marker + trailing space
 }
 
 const detectListMarker = (text: string): ListMarkerInfo | undefined => {
@@ -241,7 +269,11 @@ const detectListMarker = (text: string): ListMarkerInfo | undefined => {
   // Bullet: "- ", "* ", "+ "
   const bullet = text.match(/^([-*+])[ \t]+/)
   if (bullet) {
-    return {kind: 'bullet', marker: bullet[1] ?? '-', markerWidth: bullet[0].length}
+    return {
+      kind: 'bullet',
+      marker: bullet[1] ?? '-',
+      markerWidth: bullet[0].length,
+    }
   }
   // Ordered: "1. " or "1) "
   const ordered = text.match(/^(\d{1,9})([.)])[ \t]+/)
@@ -259,7 +291,9 @@ const detectListMarker = (text: string): ListMarkerInfo | undefined => {
 const listSpec: BlockSpec = {
   name: 'list',
   continue: (c, line) => {
-    if (/^[ \t]*$/.test(line.raw.slice(line.cursor))) return true
+    if (/^[ \t]*$/.test(line.raw.slice(line.cursor))) {
+      return true
+    }
     const tail = line.raw.slice(line.cursor)
     const leading = tail.match(/^[ \t]*/)![0].length
     const absoluteLeading = line.cursor + leading
@@ -277,13 +311,18 @@ const listSpec: BlockSpec = {
     const tail = line.raw.slice(line.cursor)
     const leading = tail.match(/^[ \t]{0,3}/)?.[0].length ?? 0
     const marker = detectListMarker(tail.slice(leading))
-    if (!marker) return false
+    if (!marker) {
+      return false
+    }
     // Advance past the optional leading indent so listItem sees the marker.
     line.cursor += leading
     ctx.push({
       spec: listSpec,
       indent: line.cursor,
-      data: {kind: marker.kind, lastItemIndent: line.cursor + marker.markerWidth},
+      data: {
+        kind: marker.kind,
+        lastItemIndent: line.cursor + marker.markerWidth,
+      },
       startLine: line.number,
     })
     ctx.emit({
@@ -310,7 +349,9 @@ const listItemSpec: BlockSpec = {
     // The item continues if the line is blank OR indented enough to be in
     // the item's content frame.
     const tail = line.raw.slice(line.cursor)
-    if (/^[ \t]*$/.test(tail)) return true
+    if (/^[ \t]*$/.test(tail)) {
+      return true
+    }
     const leading = tail.match(/^[ \t]*/)![0].length
     const absoluteLeading = line.cursor + leading
     // If a list marker sits at exactly the column of the item's own
@@ -319,17 +360,21 @@ const listItemSpec: BlockSpec = {
     const itemStart = c.indent - (c.data['marker'] as string).length
     if (absoluteLeading === itemStart) {
       const marker = detectListMarker(tail.trimStart())
-      if (marker) return false
+      if (marker) {
+        return false
+      }
     }
-    if (leading >= (c.indent - line.cursor)) {
+    if (leading >= c.indent - line.cursor) {
       // Advance past the item's continuation indent.
-      line.cursor += (c.indent - line.cursor)
+      line.cursor += c.indent - line.cursor
       return true
     }
     return false
   },
   open: (line, parent, ctx) => {
-    if (parent.spec.name !== 'list') return false
+    if (parent.spec.name !== 'list') {
+      return false
+    }
     const tail = line.raw.slice(line.cursor)
     // Allow optional leading whitespace up to the parent list's frame:
     // a sibling item at the same list's indent column may sit a few
@@ -337,10 +382,16 @@ const listItemSpec: BlockSpec = {
     // didn't fully consume the whitespace.
     const leading = tail.match(/^[ \t]*/)![0].length
     const cursorAfterLeading = line.cursor + leading
-    if (cursorAfterLeading !== parent.indent) return false
+    if (cursorAfterLeading !== parent.indent) {
+      return false
+    }
     const marker = detectListMarker(tail.slice(leading))
-    if (!marker) return false
-    if (marker.kind !== (parent.data['kind'] as string)) return false
+    if (!marker) {
+      return false
+    }
+    if (marker.kind !== (parent.data['kind'] as string)) {
+      return false
+    }
     line.cursor = cursorAfterLeading
     const indent = line.cursor + marker.markerWidth
     ctx.push({
@@ -375,7 +426,9 @@ const fencedCodeSpec: BlockSpec = {
     const fenceChar = c.data['fenceChar'] as string
     const fenceLen = c.data['fenceLen'] as number
     const escapedFence = fenceChar === '`' ? '`' : '~'
-    const closeFence = new RegExp('^[ ]{0,3}' + escapedFence + '{' + fenceLen + ',}[ \\t]*$')
+    const closeFence = new RegExp(
+      `^[ ]{0,3}${escapedFence}{${fenceLen},}[ \\t]*$`,
+    )
     if (closeFence.test(tail)) {
       line.cursor = line.raw.length
       ;(c.data['_pendingClose'] as {flag: boolean}).flag = true
@@ -386,7 +439,9 @@ const fencedCodeSpec: BlockSpec = {
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
     const m = tail.match(/^[ ]{0,3}(`{3,}|~{3,})[ \t]*([^\s`]*)?[ \t]*$/)
-    if (!m) return false
+    if (!m) {
+      return false
+    }
     const fence = m[1]!
     const lang = m[2] ?? ''
     ctx.push({
@@ -398,16 +453,25 @@ const fencedCodeSpec: BlockSpec = {
         lang,
         _pendingClose: {flag: false},
         _isOpening: true,
-        _fenceIndent: (tail.match(/^[ ]{0,3}/)?.[0].length ?? 0),
+        _fenceIndent: tail.match(/^[ ]{0,3}/)?.[0].length ?? 0,
       },
       startLine: line.number,
     })
-    ctx.emit({kind: 'open', spec: 'fenced_code', data: {lang}, location: {line: line.number, column: line.cursor + 1}})
+    ctx.emit({
+      kind: 'open',
+      spec: 'fenced_code',
+      data: {lang},
+      location: {line: line.number, column: line.cursor + 1},
+    })
     line.cursor = line.raw.length
     return true
   },
   close: (container, ctx) => {
-    ctx.emit({kind: 'close', spec: 'fenced_code', location: {line: container.startLine, column: container.indent + 1}})
+    ctx.emit({
+      kind: 'close',
+      spec: 'fenced_code',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
   },
 }
 
@@ -415,7 +479,9 @@ const indentedCodeSpec: BlockSpec = {
   name: 'code_block',
   continue: (_c, line) => {
     const tail = line.raw.slice(line.cursor)
-    if (/^[ \t]*$/.test(tail)) return true
+    if (/^[ \t]*$/.test(tail)) {
+      return true
+    }
     const leading = tail.match(/^[ \t]*/)![0].length
     if (leading >= 4) {
       line.cursor += 4
@@ -426,20 +492,32 @@ const indentedCodeSpec: BlockSpec = {
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
     const leading = tail.match(/^[ \t]*/)![0].length
-    if (leading < 4) return false
-    if (/^[ \t]*$/.test(tail)) return false
+    if (leading < 4) {
+      return false
+    }
+    if (/^[ \t]*$/.test(tail)) {
+      return false
+    }
     ctx.push({
       spec: indentedCodeSpec,
       indent: line.cursor + 4,
       data: {},
       startLine: line.number,
     })
-    ctx.emit({kind: 'open', spec: 'code_block', location: {line: line.number, column: line.cursor + 1}})
+    ctx.emit({
+      kind: 'open',
+      spec: 'code_block',
+      location: {line: line.number, column: line.cursor + 1},
+    })
     line.cursor += 4
     return true
   },
   close: (container, ctx) => {
-    ctx.emit({kind: 'close', spec: 'code_block', location: {line: container.startLine, column: container.indent + 1}})
+    ctx.emit({
+      kind: 'close',
+      spec: 'code_block',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
   },
 }
 
@@ -450,7 +528,9 @@ const htmlBlockSpec: BlockSpec = {
   },
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
-    if (!/^<\/?[a-zA-Z][a-zA-Z0-9-]*/.test(tail.trimStart())) return false
+    if (!/^<\/?[a-zA-Z][a-zA-Z0-9-]*/.test(tail.trimStart())) {
+      return false
+    }
     // Record any extra leading-space indent inside the current container
     // (e.g. an html_block under a list item often has 1+ extra spaces);
     // continuation lines strip up to that many columns.
@@ -461,20 +541,27 @@ const htmlBlockSpec: BlockSpec = {
       data: {_htmlIndent: htmlIndent},
       startLine: line.number,
     })
-    ctx.emit({kind: 'open', spec: 'html_block', location: {line: line.number, column: line.cursor + 1}})
+    ctx.emit({
+      kind: 'open',
+      spec: 'html_block',
+      location: {line: line.number, column: line.cursor + 1},
+    })
     ctx.emit({
       kind: 'verbatim_line',
-      text: tail.replace(new RegExp('^[ ]{0,' + htmlIndent + '}'), ''),
+      text: tail.replace(new RegExp(`^[ ]{0,${htmlIndent}}`), ''),
       location: {line: line.number, column: line.cursor + 1},
     })
     line.cursor = line.raw.length
     return true
   },
   close: (container, ctx) => {
-    ctx.emit({kind: 'close', spec: 'html_block', location: {line: container.startLine, column: container.indent + 1}})
+    ctx.emit({
+      kind: 'close',
+      spec: 'html_block',
+      location: {line: container.startLine, column: container.indent + 1},
+    })
   },
 }
-
 
 /**
  * Table spec. A line starting with `|` opens a table_row container.
@@ -488,10 +575,12 @@ const htmlBlockSpec: BlockSpec = {
  */
 const tableRowSpec: BlockSpec = {
   name: 'table_row',
-  continue: () => false,  // single line
+  continue: () => false, // single line
   open: (line, _parent, ctx) => {
     const tail = line.raw.slice(line.cursor)
-    if (!/^[ ]{0,3}\|/.test(tail)) return false
+    if (!/^[ ]{0,3}\|/.test(tail)) {
+      return false
+    }
     ctx.push({
       spec: tableRowSpec,
       indent: line.cursor,
@@ -523,7 +612,7 @@ const docSpec: BlockSpec = {
   close: () => undefined,
 }
 
-export class BlockParser {
+class BlockParser {
   private specs: BlockSpec[] = [
     blockquoteSpec,
     listItemSpec,
@@ -604,7 +693,11 @@ export class BlockParser {
     // Try block-starting specs. Skip when inside a verbatim container
     // since every line there is literal content.
     const tipBeforeOpen = this.ctx.tip()
-    const verbatimNames = new Set<string>(['fenced_code', 'code_block', 'html_block'])
+    const verbatimNames = new Set<string>([
+      'fenced_code',
+      'code_block',
+      'html_block',
+    ])
     if (!verbatimNames.has(tipBeforeOpen.spec.name)) {
       let opened = true
       while (opened) {
@@ -614,18 +707,25 @@ export class BlockParser {
           // If tip is paragraph and a non-paragraph block-starter
           // would match, close paragraph first so the new block
           // becomes a sibling, not a child.
-          if (currentTip.spec.name === 'paragraph' && spec.name !== 'paragraph') {
+          if (
+            currentTip.spec.name === 'paragraph' &&
+            spec.name !== 'paragraph'
+          ) {
             const savedCursor = line.cursor
             // Probe by attempting open with a temporary handle.
             // Cheap check: peek-match against tail without mutating.
             const tail = line.raw.slice(line.cursor)
             const trimmedTail = tail.trimStart()
             const looksLikeBlock =
-              spec.name === 'list' && detectListMarker(trimmedTail) !== undefined ||
-              spec.name === 'blockquote' && /^>/.test(trimmedTail) ||
-              spec.name === 'heading' && /^#{1,6}(?:\s|$)/.test(trimmedTail) ||
-              spec.name === 'thematic_break' && /^([-*_])(?:\s*\1){2,}\s*$/.test(trimmedTail) ||
-              spec.name === 'fenced_code' && /^(`{3,}|~{3,})/.test(trimmedTail)
+              (spec.name === 'list' &&
+                detectListMarker(trimmedTail) !== undefined) ||
+              (spec.name === 'blockquote' && /^>/.test(trimmedTail)) ||
+              (spec.name === 'heading' &&
+                /^#{1,6}(?:\s|$)/.test(trimmedTail)) ||
+              (spec.name === 'thematic_break' &&
+                /^([-*_])(?:\s*\1){2,}\s*$/.test(trimmedTail)) ||
+              (spec.name === 'fenced_code' &&
+                /^(`{3,}|~{3,})/.test(trimmedTail))
             if (looksLikeBlock) {
               this.closeAllFrom(this.containers.length - 1)
               line.cursor = savedCursor
@@ -654,7 +754,7 @@ export class BlockParser {
       }
       const fenceIndent = (tip.data['_fenceIndent'] as number) ?? 0
       const rawTail = line.raw.slice(line.cursor)
-      const stripped = rawTail.replace(new RegExp('^[ ]{0,' + fenceIndent + '}'), '')
+      const stripped = rawTail.replace(new RegExp(`^[ ]{0,${fenceIndent}}`), '')
       this.ctx.emit({
         kind: 'verbatim_line',
         text: stripped,
@@ -673,7 +773,7 @@ export class BlockParser {
     if (tip.spec.name === 'html_block') {
       const htmlIndent = (tip.data['_htmlIndent'] as number) ?? 0
       const rawTail = line.raw.slice(line.cursor)
-      const stripped = rawTail.replace(new RegExp('^[ ]{0,' + htmlIndent + '}'), '')
+      const stripped = rawTail.replace(new RegExp(`^[ ]{0,${htmlIndent}}`), '')
       if (stripped.length > 0 || rawTail.length > 0) {
         this.ctx.emit({
           kind: 'verbatim_line',
@@ -685,7 +785,9 @@ export class BlockParser {
     }
 
     const tail = line.raw.slice(line.cursor)
-    if (tail.length === 0) return
+    if (tail.length === 0) {
+      return
+    }
     const textBearing = new Set<string>(['paragraph', 'heading'])
     if (!textBearing.has(tip.spec.name)) {
       paragraphSpec.open(line, tip, this.ctx)

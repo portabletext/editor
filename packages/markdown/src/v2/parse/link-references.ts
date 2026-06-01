@@ -23,7 +23,8 @@ export interface LinkReferenceMap {
   [normalizedLabel: string]: LinkReference
 }
 
-const REF_LINE = /^ {0,3}\[([^\]]+)\]:\s*(\S+?)(?:\s+(?:"([^"]*)"|'([^']*)'|\(([^)]*)\)))?\s*$/
+const REF_LINE =
+  /^ {0,3}\[([^\]]+)\]:\s*(\S+?)(?:\s+(?:"([^"]*)"|'([^']*)'|\(([^)]*)\)))?\s*$/
 
 export function extractLinkReferences(markdown: string): {
   markdown: string

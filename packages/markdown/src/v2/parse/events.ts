@@ -33,7 +33,12 @@ export interface SourceLoc {
 }
 
 export type BlockEvent =
-  | {kind: 'open'; spec: BlockKind; data?: Record<string, unknown>; location: SourceLoc}
+  | {
+      kind: 'open'
+      spec: BlockKind
+      data?: Record<string, unknown>
+      location: SourceLoc
+    }
   | {kind: 'close'; spec: BlockKind; location: SourceLoc}
   | {kind: 'inline_run'; text: string; location: SourceLoc}
   | {kind: 'verbatim_line'; text: string; location: SourceLoc}

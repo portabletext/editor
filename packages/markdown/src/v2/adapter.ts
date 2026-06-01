@@ -13,6 +13,7 @@
  */
 
 import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
+import type {TypedObject} from '@portabletext/types'
 import {portableTextToMarkdown as v1PortableTextToMarkdown} from '../from-portable-text/portable-text-to-markdown'
 import {parseToBlockEvents} from './parse/block-parser'
 import {eventsToPortableText} from './parse/events-to-portable-text'
@@ -33,9 +34,11 @@ export function markdownToPortableText(
   return eventsToPortableText(events, resolved)
 }
 
-export function portableTextToMarkdown(
-  blocks: ReadonlyArray<PortableTextBlock | PortableTextObject>,
-  options: Record<string, unknown> = {},
+type V1Options = Parameters<typeof v1PortableTextToMarkdown>[1]
+
+export function portableTextToMarkdown<Block extends TypedObject>(
+  blocks: Array<Block>,
+  options?: V1Options,
 ): string {
-  return v1PortableTextToMarkdown(blocks as never, options as never)
+  return v1PortableTextToMarkdown(blocks, options)
 }

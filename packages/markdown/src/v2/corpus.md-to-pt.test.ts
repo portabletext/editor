@@ -6,8 +6,8 @@ import {
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from '../default-schema'
-import {markdownToPortableText} from './adapter'
 import {buildObjectMatcher} from '../to-portable-text/matchers'
+import {markdownToPortableText} from './adapter'
 
 describe(markdownToPortableText.name, () => {
   test('empty string', () => {

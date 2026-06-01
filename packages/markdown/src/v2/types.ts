@@ -1,5 +1,3 @@
-import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
-
 /**
  * Public option type for `markdownToPortableTextV2` and `portableTextToMarkdownV2`.
  *
@@ -11,12 +9,3 @@ import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 export interface MarkdownV2Options {
   keyGenerator?: () => string
 }
-
-/**
- * The Portable Text node kinds v2 produces and consumes. v2 emits PT directly;
- * there is no intermediate AST. This type just re-exposes the relevant PT
- * shapes for ergonomic imports across the parse/print layers.
- *
- * @internal
- */
-export type PtNode = PortableTextBlock | PortableTextObject
