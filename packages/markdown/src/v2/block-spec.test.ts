@@ -218,26 +218,6 @@ describe('block-parser Day 1 skeleton', () => {
       ])
     })
 
-    test.skip('task list (legacy expectation; corpus covers task)', () => {
-      const keys = (() => {
-        let i = 0
-        return () => `k${i++}`
-      })()
-      const result = parse('- [x] foo', {keyGenerator: keys})
-      expect(result).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-          listItem: 'bullet',
-          level: 1,
-          checked: true,
-        },
-      ])
-    })
-
     test('multiple items', () => {
       const keys = (() => {
         let i = 0
