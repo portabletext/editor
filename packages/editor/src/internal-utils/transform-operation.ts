@@ -7,10 +7,8 @@ import {
 } from '@sanity/diff-match-patch'
 import type {Node} from '../engine/interfaces/node'
 import type {Operation} from '../engine/interfaces/operation'
-import type {Path} from '../engine/interfaces/path'
-import {isAncestorPath} from '../engine/path/is-ancestor-path'
-import {pathEquals} from '../engine/path/path-equals'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {pathContains} from '../traversal/path-contains'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {debug} from './debug'
@@ -49,7 +47,7 @@ export function transformOperation(
     if (
       'path' in transformedOperation &&
       Array.isArray(transformedOperation.path) &&
-      pathStartsWith(transformedOperation.path, patch.path)
+      pathContains(patch.path, transformedOperation.path)
     ) {
       debug.history('Skipping transformation that targeted removed block')
       return []
@@ -171,13 +169,4 @@ function findOperationTargetBlock(
     return block?.node
   }
   return undefined
-}
-
-/**
- * Return true when `path` equals `prefix` or is a descendant of `prefix`.
- * Used to decide whether an operation falls inside a subtree that was
- * removed by an `unset` patch.
- */
-function pathStartsWith(path: Path, prefix: Path): boolean {
-  return pathEquals(path, prefix) || isAncestorPath(prefix, path)
 }

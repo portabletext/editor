@@ -1,8 +1,7 @@
+import {pathContains} from '../../traversal/path-contains'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
-import {isAncestorPath} from './is-ancestor-path'
-import {pathEquals} from './path-equals'
 
 /**
  * Transform a path by an operation.
@@ -29,10 +28,7 @@ export function transformPath(
       if (isKeyedSegment(lastSegment)) {
         const {path: operationPath} = operation
 
-        if (
-          pathEquals(operationPath, path) ||
-          isAncestorPath(operationPath, path)
-        ) {
+        if (pathContains(operationPath, path)) {
           return null
         }
       }
