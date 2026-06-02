@@ -1,8 +1,8 @@
+import {pathContains} from '../../traversal/path-contains'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import type {Point, PointTransformOptions} from '../interfaces/point'
-import {isAncestorPath} from '../path/is-ancestor-path'
 import {pathEquals} from '../path/path-equals'
 
 /**
@@ -109,10 +109,7 @@ export function transformPoint(
       const lastSegment = op.path[op.path.length - 1]
 
       if (isKeyedSegment(lastSegment)) {
-        if (
-          pathEquals(op.path, point.path) ||
-          isAncestorPath(op.path, point.path)
-        ) {
+        if (pathContains(op.path, point.path)) {
           return null
         }
         return point
