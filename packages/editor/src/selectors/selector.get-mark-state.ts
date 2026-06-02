@@ -2,7 +2,7 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
-import {isBlockPath} from '../types/paths'
+import {getBlock} from '../traversal/is-block'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
 import {getFocusSpan} from './selector.get-focus-span'
@@ -38,7 +38,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
 
   let selection = snapshot.context.selection
 
-  if (isBlockPath(selection.anchor.path)) {
+  if (getBlock(snapshot, selection.anchor.path)) {
     const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
       snapshot,
       blockOffset: {
@@ -56,7 +56,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       : selection
   }
 
-  if (isBlockPath(selection.focus.path)) {
+  if (getBlock(snapshot, selection.focus.path)) {
     const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
       snapshot,
       blockOffset: {
