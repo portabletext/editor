@@ -36,25 +36,6 @@ export type Path = PathSegment[]
 export type BlockPath = Path
 
 /**
- * @public
- */
-export function isBlockPath(path: Path): path is BlockPath {
-  const firstSegment = path.at(0)
-
-  return (
-    path.length === 1 &&
-    firstSegment !== undefined &&
-    isRecord(firstSegment) &&
-    '_key' in firstSegment &&
-    typeof firstSegment._key === 'string'
-  )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && (typeof value === 'object' || typeof value === 'function')
-}
-
-/**
  * A path to an annotation markDef on a block.
  *
  * @public
