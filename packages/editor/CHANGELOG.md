@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.0
+
+### Minor Changes
+
+- [#2718](https://github.com/portabletext/editor/pull/2718) [`8ef89bd`](https://github.com/portabletext/editor/commit/8ef89bd074ebcc0484183d69458e5c16bee1398f) Thanks [@christianhg](https://github.com/christianhg)! - feat: tighten `@portabletext/editor/traversal` API
+
 ## 7.0.6
 
 ### Patch Changes
