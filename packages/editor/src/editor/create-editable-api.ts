@@ -26,7 +26,7 @@ import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {getTextBlock} from '../traversal/get-text-block'
 import {getBlock, isBlock} from '../traversal/is-block'
-import {rangeIncludes} from '../traversal/range-includes'
+import {rangeContains} from '../traversal/range-contains'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -447,7 +447,7 @@ export function createEditableAPI(
         return false
       }
 
-      return rangeIncludes(editor.snapshot, selectionA, selectionB)
+      return rangeContains(editor.snapshot, selectionA, selectionB)
     },
   }
 

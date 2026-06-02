@@ -10,10 +10,10 @@ import type {Path} from '../types/paths'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
- * Returns true if `range` includes the supplied `target`. The target may be
+ * Returns true if `range` contains the supplied `target`. The target may be
  * a `Path`, an `EditorSelectionPoint`, or another `EditorSelection`.
- * "Includes" means partial intersection — two ranges that touch at a single
- * endpoint share that point and are considered overlapping.
+ * "Contains" means partial intersection — two ranges that touch at a single
+ * endpoint share that point and overlap.
  *
  * Pass `snapshot.context.selection` as `range` to ask the question against
  * the editor's current selection.
@@ -22,7 +22,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * @beta
  */
-export function rangeIncludes(
+export function rangeContains(
   snapshot: TraversalSnapshot,
   range: EditorSelection,
   target: Path | EditorSelectionPoint | EditorSelection,
@@ -35,8 +35,8 @@ export function rangeIncludes(
 
   if (isRange(target)) {
     if (
-      rangeIncludes(snapshot, range, target.anchor) ||
-      rangeIncludes(snapshot, range, target.focus)
+      rangeContains(snapshot, range, target.anchor) ||
+      rangeContains(snapshot, range, target.focus)
     ) {
       return true
     }
