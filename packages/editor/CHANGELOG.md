@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.1
+
+### Patch Changes
+
+- [#2724](https://github.com/portabletext/editor/pull/2724) [`4121c36`](https://github.com/portabletext/editor/commit/4121c365871569f7ca0afe54e8400534be54b8e7) Thanks [@christianhg](https://github.com/christianhg)! - fix: export `Path`
+
 ## 7.1.0
 
 ### Minor Changes
