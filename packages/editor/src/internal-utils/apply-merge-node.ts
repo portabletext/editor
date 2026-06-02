@@ -29,14 +29,14 @@ export function applyMergeNode(
   path: Path,
   position: number,
 ): void {
-  const nodeEntry = getNode(editor, path)
+  const nodeEntry = getNode(editor.snapshot, path)
 
   if (!nodeEntry) {
     return
   }
 
   const node = nodeEntry.node
-  const prevSibling = getSibling(editor, path, {direction: 'previous'})
+  const prevSibling = getSibling(editor.snapshot, path, {direction: 'previous'})
 
   if (!prevSibling) {
     return
@@ -83,24 +83,24 @@ export function applyMergeNode(
   }
 
   // Pre-transform editor.selection
-  if (editor.selection) {
+  if (editor.snapshot.context.selection) {
     const anchor = transformPointForMerge(
-      editor.selection.anchor,
+      editor.snapshot.context.selection.anchor,
       path,
       prevKey,
       position,
     )
     const focus = transformPointForMerge(
-      editor.selection.focus,
+      editor.snapshot.context.selection.focus,
       path,
       prevKey,
       position,
     )
     if (anchor && focus) {
-      editor.selection = {
+      editor.snapshot.context.selection = {
         anchor,
         focus,
-        backward: isBackwardRange({anchor, focus}, editor),
+        backward: isBackwardRange({anchor, focus}, editor.snapshot.context),
       }
     }
   }
@@ -115,7 +115,7 @@ export function applyMergeNode(
   editor.rangeRefs.clear()
 
   // Save the pre-transformed selection
-  const savedSelection = editor.selection
+  const savedSelection = editor.snapshot.context.selection
 
   // Pre-transform DOM-layer pending state with merge semantics, then
   // suppress transforms during the decomposed operations by clearing them.
@@ -192,7 +192,7 @@ export function applyMergeNode(
 
   try {
     withoutNormalizing(editor, () => {
-      if (isSpan({schema: editor.schema}, node)) {
+      if (isSpan({schema: editor.snapshot.context.schema}, node)) {
         // Merge text: insert the text into the previous sibling at the position
         if (node.text.length > 0) {
           editor.apply({
@@ -207,12 +207,12 @@ export function applyMergeNode(
           type: 'unset',
           path,
         })
-      } else if (isTextBlock({schema: editor.schema}, node)) {
+      } else if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
         // Merge element: move all children into the previous sibling
-        const prevEntry = getNode(editor, prevPath)
+        const prevEntry = getNode(editor.snapshot, prevPath)
         if (
           !prevEntry ||
-          !isTextBlock({schema: editor.schema}, prevEntry.node)
+          !isTextBlock({schema: editor.snapshot.context.schema}, prevEntry.node)
         ) {
           return
         }
@@ -250,7 +250,7 @@ export function applyMergeNode(
     })
   } finally {
     // Restore pre-transformed selection
-    editor.selection = savedSelection
+    editor.snapshot.context.selection = savedSelection
 
     // Restore all refs
     for (const ref of pathRefs) {

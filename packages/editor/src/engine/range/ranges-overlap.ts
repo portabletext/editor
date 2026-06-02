@@ -12,7 +12,7 @@ import {rangeEdges} from './range-edges'
 export function rangesOverlap(
   rangeA: Range,
   rangeB: Range,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): boolean {
   const [startA, endA] = rangeEdges(rangeA, root)
   const [startB, endB] = rangeEdges(rangeB, root)

@@ -57,7 +57,7 @@ const Element = (props: {
   } = props
   const dataPath = serializePath(props.path)
   const editor = useEngineStatic()
-  const isInline = isInlinePath(editor, props.path)
+  const isInline = isInlinePath(editor.snapshot, props.path)
   const isInNewPipeline = useContext(NewPipelineContext)
   const decorations = useDecorations(element, props.path, parentDecorations)
   const children = useChildren({
@@ -93,8 +93,11 @@ const Element = (props: {
 
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.
-  if (!isInline && isTextBlockNode({schema: editor.schema}, element)) {
-    const text = getText(editor, props.path)
+  if (
+    !isInline &&
+    isTextBlockNode({schema: editor.snapshot.context.schema}, element)
+  ) {
+    const text = getText(editor.snapshot, props.path)
     const dir = text !== undefined ? getDirection(text) : undefined
 
     if (dir === 'rtl') {

@@ -34,7 +34,10 @@ export function normalize(
   }
 
   if (force) {
-    const allPaths = Array.from(getNodes(editor), (entry) => entry.path)
+    const allPaths = Array.from(
+      getNodes(editor.snapshot),
+      (entry) => entry.path,
+    )
     const allPathKeys = new Set(allPaths.map((p) => serializePath(p)))
     editor.dirtyPaths = allPaths
     editor.dirtyPathKeys = allPathKeys
@@ -55,8 +58,8 @@ export function normalize(
         continue
       }
 
-      if (hasNode(editor, dirtyPath)) {
-        const entry = getNode(editor, dirtyPath)
+      if (hasNode(editor.snapshot, dirtyPath)) {
+        const entry = getNode(editor.snapshot, dirtyPath)
         if (!entry) {
           continue
         }
@@ -70,7 +73,7 @@ export function normalize(
           by definition adding children to an empty node can't cause other paths to change.
         */
         if (
-          isTextBlock({schema: editor.schema}, entryNode) &&
+          isTextBlock({schema: editor.snapshot.context.schema}, entryNode) &&
           entryNode.children.length === 0
         ) {
           editor.isNormalizingNode = true
@@ -103,8 +106,8 @@ export function normalize(
         editor.isNormalizingNode = true
         editor.normalizeNode([editor, dirtyPath], {operation})
         editor.isNormalizingNode = false
-      } else if (hasNode(editor, dirtyPath)) {
-        const entry = getNode(editor, dirtyPath)
+      } else if (hasNode(editor.snapshot, dirtyPath)) {
+        const entry = getNode(editor.snapshot, dirtyPath)
         if (entry) {
           editor.isNormalizingNode = true
           editor.normalizeNode([entry.node, entry.path], {operation})

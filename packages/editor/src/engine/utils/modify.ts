@@ -1,4 +1,9 @@
-import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {getNodeChildren} from '../../traversal/get-children'
 import {getNode} from '../../traversal/get-node'
@@ -57,10 +62,10 @@ export const modifyDescendant = <N extends Node>(
   }
 
   const context = {
-    schema: editor.schema,
-    containers: editor.publicContainers,
+    schema: editor.snapshot.context.schema,
+    containers: editor.snapshot.context.containers,
   }
-  const nodeEntry = getNode(editor, path)
+  const nodeEntry = getNode(editor.snapshot, path)
   if (!nodeEntry) {
     return
   }
@@ -88,7 +93,9 @@ export const modifyDescendant = <N extends Node>(
   }
   const fieldNames: string[] = []
   {
-    let currentNode: Node | {value: Array<Node>} = {value: editor.children}
+    let currentNode: Node | {value: Array<Node>} = {
+      value: editor.snapshot.context.value,
+    }
     let currentParent:
       | import('../../schema/resolve-containers').RegisteredContainer
       | undefined
@@ -138,7 +145,7 @@ export const modifyDescendant = <N extends Node>(
     const ancestorPath =
       ancestorPathEnd > 0 ? path.slice(0, ancestorPathEnd) : []
 
-    const ancestorEntry = getNode(editor, ancestorPath)
+    const ancestorEntry = getNode(editor.snapshot, ancestorPath)
     if (!ancestorEntry) {
       return
     }
@@ -177,26 +184,26 @@ export const modifyDescendant = <N extends Node>(
   } else if (keyedSegments.length > 0) {
     const rootKey = keyedSegments[0]!._key
     if (
-      editor.blockIndexMap.size === editor.children.length &&
+      editor.blockIndexMap.size === editor.snapshot.context.value.length &&
       editor.blockIndexMap.has(rootKey)
     ) {
       rootIndex = editor.blockIndexMap.get(rootKey)!
     } else {
-      rootIndex = findIndexByKey(editor.children, rootKey)
+      rootIndex = findIndexByKey(editor.snapshot.context.value, rootKey)
     }
   } else {
     const firstSegment = path[0]
     rootIndex = typeof firstSegment === 'number' ? firstSegment : -1
   }
-  if (rootIndex === -1 || rootIndex >= editor.children.length) {
+  if (rootIndex === -1 || rootIndex >= editor.snapshot.context.value.length) {
     return
   }
-  ;(editor as {children: Node[]}).children = replaceChildren(
-    editor.children,
+  editor.snapshot.context.value = replaceChildren(
+    editor.snapshot.context.value,
     rootIndex,
     1,
     modifiedNode,
-  )
+  ) as PortableTextBlock[]
 }
 
 /**
@@ -212,14 +219,16 @@ export const modifyChildren = (
   f: (children: Node[]) => Node[],
 ) => {
   if (path.length === 0) {
-    ;(editor as {children: Node[]}).children = f(editor.children)
+    editor.snapshot.context.value = f(
+      editor.snapshot.context.value,
+    ) as PortableTextBlock[]
   } else {
     const context = {
-      schema: editor.schema,
-      containers: editor.publicContainers,
+      schema: editor.snapshot.context.schema,
+      containers: editor.snapshot.context.containers,
     }
 
-    const nodeEntry = getNode(editor, path)
+    const nodeEntry = getNode(editor.snapshot, path)
     if (!nodeEntry) {
       return
     }
@@ -229,7 +238,7 @@ export const modifyChildren = (
     // registered globally or only as a positional override.
     const resolved = resolveContainerAt(
       context.containers,
-      editor.children,
+      editor.snapshot.context.value,
       path,
     )
     let fieldName: string
@@ -263,7 +272,7 @@ export const modifyLeaf = (
   f: (leaf: PortableTextSpan) => PortableTextSpan,
 ) =>
   modifyDescendant(editor, path, (node) => {
-    if (!isSpan({schema: editor.schema}, node)) {
+    if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
       return node
     }
 

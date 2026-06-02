@@ -126,7 +126,7 @@ export function performEvent({
       }
 
       performOperation({
-        snapshot: editor,
+        snapshot: editor.snapshot,
         operation: {
           ...event,
           editor,
@@ -367,7 +367,7 @@ export function performEvent({
       }
 
       performOperation({
-        snapshot: editor,
+        snapshot: editor.snapshot,
         operation: {
           ...event,
           editor,

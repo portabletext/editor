@@ -18,7 +18,7 @@ const value: Array<PortableTextBlock> = [
   },
 ]
 
-const root = {children: value}
+const root = {value}
 
 describe(rangesOverlap.name, () => {
   test('disjoint ranges in same span', () => {

@@ -441,7 +441,7 @@ async function updateValue({
   let isChanged = false
   let isValid = true
 
-  const hadSelection = !!editorEngine.selection
+  const hadSelection = !!editorEngine.snapshot.context.selection
 
   if (!value || value.length === 0) {
     clearEditor({
@@ -562,8 +562,8 @@ async function updateValue({
 
     if (
       hadSelection &&
-      !editorEngine.selection &&
-      editorEngine.children.length > 0
+      !editorEngine.snapshot.context.selection &&
+      editorEngine.snapshot.context.value.length > 0
     ) {
       applySelect(editorEngine, start(editorEngine, []))
       editorEngine.onChange()
@@ -608,10 +608,11 @@ function clearEditor({
             return
           }
 
-          const childrenLength = editorEngine.children.length
+          const childrenLength = editorEngine.snapshot.context.value.length
 
-          editorEngine.children.forEach((_, index) => {
-            const removeNode = editorEngine.children[childrenLength - 1 - index]
+          editorEngine.snapshot.context.value.forEach((_, index) => {
+            const removeNode =
+              editorEngine.snapshot.context.value[childrenLength - 1 - index]
             if (!removeNode) {
               return
             }
@@ -642,11 +643,11 @@ function removeExtraBlocks({
   withoutNormalizing(editorEngine, () => {
     withRemoteChanges(editorEngine, () => {
       withoutPatching(editorEngine, () => {
-        const childrenLength = editorEngine.children.length
+        const childrenLength = editorEngine.snapshot.context.value.length
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const removeNode = editorEngine.children[i]
+            const removeNode = editorEngine.snapshot.context.value[i]
             if (!removeNode) {
               continue
             }
@@ -685,8 +686,8 @@ function syncBlock({
   editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
 }) {
-  const oldEngineBlock = editorEngine.children.at(index)
-  const oldBlock = editorEngine.children.at(index)
+  const oldEngineBlock = editorEngine.snapshot.context.value.at(index)
+  const oldBlock = editorEngine.snapshot.context.value.at(index)
 
   if (!oldEngineBlock || !oldBlock) {
     // Insert the new block
@@ -711,7 +712,7 @@ function syncBlock({
           withoutPatching(editorEngine, () => {
             editorEngine.apply({
               type: 'insert',
-              path: [editorEngine.children.length],
+              path: [editorEngine.snapshot.context.value.length],
               node: engineBlock,
               position: 'before',
             })
@@ -857,9 +858,9 @@ function replaceBlock({
 
   // While replacing the block and the current selection focus is on the replaced block,
   // temporarily deselect the editor then optimistically try to restore the selection afterwards.
-  const currentSelection = editorEngine.selection
+  const currentSelection = editorEngine.snapshot.context.selection
   const focusBlockSegment = currentSelection?.focus.path[0]
-  const blockAtIndex = editorEngine.children[index]
+  const blockAtIndex = editorEngine.snapshot.context.value[index]
   const selectionFocusOnBlock =
     currentSelection &&
     isKeyedSegment(focusBlockSegment) &&
@@ -870,7 +871,7 @@ function replaceBlock({
     applyDeselect(editorEngine)
   }
 
-  const oldNode = editorEngine.children[index]
+  const oldNode = editorEngine.snapshot.context.value[index]
   if (!oldNode) {
     return
   }
@@ -889,8 +890,8 @@ function replaceBlock({
 
   if (
     selectionFocusOnBlock &&
-    hasNode(editorEngine, currentSelection.anchor.path) &&
-    hasNode(editorEngine, currentSelection.focus.path)
+    hasNode(editorEngine.snapshot, currentSelection.anchor.path) &&
+    hasNode(editorEngine.snapshot, currentSelection.focus.path)
   ) {
     applySelect(editorEngine, currentSelection)
   }
@@ -951,8 +952,8 @@ function updateBlock({
 
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
-    isTextBlock({schema: editorEngine.schema}, engineBlock) &&
-    isTextBlock({schema: editorEngine.schema}, oldEngineBlock)
+    isTextBlock({schema: editorEngine.snapshot.context.schema}, engineBlock) &&
+    isTextBlock({schema: editorEngine.snapshot.context.schema}, oldEngineBlock)
   ) {
     // Detect cases where incremental remove/insert would break due to
     // stale keyed path references. Use a single set to replace the
@@ -1013,11 +1014,14 @@ function updateBlock({
           !isEqualChild(
             currentBlockChild,
             oldBlockChild,
-            editorEngine.schema.span.name,
+            editorEngine.snapshot.context.schema.span.name,
           )
         const isTextChanged =
           oldBlockChild &&
-          isSpan({schema: editorEngine.schema}, oldBlockChild) &&
+          isSpan(
+            {schema: editorEngine.snapshot.context.schema},
+            oldBlockChild,
+          ) &&
           currentBlockChild.text !== oldBlockChild.text
         const path = [
           {_key: oldEngineBlock._key},

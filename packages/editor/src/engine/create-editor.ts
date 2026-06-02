@@ -13,26 +13,13 @@ import type {Editor} from './interfaces/editor'
  * engine core methods, then the `withDOM` plugin adds DOMEditor and
  * PortableTextEditorEngine methods. We use `as any` for the self-referencing
  * delegates because the object doesn't satisfy `Editor` until after plugin
- * application. This file gets rewritten in the PT-native fork (Step 3).
+ * application.
  */
 export const createEditor = (): Editor => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const e: any = {
     [EDITOR_BRAND]: true,
-    children: [],
-    get value() {
-      return this.children
-    },
-    get context() {
-      return {
-        schema: this.schema,
-        containers: this.publicContainers,
-        value: this.children,
-        keyGenerator: this.keyGenerator,
-      }
-    },
     operations: [],
-    selection: null,
     marks: null,
     dirtyPaths: [],
     dirtyPathKeys: new Set(),

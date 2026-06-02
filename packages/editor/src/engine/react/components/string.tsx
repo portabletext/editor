@@ -27,12 +27,12 @@ function getTextContent(editor: Editor, path: Path): string {
   const end = editorEnd(editor, path)
   let text = ''
 
-  for (const {node, path: nodePath} of getNodes(editor, {
+  for (const {node, path: nodePath} of getNodes(editor.snapshot, {
     from: start.path,
     to: end.path,
-    match: (n) => isSpan({schema: editor.schema}, n),
+    match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
   })) {
-    if (!isSpan({schema: editor.schema}, node)) {
+    if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
       continue
     }
     let nodeText = node.text
@@ -65,7 +65,7 @@ const EngineString = (props: {
   // to support expected plain text.
   if (
     leafText === '' &&
-    isTextBlock({schema: editor.schema}, parent) &&
+    isTextBlock({schema: editor.snapshot.context.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
     getTextContent(editor, parentPath) === ''
   ) {

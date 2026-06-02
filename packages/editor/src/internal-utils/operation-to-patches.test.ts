@@ -27,16 +27,22 @@ const editorActor = createActor(editorMachine, {
 const relayActor = createActor(relayMachine)
 
 const e = createEditor()
-e.children = [] as any
-e.schema = schema
 e.containers = new Map()
 e.blockIndexMap = new Map()
-Object.defineProperty(e, 'value', {
-  get() {
-    return e.children
+e.snapshot = {
+  blockIndexMap: e.blockIndexMap,
+  context: {
+    containers: new Map(),
+    converters: [],
+    keyGenerator: () => 'k',
+    readOnly: false,
+    schema,
+    selection: null,
+    value: [] as any,
   },
-  configurable: true,
-})
+  decoratorState: {},
+} as any
+// e.value reads through to e.snapshot.context.value via getter once defined
 const editor = plugins(e, {
   editorActor,
   relayActor,
@@ -92,7 +98,7 @@ describe(insertNodePatch.name, () => {
 
 describe('operationToPatches', () => {
   beforeEach(() => {
-    editor.children = createDefaultChildren()
+    editor.snapshot.context.value = createDefaultChildren()
     editor.onChange()
   })
 
@@ -131,7 +137,7 @@ describe('operationToPatches', () => {
   })
 
   it('produce correct insert block patch with an empty editor', () => {
-    editor.children = []
+    editor.snapshot.context.value = []
     editor.onChange()
     expect(
       insertNodePatch({
@@ -206,11 +212,13 @@ describe('operationToPatches', () => {
   })
 
   it('produce correct insert text patch', () => {
-    ;(editor.children[0] as PortableTextTextBlock).children[2]!.text = '1'
+    ;(
+      editor.snapshot.context.value[0] as PortableTextTextBlock
+    ).children[2]!.text = '1'
     editor.onChange()
     expect(
       textPatch(
-        editor,
+        editor.snapshot,
         {
           type: 'insert_text',
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
@@ -283,7 +291,7 @@ describe('operationToPatches', () => {
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
     expect(
       textPatch(
-        editor,
+        editor.snapshot,
         {
           type: 'remove_text',
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
@@ -317,7 +325,7 @@ describe('operationToPatches', () => {
 
 describe('defensive setIfMissing patches', () => {
   beforeEach(() => {
-    editor.children = createDefaultChildren()
+    editor.snapshot.context.value = createDefaultChildren()
     editor.onChange()
   })
 

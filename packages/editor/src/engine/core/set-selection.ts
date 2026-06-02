@@ -3,7 +3,7 @@ import type {Range} from '../interfaces/range'
 import {pointEquals} from '../point/point-equals'
 
 export function setSelection(editor: Editor, props: Partial<Range>): void {
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
   const oldProps: Partial<Range> | null = {}
   const newProps: Partial<Range> = {}
 

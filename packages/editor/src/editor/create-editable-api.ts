@@ -127,25 +127,29 @@ export function createEditableAPI(
       })
     },
     focusBlock: (): PortableTextBlock | undefined => {
-      if (!editor.selection) {
+      if (!editor.snapshot.context.selection) {
         return undefined
       }
 
-      const focusPath = editor.selection.focus.path
+      const focusPath = editor.snapshot.context.selection.focus.path
 
       return (
-        getBlock(editor, focusPath)?.node ??
-        getBlock(editor, parentPath(focusPath))?.node
+        getBlock(editor.snapshot, focusPath)?.node ??
+        getBlock(editor.snapshot, parentPath(focusPath))?.node
       )
     },
     focusChild: (): PortableTextChild | undefined => {
-      if (!editor.selection) {
+      if (!editor.snapshot.context.selection) {
         return undefined
       }
 
-      const leaf = getLeaf(editor, editor.selection.focus.path, {edge: 'start'})
+      const leaf = getLeaf(
+        editor.snapshot,
+        editor.snapshot.context.selection.focus.path,
+        {edge: 'start'},
+      )
 
-      if (!leaf || isBlock(editor, leaf.path)) {
+      if (!leaf || isBlock(editor.snapshot, leaf.path)) {
         return undefined
       }
 
@@ -167,7 +171,7 @@ export function createEditableAPI(
         editor,
       })
 
-      return editor.selection?.focus.path ?? []
+      return editor.snapshot.context.selection?.focus.path ?? []
     },
     insertBlock: <TSchemaType extends {name: string}>(
       type: TSchemaType,
@@ -186,7 +190,7 @@ export function createEditableAPI(
         editor,
       })
 
-      return editor.selection?.focus.path ?? []
+      return editor.snapshot.context.selection?.focus.path ?? []
     },
     hasBlockStyle: (style: string): boolean => {
       try {
@@ -205,7 +209,7 @@ export function createEditableAPI(
       }
     },
     isVoid: (element: PortableTextBlock | PortableTextChild): boolean => {
-      const schema = editor.schema
+      const schema = editor.snapshot.context.schema
       return ![schema.block.name, schema.span.name].includes(element._type)
     },
     findByPath: (
@@ -214,7 +218,7 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const result = getNode(editor, path as InternalPath)
+      const result = getNode(editor.snapshot, path as InternalPath)
 
       if (!result) {
         return [undefined, undefined]
@@ -228,7 +232,7 @@ export function createEditableAPI(
       let node: Node | undefined
       try {
         const entry = Array.from(
-          getNodes(editor, {
+          getNodes(editor.snapshot, {
             match: (n) => n._key === element._key,
           }),
         )[0]
@@ -242,29 +246,38 @@ export function createEditableAPI(
       return node
     },
     activeAnnotations: (): PortableTextObject[] => {
-      if (!editor.selection || editor.selection.focus.path.length < 2) {
+      if (
+        !editor.snapshot.context.selection ||
+        editor.snapshot.context.selection.focus.path.length < 2
+      ) {
         return []
       }
       try {
         const activeAnnotations: PortableTextObject[] = []
-        const spans = getNodes(editor, {
-          from: rangeStart(editor.selection, editor).path,
-          to: rangeEnd(editor.selection, editor).path,
+        const spans = getNodes(editor.snapshot, {
+          from: rangeStart(
+            editor.snapshot.context.selection,
+            editor.snapshot.context,
+          ).path,
+          to: rangeEnd(
+            editor.snapshot.context.selection,
+            editor.snapshot.context,
+          ).path,
           match: (node) =>
-            isSpan({schema: editor.schema}, node) &&
+            isSpan({schema: editor.snapshot.context.schema}, node) &&
             node.marks !== undefined &&
             Array.isArray(node.marks) &&
             node.marks.length > 0,
         })
         for (const {node: span, path: spanPath} of spans) {
-          const blockEntry = getTextBlock(editor, parentPath(spanPath))
+          const blockEntry = getTextBlock(editor.snapshot, parentPath(spanPath))
           if (!blockEntry) {
             continue
           }
           const block = blockEntry.node
           block.markDefs?.forEach((def) => {
             if (
-              isSpan({schema: editor.schema}, span) &&
+              isSpan({schema: editor.snapshot.context.schema}, span) &&
               span.marks &&
               Array.isArray(span.marks) &&
               span.marks.includes(def._key)
@@ -395,16 +408,22 @@ export function createEditableAPI(
       })
     },
     getSelection: (): EditorSelection | null => {
-      return editor.selection
+      return editor.snapshot.context.selection
     },
     getValue: () => {
-      return editor.children
+      return editor.snapshot.context.value
     },
     isCollapsedSelection: () => {
-      return !!editor.selection && isCollapsedRange(editor.selection)
+      return (
+        !!editor.snapshot.context.selection &&
+        isCollapsedRange(editor.snapshot.context.selection)
+      )
     },
     isExpandedSelection: () => {
-      return !!editor.selection && isExpandedRange(editor.selection)
+      return (
+        !!editor.snapshot.context.selection &&
+        isExpandedRange(editor.snapshot.context.selection)
+      )
     },
     insertBreak: () => {
       editorActor.send({
@@ -428,7 +447,7 @@ export function createEditableAPI(
         return false
       }
 
-      return rangeIncludes(selectionA, selectionB, editor)
+      return rangeIncludes(selectionA, selectionB, editor.snapshot.context)
     },
   }
 

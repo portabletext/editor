@@ -13,7 +13,7 @@ interface SelectionMoveOptions {
 }
 
 export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
   const {distance = 1, unit = 'character', reverse = false} = options
   let {edge = null} = options
 
@@ -22,11 +22,15 @@ export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
   }
 
   if (edge === 'start') {
-    edge = isBackwardRange(selection, editor) ? 'focus' : 'anchor'
+    edge = isBackwardRange(selection, editor.snapshot.context)
+      ? 'focus'
+      : 'anchor'
   }
 
   if (edge === 'end') {
-    edge = isBackwardRange(selection, editor) ? 'anchor' : 'focus'
+    edge = isBackwardRange(selection, editor.snapshot.context)
+      ? 'anchor'
+      : 'focus'
   }
 
   const {anchor, focus} = selection

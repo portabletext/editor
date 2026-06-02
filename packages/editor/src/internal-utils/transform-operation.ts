@@ -28,7 +28,7 @@ export function transformOperation(
   patch: Patch,
   operation: Operation,
 ): Operation[] {
-  const snapshot: TraversalSnapshot = editor
+  const snapshot: TraversalSnapshot = editor.snapshot
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert') {
@@ -44,7 +44,7 @@ export function transformOperation(
     // If this operation targets anything inside the subtree that got
     // removed, drop it. With keyed paths, other operations' paths don't
     // need adjustment. Compare path prefixes rather than resolving
-    // against the tree — `editor.children` reflects the post-patch state
+    // against the tree — `editor.snapshot.context.value` reflects the post-patch state
     // where the removed subtree is already gone.
     if (
       'path' in transformedOperation &&
@@ -159,8 +159,11 @@ function findOperationTargetBlock(
   editor: PortableTextEditorEngine,
   operation: Operation,
 ): Node | undefined {
-  if (operation.type === 'set_selection' && editor.selection) {
-    const block = getEnclosingBlock(snapshot, editor.selection.focus.path)
+  if (operation.type === 'set_selection' && editor.snapshot.context.selection) {
+    const block = getEnclosingBlock(
+      snapshot,
+      editor.snapshot.context.selection.focus.path,
+    )
     return block?.node
   }
   if ('path' in operation) {

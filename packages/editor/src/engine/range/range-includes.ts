@@ -13,7 +13,7 @@ import {rangeEdges} from './range-edges'
 export function rangeIncludes(
   range: Range,
   target: Path | Point | Range,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): boolean {
   if (isRange(target)) {
     if (

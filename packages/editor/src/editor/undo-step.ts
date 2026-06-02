@@ -127,13 +127,13 @@ function createNewStep(
   editor: PortableTextEditorEngine,
 ): Array<UndoStep> {
   const operations =
-    editor.selection === null
+    editor.snapshot.context.selection === null
       ? [op]
       : [
           {
             type: 'set_selection' as const,
-            properties: {...editor.selection},
-            newProperties: {...editor.selection},
+            properties: {...editor.snapshot.context.selection},
+            newProperties: {...editor.snapshot.context.selection},
           },
           op,
         ]

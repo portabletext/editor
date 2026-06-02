@@ -20,31 +20,35 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema,
-        publicContainers: new Map(),
-        blockIndexMap: new Map(),
-        children: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
+        snapshot: {
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
               {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'foo',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'stock-ticker',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'bar',
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'foo',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'stock-ticker',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'bar',
+                  },
+                ],
               },
             ],
           },
-        ],
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -72,31 +76,35 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema,
-        publicContainers: new Map(),
-        blockIndexMap: new Map(),
-        children: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
+        snapshot: {
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
               {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: "'",
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'stock-ticker',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: "foo'",
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: "'",
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'stock-ticker',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: "foo'",
+                  },
+                ],
               },
             ],
           },
-        ],
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -122,15 +130,19 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema,
-        publicContainers: new Map(),
-        blockIndexMap: new Map(),
-        children: [
-          {
-            _key: blockObjectKey,
-            _type: 'image',
+        snapshot: {
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockObjectKey,
+                _type: 'image',
+              },
+            ],
           },
-        ],
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -158,22 +170,26 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema,
-        publicContainers: new Map(),
-        blockIndexMap: new Map(),
-        children: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
+        snapshot: {
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
               {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'foobar',
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'foobar',
+                  },
+                ],
               },
             ],
           },
-        ],
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -200,22 +216,26 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema,
-        publicContainers: new Map(),
-        blockIndexMap: new Map(),
-        children: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
+        snapshot: {
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
               {
-                _key: spanKey,
-                _type: 'span',
-                text: 'foo',
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: spanKey,
+                    _type: 'span',
+                    text: 'foo',
+                  },
+                ],
               },
             ],
           },
-        ],
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -242,28 +262,32 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema,
-        publicContainers: new Map(),
-        blockIndexMap: new Map(),
-        children: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {_key: keyGenerator(), _type: 'span', text: 'foo'},
+        snapshot: {
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
               {
-                _key: inlineObjectKey,
-                _type: 'stock-ticker',
-                symbol: 'AAPL',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'bar',
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {_key: keyGenerator(), _type: 'span', text: 'foo'},
+                  {
+                    _key: inlineObjectKey,
+                    _type: 'stock-ticker',
+                    symbol: 'AAPL',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'bar',
+                  },
+                ],
               },
             ],
           },
-        ],
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -289,10 +313,14 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema: context.schema,
-        publicContainers: context.containers,
-        children: context.value,
-        blockIndexMap: new Map(),
+        snapshot: {
+          context: {
+            schema: context.schema,
+            containers: context.containers,
+            value: context.value,
+          },
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {
@@ -336,10 +364,14 @@ describe(resolveSelection.name, () => {
 
     const range = resolveSelection(
       {
-        schema: context.schema,
-        publicContainers: context.containers,
-        children: context.value,
-        blockIndexMap: new Map(),
+        snapshot: {
+          context: {
+            schema: context.schema,
+            containers: context.containers,
+            value: context.value,
+          },
+          blockIndexMap: new Map(),
+        } as any,
       },
       {
         anchor: {

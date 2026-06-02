@@ -460,7 +460,7 @@ describe('tables', () => {
 
       editorEngineRef.current!.containers = _resolvedContainers
 
-      editorEngineRef.current!.publicContainers =
+      editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
       // Force normalization with containers set
@@ -529,7 +529,7 @@ describe('tables', () => {
 
       editorEngineRef.current!.containers = _resolvedContainers
 
-      editorEngineRef.current!.publicContainers =
+      editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
       withoutPatching(editorEngineRef.current!, () => {
@@ -597,7 +597,7 @@ describe('tables', () => {
 
       editorEngineRef.current!.containers = _resolvedContainers
 
-      editorEngineRef.current!.publicContainers =
+      editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
       withoutPatching(editorEngineRef.current!, () => {
@@ -683,7 +683,7 @@ describe('tables', () => {
 
       editorEngineRef.current!.containers = _resolvedContainers
 
-      editorEngineRef.current!.publicContainers =
+      editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
       withoutPatching(editorEngineRef.current!, () => {
@@ -759,7 +759,7 @@ describe('tables', () => {
 
       editorEngineRef.current!.containers = _resolvedContainers
 
-      editorEngineRef.current!.publicContainers =
+      editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
       withoutPatching(editorEngineRef.current!, () => {
@@ -822,7 +822,7 @@ describe('tables', () => {
 
       editorEngineRef.current!.containers = _resolvedContainers
 
-      editorEngineRef.current!.publicContainers =
+      editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
       withoutPatching(editorEngineRef.current!, () => {

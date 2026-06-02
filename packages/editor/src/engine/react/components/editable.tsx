@@ -23,6 +23,7 @@ import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
 import {getText} from '../../../traversal/get-text'
 import {isLeafObject} from '../../../traversal/is-leaf-object'
+import type {PortableTextEditorEngine} from '../../../types/editor-engine'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
@@ -153,7 +154,10 @@ type EditableProps = {
   renderElement: (props: RenderElementProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
-  scrollSelectionIntoView?: (editor: DOMEditor, domRange: DOMRange) => void
+  scrollSelectionIntoView?: (
+    editor: PortableTextEditorEngine,
+    domRange: DOMRange,
+  ) => void
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
 /**
@@ -345,7 +349,7 @@ export const Editable = forwardRef(
       }
 
       // Make sure the DOM selection state is in sync.
-      const {selection} = editor
+      const {selection} = editor.snapshot.context
       const root = DOMEditor.findDocumentOrShadowRoot(editor)
       const domSelection = getSelection(root)
 
@@ -433,10 +437,13 @@ export const Editable = forwardRef(
               suppressThrow: true,
             },
           )
-          editor.selection = fallbackRange
+          editor.snapshot.context.selection = fallbackRange
             ? {
                 ...fallbackRange,
-                backward: isBackwardRange(fallbackRange, editor),
+                backward: isBackwardRange(
+                  fallbackRange,
+                  editor.snapshot.context,
+                ),
               }
             : null
           return
@@ -456,7 +463,7 @@ export const Editable = forwardRef(
         if (newDomRange) {
           if (editor.composing && !IS_ANDROID) {
             domSelection.collapseToEnd()
-          } else if (isBackwardRange(selection!, editor)) {
+          } else if (isBackwardRange(selection!, editor.snapshot.context)) {
             domSelection.setBaseAndExtent(
               newDomRange.endContainer,
               newDomRange.endOffset,
@@ -595,7 +602,7 @@ export const Editable = forwardRef(
           scheduleOnDOMSelectionChange.flush()
           onDOMSelectionChange.flush()
 
-          const {selection} = editor
+          const {selection} = editor.snapshot.context
           const {inputType: type} = event
           const data = (event as any).dataTransfer || event.data || undefined
 
@@ -663,12 +670,13 @@ export const Editable = forwardRef(
                 window?.getComputedStyle(node.parentElement)?.whiteSpace ===
                   'pre'
               ) {
-                const block = getParent(editor, anchor.path, {
-                  match: (node) => isTextBlock({schema: editor.schema}, node),
+                const block = getParent(editor.snapshot, anchor.path, {
+                  match: (node) =>
+                    isTextBlock({schema: editor.snapshot.context.schema}, node),
                 })
 
                 if (block) {
-                  const blockText = getText(editor, block.path)
+                  const blockText = getText(editor.snapshot, block.path)
 
                   if (blockText?.includes('\t')) {
                     native = false
@@ -698,8 +706,8 @@ export const Editable = forwardRef(
 
                 const selectionRef =
                   !isCompositionChange &&
-                  editor.selection &&
-                  rangeRef(editor, editor.selection)
+                  editor.snapshot.context.selection &&
+                  rangeRef(editor, editor.snapshot.context.selection)
 
                 editor.select(range)
 
@@ -911,7 +919,8 @@ export const Editable = forwardRef(
 
           if (
             toRestore &&
-            (!editor.selection || !rangeEquals(editor.selection, toRestore))
+            (!editor.snapshot.context.selection ||
+              !rangeEquals(editor.snapshot.context.selection, toRestore))
           ) {
             editor.select(toRestore)
           }
@@ -1169,17 +1178,24 @@ export const Editable = forwardRef(
                     const relatedPath = getDomNodePath(relatedTarget)
 
                     if (relatedPath) {
-                      const relatedNodeEntry = getNode(editor, relatedPath)
+                      const relatedNodeEntry = getNode(
+                        editor.snapshot,
+                        relatedPath,
+                      )
                       const relatedNode = relatedNodeEntry
                         ? relatedNodeEntry.node
                         : undefined
                       if (
                         relatedNode &&
                         (isTextBlockNode(
-                          {schema: editor.schema},
+                          {schema: editor.snapshot.context.schema},
                           relatedNode,
                         ) ||
-                          isLeafObject(editor, relatedNode, relatedPath))
+                          isLeafObject(
+                            editor.snapshot,
+                            relatedNode,
+                            relatedPath,
+                          ))
                       ) {
                         return
                       }
@@ -1220,7 +1236,7 @@ export const Editable = forwardRef(
                     // At this time, the engine document may be arbitrarily different,
                     // because onClick handlers can change the document before we get here.
                     // Therefore we must check that this path actually exists.
-                    const nodeClickEntry = getNode(editor, path)
+                    const nodeClickEntry = getNode(editor.snapshot, path)
 
                     if (!nodeClickEntry) {
                       return
@@ -1230,10 +1246,18 @@ export const Editable = forwardRef(
                     if (event.detail === TRIPLE_CLICK && path.length >= 1) {
                       let blockPath = path
 
-                      if (!isTextBlockNode({schema: editor.schema}, node)) {
-                        const block = getParent(editor, path, {
+                      if (
+                        !isTextBlockNode(
+                          {schema: editor.snapshot.context.schema},
+                          node,
+                        )
+                      ) {
+                        const block = getParent(editor.snapshot, path, {
                           match: (node) =>
-                            isTextBlock({schema: editor.schema}, node),
+                            isTextBlock(
+                              {schema: editor.snapshot.context.schema},
+                              node,
+                            ),
                         })
 
                         blockPath = block?.path ?? path.slice(0, 1)
@@ -1250,22 +1274,23 @@ export const Editable = forwardRef(
 
                     const start = editorStart(editor, path)
                     const end = editorEnd(editor, path)
-                    const startEntry = getNode(editor, start.path)
+                    const startEntry = getNode(editor.snapshot, start.path)
                     const startVoidNode =
                       startEntry &&
-                      isLeafObject(editor, startEntry.node, start.path)
+                      isLeafObject(editor.snapshot, startEntry.node, start.path)
                         ? startEntry
-                        : getAncestor(editor, start.path, {
+                        : getAncestor(editor.snapshot, start.path, {
                             match: (node, ancestorPath) =>
-                              isLeafObject(editor, node, ancestorPath),
+                              isLeafObject(editor.snapshot, node, ancestorPath),
                           })
-                    const endEntry = getNode(editor, end.path)
+                    const endEntry = getNode(editor.snapshot, end.path)
                     const endVoidNode =
-                      endEntry && isLeafObject(editor, endEntry.node, end.path)
+                      endEntry &&
+                      isLeafObject(editor.snapshot, endEntry.node, end.path)
                         ? endEntry
-                        : getAncestor(editor, end.path, {
+                        : getAncestor(editor.snapshot, end.path, {
                             match: (node, ancestorPath) =>
-                              isLeafObject(editor, node, ancestorPath),
+                              isLeafObject(editor.snapshot, node, ancestorPath),
                           })
 
                     if (
@@ -1358,7 +1383,7 @@ export const Editable = forwardRef(
                       return
                     }
 
-                    const {selection} = editor
+                    const {selection} = editor.snapshot.context
                     if (selection && isExpandedRange(selection)) {
                       editorActor.send({
                         type: 'behavior event',
@@ -1431,10 +1456,10 @@ export const Editable = forwardRef(
                       return
                     }
 
-                    const {selection} = editor
+                    const {selection} = editor.snapshot.context
                     const blockSegment =
                       selection !== null ? selection.focus.path[0]! : 0
-                    const elementText = getText(editor, [blockSegment])
+                    const elementText = getText(editor.snapshot, [blockSegment])
                     const isRTL =
                       elementText !== undefined &&
                       getDirection(elementText) === 'rtl'
@@ -1733,14 +1758,14 @@ export const Editable = forwardRef(
                           isCollapsedRange(selection)
                         ) {
                           const currentNodeEntry = getNode(
-                            editor,
+                            editor.snapshot,
                             selection.anchor.path,
                           )
 
                           if (
                             currentNodeEntry &&
                             isLeafObject(
-                              editor,
+                              editor.snapshot,
                               currentNodeEntry.node,
                               selection.anchor.path,
                             )
@@ -1825,12 +1850,13 @@ const defaultDecorate: (entry: NodeEntry) => DecoratedRange[] = () => []
  */
 
 const defaultScrollSelectionIntoView = (
-  editor: DOMEditor,
+  editor: PortableTextEditorEngine,
   domRange: DOMRange,
 ) => {
   // Scroll to the focus point of the selection, in case the selection is expanded
   const isBackward =
-    !!editor.selection && isBackwardRange(editor.selection, editor)
+    !!editor.snapshot.context.selection &&
+    isBackwardRange(editor.snapshot.context.selection, editor.snapshot.context)
   const domFocusPoint = domRange.cloneRange()
   domFocusPoint.collapse(isBackward)
 

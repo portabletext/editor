@@ -94,7 +94,7 @@ export function createAndroidInputManager({
     editor.pendingSelection = null
 
     if (pendingSelection) {
-      const {selection} = editor
+      const {selection} = editor.snapshot.context
       const normalized = normalizeRange(editor, pendingSelection)
 
       debug('apply pending selection', pendingSelection, normalized)
@@ -122,7 +122,10 @@ export function createAndroidInputManager({
       }
 
       const targetRange = editorRange(editor, target)
-      if (!editor.selection || !rangeEquals(editor.selection, targetRange)) {
+      if (
+        !editor.snapshot.context.selection ||
+        !rangeEquals(editor.snapshot.context.selection, targetRange)
+      ) {
         editor.select(target)
       }
     }
@@ -157,8 +160,8 @@ export function createAndroidInputManager({
     }
 
     const selectionRef =
-      editor.selection &&
-      rangeRef(editor, editor.selection, {affinity: 'forward'})
+      editor.snapshot.context.selection &&
+      rangeRef(editor, editor.snapshot.context.selection, {affinity: 'forward'})
 
     debug('flush', editor.pendingAction, editor.pendingDiffs)
 
@@ -168,7 +171,10 @@ export function createAndroidInputManager({
     // biome-ignore lint/suspicious/noAssignInExpressions: engine upstream pattern
     while ((diff = editor.pendingDiffs?.[0])) {
       const range = targetRange(diff)
-      if (!editor.selection || !rangeEquals(editor.selection, range)) {
+      if (
+        !editor.snapshot.context.selection ||
+        !rangeEquals(editor.snapshot.context.selection, range)
+      ) {
         editor.select(range)
       }
 
@@ -212,7 +218,8 @@ export function createAndroidInputManager({
     if (
       selection &&
       !editor.pendingSelection &&
-      (!editor.selection || !rangeEquals(selection, editor.selection))
+      (!editor.snapshot.context.selection ||
+        !rangeEquals(selection, editor.snapshot.context.selection))
     ) {
       editor.select(selection)
     }
@@ -267,7 +274,7 @@ export function createAndroidInputManager({
 
     const pendingDiffs = editor.pendingDiffs
 
-    const targetEntry = getSpan(editor, path)
+    const targetEntry = getSpan(editor.snapshot, path)
 
     if (!targetEntry) {
       return
@@ -365,7 +372,7 @@ export function createAndroidInputManager({
       })
     }
 
-    targetRange = targetRange ?? editor.selection
+    targetRange = targetRange ?? editor.snapshot.context.selection
     if (!targetRange) {
       return
     }
@@ -379,12 +386,12 @@ export function createAndroidInputManager({
 
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
-      let [start, end] = rangeEdges(targetRange, editor)
-      const leafNodeEntry = getNode(editor, start.path)
+      let [start, end] = rangeEdges(targetRange, editor.snapshot.context)
+      const leafNodeEntry = getNode(editor.snapshot, start.path)
       const leafResult =
         leafNodeEntry &&
-        (isSpan({schema: editor.schema}, leafNodeEntry.node) ||
-          isLeafObject(editor, leafNodeEntry.node, start.path))
+        (isSpan({schema: editor.snapshot.context.schema}, leafNodeEntry.node) ||
+          isLeafObject(editor.snapshot, leafNodeEntry.node, start.path))
           ? leafNodeEntry
           : undefined
 
@@ -403,7 +410,7 @@ export function createAndroidInputManager({
       let leaf = leafResult.node
       let path = leafResult.path
 
-      if (!isSpan({schema: editor.schema}, leaf)) {
+      if (!isSpan({schema: editor.snapshot.context.schema}, leaf)) {
         return scheduleAction(
           () =>
             editorActor.send({
@@ -419,14 +426,15 @@ export function createAndroidInputManager({
         if (leaf.text.length === start.offset && end.offset === 0) {
           const afterPoint = after(editor, start.path)
           const [nextEntry] = afterPoint
-            ? getNodes(editor, {
+            ? getNodes(editor.snapshot, {
                 from: afterPoint.path,
-                match: (n) => isSpan({schema: editor.schema}, n),
+                match: (n) =>
+                  isSpan({schema: editor.snapshot.context.schema}, n),
               })
             : []
           if (
             nextEntry &&
-            isSpan({schema: editor.schema}, nextEntry.node) &&
+            isSpan({schema: editor.snapshot.context.schema}, nextEntry.node) &&
             pathEquals(nextEntry.path, end.path)
           ) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)
@@ -445,7 +453,7 @@ export function createAndroidInputManager({
         }
       }
 
-      if (!isSpan({schema: editor.schema}, leaf)) {
+      if (!isSpan({schema: editor.snapshot.context.schema}, leaf)) {
         return
       }
 
@@ -517,7 +525,7 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && isCollapsedRange(targetRange)) {
-          const targetNodeEntry = getSpan(editor, anchor.path)
+          const targetNodeEntry = getSpan(editor.snapshot, anchor.path)
 
           if (
             targetNodeEntry &&
@@ -751,7 +759,7 @@ export function createAndroidInputManager({
         }
 
         if (pathEquals(targetRange.anchor.path, targetRange.focus.path)) {
-          const [start, end] = rangeEdges(targetRange, editor)
+          const [start, end] = rangeEdges(targetRange, editor.snapshot.context)
 
           const diff = {
             start: start.offset,
@@ -803,7 +811,7 @@ export function createAndroidInputManager({
           }
 
           if (canStoreDiff) {
-            const currentSelection = editor.selection
+            const currentSelection = editor.snapshot.context.selection
             storeDiff(start.path, diff)
 
             if (currentSelection) {
@@ -863,7 +871,7 @@ export function createAndroidInputManager({
       flushTimeoutId = null
     }
 
-    const {selection} = editor
+    const {selection} = editor.snapshot.context
     if (!range) {
       return
     }

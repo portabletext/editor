@@ -2,7 +2,7 @@ import {describe, expect, test} from 'vitest'
 import type {Node} from '../interfaces/node'
 import {comparePaths} from './compare-paths'
 
-const emptyRoot = {children: [] as Array<Node>}
+const emptyRoot = {value: [] as Array<Node>}
 
 describe(comparePaths.name, () => {
   test('equal keyed paths return 0', () => {
@@ -56,7 +56,9 @@ describe(comparePaths.name, () => {
       {_key: 'b1', _type: 'block', children: []},
       {_key: 'b2', _type: 'block', children: []},
     ]
-    expect(comparePaths([{_key: 'b1'}], [{_key: 'b2'}], {children})).toEqual(-1)
+    expect(
+      comparePaths([{_key: 'b1'}], [{_key: 'b2'}], {value: children}),
+    ).toEqual(-1)
   })
 
   test('keyed ordering falls back to string comparison when keys are not in root', () => {
@@ -69,6 +71,8 @@ describe(comparePaths.name, () => {
       {_key: 'a', _type: 'block', children: []},
     ]
     expect(comparePaths([{_key: 'a'}], [{_key: 'z'}], emptyRoot)).toEqual(-1)
-    expect(comparePaths([{_key: 'z'}], [{_key: 'a'}], {children})).toEqual(-1)
+    expect(
+      comparePaths([{_key: 'z'}], [{_key: 'a'}], {value: children}),
+    ).toEqual(-1)
   })
 })

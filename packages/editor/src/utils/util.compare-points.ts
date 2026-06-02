@@ -18,7 +18,7 @@ export function comparePoints(
   pointB: EditorSelectionPoint,
 ): -1 | 0 | 1 {
   const pathComparison = comparePaths(pointA.path, pointB.path, {
-    children: snapshot.context.value,
+    value: snapshot.context.value,
   })
 
   if (pathComparison !== 0) {

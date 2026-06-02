@@ -16,7 +16,7 @@ export const selectOperationImplementation: OperationImplementation<
     applyDeselect(operation.editor)
   }
 
-  if (operation.editor.focused && operation.editor.readOnly) {
+  if (operation.editor.focused && operation.editor.snapshot.context.readOnly) {
     operation.editor.focused = false
   }
 }

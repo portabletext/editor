@@ -21,7 +21,7 @@ export function point(
   if (isPath(at)) {
     let path: Path
 
-    const deepest = getLeaf(editor, at, {
+    const deepest = getLeaf(editor.snapshot, at, {
       edge: edge === 'end' ? 'end' : 'start',
     })
     if (!deepest) {
@@ -34,14 +34,14 @@ export function point(
     path = nodePath
 
     if (
-      !isSpan({schema: editor.schema}, node) &&
-      !isTextBlockNode({schema: editor.schema}, node) &&
+      !isSpan({schema: editor.snapshot.context.schema}, node) &&
+      !isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
       !isEditor(node)
     ) {
       return {path, offset: 0}
     }
 
-    if (!isSpan({schema: editor.schema}, node)) {
+    if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
       throw new Error(
         `Cannot get the ${edge} point in the node at path [${at}] because it has no ${edge} text node.`,
       )
@@ -51,7 +51,7 @@ export function point(
   }
 
   if (isRange(at)) {
-    const [start, end] = rangeEdges(at, editor)
+    const [start, end] = rangeEdges(at, editor.snapshot.context)
     return edge === 'start' ? start : end
   }
 

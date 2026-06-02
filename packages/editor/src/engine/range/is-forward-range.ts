@@ -4,7 +4,7 @@ import {isBackwardRange} from './is-backward-range'
 
 export function isForwardRange(
   range: Range,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): boolean {
   return !isBackwardRange(range, root)
 }

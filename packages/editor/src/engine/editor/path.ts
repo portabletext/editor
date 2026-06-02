@@ -20,7 +20,7 @@ export function path(
 
   if (isPath(at)) {
     if (edge === 'start' || edge === 'end') {
-      const leaf = getLeaf(editor, at, {edge})
+      const leaf = getLeaf(editor.snapshot, at, {edge})
       if (leaf) {
         at = leaf.path
       }
@@ -29,9 +29,9 @@ export function path(
 
   if (isRange(at)) {
     if (edge === 'start') {
-      at = rangeStart(at, editor)
+      at = rangeStart(at, editor.snapshot.context)
     } else if (edge === 'end') {
-      at = rangeEnd(at, editor)
+      at = rangeEnd(at, editor.snapshot.context)
     } else {
       at = commonPath(at.anchor.path, at.focus.path)
     }

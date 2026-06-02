@@ -288,14 +288,14 @@ export const editorMachine = setup({
     }),
     'emit read only': enqueueActions(({context, enqueue}) => {
       if (context.editorEngine) {
-        context.editorEngine.readOnly = true
+        context.editorEngine.snapshot.context.readOnly = true
         context.editorEngine.onChange()
       }
       enqueue.emit({type: 'read only'})
     }),
     'emit editable': enqueueActions(({context, enqueue}) => {
       if (context.editorEngine) {
-        context.editorEngine.readOnly = false
+        context.editorEngine.snapshot.context.readOnly = false
         context.editorEngine.onChange()
       }
       enqueue.emit({type: 'editable'})
@@ -374,7 +374,7 @@ export const editorMachine = setup({
       }
 
       try {
-        const currentSelection = editorEngine.selection
+        const currentSelection = editorEngine.snapshot.context.selection
 
         DOMEditor.focus(editorEngine)
 
@@ -382,7 +382,8 @@ export const editorMachine = setup({
           editorEngine.select(currentSelection)
 
           // Tell the engine to use this selection for DOM sync
-          editorEngine.pendingSelection = editorEngine.selection
+          editorEngine.pendingSelection =
+            editorEngine.snapshot.context.selection
 
           // Trigger the DOM sync
           editorEngine.onChange()
@@ -409,10 +410,10 @@ export const editorMachine = setup({
           remainingEventBehaviors: behaviors,
           event: event.behaviorEvent,
           editor: event.editor,
-          converters: event.editor.converters,
-          keyGenerator: event.editor.keyGenerator,
-          schema: event.editor.schema,
-          readOnly: event.editor.readOnly,
+          converters: event.editor.snapshot.context.converters,
+          keyGenerator: event.editor.snapshot.context.keyGenerator,
+          schema: event.editor.snapshot.context.schema,
+          readOnly: event.editor.snapshot.context.readOnly,
           nativeEvent: event.nativeEvent,
           sendBack: (eventSentBack) => {
             if (eventSentBack.type === 'set drag ghost') {

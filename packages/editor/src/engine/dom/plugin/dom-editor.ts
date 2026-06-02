@@ -239,14 +239,17 @@ export const DOMEditor: DOMEditorInterface = {
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
     if (root.activeElement !== el) {
       // Ensure that the DOM selection state is set to the editor's selection
-      if (editor.selection && root instanceof Document) {
+      if (editor.snapshot.context.selection && root instanceof Document) {
         const domSelection = getSelection(root)
-        const domRange = DOMEditor.toDOMRange(editor, editor.selection)
+        const domRange = DOMEditor.toDOMRange(
+          editor,
+          editor.snapshot.context.selection,
+        )
         domSelection?.removeAllRanges()
         domSelection?.addRange(domRange)
       }
       // Create a new selection in the top of the document if missing
-      if (!editor.selection) {
+      if (!editor.snapshot.context.selection) {
         editor.select(editorStart(editor, []))
       }
       // IS_FOCUSED should be set before calling el.focus() to ensure that
@@ -258,9 +261,12 @@ export const DOMEditor: DOMEditorInterface = {
       // reset the selection when el.focus() is called, which can cause the
       // selection to shift away from the intended position (e.g., away from
       // an inline object to an adjacent empty span).
-      if (editor.selection && root instanceof Document) {
+      if (editor.snapshot.context.selection && root instanceof Document) {
         const domSelection = getSelection(root)
-        const domRange = DOMEditor.toDOMRange(editor, editor.selection)
+        const domRange = DOMEditor.toDOMRange(
+          editor,
+          editor.snapshot.context.selection,
+        )
         domSelection?.removeAllRanges()
         domSelection?.addRange(domRange)
       }
@@ -323,7 +329,10 @@ export const DOMEditor: DOMEditorInterface = {
 
   hasRange: (editor, range) => {
     const {anchor, focus} = range
-    return hasNode(editor, anchor.path) && hasNode(editor, focus.path)
+    return (
+      hasNode(editor.snapshot, anchor.path) &&
+      hasNode(editor.snapshot, focus.path)
+    )
   },
 
   hasSelectableTarget: (editor, target) =>
@@ -347,7 +356,7 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   toDOMPoint: (editor, point) => {
-    const nodeEntry = getNode(editor, point.path)
+    const nodeEntry = getNode(editor.snapshot, point.path)
     const el = getDomNode(editor, point.path)
 
     if (!el) {
@@ -356,7 +365,10 @@ export const DOMEditor: DOMEditorInterface = {
 
     let domPoint: DOMPoint | undefined
 
-    if (nodeEntry && isLeafObject(editor, nodeEntry.node, point.path)) {
+    if (
+      nodeEntry &&
+      isLeafObject(editor.snapshot, nodeEntry.node, point.path)
+    ) {
       const spacer = el.querySelector('[data-pt-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
@@ -378,17 +390,17 @@ export const DOMEditor: DOMEditorInterface = {
     // If we're inside an object node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
     const pointPath = editorPath(editor, point)
-    const pointEntry = getNode(editor, pointPath)
+    const pointEntry = getNode(editor.snapshot, pointPath)
     const pointObjectNode =
-      pointEntry && isLeafObject(editor, pointEntry.node, pointPath)
+      pointEntry && isLeafObject(editor.snapshot, pointEntry.node, pointPath)
         ? pointEntry
-        : getAncestor(editor, point.path, {
+        : getAncestor(editor.snapshot, point.path, {
             match: (node, ancestorPath) =>
-              isLeafObject(editor, node, ancestorPath),
+              isLeafObject(editor.snapshot, node, ancestorPath),
           })
     if (
       pointObjectNode &&
-      isLeafObject(editor, pointObjectNode.node, pointObjectNode.path)
+      isLeafObject(editor.snapshot, pointObjectNode.node, pointObjectNode.path)
     ) {
       point = {path: point.path, offset: 0}
     }
@@ -432,7 +444,7 @@ export const DOMEditor: DOMEditorInterface = {
 
   toDOMRange: (editor, range) => {
     const {anchor, focus} = range
-    const isBackward = isBackwardRange(range, editor)
+    const isBackward = isBackwardRange(range, editor.snapshot.context)
     const domAnchor = DOMEditor.toDOMPoint(editor, anchor)
     const domFocus = isCollapsedRange(range)
       ? domAnchor
@@ -755,9 +767,12 @@ export const DOMEditor: DOMEditorInterface = {
     // Truncate paths that resolve to the spacer's virtual text node.
     if (path.length > 1) {
       const parentPath = path.slice(0, -1)
-      const parentEntry = getNode(editor, parentPath)
+      const parentEntry = getNode(editor.snapshot, parentPath)
 
-      if (parentEntry && isLeafObject(editor, parentEntry.node, parentPath)) {
+      if (
+        parentEntry &&
+        isLeafObject(editor.snapshot, parentEntry.node, parentPath)
+      ) {
         return {path: parentPath, offset: 0}
       }
     }

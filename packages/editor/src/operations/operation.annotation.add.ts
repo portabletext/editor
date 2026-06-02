@@ -32,7 +32,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     ? resolveSelection(operation.editor, operation.at)
     : null
 
-  const effectiveSelection = at ?? editor.selection
+  const effectiveSelection = at ?? editor.snapshot.context.selection
 
   const anchorPath = effectiveSelection?.anchor.path
   const annotationSchema = anchorPath
@@ -63,11 +63,12 @@ export const addAnnotationOperationImplementation: OperationImplementation<
   const ref = at ? rangeRef(editor, at, {affinity: 'inward'}) : null
 
   const selectedBlocks = Array.from(
-    getNodes(editor, {
-      from: rangeStart(effectiveSelection, editor).path,
-      to: rangeEnd(effectiveSelection, editor).path,
-      match: (node) => isTextBlock({schema: editor.schema}, node),
-      reverse: isBackwardRange(effectiveSelection, editor),
+    getNodes(editor.snapshot, {
+      from: rangeStart(effectiveSelection, editor.snapshot.context).path,
+      to: rangeEnd(effectiveSelection, editor.snapshot.context).path,
+      match: (node) =>
+        isTextBlock({schema: editor.snapshot.context.schema}, node),
+      reverse: isBackwardRange(effectiveSelection, editor.snapshot.context),
     }),
   )
 
@@ -75,7 +76,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
   withoutNormalizing(editor, () => {
     for (const {node: block, path: blockPath} of selectedBlocks) {
-      if (!isTextBlock({schema: editor.schema}, block)) {
+      if (!isTextBlock({schema: editor.snapshot.context.schema}, block)) {
         continue
       }
 
@@ -124,21 +125,24 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       }
 
       // Split text nodes at range boundaries
-      const splitRange = at ?? editor.selection
+      const splitRange = at ?? editor.snapshot.context.selection
       if (splitRange && isRange(splitRange)) {
-        const splitLeaf = getNode(editor, splitRange.anchor.path)?.node
+        const splitLeaf = getNode(editor.snapshot, splitRange.anchor.path)?.node
         if (
           !(
             splitLeaf &&
             isCollapsedRange(splitRange) &&
-            isSpan({schema: editor.schema}, splitLeaf) &&
+            isSpan({schema: editor.snapshot.context.schema}, splitLeaf) &&
             splitLeaf.text.length > 0
           )
         ) {
           const splitRangeRef = rangeRef(editor, splitRange, {
             affinity: 'inward',
           })
-          const [splitStart, splitEnd] = rangeEdges(splitRange, editor)
+          const [splitStart, splitEnd] = rangeEdges(
+            splitRange,
+            editor.snapshot.context,
+          )
           const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
           if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
             applySplitNode(editor, splitEnd.path, splitEnd.offset)
@@ -155,19 +159,19 @@ export const addAnnotationOperationImplementation: OperationImplementation<
         }
       }
 
-      const children = getChildren(editor, blockPath)
+      const children = getChildren(editor.snapshot, blockPath)
 
       // Use the tracked range (updated after splits) or fall back to editor.selection
-      const selectionRange = ref?.current ?? editor.selection
+      const selectionRange = ref?.current ?? editor.snapshot.context.selection
 
       for (const {node: span, path: spanPath} of children) {
-        if (!isSpan({schema: editor.schema}, span)) {
+        if (!isSpan({schema: editor.snapshot.context.schema}, span)) {
           continue
         }
 
         if (
           !selectionRange ||
-          !rangeIncludes(selectionRange, spanPath, editor)
+          !rangeIncludes(selectionRange, spanPath, editor.snapshot.context)
         ) {
           continue
         }

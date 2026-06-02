@@ -32,7 +32,7 @@ export function isOverlappingSelection(
     }
 
     return rangesOverlap(selection, editorSelection, {
-      children: snapshot.context.value,
+      value: snapshot.context.value,
     })
   }
 }

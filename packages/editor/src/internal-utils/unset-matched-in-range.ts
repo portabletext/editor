@@ -22,7 +22,7 @@ export function unsetMatchedNodesInRange(
 ): void {
   const candidates: Array<{node: Node; path: Path}> = []
 
-  for (const entry of getNodes(editor, {
+  for (const entry of getNodes(editor.snapshot, {
     from,
     to,
     match: predicate,
@@ -46,7 +46,7 @@ export function unsetMatchedNodesInRange(
     if (!path) {
       continue
     }
-    if (!getNode(editor, path)) {
+    if (!getNode(editor.snapshot, path)) {
       continue
     }
     editor.apply({type: 'unset', path})

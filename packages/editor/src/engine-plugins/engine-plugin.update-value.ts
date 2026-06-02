@@ -42,7 +42,7 @@ export function updateValuePlugin(
       buildIndexMaps(
         {
           schema: context.schema,
-          value: editor.children,
+          value: editor.snapshot.context.value,
         },
         {
           blockIndexMap: editor.blockIndexMap,

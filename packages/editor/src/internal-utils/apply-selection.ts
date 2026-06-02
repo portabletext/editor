@@ -17,10 +17,7 @@ import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
-type ResolveSelectionEditor = Pick<
-  PortableTextEditorEngine,
-  'children' | 'schema' | 'publicContainers' | 'blockIndexMap'
->
+type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
 
 /**
  * Normalize a selection so that each point resolves to a valid leaf path.
@@ -89,11 +86,11 @@ function resolveSelectionPoint(
   | undefined {
   const snapshot = {
     context: {
-      schema: editor.schema,
-      containers: editor.publicContainers,
-      value: editor.children,
+      schema: editor.snapshot.context.schema,
+      containers: editor.snapshot.context.containers,
+      value: editor.snapshot.context.value,
     },
-    blockIndexMap: editor.blockIndexMap,
+    blockIndexMap: editor.snapshot.blockIndexMap,
   }
 
   const entry = getNode(snapshot, selectionPoint.path)
@@ -105,7 +102,7 @@ function resolveSelectionPoint(
     if (children.length === 0) {
       return {
         path: entry.path,
-        offset: isSpan({schema: editor.schema}, entry.node)
+        offset: isSpan({schema: editor.snapshot.context.schema}, entry.node)
           ? Math.min(entry.node.text.length, selectionPoint.offset)
           : 0,
       }
@@ -117,7 +114,10 @@ function resolveSelectionPoint(
     // depth, regardless of the parent field name.
     const isBlockLevelPath = isBlock(snapshot, selectionPoint.path)
 
-    if (isTextBlock({schema: editor.schema}, entry.node) && isBlockLevelPath) {
+    if (
+      isTextBlock({schema: editor.snapshot.context.schema}, entry.node) &&
+      isBlockLevelPath
+    ) {
       const spanPoint = blockOffsetToSpanSelectionPoint({
         snapshot,
         blockOffset: {
@@ -170,7 +170,7 @@ export function applySelect(
   target: Range | Point | Path,
 ): void {
   const range = toRange(editor, target)
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
 
   if (selection) {
     const oldProps: Partial<Range> = {}
@@ -206,7 +206,7 @@ export function applySelect(
  * Clear the editor selection.
  */
 export function applyDeselect(editor: PortableTextEditorEngine): void {
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
 
   if (selection) {
     editor.apply({

@@ -40,9 +40,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Add a placeholder block when the editor is empty
    */
-  if (isEditor(node) && node.children.length === 0) {
+  if (isEditor(node) && node.snapshot.context.value.length === 0) {
     withoutPatching(editor, () => {
-      applyInsertNodeAtPath(editor, createPlaceholderBlock(editor), [0])
+      applyInsertNodeAtPath(
+        editor,
+        createPlaceholderBlock(editor.snapshot),
+        [0],
+      )
     })
     return
   }
@@ -50,16 +54,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Merge spans with same set of .marks
    */
-  if (isTextBlock({schema: editor.schema}, node)) {
-    const children = getChildren(editor, path)
+  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+    const children = getChildren(editor.snapshot, path)
 
     for (let i = 0; i < children.length - 1; i++) {
       const {node: child} = children[i]!
       const {node: nextNode, path: nextChildPath} = children[i + 1]!
 
       if (
-        isSpan({schema: editor.schema}, child) &&
-        isSpan({schema: editor.schema}, nextNode) &&
+        isSpan({schema: editor.snapshot.context.schema}, child) &&
+        isSpan({schema: editor.snapshot.context.schema}, nextNode) &&
         child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
         nextNode.marks?.every((mark) => child.marks?.includes(mark))
       ) {
@@ -72,15 +76,18 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Normalize missing _type based on context.
   if (nodeRecord['_type'] === undefined && path.length > 0) {
-    const parent = getNode(editor, parentPath(path))
+    const parent = getNode(editor.snapshot, parentPath(path))
 
     // Children of text blocks default to the span type.
-    if (parent && isTextBlock({schema: editor.schema}, parent.node)) {
+    if (
+      parent &&
+      isTextBlock({schema: editor.snapshot.context.schema}, parent.node)
+    ) {
       debug.normalization('Setting span type on node without a type')
       editor.apply({
         type: 'set',
         path: [...path, '_type'],
-        value: editor.schema.span.name,
+        value: editor.snapshot.context.schema.span.name,
         inverse: {type: 'unset', path: [...path, '_type']},
       })
       return
@@ -91,7 +98,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     editor.apply({
       type: 'set',
       path: [...path, '_type'],
-      value: editor.schema.block.name,
+      value: editor.snapshot.context.schema.block.name,
       inverse: {type: 'unset', path: [...path, '_type']},
     })
     return
@@ -102,7 +109,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // address it by. Any ancestor segments with undefined _key are also
   // resolved to numeric indices.
   if (nodeRecord['_key'] === undefined && path.length > 0) {
-    const newKey = editor.keyGenerator()
+    const newKey = editor.snapshot.context.keyGenerator()
     debug.normalization('Setting missing key on node')
 
     // Build a fully resolved path by walking the tree from the root,
@@ -124,7 +131,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         ? (((currentNode as Record<string, unknown>)[
             numericPath[numericPath.length - 1] as string
           ] as ArrayLike<Node>) ?? [])
-        : editor.children
+        : editor.snapshot.context.value
 
       if (isKeyedSegment(segment) && segment._key !== undefined) {
         numericPath.push(segment)
@@ -161,10 +168,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Fix duplicate _key among siblings
   if (path.length > 0 && nodeRecord['_key'] !== undefined) {
-    const parent = getParent(editor, path)
+    const parent = getParent(editor.snapshot, path)
     const siblings = parent
-      ? getChildren(editor, parent.path)
-      : editor.children.map((child, index) => ({
+      ? getChildren(editor.snapshot, parent.path)
+      : editor.snapshot.context.value.map((child, index) => ({
           node: child,
           path: [{_key: child._key}],
           index,
@@ -181,7 +188,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           firstIndex = i
         } else {
           // Found a duplicate: rename the later occurrence
-          const newKey = editor.keyGenerator()
+          const newKey = editor.snapshot.context.keyGenerator()
           debug.normalization('Fixing duplicate key on node')
           const dupParentPath = parent ? parent.path : []
           const numericPath: Path =
@@ -189,7 +196,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               ? [i]
               : [
                   ...dupParentPath,
-                  getChildFieldName(editor.context, parent!.path) ?? 'children',
+                  getChildFieldName(editor.snapshot.context, parent!.path) ??
+                    'children',
                   i,
                 ]
           editor.apply({
@@ -212,7 +220,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .markDefs to text block nodes
    */
   if (
-    isTextBlockNode({schema: editor.schema}, node) &&
+    isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     !Array.isArray(node.markDefs)
   ) {
     debug.normalization('adding .markDefs to block node')
@@ -224,10 +232,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .style to text block nodes
    */
   if (
-    isTextBlockNode({schema: editor.schema}, node) &&
+    isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     typeof node.style === 'undefined'
   ) {
-    const defaultStyle = getPathSubSchema(editor, path).styles.at(0)?.name
+    const defaultStyle = getPathSubSchema(editor.snapshot, path).styles.at(
+      0,
+    )?.name
     if (defaultStyle) {
       debug.normalization('adding .style to block node')
       setNodeProperties(editor, {style: defaultStyle}, path)
@@ -238,7 +248,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Add missing .text to span nodes
    */
-  if (isSpanNode(editor, node) && typeof node.text !== 'string') {
+  if (
+    isSpanNode(editor.snapshot.context, node) &&
+    typeof node.text !== 'string'
+  ) {
     debug.normalization('Adding .text to span node')
     editor.apply({
       type: 'set',
@@ -252,7 +265,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Add missing .marks to span nodes
    */
-  if (isSpan({schema: editor.schema}, node) && !Array.isArray(node.marks)) {
+  if (
+    isSpan({schema: editor.snapshot.context.schema}, node) &&
+    !Array.isArray(node.marks)
+  ) {
     debug.normalization('Adding .marks to span node')
     setNodeProperties(editor, {marks: []}, path)
     return
@@ -261,13 +277,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove annotations from empty spans
    */
-  if (isSpan({schema: editor.schema}, node)) {
+  if (isSpan({schema: editor.snapshot.context.schema}, node)) {
     const blockPath = parentPath(path)
-    const blockEntry = getTextBlock(editor, blockPath)
+    const blockEntry = getTextBlock(editor.snapshot, blockPath)
     if (!blockEntry) {
       return
     }
-    const decorators = getPathSubSchema(editor, path).decorators.map(
+    const decorators = getPathSubSchema(editor.snapshot, path).decorators.map(
       (decorator) => decorator.name,
     )
     const annotations = node.marks?.filter((mark) => !decorators.includes(mark))
@@ -286,13 +302,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove orphaned annotations from child spans of block nodes
    */
-  if (isTextBlock({schema: editor.schema}, node)) {
-    const decorators = getPathSubSchema(editor, path).decorators.map(
+  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+    const decorators = getPathSubSchema(editor.snapshot, path).decorators.map(
       (decorator) => decorator.name,
     )
 
-    for (const {node: child, path: childPath} of getChildren(editor, path)) {
-      if (isSpan({schema: editor.schema}, child)) {
+    for (const {node: child, path: childPath} of getChildren(
+      editor.snapshot,
+      path,
+    )) {
+      if (isSpan({schema: editor.snapshot.context.schema}, child)) {
         const marks = child.marks ?? []
         const orphanedAnnotations = marks.filter((mark) => {
           return (
@@ -321,13 +340,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove orphaned annotations from span nodes
    */
-  if (isSpan({schema: editor.schema}, node)) {
+  if (isSpan({schema: editor.snapshot.context.schema}, node)) {
     const blockPath = parentPath(path)
-    const blockEntry2 = getTextBlock(editor, blockPath)
+    const blockEntry2 = getTextBlock(editor.snapshot, blockPath)
 
     if (blockEntry2) {
       const block = blockEntry2.node
-      const decorators = getPathSubSchema(editor, path).decorators.map(
+      const decorators = getPathSubSchema(editor.snapshot, path).decorators.map(
         (decorator) => decorator.name,
       )
       const marks = node.marks ?? []
@@ -355,7 +374,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove duplicate markDefs
    */
-  if (isTextBlock({schema: editor.schema}, node)) {
+  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
     const markDefs = node.markDefs ?? []
     const markDefKeys = new Set<string>()
     const newMarkDefs: Array<PortableTextObject> = []
@@ -377,11 +396,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove markDefs not in use
    */
-  if (isTextBlock({schema: editor.schema}, node)) {
+  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
     const newMarkDefs = (node.markDefs || []).filter((def) => {
       return node.children.find((child) => {
         return (
-          isSpan({schema: editor.schema}, child) &&
+          isSpan({schema: editor.snapshot.context.schema}, child) &&
           Array.isArray(child.marks) &&
           child.marks.includes(def._key)
         )
@@ -395,7 +414,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }
   }
 
-  if (isSpanNode({schema: editor.schema}, node)) {
+  if (isSpanNode({schema: editor.snapshot.context.schema}, node)) {
     /**
      * Add missing .text to span nodes
      */
@@ -415,8 +434,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Container normalization: ensure the child array field exists and is
   // non-empty.
-  if (isObject(editor, node)) {
-    const resolved = resolveContainerByPath(editor, path, node)
+  if (isObject(editor.snapshot, node)) {
+    const resolved = resolveContainerByPath(
+      {
+        containers: editor.containers,
+        schema: editor.snapshot.context.schema,
+        value: editor.snapshot.context.value,
+      },
+      path,
+      node,
+    )
     const arrayField =
       resolved && 'container' in resolved ? resolved.field : undefined
 
@@ -433,7 +460,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
         let childNode: Node | undefined
         if (acceptsBlocks) {
-          childNode = createPlaceholderBlock(editor, [
+          childNode = createPlaceholderBlock(editor.snapshot, [
             ...path,
             arrayField.name,
             0,
@@ -448,7 +475,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               : firstChildType.type
           childNode = {
             _type: childTypeName,
-            _key: editor.keyGenerator(),
+            _key: editor.snapshot.context.keyGenerator(),
           } as Node
         }
 
@@ -481,8 +508,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // The sibling-level handler above catches duplicates when each child is
   // visited individually, but container children may not be visited if
   // containers gates traversal. Handle it at the parent level as well.
-  if (isObject(editor, node)) {
-    const children = [...getChildren(editor, path)]
+  if (isObject(editor.snapshot, node)) {
+    const children = [...getChildren(editor.snapshot, path)]
 
     if (children.length > 1) {
       const seen = new Map<string, number>()
@@ -490,11 +517,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       for (let i = 0; i < children.length; i++) {
         const key = children[i]!.node._key
         if (key !== undefined && seen.has(key)) {
-          const newKey = editor.keyGenerator()
+          const newKey = editor.snapshot.context.keyGenerator()
           debug.normalization('Fixing duplicate key on container child')
           // Use numeric index to address the duplicate since keyed path
           // is ambiguous for nodes with the same key.
-          const arrayFieldName = getChildFieldName(editor.context, path)
+          const arrayFieldName = getChildFieldName(
+            editor.snapshot.context,
+            path,
+          )
           if (arrayFieldName) {
             editor.apply({
               type: 'set',
@@ -519,9 +549,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 
   // Text blocks must always have at least one child span.
-  if (isTextBlockNode({schema: editor.schema}, node)) {
+  if (isTextBlockNode({schema: editor.snapshot.context.schema}, node)) {
+    // We will have to refetch the element any time we modify its children
+    // since it clones to a new immutable reference when we do.
+    let element = node as unknown as PortableTextTextBlock
+
     // Runtime data can arrive without children (e.g. after an unset patch).
-    if (!Array.isArray(node.children)) {
+    if (!Array.isArray(element.children)) {
       editor.apply({
         type: 'set',
         path: [...path, 'children'],
@@ -531,20 +565,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       return
     }
 
-    // We will have to refetch the element any time we modify its children
-    // since it clones to a new immutable reference when we do.
-    let element: PortableTextTextBlock = node
-
     // Ensure that text blocks have at least one child.
     if (element.children.length === 0) {
-      const child = createSpanNode(editor)
+      const child = createSpanNode(editor.snapshot.context)
       editor.apply({
         type: 'insert',
         path: [...path, 'children', 0],
         node: child,
         position: 'before',
       })
-      const refetched = getTextBlock(editor, path)?.node
+      const refetched = getTextBlock(editor.snapshot, path)?.node
       if (!refetched) {
         return
       }
@@ -559,12 +589,15 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       const prev: Node | undefined = element.children[n - 1]
       const childPath = [...path, 'children', {_key: child._key}]
 
-      if (isSpan({schema: editor.schema}, child)) {
-        if (prev != null && isSpan({schema: editor.schema}, prev)) {
+      if (isSpan({schema: editor.snapshot.context.schema}, child)) {
+        if (
+          prev != null &&
+          isSpan({schema: editor.snapshot.context.schema}, prev)
+        ) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
             editor.apply({type: 'unset', path: childPath})
-            const refetched = getTextBlock(editor, path)?.node
+            const refetched = getTextBlock(editor.snapshot, path)?.node
             if (!refetched) {
               return
             }
@@ -573,7 +606,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           } else if (prev.text === '') {
             const prevPath = [...path, 'children', {_key: prev._key}]
             editor.apply({type: 'unset', path: prevPath})
-            const refetched = getTextBlock(editor, path)?.node
+            const refetched = getTextBlock(editor.snapshot, path)?.node
             if (!refetched) {
               return
             }
@@ -581,7 +614,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           } else if (textEquals(child, prev, {loose: true})) {
             applyMergeNode(editor, childPath, prev.text.length)
-            const refetched = getTextBlock(editor, path)?.node
+            const refetched = getTextBlock(editor.snapshot, path)?.node
             if (!refetched) {
               return
             }
@@ -589,16 +622,19 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           }
         }
-      } else if (isObject(editor, child)) {
-        if (prev == null || !isSpan({schema: editor.schema}, prev)) {
-          const newChild = createSpanNode(editor)
+      } else if (isObject(editor.snapshot, child)) {
+        if (
+          prev == null ||
+          !isSpan({schema: editor.snapshot.context.schema}, prev)
+        ) {
+          const newChild = createSpanNode(editor.snapshot.context)
           editor.apply({
             type: 'insert',
             path: childPath,
             node: newChild,
             position: 'before',
           })
-          const refetched = getTextBlock(editor, path)?.node
+          const refetched = getTextBlock(editor.snapshot, path)?.node
           if (!refetched) {
             return
           }
@@ -606,14 +642,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           n++
         }
         if (n === element.children.length - 1) {
-          const newChild = createSpanNode(editor)
+          const newChild = createSpanNode(editor.snapshot.context)
           editor.apply({
             type: 'insert',
             path: [...path, 'children', {_key: element.children[n]!._key}],
             node: newChild,
             position: 'after',
           })
-          const refetched = getTextBlock(editor, path)?.node
+          const refetched = getTextBlock(editor.snapshot, path)?.node
           if (!refetched) {
             return
           }

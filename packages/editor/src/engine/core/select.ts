@@ -5,7 +5,7 @@ import type {Location} from '../interfaces/location'
 import {isRange} from '../range/is-range'
 
 export function select(editor: Editor, target: Location): void {
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
   target = editorRange(editor, target)
 
   if (selection) {

@@ -26,7 +26,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
   const mark = operation.decorator
   const at = operation.at
     ? resolveSelection(operation.editor, operation.at)
-    : editor.selection
+    : editor.snapshot.context.selection
 
   if (!at) {
     // Unable to remove decorator without a selection
@@ -38,16 +38,16 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
 
     withoutNormalizing(editor, () => {
       // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
-      const decoratorLeaf = getNode(editor, at!.anchor.path)?.node
+      const decoratorLeaf = getNode(editor.snapshot, at!.anchor.path)?.node
       if (
         !(
           decoratorLeaf &&
           isCollapsedRange(at) &&
-          isSpan({schema: editor.schema}, decoratorLeaf) &&
+          isSpan({schema: editor.snapshot.context.schema}, decoratorLeaf) &&
           decoratorLeaf.text.length > 0
         )
       ) {
-        const [start, end] = rangeEdges(at, editor)
+        const [start, end] = rangeEdges(at, editor.snapshot.context)
         const endAtEndOfNode = isEnd(editor, end, end.path)
         if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
           applySplitNode(editor, end.path, end.offset)
@@ -62,22 +62,22 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
 
       if (updatedAt) {
         const splitTextNodes = [
-          ...getNodes(editor, {
-            from: rangeStart(updatedAt, editor).path,
-            to: rangeEnd(updatedAt, editor).path,
-            match: (n) => isSpan({schema: editor.schema}, n),
+          ...getNodes(editor.snapshot, {
+            from: rangeStart(updatedAt, editor.snapshot.context).path,
+            to: rangeEnd(updatedAt, editor.snapshot.context).path,
+            match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
           }),
         ]
         for (const {node, path: nodePath} of splitTextNodes) {
-          if (!isSpan({schema: editor.schema}, node)) {
+          if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
             continue
           }
 
           const blockPath = parentPath(nodePath)
-          const blockEntry = getNode(editor, blockPath)
+          const blockEntry = getNode(editor.snapshot, blockPath)
           const block = blockEntry?.node
           if (
-            isTextBlock({schema: editor.schema}, block) &&
+            isTextBlock({schema: editor.snapshot.context.schema}, block) &&
             block.children.includes(node)
           ) {
             setNodeProperties(
@@ -96,7 +96,8 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     }) // end withoutNormalizing
   } else {
     const textBlockEntry = getParent(snapshot, at.focus.path, {
-      match: (node) => isTextBlock({schema: editor.schema}, node),
+      match: (node) =>
+        isTextBlock({schema: editor.snapshot.context.schema}, node),
     })
     if (!textBlockEntry) {
       return
@@ -104,7 +105,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     const {node: block, path: blockPath} = textBlockEntry
     const lonelyEmptySpan =
       block.children.length === 1 &&
-      isSpan({schema: editor.schema}, block.children[0]) &&
+      isSpan({schema: editor.snapshot.context.schema}, block.children[0]) &&
       block.children[0].text === ''
         ? block.children[0]
         : undefined
@@ -116,9 +117,10 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       )
 
       for (const {path: spanPath} of Array.from(
-        getNodes(editor, {
+        getNodes(editor.snapshot, {
           at: blockPath,
-          match: (node) => isSpan({schema: editor.schema}, node),
+          match: (node) =>
+            isSpan({schema: editor.snapshot.context.schema}, node),
         }),
       )) {
         setNodeProperties(
@@ -128,13 +130,13 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         )
       }
     } else {
-      editor.decoratorState[mark] = false
+      editor.snapshot.decoratorState[mark] = false
     }
   }
 
-  if (editor.selection) {
+  if (editor.snapshot.context.selection) {
     // Reselect
-    const selection = editor.selection
-    editor.selection = {...selection}
+    const selection = editor.snapshot.context.selection
+    editor.snapshot.context.selection = {...selection}
   }
 }

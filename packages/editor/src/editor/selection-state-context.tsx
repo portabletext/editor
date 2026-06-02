@@ -122,7 +122,7 @@ export function SelectionStateProvider({
         {
           context: {
             schema: snapshot.context.schema,
-            containers: editorEngine.publicContainers,
+            containers: editorEngine.snapshot.context.containers,
             value: snapshot.context.value,
           },
           blockIndexMap: editorEngine.blockIndexMap,

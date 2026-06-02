@@ -76,7 +76,7 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
 })
 
 // This function will handle unexpected DOM changes inside the Editable rendering,
-// and make sure that we can maintain a stable editorEngine.selection when that happens.
+// and make sure that we can maintain a stable editorEngine.snapshot.context.selection when that happens.
 //
 // For example, if this Editable is rendered inside something that might re-render
 // this component (hidden contexts) while the user is still actively changing the
@@ -87,15 +87,15 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
 // that are impossible to recover properly from or result in a wrong selection.
 //
 // Also the other way around, when the DOMEditor will try to create a DOM Range
-// from the current editorEngine.selection, it may throw unrecoverable errors
-// if the current editor.selection is invalid according to the DOM.
+// from the current editorEngine.snapshot.context.selection, it may throw unrecoverable errors
+// if the current editor.snapshot.context.selection is invalid according to the DOM.
 // If this is the case, default to selecting the top of the document, if the
 // user already had a selection.
 function validateSelection(
   editorEngine: PortableTextEditorEngine,
   editorElement: HTMLDivElement,
 ) {
-  if (!editorEngine.selection) {
+  if (!editorEngine.snapshot.context.selection) {
     return
   }
 
@@ -123,7 +123,7 @@ function validateSelection(
   try {
     const newDOMRange = DOMEditor.toDOMRange(
       editorEngine,
-      editorEngine.selection,
+      editorEngine.snapshot.context.selection,
     )
     if (
       newDOMRange.startOffset !== existingDOMRange.startOffset ||
@@ -140,7 +140,7 @@ function validateSelection(
     // Deselect the editor
     applyDeselect(editorEngine)
     // Select top document if there is a top block to select
-    if (editorEngine.children.length > 0) {
+    if (editorEngine.snapshot.context.value.length > 0) {
       applySelect(editorEngine, start(editorEngine, []))
     }
     editorEngine.onChange()

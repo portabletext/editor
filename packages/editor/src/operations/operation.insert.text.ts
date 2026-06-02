@@ -29,7 +29,7 @@ export const insertTextOperationImplementation: OperationImplementation<
   }
 
   // Caret form: resolve position from the current selection.
-  const {selection} = editor
+  const {selection} = editor.snapshot.context
 
   if (!selection || !isCollapsedRange(selection)) {
     return
@@ -37,7 +37,7 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   let {path, offset} = selection.anchor
 
-  const nodeEntry = getNode(editor, path)
+  const nodeEntry = getNode(editor.snapshot, path)
 
   if (!nodeEntry) {
     return
@@ -47,11 +47,13 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   // If the selection is at a non-span leaf (inline object or block object),
   // try to move to the adjacent span.
-  if (isLeafObject(editor, node, nodeEntry.path)) {
-    const nextSibling = getSibling(editor, nodeEntry.path, {direction: 'next'})
+  if (isLeafObject(editor.snapshot, node, nodeEntry.path)) {
+    const nextSibling = getSibling(editor.snapshot, nodeEntry.path, {
+      direction: 'next',
+    })
 
     if (nextSibling) {
-      const nextNodeEntry = getSpan(editor, nextSibling.path)
+      const nextNodeEntry = getSpan(editor.snapshot, nextSibling.path)
 
       if (nextNodeEntry) {
         path = nextSibling.path

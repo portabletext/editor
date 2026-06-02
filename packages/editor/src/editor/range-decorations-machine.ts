@@ -323,9 +323,9 @@ function createDecorate(
 ) {
   return function decorate([node, path]: NodeEntry): Array<Range> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = editorEngine.children[0]
+    const firstBlock = editorEngine.snapshot.context.value[0]
     const editorOnlyContainsEmptyParagraph =
-      editorEngine.children.length === 1 &&
+      editorEngine.snapshot.context.value.length === 1 &&
       firstBlock &&
       isEmptyTextBlock({schema}, firstBlock) &&
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
@@ -353,7 +353,7 @@ function createDecorate(
     }
 
     if (
-      !isTextBlock({schema: editorEngine.schema}, node) ||
+      !isTextBlock({schema: editorEngine.snapshot.context.schema}, node) ||
       node.children.length === 0
     ) {
       return []
@@ -364,7 +364,7 @@ function createDecorate(
       if (isCollapsedRange(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level.
         const anchorBlock = getEnclosingBlock(
-          editorEngine,
+          editorEngine.snapshot,
           decoratedRange.anchor.path,
         )
         const anchorChildSegment = decoratedRange.anchor.path.at(-1)
@@ -388,8 +388,8 @@ function createDecorate(
             anchor: {path, offset: 0},
             focus: {path, offset: 0},
           },
-          editorEngine,
-        ) || rangeIncludes(decoratedRange, path, editorEngine)
+          editorEngine.snapshot.context,
+        ) || rangeIncludes(decoratedRange, path, editorEngine.snapshot.context)
       )
     })
   }

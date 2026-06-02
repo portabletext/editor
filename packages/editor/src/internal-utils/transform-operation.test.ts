@@ -8,9 +8,9 @@ import {transformOperation} from './transform-operation'
 const testSchema = compileSchema(defineSchema({}))
 
 /**
- * Minimal editor mock. transformOperation only reads editor.children,
- * editor.schema, editor.containers (for block resolution), and
- * editor.selection (for set_selection target resolution).
+ * Minimal editor mock. transformOperation only reads editor.snapshot.context.value,
+ * editor.snapshot.context.schema, editor.containers (for block resolution), and
+ * editor.snapshot.context.selection (for set_selection target resolution).
  */
 function createMockEditor(
   children: Array<{_key: string; _type: string; [key: string]: unknown}>,

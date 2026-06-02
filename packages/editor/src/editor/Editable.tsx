@@ -137,7 +137,7 @@ export const PortableTextEditable = forwardRef<
   const editorActor = useContext(EditorActorContext)
   const relayActor = useContext(RelayActorContext)
   const editorEngine = useEngine()
-  const schema = editorEngine.schema
+  const schema = editorEngine.snapshot.context.schema
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
@@ -309,7 +309,7 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = editorEngine.selection ?? undefined
+        const selection = editorEngine.snapshot.context.selection ?? undefined
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -351,7 +351,7 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = editorEngine.selection
+        const selection = editorEngine.snapshot.context.selection
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -379,8 +379,8 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      const value = editorEngine.children
-      const ptRange = editorEngine.selection
+      const value = editorEngine.snapshot.context.value
+      const ptRange = editorEngine.snapshot.context.selection
       const path = ptRange?.focus.path || []
       const onPasteResult = onPaste?.({
         event,
@@ -389,7 +389,7 @@ export const PortableTextEditable = forwardRef<
         schemaTypes: portableTextEditor.schemaTypes,
       })
 
-      if (onPasteResult || !editorEngine.selection) {
+      if (onPasteResult || !editorEngine.snapshot.context.selection) {
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
@@ -407,7 +407,7 @@ export const PortableTextEditable = forwardRef<
                 'No result from custom paste handler, pasting normally',
               )
 
-              const selection = editorEngine.selection
+              const selection = editorEngine.snapshot.context.selection
               const position = selection ? {selection} : undefined
 
               if (!position) {
@@ -433,8 +433,8 @@ export const PortableTextEditable = forwardRef<
                 behaviorEvent: {
                   type: 'insert.blocks',
                   blocks: parseBlocks({
-                    keyGenerator: editorEngine.keyGenerator,
-                    schema: editorEngine.schema,
+                    keyGenerator: editorEngine.snapshot.context.keyGenerator,
+                    schema: editorEngine.snapshot.context.schema,
                     blocks: result.insert,
                     options: {
                       normalize: false,
@@ -466,7 +466,7 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
         event.stopPropagation()
 
-        const selection = editorEngine.selection
+        const selection = editorEngine.snapshot.context.selection
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -503,9 +503,12 @@ export const PortableTextEditable = forwardRef<
         relayActor.send({type: 'focused', event})
 
         if (
-          !editorEngine.selection &&
-          editorEngine.children.length === 1 &&
-          isEmptyTextBlock(editorEngine, editorEngine.children.at(0))
+          !editorEngine.snapshot.context.selection &&
+          editorEngine.snapshot.context.value.length === 1 &&
+          isEmptyTextBlock(
+            editorEngine.snapshot.context,
+            editorEngine.snapshot.context.value.at(0),
+          )
         ) {
           editorEngine.select(start(editorEngine, []))
           editorEngine.onChange()

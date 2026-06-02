@@ -1,5 +1,3 @@
-import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorSelection} from '../../types/editor'
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import type {DOMEditor} from '../dom/plugin/dom-editor'
 import type {Location} from './location'
@@ -18,9 +16,6 @@ import type {RangeRef} from './range-ref'
 export interface BaseEditor {
   // Core state.
 
-  children: PortableTextBlock[]
-  readonly value: PortableTextBlock[]
-  selection: EditorSelection
   operations: Operation[]
   dirtyPaths: Path[]
   dirtyPathKeys: Set<string>

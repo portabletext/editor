@@ -11,7 +11,7 @@ export function collapse(
   options: SelectionCollapseOptions = {},
 ): void {
   const {edge = 'anchor'} = options
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
 
   if (!selection) {
     return
@@ -20,10 +20,10 @@ export function collapse(
   } else if (edge === 'focus') {
     editor.select(selection.focus)
   } else if (edge === 'start') {
-    const [start] = rangeEdges(selection, editor)
+    const [start] = rangeEdges(selection, editor.snapshot.context)
     editor.select(start)
   } else if (edge === 'end') {
-    const [, end] = rangeEdges(selection, editor)
+    const [, end] = rangeEdges(selection, editor.snapshot.context)
     editor.select(end)
   }
 }

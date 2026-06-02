@@ -16,14 +16,15 @@ export const insertChildOperationImplementation: OperationImplementation<
   'insert.child'
 > = ({snapshot, operation}) => {
   const {context} = snapshot
-  const focus = operation.editor.selection?.focus
+  const focus = operation.editor.snapshot.context.selection?.focus
 
   if (!focus) {
     throw new Error('Unable to insert child without a focus')
   }
 
-  const focusBlockEntry = getParent(operation.editor, focus.path, {
-    match: (node) => isTextBlock({schema: operation.editor.schema}, node),
+  const focusBlockEntry = getParent(operation.editor.snapshot, focus.path, {
+    match: (node) =>
+      isTextBlock({schema: operation.editor.snapshot.context.schema}, node),
   })
 
   if (!focusBlockEntry) {
@@ -65,19 +66,26 @@ export const insertChildOperationImplementation: OperationImplementation<
   })
 
   if (span) {
-    const focusSpanEntry = getNode(operation.editor, focusChildPath)
+    const focusSpanEntry = getNode(operation.editor.snapshot, focusChildPath)
     const focusSpan =
       focusSpanEntry &&
-      isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
+      isSpan(
+        {schema: operation.editor.snapshot.context.schema},
+        focusSpanEntry.node,
+      )
         ? focusSpanEntry.node
         : undefined
 
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, span, focus)
     } else {
-      const nextSibling = getSibling(operation.editor, focusChildPath, {
-        direction: 'next',
-      })
+      const nextSibling = getSibling(
+        operation.editor.snapshot,
+        focusChildPath,
+        {
+          direction: 'next',
+        },
+      )
       if (nextSibling) {
         applyInsertNodeAtPath(operation.editor, span, nextSibling.path)
       } else {
@@ -92,7 +100,8 @@ export const insertChildOperationImplementation: OperationImplementation<
 
     // This makes sure the selection is set correctly when event handling is run
     // through the engine's Android input handling
-    operation.editor.pendingSelection = operation.editor.selection
+    operation.editor.pendingSelection =
+      operation.editor.snapshot.context.selection
 
     return
   }
@@ -113,19 +122,26 @@ export const insertChildOperationImplementation: OperationImplementation<
       ...rest,
     }
 
-    const focusSpanEntry = getNode(operation.editor, focusChildPath)
+    const focusSpanEntry = getNode(operation.editor.snapshot, focusChildPath)
     const focusSpan =
       focusSpanEntry &&
-      isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
+      isSpan(
+        {schema: operation.editor.snapshot.context.schema},
+        focusSpanEntry.node,
+      )
         ? focusSpanEntry.node
         : undefined
 
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, inlineNode, focus)
     } else {
-      const nextSibling = getSibling(operation.editor, focusChildPath, {
-        direction: 'next',
-      })
+      const nextSibling = getSibling(
+        operation.editor.snapshot,
+        focusChildPath,
+        {
+          direction: 'next',
+        },
+      )
       if (nextSibling) {
         applyInsertNodeAtPath(operation.editor, inlineNode, nextSibling.path)
       } else {

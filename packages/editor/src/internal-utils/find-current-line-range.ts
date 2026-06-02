@@ -19,7 +19,10 @@ export function findCurrentLineRange(
   editor: Editor,
   parentRange: Range,
 ): Range {
-  const parentRangeBoundary = editorRange(editor, rangeEnd(parentRange, editor))
+  const parentRangeBoundary = editorRange(
+    editor,
+    rangeEnd(parentRange, editor.snapshot.context),
+  )
   const positions = Array.from(editorPositions(editor, {at: parentRange}))
 
   let left = 0

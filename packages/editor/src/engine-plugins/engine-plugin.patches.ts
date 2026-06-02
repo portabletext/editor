@@ -37,13 +37,13 @@ export function createPatchesPlugin({
   subscriptions,
 }: Options): (editor: PortableTextEditorEngine) => PortableTextEditorEngine {
   // The previous editor value are needed to figure out the _key of deleted nodes
-  // The editor.children would no longer contain that information if the node is already deleted.
+  // The editor.snapshot.context.value would no longer contain that information if the node is already deleted.
   let previousValue: PortableTextBlock[]
 
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
   return function patchesPlugin(editor: PortableTextEditorEngine) {
-    previousValue = [...editor.children]
+    previousValue = [...editor.snapshot.context.value]
 
     const {apply} = editor
     let bufferedPatches: Patch[] = []
@@ -109,7 +109,7 @@ export function createPatchesPlugin({
       let patches: Patch[] = []
 
       // Update previous children here before we apply
-      previousValue = editor.children
+      previousValue = editor.snapshot.context.value
 
       const snapshot = editorActor.getSnapshot()
       const {initialValue, schema} = snapshot.context
@@ -122,8 +122,12 @@ export function createPatchesPlugin({
       apply(operation)
 
       const editorIsEmpty =
-        editor.children.length === 1 &&
-        isEqualToEmptyEditor(initialValue, editor.children, schema)
+        editor.snapshot.context.value.length === 1 &&
+        isEqualToEmptyEditor(
+          initialValue,
+          editor.snapshot.context.value,
+          schema,
+        )
 
       if (!editor.isPatching) {
         return editor
@@ -140,10 +144,16 @@ export function createPatchesPlugin({
 
       switch (operation.type) {
         case 'insert_text':
-          patches = [...patches, ...textPatch(editor, operation, previousValue)]
+          patches = [
+            ...patches,
+            ...textPatch(editor.snapshot, operation, previousValue),
+          ]
           break
         case 'remove_text':
-          patches = [...patches, ...textPatch(editor, operation, previousValue)]
+          patches = [
+            ...patches,
+            ...textPatch(editor.snapshot, operation, previousValue),
+          ]
           break
         case 'insert':
           patches = [...patches, ...insertNodePatch(operation)]
@@ -183,7 +193,7 @@ export function createPatchesPlugin({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
             operationId: editor.undoStepId,
-            value: editor.children,
+            value: editor.snapshot.context.value,
           })
         }
       }

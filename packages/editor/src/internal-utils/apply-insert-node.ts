@@ -41,11 +41,13 @@ export function applyInsertNodeAtPoint(
   at: Point,
 ): void {
   withoutNormalizing(editor, () => {
-    const match = isSpan({schema: editor.schema}, node)
-      ? (n: Node) => isSpan({schema: editor.schema}, n)
-      : (n: Node) => isSpan({schema: editor.schema}, n) || isObject(editor, n)
+    const match = isSpan({schema: editor.snapshot.context.schema}, node)
+      ? (n: Node) => isSpan({schema: editor.snapshot.context.schema}, n)
+      : (n: Node) =>
+          isSpan({schema: editor.snapshot.context.schema}, n) ||
+          isObject(editor.snapshot, n)
 
-    const nodeEntry = getNode(editor, at.path)
+    const nodeEntry = getNode(editor.snapshot, at.path)
     const entry = nodeEntry && match(nodeEntry.node) ? nodeEntry : undefined
 
     if (!entry) {

@@ -11,7 +11,7 @@ import type {OperationImplementation} from './operation.types'
 export const childSetOperationImplementation: OperationImplementation<
   'child.set'
 > = ({snapshot, operation}) => {
-  const childEntry = getNode(operation.editor, operation.at)
+  const childEntry = getNode(operation.editor.snapshot, operation.at)
 
   if (!childEntry) {
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
@@ -19,7 +19,7 @@ export const childSetOperationImplementation: OperationImplementation<
 
   const {node: child, path: childPath} = childEntry
 
-  if (isSpan({schema: operation.editor.schema}, child)) {
+  if (isSpan({schema: operation.editor.snapshot.context.schema}, child)) {
     const {_type, text, ...rest} = operation.props
 
     setNodeProperties(
@@ -58,7 +58,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (isObject(operation.editor, child)) {
+  if (isObject(operation.editor.snapshot, child)) {
     const blockPath = parentPath(childPath)
     const {inlineObjects} = getPathSubSchema(snapshot, blockPath)
     const definition = inlineObjects.find(

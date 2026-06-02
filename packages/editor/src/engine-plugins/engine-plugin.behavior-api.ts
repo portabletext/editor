@@ -14,7 +14,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         return
       }
 
-      if (editor.selection) {
+      if (editor.snapshot.context.selection) {
         select(location)
         return
       }
@@ -27,7 +27,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
           type: 'select',
           at: {
             ...range,
-            backward: isBackwardRange(range, editor),
+            backward: isBackwardRange(range, editor.snapshot.context),
           },
         },
         editor,
@@ -45,13 +45,15 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       const anchor = partialRange.anchor
       const focus = partialRange.focus
 
-      const backward = editor.selection
+      const backward = editor.snapshot.context.selection
         ? isBackwardRange(
             {
-              anchor: partialRange.anchor ?? editor.selection.anchor,
-              focus: partialRange.focus ?? editor.selection.focus,
+              anchor:
+                partialRange.anchor ?? editor.snapshot.context.selection.anchor,
+              focus:
+                partialRange.focus ?? editor.snapshot.context.selection.focus,
             },
-            editor,
+            editor.snapshot.context,
           )
         : partialRange.anchor && partialRange.focus
           ? isBackwardRange(
@@ -59,17 +61,19 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
                 anchor: partialRange.anchor,
                 focus: partialRange.focus,
               },
-              editor,
+              editor.snapshot.context,
             )
           : undefined
 
-      if (editor.selection) {
-        const newAnchor = partialRange.anchor ?? editor.selection.anchor
-        const newFocus = partialRange.focus ?? editor.selection.focus
+      if (editor.snapshot.context.selection) {
+        const newAnchor =
+          partialRange.anchor ?? editor.snapshot.context.selection.anchor
+        const newFocus =
+          partialRange.focus ?? editor.snapshot.context.selection.focus
 
         if (
-          pointEquals(newAnchor, editor.selection.anchor) &&
-          pointEquals(newFocus, editor.selection.focus)
+          pointEquals(newAnchor, editor.snapshot.context.selection.anchor) &&
+          pointEquals(newFocus, editor.snapshot.context.selection.focus)
         ) {
           // To avoid double `select` events, we call `setSelection` directly
           // if the selection wouldn't actually change.

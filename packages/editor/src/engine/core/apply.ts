@@ -24,7 +24,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   }
 
   for (const ref of editor.rangeRefs) {
-    transformRangeRef(ref, op, editor)
+    transformRangeRef(ref, op, editor.snapshot.context)
   }
 
   // Apply the operation to the tree first, so that getDirtyPaths
@@ -32,7 +32,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op)
 
-  updateDirtyPaths(editor, getDirtyPaths(editor.context, op))
+  updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
 
   editor.operations.push(op)
   normalize(editor, {
@@ -59,9 +59,15 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
       })
 
       if (previousSelectionIsCollapsed && newSelectionIsCollapsed) {
-        const focusSpanEntry = getSpan(editor, op.properties.focus.path)
+        const focusSpanEntry = getSpan(
+          editor.snapshot,
+          op.properties.focus.path,
+        )
         const focusSpan: PortableTextSpan | undefined = focusSpanEntry?.node
-        const newFocusSpanEntry = getSpan(editor, op.newProperties.focus.path)
+        const newFocusSpanEntry = getSpan(
+          editor.snapshot,
+          op.newProperties.focus.path,
+        )
         const newFocusSpan: PortableTextSpan | undefined =
           newFocusSpanEntry?.node
 
@@ -77,12 +83,20 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
         let movedToPreviousSpan = false
 
         if (sameParent && focusSpan && newFocusSpan) {
-          const nextSibling = getSibling(editor, op.properties.focus.path, {
-            direction: 'next',
-          })
-          const previousSibling = getSibling(editor, op.properties.focus.path, {
-            direction: 'previous',
-          })
+          const nextSibling = getSibling(
+            editor.snapshot,
+            op.properties.focus.path,
+            {
+              direction: 'next',
+            },
+          )
+          const previousSibling = getSibling(
+            editor.snapshot,
+            op.properties.focus.path,
+            {
+              direction: 'previous',
+            },
+          )
 
           movedToNextSpan =
             nextSibling !== undefined &&
@@ -98,12 +112,12 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
         }
 
         if (!movedToNextSpan && !movedToPreviousSpan) {
-          editor.decoratorState = {}
+          editor.snapshot.decoratorState = {}
         }
       }
     } else {
       // In any other case, we want to clear the decorator state.
-      editor.decoratorState = {}
+      editor.snapshot.decoratorState = {}
     }
   }
 
