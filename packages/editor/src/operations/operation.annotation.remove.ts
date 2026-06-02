@@ -12,7 +12,6 @@ import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {isRange} from '../engine/range/is-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
-import {rangeIncludes} from '../engine/range/range-includes'
 import {rangeStart} from '../engine/range/range-start'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
@@ -21,6 +20,7 @@ import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
+import {rangeIncludes} from '../traversal/range-includes'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -209,7 +209,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
           if (
             !selectionRange ||
-            !rangeIncludes(selectionRange, childPath, editor.snapshot.context)
+            !rangeIncludes(editor.snapshot, selectionRange, childPath)
           ) {
             continue
           }

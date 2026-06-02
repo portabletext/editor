@@ -11,7 +11,6 @@ import {parentPath} from '../engine/path/parent-path'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {isExpandedRange} from '../engine/range/is-expanded-range'
 import {rangeEnd} from '../engine/range/range-end'
-import {rangeIncludes} from '../engine/range/range-includes'
 import {rangeStart} from '../engine/range/range-start'
 import {isListItemActive, isStyleActive} from '../internal-utils/engine-utils'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
@@ -27,6 +26,7 @@ import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {getTextBlock} from '../traversal/get-text-block'
 import {getBlock, isBlock} from '../traversal/is-block'
+import {rangeIncludes} from '../traversal/range-includes'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -447,7 +447,7 @@ export function createEditableAPI(
         return false
       }
 
-      return rangeIncludes(selectionA, selectionB, editor.snapshot.context)
+      return rangeIncludes(editor.snapshot, selectionA, selectionB)
     },
   }
 
