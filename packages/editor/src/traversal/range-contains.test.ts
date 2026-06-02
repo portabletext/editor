@@ -1,14 +1,14 @@
 import {describe, expect, test} from 'vitest'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
-import {rangeIncludes} from './range-includes'
+import {rangeContains} from './range-contains'
 
-describe(rangeIncludes.name, () => {
+describe(rangeContains.name, () => {
   const testbed = createNodeTraversalTestbed()
   const snapshot = testbed.snapshot
 
   test('returns false when the range is null', () => {
     expect(
-      rangeIncludes(snapshot, null, [{_key: testbed.textBlock1._key}]),
+      rangeContains(snapshot, null, [{_key: testbed.textBlock1._key}]),
     ).toBe(false)
   })
 
@@ -22,7 +22,7 @@ describe(rangeIncludes.name, () => {
       offset: 0,
     }
     const range = {anchor: point, focus: point}
-    expect(rangeIncludes(snapshot, range, null)).toBe(false)
+    expect(rangeContains(snapshot, range, null)).toBe(false)
   })
 
   describe('Path target', () => {
@@ -37,7 +37,7 @@ describe(rangeIncludes.name, () => {
       }
       const range = {anchor: point, focus: point}
       expect(
-        rangeIncludes(snapshot, range, [{_key: testbed.textBlock1._key}]),
+        rangeContains(snapshot, range, [{_key: testbed.textBlock1._key}]),
       ).toBe(true)
     })
 
@@ -52,7 +52,7 @@ describe(rangeIncludes.name, () => {
       }
       const range = {anchor: point, focus: point}
       expect(
-        rangeIncludes(snapshot, range, [{_key: testbed.textBlock1._key}]),
+        rangeContains(snapshot, range, [{_key: testbed.textBlock1._key}]),
       ).toBe(false)
     })
 
@@ -75,7 +75,7 @@ describe(rangeIncludes.name, () => {
           offset: 0,
         },
       }
-      expect(rangeIncludes(snapshot, range, [{_key: testbed.image._key}])).toBe(
+      expect(rangeContains(snapshot, range, [{_key: testbed.image._key}])).toBe(
         true,
       )
     })
@@ -97,7 +97,7 @@ describe(rangeIncludes.name, () => {
       }
       const range = {anchor: point, focus: point}
       expect(
-        rangeIncludes(snapshot, range, [
+        rangeContains(snapshot, range, [
           {_key: testbed.table._key},
           'rows',
           {_key: testbed.row1._key},
@@ -134,7 +134,7 @@ describe(rangeIncludes.name, () => {
         ],
         offset: 3,
       }
-      expect(rangeIncludes(snapshot, range, target)).toBe(true)
+      expect(rangeContains(snapshot, range, target)).toBe(true)
     })
 
     test('point outside the range is not included', () => {
@@ -155,7 +155,7 @@ describe(rangeIncludes.name, () => {
         ],
         offset: 0,
       }
-      expect(rangeIncludes(snapshot, range, target)).toBe(false)
+      expect(rangeContains(snapshot, range, target)).toBe(false)
     })
   })
 
@@ -179,7 +179,7 @@ describe(rangeIncludes.name, () => {
       }
       const range = {anchor: a, focus: b}
       const target = {anchor: b, focus: b}
-      expect(rangeIncludes(snapshot, range, target)).toBe(true)
+      expect(rangeContains(snapshot, range, target)).toBe(true)
     })
 
     test('non-overlapping ranges return false', () => {
@@ -201,7 +201,7 @@ describe(rangeIncludes.name, () => {
       }
       const range = {anchor: inBlock1, focus: inBlock1}
       const target = {anchor: inBlock2, focus: inBlock2}
-      expect(rangeIncludes(snapshot, range, target)).toBe(false)
+      expect(rangeContains(snapshot, range, target)).toBe(false)
     })
   })
 })
