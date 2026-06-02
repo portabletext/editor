@@ -28,14 +28,18 @@ export function unwrapContainer(
   originPath: Path,
   position: 'before' | 'after',
 ): void {
-  const children = getChildren(editor, originPath)
+  const children = getChildren(editor.snapshot, originPath)
   if (children.length === 0) {
     editor.apply({type: 'unset', path: originPath})
     return
   }
 
   const payloadTypes = new Set(children.map((child) => child.node._type))
-  const unwrapTarget = getUnwrapTarget(editor, originPath, payloadTypes)
+  const unwrapTarget = getUnwrapTarget(
+    editor.snapshot,
+    originPath,
+    payloadTypes,
+  )
   if (!unwrapTarget) {
     return
   }
@@ -43,7 +47,7 @@ export function unwrapContainer(
   // `children[0].path` resolves to e.g. `[...originPath, fieldName, {_key}]`,
   // giving us the field name without re-resolving the container.
   const innerPrefix = children[0]!.path.slice(0, originPath.length + 1)
-  const previousSelection = editor.selection
+  const previousSelection = editor.snapshot.context.selection
 
   // Repeated `position: 'before'` against the same path inserts in
   // reverse, so iterate backward; `'after'` is symmetric.
@@ -63,7 +67,7 @@ export function unwrapContainer(
     const focus = transformPoint(previousSelection.focus, innerPrefix)
     editor.apply({
       type: 'set_selection',
-      properties: editor.selection,
+      properties: editor.snapshot.context.selection,
       newProperties: {anchor, focus},
     })
   }

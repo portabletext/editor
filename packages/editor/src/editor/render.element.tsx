@@ -260,7 +260,7 @@ export function RenderElement(props: {
     return rendered
   }
 
-  if (isInline(engineStatic, props.path)) {
+  if (isInline(engineStatic.snapshot, props.path)) {
     if (isInNewPipeline && !inlineObjectConfig) {
       const {
         'data-slate-node': _sn,

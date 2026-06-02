@@ -7,7 +7,7 @@ import {rangesOverlap} from './ranges-overlap'
 export function rangeIntersection(
   range: Range,
   another: Range,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): Range | null {
   if (!rangesOverlap(range, another, root)) {
     return null

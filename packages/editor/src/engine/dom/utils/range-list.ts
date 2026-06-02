@@ -118,8 +118,8 @@ export const splitDecorationsByChild = (
   decorations: DecoratedRange[],
 ): DecoratedRange[][] => {
   const children: readonly unknown[] = isEditor(node)
-    ? node.children
-    : isTextBlock({schema: editor.schema}, node)
+    ? editor.snapshot.context.value
+    : isTextBlock({schema: editor.snapshot.context.schema}, node)
       ? node.children
       : []
   const decorationsByChild = Array.from(children, (): DecoratedRange[] => [])
@@ -170,12 +170,19 @@ export const splitDecorationsByChild = (
   }
 
   for (const decoration of decorations) {
-    const decorationRange = rangeIntersection(ancestorRange, decoration, editor)
+    const decorationRange = rangeIntersection(
+      ancestorRange,
+      decoration,
+      editor.snapshot.context,
+    )
     if (!decorationRange) {
       continue
     }
 
-    const [startPoint, endPoint] = rangeEdges(decorationRange, editor)
+    const [startPoint, endPoint] = rangeEdges(
+      decorationRange,
+      editor.snapshot.context,
+    )
     const startIndex = resolveChildIndex(startPoint) ?? 0
     const endIndex = resolveChildIndex(endPoint) ?? children.length - 1
 
@@ -192,7 +199,7 @@ export const splitDecorationsByChild = (
       const childDecorationRange = rangeIntersection(
         childRange,
         decoration,
-        editor,
+        editor.snapshot.context,
       )
       if (!childDecorationRange) {
         continue

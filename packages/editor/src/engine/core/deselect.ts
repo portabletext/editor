@@ -1,7 +1,7 @@
 import type {Editor} from '../interfaces/editor'
 
 export function deselect(editor: Editor): void {
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
 
   if (selection) {
     editor.apply({

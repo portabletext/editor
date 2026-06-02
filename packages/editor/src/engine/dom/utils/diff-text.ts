@@ -34,11 +34,11 @@ export type TextDiff = {
  */
 export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   const {path, diff} = textDiff
-  if (!hasNode(editor, path)) {
+  if (!hasNode(editor.snapshot, path)) {
     return false
   }
 
-  const nodeEntry = getSpan(editor, path)
+  const nodeEntry = getSpan(editor.snapshot, path)
   if (!nodeEntry) {
     return false
   }
@@ -50,12 +50,12 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     )
   }
 
-  const nextSibling = getSibling(editor, path, {direction: 'next'})
+  const nextSibling = getSibling(editor.snapshot, path, {direction: 'next'})
   if (!nextSibling) {
     return false
   }
 
-  const nextNodeEntry = getSpan(editor, nextSibling.path)
+  const nextNodeEntry = getSpan(editor.snapshot, nextSibling.path)
   return !!nextNodeEntry && nextNodeEntry.node.text.startsWith(diff.text)
 }
 
@@ -172,18 +172,19 @@ export function targetRange(textDiff: TextDiff): Range {
  */
 export function normalizePoint(editor: Editor, point: Point): Point | null {
   let {path, offset} = point
-  if (!hasNode(editor, path)) {
+  if (!hasNode(editor.snapshot, path)) {
     return null
   }
 
-  const leafEntry = getSpan(editor, path)
+  const leafEntry = getSpan(editor.snapshot, path)
   if (!leafEntry) {
     return null
   }
   let leaf = leafEntry.node
 
-  const parentBlock = getParent(editor, path, {
-    match: (node) => isTextBlock({schema: editor.schema}, node),
+  const parentBlock = getParent(editor.snapshot, path, {
+    match: (node) =>
+      isTextBlock({schema: editor.snapshot.context.schema}, node),
   })
 
   if (!parentBlock) {
@@ -193,14 +194,14 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   while (offset > leaf.text.length) {
     const afterPoint = after(editor, path)
     const [nextEntry] = afterPoint
-      ? getNodes(editor, {
+      ? getNodes(editor.snapshot, {
           from: afterPoint.path,
-          match: (n) => isSpan({schema: editor.schema}, n),
+          match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
         })
       : []
     if (
       !nextEntry ||
-      !isSpan({schema: editor.schema}, nextEntry.node) ||
+      !isSpan({schema: editor.snapshot.context.schema}, nextEntry.node) ||
       !isDescendantPath(nextEntry.path, parentBlock.path)
     ) {
       return null

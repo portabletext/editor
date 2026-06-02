@@ -8,7 +8,7 @@ export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
 > = ({snapshot, operation}) => {
   const {context} = snapshot
-  const blockEntry = getNode(operation.editor, operation.at)
+  const blockEntry = getNode(operation.editor.snapshot, operation.at)
 
   if (!blockEntry) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)

@@ -9,7 +9,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({snapshot, operation}) => {
   const {context} = snapshot
-  const childEntry = getNode(operation.editor, operation.at)
+  const childEntry = getNode(operation.editor.snapshot, operation.at)
 
   if (!childEntry) {
     throw new Error(
@@ -19,7 +19,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
 
   const {node: child, path: childPath} = childEntry
 
-  if (isSpan({schema: operation.editor.schema}, child)) {
+  if (isSpan({schema: operation.editor.snapshot.context.schema}, child)) {
     const newNode: Record<string, unknown> = {}
 
     for (const prop of operation.props) {
@@ -40,7 +40,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (isObject(operation.editor, child)) {
+  if (isObject(operation.editor.snapshot, child)) {
     const unsetProps: Record<string, unknown> = {}
     for (const prop of operation.props) {
       if (prop === '_type') {

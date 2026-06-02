@@ -5,7 +5,7 @@ import {comparePoints} from './compare-points'
 export function isAfterPoint(
   point: Point,
   another: Point,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): boolean {
   return comparePoints(point, another, root) === 1
 }

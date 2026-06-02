@@ -80,11 +80,14 @@ function getChildNodes(
   }
 
   try {
-    const [start, end] = rangeEdges(snapshot.context.selection, editorEngine)
+    const [start, end] = rangeEdges(
+      snapshot.context.selection,
+      editorEngine.snapshot.context,
+    )
     const childEntries: Array<{node: unknown; path: Path}> = []
     let buffered: {node: unknown; path: Path} | undefined
 
-    for (const entry of getNodes(editorEngine, {
+    for (const entry of getNodes(editorEngine.snapshot, {
       from: start.path,
       to: end.path,
     })) {

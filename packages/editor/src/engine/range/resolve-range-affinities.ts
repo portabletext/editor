@@ -16,7 +16,7 @@ export type PointAffinity = 'forward' | 'backward' | null
  */
 export function resolveRangeAffinities(
   range: Range,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
   affinity: RangeDirection | null,
 ): [PointAffinity, PointAffinity] {
   if (affinity === 'inward') {

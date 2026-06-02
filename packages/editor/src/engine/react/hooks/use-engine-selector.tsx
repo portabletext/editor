@@ -30,7 +30,7 @@ const refEquality = (a: any, b: any) => a === b
  * every time the component renders.
  *
  * @example
- * const isSelectionActive = useEngineSelector(editor => Boolean(editor.selection))
+ * const isSelectionActive = useEngineSelector(editor => Boolean(editor.snapshot.context.selection))
  */
 
 export function useEngineSelector<T>(

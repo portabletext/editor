@@ -12,10 +12,10 @@ import type {Path} from '../interfaces/path'
 export function comparePaths(
   path: Path,
   another: Path,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): -1 | 0 | 1 {
   const min = Math.min(path.length, another.length)
-  let currentChildren: Array<Node> | undefined = root?.children
+  let currentChildren: Array<Node> | undefined = root?.value
   let currentNode: Node | undefined
 
   for (let i = 0; i < min; i++) {

@@ -14,7 +14,7 @@ export function applyMove(
     reverse?: boolean
   } = {},
 ): void {
-  const {selection} = editor
+  const selection = editor.snapshot.context.selection
 
   if (!selection) {
     return

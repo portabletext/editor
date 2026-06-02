@@ -44,7 +44,7 @@ function isDropTargetingDragOrigin(
     return true
   }
 
-  const root = {children: snapshot.context.value}
+  const root = {value: snapshot.context.value}
   const [startA, endA] = rangeEdges(dropSelection, root)
   const [startB, endB] = rangeEdges(dragOriginSelection, root)
 

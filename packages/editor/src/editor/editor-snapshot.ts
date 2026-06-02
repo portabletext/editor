@@ -62,21 +62,21 @@ export function createEditorSnapshot({
   readOnly: boolean
   schema: EditorSchema
 }) {
-  const selection = editor.selection
+  const selection = editor.snapshot.context.selection
 
   const context = {
-    containers: editor.publicContainers,
+    containers: editor.snapshot.context.containers,
     converters,
     keyGenerator,
     readOnly,
     schema,
     selection,
-    value: editor.children,
+    value: editor.snapshot.context.value,
   } satisfies EditorContext
 
   return {
     blockIndexMap: editor.blockIndexMap,
     context,
-    decoratorState: editor.decoratorState,
+    decoratorState: editor.snapshot.decoratorState,
   } satisfies EditorSnapshot
 }

@@ -32,7 +32,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     ? resolveSelection(operation.editor, operation.at)
     : null
 
-  const effectiveSelection = at ?? editor.selection
+  const effectiveSelection = at ?? editor.snapshot.context.selection
 
   if (!effectiveSelection) {
     return
@@ -40,7 +40,8 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
   if (isCollapsedRange(effectiveSelection)) {
     const blockEntry = getParent(snapshot, effectiveSelection.focus.path, {
-      match: (node) => isTextBlock({schema: editor.schema}, node),
+      match: (node) =>
+        isTextBlock({schema: editor.snapshot.context.schema}, node),
     })
 
     if (!blockEntry) {
@@ -54,7 +55,10 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       (markDef) => markDef._type === operation.annotation.name,
     )
 
-    const selectedChildEntry = getNode(editor, effectiveSelection.focus.path)
+    const selectedChildEntry = getNode(
+      editor.snapshot,
+      effectiveSelection.focus.path,
+    )
 
     if (!selectedChildEntry) {
       return
@@ -62,7 +66,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
     const {node: selectedChild, path: selectedChildPath} = selectedChildEntry
 
-    if (!isSpan({schema: editor.schema}, selectedChild)) {
+    if (!isSpan({schema: editor.snapshot.context.schema}, selectedChild)) {
       return
     }
 
@@ -78,7 +82,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    const reversedChildren = getChildren(editor, blockPath)
+    const reversedChildren = getChildren(editor.snapshot, blockPath)
 
     for (let index = reversedChildren.length - 1; index >= 0; index--) {
       const entry = reversedChildren[index]
@@ -86,11 +90,13 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         continue
       }
       const {node: child, path: childPath} = entry
-      if (!isSpan({schema: editor.schema}, child)) {
+      if (!isSpan({schema: editor.snapshot.context.schema}, child)) {
         continue
       }
 
-      if (!isBeforePath(childPath, selectedChildPath, editor)) {
+      if (
+        !isBeforePath(childPath, selectedChildPath, editor.snapshot.context)
+      ) {
         continue
       }
 
@@ -106,14 +112,14 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     > = []
 
     for (const {node: child, path: childPath} of getChildren(
-      editor,
+      editor.snapshot,
       blockPath,
     )) {
-      if (!isSpan({schema: editor.schema}, child)) {
+      if (!isSpan({schema: editor.snapshot.context.schema}, child)) {
         continue
       }
 
-      if (!isAfterPath(childPath, selectedChildPath, editor)) {
+      if (!isAfterPath(childPath, selectedChildPath, editor.snapshot.context)) {
         continue
       }
 
@@ -143,21 +149,24 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
     withoutNormalizing(editor, () => {
       // Split text nodes at range boundaries
-      const splitRange = at ?? editor.selection
+      const splitRange = at ?? editor.snapshot.context.selection
       if (splitRange && isRange(splitRange)) {
-        const splitLeaf = getNode(editor, splitRange.anchor.path)?.node
+        const splitLeaf = getNode(editor.snapshot, splitRange.anchor.path)?.node
         if (
           !(
             splitLeaf &&
             isCollapsedRange(splitRange) &&
-            isSpan({schema: editor.schema}, splitLeaf) &&
+            isSpan({schema: editor.snapshot.context.schema}, splitLeaf) &&
             splitLeaf.text.length > 0
           )
         ) {
           const splitRangeRef = rangeRef(editor, splitRange, {
             affinity: 'inward',
           })
-          const [splitStart, splitEnd] = rangeEdges(splitRange, editor)
+          const [splitStart, splitEnd] = rangeEdges(
+            splitRange,
+            editor.snapshot.context,
+          )
           const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
           if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
             applySplitNode(editor, splitEnd.path, splitEnd.offset)
@@ -175,31 +184,32 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       }
 
       const blocks = Array.from(
-        getNodes(editor, {
-          from: rangeStart(effectiveSelection, editor).path,
-          to: rangeEnd(effectiveSelection, editor).path,
-          match: (node) => isTextBlock({schema: editor.schema}, node),
+        getNodes(editor.snapshot, {
+          from: rangeStart(effectiveSelection, editor.snapshot.context).path,
+          to: rangeEnd(effectiveSelection, editor.snapshot.context).path,
+          match: (node) =>
+            isTextBlock({schema: editor.snapshot.context.schema}, node),
         }),
       )
 
       // Use the tracked range (updated after splits) or fall back to editor.selection
-      const selectionRange = ref?.current ?? editor.selection
+      const selectionRange = ref?.current ?? editor.snapshot.context.selection
 
       for (const {node: block, path: blockPath} of blocks) {
-        if (!isTextBlock({schema: editor.schema}, block)) {
+        if (!isTextBlock({schema: editor.snapshot.context.schema}, block)) {
           continue
         }
 
-        const children = getChildren(editor, blockPath)
+        const children = getChildren(editor.snapshot, blockPath)
 
         for (const {node: child, path: childPath} of children) {
-          if (!isSpan({schema: editor.schema}, child)) {
+          if (!isSpan({schema: editor.snapshot.context.schema}, child)) {
             continue
           }
 
           if (
             !selectionRange ||
-            !rangeIncludes(selectionRange, childPath, editor)
+            !rangeIncludes(selectionRange, childPath, editor.snapshot.context)
           ) {
             continue
           }

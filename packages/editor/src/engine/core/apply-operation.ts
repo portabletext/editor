@@ -3,7 +3,7 @@ import {
   set as setPatchHelper,
   unset as unsetPatchHelper,
 } from '@portabletext/patches'
-import type {PortableTextSpan} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getNode} from '../../traversal/get-node'
@@ -52,7 +52,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
           node._key !== undefined &&
           children.some((sibling) => sibling._key === node._key)
         ) {
-          node = {...node, _key: editor.keyGenerator()}
+          node = {...node, _key: editor.snapshot.context.keyGenerator()}
           op.node = node
         }
 
@@ -157,14 +157,15 @@ export function applyOperation(editor: Editor, op: Operation): void {
     case 'set': {
       const {path, value} = op
 
-      // Root-level value replacement: set editor.children directly
+      // Root-level value replacement: set editor.snapshot.context.value directly
       if (path.length === 0) {
         if (Array.isArray(value)) {
-          ;(editor as {children: Node[]}).children = value as Node[]
+          editor.snapshot.context.value =
+            value as unknown as PortableTextBlock[]
           // Rebuild blockIndexMap
           editor.blockIndexMap.clear()
-          for (let i = 0; i < editor.children.length; i++) {
-            const child = editor.children[i]
+          for (let i = 0; i < editor.snapshot.context.value.length; i++) {
+            const child = editor.snapshot.context.value[i]
             if (child) {
               editor.blockIndexMap.set(child._key, i)
             }
@@ -199,7 +200,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       }
 
       // Check if the node path resolves to a known node
-      const setNodeEntry = getNode(editor, setNodePath)
+      const setNodeEntry = getNode(editor.snapshot, setNodePath)
 
       if (setNodeEntry) {
         // Node found: use modifyDescendant
@@ -225,8 +226,8 @@ export function applyOperation(editor: Editor, op: Operation): void {
             } else {
               // No inverse data: full rebuild
               editor.blockIndexMap.clear()
-              for (let i = 0; i < editor.children.length; i++) {
-                const child = editor.children[i]
+              for (let i = 0; i < editor.snapshot.context.value.length; i++) {
+                const child = editor.snapshot.context.value[i]
                 if (child) {
                   editor.blockIndexMap.set(child._key, i)
                 }
@@ -251,7 +252,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
           break
         }
 
-        const block = editor.children[blockIndex]
+        const block = editor.snapshot.context.value[blockIndex]
         if (!block) {
           break
         }
@@ -260,9 +261,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
           setPatchHelper(value, path.slice(1)),
         ])
 
-        const newChildren = editor.children.slice()
+        const newChildren = editor.snapshot.context.value.slice()
         newChildren[blockIndex] = updatedBlock
-        ;(editor as {children: Node[]}).children = newChildren
+        editor.snapshot.context.value = newChildren
       }
 
       transformSelection = true
@@ -274,7 +275,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       // Root-level unset: remove all children
       if (path.length === 0) {
-        ;(editor as {children: Node[]}).children = []
+        editor.snapshot.context.value = []
         editor.blockIndexMap.clear()
         transformSelection = true
         break
@@ -289,8 +290,10 @@ export function applyOperation(editor: Editor, op: Operation): void {
         // comparePaths needs the node in the tree to resolve document order
         // for keyed segments. After removal, it falls back to string
         // comparison of _key values which may give wrong ordering.
-        if (editor.selection) {
-          let selection: EditorSelection = {...editor.selection}
+        if (editor.snapshot.context.selection) {
+          let selection: EditorSelection = {
+            ...editor.snapshot.context.selection,
+          }
 
           for (const [point, key] of rangePoints(selection)) {
             const result = transformPoint(point, op)
@@ -301,14 +304,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
               let prev: NodeEntry<PortableTextSpan> | undefined
               let next: NodeEntry<PortableTextSpan> | undefined
 
-              for (const {node: n, path: p} of getNodes(editor)) {
-                if (!isSpan({schema: editor.schema}, n)) {
+              for (const {node: n, path: p} of getNodes(editor.snapshot)) {
+                if (!isSpan({schema: editor.snapshot.context.schema}, n)) {
                   continue
                 }
                 if (pathEquals(p, path)) {
                   continue
                 }
-                if (comparePaths(p, path, editor) === -1) {
+                if (comparePaths(p, path, editor.snapshot.context) === -1) {
                   prev = [n, p]
                 } else {
                   next = [n, p]
@@ -339,8 +342,11 @@ export function applyOperation(editor: Editor, op: Operation): void {
             }
           }
 
-          editor.selection = selection
-            ? {...selection, backward: isBackwardRange(selection, editor)}
+          editor.snapshot.context.selection = selection
+            ? {
+                ...selection,
+                backward: isBackwardRange(selection, editor.snapshot.context),
+              }
             : null
         }
 
@@ -412,7 +418,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       }
 
       // Check if the node path resolves to a known node
-      const unsetNodeEntry = getNode(editor, unsetNodePath)
+      const unsetNodeEntry = getNode(editor.snapshot, unsetNodePath)
 
       if (unsetNodeEntry) {
         // Node found: use modifyDescendant
@@ -441,16 +447,16 @@ export function applyOperation(editor: Editor, op: Operation): void {
           break
         }
 
-        const block = editor.children[blockIndex]
+        const block = editor.snapshot.context.value[blockIndex]
         if (!block) {
           break
         }
 
         const updatedBlock = applyAll(block, [unsetPatchHelper(path.slice(1))])
 
-        const newChildren = editor.children.slice()
+        const newChildren = editor.snapshot.context.value.slice()
         newChildren[blockIndex] = updatedBlock
-        ;(editor as {children: Node[]}).children = newChildren
+        editor.snapshot.context.value = newChildren
       }
 
       transformSelection = true
@@ -461,11 +467,11 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const {newProperties} = op
 
       if (newProperties == null) {
-        editor.selection = null
+        editor.snapshot.context.selection = null
         break
       }
 
-      if (editor.selection == null) {
+      if (editor.snapshot.context.selection == null) {
         if (!isRange(newProperties)) {
           throw new Error(
             `Cannot apply an incomplete "set_selection" operation properties ${safeStringify(
@@ -474,14 +480,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
           )
         }
 
-        editor.selection = {
+        editor.snapshot.context.selection = {
           ...newProperties,
-          backward: isBackwardRange(newProperties, editor),
+          backward: isBackwardRange(newProperties, editor.snapshot.context),
         }
         break
       }
 
-      const selection = {...editor.selection}
+      const selection = {...editor.snapshot.context.selection}
 
       for (const key in newProperties) {
         const value = newProperties[key as keyof Range]
@@ -497,37 +503,37 @@ export function applyOperation(editor: Editor, op: Operation): void {
         }
       }
 
-      editor.selection = {
+      editor.snapshot.context.selection = {
         ...selection,
-        backward: isBackwardRange(selection, editor),
+        backward: isBackwardRange(selection, editor.snapshot.context),
       }
 
       break
     }
   }
 
-  if (transformSelection && editor.selection) {
-    const anchor = transformPoint(editor.selection.anchor, op)
-    const focus = transformPoint(editor.selection.focus, op)
+  if (transformSelection && editor.snapshot.context.selection) {
+    const anchor = transformPoint(editor.snapshot.context.selection.anchor, op)
+    const focus = transformPoint(editor.snapshot.context.selection.focus, op)
 
     if (!anchor || !focus) {
       // The operation removed the host node of one of the selection's
       // endpoints. The selection is no longer valid.
-      editor.selection = null
+      editor.snapshot.context.selection = null
     } else if (
-      anchor !== editor.selection.anchor ||
-      focus !== editor.selection.focus
+      anchor !== editor.snapshot.context.selection.anchor ||
+      focus !== editor.snapshot.context.selection.focus
     ) {
       // `transformPoint` returns the same reference when the operation doesn't
       // move the point. If neither endpoint moved, the selection is identity-
-      // stable and we leave `editor.selection` alone. This lets internal sync
+      // stable and we leave `editor.snapshot.context.selection` alone. This lets internal sync
       // paths (e.g. remote patches arriving via `update value`) run set/unset/
       // insert_text operations without forcing downstream consumers to re-derive
       // selection-keyed state for no semantic reason.
-      editor.selection = {
+      editor.snapshot.context.selection = {
         anchor,
         focus,
-        backward: isBackwardRange({anchor, focus}, editor),
+        backward: isBackwardRange({anchor, focus}, editor.snapshot.context),
       }
     }
   }
@@ -585,7 +591,9 @@ function resolveBlockIndex(editor: Editor, blockKey: string): number {
   if (mapIndex !== undefined) {
     return mapIndex
   }
-  return editor.children.findIndex((child) => child._key === blockKey)
+  return editor.snapshot.context.value.findIndex(
+    (child) => child._key === blockKey,
+  )
 }
 
 /**

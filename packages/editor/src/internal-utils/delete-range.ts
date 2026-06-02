@@ -73,20 +73,20 @@ function resolveExplicitRange(
     return null
   }
 
-  const [start, end] = rangeEdges(at, editor)
-  const startBlock = getEnclosingBlock(editor, start.path)
-  const endBlock = getEnclosingBlock(editor, end.path)
+  const [start, end] = rangeEdges(at, editor.snapshot.context)
+  const startBlock = getEnclosingBlock(editor.snapshot, start.path)
+  const endBlock = getEnclosingBlock(editor.snapshot, end.path)
 
   let clampedStart = start
   let clampedEnd = end
 
-  const startEntry = getNode(editor, start.path)
+  const startEntry = getNode(editor.snapshot, start.path)
   const startObjectNode =
-    startEntry && isLeafObject(editor, startEntry.node, start.path)
+    startEntry && isLeafObject(editor.snapshot, startEntry.node, start.path)
       ? startEntry
-      : getAncestor(editor, start.path, {
+      : getAncestor(editor.snapshot, start.path, {
           match: (node, ancestorPath) =>
-            isLeafObject(editor, node, ancestorPath),
+            isLeafObject(editor.snapshot, node, ancestorPath),
           mode: 'highest',
         })
   if (startObjectNode && startBlock) {
@@ -96,13 +96,13 @@ function resolveExplicitRange(
     }
   }
 
-  const endEntry = getNode(editor, end.path)
+  const endEntry = getNode(editor.snapshot, end.path)
   const endObjectNode =
-    endEntry && isLeafObject(editor, endEntry.node, end.path)
+    endEntry && isLeafObject(editor.snapshot, endEntry.node, end.path)
       ? endEntry
-      : getAncestor(editor, end.path, {
+      : getAncestor(editor.snapshot, end.path, {
           match: (node, ancestorPath) =>
-            isLeafObject(editor, node, ancestorPath),
+            isLeafObject(editor.snapshot, node, ancestorPath),
           mode: 'highest',
         })
   if (endObjectNode && endBlock) {

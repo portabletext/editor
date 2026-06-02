@@ -54,7 +54,7 @@ export function getEventPosition({
 
   const {node: eventNode, path: eventPath} = eventResult
 
-  const eventBlockEntry = getEnclosingBlock(editorEngine, eventPath)
+  const eventBlockEntry = getEnclosingBlock(editorEngine.snapshot, eventPath)
   const eventBlock = eventBlockEntry?.node
   const eventBlockPath = eventBlockEntry?.path
   const eventPositionBlock = getEventPositionBlock({
@@ -79,14 +79,14 @@ export function getEventPosition({
       isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
-          context: editorEngine,
+          context: editorEngine.snapshot.context,
           block: {
             node: eventBlock,
             path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
-          context: editorEngine,
+          context: editorEngine.snapshot.context,
           block: {
             node: eventBlock,
             path: eventBlockPath,
@@ -101,7 +101,7 @@ export function getEventPosition({
   }
 
   const eventSelectionFocusBlock = getEnclosingBlock(
-    editorEngine,
+    editorEngine.snapshot,
     eventSelection.focus.path,
   )
 
@@ -124,14 +124,14 @@ export function getEventPosition({
       isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
-          context: editorEngine,
+          context: editorEngine.snapshot.context,
           block: {
             node: eventBlock,
             path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
-          context: editorEngine,
+          context: editorEngine.snapshot.context,
           block: {
             node: eventBlock,
             path: eventBlockPath,
@@ -146,7 +146,7 @@ export function getEventPosition({
     isEditor: isEditor(eventNode),
     isContainer: isEditor(eventNode)
       ? false
-      : isEditableContainer(editorEngine, eventNode, eventPath),
+      : isEditableContainer(editorEngine.snapshot, eventNode, eventPath),
     selection: eventSelection,
   }
 }
@@ -169,7 +169,7 @@ function getEventNode({
       if (path.length === 0) {
         return {node: editorEngine, path}
       } else {
-        const nodeEntry = getNode(editorEngine, path)
+        const nodeEntry = getNode(editorEngine.snapshot, path)
         if (nodeEntry) {
           return {node: nodeEntry.node, path}
         }
@@ -191,7 +191,7 @@ function getEventPositionBlock({
   editorEngine: PortableTextEditorEngine
   event: DragEvent | MouseEvent
 }): EventPositionBlock | undefined {
-  const firstBlockEntry = getNode(editorEngine, [0])
+  const firstBlockEntry = getNode(editorEngine.snapshot, [0])
 
   if (!firstBlockEntry) {
     return undefined
@@ -209,9 +209,9 @@ function getEventPositionBlock({
     return 'start'
   }
 
-  const lastBlock = editorEngine.children.at(-1)
+  const lastBlock = editorEngine.snapshot.context.value.at(-1)
   const lastBlockEntry = lastBlock
-    ? getNode(editorEngine, [{_key: lastBlock._key}])
+    ? getNode(editorEngine.snapshot, [{_key: lastBlock._key}])
     : undefined
 
   if (!lastBlockEntry) {
@@ -308,5 +308,5 @@ function isEventContainer(
   if (isEditor(eventNode)) {
     return true
   }
-  return isEditableContainer(editorEngine, eventNode, eventPath)
+  return isEditableContainer(editorEngine.snapshot, eventNode, eventPath)
 }

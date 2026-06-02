@@ -5,7 +5,7 @@ import {comparePaths} from './compare-paths'
 export function isAfterPath(
   path: Path,
   another: Path,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): boolean {
   return comparePaths(path, another, root) === 1
 }

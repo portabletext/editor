@@ -25,7 +25,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
 
   let at = operation.at
     ? resolveSelection(operation.editor, operation.at)
-    : operation.editor.selection
+    : operation.editor.snapshot.context.selection
 
   if (!at) {
     // Unable to add decorator without a selection
@@ -36,7 +36,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     const ref = rangeRef(editor, at, {affinity: 'inward'})
 
     withoutNormalizing(editor, () => {
-      const [start, end] = rangeEdges(at!, editor)
+      const [start, end] = rangeEdges(at!, editor.snapshot.context)
 
       if (!isEdge(editor, end, end.path)) {
         applySplitNode(editor, end.path, end.offset)
@@ -57,18 +57,18 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       }
 
       // Use new selection to find nodes to decorate
-      const atStart = rangeStart(at, editor)
-      const atEnd = rangeEnd(at, editor)
+      const atStart = rangeStart(at, editor.snapshot.context)
+      const atEnd = rangeEnd(at, editor.snapshot.context)
       const splitTextNodes = Array.from(
-        getNodes(editor, {
+        getNodes(editor.snapshot, {
           from: atStart.path,
           to: atEnd.path,
-          match: (n) => isSpan({schema: editor.schema}, n),
+          match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
         }),
       )
 
       for (const {node, path: spanPath} of splitTextNodes) {
-        if (!isSpan({schema: editor.schema}, node)) {
+        if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
           continue
         }
 
@@ -104,10 +104,10 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     }) // end withoutNormalizing
   } else {
     const selectedSpan = Array.from(
-      getNodes(editor, {
-        from: rangeStart(at, editor).path,
-        to: rangeEnd(at, editor).path,
-        match: (node) => isSpan({schema: editor.schema}, node),
+      getNodes(editor.snapshot, {
+        from: rangeStart(at, editor.snapshot.context).path,
+        to: rangeEnd(at, editor.snapshot.context).path,
+        match: (node) => isSpan({schema: editor.snapshot.context.schema}, node),
       }),
     )?.at(0)
 
@@ -132,7 +132,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
 
     const lonelyEmptySpan =
       block.children.length === 1 &&
-      isSpan({schema: editor.schema}, block.children[0]) &&
+      isSpan({schema: editor.snapshot.context.schema}, block.children[0]) &&
       block.children[0].text === ''
         ? block.children[0]
         : undefined
@@ -148,21 +148,22 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           ? [...existingMarks, mark]
           : existingMarksWithoutDecorator
       for (const {path: spanPath} of Array.from(
-        getNodes(editor, {
+        getNodes(editor.snapshot, {
           at: blockPath,
-          match: (node) => isSpan({schema: editor.schema}, node),
+          match: (node) =>
+            isSpan({schema: editor.snapshot.context.schema}, node),
         }),
       )) {
         setNodeProperties(editor, {marks: newMarks}, spanPath)
       }
     } else {
-      editor.decoratorState[mark] = true
+      editor.snapshot.decoratorState[mark] = true
     }
   }
 
-  if (editor.selection) {
+  if (editor.snapshot.context.selection) {
     // Reselect
-    const selection = editor.selection
-    editor.selection = {...selection}
+    const selection = editor.snapshot.context.selection
+    editor.snapshot.context.selection = {...selection}
   }
 }

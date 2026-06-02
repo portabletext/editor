@@ -7,7 +7,7 @@ import {resolveRangeAffinities} from './resolve-range-affinities'
 export function transformRange(
   range: Range | null,
   op: Operation,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
   options: RangeTransformOptions = {},
 ): Range | null {
   if (range === null) {

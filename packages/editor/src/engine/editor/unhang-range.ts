@@ -27,7 +27,7 @@ import {rangeEdges} from '../range/range-edges'
  */
 export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
   const {context} = snapshot
-  let [start, end] = rangeEdges(range, {children: context.value})
+  let [start, end] = rangeEdges(range, {value: context.value})
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
   // A range can only hang when end is at offset 0 of the first child in a block.
@@ -80,7 +80,7 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
 
     if (
       node.text !== '' ||
-      isBeforePath(nodePath, blockPath, {children: context.value})
+      isBeforePath(nodePath, blockPath, {value: context.value})
     ) {
       end = {path: nodePath, offset: node.text.length}
       break

@@ -5,7 +5,7 @@ import {isBackwardRange} from './is-backward-range'
 
 export function rangeEdges(
   range: Range,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): [Point, Point] {
   const {anchor, focus} = range
   return isBackwardRange(range, root) ? [focus, anchor] : [anchor, focus]

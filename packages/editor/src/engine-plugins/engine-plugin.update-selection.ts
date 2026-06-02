@@ -11,7 +11,7 @@ export function updateSelectionPlugin({
   const updateSelection = () => {
     editorActor.send({
       type: 'update selection',
-      selection: editor.selection,
+      selection: editor.snapshot.context.selection,
     })
   }
 

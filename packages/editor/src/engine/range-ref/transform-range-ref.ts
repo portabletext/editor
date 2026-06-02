@@ -6,7 +6,7 @@ import {transformRange} from '../range/transform-range'
 export function transformRangeRef(
   ref: RangeRef,
   op: Operation,
-  root: {children: Array<Node>},
+  root: {value: Array<Node>},
 ): void {
   const {current, affinity} = ref
 

@@ -36,12 +36,12 @@ export function getFullyCoveredContainers(
   editor: PortableTextEditorEngine,
   range: Range,
 ): {start: Path | undefined; end: Path | undefined} {
-  const [start, end] = rangeEdges(range, editor)
+  const [start, end] = rangeEdges(range, editor.snapshot.context)
   return {
-    start: getAncestor(editor, start.path, {
+    start: getAncestor(editor.snapshot, start.path, {
       match: (node, path) => isFullyCovered(editor, node, path, start, end),
     })?.path,
-    end: getAncestor(editor, end.path, {
+    end: getAncestor(editor.snapshot, end.path, {
       match: (node, path) => isFullyCovered(editor, node, path, start, end),
     })?.path,
   }
@@ -55,13 +55,13 @@ function isFullyCovered(
   rangeEnd: Point,
 ): boolean {
   if (
-    !isEditableContainer(editor, node, path) ||
-    isTextBlock({schema: editor.schema}, node)
+    !isEditableContainer(editor.snapshot, node, path) ||
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
   ) {
     return false
   }
 
-  const root = {children: editor.children}
+  const root = {value: editor.snapshot.context.value}
   const containerStart = editorStart(editor, path)
   const containerEnd = editorEnd(editor, path)
 
@@ -99,7 +99,7 @@ function parentFieldAcceptsTextBlock(
   if (parent.length === 0) {
     return true
   }
-  const parentEntry = getNode(editor, parent)
+  const parentEntry = getNode(editor.snapshot, parent)
   if (!parentEntry) {
     return false
   }
@@ -116,6 +116,6 @@ function fieldAcceptsTextBlock(
     return false
   }
   return container.field.of.some(
-    (member) => member.type === editor.schema.block.name,
+    (member) => member.type === editor.snapshot.context.schema.block.name,
   )
 }

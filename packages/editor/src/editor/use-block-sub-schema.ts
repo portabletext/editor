@@ -12,5 +12,5 @@ import {getPathSubSchema} from '../traversal/get-path-sub-schema'
  */
 export function useBlockSubSchema(path: Path): Schema {
   const editor = useEngineStatic()
-  return getPathSubSchema(editor, path)
+  return getPathSubSchema(editor.snapshot, path)
 }

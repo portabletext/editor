@@ -11,24 +11,28 @@ export function isListItemActive({
   editor: Editor
   listItem: string
 }): boolean {
-  if (!editor.selection) {
+  if (!editor.snapshot.context.selection) {
     return false
   }
 
-  const [selStart, selEnd] = rangeEdges(editor.selection, editor)
+  const [selStart, selEnd] = rangeEdges(
+    editor.snapshot.context.selection,
+    editor.snapshot.context,
+  )
 
   const selectedBlocks = [
-    ...getNodes(editor, {
+    ...getNodes(editor.snapshot, {
       from: selStart.path,
       to: selEnd.path,
-      match: (node) => isTextBlock({schema: editor.schema}, node),
+      match: (node) =>
+        isTextBlock({schema: editor.snapshot.context.schema}, node),
     }),
   ]
 
   if (selectedBlocks.length > 0) {
     return selectedBlocks.every(
       (entry) =>
-        isListBlock({schema: editor.schema}, entry.node) &&
+        isListBlock({schema: editor.snapshot.context.schema}, entry.node) &&
         entry.node.listItem === listItem,
     )
   }
@@ -43,24 +47,28 @@ export function isStyleActive({
   editor: Editor
   style: string
 }): boolean {
-  if (!editor.selection) {
+  if (!editor.snapshot.context.selection) {
     return false
   }
 
-  const [selStart, selEnd] = rangeEdges(editor.selection, editor)
+  const [selStart, selEnd] = rangeEdges(
+    editor.snapshot.context.selection,
+    editor.snapshot.context,
+  )
 
   const selectedBlocks = [
-    ...getNodes(editor, {
+    ...getNodes(editor.snapshot, {
       from: selStart.path,
       to: selEnd.path,
-      match: (node) => isTextBlock({schema: editor.schema}, node),
+      match: (node) =>
+        isTextBlock({schema: editor.snapshot.context.schema}, node),
     }),
   ]
 
   if (selectedBlocks.length > 0) {
     return selectedBlocks.every(
       (entry) =>
-        isTextBlock({schema: editor.schema}, entry.node) &&
+        isTextBlock({schema: editor.snapshot.context.schema}, entry.node) &&
         entry.node.style === style,
     )
   }

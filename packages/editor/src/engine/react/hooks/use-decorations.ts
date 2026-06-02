@@ -36,7 +36,7 @@ export const useDecorations = (
     return decorate([node, path])
   }
 
-  const equalityFn = isSpan({schema: editor.schema}, node)
+  const equalityFn = isSpan({schema: editor.snapshot.context.schema}, node)
     ? isTextDecorationsEqual
     : isElementDecorationsEqual
 

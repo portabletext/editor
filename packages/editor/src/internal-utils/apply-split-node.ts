@@ -25,7 +25,7 @@ export function applySplitNode(
   path: Path,
   position: number,
 ): void {
-  const nodeEntry = getNode(editor, path)
+  const nodeEntry = getNode(editor.snapshot, path)
 
   if (!nodeEntry) {
     return
@@ -33,13 +33,13 @@ export function applySplitNode(
 
   const node = nodeEntry.node
 
-  const newKey = editor.keyGenerator()
+  const newKey = editor.snapshot.context.keyGenerator()
 
   // Collect the keys of children that will move to the new node.
   // For block splits, children at index >= position move.
   // For span splits, this is empty (text splits don't move child nodes).
   const movedChildKeys = new Set<string>()
-  if (isTextBlock({schema: editor.schema}, node)) {
+  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
     for (let i = position; i < node.children.length; i++) {
       movedChildKeys.add(node.children[i]!._key)
     }
@@ -76,7 +76,7 @@ export function applySplitNode(
     if (current) {
       const [anchorAffinity, focusAffinity] = resolveRangeAffinities(
         current,
-        editor,
+        editor.snapshot.context,
         ref.affinity,
       )
       const anchor = transformPointForSplit(
@@ -104,10 +104,10 @@ export function applySplitNode(
     }
   }
 
-  // Pre-transform editor.selection
-  if (editor.selection) {
+  // Pre-transform editor.snapshot.context.selection
+  if (editor.snapshot.context.selection) {
     const anchor = transformPointForSplit(
-      editor.selection.anchor,
+      editor.snapshot.context.selection.anchor,
       path,
       position,
       newKey,
@@ -115,7 +115,7 @@ export function applySplitNode(
       'forward',
     )
     const focus = transformPointForSplit(
-      editor.selection.focus,
+      editor.snapshot.context.selection.focus,
       path,
       position,
       newKey,
@@ -123,10 +123,10 @@ export function applySplitNode(
       'forward',
     )
     if (anchor && focus) {
-      editor.selection = {
+      editor.snapshot.context.selection = {
         anchor,
         focus,
-        backward: isBackwardRange({anchor, focus}, editor),
+        backward: isBackwardRange({anchor, focus}, editor.snapshot.context),
       }
     }
   }
@@ -142,11 +142,11 @@ export function applySplitNode(
 
   // Save the pre-transformed selection so decomposed operations don't
   // double-transform it
-  const savedSelection = editor.selection
+  const savedSelection = editor.snapshot.context.selection
 
   try {
     withoutNormalizing(editor, () => {
-      if (isSpan({schema: editor.schema}, node)) {
+      if (isSpan({schema: editor.snapshot.context.schema}, node)) {
         const {text: _text, ...properties} = node
         const afterText = node.text.slice(position)
         const newNode = {...properties, _key: newKey, text: afterText} as Node
@@ -162,7 +162,7 @@ export function applySplitNode(
           node: newNode,
           position: 'after',
         })
-      } else if (isTextBlock({schema: editor.schema}, node)) {
+      } else if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
         const {children: _children, ...properties} = node
         const children = node.children
         const afterChildren = children.slice(position)
@@ -189,7 +189,7 @@ export function applySplitNode(
   } finally {
     // Restore pre-transformed selection (decomposed ops may have
     // double-transformed it)
-    editor.selection = savedSelection
+    editor.snapshot.context.selection = savedSelection
 
     // Restore all refs
     for (const ref of pathRefs) {

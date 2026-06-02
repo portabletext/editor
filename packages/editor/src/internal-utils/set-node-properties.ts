@@ -17,7 +17,7 @@ export function setNodeProperties(
   props: Record<string, unknown> | object,
   path: Path,
 ): void {
-  const nodeEntry = getNode(editor, path)
+  const nodeEntry = getNode(editor.snapshot, path)
 
   if (!nodeEntry) {
     return

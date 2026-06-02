@@ -50,13 +50,13 @@ export function deleteCollapsed(
   options: DeleteCollapsedOptions,
 ): void {
   withoutNormalizing(editor, () => {
-    const pointEntry = getNode(editor, point.path)
+    const pointEntry = getNode(editor.snapshot, point.path)
     const furthestObjectNode =
-      pointEntry && isLeafObject(editor, pointEntry.node, point.path)
+      pointEntry && isLeafObject(editor.snapshot, pointEntry.node, point.path)
         ? pointEntry
-        : getAncestor(editor, point.path, {
+        : getAncestor(editor.snapshot, point.path, {
             match: (node, ancestorPath) =>
-              isLeafObject(editor, node, ancestorPath),
+              isLeafObject(editor.snapshot, node, ancestorPath),
             mode: 'highest',
           })
     if (furthestObjectNode) {

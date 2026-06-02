@@ -28,20 +28,20 @@ export const deleteOperationImplementation: OperationImplementation<
 > = ({operation}) => {
   const at = operation.at
     ? resolveSelection(operation.editor, operation.at)
-    : operation.editor.selection
+    : operation.editor.snapshot.context.selection
 
   if (!at) {
     throw new Error('Unable to delete without a selection')
   }
 
-  const [start, end] = rangeEdges(at, operation.editor)
+  const [start, end] = rangeEdges(at, operation.editor.snapshot.context)
 
   if (operation.unit === 'block') {
     unsetMatchedNodesInRange(
       operation.editor,
       start.path,
       end.path,
-      (_, path) => isBlock(operation.editor, path),
+      (_, path) => isBlock(operation.editor.snapshot, path),
     )
     return
   }
@@ -51,28 +51,38 @@ export const deleteOperationImplementation: OperationImplementation<
       operation.editor,
       start.path,
       end.path,
-      (_, path) => isInline(operation.editor, path),
+      (_, path) => isInline(operation.editor.snapshot, path),
     )
     return
   }
 
   if (operation.direction === 'backward' && operation.unit === 'line') {
     const parentBlockEntry = pathEquals(at.anchor.path, at.focus.path)
-      ? getParent(operation.editor, at.anchor.path, {
-          match: (node) => isTextBlock({schema: operation.editor.schema}, node),
+      ? getParent(operation.editor.snapshot, at.anchor.path, {
+          match: (node) =>
+            isTextBlock(
+              {schema: operation.editor.snapshot.context.schema},
+              node,
+            ),
         })
       : (() => {
           const fromPath = commonPath(at.anchor.path, at.focus.path)
-          const nodeEntry = getNode(operation.editor, fromPath)
+          const nodeEntry = getNode(operation.editor.snapshot, fromPath)
           if (
             nodeEntry &&
-            isTextBlockNode({schema: operation.editor.schema}, nodeEntry.node)
+            isTextBlockNode(
+              {schema: operation.editor.snapshot.context.schema},
+              nodeEntry.node,
+            )
           ) {
             return nodeEntry
           }
-          return getParent(operation.editor, fromPath, {
+          return getParent(operation.editor.snapshot, fromPath, {
             match: (node) =>
-              isTextBlock({schema: operation.editor.schema}, node),
+              isTextBlock(
+                {schema: operation.editor.snapshot.context.schema},
+                node,
+              ),
           })
         })()
 
@@ -103,20 +113,24 @@ export const deleteOperationImplementation: OperationImplementation<
     : 'collapse-to-start'
 
   if (isCollapsedRange(at)) {
-    const enclosingContainer = getAncestor(operation.editor, at.anchor.path, {
-      match: (node, path) =>
-        isObject(operation.editor, node) &&
-        isEditableContainer(operation.editor, node, path),
-    })
+    const enclosingContainer = getAncestor(
+      operation.editor.snapshot,
+      at.anchor.path,
+      {
+        match: (node, path) =>
+          isObject(operation.editor.snapshot, node) &&
+          isEditableContainer(operation.editor.snapshot, node, path),
+      },
+    )
     const enclosingContainerChildren = enclosingContainer
-      ? getChildren(operation.editor, enclosingContainer.path)
+      ? getChildren(operation.editor.snapshot, enclosingContainer.path)
       : undefined
     const [firstChild] = enclosingContainerChildren ?? []
     if (
       enclosingContainer &&
       enclosingContainerChildren?.length === 1 &&
       firstChild &&
-      isEmptyTextBlock(operation.editor.context, firstChild.node)
+      isEmptyTextBlock(operation.editor.snapshot.context, firstChild.node)
     ) {
       unwrapContainer(
         operation.editor,
@@ -145,7 +159,7 @@ export const deleteOperationImplementation: OperationImplementation<
     return
   }
 
-  deleteRange(operation.editor, unhangRange(operation.editor, at), {
+  deleteRange(operation.editor, unhangRange(operation.editor.snapshot, at), {
     selection,
     removeEmptyStartBlock: true,
   })

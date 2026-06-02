@@ -95,10 +95,10 @@ const useChildren = (props: {
   let childContainer: ContainerConfig | undefined = parentContainer
 
   if (isEditor(node)) {
+    children = node.snapshot.context.value
+  } else if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
     children = node.children
-  } else if (isTextBlock({schema: editor.schema}, node)) {
-    children = node.children
-  } else if (isObject(editor, node)) {
+  } else if (isObject(editor.snapshot, node)) {
     const containerConfig = resolveContainerForNode(
       editor,
       parentContainer,
@@ -152,7 +152,10 @@ const useChildren = (props: {
     ],
   )
 
-  const textBlockParent = isTextBlock({schema: editor.schema}, node)
+  const textBlockParent = isTextBlock(
+    {schema: editor.snapshot.context.schema},
+    node,
+  )
     ? node
     : undefined
 
@@ -238,7 +241,7 @@ const useChildren = (props: {
     if (isContainerChild) {
       return true
     }
-    if (isTextBlock({schema: editor.schema}, n)) {
+    if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
       if (editor.textBlocks.has(n._type)) {
         return true
       }
@@ -251,7 +254,7 @@ const useChildren = (props: {
       }
       return false
     }
-    if (isObject(editor, n)) {
+    if (isObject(editor.snapshot, n)) {
       if (textBlockParent !== undefined) {
         // Inline-object position: pipeline mode is inherited from the
         // parent text block. An inline object never kicks off a new-
@@ -274,7 +277,7 @@ const useChildren = (props: {
       }
       return false
     }
-    if (isSpan({schema: editor.schema}, n)) {
+    if (isSpan({schema: editor.snapshot.context.schema}, n)) {
       // Span position: pipeline mode is inherited from the parent text
       // block, same as inline objects above. `parentIsInNewPipeline`
       // short-circuits upstream when the text block is itself in the
@@ -285,7 +288,7 @@ const useChildren = (props: {
   }
 
   const elements = children.map((n: Node, i: number) => {
-    if (isTextBlock({schema: editor.schema}, n)) {
+    if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
       return wrapNewPipeline(
         renderElementComponent(n, i, false),
         isInNewPipelineForChild(n, false),
@@ -293,10 +296,10 @@ const useChildren = (props: {
       )
     }
     // Fallback for text block nodes without `children`
-    if (isTextBlockNode({schema: editor.schema}, n)) {
+    if (isTextBlockNode({schema: editor.snapshot.context.schema}, n)) {
       return null
     }
-    if (isObject(editor, n)) {
+    if (isObject(editor.snapshot, n)) {
       // Does `n` resolve as a container at this position?
       // (positional override in childContainer.container.of, or global)
       if (resolveContainerForNode(editor, childContainer, n)) {
@@ -308,7 +311,7 @@ const useChildren = (props: {
         n._key,
       )
     }
-    if (isSpan({schema: editor.schema}, n)) {
+    if (isSpan({schema: editor.snapshot.context.schema}, n)) {
       return wrapNewPipeline(
         renderTextComponent(n, i),
         isInNewPipelineForChild(n, false),
@@ -316,7 +319,7 @@ const useChildren = (props: {
       )
     }
     // Fallback for span nodes without `text`
-    if (isSpanNode({schema: editor.schema}, n)) {
+    if (isSpanNode({schema: editor.snapshot.context.schema}, n)) {
       return null
     }
     throw new Error(`Unexpected node type`)

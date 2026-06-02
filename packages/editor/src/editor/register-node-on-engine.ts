@@ -26,7 +26,10 @@ export function registerNodeOnEngine(
     if (isTypeAlreadyRegistered(engine, 'container', node.type)) {
       return
     }
-    const containerConfig = resolveNestedContainer(engine.schema, node)
+    const containerConfig = resolveNestedContainer(
+      engine.snapshot.context.schema,
+      node,
+    )
     if (!containerConfig) {
       // resolveNestedContainer has already warned with chain context.
       return
@@ -34,7 +37,7 @@ export function registerNodeOnEngine(
     const containers = new Map(engine.containers)
     containers.set(node.type, containerConfig)
     engine.containers = containers
-    engine.publicContainers = buildPublicContainers(containers)
+    engine.snapshot.context.containers = buildPublicContainers(containers)
     normalize(engine, {force: true})
     engine.onChange()
     return
@@ -92,7 +95,7 @@ export function unregisterNodeOnEngine(
     const containers = new Map(engine.containers)
     containers.delete(node.type)
     engine.containers = containers
-    engine.publicContainers = buildPublicContainers(containers)
+    engine.snapshot.context.containers = buildPublicContainers(containers)
     normalize(engine, {force: true})
     engine.onChange()
     return

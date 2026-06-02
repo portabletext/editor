@@ -19,7 +19,8 @@ export function createHistoryPlugin({
   subscriptions: Array<() => () => void>
 }): (editor: PortableTextEditorEngine) => PortableTextEditorEngine {
   return function historyPlugin(editor: PortableTextEditorEngine) {
-    let previousSnapshot: Array<PortableTextBlock> | undefined = editor.children
+    let previousSnapshot: Array<PortableTextBlock> | undefined =
+      editor.snapshot.context.value
     let previousUndoStepId = editor.undoStepId
 
     subscriptions.push(() => {

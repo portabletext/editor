@@ -6,7 +6,6 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
-import {getEditorSnapshot} from './editor-selector'
 import type {RelayActor} from './relay-machine'
 
 type EditorEngineConfig = {
@@ -36,27 +35,37 @@ export function createEditorEngine(
 
   const editor = createEditor()
 
-  editor.schema = context.schema
-  editor.keyGenerator = context.keyGenerator
-  editor.converters = context.initialConverters
-  editor.readOnly = context.initialReadOnly
+  // The engine's observable state lives on `editor.snapshot`. The
+  // wrapping snapshot and context objects are reassigned (new
+  // identity) when the editor settles; inner mutable values
+  // (selection, value, etc) are mutated in place by operations.
+  editor.snapshot = {
+    blockIndexMap: new Map<string, number>(),
+    context: {
+      containers: new Map(),
+      converters: context.initialConverters,
+      keyGenerator: context.keyGenerator,
+      readOnly: context.initialReadOnly,
+      schema: context.schema,
+      selection: null,
+      value: [placeholderBlock],
+    },
+    decoratorState: {},
+  }
+
   editor.containers = new Map()
-  editor.publicContainers = new Map()
   editor.blockObjects = new Map()
   editor.inlineObjects = new Map()
   editor.spans = new Map()
   editor.textBlocks = new Map()
 
   editor.decoratedRanges = []
-  editor.decoratorState = {}
-  editor.blockIndexMap = new Map<string, number>()
+  editor.blockIndexMap = editor.snapshot.blockIndexMap
   editor.history = {undos: [], redos: []}
 
   editor.listIndexMap = new Map<string, number>()
   editor.remotePatches = []
   editor.undoStepId = undefined
-
-  editor.children = [placeholderBlock]
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
@@ -76,7 +85,7 @@ export function createEditorEngine(
   buildIndexMaps(
     {
       schema: context.schema,
-      value: editorEngine.children,
+      value: editorEngine.snapshot.context.value,
     },
     {
       blockIndexMap: editorEngine.blockIndexMap,
@@ -84,18 +93,17 @@ export function createEditorEngine(
     },
   )
 
-  // Initialize the stored snapshot synchronously so the engine satisfies the
-  // `Subscribable<EditorSnapshot>` contract from first read. Refreshed on
-  // every editor-actor notification below.
-  editorEngine.snapshot = getEditorSnapshot({
-    editorEngineInstance: editorEngine,
-  })
-
+  // Each editor-actor notification flips the snapshot wrapper
+  // identity so `useSyncExternalStore` re-evaluates selectors. The
+  // inner state (selection, value, decoratorState) is read directly
+  // from `editor.snapshot.context` and mutated in place by
+  // operations; cross-mutation reads stay reference-stable.
   config.subscriptions.push(() => {
     const subscription = config.editorActor.subscribe(() => {
-      editorEngine.snapshot = getEditorSnapshot({
-        editorEngineInstance: editorEngine,
-      })
+      editorEngine.snapshot = {
+        ...editorEngine.snapshot,
+        context: {...editorEngine.snapshot.context},
+      }
     })
 
     return () => {

@@ -75,7 +75,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
   // which lands the block in the right field of an empty container.
   const resolved = operation.at
     ? resolveSelection(editor, operation.at)
-    : resolveSelection(editor, editor.selection)
+    : resolveSelection(editor, editor.snapshot.context.selection)
   const at =
     resolved && operation.at && operation.placement !== 'auto'
       ? operation.at
@@ -87,9 +87,9 @@ export const insertBlockOperationImplementation: OperationImplementation<
   // When the editor is empty there is no path to derive from, so use root scope.
   const destinationPath = at
     ? operation.placement === 'before'
-      ? rangeStart(at, editor).path
-      : rangeEnd(at, editor).path
-    : editor.children.length > 0
+      ? rangeStart(at, editor.snapshot.context).path
+      : rangeEnd(at, editor.snapshot.context).path
+    : editor.snapshot.context.value.length > 0
       ? editorEnd(editor, []).path
       : undefined
   const schema = destinationPath
@@ -132,7 +132,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
     block,
     target,
     select: operation.select ?? 'start',
-    selectionAtEntry: editor.selection,
+    selectionAtEntry: editor.snapshot.context.selection,
   })
 }
 
@@ -152,16 +152,16 @@ function resolveTarget(args: {
 }): InsertTarget | undefined {
   const {editor, block, at, placement} = args
 
-  if (editor.children.length === 0) {
+  if (editor.snapshot.context.value.length === 0) {
     return {kind: 'empty-editor'}
   }
 
   const [startPoint, endPoint] = at
-    ? rangeEdges(at, editor)
+    ? rangeEdges(at, editor.snapshot.context)
     : [editorStart(editor, []), editorEnd(editor, [])]
 
-  const startBlockEntry = getEnclosingBlock(editor, startPoint.path)
-  const endBlockEntry = getEnclosingBlock(editor, endPoint.path)
+  const startBlockEntry = getEnclosingBlock(editor.snapshot, startPoint.path)
+  const endBlockEntry = getEnclosingBlock(editor.snapshot, endPoint.path)
 
   if (!startBlockEntry || !endBlockEntry) {
     return undefined
@@ -179,7 +179,7 @@ function resolveTarget(args: {
     return {kind: 'after', blockPath: endBlockPath}
   }
 
-  const schemaContext = {schema: editor.schema}
+  const schemaContext = {schema: editor.snapshot.context.schema}
 
   if (!at) {
     if (isEmptyTextBlock(schemaContext, endBlock)) {
@@ -214,7 +214,7 @@ function resolveTarget(args: {
     return {kind: 'delete-then-insert', range: at, startBlockPath}
   }
 
-  const collapsedPoint = rangeStart(at, editor)
+  const collapsedPoint = rangeStart(at, editor.snapshot.context)
 
   if (isEmptyTextBlock(schemaContext, endBlock)) {
     return {kind: 'replace', blockPath: endBlockPath}
@@ -424,14 +424,14 @@ function splitBlockAndInsert(
   const blockPathRef = pathRef(editor, blockPath, {affinity: 'backward'})
 
   if (splitAt.offset > 0) {
-    const spanEntry = getSpan(editor, splitAt.path)
+    const spanEntry = getSpan(editor.snapshot, splitAt.path)
     if (spanEntry && splitAt.offset < spanEntry.node.text.length) {
       applySplitNode(editor, splitAt.path, splitAt.offset)
     }
   }
 
   const currentBlockPath = blockPathRef.current ?? blockPath
-  const blockEntry = getTextBlock(editor, currentBlockPath)
+  const blockEntry = getTextBlock(editor.snapshot, currentBlockPath)
 
   if (blockEntry) {
     const childSegment = splitAt.path[blockPath.length + 1]
@@ -466,7 +466,7 @@ function mergeTextBlockFragment(args: {
 }): void {
   const {editor, context, block, at, endBlockPath, select, wasCrossBlock} = args
 
-  const endBlockEntry = getTextBlock(editor, endBlockPath)
+  const endBlockEntry = getTextBlock(editor.snapshot, endBlockPath)
 
   if (!endBlockEntry) {
     return
@@ -534,10 +534,10 @@ function applyPostInsertSelection(
       return
     }
 
-    if (editor.selection) {
+    if (editor.snapshot.context.selection) {
       editor.apply({
         type: 'set_selection',
-        properties: editor.selection,
+        properties: editor.snapshot.context.selection,
         newProperties: null,
       })
     }
@@ -572,11 +572,14 @@ function executeDeleteThenInsert(args: {
 }): void {
   const {editor, context, block, range, select, selectionAtEntry} = args
 
-  const rangeStartPoint = rangeStart(range, editor)
-  const rangeEndPoint = rangeEnd(range, editor)
+  const rangeStartPoint = rangeStart(range, editor.snapshot.context)
+  const rangeEndPoint = rangeEnd(range, editor.snapshot.context)
 
-  const startBlockEntry = getEnclosingBlock(editor, rangeStartPoint.path)
-  const endBlockEntry = getEnclosingBlock(editor, rangeEndPoint.path)
+  const startBlockEntry = getEnclosingBlock(
+    editor.snapshot,
+    rangeStartPoint.path,
+  )
+  const endBlockEntry = getEnclosingBlock(editor.snapshot, rangeEndPoint.path)
   const wasCrossBlock =
     startBlockEntry !== undefined &&
     endBlockEntry !== undefined &&
@@ -597,19 +600,24 @@ function executeDeleteThenInsert(args: {
     removeEmptyStartBlock: false,
   })
 
-  const collapsedRange = collapsedRangeRef.unref() ?? editor.selection
+  const collapsedRange =
+    collapsedRangeRef.unref() ?? editor.snapshot.context.selection
   const collapsedPoint = collapsedRange
-    ? rangeStart(collapsedRange, editor)
+    ? rangeStart(collapsedRange, editor.snapshot.context)
     : undefined
 
   if (!collapsedPoint) {
     return
   }
 
-  const resolvedBlock = getParent(editor, collapsedPoint.path, {
-    match: (node) => isTextBlock({schema: editor.schema}, node),
+  const resolvedBlock = getParent(editor.snapshot, collapsedPoint.path, {
+    match: (node) =>
+      isTextBlock({schema: editor.snapshot.context.schema}, node),
   })
-  const blockIsText = isTextBlock({schema: editor.schema}, block)
+  const blockIsText = isTextBlock(
+    {schema: editor.snapshot.context.schema},
+    block,
+  )
 
   // For `select: 'none'`, the desired restored selection is the collapsed
   // post-delete range (not the original expanded range). Track it through
@@ -651,7 +659,7 @@ function executeDeleteThenInsert(args: {
   }
 
   const containingBlockEntry =
-    resolvedBlock ?? getEnclosingBlock(editor, collapsedPoint.path)
+    resolvedBlock ?? getEnclosingBlock(editor.snapshot, collapsedPoint.path)
 
   if (!containingBlockEntry) {
     return
@@ -689,7 +697,7 @@ function removeAdjacentEmptyTextBlock(args: {
   const {editor, context, insertedPath} = args
 
   for (const direction of ['next', 'previous'] as const) {
-    const sibling = getSibling(editor, insertedPath, {direction})
+    const sibling = getSibling(editor.snapshot, insertedPath, {direction})
     if (sibling && isEmptyTextBlock(context, sibling.node)) {
       editor.apply({type: 'unset', path: sibling.path})
       return
@@ -796,12 +804,12 @@ function insertFragmentChildren(
   block: Node,
   at: Point,
 ): string | undefined {
-  if (!isTextBlock({schema: editor.schema}, block)) {
+  if (!isTextBlock({schema: editor.snapshot.context.schema}, block)) {
     return undefined
   }
 
   if (at.offset > 0) {
-    const textNodeEntry = getSpan(editor, at.path)
+    const textNodeEntry = getSpan(editor.snapshot, at.path)
 
     if (textNodeEntry) {
       applySplitNode(editor, at.path, at.offset)
@@ -813,9 +821,12 @@ function insertFragmentChildren(
 
   if (at.offset === 0 && block.children.length === 1) {
     const firstChild = block.children[0]!
-    const existingEntry = getSpan(editor, at.path)
+    const existingEntry = getSpan(editor.snapshot, at.path)
 
-    if (existingEntry && isSpan({schema: editor.schema}, firstChild)) {
+    if (
+      existingEntry &&
+      isSpan({schema: editor.snapshot.context.schema}, firstChild)
+    ) {
       if (firstChild.text.length > 0) {
         editor.apply({
           type: 'insert_text',

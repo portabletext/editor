@@ -64,14 +64,7 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextEditorEngine,
-    | 'children'
-    | 'apply'
-    | 'selection'
-    | 'onChange'
-    | 'schema'
-    | 'containers'
-    | 'context'
-    | 'blockIndexMap'
+    'apply' | 'onChange' | 'containers' | 'snapshot'
   >,
   patch: DiffMatchPatch,
 ): boolean {
@@ -81,9 +74,12 @@ function diffMatchPatch(
   }
 
   const spanPath = patch.path.slice(0, -1)
-  const spanEntry = getNode(editor, spanPath)
+  const spanEntry = getNode(editor.snapshot, spanPath)
 
-  if (!spanEntry || !isSpan({schema: editor.schema}, spanEntry.node)) {
+  if (
+    !spanEntry ||
+    !isSpan({schema: editor.snapshot.context.schema}, spanEntry.node)
+  ) {
     return false
   }
 
@@ -129,7 +125,11 @@ function insertPatch(
 
   const editorWasEmptyBefore =
     patch.path.length === 1 &&
-    isEqualToEmptyEditor(context.initialValue, editor.children, context.schema)
+    isEqualToEmptyEditor(
+      context.initialValue,
+      editor.snapshot.context.value,
+      context.schema,
+    )
 
   const arrayFieldPath = patch.path.slice(0, -1)
 
@@ -172,7 +172,7 @@ function insertPatch(
 
   if (editorWasEmptyBefore && typeof patch.path[0] === 'number') {
     const removeIdx = position === 'before' ? items.length : 0
-    const removeNode = editor.children[removeIdx]
+    const removeNode = editor.snapshot.context.value[removeIdx]
     if (removeNode) {
       editor.apply({
         type: 'unset',
@@ -192,8 +192,8 @@ function setPatch(
   if (patch.type === 'setIfMissing') {
     if (
       patch.path.length === 0
-        ? editor.children.length > 0
-        : getValue(editor.children, patch.path) !== undefined
+        ? editor.snapshot.context.value.length > 0
+        : getValue(editor.snapshot.context.value, patch.path) !== undefined
     ) {
       return false
     }

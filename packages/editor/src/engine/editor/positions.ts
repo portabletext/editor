@@ -27,7 +27,11 @@ export function* positions(
     reverse?: boolean
   } = {},
 ): Generator<Point, void, undefined> {
-  const {at = editor.selection, unit = 'offset', reverse = false} = options
+  const {
+    at = editor.snapshot.context.selection,
+    unit = 'offset',
+    reverse = false,
+  } = options
 
   if (!at) {
     return
@@ -52,7 +56,7 @@ export function* positions(
    */
 
   const editorRange = range(editor, at)
-  const [start, end] = rangeEdges(editorRange, editor)
+  const [start, end] = rangeEdges(editorRange, editor.snapshot.context)
   const first = reverse ? end : start
   let isNewBlock = false
   let blockText = ''
@@ -66,7 +70,7 @@ export function* positions(
   // encounter the block node, then all of its text nodes, so when iterating
   // through the blockText and leafText we just need to remember a window of
   // one block node and leaf node, respectively.
-  for (const {node, path: nodePath} of getNodes(editor, {
+  for (const {node, path: nodePath} of getNodes(editor.snapshot, {
     from: start.path,
     to: end.path,
     reverse,
@@ -74,7 +78,7 @@ export function* positions(
     /*
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
-    if (isTextBlockNode({schema: editor.schema}, node)) {
+    if (isTextBlockNode({schema: editor.snapshot.context.schema}, node)) {
       // Block element node - set `blockText` to its text content.
       {
         // We always exhaust block nodes before encountering a new one:
@@ -96,12 +100,15 @@ export function* positions(
           : editorStart(editor, nodePath)
 
         blockText = ''
-        for (const {node: spanNode, path: spanPath} of getNodes(editor, {
-          from: s.path,
-          to: e.path,
-          match: (n) => isSpan({schema: editor.schema}, n),
-        })) {
-          if (!isSpan({schema: editor.schema}, spanNode)) {
+        for (const {node: spanNode, path: spanPath} of getNodes(
+          editor.snapshot,
+          {
+            from: s.path,
+            to: e.path,
+            match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
+          },
+        )) {
+          if (!isSpan({schema: editor.snapshot.context.schema}, spanNode)) {
             continue
           }
           let spanText = spanNode.text
@@ -117,17 +124,17 @@ export function* positions(
       }
     }
 
-    if (isLeafObject(editor, node, nodePath)) {
+    if (isLeafObject(editor.snapshot, node, nodePath)) {
       yield {path: nodePath, offset: 0}
       continue
     }
 
     if (
-      !isTextBlockNode({schema: editor.schema}, node) &&
-      !isSpan({schema: editor.schema}, node)
+      !isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
+      !isSpan({schema: editor.snapshot.context.schema}, node)
     ) {
       // Editable containers aren't leaf positions — descend into them.
-      if (isEditableContainer(editor, node, nodePath)) {
+      if (isEditableContainer(editor.snapshot, node, nodePath)) {
         continue
       }
       yield {path: nodePath, offset: 0}
@@ -138,7 +145,7 @@ export function* positions(
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.
      */
-    if (isSpan({schema: editor.schema}, node)) {
+    if (isSpan({schema: editor.snapshot.context.schema}, node)) {
       const isFirst = pathEquals(nodePath, first.path)
 
       // Proof that we always exhaust text nodes before encountering a new one:

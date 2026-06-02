@@ -12,7 +12,7 @@ export const usePortableTextEditorSelection = (): EditorSelection => {
   const editorActor = useContext(EditorActorContext)
   const editorEngine = useEngineStatic()
   const [selection, setSelection] = useState<EditorSelection>(
-    editorEngine.selection,
+    editorEngine.snapshot.context.selection,
   )
 
   useEffect(() => {
