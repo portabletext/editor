@@ -2,6 +2,7 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {resolveTestbedContainers} from '../traversal/node-traversal-testbed'
 import {getMarkState} from './selector.get-mark-state'
 
 describe(getMarkState.name, () => {
@@ -320,6 +321,72 @@ describe(getMarkState.name, () => {
       state: 'changed',
       marks: [],
       previousMarks: [linkKey],
+    })
+  })
+
+  test('Scenario: Caret on a block-rooted selection inside a container', () => {
+    const schema = compileSchema(
+      defineSchema({
+        decorators: [{name: 'strong'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {
+                    type: 'block',
+                    decorators: [{name: 'strong'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const containers = resolveTestbedContainers(schema, [
+      {kind: 'container', type: 'callout', arrayField: 'content'},
+    ])
+
+    const snapshot = createTestSnapshot({
+      context: {
+        schema,
+        containers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
+                ],
+              },
+            ],
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: 'c1'}, 'content', {_key: 'b1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'c1'}, 'content', {_key: 'b1'}],
+            offset: 3,
+          },
+          backward: false,
+        },
+      },
+    })
+
+    expect(getMarkState(snapshot)).toEqual({
+      state: 'unchanged',
+      marks: ['strong'],
     })
   })
 })
