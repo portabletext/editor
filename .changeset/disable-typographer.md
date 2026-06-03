@@ -2,4 +2,4 @@
 '@portabletext/markdown': patch
 ---
 
-fix: disable `markdown-it` typographer
+fix: stop transforming typography characters in markdown input
