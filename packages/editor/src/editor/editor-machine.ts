@@ -22,10 +22,10 @@ import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {RegistrableNode} from '../renderers/renderer.types'
+import {pathContains} from '../traversal/path-contains'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
-import {pathsOverlap} from '../utils/util.paths-overlap'
 import type {EditorSchema} from './editor-schema'
 import {
   registerNodeOnEngine,
@@ -328,8 +328,10 @@ export const editorMachine = setup({
             return true
           }
 
-          return !incomingPaths.some((incomingPath) =>
-            pathsOverlap(pendingEvent.patch.path, incomingPath),
+          return !incomingPaths.some(
+            (incomingPath) =>
+              pathContains(pendingEvent.patch.path, incomingPath) ||
+              pathContains(incomingPath, pendingEvent.patch.path),
           )
         })
       },
