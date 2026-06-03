@@ -1,20 +1,8 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {isEqualPaths} from '../utils/util.is-equal-paths'
+import {isSelectionCollapsed as isSelectionCollapsedUtil} from '../utils/util.is-selection-collapsed'
 
 /**
  * @public
  */
-export const isSelectionCollapsed: EditorSelector<boolean> = (snapshot) => {
-  if (!snapshot.context.selection) {
-    return false
-  }
-
-  return (
-    isEqualPaths(
-      snapshot.context.selection.anchor.path,
-      snapshot.context.selection.focus.path,
-    ) &&
-    snapshot.context.selection.anchor.offset ===
-      snapshot.context.selection.focus.offset
-  )
-}
+export const isSelectionCollapsed: EditorSelector<boolean> = (snapshot) =>
+  isSelectionCollapsedUtil(snapshot.context.selection)
