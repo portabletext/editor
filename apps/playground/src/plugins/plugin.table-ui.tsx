@@ -204,11 +204,8 @@ function Handle(props: {
         className={props.className}
         onMouseDown={(event) => event.preventDefault()}
         onClick={(event) => {
-          setMenu((current) =>
-            current
-              ? null
-              : {anchorRect: event.currentTarget.getBoundingClientRect()},
-          )
+          const anchorRect = event.currentTarget.getBoundingClientRect()
+          setMenu((current) => (current ? null : {anchorRect}))
         }}
       >
         {props.children}

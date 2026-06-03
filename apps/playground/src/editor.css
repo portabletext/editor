@@ -235,19 +235,23 @@ table[data-pt-block='container'] td .pt-plugin-table-ui__cell-content {
   color: rgb(226, 232, 240);
 }
 
-/* Header row: first row gets a stronger fill + weight. */
+/* Header row: first row gets a stronger fill, weight, and a thick bottom border. */
 table[data-pt-block='container'][data-pt-plugin-table-header-row]
   tr:first-child
   td {
-  background: rgb(241, 245, 249);
+  background: rgb(226, 232, 240);
   font-weight: 600;
+  color: rgb(15, 23, 42);
+  border-bottom: 2px solid rgb(148, 163, 184);
 }
 
 :where(.dark)
   table[data-pt-block='container'][data-pt-plugin-table-header-row]
   tr:first-child
   td {
-  background: rgb(30, 41, 59);
+  background: rgb(51, 65, 85);
+  color: rgb(248, 250, 252);
+  border-bottom-color: rgb(100, 116, 139);
 }
 
 /* Rectangle selection: tint each cell + blue ring. */
