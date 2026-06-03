@@ -1,5 +1,5 @@
-import {comparePoints} from '../engine/point/compare-points'
 import type {EditorSelection} from '../types/editor'
+import {comparePoints} from './compare-points'
 import {getRangeEdges} from './get-range-edges'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -24,9 +24,8 @@ export function rangesOverlap(
   }
   const [startA, endA] = getRangeEdges(snapshot, rangeA)
   const [startB, endB] = getRangeEdges(snapshot, rangeB)
-  const root = {value: snapshot.context.value}
   return (
-    comparePoints(startA, endB, root) <= 0 &&
-    comparePoints(startB, endA, root) <= 0
+    comparePoints(snapshot, startA, endB) <= 0 &&
+    comparePoints(snapshot, startB, endA) <= 0
   )
 }

@@ -1,5 +1,5 @@
-import {comparePaths} from '../engine/path/compare-paths'
 import type {EditorSelectionPoint} from '../types/editor'
+import {comparePaths} from './compare-paths'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -19,9 +19,7 @@ export function comparePoints(
   pointA: EditorSelectionPoint,
   pointB: EditorSelectionPoint,
 ): -1 | 0 | 1 {
-  const pathComparison = comparePaths(pointA.path, pointB.path, {
-    value: snapshot.context.value,
-  })
+  const pathComparison = comparePaths(snapshot, pointA.path, pointB.path)
 
   if (pathComparison !== 0) {
     return pathComparison

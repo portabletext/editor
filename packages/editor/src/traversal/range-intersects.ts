@@ -1,12 +1,12 @@
-import {comparePaths} from '../engine/path/compare-paths'
-import {isAfterPoint} from '../engine/point/is-after-point'
-import {isBeforePoint} from '../engine/point/is-before-point'
 import {isPoint} from '../engine/point/is-point'
 import {isRange} from '../engine/range/is-range'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {Path} from '../types/paths'
+import {comparePaths} from './compare-paths'
 import {comparePoints} from './compare-points'
 import {getRangeEdges} from './get-range-edges'
+import {isAfterPoint} from './is-after-point'
+import {isBeforePoint} from './is-before-point'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -36,8 +36,6 @@ export function rangeIntersects(
     return false
   }
 
-  const root = {value: snapshot.context.value}
-
   if (isRange(target)) {
     if (
       rangeIntersects(snapshot, range, target.anchor) ||
@@ -47,7 +45,7 @@ export function rangeIntersects(
     }
     const [rs, re] = getRangeEdges(snapshot, range)
     const [ts, te] = getRangeEdges(snapshot, target)
-    return isBeforePoint(rs, ts, root) && isAfterPoint(re, te, root)
+    return isBeforePoint(snapshot, rs, ts) && isAfterPoint(snapshot, re, te)
   }
 
   const [start, end] = getRangeEdges(snapshot, range)
@@ -58,8 +56,8 @@ export function rangeIntersects(
     isAfterStart = comparePoints(snapshot, target, start) >= 0
     isBeforeEnd = comparePoints(snapshot, target, end) <= 0
   } else {
-    isAfterStart = comparePaths(target, start.path, root) >= 0
-    isBeforeEnd = comparePaths(target, end.path, root) <= 0
+    isAfterStart = comparePaths(snapshot, target, start.path) >= 0
+    isBeforeEnd = comparePaths(snapshot, target, end.path) <= 0
   }
 
   return isAfterStart && isBeforeEnd
