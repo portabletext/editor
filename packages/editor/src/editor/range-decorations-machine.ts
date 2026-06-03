@@ -11,10 +11,10 @@ import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {Operation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
-import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {getRangeIntersection} from '../traversal/get-range-intersection'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {RangeDecoration} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -386,14 +386,10 @@ function createDecorate(
       }
 
       return (
-        rangeIntersection(
-          decoratedRange,
-          {
-            anchor: {path, offset: 0},
-            focus: {path, offset: 0},
-          },
-          editorEngine.snapshot.context,
-        ) || rangeIntersects(editorEngine.snapshot, decoratedRange, path)
+        getRangeIntersection(editorEngine.snapshot, decoratedRange, {
+          anchor: {path, offset: 0},
+          focus: {path, offset: 0},
+        }) || rangeIntersects(editorEngine.snapshot, decoratedRange, path)
       )
     })
   }
