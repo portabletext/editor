@@ -1,6 +1,6 @@
 import {isBeforePoint} from '../engine/point/is-before-point'
-import {rangeEdges} from '../engine/range/range-edges'
 import type {EditorSelection} from '../types/editor'
+import {getRangeEdges} from './get-range-edges'
 import {rangesOverlap} from './ranges-overlap'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -28,10 +28,10 @@ export function getRangeIntersection<
   if (!rangeA || !rangeB || !rangesOverlap(snapshot, rangeA, rangeB)) {
     return null as Return
   }
-  const root = {value: snapshot.context.value}
   const {anchor: _anchor, focus: _focus, ...rest} = rangeA
-  const [s1, e1] = rangeEdges(rangeA, root)
-  const [s2, e2] = rangeEdges(rangeB, root)
+  const [s1, e1] = getRangeEdges(snapshot, rangeA)
+  const [s2, e2] = getRangeEdges(snapshot, rangeB)
+  const root = {value: snapshot.context.value}
   const start = isBeforePoint(s1, s2, root) ? s2 : s1
   const end = isBeforePoint(e1, e2, root) ? e1 : e2
   return {anchor: start, focus: end, ...rest} as unknown as Return

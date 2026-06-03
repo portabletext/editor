@@ -3,10 +3,10 @@ import {isAfterPoint} from '../engine/point/is-after-point'
 import {isBeforePoint} from '../engine/point/is-before-point'
 import {isPoint} from '../engine/point/is-point'
 import {isRange} from '../engine/range/is-range'
-import {rangeEdges} from '../engine/range/range-edges'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {Path} from '../types/paths'
 import {comparePoints} from './compare-points'
+import {getRangeEdges} from './get-range-edges'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -45,12 +45,12 @@ export function rangeIntersects(
     ) {
       return true
     }
-    const [rs, re] = rangeEdges(range, root)
-    const [ts, te] = rangeEdges(target, root)
+    const [rs, re] = getRangeEdges(snapshot, range)
+    const [ts, te] = getRangeEdges(snapshot, target)
     return isBeforePoint(rs, ts, root) && isAfterPoint(re, te, root)
   }
 
-  const [start, end] = rangeEdges(range, root)
+  const [start, end] = getRangeEdges(snapshot, range)
   let isAfterStart = false
   let isBeforeEnd = false
 
