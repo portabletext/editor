@@ -51,6 +51,8 @@ export {
   defineTextBlock,
   type BlockObject,
   type Container,
+  type ContainerRender,
+  type ContainerRenderProps,
   type InlineObject,
   type RegistrableNode,
   type Span,

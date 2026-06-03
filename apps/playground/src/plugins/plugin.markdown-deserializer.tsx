@@ -73,7 +73,7 @@ export function MarkdownDeserializerPlugin() {
                   _type: 'table',
                   _key: context.keyGenerator(),
                   ...(value.headerRows !== undefined
-                    ? {headerRows: value.headerRows}
+                    ? {headerRow: value.headerRows >= 1}
                     : {}),
                   rows,
                 }

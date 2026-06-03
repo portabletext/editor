@@ -1,22 +1,24 @@
-import {useEditor} from '@portabletext/editor'
-import {useEffect} from 'react'
+import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {insertBehaviors} from './behaviors/insert'
+import {moveBehaviors} from './behaviors/move'
+import {unsetBehaviors} from './behaviors/unset'
+import {buildTableContainer, type TableComponents} from './containers'
 
 /**
- * Skeleton placeholder for the table plugin.
- *
- * This component currently registers no behaviors and renders nothing. It
- * exists so that consumers can wire `<TablePlugin />` into their editor today
- * and pick up real functionality as the package grows.
+ * Registers the table, row and cell containers and the move/insert/unset
+ * behaviors that operate on them. Pass `components` to wrap or replace
+ * the plugin's default renders — each render receives `renderDefault`
+ * pointing at the plugin's default so a wrapper can re-emit it verbatim.
  *
  * @alpha
  */
-export function TablePlugin() {
-  const editor = useEditor()
-
-  useEffect(() => {
-    // Reserved for behavior registration once the table API takes shape.
-    void editor
-  }, [editor])
-
-  return null
+export function TablePlugin(props: {components?: TableComponents} = {}) {
+  return (
+    <>
+      <NodePlugin nodes={[buildTableContainer(props.components)]} />
+      <BehaviorPlugin
+        behaviors={[...insertBehaviors, ...unsetBehaviors, ...moveBehaviors]}
+      />
+    </>
+  )
 }

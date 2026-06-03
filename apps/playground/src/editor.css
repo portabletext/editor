@@ -201,106 +201,59 @@
 }
 
 /**
- * Playground table styling.
- *
- * `data-header-rows` carries the table's headerRows count; CSS targets
- * the first N rows via `tr:nth-child(-n+N)` to highlight headers.
+ * Tables — chrome leaning on the playground's slate palette.
+ * Hooks: `[data-pt-block='container']` (engine), `data-pt-plugin-table-header-row`,
+ * `data-pt-plugin-table-selected` (cells).
  */
-.playground-table {
-  border-collapse: separate;
-  border-spacing: 0;
+table[data-pt-block='container'] {
   width: 100%;
-  margin: 1.25rem 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 0.75rem 0;
   font-size: 0.875rem;
   line-height: 1.5;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-:where(.dark) .playground-table {
-  background: #0f172a;
-  border-color: #334155;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-/* Body cells: subtle horizontal + vertical dividers. */
-.playground-table td {
-  padding: 0.625rem 0.875rem;
+table[data-pt-block='container'] td {
+  border: 1px solid rgb(226, 232, 240);
+  padding: 0.5rem 0.75rem;
   vertical-align: top;
-  min-width: 8rem;
-  color: #1e293b;
-  border-bottom: 1px solid #f1f5f9;
-  border-right: 1px solid #f1f5f9;
+  background: rgb(248, 250, 252);
+  color: rgb(15, 23, 42);
+  overflow: hidden;
+  word-break: break-word;
 }
 
-:where(.dark) .playground-table td {
-  color: #e2e8f0;
-  border-bottom-color: #1e293b;
-  border-right-color: #1e293b;
+:where(.dark) table[data-pt-block='container'] td {
+  border-color: rgb(51, 65, 85);
+  background: rgba(30, 41, 59, 0.6);
+  color: rgb(226, 232, 240);
 }
 
-/* Last cell in each row drops its right border so the table edge stays clean. */
-.playground-table tr td:last-child {
-  border-right: none;
-}
-
-/* Last row drops its bottom border so the table edge is clean. */
-.playground-table tr:last-child td {
-  border-bottom: none;
-}
-
-/**
- * Header rows: bg tinted indigo to clearly differentiate from body, with
- * uppercase + tracking on the cell content. The bottom of the header band
- * has a slightly stronger divider to mark the body boundary.
- */
-.playground-table[data-header-rows='1'] tr:nth-child(1) td,
-.playground-table[data-header-rows='2'] tr:nth-child(-n + 2) td,
-.playground-table[data-header-rows='3'] tr:nth-child(-n + 3) td {
-  background: #f1f5f9;
-  color: #475569;
+/* Header row: first row gets a stronger fill + weight. */
+table[data-pt-block='container'][data-pt-plugin-table-header-row]
+  tr:first-child
+  td {
+  background: rgb(241, 245, 249);
   font-weight: 600;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
 }
 
-:where(.dark) .playground-table[data-header-rows='1'] tr:nth-child(1) td,
-:where(.dark) .playground-table[data-header-rows='2'] tr:nth-child(-n + 2) td,
-:where(.dark) .playground-table[data-header-rows='3'] tr:nth-child(-n + 3) td {
-  background: #1e293b;
-  color: #94a3b8;
+:where(.dark)
+  table[data-pt-block='container'][data-pt-plugin-table-header-row]
+  tr:first-child
+  td {
+  background: rgb(30, 41, 59);
 }
 
-/* Last header row gets a slightly heavier divider to mark the body boundary. */
-.playground-table[data-header-rows='1'] tr:nth-child(1) td,
-.playground-table[data-header-rows='2'] tr:nth-child(2) td,
-.playground-table[data-header-rows='3'] tr:nth-child(3) td {
-  border-bottom: 1px solid #cbd5e1;
+/* Rectangle selection: tint each cell + blue ring. */
+table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: inset 0 0 0 1px rgb(59, 130, 246);
 }
 
-:where(.dark) .playground-table[data-header-rows='1'] tr:nth-child(1) td,
-:where(.dark) .playground-table[data-header-rows='2'] tr:nth-child(2) td,
-:where(.dark) .playground-table[data-header-rows='3'] tr:nth-child(3) td {
-  border-bottom-color: #475569;
-}
-
-/**
- * Selection cue: `data-selected` is set on the cell whose content currently
- * holds the editor selection. Subtle inset-ring highlight only on that cell
- * - the row and table cascades aren't styled (they were too noisy when the
- * caret was inside a single cell).
- */
-.playground-table td[data-selected] {
-  box-shadow: inset 0 0 0 2px #3b82f6;
-  border-radius: 0;
-}
-
-:where(.dark) .playground-table td[data-selected] {
-  box-shadow: inset 0 0 0 2px #60a5fa;
+:where(.dark)
+  table[data-pt-block='container']
+  td[data-pt-plugin-table-selected] {
+  background: rgba(59, 130, 246, 0.18);
+  box-shadow: inset 0 0 0 1px rgb(96, 165, 250);
 }

@@ -60,6 +60,10 @@ export default defineConfig({
         __dirname,
         '../../packages/plugin-paste-link/src',
       ),
+      '@portabletext/plugin-table': path.resolve(
+        __dirname,
+        '../../packages/plugin-table/src',
+      ),
       '@portabletext/plugin-typeahead-picker': path.resolve(
         __dirname,
         '../../packages/plugin-typeahead-picker/src',
