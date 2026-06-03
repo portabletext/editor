@@ -268,7 +268,7 @@ export function markdownToPortableText(
   const md = markdownit({
     html: true,
     linkify: true,
-    typographer: true,
+    typographer: false,
   })
     .enable(['strikethrough', 'table'])
     .use(alert)
