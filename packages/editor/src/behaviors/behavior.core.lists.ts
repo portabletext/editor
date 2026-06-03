@@ -8,9 +8,9 @@ import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
+import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isListBlock} from '../utils/parse-blocks'
-import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -34,12 +34,7 @@ const clearListOnBackspace = defineBehavior({
       return false
     }
 
-    if (
-      !isAtTheBeginningOfBlock({
-        snapshot,
-        block: focusTextBlock.node,
-      })
-    ) {
+    if (!isAtTheStartOfBlock(focusTextBlock)(snapshot)) {
       return false
     }
 
@@ -148,12 +143,7 @@ const mergeTextIntoListOnBackspace = defineBehavior({
       return false
     }
 
-    if (
-      !isAtTheBeginningOfBlock({
-        snapshot,
-        block: focusTextBlock.node,
-      })
-    ) {
+    if (!isAtTheStartOfBlock(focusTextBlock)(snapshot)) {
       return false
     }
 
