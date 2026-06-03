@@ -18,7 +18,7 @@ import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
-import {rangeContains} from '../traversal/range-contains'
+import {rangeIntersects} from '../traversal/range-intersects'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -171,7 +171,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
         if (
           !selectionRange ||
-          !rangeContains(editor.snapshot, selectionRange, spanPath)
+          !rangeIntersects(editor.snapshot, selectionRange, spanPath)
         ) {
           continue
         }
