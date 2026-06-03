@@ -1,6 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {comparePoints} from '../traversal/compare-points'
 import type {EditorSelectionPoint} from '../types/editor'
-import {comparePoints} from '../utils/util.compare-points'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 
 /**

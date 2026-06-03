@@ -1,6 +1,6 @@
-import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {comparePaths} from '../engine/path/compare-paths'
 import type {EditorSelectionPoint} from '../types/editor'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Returns:
@@ -11,9 +11,11 @@ import type {EditorSelectionPoint} from '../types/editor'
  *
  * Compares the two points by document order, resolved at any depth. When
  * the paths are equal, compares offsets.
+ *
+ * @beta
  */
 export function comparePoints(
-  snapshot: EditorSnapshot,
+  snapshot: TraversalSnapshot,
   pointA: EditorSelectionPoint,
   pointB: EditorSelectionPoint,
 ): -1 | 0 | 1 {
