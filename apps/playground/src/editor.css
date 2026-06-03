@@ -240,13 +240,14 @@ table[data-pt-block='container'] tr:first-child td {
   background: rgb(226, 232, 240);
   font-weight: 600;
   color: rgb(15, 23, 42);
-  border-bottom: 2px solid rgb(148, 163, 184);
+  border-color: rgb(148, 163, 184);
+  border-bottom-width: 2px;
 }
 
 :where(.dark) table[data-pt-block='container'] tr:first-child td {
   background: rgb(51, 65, 85);
   color: rgb(248, 250, 252);
-  border-bottom-color: rgb(100, 116, 139);
+  border-color: rgb(100, 116, 139);
 }
 
 /* Rectangle selection: tint each cell + blue ring. */
@@ -284,15 +285,24 @@ table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
   width: 20px;
   height: 20px;
   padding: 0;
-  border: 1px solid transparent;
+  border: 1px solid rgb(148, 163, 184);
   border-radius: 4px;
   background: rgb(255, 255, 255);
-  color: rgb(100, 116, 139);
+  color: rgb(71, 85, 105);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.1s ease-out;
   user-select: none;
   z-index: 2;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+:where(.dark) .pt-plugin-table-ui__row-handle,
+:where(.dark) .pt-plugin-table-ui__column-handle {
+  background: rgb(30, 41, 59);
+  border-color: rgb(71, 85, 105);
+  color: rgb(203, 213, 225);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .pt-plugin-table-ui__row-handle {
@@ -316,23 +326,17 @@ table[data-pt-block='container']:hover .pt-plugin-table-ui__column-handle,
   opacity: 1;
 }
 
-.pt-plugin-table-ui__row-handle:hover,
-.pt-plugin-table-ui__column-handle:hover {
+.pt-plugin-table-ui__row-handle[data-hovered],
+.pt-plugin-table-ui__column-handle[data-hovered] {
   background: rgb(241, 245, 249);
-  border-color: rgb(226, 232, 240);
-  color: rgb(30, 41, 59);
+  border-color: rgb(100, 116, 139);
+  color: rgb(15, 23, 42);
 }
 
-:where(.dark) .pt-plugin-table-ui__row-handle,
-:where(.dark) .pt-plugin-table-ui__column-handle {
-  background: rgb(15, 23, 42);
-  color: rgb(148, 163, 184);
-}
-
-:where(.dark) .pt-plugin-table-ui__row-handle:hover,
-:where(.dark) .pt-plugin-table-ui__column-handle:hover {
-  background: rgb(30, 41, 59);
-  border-color: rgb(51, 65, 85);
+:where(.dark) .pt-plugin-table-ui__row-handle[data-hovered],
+:where(.dark) .pt-plugin-table-ui__column-handle[data-hovered] {
+  background: rgb(51, 65, 85);
+  border-color: rgb(148, 163, 184);
   color: rgb(248, 250, 252);
 }
 
