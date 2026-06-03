@@ -1,5 +1,4 @@
 import {comparePaths} from '../engine/path/compare-paths'
-import {comparePoints} from '../engine/point/compare-points'
 import {isAfterPoint} from '../engine/point/is-after-point'
 import {isBeforePoint} from '../engine/point/is-before-point'
 import {isPoint} from '../engine/point/is-point'
@@ -7,13 +6,19 @@ import {isRange} from '../engine/range/is-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {Path} from '../types/paths'
+import {comparePoints} from './compare-points'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
- * Returns true if `range` contains the supplied `target`. The target may be
- * a `Path`, an `EditorSelectionPoint`, or another `EditorSelection`.
- * "Contains" means partial intersection — two ranges that touch at a single
- * endpoint share that point and overlap.
+ * Returns true if `range` and the supplied `target` intersect. The target
+ * may be a `Path`, an `EditorSelectionPoint`, or another
+ * `EditorSelection`.
+ *
+ * For a `Path` or `EditorSelectionPoint` target, "intersect" means the
+ * target lies at or between `range`'s start and end edges (inclusive).
+ *
+ * For an `EditorSelection` target, "intersect" means either endpoint of
+ * `target` lies inside `range`, or `range` strictly encloses `target`.
  *
  * Pass `snapshot.context.selection` as `range` to ask the question against
  * the editor's current selection.
@@ -22,7 +27,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * @beta
  */
-export function rangeContains(
+export function rangeIntersects(
   snapshot: TraversalSnapshot,
   range: EditorSelection,
   target: Path | EditorSelectionPoint | EditorSelection,
@@ -35,8 +40,8 @@ export function rangeContains(
 
   if (isRange(target)) {
     if (
-      rangeContains(snapshot, range, target.anchor) ||
-      rangeContains(snapshot, range, target.focus)
+      rangeIntersects(snapshot, range, target.anchor) ||
+      rangeIntersects(snapshot, range, target.focus)
     ) {
       return true
     }
@@ -50,8 +55,8 @@ export function rangeContains(
   let isBeforeEnd = false
 
   if (isPoint(target)) {
-    isAfterStart = comparePoints(target, start, root) >= 0
-    isBeforeEnd = comparePoints(target, end, root) <= 0
+    isAfterStart = comparePoints(snapshot, target, start) >= 0
+    isBeforeEnd = comparePoints(snapshot, target, end) <= 0
   } else {
     isAfterStart = comparePaths(target, start.path, root) >= 0
     isBeforeEnd = comparePaths(target, end.path, root) <= 0

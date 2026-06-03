@@ -1,14 +1,14 @@
 import {describe, expect, test} from 'vitest'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
-import {rangeContains} from './range-contains'
+import {rangeIntersects} from './range-intersects'
 
-describe(rangeContains.name, () => {
+describe(rangeIntersects.name, () => {
   const testbed = createNodeTraversalTestbed()
   const snapshot = testbed.snapshot
 
   test('returns false when the range is null', () => {
     expect(
-      rangeContains(snapshot, null, [{_key: testbed.textBlock1._key}]),
+      rangeIntersects(snapshot, null, [{_key: testbed.textBlock1._key}]),
     ).toBe(false)
   })
 
@@ -22,7 +22,7 @@ describe(rangeContains.name, () => {
       offset: 0,
     }
     const range = {anchor: point, focus: point}
-    expect(rangeContains(snapshot, range, null)).toBe(false)
+    expect(rangeIntersects(snapshot, range, null)).toBe(false)
   })
 
   describe('Path target', () => {
@@ -37,7 +37,7 @@ describe(rangeContains.name, () => {
       }
       const range = {anchor: point, focus: point}
       expect(
-        rangeContains(snapshot, range, [{_key: testbed.textBlock1._key}]),
+        rangeIntersects(snapshot, range, [{_key: testbed.textBlock1._key}]),
       ).toBe(true)
     })
 
@@ -52,7 +52,7 @@ describe(rangeContains.name, () => {
       }
       const range = {anchor: point, focus: point}
       expect(
-        rangeContains(snapshot, range, [{_key: testbed.textBlock1._key}]),
+        rangeIntersects(snapshot, range, [{_key: testbed.textBlock1._key}]),
       ).toBe(false)
     })
 
@@ -75,9 +75,9 @@ describe(rangeContains.name, () => {
           offset: 0,
         },
       }
-      expect(rangeContains(snapshot, range, [{_key: testbed.image._key}])).toBe(
-        true,
-      )
+      expect(
+        rangeIntersects(snapshot, range, [{_key: testbed.image._key}]),
+      ).toBe(true)
     })
 
     test('deep path inside a nested container is included when range lives there', () => {
@@ -97,7 +97,7 @@ describe(rangeContains.name, () => {
       }
       const range = {anchor: point, focus: point}
       expect(
-        rangeContains(snapshot, range, [
+        rangeIntersects(snapshot, range, [
           {_key: testbed.table._key},
           'rows',
           {_key: testbed.row1._key},
@@ -134,7 +134,7 @@ describe(rangeContains.name, () => {
         ],
         offset: 3,
       }
-      expect(rangeContains(snapshot, range, target)).toBe(true)
+      expect(rangeIntersects(snapshot, range, target)).toBe(true)
     })
 
     test('point outside the range is not included', () => {
@@ -155,7 +155,7 @@ describe(rangeContains.name, () => {
         ],
         offset: 0,
       }
-      expect(rangeContains(snapshot, range, target)).toBe(false)
+      expect(rangeIntersects(snapshot, range, target)).toBe(false)
     })
   })
 
@@ -179,7 +179,7 @@ describe(rangeContains.name, () => {
       }
       const range = {anchor: a, focus: b}
       const target = {anchor: b, focus: b}
-      expect(rangeContains(snapshot, range, target)).toBe(true)
+      expect(rangeIntersects(snapshot, range, target)).toBe(true)
     })
 
     test('non-overlapping ranges return false', () => {
@@ -201,7 +201,7 @@ describe(rangeContains.name, () => {
       }
       const range = {anchor: inBlock1, focus: inBlock1}
       const target = {anchor: inBlock2, focus: inBlock2}
-      expect(rangeContains(snapshot, range, target)).toBe(false)
+      expect(rangeIntersects(snapshot, range, target)).toBe(false)
     })
   })
 })

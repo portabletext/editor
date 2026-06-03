@@ -20,7 +20,7 @@ import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
-import {rangeContains} from '../traversal/range-contains'
+import {rangeIntersects} from '../traversal/range-intersects'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -209,7 +209,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
           if (
             !selectionRange ||
-            !rangeContains(editor.snapshot, selectionRange, childPath)
+            !rangeIntersects(editor.snapshot, selectionRange, childPath)
           ) {
             continue
           }

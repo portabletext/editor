@@ -15,7 +15,7 @@ import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
-import {rangeContains} from '../traversal/range-contains'
+import {rangeIntersects} from '../traversal/range-intersects'
 import type {RangeDecoration} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils'
@@ -393,7 +393,7 @@ function createDecorate(
             focus: {path, offset: 0},
           },
           editorEngine.snapshot.context,
-        ) || rangeContains(editorEngine.snapshot, decoratedRange, path)
+        ) || rangeIntersects(editorEngine.snapshot, decoratedRange, path)
       )
     })
   }
