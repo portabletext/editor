@@ -313,4 +313,79 @@ describe('delete behaviors within tables', () => {
       expect(value.find((b) => b._type === 'table')).toBeUndefined()
     })
   })
+
+  test('delete on multi-cell rectangle: clears all touched cells, collapses to top-left cell start', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    // Select 2x2 rectangle: anchor in r0c0, focus in r1c1.
+    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointAt('r1c1', 'r1c1b', 'r1c1s', 1)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      const table = firstTable(editor.getSnapshot().context.value)
+      // All four cells in the rectangle are cleared to empty text.
+      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
+      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
+      expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
+      expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
+      // Table structure unchanged.
+      expect(table.rows.length).toBe(2)
+      expect(table.rows[0]?.cells.length).toBe(2)
+    })
+  })
+
+  test('delete on multi-cell rectangle in same row: clears both, leaves other row untouched', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointAt('r0c1', 'r0c1b', 'r0c1s', 1)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      const table = firstTable(editor.getSnapshot().context.value)
+      // Row 0 cells cleared.
+      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
+      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
+      // Row 1 cells untouched.
+      expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('CC')
+      expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('DD')
+    })
+  })
+
+  test('split (Enter) with multi-cell rectangle selection: clears rectangle, no split', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointAt('r0c1', 'r0c1b', 'r0c1s', 1)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'split'})
+
+    await vi.waitFor(() => {
+      const table = firstTable(editor.getSnapshot().context.value)
+      // Both touched cells cleared.
+      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
+      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
+      // No new blocks added inside either cell.
+      expect(table.rows[0]?.cells[0]?.content.length).toBe(1)
+      expect(table.rows[0]?.cells[1]?.content.length).toBe(1)
+    })
+  })
 })

@@ -1,4 +1,5 @@
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {deleteBehaviors} from './behaviors/delete'
 import {insertBehaviors} from './behaviors/insert'
 import {moveBehaviors} from './behaviors/move'
 import {unsetBehaviors} from './behaviors/unset'
@@ -17,7 +18,12 @@ export function TablePlugin(props: {components?: TableComponents} = {}) {
     <>
       <NodePlugin nodes={[buildTableContainer(props.components)]} />
       <BehaviorPlugin
-        behaviors={[...insertBehaviors, ...unsetBehaviors, ...moveBehaviors]}
+        behaviors={[
+          ...insertBehaviors,
+          ...unsetBehaviors,
+          ...moveBehaviors,
+          ...deleteBehaviors,
+        ]}
       />
     </>
   )
