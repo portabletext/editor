@@ -26,7 +26,7 @@ import {isTable} from './types'
 type RectangleGuard = {tablePath: Path; cellKeys: ReadonlyArray<string>}
 
 export const deleteBehaviors = [
-  defineBehavior<{}, 'delete', RectangleGuard>({
+  defineBehavior<Record<string, never>, 'delete', RectangleGuard>({
     on: 'delete',
     guard: ({snapshot}) => guardMultiCellRectangle(snapshot),
     actions: [
@@ -34,7 +34,7 @@ export const deleteBehaviors = [
         clearCellsAndCollapse(snapshot, tablePath, cellKeys),
     ],
   }),
-  defineBehavior<{}, 'split', RectangleGuard>({
+  defineBehavior<Record<string, never>, 'split', RectangleGuard>({
     on: 'split',
     guard: ({snapshot}) => guardMultiCellRectangle(snapshot),
     actions: [
@@ -60,7 +60,9 @@ function guardMultiCellRectangle(snapshot: Snapshot): RectangleGuard | false {
   const [colStart, colEnd] = tableSelection.colRange
   for (let r = rowStart; r <= rowEnd; r++) {
     const row = table.rows[r]
-    if (!row) continue
+    if (!row) {
+      continue
+    }
     for (let c = colStart; c <= colEnd; c++) {
       const cell = row.cells[c]
       if (cell) {

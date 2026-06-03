@@ -9,7 +9,8 @@ export type Table = PortableTextBlock & {
 }
 
 export function isRow(node: PortableTextBlock): node is Row {
-  return node._type === 'row' && 'cells' in node && Array.isArray(node.cells)
+  // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
+  return node._type === 'row' && 'cells' in node && Array.isArray(node['cells'])
 }
 
 export function isCell(node: PortableTextBlock): node is Cell {
@@ -17,7 +18,8 @@ export function isCell(node: PortableTextBlock): node is Cell {
 }
 
 export function isTable(node: PortableTextBlock): node is Table {
-  return node._type === 'table' && 'rows' in node && Array.isArray(node.rows)
+  // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
+  return node._type === 'table' && 'rows' in node && Array.isArray(node['rows'])
 }
 
 export type TableSelection = {
