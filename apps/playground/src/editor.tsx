@@ -46,7 +46,6 @@ import {useContext, useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import './editor.css'
-import {TablePlugin} from '@portabletext/plugin-table'
 import {EditorSettingsPopover} from './editor-settings-popover'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {
@@ -72,6 +71,7 @@ import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
+import {PlaygroundTablePlugin} from './plugins/plugin.table-ui'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {markdownOptions} from './previews/markdown-options'
 import {Button} from './primitives/button'
@@ -163,7 +163,7 @@ export function Editor(props: {
               {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
               {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
               {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
-              {featureFlags.tablePlugin ? <TablePlugin /> : null}
+              {featureFlags.tablePlugin ? <PlaygroundTablePlugin /> : null}
               <InlineObjectsPlugin />
               {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
               {featureFlags.mentionPickerPlugin ? (

@@ -216,12 +216,17 @@ table[data-pt-block='container'] {
 
 table[data-pt-block='container'] td {
   border: 1px solid rgb(226, 232, 240);
-  padding: 0.5rem 0.75rem;
+  padding: 0;
   vertical-align: top;
   background: rgb(248, 250, 252);
   color: rgb(15, 23, 42);
-  overflow: hidden;
   word-break: break-word;
+  /* overflow visible so absolute-positioned handles can escape the cell box */
+}
+
+table[data-pt-block='container'] td .pt-plugin-table-ui__cell-content {
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
 }
 
 :where(.dark) table[data-pt-block='container'] td {
@@ -256,4 +261,129 @@ table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
   td[data-pt-plugin-table-selected] {
   background: rgba(59, 130, 246, 0.18);
   box-shadow: inset 0 0 0 1px rgb(96, 165, 250);
+}
+
+/*
+ * Table UI affordances (playground-only). Handles are anchored inside
+ * the cells they control — row handle on the left edge of the first
+ * cell of each row, column handle on the top edge of each cell in the
+ * first row. The cells are `position: relative` so the handles sit on
+ * the cell edges via `translate(-50%, -50%)`. The open menu portals to
+ * `document.body` to escape any `overflow: hidden` on table wrappers.
+ * Hooks: `.pt-plugin-table-ui__*`.
+ */
+.pt-plugin-table-ui__cell {
+  position: relative;
+}
+
+.pt-plugin-table-ui__row-handle,
+.pt-plugin-table-ui__column-handle {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: rgb(255, 255, 255);
+  color: rgb(100, 116, 139);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease-out;
+  user-select: none;
+  z-index: 2;
+}
+
+.pt-plugin-table-ui__row-handle {
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pt-plugin-table-ui__column-handle {
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+table[data-pt-block='container']:hover .pt-plugin-table-ui__row-handle,
+table[data-pt-block='container']:hover .pt-plugin-table-ui__column-handle,
+.pt-plugin-table-ui__row-handle:focus-visible,
+.pt-plugin-table-ui__column-handle:focus-visible,
+.pt-plugin-table-ui__row-handle[aria-expanded='true'],
+.pt-plugin-table-ui__column-handle[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.pt-plugin-table-ui__row-handle:hover,
+.pt-plugin-table-ui__column-handle:hover {
+  background: rgb(241, 245, 249);
+  border-color: rgb(226, 232, 240);
+  color: rgb(30, 41, 59);
+}
+
+:where(.dark) .pt-plugin-table-ui__row-handle,
+:where(.dark) .pt-plugin-table-ui__column-handle {
+  background: rgb(15, 23, 42);
+  color: rgb(148, 163, 184);
+}
+
+:where(.dark) .pt-plugin-table-ui__row-handle:hover,
+:where(.dark) .pt-plugin-table-ui__column-handle:hover {
+  background: rgb(30, 41, 59);
+  border-color: rgb(51, 65, 85);
+  color: rgb(248, 250, 252);
+}
+
+.pt-plugin-table-ui__menu {
+  position: absolute;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: 4px;
+  border: 1px solid rgb(226, 232, 240);
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+:where(.dark) .pt-plugin-table-ui__menu {
+  background: rgb(30, 41, 59);
+  border-color: rgb(51, 65, 85);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.pt-plugin-table-ui__menu-item {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgb(30, 41, 59);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pt-plugin-table-ui__menu-item:hover:not(:disabled) {
+  background: rgb(241, 245, 249);
+}
+
+.pt-plugin-table-ui__menu-item:disabled {
+  color: rgb(148, 163, 184);
+  cursor: not-allowed;
+}
+
+:where(.dark) .pt-plugin-table-ui__menu-item {
+  color: rgb(248, 250, 252);
+}
+
+:where(.dark) .pt-plugin-table-ui__menu-item:hover:not(:disabled) {
+  background: rgb(51, 65, 85);
+}
+
+:where(.dark) .pt-plugin-table-ui__menu-item:disabled {
+  color: rgb(100, 116, 139);
 }
