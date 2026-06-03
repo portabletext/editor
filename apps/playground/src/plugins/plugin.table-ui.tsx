@@ -12,8 +12,14 @@ import {
   TablePlugin,
 } from '@portabletext/plugin-table'
 import {GripHorizontalIcon, GripVerticalIcon} from 'lucide-react'
-import {createContext, useContext, useEffect, useState} from 'react'
-import {createPortal} from 'react-dom'
+import {createContext, useContext} from 'react'
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuTrigger,
+  Popover,
+} from 'react-aria-components'
 
 type Cell = {_key: string}
 type Row = PortableTextBlock & {_key: string; cells: ReadonlyArray<Cell>}
@@ -29,10 +35,14 @@ const RowKeyCtx = createContext<{
 /**
  * Playground table UI: wraps the table/row/cell renders to add per-row
  * and per-column affordances that dispatch the plugin's existing
- * insert/unset behaviors. Handles are anchored inside the cells they
- * control — row handle in the first cell of each row, column handle in
- * each cell of the first row — and the open menu portals to
- * `document.body` to escape any `overflow: hidden` on table wrappers.
+ * insert/unset behaviors. The first row is always treated as the header
+ * row — its row handle disables row insertion above and deletion so the
+ * header stays in place.
+ *
+ * Handles are anchored inside the cells they control — row handle in
+ * the first cell of each row, column handle in each cell of the first
+ * row — and the action menu uses `react-aria-components` for portal
+ * rendering, focus management, and keyboard navigation.
  */
 export function PlaygroundTablePlugin() {
   return (
@@ -101,7 +111,7 @@ const PlaygroundCellRender: ContainerRender = (props) => {
   )
 }
 
-type MenuAction = {label: string; onSelect: () => void; disabled?: boolean}
+type ActionKey = string
 
 function RowHandle(props: {
   rowPath: Path
@@ -109,167 +119,110 @@ function RowHandle(props: {
   isHeaderRow: boolean
 }) {
   const editor = useEditor()
-  const actions: ReadonlyArray<MenuAction> = [
-    {
-      label: 'Insert row above',
-      onSelect: () =>
-        editor.send({
-          type: 'custom.insert.row',
-          at: props.rowPath,
-          position: 'before',
-        }),
-      disabled: props.isHeaderRow,
-    },
-    {
-      label: 'Insert row below',
-      onSelect: () =>
-        editor.send({
-          type: 'custom.insert.row',
-          at: props.rowPath,
-          position: 'after',
-        }),
-    },
-    {
-      label: 'Delete row',
-      onSelect: () =>
-        editor.send({type: 'custom.unset.row', at: props.rowPath}),
-      disabled: !props.canDelete,
-    },
-  ]
+  const handleAction = (key: ActionKey) => {
+    if (key === 'insert-above') {
+      editor.send({
+        type: 'custom.insert.row',
+        at: props.rowPath,
+        position: 'before',
+      })
+    } else if (key === 'insert-below') {
+      editor.send({
+        type: 'custom.insert.row',
+        at: props.rowPath,
+        position: 'after',
+      })
+    } else if (key === 'delete') {
+      editor.send({type: 'custom.unset.row', at: props.rowPath})
+    }
+  }
   return (
-    <Handle
-      className="pt-plugin-table-ui__row-handle"
-      label="Row actions"
-      actions={actions}
-    >
-      <GripVerticalIcon size={14} />
-    </Handle>
+    <MenuTrigger>
+      <Button
+        aria-label="Row actions"
+        className="pt-plugin-table-ui__row-handle"
+        excludeFromTabOrder
+        onPress={(event) => event.continuePropagation()}
+      >
+        <GripVerticalIcon size={14} />
+      </Button>
+      <Popover className="pt-plugin-table-ui__popover" placement="bottom start">
+        <Menu
+          className="pt-plugin-table-ui__menu"
+          onAction={(key) => handleAction(String(key))}
+        >
+          <MenuItem
+            id="insert-above"
+            className="pt-plugin-table-ui__menu-item"
+            isDisabled={props.isHeaderRow}
+          >
+            Insert row above
+          </MenuItem>
+          <MenuItem id="insert-below" className="pt-plugin-table-ui__menu-item">
+            Insert row below
+          </MenuItem>
+          <MenuItem
+            id="delete"
+            className="pt-plugin-table-ui__menu-item"
+            isDisabled={!props.canDelete}
+          >
+            Delete row
+          </MenuItem>
+        </Menu>
+      </Popover>
+    </MenuTrigger>
   )
 }
 
 function ColumnHandle(props: {cellPath: Path; canDelete: boolean}) {
   const editor = useEditor()
-  const actions: ReadonlyArray<MenuAction> = [
-    {
-      label: 'Insert column left',
-      onSelect: () =>
-        editor.send({
-          type: 'custom.insert.column',
-          at: props.cellPath,
-          position: 'before',
-        }),
-    },
-    {
-      label: 'Insert column right',
-      onSelect: () =>
-        editor.send({
-          type: 'custom.insert.column',
-          at: props.cellPath,
-          position: 'after',
-        }),
-    },
-    {
-      label: 'Delete column',
-      onSelect: () =>
-        editor.send({type: 'custom.unset.column', at: props.cellPath}),
-      disabled: !props.canDelete,
-    },
-  ]
-  return (
-    <Handle
-      className="pt-plugin-table-ui__column-handle"
-      label="Column actions"
-      actions={actions}
-    >
-      <GripHorizontalIcon size={14} />
-    </Handle>
-  )
-}
-
-function Handle(props: {
-  className: string
-  label: string
-  actions: ReadonlyArray<MenuAction>
-  children: React.ReactNode
-}) {
-  const [menu, setMenu] = useState<{anchorRect: DOMRect} | null>(null)
-  return (
-    <>
-      <button
-        type="button"
-        aria-label={props.label}
-        aria-haspopup="menu"
-        aria-expanded={menu !== null}
-        contentEditable={false}
-        className={props.className}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={(event) => {
-          const anchorRect = event.currentTarget.getBoundingClientRect()
-          setMenu((current) => (current ? null : {anchorRect}))
-        }}
-      >
-        {props.children}
-      </button>
-      {menu ? (
-        <PortalMenu
-          anchorRect={menu.anchorRect}
-          actions={props.actions}
-          onClose={() => setMenu(null)}
-        />
-      ) : null}
-    </>
-  )
-}
-
-function PortalMenu(props: {
-  anchorRect: DOMRect
-  actions: ReadonlyArray<MenuAction>
-  onClose: () => void
-}) {
-  const {anchorRect, actions, onClose} = props
-
-  useEffect(() => {
-    function handleDocumentMouseDown(event: MouseEvent) {
-      const target = event.target as Node | null
-      if (!target) {
-        return
-      }
-      const menu = document.querySelector('[data-pt-plugin-table-ui-menu]')
-      if (menu && menu.contains(target)) {
-        return
-      }
-      onClose()
+  const handleAction = (key: ActionKey) => {
+    if (key === 'insert-left') {
+      editor.send({
+        type: 'custom.insert.column',
+        at: props.cellPath,
+        position: 'before',
+      })
+    } else if (key === 'insert-right') {
+      editor.send({
+        type: 'custom.insert.column',
+        at: props.cellPath,
+        position: 'after',
+      })
+    } else if (key === 'delete') {
+      editor.send({type: 'custom.unset.column', at: props.cellPath})
     }
-    document.addEventListener('mousedown', handleDocumentMouseDown)
-    return () =>
-      document.removeEventListener('mousedown', handleDocumentMouseDown)
-  }, [onClose])
-
-  const top = anchorRect.bottom + window.scrollY + 4
-  const left = anchorRect.left + window.scrollX
-
-  return createPortal(
-    <div
-      data-pt-plugin-table-ui-menu=""
-      className="pt-plugin-table-ui__menu"
-      style={{top, left}}
-    >
-      {actions.map((action) => (
-        <button
-          key={action.label}
-          type="button"
-          className="pt-plugin-table-ui__menu-item"
-          disabled={action.disabled}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => {
-            action.onSelect()
-            onClose()
-          }}
+  }
+  return (
+    <MenuTrigger>
+      <Button
+        aria-label="Column actions"
+        className="pt-plugin-table-ui__column-handle"
+        excludeFromTabOrder
+        onPress={(event) => event.continuePropagation()}
+      >
+        <GripHorizontalIcon size={14} />
+      </Button>
+      <Popover className="pt-plugin-table-ui__popover" placement="bottom start">
+        <Menu
+          className="pt-plugin-table-ui__menu"
+          onAction={(key) => handleAction(String(key))}
         >
-          {action.label}
-        </button>
-      ))}
-    </div>,
-    document.body,
+          <MenuItem id="insert-left" className="pt-plugin-table-ui__menu-item">
+            Insert column left
+          </MenuItem>
+          <MenuItem id="insert-right" className="pt-plugin-table-ui__menu-item">
+            Insert column right
+          </MenuItem>
+          <MenuItem
+            id="delete"
+            className="pt-plugin-table-ui__menu-item"
+            isDisabled={!props.canDelete}
+          >
+            Delete column
+          </MenuItem>
+        </Menu>
+      </Popover>
+    </MenuTrigger>
   )
 }
