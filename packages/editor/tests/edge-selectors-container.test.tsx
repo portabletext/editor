@@ -8,7 +8,7 @@ import {isOverlappingSelection} from '../src/selectors/selector.is-overlapping-s
 import {isPointAfterSelection} from '../src/selectors/selector.is-point-after-selection'
 import {isPointBeforeSelection} from '../src/selectors/selector.is-point-before-selection'
 import {createTestEditor} from '../src/test/vitest'
-import {comparePoints} from '../src/utils/util.compare-points'
+import {comparePoints} from '../src/traversal/compare-points'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
