@@ -12,8 +12,8 @@ import type {Operation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeIntersection} from '../engine/range/range-intersection'
+import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
-import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeContains} from '../traversal/range-contains'
 import type {RangeDecoration} from '../types/editor'
@@ -154,7 +154,11 @@ export const rangeDecorationsMachine = setup({
           continue
         }
 
-        const newRange = moveRangeByOperation(currentSelection, event.operation)
+        const newRange = transformRange(
+          currentSelection,
+          event.operation,
+          context.editorEngine.snapshot.context,
+        )
 
         if (
           (newRange && newRange !== currentSelection) ||

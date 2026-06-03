@@ -4,6 +4,11 @@ import type {Range, RangeTransformOptions} from '../interfaces/range'
 import {transformPoint} from '../point/transform-point'
 import {resolveRangeAffinities} from './resolve-range-affinities'
 
+/**
+ * Transform a range by an operation. Returns the same `range` reference when
+ * neither endpoint moved, so callers can use referential equality to detect
+ * "nothing changed."
+ */
 export function transformRange(
   range: Range | null,
   op: Operation,
@@ -28,6 +33,10 @@ export function transformRange(
 
   if (!anchor || !focus) {
     return null
+  }
+
+  if (anchor === range.anchor && focus === range.focus) {
+    return range
   }
 
   return {anchor, focus}
