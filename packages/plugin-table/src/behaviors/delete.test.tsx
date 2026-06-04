@@ -339,6 +339,12 @@ describe('delete behaviors within tables', () => {
       expect(table.rows.length).toBe(2)
       expect(table.rows[0]?.cells.length).toBe(2)
     })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
   })
 
   test('delete on multi-cell rectangle in same row: clears both, leaves other row untouched', async () => {
@@ -363,6 +369,12 @@ describe('delete behaviors within tables', () => {
       expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('CC')
       expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('DD')
     })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
   })
 
   test('split (Enter) with multi-cell rectangle selection: clears rectangle, no split', async () => {
@@ -386,6 +398,12 @@ describe('delete behaviors within tables', () => {
       // No new blocks added inside either cell.
       expect(table.rows[0]?.cells[0]?.content.length).toBe(1)
       expect(table.rows[0]?.cells[1]?.content.length).toBe(1)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
   })
 })
