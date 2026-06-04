@@ -1,6 +1,6 @@
 import type {Operation} from '../engine/interfaces/operation'
+import type {Range} from '../engine/interfaces/range'
 import {pathEquals} from '../engine/path/path-equals'
-import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 type UndoStep = {
   operations: Array<Operation>
@@ -10,30 +10,35 @@ type UndoStep = {
 export function createUndoSteps({
   steps,
   op,
-  editor,
   currentUndoStepId,
   previousUndoStepId,
+  operationsInProgress,
+  isNormalizingNode,
+  selectionBeforeApply,
 }: {
   steps: Array<UndoStep>
   op: Operation
-  editor: PortableTextEditorEngine
   currentUndoStepId: string | undefined
   previousUndoStepId: string | undefined
+  /** Snapshots of pre-apply editor state — volatile during apply. */
+  operationsInProgress: boolean
+  isNormalizingNode: boolean
+  selectionBeforeApply: Range | null
 }): Array<UndoStep> {
   const lastStep = steps.at(-1)
 
   if (!lastStep) {
-    return createNewStep(steps, op, editor)
+    return createNewStep(steps, op, selectionBeforeApply)
   }
 
-  if (editor.operations.length > 0) {
-    // The editor has operations in progress
+  if (operationsInProgress) {
+    // The editor had operations in progress when apply started.
 
-    if (currentUndoStepId === previousUndoStepId || editor.isNormalizingNode) {
+    if (currentUndoStepId === previousUndoStepId || isNormalizingNode) {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
-    return createNewStep(steps, op, editor)
+    return createNewStep(steps, op, selectionBeforeApply)
   }
 
   if (
@@ -84,7 +89,7 @@ export function createUndoSteps({
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
-    return createNewStep(steps, op, editor)
+    return createNewStep(steps, op, selectionBeforeApply)
   }
 
   // Handle case when both IDs are defined but different (e.g., consecutive
@@ -118,22 +123,22 @@ export function createUndoSteps({
     }
   }
 
-  return createNewStep(steps, op, editor)
+  return createNewStep(steps, op, selectionBeforeApply)
 }
 
 function createNewStep(
   steps: Array<UndoStep>,
   op: Operation,
-  editor: PortableTextEditorEngine,
+  selectionBeforeApply: Range | null,
 ): Array<UndoStep> {
   const operations =
-    editor.snapshot.context.selection === null
+    selectionBeforeApply === null
       ? [op]
       : [
           {
             type: 'set_selection' as const,
-            properties: {...editor.snapshot.context.selection},
-            newProperties: {...editor.snapshot.context.selection},
+            properties: {...selectionBeforeApply},
+            newProperties: {...selectionBeforeApply},
           },
           op,
         ]

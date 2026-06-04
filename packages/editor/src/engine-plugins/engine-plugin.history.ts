@@ -99,6 +99,24 @@ export function createHistoryPlugin({
         return
       }
 
+      // Snapshot pre-apply state — these fields are all volatile during apply.
+      const operationsInProgress = editor.operations.length > 0
+      const isNormalizingNode = editor.isNormalizingNode
+      const selectionBeforeApply = editor.snapshot.context.selection
+
+      apply(op)
+
+      const isNoOp =
+        ((op.type === 'set' || op.type === 'unset' || op.type === 'insert') &&
+          !op.inverse) ||
+        ((op.type === 'insert_text' || op.type === 'remove_text') &&
+          op.text.length === 0)
+
+      if (isNoOp) {
+        previousUndoStepId = currentUndoStepId
+        return
+      }
+
       if (op.type !== 'set_selection') {
         // Clear the redo steps if any actual changes are made
         if (editor.history.redos.length > 0) {
@@ -109,9 +127,11 @@ export function createHistoryPlugin({
       editor.history.undos = createUndoSteps({
         steps: editor.history.undos,
         op,
-        editor,
         currentUndoStepId,
         previousUndoStepId,
+        operationsInProgress,
+        isNormalizingNode,
+        selectionBeforeApply,
       })
 
       // Make sure we don't exceed the maximum number of undo steps we want
@@ -121,8 +141,6 @@ export function createHistoryPlugin({
       }
 
       previousUndoStepId = currentUndoStepId
-
-      apply(op)
     }
 
     return editor
