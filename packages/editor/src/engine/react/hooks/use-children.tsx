@@ -242,7 +242,7 @@ const useChildren = (props: {
       return true
     }
     if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
-      if (editor.textBlocks.has(n._type)) {
+      if (editor.textBlocks.has(n._type) || editor.textBlocks.has('*')) {
         return true
       }
       if (parentContainer?.of) {
@@ -265,7 +265,7 @@ const useChildren = (props: {
         return false
       }
       // Block object position
-      if (editor.blockObjects.has(n._type)) {
+      if (editor.blockObjects.has(n._type) || editor.blockObjects.has('*')) {
         return true
       }
       if (parentContainer?.of) {

@@ -36,27 +36,7 @@ import {
   useIsFocusedContainer,
   useIsSelectedContainer,
 } from './selection-state-context'
-
-/**
- * Reference-equality comparator for fixed-length tuples. Each slot is
- * compared via `Object.is`; the tuple is considered equal when every
- * slot's reference is unchanged. Lets a multi-slot `useSelector` skip
- * re-renders unless one of the slots actually changes.
- */
-function tupleRefEqual<T extends readonly unknown[]>(
-  previous: T | null,
-  next: T,
-): boolean {
-  if (previous === null || previous.length !== next.length) {
-    return false
-  }
-  for (let i = 0; i < previous.length; i++) {
-    if (!Object.is(previous[i], next[i])) {
-      return false
-    }
-  }
-  return true
-}
+import {tupleRefEqual} from './tuple-ref-equal'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
@@ -96,16 +76,22 @@ export function RenderElement(props: {
   const [
     globalContainerConfig,
     globalBlockObjectConfig,
+    globalBlockObjectCatchAll,
     globalInlineObjectConfig,
+    globalInlineObjectCatchAll,
     textBlockConfig,
+    textBlockCatchAll,
   ] = useEngineSelector(
     useCallback(
       (engine) =>
         [
           engine.containers.get(type),
           engine.blockObjects.get(type),
+          engine.blockObjects.get('*'),
           engine.inlineObjects.get(type),
+          engine.inlineObjects.get('*'),
           engine.textBlocks.get(type),
+          engine.textBlocks.get('*'),
         ] as const,
       [type],
     ),
@@ -136,8 +122,8 @@ export function RenderElement(props: {
     if (blockPositionalOverride && 'textBlock' in blockPositionalOverride) {
       return blockPositionalOverride
     }
-    return textBlockConfig
-  }, [blockPositionalOverride, textBlockConfig])
+    return textBlockConfig ?? textBlockCatchAll
+  }, [blockPositionalOverride, textBlockConfig, textBlockCatchAll])
 
   // Resolve which text-block config (if any) supplies a `render` at
   // this position. Mirrors the shape used by `containerConfig` /
@@ -147,28 +133,32 @@ export function RenderElement(props: {
   const renderableTextBlockConfig = useMemo<TextBlockConfig | undefined>(() => {
     if (blockPositionalOverride && 'textBlock' in blockPositionalOverride) {
       if (blockPositionalOverride.textBlock.render === undefined) {
-        return textBlockConfig
+        return textBlockConfig ?? textBlockCatchAll
       }
       return blockPositionalOverride
     }
-    return textBlockConfig
-  }, [blockPositionalOverride, textBlockConfig])
+    return textBlockConfig ?? textBlockCatchAll
+  }, [blockPositionalOverride, textBlockConfig, textBlockCatchAll])
 
   const blockObjectConfig = useMemo<BlockObjectConfig | undefined>(() => {
     if (blockPositionalOverride && 'blockObject' in blockPositionalOverride) {
       // Positional undefined render falls through to global; function
       // render is used at this position.
       if (blockPositionalOverride.blockObject.render === undefined) {
-        // Fall through to global.
-        return globalBlockObjectConfig
+        return globalBlockObjectConfig ?? globalBlockObjectCatchAll
       }
       return blockPositionalOverride
     }
     if (containerConfig) {
       return undefined
     }
-    return globalBlockObjectConfig
-  }, [blockPositionalOverride, globalBlockObjectConfig, containerConfig])
+    return globalBlockObjectConfig ?? globalBlockObjectCatchAll
+  }, [
+    blockPositionalOverride,
+    globalBlockObjectConfig,
+    globalBlockObjectCatchAll,
+    containerConfig,
+  ])
 
   // Inline-object positional override comes from the parent TEXT
   // BLOCK's `of`, not the parent container's.
@@ -178,15 +168,20 @@ export function RenderElement(props: {
       'inlineObject' in inlinePositionalOverride
     ) {
       if (inlinePositionalOverride.inlineObject.render === undefined) {
-        return globalInlineObjectConfig
+        return globalInlineObjectConfig ?? globalInlineObjectCatchAll
       }
       return inlinePositionalOverride
     }
     if (containerConfig) {
       return undefined
     }
-    return globalInlineObjectConfig
-  }, [inlinePositionalOverride, globalInlineObjectConfig, containerConfig])
+    return globalInlineObjectConfig ?? globalInlineObjectCatchAll
+  }, [
+    inlinePositionalOverride,
+    globalInlineObjectConfig,
+    globalInlineObjectCatchAll,
+    containerConfig,
+  ])
 
   if (containerConfig) {
     return (
