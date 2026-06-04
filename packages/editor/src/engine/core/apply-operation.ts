@@ -219,28 +219,22 @@ export function applyOperation(editor: Editor, op: Operation): void {
             return {...node, [propertyName]: value} as typeof node
           })
 
-          // Update blockIndexMap when _key changes on a root-level block
-          if (propertyName === '_key' && setNodePath.length === 1) {
-            if (op.inverse) {
-              const oldKey =
-                op.inverse.type === 'set' ? op.inverse.value : undefined
-              const newKey = value
-              if (typeof oldKey === 'string' && typeof newKey === 'string') {
-                const blockIndex = editor.blockIndexMap.get(oldKey)
-                if (blockIndex !== undefined) {
-                  editor.blockIndexMap.delete(oldKey)
-                  editor.blockIndexMap.set(newKey, blockIndex)
-                }
-              }
-            } else {
-              // No inverse data: full rebuild
-              editor.blockIndexMap.clear()
-              for (let i = 0; i < editor.snapshot.context.value.length; i++) {
-                const child = editor.snapshot.context.value[i]
-                if (child) {
-                  editor.blockIndexMap.set(child._key, i)
-                }
-              }
+          // Update blockIndexMap when _key changes on a root-level block.
+          // The preamble above guarantees op.inverse is populated; if it's a
+          // 'set' (existing key being renamed), the surgical delete+set keeps
+          // the map consistent. A 'unset' inverse means the node didn't have
+          // a _key before — no map entry to migrate, nothing to do.
+          if (
+            propertyName === '_key' &&
+            setNodePath.length === 1 &&
+            op.inverse?.type === 'set' &&
+            typeof op.inverse.value === 'string' &&
+            typeof value === 'string'
+          ) {
+            const blockIndex = editor.blockIndexMap.get(op.inverse.value)
+            if (blockIndex !== undefined) {
+              editor.blockIndexMap.delete(op.inverse.value)
+              editor.blockIndexMap.set(value, blockIndex)
             }
           }
         } else {
