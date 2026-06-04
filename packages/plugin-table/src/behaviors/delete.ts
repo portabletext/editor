@@ -1,8 +1,4 @@
-import type {
-  EditorSelectionPoint,
-  Path,
-  PortableTextBlock,
-} from '@portabletext/editor'
+import type {EditorSelectionPoint, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {getLeaf} from '@portabletext/editor/traversal'
 import {isKeyedSegment} from '@portabletext/editor/utils'
@@ -127,22 +123,7 @@ function clearCellsAndCollapse(
   return actions
 }
 
-type TableNode = PortableTextBlock & {
-  _key: string
-  rows: ReadonlyArray<RowNode>
-}
-
-type RowNode = {
-  _key: string
-  cells: ReadonlyArray<CellNode>
-}
-
-type CellNode = {
-  _key: string
-  content: ReadonlyArray<{_key: string}>
-}
-
-function findTable(snapshot: Snapshot, tablePath: Path): TableNode | null {
+function findTable(snapshot: Snapshot, tablePath: Path) {
   const tableSegment = tablePath[0]
   if (!isKeyedSegment(tableSegment)) {
     return null
@@ -153,5 +134,5 @@ function findTable(snapshot: Snapshot, tablePath: Path): TableNode | null {
   if (!block || !isTable(block)) {
     return null
   }
-  return block as TableNode
+  return block
 }
