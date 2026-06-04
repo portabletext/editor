@@ -85,29 +85,35 @@ function clearCellsAndCollapse(
   if (!table) {
     return []
   }
+  // Unset every block inside each cell's `content` array. Targeting keyed
+  // child paths (rather than the whole `content` field) keeps inverse
+  // data attached to each operation, so `history.undo` restores the
+  // original content. Normalization repopulates each cleared cell with a
+  // single empty text block.
   const actions = []
   let topLeftCellPath: Path | null = null
   for (const row of table.rows) {
     for (const cell of row.cells) {
-      if (cellKeys.includes(cell._key)) {
-        const cellContentPath: Path = [
-          ...tablePath,
-          'rows',
-          {_key: row._key},
-          'cells',
-          {_key: cell._key},
-          'content',
-        ]
-        actions.push(raise({type: 'unset', at: cellContentPath}))
-        if (topLeftCellPath === null) {
-          topLeftCellPath = [
-            ...tablePath,
-            'rows',
-            {_key: row._key},
-            'cells',
-            {_key: cell._key},
-          ]
-        }
+      if (!cellKeys.includes(cell._key)) {
+        continue
+      }
+      const cellPath: Path = [
+        ...tablePath,
+        'rows',
+        {_key: row._key},
+        'cells',
+        {_key: cell._key},
+      ]
+      if (topLeftCellPath === null) {
+        topLeftCellPath = cellPath
+      }
+      for (const block of cell.content) {
+        actions.push(
+          raise({
+            type: 'unset',
+            at: [...cellPath, 'content', {_key: block._key}],
+          }),
+        )
       }
     }
   }
@@ -133,6 +139,7 @@ type RowNode = {
 
 type CellNode = {
   _key: string
+  content: ReadonlyArray<{_key: string}>
 }
 
 function findTable(snapshot: Snapshot, tablePath: Path): TableNode | null {
