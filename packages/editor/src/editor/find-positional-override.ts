@@ -18,7 +18,7 @@ export function findBlockPositionalOverride(
   if (!parentConfig?.of) {
     return undefined
   }
-  return parentConfig.of.find((entry) => {
+  const specific = parentConfig.of.find((entry) => {
     if ('container' in entry) {
       return entry.container.type === type
     }
@@ -26,6 +26,19 @@ export function findBlockPositionalOverride(
       return entry.textBlock.type === type
     }
     return entry.blockObject.type === type
+  })
+  if (specific) {
+    return specific
+  }
+  // Catch-all fallback. Containers are not eligible for `'*'`.
+  return parentConfig.of.find((entry) => {
+    if ('container' in entry) {
+      return false
+    }
+    if ('textBlock' in entry) {
+      return entry.textBlock.type === '*'
+    }
+    return entry.blockObject.type === '*'
   })
 }
 
@@ -41,10 +54,19 @@ export function findInlinePositionalOverride(
   if (!parentTextBlock?.of) {
     return undefined
   }
-  return parentTextBlock.of.find((entry) => {
+  const specific = parentTextBlock.of.find((entry) => {
     if ('span' in entry) {
       return entry.span.type === type
     }
     return entry.inlineObject.type === type
+  })
+  if (specific) {
+    return specific
+  }
+  return parentTextBlock.of.find((entry) => {
+    if ('span' in entry) {
+      return entry.span.type === '*'
+    }
+    return entry.inlineObject.type === '*'
   })
 }

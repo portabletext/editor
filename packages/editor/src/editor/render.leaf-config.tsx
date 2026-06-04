@@ -9,6 +9,7 @@ import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
 import type {SpanConfig} from '../renderers/renderer.types'
 import {findInlinePositionalOverride} from './find-positional-override'
 import {ParentTextBlockContext} from './parent-text-block-context'
+import {tupleRefEqual} from './tuple-ref-equal'
 
 /**
  * Hook: resolve the registered span config for the span at `node`, or
@@ -27,16 +28,21 @@ export function useSpanConfig(
 ): SpanConfig | undefined {
   const parentTextBlock = useContext(ParentTextBlockContext)
   const positional = findInlinePositionalOverride(parentTextBlock, node._type)
-  const globalSpan = useEngineSelector(
-    useCallback((engine) => engine.spans.get(node._type), [node._type]),
+  const [globalSpan, globalSpanCatchAll] = useEngineSelector(
+    useCallback(
+      (engine) =>
+        [engine.spans.get(node._type), engine.spans.get('*')] as const,
+      [node._type],
+    ),
+    tupleRefEqual,
   )
   if (positional && 'span' in positional) {
     // Positional present: undefined render falls through to global;
     // function render is used at this position.
     if (positional.span.render === undefined) {
-      return globalSpan
+      return globalSpan ?? globalSpanCatchAll
     }
     return positional
   }
-  return globalSpan
+  return globalSpan ?? globalSpanCatchAll
 }

@@ -331,7 +331,9 @@ export function defineContainer<const TType extends string>(config: {
     ? "Error: defineContainer({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
     : TType extends 'block'
       ? "Error: defineContainer({type: 'block'}) is forbidden -- 'block' is always a text block, use defineTextBlock"
-      : TType
+      : TType extends '*'
+        ? "Error: defineContainer({type: '*'}) is forbidden -- containers cannot be registered by wildcard"
+        : TType
   arrayField: string
   render?: (props: {
     attributes: Record<string, unknown>
