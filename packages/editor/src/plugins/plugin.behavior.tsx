@@ -4,6 +4,13 @@ import {useEditor} from '../editor/use-editor'
 
 /**
  * @beta
+ *
+ * Plugin component that registers a list of `Behavior`s with the editor.
+ *
+ * Stabilize the `behaviors` array (a module-level constant or `useMemo`)
+ * to avoid a full unregister/re-register cycle on every parent render: a
+ * new array reference per render triggers the registration effect to
+ * re-run.
  */
 export function BehaviorPlugin(props: {behaviors: Array<Behavior>}) {
   const editor = useEditor()
