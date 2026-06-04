@@ -5,6 +5,7 @@ import {
 } from '@portabletext/patches'
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
+import {getValue} from '../../internal-utils/get-value'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getNode} from '../../traversal/get-node'
 import {getNodes} from '../../traversal/get-nodes'
@@ -157,6 +158,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
     case 'set': {
       const {path, value} = op
 
+      if (!op.inverse && !editor.isProcessingRemoteChanges) {
+        const previousValue = getValue(editor.snapshot.context.value, path)
+        op.inverse =
+          previousValue === undefined
+            ? {type: 'unset', path}
+            : {type: 'set', path, value: previousValue}
+      }
+
       // Root-level value replacement: set editor.snapshot.context.value directly
       if (path.length === 0) {
         if (Array.isArray(value)) {
@@ -275,6 +284,13 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       // Root-level unset: remove all children
       if (path.length === 0) {
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          op.inverse = {
+            type: 'set',
+            path,
+            value: editor.snapshot.context.value,
+          }
+        }
         editor.snapshot.context.value = []
         editor.blockIndexMap.clear()
         transformSelection = true
@@ -415,6 +431,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       if (unsetPropertyPath.length === 0 || unsetNodePath.length === 0) {
         break
+      }
+
+      if (!op.inverse && !editor.isProcessingRemoteChanges) {
+        const previousValue = getValue(editor.snapshot.context.value, path)
+        if (previousValue === undefined) {
+          break
+        }
+        op.inverse = {type: 'set', path, value: previousValue}
       }
 
       // Check if the node path resolves to a known node
