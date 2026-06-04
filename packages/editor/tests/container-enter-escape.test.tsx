@@ -25,6 +25,28 @@ const codeBlockContainer = defineContainer({
   ),
 })
 
+const calloutSchema = defineSchema({
+  lists: [{name: 'bullet'}, {name: 'number'}],
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}],
+        },
+      ],
+    },
+  ],
+})
+
+const calloutContainer = defineContainer({
+  type: 'callout',
+  arrayField: 'content',
+  render: ({children}) => <>{children}</>,
+})
+
 describe('container Enter escape', () => {
   test('Scenario: Enter on empty last line with empty previous sibling escapes to editor root', async () => {
     const keyGenerator = createTestKeyGenerator()
@@ -237,6 +259,138 @@ describe('container Enter escape', () => {
               style: 'normal',
             },
           ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Enter on empty trailing list item clears the list marker before container-escape kicks in', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const item1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const item2Key = keyGenerator()
+    const span2Key = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: item1Key,
+              children: [
+                {_type: 'span', _key: span1Key, text: 'First item', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+              listItem: 'bullet',
+              level: 1,
+            },
+            {
+              _type: 'block',
+              _key: item2Key,
+              children: [{_type: 'span', _key: span2Key, text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+              listItem: 'bullet',
+              level: 1,
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[calloutContainer]} />,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: item2Key},
+            'children',
+            {_key: span2Key},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: item2Key},
+            'children',
+            {_key: span2Key},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: item1Key,
+              children: [
+                {_type: 'span', _key: span1Key, text: 'First item', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+              listItem: 'bullet',
+              level: 1,
+            },
+            {
+              _type: 'block',
+              _key: item2Key,
+              children: [{_type: 'span', _key: span2Key, text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'insert.break'})
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: item1Key,
+              children: [
+                {_type: 'span', _key: span1Key, text: 'First item', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+              listItem: 'bullet',
+              level: 1,
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: 'k9',
+          children: [{_type: 'span', _key: 'k10', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
         },
       ])
     })
