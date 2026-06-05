@@ -49,7 +49,7 @@
     "@mdit/plugin-alert": "^0.23.2",
     "@portabletext/schema": "workspace:^",
     "@portabletext/toolkit": "^5.0.2",
-    "markdown-it": "^14.1.1"
+    "markdown-it": "^14.2.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
