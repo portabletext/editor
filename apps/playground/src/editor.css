@@ -203,7 +203,11 @@
 /**
  * Tables — chrome leaning on the playground's slate palette.
  * Hooks: `[data-pt-block='container']` (engine), `data-pt-plugin-table-header-row`,
- * `data-pt-plugin-table-selected` (cells).
+ * `data-pt-plugin-table-selected` (cells in the rectangular selection),
+ * `data-pt-plugin-table-selected-edge-{top,right,bottom,left}` (per cell —
+ * marks which sides of the cell are on the selection rectangle's
+ * perimeter; the CSS targets those sides to draw a single outline
+ * around the rectangle instead of a ring per cell).
  */
 table[data-pt-block='container'] {
   width: 100%;
@@ -250,17 +254,65 @@ table[data-pt-block='container'] tr:first-child td {
   border-color: rgb(100, 116, 139);
 }
 
-/* Rectangle selection: tint each cell + blue ring. */
+/*
+ * Rectangle selection. Each cell in the rectangle is tinted; the
+ * rectangle's outline is drawn one edge at a time on the cells that
+ * own that edge of the perimeter. Interior gridlines between selected
+ * cells stay the regular cell border.
+ */
 table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
-  background: rgba(59, 130, 246, 0.12);
-  box-shadow: inset 0 0 0 1px rgb(59, 130, 246);
+  background: rgba(85, 107, 252, 0.06);
+}
+
+table[data-pt-block='container'] tr td[data-pt-plugin-table-selected-edge-top] {
+  border-top-color: rgb(85, 107, 252);
+  border-top-width: 1.5px;
+}
+
+table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-right] {
+  border-right-color: rgb(85, 107, 252);
+  border-right-width: 1.5px;
+}
+
+table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-bottom] {
+  border-bottom-color: rgb(85, 107, 252);
+  border-bottom-width: 1.5px;
+}
+
+table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-left] {
+  border-left-color: rgb(85, 107, 252);
+  border-left-width: 1.5px;
 }
 
 :where(.dark)
   table[data-pt-block='container']
   td[data-pt-plugin-table-selected] {
-  background: rgba(59, 130, 246, 0.18);
-  box-shadow: inset 0 0 0 1px rgb(96, 165, 250);
+  background: rgba(129, 140, 248, 0.12);
+}
+
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-top],
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-right],
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-bottom],
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-left] {
+  border-color: rgb(129, 140, 248);
 }
 
 /*
