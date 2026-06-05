@@ -275,28 +275,28 @@ table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
 
 table[data-pt-block='container'] tr td[data-pt-plugin-table-selected-edge-top] {
   border-top-color: rgb(85, 107, 252);
-  border-top-width: 1.5px;
+  border-top-width: 2px;
 }
 
 table[data-pt-block='container']
   tr
   td[data-pt-plugin-table-selected-edge-right] {
   border-right-color: rgb(85, 107, 252);
-  border-right-width: 1.5px;
+  border-right-width: 2px;
 }
 
 table[data-pt-block='container']
   tr
   td[data-pt-plugin-table-selected-edge-bottom] {
   border-bottom-color: rgb(85, 107, 252);
-  border-bottom-width: 1.5px;
+  border-bottom-width: 2px;
 }
 
 table[data-pt-block='container']
   tr
   td[data-pt-plugin-table-selected-edge-left] {
   border-left-color: rgb(85, 107, 252);
-  border-left-width: 1.5px;
+  border-left-width: 2px;
 }
 
 :where(.dark)
