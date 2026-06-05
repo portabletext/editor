@@ -454,3 +454,174 @@ describe(toTextspec.name, () => {
     )
   })
 })
+
+describe('toTextspec(): nested-`of` container registration', () => {
+  // Plugin-table-shaped registration: a single top-level container that
+  // declares its children positionally inside `of`, not as separate
+  // top-level registrations.
+  const nestedTableContainers: Containers = resolveContainers(schema, [
+    {
+      type: 'table',
+      arrayField: 'rows',
+      of: [
+        {
+          kind: 'container',
+          type: 'tableRow',
+          arrayField: 'cells',
+          of: [
+            {
+              kind: 'container',
+              type: 'tableCell',
+              arrayField: 'content',
+            },
+          ],
+        },
+      ],
+    },
+  ])
+
+  test('nested table with single cell recurses into positionally-registered row + cell', () => {
+    const value = [
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'tableRow',
+            _key: 'r0',
+            cells: [
+              {
+                _type: 'tableCell',
+                _key: 'c0',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'hello', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ] as Array<PortableTextBlock>
+    expect(
+      toTextspec({
+        schema,
+        value,
+        selection: null,
+        containers: nestedTableContainers,
+      }),
+    ).toBe('TABLE:\n  TABLEROW:\n    TABLECELL:\n      B: hello')
+  })
+
+  test('nested 2x2 table recurses through positional registrations', () => {
+    const value = [
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'tableRow',
+            _key: 'r0',
+            cells: [
+              {
+                _type: 'tableCell',
+                _key: 'c00',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b00',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 's00', text: 'a', marks: []},
+                    ],
+                  },
+                ],
+              },
+              {
+                _type: 'tableCell',
+                _key: 'c01',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b01',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 's01', text: 'b', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            _type: 'tableRow',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'tableCell',
+                _key: 'c10',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b10',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 's10', text: 'c', marks: []},
+                    ],
+                  },
+                ],
+              },
+              {
+                _type: 'tableCell',
+                _key: 'c11',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b11',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 's11', text: 'd', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ] as Array<PortableTextBlock>
+    expect(
+      toTextspec({
+        schema,
+        value,
+        selection: null,
+        containers: nestedTableContainers,
+      }),
+    ).toBe(
+      [
+        'TABLE:',
+        '  TABLEROW:',
+        '    TABLECELL:',
+        '      B: a',
+        '    TABLECELL:',
+        '      B: b',
+        '  TABLEROW:',
+        '    TABLECELL:',
+        '      B: c',
+        '    TABLECELL:',
+        '      B: d',
+      ].join('\n'),
+    )
+  })
+})
