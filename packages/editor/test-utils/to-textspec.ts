@@ -14,7 +14,10 @@ import type {
   TextBlock,
   Selection as TextspecSelection,
 } from '@textspec/notation'
-import type {Containers} from '../src/schema/resolve-containers'
+import type {
+  Containers,
+  RegisteredContainer,
+} from '../src/schema/resolve-containers'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
 /**
@@ -351,18 +354,20 @@ function convertBlockToTextspec(
   containers: Containers,
   annotationKeys: Map<string, string> | undefined,
   block: PortableTextBlock,
+  parent?: RegisteredContainer,
 ): Block {
   if (isTextBlock({schema}, block)) {
     return convertTextBlock(schema, block, annotationKeys)
   }
 
-  if (containers.has(block._type)) {
+  const resolved = resolveChildContainer(containers, parent, block._type)
+  if (resolved) {
     return convertContainerBlock(
       schema,
       containers,
       annotationKeys,
       block,
-      block._type,
+      resolved,
     )
   }
 
@@ -373,23 +378,35 @@ function convertBlockToTextspec(
   }
 }
 
+/**
+ * Resolve which {@link RegisteredContainer} applies to a child of type
+ * `childType` under `parent`. Positional override (parent.of) wins;
+ * otherwise fall back to the top-level `containers` map. Returns
+ * undefined when the type is not registered at this position.
+ */
+function resolveChildContainer(
+  containers: Containers,
+  parent: RegisteredContainer | undefined,
+  childType: string,
+): RegisteredContainer | undefined {
+  if (parent?.of) {
+    for (const entry of parent.of) {
+      if (entry.type === childType && entry.kind === 'container') {
+        return entry
+      }
+    }
+  }
+  return containers.get(childType)
+}
+
 function convertContainerBlock(
   schema: Schema,
   containers: Containers,
   annotationKeys: Map<string, string> | undefined,
   block: Record<string, unknown>,
-  containerType: string,
+  parent: RegisteredContainer,
 ): ContainerBlock {
-  const containerField = containers.get(containerType)?.field
-
-  if (!containerField) {
-    return {
-      kind: 'containerBlock',
-      type:
-        typeof block['_type'] === 'string' ? block['_type'].toUpperCase() : '',
-      children: [],
-    }
-  }
+  const containerField = parent.field
 
   const fieldValue = block[containerField.name]
   const children: Array<Block> = []
@@ -406,15 +423,20 @@ function convertContainerBlock(
         typeof item._type === 'string'
       ) {
         const typedItem = item as Record<string, unknown>
+        const childContainer = resolveChildContainer(
+          containers,
+          parent,
+          item._type,
+        )
 
-        if (containers.has(item._type)) {
+        if (childContainer) {
           children.push(
             convertContainerBlock(
               schema,
               containers,
               annotationKeys,
               typedItem,
-              item._type,
+              childContainer,
             ),
           )
         } else {
