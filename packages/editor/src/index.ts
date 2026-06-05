@@ -50,11 +50,21 @@ export {
   defineSpan,
   defineTextBlock,
   type BlockObject,
+  type BlockObjectRender,
+  type BlockObjectRenderProps,
   type Container,
+  type ContainerRender,
+  type ContainerRenderProps,
   type InlineObject,
+  type InlineObjectRender,
+  type InlineObjectRenderProps,
   type RegistrableNode,
   type Span,
+  type SpanRender,
+  type SpanRenderProps,
   type TextBlock,
+  type TextBlockRender,
+  type TextBlockRenderProps,
 } from './renderers/renderer.types'
 export {resolveContainerAt} from './schema/resolve-containers'
 export type {
