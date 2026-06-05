@@ -54,6 +54,13 @@ export type ContainerRenderProps = {
    */
   renderDefault: (props: ContainerRenderProps) => ReactElement
 }
+
+/**
+ * @alpha
+ *
+ * Shorthand for a container's render function. See
+ * {@link ContainerRenderProps} for the props shape.
+ */
 export type ContainerRender = (props: ContainerRenderProps) => ReactElement
 
 /**

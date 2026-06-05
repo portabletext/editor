@@ -201,106 +201,249 @@
 }
 
 /**
- * Playground table styling.
- *
- * `data-header-rows` carries the table's headerRows count; CSS targets
- * the first N rows via `tr:nth-child(-n+N)` to highlight headers.
+ * Tables — chrome leaning on the playground's slate palette.
+ * Hooks: `[data-pt-block='container']` (engine), `data-pt-plugin-table-header-row`,
+ * `data-pt-plugin-table-selected` (cells in the rectangular selection),
+ * `data-pt-plugin-table-selected-edge-{top,right,bottom,left}` (per cell —
+ * marks which sides of the cell are on the selection rectangle's
+ * perimeter; the CSS targets those sides to draw a single outline
+ * around the rectangle instead of a ring per cell).
  */
-.playground-table {
-  border-collapse: separate;
-  border-spacing: 0;
+table[data-pt-block='container'] {
   width: 100%;
-  margin: 1.25rem 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 0.75rem 0;
   font-size: 0.875rem;
   line-height: 1.5;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-:where(.dark) .playground-table {
-  background: #0f172a;
-  border-color: #334155;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-/* Body cells: subtle horizontal + vertical dividers. */
-.playground-table td {
-  padding: 0.625rem 0.875rem;
+table[data-pt-block='container'] td {
+  border: 1px solid rgb(226, 232, 240);
+  padding: 0;
   vertical-align: top;
-  min-width: 8rem;
-  color: #1e293b;
-  border-bottom: 1px solid #f1f5f9;
-  border-right: 1px solid #f1f5f9;
+  background: rgb(248, 250, 252);
+  color: rgb(15, 23, 42);
+  word-break: break-word;
+  /* overflow visible so absolute-positioned handles can escape the cell box */
 }
 
-:where(.dark) .playground-table td {
-  color: #e2e8f0;
-  border-bottom-color: #1e293b;
-  border-right-color: #1e293b;
+table[data-pt-block='container'] td .pt-plugin-table-ui__cell-content {
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
 }
 
-/* Last cell in each row drops its right border so the table edge stays clean. */
-.playground-table tr td:last-child {
-  border-right: none;
+:where(.dark) table[data-pt-block='container'] td {
+  border-color: rgb(51, 65, 85);
+  background: rgba(30, 41, 59, 0.6);
+  color: rgb(226, 232, 240);
 }
 
-/* Last row drops its bottom border so the table edge is clean. */
-.playground-table tr:last-child td {
-  border-bottom: none;
-}
-
-/**
- * Header rows: bg tinted indigo to clearly differentiate from body, with
- * uppercase + tracking on the cell content. The bottom of the header band
- * has a slightly stronger divider to mark the body boundary.
- */
-.playground-table[data-header-rows='1'] tr:nth-child(1) td,
-.playground-table[data-header-rows='2'] tr:nth-child(-n + 2) td,
-.playground-table[data-header-rows='3'] tr:nth-child(-n + 3) td {
-  background: #f1f5f9;
-  color: #475569;
+/* Header row: first row always gets a stronger fill, weight, and a thick bottom border. */
+table[data-pt-block='container'] tr:first-child td {
+  background: rgb(226, 232, 240);
   font-weight: 600;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  color: rgb(15, 23, 42);
+  border-color: rgb(148, 163, 184);
+  border-bottom-width: 2px;
 }
 
-:where(.dark) .playground-table[data-header-rows='1'] tr:nth-child(1) td,
-:where(.dark) .playground-table[data-header-rows='2'] tr:nth-child(-n + 2) td,
-:where(.dark) .playground-table[data-header-rows='3'] tr:nth-child(-n + 3) td {
-  background: #1e293b;
-  color: #94a3b8;
+:where(.dark) table[data-pt-block='container'] tr:first-child td {
+  background: rgb(51, 65, 85);
+  color: rgb(248, 250, 252);
+  border-color: rgb(100, 116, 139);
 }
 
-/* Last header row gets a slightly heavier divider to mark the body boundary. */
-.playground-table[data-header-rows='1'] tr:nth-child(1) td,
-.playground-table[data-header-rows='2'] tr:nth-child(2) td,
-.playground-table[data-header-rows='3'] tr:nth-child(3) td {
-  border-bottom: 1px solid #cbd5e1;
-}
-
-:where(.dark) .playground-table[data-header-rows='1'] tr:nth-child(1) td,
-:where(.dark) .playground-table[data-header-rows='2'] tr:nth-child(2) td,
-:where(.dark) .playground-table[data-header-rows='3'] tr:nth-child(3) td {
-  border-bottom-color: #475569;
-}
-
-/**
- * Selection cue: `data-selected` is set on the cell whose content currently
- * holds the editor selection. Subtle inset-ring highlight only on that cell
- * - the row and table cascades aren't styled (they were too noisy when the
- * caret was inside a single cell).
+/*
+ * Rectangle selection. Each cell in the rectangle is tinted; the
+ * rectangle's outline is drawn one edge at a time on the cells that
+ * own that edge of the perimeter. Interior gridlines between selected
+ * cells stay the regular cell border.
  */
-.playground-table td[data-selected] {
-  box-shadow: inset 0 0 0 2px #3b82f6;
-  border-radius: 0;
+table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
+  background: rgba(85, 107, 252, 0.06);
 }
 
-:where(.dark) .playground-table td[data-selected] {
-  box-shadow: inset 0 0 0 2px #60a5fa;
+table[data-pt-block='container'] tr td[data-pt-plugin-table-selected-edge-top] {
+  border-top-color: rgb(85, 107, 252);
+  border-top-width: 1.5px;
+}
+
+table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-right] {
+  border-right-color: rgb(85, 107, 252);
+  border-right-width: 1.5px;
+}
+
+table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-bottom] {
+  border-bottom-color: rgb(85, 107, 252);
+  border-bottom-width: 1.5px;
+}
+
+table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-left] {
+  border-left-color: rgb(85, 107, 252);
+  border-left-width: 1.5px;
+}
+
+:where(.dark)
+  table[data-pt-block='container']
+  td[data-pt-plugin-table-selected] {
+  background: rgba(129, 140, 248, 0.12);
+}
+
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-top],
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-right],
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-bottom],
+:where(.dark)
+  table[data-pt-block='container']
+  tr
+  td[data-pt-plugin-table-selected-edge-left] {
+  border-color: rgb(129, 140, 248);
+}
+
+/*
+ * Table UI affordances (playground-only). Handles are anchored inside
+ * the cells they control — row handle on the left edge of the first
+ * cell of each row, column handle on the top edge of each cell in the
+ * first row. The cells are `position: relative` so the handles sit on
+ * the cell edges via `translate(-50%, -50%)`. The open menu portals to
+ * `document.body` to escape any `overflow: hidden` on table wrappers.
+ * Hooks: `.pt-plugin-table-ui__*`.
+ */
+.pt-plugin-table-ui__cell {
+  position: relative;
+}
+
+.pt-plugin-table-ui__row-handle,
+.pt-plugin-table-ui__column-handle {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgb(148, 163, 184);
+  border-radius: 4px;
+  background: rgb(255, 255, 255);
+  color: rgb(71, 85, 105);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease-out;
+  user-select: none;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+:where(.dark) .pt-plugin-table-ui__row-handle,
+:where(.dark) .pt-plugin-table-ui__column-handle {
+  background: rgb(30, 41, 59);
+  border-color: rgb(71, 85, 105);
+  color: rgb(203, 213, 225);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.pt-plugin-table-ui__row-handle {
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pt-plugin-table-ui__column-handle {
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+table[data-pt-block='container']:hover .pt-plugin-table-ui__row-handle,
+table[data-pt-block='container']:hover .pt-plugin-table-ui__column-handle,
+.pt-plugin-table-ui__row-handle[data-focus-visible],
+.pt-plugin-table-ui__column-handle[data-focus-visible],
+.pt-plugin-table-ui__row-handle[data-pressed],
+.pt-plugin-table-ui__column-handle[data-pressed] {
+  opacity: 1;
+}
+
+.pt-plugin-table-ui__row-handle[data-hovered],
+.pt-plugin-table-ui__column-handle[data-hovered] {
+  background: rgb(241, 245, 249);
+  border-color: rgb(100, 116, 139);
+  color: rgb(15, 23, 42);
+}
+
+:where(.dark) .pt-plugin-table-ui__row-handle[data-hovered],
+:where(.dark) .pt-plugin-table-ui__column-handle[data-hovered] {
+  background: rgb(51, 65, 85);
+  border-color: rgb(148, 163, 184);
+  color: rgb(248, 250, 252);
+}
+
+.pt-plugin-table-ui__popover {
+  z-index: 100;
+}
+
+.pt-plugin-table-ui__menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: 4px;
+  border: 1px solid rgb(226, 232, 240);
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  outline: none;
+}
+
+:where(.dark) .pt-plugin-table-ui__menu {
+  background: rgb(30, 41, 59);
+  border-color: rgb(51, 65, 85);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.pt-plugin-table-ui__menu-item {
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: transparent;
+  color: rgb(30, 41, 59);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.pt-plugin-table-ui__menu-item[data-hovered],
+.pt-plugin-table-ui__menu-item[data-focused] {
+  background: rgb(241, 245, 249);
+}
+
+.pt-plugin-table-ui__menu-item[data-disabled] {
+  color: rgb(148, 163, 184);
+  cursor: not-allowed;
+}
+
+:where(.dark) .pt-plugin-table-ui__menu-item {
+  color: rgb(248, 250, 252);
+}
+
+:where(.dark) .pt-plugin-table-ui__menu-item[data-hovered],
+:where(.dark) .pt-plugin-table-ui__menu-item[data-focused] {
+  background: rgb(51, 65, 85);
+}
+
+:where(.dark) .pt-plugin-table-ui__menu-item[data-disabled] {
+  color: rgb(100, 116, 139);
 }
