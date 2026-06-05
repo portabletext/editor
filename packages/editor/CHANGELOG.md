@@ -1,5 +1,20 @@
 # Changelog
 
+## 7.3.0
+
+### Minor Changes
+
+- [#2750](https://github.com/portabletext/editor/pull/2750) [`2b4d9a2`](https://github.com/portabletext/editor/commit/2b4d9a215dfaf2417afec3d9b097776e4637f331) Thanks [@christianhg](https://github.com/christianhg)! - feat: export `defineX` render-prop types
+
+  Add public re-exports for the prop and render-function types of the
+  `defineContainer` / `defineTextBlock` / `defineSpan` /
+  `defineBlockObject` / `defineInlineObject` factories:
+  `ContainerRenderProps`, `ContainerRender`, `TextBlockRenderProps`,
+  `TextBlockRender`, `SpanRenderProps`, `SpanRender`,
+  `BlockObjectRenderProps`, `BlockObjectRender`, `InlineObjectRenderProps`,
+  `InlineObjectRender`. Consumers writing custom node renders no longer
+  need to derive these via `Parameters<NonNullable<...>>` inference.
+
 ## 7.2.0
 
 ### Minor Changes
