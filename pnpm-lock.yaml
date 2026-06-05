@@ -474,8 +474,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       '@textspec/notation':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.0.2
+        version: 1.0.2
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -5247,8 +5247,8 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
 
-  '@textspec/notation@1.0.1':
-    resolution: {integrity: sha512-XADhtctcXBykcJ+hlsNPmKG5I2YHmF4eDtahZUUOSR1w/tZUk346uznnntm+FhWXCr9bCSht5PTeHry1m1TC4w==}
+  '@textspec/notation@1.0.2':
+    resolution: {integrity: sha512-xvqE3lJPRBqsqN1WvJ0FftSBOZTzjNz7+iHdy++/D+klf/MxpJTE7IPPzL467cTXK3iqvc7QO0C5bV3BfufgpQ==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@ts-morph/common@0.28.1':
@@ -13536,7 +13536,7 @@ snapshots:
       tailwindcss: 4.1.18
       vite: 7.3.3(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
 
-  '@textspec/notation@1.0.1': {}
+  '@textspec/notation@1.0.2': {}
 
   '@ts-morph/common@0.28.1':
     dependencies:
