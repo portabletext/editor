@@ -123,6 +123,23 @@ export function createUndoSteps({
     }
   }
 
+  // Asymmetric on purpose — the reverse direction (current defined, previous
+  // undefined) signals an intentional undo step boundary and stays unmerged.
+  if (currentUndoStepId === undefined && previousUndoStepId !== undefined) {
+    const lastOp = lastStep.operations.at(-1)
+
+    if (
+      lastOp &&
+      op.type === 'insert_text' &&
+      lastOp.type === 'insert_text' &&
+      op.offset === lastOp.offset + lastOp.text.length &&
+      pathEquals(op.path, lastOp.path) &&
+      op.text !== ' '
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+  }
+
   return createNewStep(steps, op, selectionBeforeApply)
 }
 
