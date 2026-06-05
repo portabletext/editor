@@ -43,16 +43,27 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-type Table = {
-  _type: 'table'
-  _key: string
-  rows: ReadonlyArray<Row>
+function textBlock(key: string, spanKey: string, text: string): TextBlock {
+  return {
+    _type: 'block',
+    _key: key,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+  }
 }
 
-type Row = {
-  _type: 'row'
-  _key: string
-  cells: ReadonlyArray<Cell>
+function cellWithText(
+  cellKey: string,
+  blockKey: string,
+  spanKey: string,
+  text: string,
+): Cell {
+  return {
+    _type: 'cell',
+    _key: cellKey,
+    content: [textBlock(blockKey, spanKey, text)],
+  }
 }
 
 type Cell = {
@@ -72,31 +83,6 @@ type TextBlock = {
     text: string
     marks: ReadonlyArray<string>
   }>
-}
-
-function cellWithText(
-  cellKey: string,
-  blockKey: string,
-  spanKey: string,
-  text: string,
-): Cell {
-  return {
-    _type: 'cell',
-    _key: cellKey,
-    content: [
-      {
-        _type: 'block',
-        _key: blockKey,
-        style: 'normal',
-        markDefs: [],
-        children: [{_type: 'span', _key: spanKey, text, marks: []}],
-      },
-    ],
-  }
-}
-
-function emptyCell(cellKey: string, blockKey: string, spanKey: string): Cell {
-  return cellWithText(cellKey, blockKey, spanKey, '')
 }
 
 // 2x2 table with text in each cell
@@ -125,7 +111,7 @@ const initialValue = [
   },
 ]
 
-function pointAt(
+function pointInSpan(
   cellKey: string,
   blockKey: string,
   spanKey: string,
@@ -147,8 +133,73 @@ function pointAt(
   }
 }
 
-function firstTable(value: ReadonlyArray<unknown>): Table {
-  return value[0] as unknown as Table
+function pointAtCell(cellKey: string) {
+  return {
+    path: [
+      {_key: 't0'},
+      'rows',
+      {_key: cellKey.startsWith('r0') ? 'r0' : 'r1'},
+      'cells',
+      {_key: cellKey},
+    ],
+    offset: 0,
+  }
+}
+
+function collapsed(point: ReturnType<typeof pointInSpan>) {
+  return {anchor: point, focus: point, backward: false}
+}
+
+function collapsedAtCell(cellKey: string) {
+  const point = pointAtCell(cellKey)
+  return {anchor: point, focus: point, backward: false}
+}
+
+/**
+ * Builds the expected post-delete value for a 2x2 `initialValue` table
+ * given the set of cleared cell keys. Each cleared cell ends up with a
+ * single empty block; we drive its block + span keys from the test's
+ * key generator state.
+ */
+function tableWithCleared(
+  cleared: Record<string, {blockKey: string; spanKey: string}>,
+) {
+  function cellFor(
+    cellKey: string,
+    originalBlock: string,
+    originalSpan: string,
+    originalText: string,
+  ): Cell {
+    const overrides = cleared[cellKey]
+    if (overrides) {
+      return cellWithText(cellKey, overrides.blockKey, overrides.spanKey, '')
+    }
+    return cellWithText(cellKey, originalBlock, originalSpan, originalText)
+  }
+  return [
+    {
+      _type: 'table',
+      _key: 't0',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'r0',
+          cells: [
+            cellFor('r0c0', 'r0c0b', 'r0c0s', 'AA'),
+            cellFor('r0c1', 'r0c1b', 'r0c1s', 'BB'),
+          ],
+        },
+        {
+          _type: 'row',
+          _key: 'r1',
+          cells: [
+            cellFor('r1c0', 'r1c0b', 'r1c0s', 'CC'),
+            cellFor('r1c1', 'r1c1b', 'r1c1s', 'DD'),
+          ],
+        },
+      ],
+    },
+  ]
 }
 
 describe('delete behaviors within tables', () => {
@@ -160,17 +211,13 @@ describe('delete behaviors within tables', () => {
       children: <TablePlugin />,
     })
 
-    const point = pointAt('r0c1', 'r0c1b', 'r0c1s', 0)
+    const point = pointInSpan('r0c1', 'r0c1b', 'r0c1s', 0)
     editor.send({type: 'select', at: {anchor: point, focus: point}})
     editor.send({type: 'delete.backward', unit: 'character'})
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: point,
-        focus: point,
-        backward: false,
-      })
+      expect(editor.getSnapshot().context.selection).toEqual(collapsed(point))
     })
   })
 
@@ -182,17 +229,13 @@ describe('delete behaviors within tables', () => {
       children: <TablePlugin />,
     })
 
-    const point = pointAt('r0c0', 'r0c0b', 'r0c0s', 2)
+    const point = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 2)
     editor.send({type: 'select', at: {anchor: point, focus: point}})
     editor.send({type: 'delete.forward', unit: 'character'})
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: point,
-        focus: point,
-        backward: false,
-      })
+      expect(editor.getSnapshot().context.selection).toEqual(collapsed(point))
     })
   })
 
@@ -204,17 +247,43 @@ describe('delete behaviors within tables', () => {
       children: <TablePlugin />,
     })
 
-    const startPoint = pointAt('r0c0', 'r0c0b', 'r0c0s', 2)
+    const startPoint = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 2)
     editor.send({type: 'select', at: {anchor: startPoint, focus: startPoint}})
     editor.send({type: 'delete.backward', unit: 'character'})
 
+    const endPoint = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
     await vi.waitFor(() => {
-      const table = firstTable(editor.getSnapshot().context.value)
-      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('A')
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [
+                cellWithText('r0c0', 'r0c0b', 'r0c0s', 'A'),
+                cellWithText('r0c1', 'r0c1b', 'r0c1s', 'BB'),
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                cellWithText('r1c0', 'r1c0b', 'r1c0s', 'CC'),
+                cellWithText('r1c1', 'r1c1b', 'r1c1s', 'DD'),
+              ],
+            },
+          ],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsed(endPoint),
+      )
     })
   })
 
-  test('delete.range straddling two cells in same row: structure preserved (no cell merge)', async () => {
+  test('delete on multi-cell rectangle (2x2): clears all touched cells, collapses to top-left cell', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -222,128 +291,23 @@ describe('delete behaviors within tables', () => {
       children: <TablePlugin />,
     })
 
-    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
-    const focus = pointAt('r0c1', 'r0c1b', 'r0c1s', 1)
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointInSpan('r1c1', 'r1c1b', 'r1c1s', 1)
     editor.send({type: 'select', at: {anchor, focus}})
     editor.send({type: 'delete'})
 
     await vi.waitFor(() => {
-      const table = firstTable(editor.getSnapshot().context.value)
-      expect(table.rows.length).toBe(2)
-      expect(table.rows[0]?.cells.length).toBe(2)
-      expect(table.rows[1]?.cells.length).toBe(2)
-    })
-  })
-
-  test('delete.range straddling rows in same table: structure preserved (no row merge)', async () => {
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue,
-      children: <TablePlugin />,
-    })
-
-    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
-    const focus = pointAt('r1c1', 'r1c1b', 'r1c1s', 1)
-    editor.send({type: 'select', at: {anchor, focus}})
-    editor.send({type: 'delete'})
-
-    await vi.waitFor(() => {
-      const table = firstTable(editor.getSnapshot().context.value)
-      expect(table.rows.length).toBe(2)
-      expect(table.rows[0]?.cells.length).toBe(2)
-      expect(table.rows[1]?.cells.length).toBe(2)
-    })
-  })
-
-  test('split (Enter) inside a cell: splits inside the cell, structure outside cell preserved', async () => {
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue,
-      children: <TablePlugin />,
-    })
-
-    const point = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
-    editor.send({type: 'select', at: {anchor: point, focus: point}})
-    editor.send({type: 'split'})
-
-    await vi.waitFor(() => {
-      // Cells are multi-block containers by design — Enter creates a new
-      // block inside the cell, not outside. The table itself stays one
-      // block with the same rows and cells.
-      const table = firstTable(editor.getSnapshot().context.value)
-      expect(editor.getSnapshot().context.value.length).toBe(1)
-      expect(table.rows.length).toBe(2)
-      expect(table.rows[0]?.cells.length).toBe(2)
-      expect(table.rows[0]?.cells[0]?.content.length).toBe(2)
-    })
-  })
-
-  test('delete.backward in last empty cell of a single-cell table: removes the table (matches plain-block backspace semantics)', async () => {
-    const onlyEmptyCellTable = [
-      {
-        _type: 'table',
-        _key: 't0',
-        rows: [
-          {
-            _type: 'row',
-            _key: 'r0',
-            cells: [emptyCell('r0c0', 'r0c0b', 'r0c0s')],
-          },
-        ],
-      },
-    ]
-
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue: onlyEmptyCellTable,
-      children: <TablePlugin />,
-    })
-
-    const point = pointAt('r0c0', 'r0c0b', 'r0c0s', 0)
-    editor.send({type: 'select', at: {anchor: point, focus: point}})
-    editor.send({type: 'delete.backward', unit: 'character'})
-
-    await vi.waitFor(() => {
-      // Engine removes the table — symmetric with backspace in an empty block.
-      // This is the documented contract; intercepting would surprise users.
-      const value = editor.getSnapshot().context.value
-      expect(value.find((b) => b._type === 'table')).toBeUndefined()
-    })
-  })
-
-  test('delete on multi-cell rectangle: clears all touched cells, collapses to top-left cell start', async () => {
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue,
-      children: <TablePlugin />,
-    })
-
-    // Select 2x2 rectangle: anchor in r0c0, focus in r1c1.
-    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
-    const focus = pointAt('r1c1', 'r1c1b', 'r1c1s', 1)
-    editor.send({type: 'select', at: {anchor, focus}})
-    editor.send({type: 'delete'})
-
-    await vi.waitFor(() => {
-      const table = firstTable(editor.getSnapshot().context.value)
-      // All four cells in the rectangle are cleared to empty text.
-      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
-      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
-      expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
-      expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
-      // Table structure unchanged.
-      expect(table.rows.length).toBe(2)
-      expect(table.rows[0]?.cells.length).toBe(2)
-      // Selection collapses to the start of the top-left cell of the
-      // rectangle (r0c0).
-      const selection = editor.getSnapshot().context.selection
-      expect((selection?.anchor.path[4] as {_key: string})?._key).toBe('r0c0')
-      expect((selection?.focus.path[4] as {_key: string})?._key).toBe('r0c0')
-      expect(selection?.anchor.offset).toBe(0)
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k8', spanKey: 'k9'},
+          r0c1: {blockKey: 'k6', spanKey: 'k7'},
+          r1c0: {blockKey: 'k4', spanKey: 'k5'},
+          r1c1: {blockKey: 'k2', spanKey: 'k3'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtCell('r0c0'),
+      )
     })
 
     editor.send({type: 'history.undo'})
@@ -361,57 +325,21 @@ describe('delete behaviors within tables', () => {
       children: <TablePlugin />,
     })
 
-    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
-    const focus = pointAt('r0c1', 'r0c1b', 'r0c1s', 1)
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointInSpan('r0c1', 'r0c1b', 'r0c1s', 1)
     editor.send({type: 'select', at: {anchor, focus}})
     editor.send({type: 'delete'})
 
     await vi.waitFor(() => {
-      const table = firstTable(editor.getSnapshot().context.value)
-      // Row 0 cells cleared.
-      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
-      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
-      // Row 1 cells untouched.
-      expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('CC')
-      expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('DD')
-      // Selection lands in r0c0 (top-left of rectangle).
-      const selection = editor.getSnapshot().context.selection
-      expect((selection?.anchor.path[4] as {_key: string})?._key).toBe('r0c0')
-      expect(selection?.anchor.offset).toBe(0)
-    })
-
-    editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
-  })
-
-  test('split (Enter) with multi-cell rectangle selection: clears rectangle, no split', async () => {
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue,
-      children: <TablePlugin />,
-    })
-
-    const anchor = pointAt('r0c0', 'r0c0b', 'r0c0s', 1)
-    const focus = pointAt('r0c1', 'r0c1b', 'r0c1s', 1)
-    editor.send({type: 'select', at: {anchor, focus}})
-    editor.send({type: 'split'})
-
-    await vi.waitFor(() => {
-      const table = firstTable(editor.getSnapshot().context.value)
-      // Both touched cells cleared.
-      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('')
-      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
-      // No new blocks added inside either cell.
-      expect(table.rows[0]?.cells[0]?.content.length).toBe(1)
-      expect(table.rows[0]?.cells[1]?.content.length).toBe(1)
-      // Selection lands in r0c0 (top-left of rectangle), no split happened.
-      const selection = editor.getSnapshot().context.selection
-      expect((selection?.anchor.path[4] as {_key: string})?._key).toBe('r0c0')
-      expect(selection?.anchor.offset).toBe(0)
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k4', spanKey: 'k5'},
+          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtCell('r0c0'),
+      )
     })
 
     editor.send({type: 'history.undo'})
@@ -429,36 +357,198 @@ describe('delete behaviors within tables', () => {
       children: <TablePlugin />,
     })
 
-    // Select cells in column 1 only (r0c1 + r1c1). Column 0 (containing AA/CC)
-    // is outside the selection. After delete, cursor must land at the start of
-    // r0c1 (the top-left of the SELECTION), not r0c0.
-    const anchor = pointAt('r0c1', 'r0c1b', 'r0c1s', 0)
-    const focus = pointAt('r1c1', 'r1c1b', 'r1c1s', 2)
+    // Select cells in column 1 only (r0c1 + r1c1). After delete, cursor must
+    // land at the start of r0c1 (top-left of the SELECTION), not r0c0.
+    const anchor = pointInSpan('r0c1', 'r0c1b', 'r0c1s', 0)
+    const focus = pointInSpan('r1c1', 'r1c1b', 'r1c1s', 2)
     editor.send({type: 'select', at: {anchor, focus}})
     editor.send({type: 'delete'})
 
     await vi.waitFor(() => {
-      const selection = editor.getSnapshot().context.selection
-      if (!selection) {
-        throw new Error('expected collapsed selection inside r0c1')
-      }
-      // Anchor and focus must point inside r0c1, not r0c0.
-      const anchorPath = selection.anchor.path
-      const cellKeyAnchor = (anchorPath[4] as {_key: string} | undefined)?._key
-      expect(cellKeyAnchor).toBe('r0c1')
-      const cellKeyFocus = (
-        selection.focus.path[4] as {_key: string} | undefined
-      )?._key
-      expect(cellKeyFocus).toBe('r0c1')
-      expect(selection.anchor.offset).toBe(0)
-      expect(selection.focus.offset).toBe(0)
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c1: {blockKey: 'k4', spanKey: 'k5'},
+          r1c1: {blockKey: 'k2', spanKey: 'k3'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtCell('r0c1'),
+      )
+    })
 
-      const table = firstTable(editor.getSnapshot().context.value)
-      // r0c0/r1c0 untouched, r0c1/r1c1 cleared.
-      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('AA')
-      expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('CC')
-      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
-      expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('split (Enter) inside a cell: splits inside the cell, structure outside cell preserved', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const point = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+    editor.send({type: 'split'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'r0c0',
+                  content: [
+                    textBlock('r0c0b', 'r0c0s', 'A'),
+                    textBlock('k2', 'r0c0s', 'A'),
+                  ],
+                },
+                cellWithText('r0c1', 'r0c1b', 'r0c1s', 'BB'),
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                cellWithText('r1c0', 'r1c0b', 'r1c0s', 'CC'),
+                cellWithText('r1c1', 'r1c1b', 'r1c1s', 'DD'),
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('split (Enter) with multi-cell rectangle selection: clears rectangle, no split', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointInSpan('r0c1', 'r0c1b', 'r0c1s', 1)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'split'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k4', spanKey: 'k5'},
+          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtCell('r0c0'),
+      )
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('delete.range straddling two cells in same row: structure preserved (no cell merge)', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointInSpan('r0c1', 'r0c1b', 'r0c1s', 1)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k4', spanKey: 'k5'},
+          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtCell('r0c0'),
+      )
+    })
+  })
+
+  test('delete.range straddling rows in same table: structure preserved (no row merge)', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 1)
+    const focus = pointInSpan('r1c1', 'r1c1b', 'r1c1s', 1)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k8', spanKey: 'k9'},
+          r0c1: {blockKey: 'k6', spanKey: 'k7'},
+          r1c0: {blockKey: 'k4', spanKey: 'k5'},
+          r1c1: {blockKey: 'k2', spanKey: 'k3'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtCell('r0c0'),
+      )
+    })
+  })
+
+  test('delete.backward in last empty cell of a single-cell table: removes the table (matches plain-block backspace semantics)', async () => {
+    const onlyEmptyCellTable = [
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [cellWithText('r0c0', 'r0c0b', 'r0c0s', '')],
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: onlyEmptyCellTable,
+      children: <TablePlugin />,
+    })
+
+    const point = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 0)
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      // Engine removes the table - symmetric with backspace in an empty
+      // block. This is the documented contract; intercepting would surprise
+      // users.
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock('r0c0b', 'r0c0s', ''),
+      ])
     })
   })
 })
