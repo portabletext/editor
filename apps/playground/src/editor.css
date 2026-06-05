@@ -269,8 +269,12 @@ table[data-pt-block='container'][data-pt-plugin-table-selected] *::selection {
   color: inherit;
 }
 
-table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
+/* Interior gridlines disappear within the selection - the rectangle
+ * reads as one unified block, not a grid of cells. Perimeter edges
+ * below paint the blue outline on the cells that own each side. */
+table[data-pt-block='container'] tr td[data-pt-plugin-table-selected] {
   background: rgba(85, 107, 252, 0.06);
+  border-color: transparent;
 }
 
 table[data-pt-block='container'] tr td[data-pt-plugin-table-selected-edge-top] {
