@@ -13,9 +13,23 @@ import {createContext, useContext, type ReactElement} from 'react'
 import {isTable} from './behaviors/types'
 import {getTableSelection} from './derivation'
 
-const EMPTY_SET: ReadonlySet<string> = new Set()
+/**
+ * Which sides of a cell are perimeter edges of the rectangular selection
+ * the cell belongs to. Cells in the interior of the rectangle have all
+ * four edges false; cells on the rectangle's border have one to four
+ * edges true.
+ */
+type CellEdges = {
+  top: boolean
+  right: boolean
+  bottom: boolean
+  left: boolean
+}
 
-const SelectedCellKeysContext = createContext<ReadonlySet<string>>(EMPTY_SET)
+const EMPTY_MAP: ReadonlyMap<string, CellEdges> = new Map()
+
+const SelectedCellsContext =
+  createContext<ReadonlyMap<string, CellEdges>>(EMPTY_MAP)
 
 /**
  * The default table render: a `<table>` wrapper with selection-derived
@@ -47,7 +61,7 @@ export const defaultRowRender: ContainerRender = ({attributes, children}) => (
 
 /**
  * The default cell render: a `<td>` that subscribes to its enclosing
- * table's selected-cells set. Consumers can wrap or replace via the
+ * table's selected-cells map. Consumers can wrap or replace via the
  * `components.Cell` prop on `<TablePlugin>`.
  *
  * @alpha
@@ -122,22 +136,22 @@ function TableRender(props: {
   path: Path
 }) {
   const editor = useEditor()
-  const selectedCellKeys = useEditorSelector(
+  const selectedCells = useEditorSelector(
     editor,
-    (snapshot) => selectSelectedCellKeys(snapshot, props.path),
-    compareSelectedCellKeys,
+    (snapshot) => selectSelectedCells(snapshot, props.path),
+    compareSelectedCells,
   )
   const headerRow = isTable(props.node) && props.node.headerRow === true
   return (
-    <SelectedCellKeysContext.Provider value={selectedCellKeys}>
+    <SelectedCellsContext.Provider value={selectedCells}>
       <table
         {...props.attributes}
-        data-pt-plugin-table-selected={selectedCellKeys.size > 0 || undefined}
+        data-pt-plugin-table-selected={selectedCells.size > 0 || undefined}
         data-pt-plugin-table-header-row={headerRow || undefined}
       >
         <tbody>{props.children}</tbody>
       </table>
-    </SelectedCellKeysContext.Provider>
+    </SelectedCellsContext.Provider>
   )
 }
 
@@ -146,36 +160,41 @@ function CellRender(props: {
   children: ReactElement
   path: Path
 }) {
-  const selectedCellKeys = useContext(SelectedCellKeysContext)
+  const selectedCells = useContext(SelectedCellsContext)
   const cellSegment = props.path.at(-1)
-  const isSelected =
-    isKeyedSegment(cellSegment) && selectedCellKeys.has(cellSegment._key)
+  const edges = isKeyedSegment(cellSegment)
+    ? selectedCells.get(cellSegment._key)
+    : undefined
   return (
     <td
       {...props.attributes}
-      data-pt-plugin-table-selected={isSelected || undefined}
+      data-pt-plugin-table-selected={edges ? '' : undefined}
+      data-pt-plugin-table-selected-edge-top={edges?.top ? '' : undefined}
+      data-pt-plugin-table-selected-edge-right={edges?.right ? '' : undefined}
+      data-pt-plugin-table-selected-edge-bottom={edges?.bottom ? '' : undefined}
+      data-pt-plugin-table-selected-edge-left={edges?.left ? '' : undefined}
     >
       {props.children}
     </td>
   )
 }
 
-function selectSelectedCellKeys(
+function selectSelectedCells(
   snapshot: EditorSnapshot,
   tablePath: Path,
-): ReadonlySet<string> {
+): ReadonlyMap<string, CellEdges> {
   const tableSelection = getTableSelection(snapshot)
   if (!tableSelection) {
-    return EMPTY_SET
+    return EMPTY_MAP
   }
   if (firstKey(tableSelection.tablePath) !== firstKey(tablePath)) {
-    return EMPTY_SET
+    return EMPTY_MAP
   }
   const table = getEnclosingBlock(snapshot, tablePath, {match: isTable})
   if (!table) {
-    return EMPTY_SET
+    return EMPTY_MAP
   }
-  const keys = new Set<string>()
+  const cells = new Map<string, CellEdges>()
   const [rowStart, rowEnd] = tableSelection.rowRange
   const [colStart, colEnd] = tableSelection.colRange
   for (let r = rowStart; r <= rowEnd; r++) {
@@ -185,17 +204,23 @@ function selectSelectedCellKeys(
     }
     for (let c = colStart; c <= colEnd; c++) {
       const cell = row.cells[c]
-      if (cell) {
-        keys.add(cell._key)
+      if (!cell) {
+        continue
       }
+      cells.set(cell._key, {
+        top: r === rowStart,
+        right: c === colEnd,
+        bottom: r === rowEnd,
+        left: c === colStart,
+      })
     }
   }
-  return keys
+  return cells
 }
 
-function compareSelectedCellKeys(
-  a: ReadonlySet<string>,
-  b: ReadonlySet<string>,
+function compareSelectedCells(
+  a: ReadonlyMap<string, CellEdges>,
+  b: ReadonlyMap<string, CellEdges>,
 ): boolean {
   if (a === b) {
     return true
@@ -203,8 +228,15 @@ function compareSelectedCellKeys(
   if (a.size !== b.size) {
     return false
   }
-  for (const key of a) {
-    if (!b.has(key)) {
+  for (const [key, edgesA] of a) {
+    const edgesB = b.get(key)
+    if (
+      !edgesB ||
+      edgesA.top !== edgesB.top ||
+      edgesA.right !== edgesB.right ||
+      edgesA.bottom !== edgesB.bottom ||
+      edgesA.left !== edgesB.left
+    ) {
       return false
     }
   }
