@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.0.9
+
+### Patch Changes
+
+- [#2745](https://github.com/portabletext/editor/pull/2745) [`f4f2a73`](https://github.com/portabletext/editor/commit/f4f2a73666923dba62f0f8e88f87df956fe655b5) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update xstate to ^5.32.0
+
+- Updated dependencies [[`e0ee0f6`](https://github.com/portabletext/editor/commit/e0ee0f68ae8936bca7a158c2828c9b17ba468ec2), [`5c183b3`](https://github.com/portabletext/editor/commit/5c183b39b1482d0a83b0b9f98ebe99186560d511), [`f4f2a73`](https://github.com/portabletext/editor/commit/f4f2a73666923dba62f0f8e88f87df956fe655b5), [`3229002`](https://github.com/portabletext/editor/commit/32290029c7e5eed4b8c96833b21181937efcf2a4), [`0fb1f28`](https://github.com/portabletext/editor/commit/0fb1f285fdd54ad9e67a9411829dfa2da283390c), [`ceb179f`](https://github.com/portabletext/editor/commit/ceb179f16e3a218e4e86b05331ab4593d9133602), [`ae60599`](https://github.com/portabletext/editor/commit/ae60599a6eb8514af2c80240f029688dc08bcfc0), [`6540641`](https://github.com/portabletext/editor/commit/65406416e151044913784a11f7a0567e82be48fe), [`492fb7d`](https://github.com/portabletext/editor/commit/492fb7dd390409d4267833ce5f86356a59e38c90)]:
+  - @portabletext/editor@7.2.0
+
 ## 7.0.8
 
 ### Patch Changes

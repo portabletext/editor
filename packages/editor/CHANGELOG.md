@@ -1,5 +1,43 @@
 # Changelog
 
+## 7.2.0
+
+### Minor Changes
+
+- [#2738](https://github.com/portabletext/editor/pull/2738) [`e0ee0f6`](https://github.com/portabletext/editor/commit/e0ee0f68ae8936bca7a158c2828c9b17ba468ec2) Thanks [@christianhg](https://github.com/christianhg)! - feat: catch-all node registration via `'*'` for `defineBlockObject`, `defineInlineObject`, `defineTextBlock`, and `defineSpan`
+
+  Pass `type: '*'` to register a render callback that handles any `_type` that has no specific registration. A single `defineBlockObject({type: '*', render})` plays the role of the legacy `renderBlock` callback; `defineTextBlock({type: '*', render})` plays the same role for text blocks; `defineInlineObject({type: '*', render})` and `defineSpan({type: '*', render})` mirror `renderChild`.
+
+  Resolution order (most specific wins):
+  1. Positional registration for the exact `_type` (inside a container's `of`)
+  2. Positional `'*'` (inside a container's `of`)
+  3. Global registration for the exact `_type`
+  4. Global `'*'`
+  5. Engine default
+
+  `defineContainer` does not accept `'*'` — a container is a structural commitment that the editor needs to know about up front. Trying to do so is a compile-time error.
+
+- [#2733](https://github.com/portabletext/editor/pull/2733) [`5c183b3`](https://github.com/portabletext/editor/commit/5c183b39b1482d0a83b0b9f98ebe99186560d511) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `comparePoints` traversal util
+
+- [#2731](https://github.com/portabletext/editor/pull/2731) [`ae60599`](https://github.com/portabletext/editor/commit/ae60599a6eb8514af2c80240f029688dc08bcfc0) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `pathContains` traversal util
+
+- [#2733](https://github.com/portabletext/editor/pull/2733) [`6540641`](https://github.com/portabletext/editor/commit/65406416e151044913784a11f7a0567e82be48fe) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `rangeIntersects` traversal util
+
+### Patch Changes
+
+- [#2745](https://github.com/portabletext/editor/pull/2745) [`f4f2a73`](https://github.com/portabletext/editor/commit/f4f2a73666923dba62f0f8e88f87df956fe655b5) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update xstate to ^5.32.0
+
+- [#2727](https://github.com/portabletext/editor/pull/2727) [`3229002`](https://github.com/portabletext/editor/commit/32290029c7e5eed4b8c96833b21181937efcf2a4) Thanks [@christianhg](https://github.com/christianhg)! - fix: `getMarkState` returns marks for selections inside containers
+
+- [#2735](https://github.com/portabletext/editor/pull/2735) [`0fb1f28`](https://github.com/portabletext/editor/commit/0fb1f285fdd54ad9e67a9411829dfa2da283390c) Thanks [@christianhg](https://github.com/christianhg)! - fix: capture inverse data for locally-applied `set` and `unset` operations so they can be undone
+
+- [#2747](https://github.com/portabletext/editor/pull/2747) [`ceb179f`](https://github.com/portabletext/editor/commit/ceb179f16e3a218e4e86b05331ab4593d9133602) Thanks [@christianhg](https://github.com/christianhg)! - fix: merge consecutive text operations across forward-only behavior undo step boundary
+
+- [#2739](https://github.com/portabletext/editor/pull/2739) [`492fb7d`](https://github.com/portabletext/editor/commit/492fb7dd390409d4267833ce5f86356a59e38c90) Thanks [@christianhg](https://github.com/christianhg)! - fix: skip no-op operations from history capture
+
+- Updated dependencies [[`010f182`](https://github.com/portabletext/editor/commit/010f1820c0af8a4f613394eefe3169c11e486a43), [`409a970`](https://github.com/portabletext/editor/commit/409a97041a37bc0214f3475554b834a16d92866a), [`7b961d4`](https://github.com/portabletext/editor/commit/7b961d40cda88ea3a65380ae6dd18562503f32a4)]:
+  - @portabletext/markdown@1.4.0
+
 ## 7.1.1
 
 ### Patch Changes
