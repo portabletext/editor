@@ -4,6 +4,9 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {createEditorSnapshot} from '../editor/editor-snapshot'
 import {withPerformingBehaviorOperation} from '../engine-plugins/engine-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../engine-plugins/engine-plugin.without-normalizing-conditional'
+import {isNormalizing} from '../engine/editor/is-normalizing'
+import {normalize} from '../engine/editor/normalize'
+import {setNormalizing} from '../engine/editor/set-normalizing'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
 import {performOperation} from '../operations/operation.perform'
@@ -253,95 +256,145 @@ export function performEvent({
       }
 
       const actionTypes = actions.map((action) => action.type)
-      const uniqueActionTypes = new Set(actionTypes)
+      // `with-snapshot` actions are group-transparent: they participate in
+      // the surrounding deferred-normalization group without breaking it.
+      // The flush inside each `with-snapshot` happens explicitly when it
+      // runs, so the surrounding actions still benefit from grouped
+      // normalization.
+      const groupingActionTypes = new Set(
+        actionTypes.filter((type) => type !== 'with-snapshot'),
+      )
 
-      // The set of actions are all `raise` actions
+      // The set of actions are all `raise` actions (ignoring `with-snapshot`)
       const raiseGroup =
         actionTypes.length > 1 &&
-        uniqueActionTypes.size === 1 &&
-        uniqueActionTypes.has('raise')
+        groupingActionTypes.size === 1 &&
+        groupingActionTypes.has('raise')
 
-      // The set of actions are all `execute` actions
+      // The set of actions are all `execute` actions (ignoring `with-snapshot`)
       const executeGroup =
         actionTypes.length > 1 &&
-        uniqueActionTypes.size === 1 &&
-        uniqueActionTypes.has('execute')
+        groupingActionTypes.size === 1 &&
+        groupingActionTypes.has('execute')
+
+      const dispatchAction = (
+        action: BehaviorAction,
+        withinWithSnapshot: boolean,
+      ): void => {
+        if (action.type === 'effect') {
+          try {
+            action.effect({
+              send: sendBack,
+            })
+          } catch (error) {
+            console.error(
+              new Error(
+                `Executing effect as a result of "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
+              ),
+            )
+          }
+
+          return
+        }
+
+        if (action.type === 'forward') {
+          const remainingEventBehaviors = eventBehaviors.slice(
+            eventBehaviorIndex + 1,
+          )
+
+          performEvent({
+            mode: mode === 'execute' ? 'execute' : 'forward',
+            behaviors,
+            remainingEventBehaviors,
+            event: action.event,
+            editor,
+            converters,
+            keyGenerator,
+            readOnly,
+            schema,
+            nativeEvent,
+            sendBack,
+          })
+
+          return
+        }
+
+        if (action.type === 'raise') {
+          performEvent({
+            mode: mode === 'execute' ? 'execute' : 'raise',
+            behaviors,
+            remainingEventBehaviors:
+              mode === 'execute' ? remainingEventBehaviors : behaviors,
+            event: action.event,
+            editor,
+            converters,
+            keyGenerator,
+            readOnly,
+            schema,
+            nativeEvent,
+            sendBack,
+          })
+
+          return
+        }
+
+        if (action.type === 'with-snapshot') {
+          if (withinWithSnapshot) {
+            throw new Error(
+              '`withSnapshot` cannot be nested inside another `withSnapshot`-derived action stream.',
+            )
+          }
+
+          // Flush deferred normalization so the callback sees fresh state.
+          // The outer `withoutNormalizingConditional` may have flipped
+          // `editor.normalizing` off to defer per-op normalization; we
+          // temporarily flip it back on, drain the dirty paths, and restore.
+          const wasNormalizing = isNormalizing(editor)
+          setNormalizing(editor, true)
+          normalize(editor)
+          setNormalizing(editor, wasNormalizing)
+
+          const freshSnapshot = createEditorSnapshot({
+            converters,
+            editor,
+            keyGenerator,
+            readOnly,
+            schema,
+          })
+          const nextActions = action.fn({
+            snapshot: freshSnapshot,
+            event,
+            dom: createEditorDom(sendBack, editor),
+          })
+
+          for (const nextAction of nextActions) {
+            dispatchAction(nextAction, true)
+          }
+
+          return
+        }
+
+        performEvent({
+          mode: 'execute',
+          behaviors,
+          remainingEventBehaviors: [],
+          event: action.event,
+          editor,
+          converters,
+          keyGenerator,
+          readOnly,
+          schema,
+          nativeEvent: undefined,
+          sendBack,
+        })
+      }
 
       withoutNormalizingConditional(
         editor,
         () => raiseGroup || executeGroup,
         () => {
           for (const action of actions) {
-            if (action.type === 'effect') {
-              try {
-                action.effect({
-                  send: sendBack,
-                })
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Executing effect as a result of "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
-                  ),
-                )
-              }
-
-              continue
-            }
-
-            if (action.type === 'forward') {
-              const remainingEventBehaviors = eventBehaviors.slice(
-                eventBehaviorIndex + 1,
-              )
-
-              performEvent({
-                mode: mode === 'execute' ? 'execute' : 'forward',
-                behaviors,
-                remainingEventBehaviors,
-                event: action.event,
-                editor,
-                converters,
-                keyGenerator,
-                readOnly,
-                schema,
-                nativeEvent,
-                sendBack,
-              })
-
-              continue
-            }
-
-            if (action.type === 'raise') {
-              performEvent({
-                mode: mode === 'execute' ? 'execute' : 'raise',
-                behaviors,
-                remainingEventBehaviors:
-                  mode === 'execute' ? remainingEventBehaviors : behaviors,
-                event: action.event,
-                editor,
-                converters,
-                keyGenerator,
-                readOnly,
-                schema,
-                nativeEvent,
-                sendBack,
-              })
-
-              continue
-            }
-
-            performEvent({
-              mode: 'execute',
-              behaviors,
-              remainingEventBehaviors: [],
-              event: action.event,
-              editor,
-              converters,
-              keyGenerator,
-              readOnly,
-              schema,
-              nativeEvent: undefined,
-              sendBack,
-            })
+            dispatchAction(action, false)
           }
         },
       )

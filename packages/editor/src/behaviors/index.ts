@@ -3,6 +3,7 @@ export {
   execute,
   forward,
   raise,
+  withSnapshot,
   type BehaviorAction,
   type BehaviorActionSet,
 } from './behavior.types.action'

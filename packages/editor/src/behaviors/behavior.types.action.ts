@@ -52,6 +52,17 @@ export type BehaviorAction =
         send: (event: ExternalBehaviorEvent) => void
       }) => void
     }
+  | {
+      type: 'with-snapshot'
+      fn: (payload: {
+        snapshot: EditorSnapshot
+        event:
+          | SyntheticBehaviorEvent
+          | NativeBehaviorEvent
+          | CustomBehaviorEvent
+        dom: EditorDom
+      }) => Array<BehaviorAction>
+    }
 
 /**
  * Directly executes an event, bypassing all Behavior matching.
@@ -204,6 +215,53 @@ export function effect(
   effect: PickFromUnion<BehaviorAction, 'type', 'effect'>['effect'],
 ): PickFromUnion<BehaviorAction, 'type', 'effect'> {
   return {type: 'effect', effect}
+}
+
+/**
+ * Declares a data dependency on the post-normalization editor snapshot.
+ *
+ * Use `withSnapshot` inside an actions array when later actions need to read
+ * editor state that earlier actions are about to mutate. The engine flushes
+ * any deferred normalization before invoking `fn`, re-derives a fresh
+ * snapshot, and splices the returned actions into the stream.
+ *
+ * `withSnapshot` inherits the surrounding undo intent — it does not introduce
+ * or suppress a new undo step. Whatever `editor.undoStepId` is at the point
+ * the spliced actions execute, they execute under it.
+ *
+ * Nesting `withSnapshot` inside another `withSnapshot`-derived action stream
+ * is not supported in v1 and throws at runtime.
+ *
+ * @example
+ * ```ts
+ * defineBehavior({
+ *   on: 'delete',
+ *   guard: ({snapshot}) => getTableSelection(snapshot) ?? false,
+ *   actions: [
+ *     ({snapshot}, tableSelection) => [
+ *       // 1. Clear every cell in the rectangular selection.
+ *       ...unsetCellActions(snapshot, tableSelection),
+ *       // 2. Position the caret in the top-left cell. The engine flushes
+ *       //    normalization first, so `select.block` resolves against the
+ *       //    freshly-minted empty leaves.
+ *       withSnapshot(({snapshot}) => [
+ *         raise({
+ *           type: 'select.block',
+ *           at: topLeftCellPath(tableSelection),
+ *           select: 'start',
+ *         }),
+ *       ]),
+ *     ],
+ *   ],
+ * })
+ * ```
+ *
+ * @beta
+ */
+export function withSnapshot(
+  fn: PickFromUnion<BehaviorAction, 'type', 'with-snapshot'>['fn'],
+): PickFromUnion<BehaviorAction, 'type', 'with-snapshot'> {
+  return {type: 'with-snapshot', fn}
 }
 
 /**

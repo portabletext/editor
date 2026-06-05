@@ -8,6 +8,7 @@ import {
   execute,
   forward,
   raise,
+  withSnapshot,
 } from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
@@ -1024,5 +1025,91 @@ describe('Behavior API', () => {
         )
       })
     })
+  })
+
+  test('Scenario: `withSnapshot` provides fresh editor state inside a single action set', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 's0', text: 'hello', marks: []}],
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'custom.clear-and-recenter',
+              actions: [
+                () => [
+                  raise({
+                    type: 'unset',
+                    at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  }),
+                  withSnapshot(() => [
+                    raise({
+                      type: 'select.block',
+                      at: [{_key: 'b0'}],
+                      select: 'start',
+                    }),
+                  ]),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.clear-and-recenter'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
+
+  test('Scenario: `withSnapshot` cannot be nested', async () => {
+    let innerInvoked = false
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'custom.nest',
+              actions: [
+                () => [
+                  withSnapshot(() => [
+                    withSnapshot(() => {
+                      innerInvoked = true
+                      return []
+                    }),
+                  ]),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.nest'})
+
+    await vi.waitFor(() => {
+      expect(
+        consoleError.mock.calls.some((call) =>
+          String(call[0]).includes('`withSnapshot` cannot be nested'),
+        ),
+      ).toBe(true)
+    })
+
+    expect(innerInvoked).toBe(false)
+
+    consoleError.mockRestore()
   })
 })
