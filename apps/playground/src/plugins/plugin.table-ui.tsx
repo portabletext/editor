@@ -10,6 +10,7 @@ import {
   defaultRowRender,
   defaultTableRender,
   TablePlugin,
+  useTableCellSelectionEdges,
 } from '@portabletext/plugin-table'
 import {GripHorizontalIcon, GripVerticalIcon} from 'lucide-react'
 import {createContext, useContext} from 'react'
@@ -86,6 +87,7 @@ const PlaygroundCellRender: ContainerRender = (props) => {
   const {firstRowKey, rowCount} = useContext(TableMetaCtx)
   const cellSegment = props.path.at(-1)
   const rowSegment = props.path.at(-3)
+  const edges = useTableCellSelectionEdges(props.path)
   if (!rowCtx || !isKeyedSegment(cellSegment) || !isKeyedSegment(rowSegment)) {
     return defaultCellRender(props)
   }
@@ -95,7 +97,14 @@ const PlaygroundCellRender: ContainerRender = (props) => {
   const columnCount = rowCtx.cellKeys.length
 
   return (
-    <td {...props.attributes} className="pt-plugin-table-ui__cell">
+    <td
+      {...props.attributes}
+      className="pt-plugin-table-ui__cell"
+      data-pt-plugin-table-selected-edge-top={edges?.top || undefined}
+      data-pt-plugin-table-selected-edge-right={edges?.right || undefined}
+      data-pt-plugin-table-selected-edge-bottom={edges?.bottom || undefined}
+      data-pt-plugin-table-selected-edge-left={edges?.left || undefined}
+    >
       {isFirstCellInRow ? (
         <RowHandle
           rowPath={rowCtx.rowPath}

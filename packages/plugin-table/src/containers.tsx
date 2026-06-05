@@ -14,12 +14,14 @@ import {isTable} from './behaviors/types'
 import {getTableSelection} from './derivation'
 
 /**
- * Which sides of a cell are perimeter edges of the rectangular selection
- * the cell belongs to. Cells in the interior of the rectangle have all
- * four edges false; cells on the rectangle's border have one to four
- * edges true.
+ * Which sides of a cell are perimeter edges of the rectangular
+ * selection the cell belongs to. Cells in the interior of the
+ * rectangle have all four edges false; cells on the rectangle's border
+ * have one to four edges true.
+ *
+ * @alpha
  */
-type CellEdges = {
+export type CellEdges = {
   top: boolean
   right: boolean
   bottom: boolean
@@ -160,11 +162,7 @@ function CellRender(props: {
   children: ReactElement
   path: Path
 }) {
-  const selectedCells = useContext(SelectedCellsContext)
-  const cellSegment = props.path.at(-1)
-  const edges = isKeyedSegment(cellSegment)
-    ? selectedCells.get(cellSegment._key)
-    : undefined
+  const edges = useTableCellSelectionEdges(props.path)
   return (
     <td
       {...props.attributes}
@@ -177,6 +175,25 @@ function CellRender(props: {
       {props.children}
     </td>
   )
+}
+
+/**
+ * Returns which sides of the cell at `path` are perimeter edges of the
+ * current rectangular table selection - or `undefined` if the cell is
+ * not part of any rectangular selection right now.
+ *
+ * Consumers that replace the default Cell render still want the
+ * selection chrome the plugin provides; this hook lets them subscribe
+ * to the same per-table edge map the default render does.
+ *
+ * @alpha
+ */
+export function useTableCellSelectionEdges(path: Path): CellEdges | undefined {
+  const selectedCells = useContext(SelectedCellsContext)
+  const cellSegment = path.at(-1)
+  return isKeyedSegment(cellSegment)
+    ? selectedCells.get(cellSegment._key)
+    : undefined
 }
 
 function selectSelectedCells(
