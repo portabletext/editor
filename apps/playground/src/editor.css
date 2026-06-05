@@ -269,38 +269,11 @@ table[data-pt-block='container'][data-pt-plugin-table-selected] *::selection {
   color: inherit;
 }
 
-/* Interior gridlines disappear within the selection - the rectangle
- * reads as one unified block, not a grid of cells. Perimeter edges
- * below paint the blue outline on the cells that own each side. */
+/* Selected cells get a subtle blue tint. Perimeter edges are painted
+ * via inline styles on each cell (set by the plugin from its
+ * per-cell edge data), beating cascade fights with the header row. */
 table[data-pt-block='container'] tr td[data-pt-plugin-table-selected] {
   background: rgba(85, 107, 252, 0.06);
-  border-color: transparent;
-}
-
-table[data-pt-block='container'] tr td[data-pt-plugin-table-selected-edge-top] {
-  border-top-color: rgb(85, 107, 252);
-  border-top-width: 2px;
-}
-
-table[data-pt-block='container']
-  tr
-  td[data-pt-plugin-table-selected-edge-right] {
-  border-right-color: rgb(85, 107, 252);
-  border-right-width: 2px;
-}
-
-table[data-pt-block='container']
-  tr
-  td[data-pt-plugin-table-selected-edge-bottom] {
-  border-bottom-color: rgb(85, 107, 252);
-  border-bottom-width: 2px;
-}
-
-table[data-pt-block='container']
-  tr
-  td[data-pt-plugin-table-selected-edge-left] {
-  border-left-color: rgb(85, 107, 252);
-  border-left-width: 2px;
 }
 
 :where(.dark)

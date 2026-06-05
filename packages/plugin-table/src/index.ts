@@ -4,6 +4,7 @@ export {
   defaultCellRender,
   defaultRowRender,
   defaultTableRender,
+  selectionBorderStyle,
   type TableComponents,
   useTableCellSelectionEdges,
 } from './containers'

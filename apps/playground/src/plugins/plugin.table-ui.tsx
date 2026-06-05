@@ -9,6 +9,7 @@ import {
   defaultCellRender,
   defaultRowRender,
   defaultTableRender,
+  selectionBorderStyle,
   TablePlugin,
   useTableCellSelectionEdges,
 } from '@portabletext/plugin-table'
@@ -100,10 +101,12 @@ const PlaygroundCellRender: ContainerRender = (props) => {
     <td
       {...props.attributes}
       className="pt-plugin-table-ui__cell"
+      data-pt-plugin-table-selected={edges ? '' : undefined}
       data-pt-plugin-table-selected-edge-top={edges?.top || undefined}
       data-pt-plugin-table-selected-edge-right={edges?.right || undefined}
       data-pt-plugin-table-selected-edge-bottom={edges?.bottom || undefined}
       data-pt-plugin-table-selected-edge-left={edges?.left || undefined}
+      style={selectionBorderStyle(edges)}
     >
       {isFirstCellInRow ? (
         <RowHandle

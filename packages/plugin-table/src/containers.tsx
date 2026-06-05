@@ -9,7 +9,12 @@ import {
 } from '@portabletext/editor'
 import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {isKeyedSegment} from '@portabletext/editor/utils'
-import {createContext, useContext, type ReactElement} from 'react'
+import {
+  createContext,
+  useContext,
+  type CSSProperties,
+  type ReactElement,
+} from 'react'
 import {isTable} from './behaviors/types'
 import {getTableSelection} from './derivation'
 
@@ -163,6 +168,7 @@ function CellRender(props: {
   path: Path
 }) {
   const edges = useTableCellSelectionEdges(props.path)
+  const style = selectionBorderStyle(edges)
   return (
     <td
       {...props.attributes}
@@ -171,10 +177,52 @@ function CellRender(props: {
       data-pt-plugin-table-selected-edge-right={edges?.right ? '' : undefined}
       data-pt-plugin-table-selected-edge-bottom={edges?.bottom ? '' : undefined}
       data-pt-plugin-table-selected-edge-left={edges?.left ? '' : undefined}
+      style={style}
     >
       {props.children}
     </td>
   )
+}
+
+/**
+ * Inline CSS for a cell's perimeter sides of the rectangular selection.
+ *
+ * Each selected perimeter side becomes a 2px blue border; the other
+ * sides stay at the cell's default border. Inline styles beat the
+ * cascade (including header-row rules), so the outline paints cleanly
+ * regardless of what consumer CSS targets the table.
+ *
+ * Returns `undefined` for cells outside any active rectangular
+ * selection, so React strips the `style` attribute entirely instead of
+ * forcing a no-op recompute.
+ *
+ * @alpha
+ */
+export function selectionBorderStyle(
+  edges: CellEdges | undefined,
+): CSSProperties | undefined {
+  if (!edges) {
+    return undefined
+  }
+  const blue = 'rgb(85, 107, 252)'
+  const style: CSSProperties = {}
+  if (edges.top) {
+    style.borderTopColor = blue
+    style.borderTopWidth = 1.5
+  }
+  if (edges.right) {
+    style.borderRightColor = blue
+    style.borderRightWidth = 1.5
+  }
+  if (edges.bottom) {
+    style.borderBottomColor = blue
+    style.borderBottomWidth = 1.5
+  }
+  if (edges.left) {
+    style.borderLeftColor = blue
+    style.borderLeftWidth = 1.5
+  }
+  return style
 }
 
 /**
