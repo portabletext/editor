@@ -38,6 +38,14 @@ export function createUndoSteps({
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
+    // A `set_selection` op that lands in a different undo step than the
+    // ongoing operations belongs with the preceding mutating op
+    // (a corrective `select` from a follow-up action set, or a
+    // selection rotation between behavior phases).
+    if (op.type === 'set_selection') {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
     return createNewStep(steps, op, selectionBeforeApply)
   }
 

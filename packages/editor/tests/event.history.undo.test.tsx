@@ -967,4 +967,52 @@ describe('event.history.undo', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
   })
+
+  test('Scenario: `set_selection` op in a follow-up action set merges into the previous step', async () => {
+    // A behavior with two action sets: set 1 mutates the value (raise
+    // `insert.text`), set 2 emits a corrective `set_selection`. The two
+    // sets get different undo step ids by design. The selection op in
+    // set 2 should merge into set 1's step so one undo press reverts
+    // the whole event.
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'custom.two-sets',
+              actions: [
+                () => [raise({type: 'insert.text', text: 'xy'})],
+                ({snapshot}) => {
+                  const focusBlock = getFocusBlock(snapshot)
+                  if (!focusBlock) {
+                    return []
+                  }
+                  return [
+                    raise({
+                      type: 'select.block',
+                      at: focusBlock.path,
+                      select: 'start',
+                    }),
+                  ]
+                },
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({type: 'custom.two-sets'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |xy')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
 })
