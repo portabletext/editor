@@ -259,7 +259,16 @@ table[data-pt-block='container'] tr:first-child td {
  * rectangle's outline is drawn one edge at a time on the cells that
  * own that edge of the perimeter. Interior gridlines between selected
  * cells stay the regular cell border.
+ *
+ * Native browser selection is suppressed on the whole table while a
+ * rectangle is active - the plugin's chrome IS the selection
+ * indicator, the native highlight would clash.
  */
+table[data-pt-block='container'][data-pt-plugin-table-selected] *::selection {
+  background: transparent;
+  color: inherit;
+}
+
 table[data-pt-block='container'] td[data-pt-plugin-table-selected] {
   background: rgba(85, 107, 252, 0.06);
 }
