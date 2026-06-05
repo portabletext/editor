@@ -969,11 +969,16 @@ describe('event.history.undo', () => {
   })
 
   test('Scenario: `set_selection` op in a follow-up action set merges into the previous step', async () => {
-    // A behavior with two action sets: set 1 mutates the value (raise
-    // `insert.text`), set 2 emits a corrective `set_selection`. The two
-    // sets get different undo step ids by design. The selection op in
-    // set 2 should merge into set 1's step so one undo press reverts
-    // the whole event.
+    // A behavior with two action sets:
+    //   set 1: raise `insert.text 'xy'` - mutates the value, caret ends at end
+    //   set 2: raise `select.block ... select: 'start'` - moves the caret
+    //          back to the start so the user can re-read what was inserted
+    //
+    // The two sets get different undo step ids by design. Without the
+    // `set_selection` merge, the first `history.undo` press would only
+    // undo set 2's caret move (caret jumps back to end of 'xy') and
+    // leave the text mutation in place. A second press would then revert
+    // the text. With the merge, one press reverts the whole event.
     const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
