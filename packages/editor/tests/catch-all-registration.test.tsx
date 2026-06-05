@@ -666,3 +666,74 @@ describe('catch-all registration: cross-rung precedence', () => {
     })
   })
 })
+
+const objectAndInlineSchema = defineSchema({
+  blockObjects: [{name: 'callout'}],
+  inlineObjects: [{name: 'mention'}],
+})
+
+describe("catch-all registration: cross-kind coexistence at '*'", () => {
+  test('textBlock, blockObject, and inlineObject catch-alls all register and dispatch', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: objectAndInlineSchema,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 's0', text: 'Before '},
+            {_type: 'mention', _key: 'm0'},
+            {_type: 'span', _key: 's1', text: ' after'},
+          ],
+          markDefs: [],
+        },
+        {_type: 'callout', _key: 'c0'},
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineTextBlock({
+              type: '*',
+              render: ({attributes, children, node}) => (
+                <div data-testid={`tb-${node._type}`} {...attributes}>
+                  {children}
+                </div>
+              ),
+            }),
+            defineBlockObject({
+              type: '*',
+              render: ({attributes, children, node}) => (
+                <div data-testid={`bo-${node._type}`} {...attributes}>
+                  {children}
+                </div>
+              ),
+            }),
+            defineInlineObject({
+              type: '*',
+              render: ({attributes, children, node}) => (
+                <span data-testid={`io-${node._type}`} {...attributes}>
+                  {children}
+                </span>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-testid="tb-block"]')).not.toEqual(
+        null,
+      )
+      expect(document.querySelector('[data-testid="bo-callout"]')).not.toEqual(
+        null,
+      )
+      expect(document.querySelector('[data-testid="io-mention"]')).not.toEqual(
+        null,
+      )
+    })
+  })
+})

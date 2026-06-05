@@ -71,6 +71,12 @@ export function isTypeAlreadyRegistered(
     return true
   }
 
+  // The '*' sentinel is a kind-specific catch-all, not a real `_type`,
+  // so cross-kind exclusivity does not apply.
+  if (type === '*') {
+    return false
+  }
+
   // Cross-kind exclusivity. blockObject and inlineObject can co-exist
   // with each other but not with container/textBlock/span. The
   // exclusive kinds (container/textBlock/span) are mutually exclusive
