@@ -1,5 +1,19 @@
 # @portabletext/markdown
 
+## 1.4.0
+
+### Minor Changes
+
+- [#2699](https://github.com/portabletext/editor/pull/2699) [`7b961d4`](https://github.com/portabletext/editor/commit/7b961d40cda88ea3a65380ae6dd18562503f32a4) Thanks [@christianhg](https://github.com/christianhg)! - feat: support per-column alignment on tables
+
+  The default `table` block-object now carries an optional `alignment` field that mirrors GFM's per-column alignment markers. `markdownToPortableText` reads the colons on the delimiter row (`:---`, `:---:`, `---:`) and writes them to `alignment` as an array of `'left' | 'center' | 'right' | null`, indexed by column. `portableTextToMarkdown` does the inverse: a `null` (or missing) entry emits `---`, otherwise the entry decides which colons surround the dashes. Tables without alignment round-trip unchanged - the `alignment` field is omitted on the way in and skipped on the way out.
+
+### Patch Changes
+
+- [#2744](https://github.com/portabletext/editor/pull/2744) [`010f182`](https://github.com/portabletext/editor/commit/010f1820c0af8a4f613394eefe3169c11e486a43) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update dependency markdown-it to ^14.2.0
+
+- [#2732](https://github.com/portabletext/editor/pull/2732) [`409a970`](https://github.com/portabletext/editor/commit/409a97041a37bc0214f3475554b834a16d92866a) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop transforming typography characters in markdown input
+
 ## 1.3.2
 
 ### Patch Changes
