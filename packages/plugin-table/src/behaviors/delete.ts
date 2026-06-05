@@ -1,10 +1,6 @@
-import type {
-  EditorSelectionPoint,
-  EditorSnapshot,
-  Path,
-} from '@portabletext/editor'
+import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
-import {getEnclosingBlock, getLeaf} from '@portabletext/editor/traversal'
+import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {getTableSelection} from '../derivation'
 import {isTable, type TableSelection} from './types'
 
@@ -84,11 +80,13 @@ function clearCellsAndCollapse(
     }
   }
   if (topLeftCellPath) {
-    const leaf = getLeaf(snapshot, topLeftCellPath, {edge: 'start'})
-    if (leaf) {
-      const point: EditorSelectionPoint = {path: leaf.path, offset: 0}
-      actions.push(raise({type: 'select', at: {anchor: point, focus: point}}))
-    }
+    // Raise select.block (not select with leaf path). select.block resolves
+    // to the cell's first leaf via the apply layer AFTER our unsets +
+    // normalization complete — so the cursor lands inside the cleared cell's
+    // freshly-minted empty block, not at whatever leaf survived transformPoint.
+    actions.push(
+      raise({type: 'select.block', at: topLeftCellPath, select: 'start'}),
+    )
   }
   return actions
 }

@@ -338,6 +338,12 @@ describe('delete behaviors within tables', () => {
       // Table structure unchanged.
       expect(table.rows.length).toBe(2)
       expect(table.rows[0]?.cells.length).toBe(2)
+      // Selection collapses to the start of the top-left cell of the
+      // rectangle (r0c0).
+      const selection = editor.getSnapshot().context.selection
+      expect((selection?.anchor.path[4] as {_key: string})?._key).toBe('r0c0')
+      expect((selection?.focus.path[4] as {_key: string})?._key).toBe('r0c0')
+      expect(selection?.anchor.offset).toBe(0)
     })
 
     editor.send({type: 'history.undo'})
@@ -368,6 +374,10 @@ describe('delete behaviors within tables', () => {
       // Row 1 cells untouched.
       expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('CC')
       expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('DD')
+      // Selection lands in r0c0 (top-left of rectangle).
+      const selection = editor.getSnapshot().context.selection
+      expect((selection?.anchor.path[4] as {_key: string})?._key).toBe('r0c0')
+      expect(selection?.anchor.offset).toBe(0)
     })
 
     editor.send({type: 'history.undo'})
@@ -398,12 +408,57 @@ describe('delete behaviors within tables', () => {
       // No new blocks added inside either cell.
       expect(table.rows[0]?.cells[0]?.content.length).toBe(1)
       expect(table.rows[0]?.cells[1]?.content.length).toBe(1)
+      // Selection lands in r0c0 (top-left of rectangle), no split happened.
+      const selection = editor.getSnapshot().context.selection
+      expect((selection?.anchor.path[4] as {_key: string})?._key).toBe('r0c0')
+      expect(selection?.anchor.offset).toBe(0)
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('delete on multi-cell rectangle in cols 1+: selection lands at start of selection top-left, not table top-left', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    // Select cells in column 1 only (r0c1 + r1c1). Column 0 (containing AA/CC)
+    // is outside the selection. After delete, cursor must land at the start of
+    // r0c1 (the top-left of the SELECTION), not r0c0.
+    const anchor = pointAt('r0c1', 'r0c1b', 'r0c1s', 0)
+    const focus = pointAt('r1c1', 'r1c1b', 'r1c1s', 2)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      if (!selection) {
+        throw new Error('expected collapsed selection inside r0c1')
+      }
+      // Anchor and focus must point inside r0c1, not r0c0.
+      const anchorPath = selection.anchor.path
+      const cellKeyAnchor = (anchorPath[4] as {_key: string} | undefined)?._key
+      expect(cellKeyAnchor).toBe('r0c1')
+      const cellKeyFocus = (
+        selection.focus.path[4] as {_key: string} | undefined
+      )?._key
+      expect(cellKeyFocus).toBe('r0c1')
+      expect(selection.anchor.offset).toBe(0)
+      expect(selection.focus.offset).toBe(0)
+
+      const table = firstTable(editor.getSnapshot().context.value)
+      // r0c0/r1c0 untouched, r0c1/r1c1 cleared.
+      expect(table.rows[0]?.cells[0]?.content[0]?.children[0]?.text).toBe('AA')
+      expect(table.rows[1]?.cells[0]?.content[0]?.children[0]?.text).toBe('CC')
+      expect(table.rows[0]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
+      expect(table.rows[1]?.cells[1]?.content[0]?.children[0]?.text).toBe('')
     })
   })
 })
