@@ -4,6 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {ReactElement} from 'react'
+import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {ChildArrayField} from '../schema/resolve-containers'
 
@@ -97,6 +98,15 @@ export type SpanRender = (props: SpanRenderProps) => ReactElement
 export type BlockObjectRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
+  /**
+   * Set to `'start'` or `'end'` while the editor is mid-drag and a
+   * drop above or below this block is the current target. `undefined`
+   * otherwise. The engine-default render shows a drop indicator at
+   * this position; consumers using a custom render must render their
+   * own affordance (or delegate via `renderDefault`) for drop targets
+   * to be visible.
+   */
+  dropPosition?: DropPosition['position']
   focused: boolean
   node: PortableTextObject
   path: Path
@@ -224,7 +234,22 @@ export type TextBlock = {
 export type TextBlockRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
+  /**
+   * Set to `'start'` or `'end'` while the editor is mid-drag and a
+   * drop above or below this block is the current target. `undefined`
+   * otherwise. The engine-default render shows a drop indicator at
+   * this position; consumers using a custom render must render their
+   * own affordance (or delegate via `renderDefault`) for drop targets
+   * to be visible.
+   */
+  dropPosition?: DropPosition['position']
   focused: boolean
+  /**
+   * For list-item text blocks, the 1-based running index of this item
+   * within its visible list run (accounts for the level and resets
+   * across non-list interrupts). `undefined` for non-list blocks.
+   */
+  listIndex?: number
   node: PortableTextTextBlock
   path: Path
   readOnly: boolean
