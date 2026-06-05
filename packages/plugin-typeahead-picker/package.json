@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-typeahead-picker",
-  "version": "6.0.10",
+  "version": "6.0.11",
   "description": "Generic typeahead picker infrastructure for the Portable Text Editor",
   "keywords": [
     "portabletext",
@@ -82,7 +82,7 @@
     "vitest": "^4.1.8"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^7.3.0",
+    "@portabletext/editor": "workspace:^7.3.1",
     "react": "^19.2"
   },
   "engines": {

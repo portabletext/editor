@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.3.1
+
+### Patch Changes
+
+- [#2752](https://github.com/portabletext/editor/pull/2752) [`cfcb9ec`](https://github.com/portabletext/editor/commit/cfcb9ecf2b683bf7c71fb32daa63bbd1935a4d05) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow catch-all `defineX({type: '*'})` registrations across kinds
+
+  A `defineTextBlock({type: '*'})` registration no longer blocks subsequent `defineBlockObject({type: '*'})` and `defineInlineObject({type: '*'})` registrations. The `'*'` sentinel is a kind-specific catch-all and is not subject to the cross-kind exclusivity that applies to real `_type` identifiers.
+
 ## 7.3.0
 
 ### Minor Changes
