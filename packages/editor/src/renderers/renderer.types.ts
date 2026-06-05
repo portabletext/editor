@@ -54,6 +54,9 @@ export type ContainerRenderProps = {
    */
   renderDefault: (props: ContainerRenderProps) => ReactElement
 }
+/**
+ * @alpha
+ */
 export type ContainerRender = (props: ContainerRenderProps) => ReactElement
 
 /**
@@ -77,6 +80,9 @@ export type SpanRenderProps = {
    */
   renderDefault: (props: SpanRenderProps) => ReactElement
 }
+/**
+ * @alpha
+ */
 export type SpanRender = (props: SpanRenderProps) => ReactElement
 
 /**
@@ -102,6 +108,9 @@ export type BlockObjectRenderProps = {
    */
   renderDefault: (props: BlockObjectRenderProps) => ReactElement
 }
+/**
+ * @alpha
+ */
 export type BlockObjectRender = (props: BlockObjectRenderProps) => ReactElement
 
 /**
@@ -127,6 +136,9 @@ export type InlineObjectRenderProps = {
    */
   renderDefault: (props: InlineObjectRenderProps) => ReactElement
 }
+/**
+ * @alpha
+ */
 export type InlineObjectRender = (
   props: InlineObjectRenderProps,
 ) => ReactElement
@@ -223,6 +235,9 @@ export type TextBlockRenderProps = {
    */
   renderDefault: (props: TextBlockRenderProps) => ReactElement
 }
+/**
+ * @alpha
+ */
 export type TextBlockRender = (props: TextBlockRenderProps) => ReactElement
 
 /**
