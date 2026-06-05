@@ -1,6 +1,10 @@
 import type {Path, PortableTextBlock} from '@portabletext/editor'
 
-export type Cell = {_type: 'cell'; _key: string}
+export type Cell = {
+  _type: 'cell'
+  _key: string
+  content: Array<PortableTextBlock>
+}
 export type Row = PortableTextBlock & {_type: 'row'; cells: Array<Cell>}
 export type Table = PortableTextBlock & {
   _type: 'table'

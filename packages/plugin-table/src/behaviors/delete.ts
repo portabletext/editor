@@ -1,9 +1,12 @@
-import type {EditorSelectionPoint, Path} from '@portabletext/editor'
+import type {
+  EditorSelectionPoint,
+  EditorSnapshot,
+  Path,
+} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
-import {getLeaf} from '@portabletext/editor/traversal'
-import {isKeyedSegment} from '@portabletext/editor/utils'
+import {getEnclosingBlock, getLeaf} from '@portabletext/editor/traversal'
 import {getTableSelection} from '../derivation'
-import {isTable} from './types'
+import {isTable, type TableSelection} from './types'
 
 /**
  * Intercepts `delete` and `split` when the editor selection spans more
@@ -11,73 +14,33 @@ import {isTable} from './types'
  * cleared to a single empty text block and the selection collapses to
  * the start of the top-left cell. Within a single cell, the engine's
  * built-in behavior is unchanged.
- *
- * Why this exists: the table cell selection (the blue rectangle) is a
- * derived view over the editor selection. When the user has the
- * rectangle highlighted and triggers a deletion, they expect the
- * rectangle's cells to be cleared — not for the engine to slice each
- * cell's text at the anchor/focus offsets, which is what the unguarded
- * engine path does.
  */
-type RectangleGuard = {tablePath: Path; cellKeys: ReadonlyArray<string>}
-
 export const deleteBehaviors = [
-  defineBehavior<Record<string, never>, 'delete', RectangleGuard>({
+  defineBehavior<Record<string, never>, 'delete', TableSelection>({
     on: 'delete',
-    guard: ({snapshot}) => guardMultiCellRectangle(snapshot),
+    guard: ({snapshot}) => getTableSelection(snapshot) ?? false,
     actions: [
-      ({snapshot}, {tablePath, cellKeys}) =>
-        clearCellsAndCollapse(snapshot, tablePath, cellKeys),
+      ({snapshot}, tableSelection) =>
+        clearCellsAndCollapse(snapshot, tableSelection),
     ],
   }),
-  defineBehavior<Record<string, never>, 'split', RectangleGuard>({
+  defineBehavior<Record<string, never>, 'split', TableSelection>({
     on: 'split',
-    guard: ({snapshot}) => guardMultiCellRectangle(snapshot),
+    guard: ({snapshot}) => getTableSelection(snapshot) ?? false,
     actions: [
-      ({snapshot}, {tablePath, cellKeys}) =>
-        clearCellsAndCollapse(snapshot, tablePath, cellKeys),
+      ({snapshot}, tableSelection) =>
+        clearCellsAndCollapse(snapshot, tableSelection),
     ],
   }),
 ]
 
-type Snapshot = Parameters<typeof getTableSelection>[0]
-
-function guardMultiCellRectangle(snapshot: Snapshot): RectangleGuard | false {
-  const tableSelection = getTableSelection(snapshot)
-  if (!tableSelection) {
-    return false
-  }
-  const table = findTable(snapshot, tableSelection.tablePath)
-  if (!table) {
-    return false
-  }
-  const cellKeys: Array<string> = []
-  const [rowStart, rowEnd] = tableSelection.rowRange
-  const [colStart, colEnd] = tableSelection.colRange
-  for (let r = rowStart; r <= rowEnd; r++) {
-    const row = table.rows[r]
-    if (!row) {
-      continue
-    }
-    for (let c = colStart; c <= colEnd; c++) {
-      const cell = row.cells[c]
-      if (cell) {
-        cellKeys.push(cell._key)
-      }
-    }
-  }
-  if (cellKeys.length < 2) {
-    return false
-  }
-  return {tablePath: tableSelection.tablePath, cellKeys}
-}
-
 function clearCellsAndCollapse(
-  snapshot: Snapshot,
-  tablePath: Path,
-  cellKeys: ReadonlyArray<string>,
+  snapshot: EditorSnapshot,
+  tableSelection: TableSelection,
 ) {
-  const table = findTable(snapshot, tablePath)
+  const table = getEnclosingBlock(snapshot, tableSelection.tablePath, {
+    match: isTable,
+  })
   if (!table) {
     return []
   }
@@ -87,14 +50,21 @@ function clearCellsAndCollapse(
   // original content. Normalization repopulates each cleared cell with a
   // single empty text block.
   const actions = []
+  const [rowStart, rowEnd] = tableSelection.rowRange
+  const [colStart, colEnd] = tableSelection.colRange
   let topLeftCellPath: Path | null = null
-  for (const row of table.rows) {
-    for (const cell of row.cells) {
-      if (!cellKeys.includes(cell._key)) {
+  for (let r = rowStart; r <= rowEnd; r++) {
+    const row = table.node.rows[r]
+    if (!row) {
+      continue
+    }
+    for (let c = colStart; c <= colEnd; c++) {
+      const cell = row.cells[c]
+      if (!cell) {
         continue
       }
       const cellPath: Path = [
-        ...tablePath,
+        ...tableSelection.tablePath,
         'rows',
         {_key: row._key},
         'cells',
@@ -121,18 +91,4 @@ function clearCellsAndCollapse(
     }
   }
   return actions
-}
-
-function findTable(snapshot: Snapshot, tablePath: Path) {
-  const tableSegment = tablePath[0]
-  if (!isKeyedSegment(tableSegment)) {
-    return null
-  }
-  const block = snapshot.context.value.find(
-    (item) => item._key === tableSegment._key,
-  )
-  if (!block || !isTable(block)) {
-    return null
-  }
-  return block
 }
