@@ -37,6 +37,10 @@ export {
 } from '@portabletext/schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export {
+  createEditorSlice,
+  type EditorSliceStore,
+} from './editor/create-editor-slice'
+export {
   useIsFocusedContainer,
   useIsFocusedLeaf,
   useIsSelectedContainer,

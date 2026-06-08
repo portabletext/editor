@@ -4,6 +4,7 @@ import type {EditorConfig} from '../editor'
 import {Engine} from '../engine/react/components/engine'
 import {stopActor} from '../internal-utils/stop-actor'
 import {createInternalEditor} from './create-editor'
+import {EditorSliceHost} from './create-editor-slice'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {PortableTextEditor} from './PortableTextEditor'
@@ -81,7 +82,7 @@ export function EditorProvider(props: EditorProviderProps) {
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
           <Engine editor={internalEditor.editorEngine}>
             <PortableTextEditorContext.Provider value={portableTextEditor}>
-              {props.children}
+              <EditorSliceHost>{props.children}</EditorSliceHost>
             </PortableTextEditorContext.Provider>
           </Engine>
         </RelayActorContext.Provider>
