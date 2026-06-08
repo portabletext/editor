@@ -183,10 +183,7 @@ export const modifyDescendant = <N extends Node>(
     rootIndex = rootNumericIndex
   } else if (keyedSegments.length > 0) {
     const rootKey = keyedSegments[0]!._key
-    if (
-      editor.blockIndexMap.size === editor.snapshot.context.value.length &&
-      editor.blockIndexMap.has(rootKey)
-    ) {
+    if (editor.blockIndexMap.has(rootKey)) {
       rootIndex = editor.blockIndexMap.get(rootKey)!
     } else {
       rootIndex = findIndexByKey(editor.snapshot.context.value, rootKey)

@@ -43,7 +43,7 @@ export function getNode(
     }
 
     if (isKeyedSegment(segment)) {
-      if (isRootLevel && blockIndexMap.size === currentChildren.length) {
+      if (isRootLevel) {
         const index = blockIndexMap.get(segment._key)
         if (index !== undefined) {
           const candidate = currentChildren[index]

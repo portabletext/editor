@@ -2,6 +2,7 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
+import {createTestSnapshot} from './build-index-maps'
 import {getUnwrapTarget} from './get-unwrap-target'
 
 const testRender: Container['render'] = ({children}) => children
@@ -53,34 +54,31 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'cell',
-                _key: 'c0',
-                content: [
-                  {
-                    _type: 'callout',
-                    _key: 'co0',
-                    content: [
-                      {
-                        _type: 'block',
-                        _key: 'cb0',
-                        children: [
-                          {_type: 'span', _key: 'cs0', text: '', marks: []},
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'cell',
+              _key: 'c0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'co0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'cb0',
+                      children: [
+                        {_type: 'span', _key: 'cs0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'c0'}, 'content', {_key: 'co0'}],
         new Set(['block']),
       ),
@@ -166,51 +164,48 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'table',
-                _key: 't0',
-                rows: [
-                  {
-                    _type: 'row',
-                    _key: 'r0',
-                    cells: [
-                      {
-                        _type: 'cell',
-                        _key: 'c0',
-                        content: [
-                          {
-                            _type: 'callout',
-                            _key: 'co0',
-                            content: [
-                              {
-                                _type: 'block',
-                                _key: 'cb0',
-                                children: [
-                                  {
-                                    _type: 'span',
-                                    _key: 'cs0',
-                                    text: '',
-                                    marks: [],
-                                  },
-                                ],
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'table',
+              _key: 't0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'r0',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'c0',
+                      content: [
+                        {
+                          _type: 'callout',
+                          _key: 'co0',
+                          content: [
+                            {
+                              _type: 'block',
+                              _key: 'cb0',
+                              children: [
+                                {
+                                  _type: 'span',
+                                  _key: 'cs0',
+                                  text: '',
+                                  marks: [],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [
           {_key: 't0'},
           'rows',
@@ -287,64 +282,61 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'row',
-                _key: 'r0',
-                cells: [
-                  {
-                    _type: 'cell',
-                    _key: 'c0',
-                    content: [
-                      {
-                        _type: 'callout',
-                        _key: 'co0',
-                        content: [
-                          {
-                            _type: 'block',
-                            _key: 'cb0',
-                            children: [
-                              {_type: 'span', _key: 'cs0', text: '', marks: []},
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    _type: 'cell',
-                    _key: 'c1',
-                    content: [
-                      {
-                        _type: 'callout',
-                        _key: 'co1',
-                        content: [
-                          {
-                            _type: 'block',
-                            _key: 'cb1',
-                            children: [
-                              {
-                                _type: 'span',
-                                _key: 'cs1',
-                                text: 'bar',
-                                marks: [],
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'c0',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'co0',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'cb0',
+                          children: [
+                            {_type: 'span', _key: 'cs0', text: '', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'c1',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'co1',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'cb1',
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'cs1',
+                              text: 'bar',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'r0'}, 'cells', {_key: 'c0'}, 'content', {_key: 'co0'}],
         new Set(['block']),
       ),
@@ -373,28 +365,23 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'callout',
-                _key: 'co0',
-                content: [
-                  {
-                    _type: 'block',
-                    _key: 'cb0',
-                    children: [
-                      {_type: 'span', _key: 'cs0', text: '', marks: []},
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'callout',
+              _key: 'co0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'cb0',
+                  children: [{_type: 'span', _key: 'cs0', text: '', marks: []}],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'co0'}],
         new Set(['block']),
       ),
@@ -449,35 +436,32 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'cell',
-                _key: 'c0',
-                content: [
-                  {
-                    _type: 'callout',
-                    _key: 'co0',
-                    content: [
-                      {
-                        _type: 'block',
-                        _key: 'cb0',
-                        children: [
-                          {_type: 'span', _key: 'cs0', text: '', marks: []},
-                        ],
-                      },
-                      {_type: 'image', _key: 'im0'},
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'cell',
+              _key: 'c0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'co0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'cb0',
+                      children: [
+                        {_type: 'span', _key: 'cs0', text: '', marks: []},
+                      ],
+                    },
+                    {_type: 'image', _key: 'im0'},
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'c0'}, 'content', {_key: 'co0'}],
         new Set(['block', 'image']),
       ),
@@ -530,35 +514,32 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'cell',
-                _key: 'c0',
-                content: [
-                  {
-                    _type: 'callout',
-                    _key: 'co0',
-                    content: [
-                      {
-                        _type: 'block',
-                        _key: 'cb0',
-                        children: [
-                          {_type: 'span', _key: 'cs0', text: '', marks: []},
-                        ],
-                      },
-                      {_type: 'image', _key: 'im0'},
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'cell',
+              _key: 'c0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'co0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'cb0',
+                      children: [
+                        {_type: 'span', _key: 'cs0', text: '', marks: []},
+                      ],
+                    },
+                    {_type: 'image', _key: 'im0'},
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'c0'}, 'content', {_key: 'co0'}],
         new Set(['block', 'image']),
       ),
@@ -610,35 +591,32 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'cell',
-                _key: 'c0',
-                content: [
-                  {
-                    _type: 'callout',
-                    _key: 'co0',
-                    content: [
-                      {
-                        _type: 'block',
-                        _key: 'cb0',
-                        children: [
-                          {_type: 'span', _key: 'cs0', text: '', marks: []},
-                        ],
-                      },
-                      {_type: 'image', _key: 'im0'},
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'cell',
+              _key: 'c0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'co0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'cb0',
+                      children: [
+                        {_type: 'span', _key: 'cs0', text: '', marks: []},
+                      ],
+                    },
+                    {_type: 'image', _key: 'im0'},
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'c0'}, 'content', {_key: 'co0'}],
         new Set(['block', 'image']),
       ),
@@ -690,47 +668,44 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'row',
-                _key: 'r0',
-                cells: [
-                  {
-                    _type: 'cell',
-                    _key: 'c0',
-                    content: [
-                      {
-                        _type: 'block',
-                        _key: 'b0',
-                        children: [
-                          {_type: 'span', _key: 's0', text: '', marks: []},
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    _type: 'cell',
-                    _key: 'c1',
-                    content: [
-                      {
-                        _type: 'block',
-                        _key: 'b1',
-                        children: [
-                          {_type: 'span', _key: 's1', text: 'bar', marks: []},
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'c0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b0',
+                      children: [
+                        {_type: 'span', _key: 's0', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'c1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b1',
+                      children: [
+                        {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'r0'}, 'cells', {_key: 'c0'}],
         new Set(['block']),
       ),
@@ -802,41 +777,38 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'cell',
-                _key: 'c0',
-                content: [
-                  {
-                    _type: 'section',
-                    _key: 'se0',
-                    content: [
-                      {
-                        _type: 'callout',
-                        _key: 'co0',
-                        content: [
-                          {
-                            _type: 'block',
-                            _key: 'cb0',
-                            children: [
-                              {_type: 'span', _key: 'cs0', text: '', marks: []},
-                            ],
-                          },
-                          {_type: 'image', _key: 'im0'},
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'cell',
+              _key: 'c0',
+              content: [
+                {
+                  _type: 'section',
+                  _key: 'se0',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'co0',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'cb0',
+                          children: [
+                            {_type: 'span', _key: 'cs0', text: '', marks: []},
+                          ],
+                        },
+                        {_type: 'image', _key: 'im0'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
         [{_key: 'c0'}, 'content', {_key: 'se0'}, 'content', {_key: 'co0'}],
         new Set(['block', 'image']),
       ),
@@ -871,29 +843,24 @@ describe(getUnwrapTarget.name, () => {
 
     expect(
       getUnwrapTarget(
-        {
-          context: {
-            schema,
-            containers,
-            value: [
-              {
-                _type: 'callout',
-                _key: 'co0',
-                content: [
-                  {
-                    _type: 'block',
-                    _key: 'cb0',
-                    children: [
-                      {_type: 'span', _key: 'cs0', text: '', marks: []},
-                    ],
-                  },
-                  {_type: 'image', _key: 'im0'},
-                ],
-              },
-            ],
-          },
-          blockIndexMap: new Map(),
-        },
+        createTestSnapshot({
+          schema,
+          containers,
+          value: [
+            {
+              _type: 'callout',
+              _key: 'co0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'cb0',
+                  children: [{_type: 'span', _key: 'cs0', text: '', marks: []}],
+                },
+                {_type: 'image', _key: 'im0'},
+              ],
+            },
+          ],
+        }),
         [{_key: 'co0'}],
         new Set(['block', 'image']),
       ),
