@@ -1,5 +1,7 @@
 import {useContext, useMemo, useSyncExternalStore} from 'react'
+import type {Path} from '../engine/interfaces/path'
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
+import {serializePath} from '../paths/serialize-path'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {createSliceStore} from './create-slice-store'
 import {EditorActorContext} from './editor-actor-context'
@@ -120,12 +122,16 @@ export function SelectionStateProvider({
 }
 
 /**
- * Subscribe to whether a container at `serializedPath` is currently
- * focused. Re-renders only when this boolean flips — not when other
- * containers' focused state changes.
+ * @alpha
+ *
+ * Subscribe to whether the container at `path` is currently the
+ * innermost container that contains the caret. Re-renders only when
+ * this boolean flips — not when other containers' focused state
+ * changes, and not on every keystroke when the boolean doesn't move.
  */
-export function useIsFocusedContainer(serializedPath: string): boolean {
+export function useIsFocusedContainer(path: Path): boolean {
   const store = useStore()
+  const serializedPath = serializePath(path)
   return useSyncExternalStore(
     store.subscribe,
     () => store.getSnapshot().focusedContainerPath === serializedPath,
@@ -133,22 +139,28 @@ export function useIsFocusedContainer(serializedPath: string): boolean {
 }
 
 /**
- * Subscribe to whether a container at `serializedPath` is within the
- * current selection.
+ * @alpha
+ *
+ * Subscribe to whether the container at `path` is within (or contains)
+ * the current selection.
  */
-export function useIsSelectedContainer(serializedPath: string): boolean {
+export function useIsSelectedContainer(path: Path): boolean {
   const store = useStore()
+  const serializedPath = serializePath(path)
   return useSyncExternalStore(store.subscribe, () =>
     store.getSnapshot().selectedContainerPaths.has(serializedPath),
   )
 }
 
 /**
- * Subscribe to whether a leaf (span / inline object / block object) at
- * `serializedPath` is currently focused.
+ * @alpha
+ *
+ * Subscribe to whether the leaf (span, inline object, or block object)
+ * at `path` is the one the caret is in or on.
  */
-export function useIsFocusedLeaf(serializedPath: string): boolean {
+export function useIsFocusedLeaf(path: Path): boolean {
   const store = useStore()
+  const serializedPath = serializePath(path)
   return useSyncExternalStore(
     store.subscribe,
     () => store.getSnapshot().focusedLeafPath === serializedPath,
@@ -156,11 +168,14 @@ export function useIsFocusedLeaf(serializedPath: string): boolean {
 }
 
 /**
- * Subscribe to whether a leaf at `serializedPath` is within the current
+ * @alpha
+ *
+ * Subscribe to whether the leaf at `path` is within the current
  * selection.
  */
-export function useIsSelectedLeaf(serializedPath: string): boolean {
+export function useIsSelectedLeaf(path: Path): boolean {
   const store = useStore()
+  const serializedPath = serializePath(path)
   return useSyncExternalStore(store.subscribe, () =>
     store.getSnapshot().selectedLeafPaths.has(serializedPath),
   )

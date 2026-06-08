@@ -9,7 +9,6 @@ import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
-import {serializePath} from '../paths/serialize-path'
 import type {
   BlockObjectConfig,
   ContainerConfig,
@@ -32,10 +31,6 @@ import {renderDefaultTextBlock} from './render.default'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
 import {resolveElementDropPosition} from './resolve-element-drop-position'
-import {
-  useIsFocusedContainer,
-  useIsSelectedContainer,
-} from './selection-state-context'
 import {tupleRefEqual} from './tuple-ref-equal'
 
 export function RenderElement(props: {
@@ -321,14 +316,9 @@ export function RenderElement(props: {
 
 /**
  * Renders a text block via a registered `defineTextBlock` config whose
- * `render` is a function. Extracted into its own component so the
- * per-slice selection hooks (`useIsFocusedContainer` /
- * `useIsSelectedContainer`) live at the top of a component, not inside
- * a conditional in `RenderElement`'s body.
- *
- * The dispatch in `RenderElement` filters: a `function` render flows
- * here; a config with no `render` resolves to global or to the
- * legacy pipeline at top level.
+ * `render` is a function. Extracted into its own component because the
+ * dispatch in `RenderElement` filters by render-shape and the new
+ * pipeline must not flow through the legacy-callback branch.
  */
 function RenderTextBlockConfig(props: {
   attributes: Omit<RenderElementProps['attributes'], 'data-pt-block'> & {
@@ -340,18 +330,13 @@ function RenderTextBlockConfig(props: {
   readOnly: boolean
   render: NonNullable<TextBlockConfig['textBlock']['render']>
 }) {
-  const serializedPath = serializePath(props.path)
-  const focused = useIsFocusedContainer(serializedPath)
-  const selected = useIsSelectedContainer(serializedPath)
   const renderDefault = renderDefaultTextBlock
   return props.render({
     attributes: props.attributes,
     children: props.children,
-    focused,
     node: props.node,
     path: props.path,
     readOnly: props.readOnly,
     renderDefault,
-    selected,
   })
 }

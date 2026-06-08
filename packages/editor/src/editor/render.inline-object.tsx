@@ -2,7 +2,6 @@ import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
-import {serializePath} from '../paths/serialize-path'
 import type {
   InlineObjectConfig,
   InlineObjectRenderProps,
@@ -39,9 +38,8 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const serializedPath = serializePath(props.path)
-  const selected = useIsSelectedLeaf(serializedPath)
-  const focused = useIsFocusedLeaf(serializedPath)
+  const selected = useIsSelectedLeaf(props.path)
+  const focused = useIsFocusedLeaf(props.path)
 
   const inlineObject = props.element as unknown as PortableTextChild
 
@@ -58,12 +56,10 @@ export function RenderInlineObject(props: {
         'data-pt-inline': 'object',
       },
       children: props.children,
-      focused,
       node: props.element as PortableTextObject,
       path: props.path,
       readOnly: props.readOnly,
       renderDefault: renderDefaultInlineObject,
-      selected,
     }
     return render ? render(renderProps) : renderDefaultInlineObject(renderProps)
   }

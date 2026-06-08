@@ -3,7 +3,6 @@ import {useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
-import {serializePath} from '../paths/serialize-path'
 import type {
   BlockObjectConfig,
   BlockObjectRenderProps,
@@ -30,9 +29,8 @@ export function RenderBlockObject(props: {
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
 
-  const serializedPath = serializePath(props.path)
-  const selected = useIsSelectedLeaf(serializedPath)
-  const focused = useIsFocusedLeaf(serializedPath)
+  const selected = useIsSelectedLeaf(props.path)
+  const focused = useIsFocusedLeaf(props.path)
 
   const blockObjectSchemaType = props.schema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
@@ -62,12 +60,10 @@ export function RenderBlockObject(props: {
         'data-pt-block': 'object',
       },
       children: props.children,
-      focused,
       node: props.element,
       path: props.path,
       readOnly: props.readOnly,
       renderDefault: renderDefaultBlockObject,
-      selected,
     }
     return render ? render(renderProps) : renderDefaultBlockObject(renderProps)
   }

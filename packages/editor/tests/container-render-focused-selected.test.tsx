@@ -2,6 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import type {Path} from '../src/engine/interfaces/path'
+import {useIsFocusedContainer, useIsSelectedContainer} from '../src/index'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -54,7 +55,7 @@ const tableSchema = defineSchema({
   ],
 })
 
-describe('container render focused, selected, and path', () => {
+describe('useIsFocusedContainer / useIsSelectedContainer / useIsFocusedLeaf / useIsSelectedLeaf', () => {
   test('Only the innermost container is focused; ancestors are selected', async () => {
     const calloutValues: Array<{
       focused: boolean
@@ -93,14 +94,18 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected, path}) => {
+              render: ({attributes, children, path}) => {
+                const focused = useIsFocusedContainer(path)
+                const selected = useIsSelectedContainer(path)
                 calloutValues.push({focused, selected, path})
                 return <div {...attributes}>{children}</div>
               },
               of: [
                 defineTextBlock({
                   type: 'block',
-                  render: ({attributes, children, focused, selected, path}) => {
+                  render: ({attributes, children, path}) => {
+                    const focused = useIsFocusedContainer(path)
+                    const selected = useIsSelectedContainer(path)
                     calloutBlockValues.push({focused, selected, path})
                     return <div {...attributes}>{children}</div>
                   },
@@ -176,7 +181,9 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({attributes, children, path}) => {
+                const focused = useIsFocusedContainer(path)
+                const selected = useIsSelectedContainer(path)
                 calloutValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
@@ -246,7 +253,9 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({attributes, children, path}) => {
+                const focused = useIsFocusedContainer(path)
+                const selected = useIsSelectedContainer(path)
                 tableValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
@@ -254,7 +263,9 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'row',
               arrayField: 'cells',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({attributes, children, path}) => {
+                const focused = useIsFocusedContainer(path)
+                const selected = useIsSelectedContainer(path)
                 rowValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
@@ -262,14 +273,18 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'cell',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({attributes, children, path}) => {
+                const focused = useIsFocusedContainer(path)
+                const selected = useIsSelectedContainer(path)
                 cellValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
               of: [
                 defineTextBlock({
                   type: 'block',
-                  render: ({attributes, children, focused, selected}) => {
+                  render: ({attributes, children, path}) => {
+                    const focused = useIsFocusedContainer(path)
+                    const selected = useIsSelectedContainer(path)
                     cellBlockValues.push({focused, selected})
                     return <div {...attributes}>{children}</div>
                   },
@@ -389,7 +404,9 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'cell',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected, node}) => {
+              render: ({attributes, children, node, path}) => {
+                const focused = useIsFocusedContainer(path)
+                const selected = useIsSelectedContainer(path)
                 cellValues.push({key: node._key, focused, selected})
                 return <div {...attributes}>{children}</div>
               },
