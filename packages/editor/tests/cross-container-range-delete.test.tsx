@@ -2544,7 +2544,7 @@ describe('cross-container range delete: deep structures', () => {
     })
 
     await userEvent.click(locator)
-    await userEvent.keyboard('{Control>}a{/Control}')
+    await userEvent.keyboard('{ControlOrMeta>}{A}{/ControlOrMeta}')
     await userEvent.keyboard('{Delete}')
 
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
