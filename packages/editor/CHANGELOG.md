@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.3.2
+
+### Patch Changes
+
+- [#2757](https://github.com/portabletext/editor/pull/2757) [`c92beef`](https://github.com/portabletext/editor/commit/c92beefeb17631046ea1b5e04c3aa9c4274f520e) Thanks [@christianhg](https://github.com/christianhg)! - fix: apply `insertReplacementText` at the correct position inside iframes
+
+  Accepting a suggestion from a browser extension like Grammarly now replaces the targeted word, even when the editor is mounted inside an iframe.
+
 ## 7.3.1
 
 ### Patch Changes

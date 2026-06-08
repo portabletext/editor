@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.0.12
+
+### Patch Changes
+
+- Updated dependencies [[`c92beef`](https://github.com/portabletext/editor/commit/c92beefeb17631046ea1b5e04c3aa9c4274f520e)]:
+  - @portabletext/editor@7.3.2
+
 ## 8.0.11
 
 ### Patch Changes
