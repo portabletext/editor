@@ -1,4 +1,5 @@
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {PortableTextBlock} from '@portabletext/schema'
+import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {serializePath} from '../paths/serialize-path'
 
@@ -128,5 +129,35 @@ export function buildIndexMaps(
       listItem: block.listItem,
       level: block.level,
     }
+  }
+}
+
+// Build a complete `EditorSnapshot` for tests. Populates
+// `blockIndexMap` and `listIndexMap` via `buildIndexMaps` so consumers
+// can assume the invariant that production maintains.
+export function createTestSnapshot(input: {
+  value: Array<PortableTextBlock>
+  schema: EditorContext['schema']
+  containers?: EditorContext['containers']
+  selection?: EditorContext['selection']
+}): EditorSnapshot {
+  const blockIndexMap = new Map<string, number>()
+  const listIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema: input.schema, value: input.value},
+    {blockIndexMap, listIndexMap},
+  )
+  return {
+    context: {
+      containers: input.containers ?? new Map(),
+      converters: [],
+      keyGenerator: () => '',
+      readOnly: false,
+      schema: input.schema,
+      selection: input.selection ?? null,
+      value: input.value,
+    },
+    blockIndexMap,
+    decoratorState: {},
   }
 }

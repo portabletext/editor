@@ -64,13 +64,7 @@ export function getAncestors(
 
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      // Production snapshots maintain `blockIndexMap` in lockstep with
-      // `context.value` so this fast path always fires. Some test
-      // fixtures still pass empty or stale maps, which is the debt this
-      // size check is working around - see /specs/snapshot-invariants.md.
-      // When the fixtures are aligned, drop the guard and use the map
-      // directly.
-      if (isRootLevel && blockIndexMap.size === currentChildren.length) {
+      if (isRootLevel) {
         const index = blockIndexMap.get(segment._key)
         node =
           index !== undefined

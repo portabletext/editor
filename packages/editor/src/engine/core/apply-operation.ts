@@ -578,7 +578,7 @@ function resolveChildIndex(
   key: string,
   blockIndexMap: Map<string, number> | undefined,
 ): number {
-  if (blockIndexMap && blockIndexMap.size === children.length) {
+  if (blockIndexMap) {
     const index = blockIndexMap.get(key)
     if (index !== undefined) {
       const candidate = children[index]
