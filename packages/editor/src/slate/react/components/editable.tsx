@@ -708,13 +708,33 @@ export const Editable = forwardRef(
           ) {
             const [targetRange] = (event as any).getTargetRanges()
 
-            if (targetRange) {
-              const range = ReactEditor.toSlateRange(editor, targetRange, {
+            // The target ranges tell us where the input should be applied.
+            // Synthetic `beforeinput` events dispatched by browser extensions
+            // like Grammarly carry no target ranges; they set the DOM selection
+            // to the affected range instead. The `onDOMSelectionChange` flush
+            // above normally syncs `editor.selection` to that DOM selection, but
+            // inside an iframe it can't: accepting an extension suggestion moves
+            // focus off the editable, so the flush bails on its focus check and
+            // `editor.selection` stays stale. Fall back to the DOM selection so
+            // the input isn't applied at the wrong place.
+            const domSelection = getSelection(
+              ReactEditor.findDocumentOrShadowRoot(editor),
+            )
+            const inputTarget =
+              targetRange ??
+              (domSelection && domSelection.rangeCount > 0
+                ? domSelection
+                : undefined)
+
+            if (inputTarget) {
+              const range = ReactEditor.toSlateRange(editor, inputTarget, {
                 exactMatch: false,
-                suppressThrow: false,
+                // The DOM selection fallback is not guaranteed to be a valid
+                // Slate range, so don't throw on it.
+                suppressThrow: !targetRange,
               })
 
-              if (!selection || !rangeEquals(selection, range)) {
+              if (range && (!selection || !rangeEquals(selection, range))) {
                 native = false
 
                 const selectionRef =
