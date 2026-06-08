@@ -1,14 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react'
+import {useContext, useMemo, useSyncExternalStore} from 'react'
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {createSliceStore} from './create-slice-store'
 import {EditorActorContext} from './editor-actor-context'
 import {getSelectionState, type SelectionState} from './get-selection-state'
 
@@ -27,7 +20,7 @@ const defaultSelectionState: SelectionState = {
  * change doesn't move any per-component slice.
  *
  * Assumes the Set instances passed via `selectedLeafPaths` /
- * `selectedContainerPaths` are immutable per emission - `getSelectionState`
+ * `selectedContainerPaths` are immutable per emission — `getSelectionState`
  * builds a fresh Set on each recompute rather than mutating in place,
  * so size + containment equivalence is a sound equality check.
  */
@@ -64,24 +57,11 @@ function selectionStatesEqual(
   return true
 }
 
-/**
- * External store shape exposed to consumers. Components subscribe via
- * `useSyncExternalStore` with a per-slice snapshot selector so they
- * only re-render when their own slice flips - typing a character
- * doesn't cascade through every visible container's wrapper.
- */
-type SelectionStateStore = {
-  subscribe: (callback: () => void) => () => void
-  getSnapshot: () => SelectionState
-}
-
-const defaultStore: SelectionStateStore = {
-  subscribe: () => () => {},
-  getSnapshot: () => defaultSelectionState,
-}
-
-const SelectionStateStoreContext =
-  createContext<SelectionStateStore>(defaultStore)
+const {Provider: StoreProvider, useStore} = createSliceStore<SelectionState>({
+  defaultState: defaultSelectionState,
+  equal: selectionStatesEqual,
+  displayName: 'SelectionStateStore',
+})
 
 /**
  * Subscribes once to the editor actor and maintains a single source of
@@ -103,10 +83,9 @@ export function SelectionStateProvider({
   const editorActor = useContext(EditorActorContext)
   const editorEngine = useEngineStatic()
 
-  // Compute the current snapshot once on every read. Cheap when nothing
-  // has changed (refs are reference-equal); recomputes on actor updates
-  // (handled in the subscription effect below).
-  const computeCurrent = useMemo(
+  // Memoized on engine identity so the actor subscription doesn't
+  // tear down on every Provider re-render.
+  const compute = useMemo(
     () => () => {
       const snapshot = editorEngine.snapshot
       const selection = snapshot.context.selection
@@ -133,87 +112,20 @@ export function SelectionStateProvider({
     [editorEngine],
   )
 
-  // Seed the initial snapshot exactly once via `useState`'s lazy
-  // initializer, then keep it on a ref the external store reads from.
-  // `useRef(seed)` writes `seed` to the ref on first render only;
-  // subsequent renders ignore the argument. The subscription effect
-  // below takes ownership of updates after mount.
-  const [seed] = useState(computeCurrent)
-  const stateRef = useRef<SelectionState>(seed)
-
-  // Same pattern for the subscriber Set: lazy-init via `useState` so we
-  // allocate the empty Set exactly once, not on every render.
-  const [initialSubscribers] = useState(() => new Set<() => void>())
-  const subscribersRef = useRef<Set<() => void>>(initialSubscribers)
-
-  useEffect(() => {
-    // Mount ordering: child effects run before parent effects, so by
-    // the time this effect runs every consumer `useSyncExternalStore`
-    // has already registered its notify callback in
-    // `subscribersRef.current`. The recompute-and-notify below catches
-    // any state changes between the provider's first render (when we
-    // seeded `stateRef`) and this effect firing (after commit).
-    const next = computeCurrent()
-    if (!selectionStatesEqual(stateRef.current, next)) {
-      stateRef.current = next
-      for (const cb of subscribersRef.current) {
-        cb()
-      }
-    }
-
-    let pendingRecompute = false
-
-    const subscription = editorActor.subscribe(() => {
-      // Coalesce bursts of actor updates into one selection-state
-      // recompute per microtask. The microtask drains before React's
-      // commit phase, so subscribers re-render in the same commit as
-      // the actor's state change.
-      if (pendingRecompute) {
-        return
-      }
-      pendingRecompute = true
-      queueMicrotask(() => {
-        pendingRecompute = false
-        const newState = computeCurrent()
-        if (!selectionStatesEqual(stateRef.current, newState)) {
-          stateRef.current = newState
-          for (const cb of subscribersRef.current) {
-            cb()
-          }
-        }
-      })
-    })
-
-    return () => subscription.unsubscribe()
-  }, [editorActor, computeCurrent])
-
-  const store = useMemo<SelectionStateStore>(
-    () => ({
-      subscribe: (callback) => {
-        subscribersRef.current.add(callback)
-        return () => {
-          subscribersRef.current.delete(callback)
-        }
-      },
-      getSnapshot: () => stateRef.current,
-    }),
-    [],
-  )
-
   return (
-    <SelectionStateStoreContext.Provider value={store}>
+    <StoreProvider actor={editorActor} compute={compute}>
       {children}
-    </SelectionStateStoreContext.Provider>
+    </StoreProvider>
   )
 }
 
 /**
  * Subscribe to whether a container at `serializedPath` is currently
- * focused. Re-renders only when this boolean flips - not when other
+ * focused. Re-renders only when this boolean flips — not when other
  * containers' focused state changes.
  */
 export function useIsFocusedContainer(serializedPath: string): boolean {
-  const store = useContext(SelectionStateStoreContext)
+  const store = useStore()
   return useSyncExternalStore(
     store.subscribe,
     () => store.getSnapshot().focusedContainerPath === serializedPath,
@@ -225,7 +137,7 @@ export function useIsFocusedContainer(serializedPath: string): boolean {
  * current selection.
  */
 export function useIsSelectedContainer(serializedPath: string): boolean {
-  const store = useContext(SelectionStateStoreContext)
+  const store = useStore()
   return useSyncExternalStore(store.subscribe, () =>
     store.getSnapshot().selectedContainerPaths.has(serializedPath),
   )
@@ -236,7 +148,7 @@ export function useIsSelectedContainer(serializedPath: string): boolean {
  * `serializedPath` is currently focused.
  */
 export function useIsFocusedLeaf(serializedPath: string): boolean {
-  const store = useContext(SelectionStateStoreContext)
+  const store = useStore()
   return useSyncExternalStore(
     store.subscribe,
     () => store.getSnapshot().focusedLeafPath === serializedPath,
@@ -248,7 +160,7 @@ export function useIsFocusedLeaf(serializedPath: string): boolean {
  * selection.
  */
 export function useIsSelectedLeaf(serializedPath: string): boolean {
-  const store = useContext(SelectionStateStoreContext)
+  const store = useStore()
   return useSyncExternalStore(store.subscribe, () =>
     store.getSnapshot().selectedLeafPaths.has(serializedPath),
   )
