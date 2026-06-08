@@ -1,5 +1,6 @@
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {serializePath} from '../paths/serialize-path'
 
 // Maps for each list type, keeping track of the current list count for each
 // level.
@@ -63,7 +64,7 @@ export function buildIndexMaps(
       levelIndexMap.set(block.level, listIndex)
       levelIndexMaps.set(block.listItem, levelIndexMap)
 
-      listIndexMap.set(block._key, listIndex)
+      listIndexMap.set(serializePath([{_key: block._key}]), listIndex)
 
       previousListItem = {
         listItem: block.listItem,
@@ -85,7 +86,7 @@ export function buildIndexMaps(
       levelIndexMap.set(block.level, listIndex)
       levelIndexMaps.set(block.listItem, levelIndexMap)
 
-      listIndexMap.set(block._key, listIndex)
+      listIndexMap.set(serializePath([{_key: block._key}]), listIndex)
 
       previousListItem = {
         listItem: block.listItem,
@@ -121,7 +122,7 @@ export function buildIndexMaps(
     levelIndexMap.set(block.level, levelCounter + 1)
     levelIndexMaps.set(block.listItem, levelIndexMap)
 
-    listIndexMap.set(block._key, levelCounter + 1)
+    listIndexMap.set(serializePath([{_key: block._key}]), levelCounter + 1)
 
     previousListItem = {
       listItem: block.listItem,

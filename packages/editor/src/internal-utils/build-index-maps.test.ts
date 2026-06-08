@@ -65,7 +65,7 @@ describe(buildIndexMaps.name, () => {
       {blockIndexMap, listIndexMap},
     )
     expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
-    expect(listIndexMap).toEqual(new Map([['k0', 1]]))
+    expect(listIndexMap).toEqual(new Map([['[_key=="k0"]', 1]]))
   })
 
   /**
@@ -77,7 +77,7 @@ describe(buildIndexMaps.name, () => {
       {blockIndexMap, listIndexMap},
     )
     expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
-    expect(listIndexMap).toEqual(new Map([['k0', 1]]))
+    expect(listIndexMap).toEqual(new Map([['[_key=="k0"]', 1]]))
   })
 
   /**
@@ -112,10 +112,10 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 2],
-        ['k3', 1],
-        ['k4', 2],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 2],
+        ['[_key=="k3"]', 1],
+        ['[_key=="k4"]', 2],
       ]),
     )
   })
@@ -152,10 +152,10 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 2],
-        ['k3', 1],
-        ['k4', 2],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 2],
+        ['[_key=="k3"]', 1],
+        ['[_key=="k4"]', 2],
       ]),
     )
   })
@@ -186,9 +186,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k2', 1],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k2"]', 1],
       ]),
     )
   })
@@ -212,9 +212,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k2', 2],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k2"]', 2],
       ]),
     )
   })
@@ -242,11 +242,11 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 2],
-        ['k2', 1],
-        ['k3', 1],
-        ['k4', 1],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 2],
+        ['[_key=="k2"]', 1],
+        ['[_key=="k3"]', 1],
+        ['[_key=="k4"]', 1],
       ]),
     )
   })
@@ -276,12 +276,12 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 2],
-        ['k2', 1],
-        ['k3', 1],
-        ['k4', 1],
-        ['k5', 1],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 2],
+        ['[_key=="k2"]', 1],
+        ['[_key=="k3"]', 1],
+        ['[_key=="k4"]', 1],
+        ['[_key=="k5"]', 1],
       ]),
     )
   })
@@ -315,10 +315,10 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 2],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k3"]', 2],
       ]),
     )
   })
@@ -349,9 +349,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k2', 1],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k2"]', 1],
       ]),
     )
   })
@@ -400,15 +400,15 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k2', 1],
-        ['k3', 1],
-        ['k4', 2],
-        ['k5', 1],
-        ['k6', 1],
-        ['k7', 2],
-        ['k8', 3],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k2"]', 1],
+        ['[_key=="k3"]', 1],
+        ['[_key=="k4"]', 2],
+        ['[_key=="k5"]', 1],
+        ['[_key=="k6"]', 1],
+        ['[_key=="k7"]', 2],
+        ['[_key=="k8"]', 3],
       ]),
     )
   })
@@ -432,9 +432,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k2', 2],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k2"]', 2],
       ]),
     )
   })
@@ -458,9 +458,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(listIndexMap).toEqual(
       new Map([
-        ['k0', 1],
-        ['k1', 1],
-        ['k3', 1],
+        ['[_key=="k0"]', 1],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k3"]', 1],
       ]),
     )
   })
