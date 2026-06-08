@@ -45,7 +45,7 @@ export function RenderTextBlock(props: {
   const selected = useIsSelectedContainer(serializedPath)
   const focused = useIsFocusedContainer(serializedPath)
   const listIndex = useEngineSelector((editor) =>
-    editor.listIndexMap.get(props.textBlock._key),
+    editor.listIndexMap.get(serializedPath),
   )
   const subSchema = useBlockSubSchema(props.path)
 
