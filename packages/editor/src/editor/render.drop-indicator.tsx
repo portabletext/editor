@@ -1,3 +1,8 @@
+/**
+ * Default visual for the drop indicator.
+ *
+ * @beta
+ */
 export function DropIndicator() {
   return (
     <div

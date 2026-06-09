@@ -1,9 +1,9 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
+import {useDropPosition} from '../plugins/plugin.drop-position'
 import type {
   BlockObjectConfig,
   BlockObjectRenderProps,
@@ -19,7 +19,6 @@ import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
   blockObject: PortableTextObject | undefined
-  dropPosition?: DropPosition['position']
   children: ReactElement
   element: PortableTextObject
   blockObjectConfig?: BlockObjectConfig
@@ -29,6 +28,7 @@ export function RenderBlockObject(props: {
   schema: EditorSchema
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
+  const dropPosition = useDropPosition(props.path)
 
   const serializedPath = serializePath(props.path)
   const selected = useIsSelectedLeaf(serializedPath)
@@ -102,7 +102,7 @@ export function RenderBlockObject(props: {
 
   return (
     <div {...attributes}>
-      {props.dropPosition === 'start' ? <DropIndicator /> : null}
+      {dropPosition === 'start' ? <DropIndicator /> : null}
       {props.children}
       <div
         ref={blockObjectRef}
@@ -111,7 +111,7 @@ export function RenderBlockObject(props: {
       >
         {innerContent}
       </div>
-      {props.dropPosition === 'end' ? <DropIndicator /> : null}
+      {dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
 }

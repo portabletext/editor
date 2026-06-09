@@ -49,7 +49,6 @@ import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
 import {SelectionStateProvider} from './selection-state-context'
-import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
 
@@ -160,7 +159,6 @@ export const PortableTextEditable = forwardRef<
     rangeDecorationsActor,
     (s) => s.context.decorate?.fn,
   )
-  const dropPosition = useDropPosition()
 
   useEffect(() => {
     rangeDecorationsActor.send({
@@ -190,13 +188,12 @@ export const PortableTextEditable = forwardRef<
     (eProps: RenderElementProps) => (
       <RenderElement
         {...eProps}
-        dropPosition={dropPosition}
         legacy={legacy}
         readOnly={readOnly}
         schema={schema}
       />
     ),
-    [dropPosition, schema, readOnly, legacy],
+    [schema, readOnly, legacy],
   )
 
   const renderLeaf = useCallback(

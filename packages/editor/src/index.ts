@@ -44,6 +44,12 @@ export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
 export {useEditor} from './editor/use-editor'
 export {
+  DropIndicator,
+  type DropPosition,
+  useDropPosition,
+} from './plugins/plugin.drop-position'
+export {useListIndex} from './plugins/plugin.list-index'
+export {
   defineBlockObject,
   defineContainer,
   defineInlineObject,
