@@ -2606,7 +2606,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('partial row inserted at nested path with nested-\`of\` registration normalizes cell content', async () => {
+  test('partial row inserted at nested path with nested-`of` registration normalizes cell content', async () => {
     // Mirrors plugin-table's exact setup: single top-level container with
     // nested-`of` children, partial row inserted at a NESTED path.
     const keyGenerator = createTestKeyGenerator()

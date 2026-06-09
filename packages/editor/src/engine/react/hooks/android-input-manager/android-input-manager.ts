@@ -151,7 +151,6 @@ export function createAndroidInputManager({
 
     if (!flushing) {
       flushing = true
-      // biome-ignore lint/suspicious/noAssignInExpressions: engine upstream pattern
       setTimeout(() => (flushing = false))
     }
 

@@ -834,7 +834,7 @@ describe('insert respects sub-schema', () => {
     })
   })
 
-  test('Scenario: \`decorator.add\` of a decorator not declared at root does not apply the mark', async () => {
+  test('Scenario: `decorator.add` of a decorator not declared at root does not apply the mark', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -884,7 +884,7 @@ describe('insert respects sub-schema', () => {
     })
   })
 
-  test('Scenario: \`annotation.add\` of an annotation not declared at root does not apply the mark', async () => {
+  test('Scenario: `annotation.add` of an annotation not declared at root does not apply the mark', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
