@@ -33,7 +33,6 @@ interface Options {
 
 export function createPatchesPlugin({
   editorActor,
-  relayActor,
   subscriptions,
 }: Options): (editor: PortableTextEditorEngine) => PortableTextEditorEngine {
   // The previous editor value are needed to figure out the _key of deleted nodes
@@ -175,10 +174,6 @@ export function createPatchesPlugin({
         ['set', 'unset', 'remove_text'].includes(operation.type)
       ) {
         patches = [...patches, unset([])]
-        relayActor.send({
-          type: 'unset',
-          previousValue,
-        })
       }
 
       // Prepend patches with setIfMissing if going from empty editor to something involving a patch.

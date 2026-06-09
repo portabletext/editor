@@ -14,7 +14,11 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {mutationMachine, type MutationActor} from './mutation-machine'
-import {relayMachine, type RelayActor} from './relay-machine'
+import {
+  relayMachine,
+  type EditorEmittedEvent,
+  type RelayActor,
+} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export function createInternalEditor(config: EditorConfig): {
@@ -126,6 +130,11 @@ export function createInternalEditor(config: EditorConfig): {
           case 'value changed':
             listener(event)
             break
+          default:
+            // Behavior events (`insert`, `insert.text`, `drag.dragover`,
+            // `serialize`, etc.) are forwarded through the relay so consumers
+            // can subscribe by name: `editor.on('insert.text', listener)`.
+            listener(event)
         }
       })
 
@@ -279,6 +288,15 @@ function createActors(config: {
         case 'internal.patch':
           mutationActor.send({...event, type: 'patch'})
           break
+        case 'patches':
+          // PatchesEvent is an editor-machine internal event; not a behavior
+          // event and not forwarded to the relay.
+          break
+        default:
+          // Behavior events are emitted from the editor machine's
+          // `handle behavior event` action before the chain runs. Forward to
+          // the relay so `editor.on(behaviorEventType, ...)` fires.
+          config.relayActor.send(event as EditorEmittedEvent)
       }
     })
 

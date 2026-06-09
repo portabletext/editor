@@ -2,12 +2,14 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import {assign, emit, setup, type ActorRefFrom} from 'xstate'
+import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'
 
 /**
  * @public
  */
 export type EditorEmittedEvent =
+  | BehaviorEvent
   | {
       type: 'blurred'
       event: FocusEvent<HTMLDivElement, Element>
@@ -64,7 +66,7 @@ type ErrorEvent = {
   data: unknown
 }
 
-type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
+type InternalEditorEmittedEvent = EditorEmittedEvent
 
 /**
  * @public
@@ -78,14 +80,6 @@ export type MutationEvent = {
 export type PatchEvent = {
   type: 'patch'
   patch: Patch
-}
-
-type UnsetEvent = {
-  /**
-   * @deprecated Use `'patch'` events instead
-   */
-  type: 'unset'
-  previousValue: Array<PortableTextBlock>
 }
 
 export type RelayActor = ActorRefFrom<typeof relayMachine>
