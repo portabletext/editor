@@ -267,7 +267,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
   }
 
-  if (atTheBeginningOfSpan && !spanIsEmpty && !!previousSpan) {
+  if (atTheBeginningOfSpan && !spanIsEmpty && previousSpan) {
     if (previousSpanHasAnnotations) {
       return {
         state: 'changed',

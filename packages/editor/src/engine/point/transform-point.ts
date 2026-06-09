@@ -70,7 +70,7 @@ export function transformPoint(
             : undefined
 
         if (oldKey) {
-          let newPath: Path | undefined = undefined
+          let newPath: Path | undefined
 
           for (let i = 0; i < path.length; i++) {
             const segment = path[i]
