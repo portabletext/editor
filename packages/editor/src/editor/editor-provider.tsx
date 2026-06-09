@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react'
 import type {EditorConfig} from '../editor'
 import {Engine} from '../engine/react/components/engine'
 import {stopActor} from '../internal-utils/stop-actor'
+import {DropPositionProvider} from '../plugins/plugin.drop-position'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
@@ -81,7 +82,7 @@ export function EditorProvider(props: EditorProviderProps) {
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
           <Engine editor={internalEditor.editorEngine}>
             <PortableTextEditorContext.Provider value={portableTextEditor}>
-              {props.children}
+              <DropPositionProvider>{props.children}</DropPositionProvider>
             </PortableTextEditorContext.Provider>
           </Engine>
         </RelayActorContext.Provider>
