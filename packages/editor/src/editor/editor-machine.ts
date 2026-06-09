@@ -398,47 +398,51 @@ export const editorMachine = setup({
         )
       }
     },
-    'handle behavior event': ({context, event, self}) => {
-      assertEvent(event, ['behavior event'])
+    'handle behavior event': enqueueActions(
+      ({context, event, self, enqueue}) => {
+        assertEvent(event, ['behavior event'])
 
-      try {
-        const behaviors = [...context.behaviors.values()].map(
-          (config) => config.behavior,
-        )
+        enqueue.emit(event.behaviorEvent)
 
-        performEvent({
-          mode: 'send',
-          behaviors,
-          remainingEventBehaviors: behaviors,
-          event: event.behaviorEvent,
-          editor: event.editor,
-          converters: event.editor.snapshot.context.converters,
-          keyGenerator: event.editor.snapshot.context.keyGenerator,
-          schema: event.editor.snapshot.context.schema,
-          readOnly: event.editor.snapshot.context.readOnly,
-          nativeEvent: event.nativeEvent,
-          sendBack: (eventSentBack) => {
-            if (eventSentBack.type === 'set drag ghost') {
-              self.send(eventSentBack)
-              return
-            }
+        try {
+          const behaviors = [...context.behaviors.values()].map(
+            (config) => config.behavior,
+          )
 
-            self.send(
-              rerouteExternalBehaviorEvent({
-                event: eventSentBack,
-                editorEngine: event.editor,
-              }),
-            )
-          },
-        })
-      } catch (error) {
-        console.error(
-          new Error(
-            `Raising "${event.behaviorEvent.type}" failed due to: ${error instanceof Error ? error.message : error}`,
-          ),
-        )
-      }
-    },
+          performEvent({
+            mode: 'send',
+            behaviors,
+            remainingEventBehaviors: behaviors,
+            event: event.behaviorEvent,
+            editor: event.editor,
+            converters: event.editor.snapshot.context.converters,
+            keyGenerator: event.editor.snapshot.context.keyGenerator,
+            schema: event.editor.snapshot.context.schema,
+            readOnly: event.editor.snapshot.context.readOnly,
+            nativeEvent: event.nativeEvent,
+            sendBack: (eventSentBack) => {
+              if (eventSentBack.type === 'set drag ghost') {
+                self.send(eventSentBack)
+                return
+              }
+
+              self.send(
+                rerouteExternalBehaviorEvent({
+                  event: eventSentBack,
+                  editorEngine: event.editor,
+                }),
+              )
+            },
+          })
+        } catch (error) {
+          console.error(
+            new Error(
+              `Raising "${event.behaviorEvent.type}" failed due to: ${error instanceof Error ? error.message : error}`,
+            ),
+          )
+        }
+      },
+    ),
     'sort behaviors': assign({
       behaviors: ({context}) =>
         !context.behaviorsSorted
