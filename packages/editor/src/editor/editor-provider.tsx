@@ -7,7 +7,6 @@ import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {PortableTextEditor} from './PortableTextEditor'
-import {RelayActorContext} from './relay-actor-context'
 import {PortableTextEditorContext} from './usePortableTextEditor'
 
 /**
@@ -60,7 +59,6 @@ export function EditorProvider(props: EditorProviderProps) {
       editor: internalEditor.editorEngine,
     })
     internalEditor.actors.mutationActor.start()
-    internalEditor.actors.relayActor.start()
     internalEditor.actors.syncActor.start()
 
     return () => {
@@ -70,7 +68,6 @@ export function EditorProvider(props: EditorProviderProps) {
 
       stopActor(internalEditor.actors.editorActor)
       stopActor(internalEditor.actors.mutationActor)
-      stopActor(internalEditor.actors.relayActor)
       stopActor(internalEditor.actors.syncActor)
     }
   }, [internalEditor])
@@ -78,13 +75,11 @@ export function EditorProvider(props: EditorProviderProps) {
   return (
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
-        <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
-          <Engine editor={internalEditor.editorEngine}>
-            <PortableTextEditorContext.Provider value={portableTextEditor}>
-              {props.children}
-            </PortableTextEditorContext.Provider>
-          </Engine>
-        </RelayActorContext.Provider>
+        <Engine editor={internalEditor.editorEngine}>
+          <PortableTextEditorContext.Provider value={portableTextEditor}>
+            {props.children}
+          </PortableTextEditorContext.Provider>
+        </Engine>
       </EditorActorContext.Provider>
     </EditorContext.Provider>
   )

@@ -1,5 +1,4 @@
 import type {EditorActor} from '../editor/editor-machine'
-import type {RelayActor} from '../editor/relay-machine'
 import type {Editor} from '../engine/interfaces/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {createBehaviorApiPlugin} from './engine-plugin.behavior-api'
@@ -10,7 +9,6 @@ import {updateValuePlugin} from './engine-plugin.update-value'
 
 type PluginsOptions = {
   editorActor: EditorActor
-  relayActor: RelayActor
   subscriptions: Array<() => () => void>
 }
 
@@ -19,10 +17,9 @@ export const plugins = <T extends Editor>(
   options: PluginsOptions,
 ): PortableTextEditorEngine => {
   const e = editor as T & PortableTextEditorEngine
-  const {editorActor, relayActor} = options
+  const {editorActor} = options
   const patchesPlugin = createPatchesPlugin({
     editorActor,
-    relayActor,
     subscriptions: options.subscriptions,
   })
   const historyPlugin = createHistoryPlugin({

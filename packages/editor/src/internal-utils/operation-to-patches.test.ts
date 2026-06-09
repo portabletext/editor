@@ -7,7 +7,6 @@ import {
 import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
-import {relayMachine} from '../editor/relay-machine'
 import {plugins} from '../engine-plugins/engine-plugins'
 import {createEditor} from '../engine/create-editor'
 import type {Node} from '../engine/interfaces/node'
@@ -24,7 +23,6 @@ const editorActor = createActor(editorMachine, {
     keyGenerator: defaultKeyGenerator,
   },
 })
-const relayActor = createActor(relayMachine)
 
 const e = createEditor()
 e.containers = new Map()
@@ -45,7 +43,6 @@ e.snapshot = {
 // e.value reads through to e.snapshot.context.value via getter once defined
 const editor = plugins(e, {
   editorActor,
-  relayActor,
   subscriptions: [],
 })
 
