@@ -7,7 +7,6 @@ import {
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
-import type {RelayActor} from '../editor/relay-machine'
 import {normalize} from '../engine/editor/normalize'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Editor} from '../engine/interfaces/editor'
@@ -27,13 +26,11 @@ import {withoutPatching} from './engine-plugin.without-patching'
 
 interface Options {
   editorActor: EditorActor
-  relayActor: RelayActor
   subscriptions: Array<() => () => void>
 }
 
 export function createPatchesPlugin({
   editorActor,
-  relayActor,
   subscriptions,
 }: Options): (editor: PortableTextEditorEngine) => PortableTextEditorEngine {
   // The previous editor value are needed to figure out the _key of deleted nodes
@@ -175,10 +172,6 @@ export function createPatchesPlugin({
         ['set', 'unset', 'remove_text'].includes(operation.type)
       ) {
         patches = [...patches, unset([])]
-        relayActor.send({
-          type: 'unset',
-          previousValue,
-        })
       }
 
       // Prepend patches with setIfMissing if going from empty editor to something involving a patch.

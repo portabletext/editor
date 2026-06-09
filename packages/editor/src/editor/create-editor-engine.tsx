@@ -6,11 +6,11 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
-import type {RelayActor} from './relay-machine'
+import type {Publisher} from './publish'
 
 type EditorEngineConfig = {
   editorActor: EditorActor
-  relayActor: RelayActor
+  publisher: Publisher
   subscriptions: Array<() => () => void>
 }
 
@@ -76,9 +76,10 @@ export function createEditorEngine(
   editor.isUndoing = false
   editor.withHistory = true
 
+  editor.publisher = config.publisher
+
   const editorEngine = plugins(withDOM(editor), {
     editorActor: config.editorActor,
-    relayActor: config.relayActor,
     subscriptions: config.subscriptions,
   })
 

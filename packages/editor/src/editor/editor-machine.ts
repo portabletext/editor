@@ -27,15 +27,11 @@ import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSchema} from './editor-schema'
+import type {EditorEmittedEvent, MutationEvent, PatchEvent} from './publish'
 import {
   registerNodeOnEngine,
   unregisterNodeOnEngine,
 } from './register-node-on-engine'
-import type {
-  EditorEmittedEvent,
-  MutationEvent,
-  PatchEvent,
-} from './relay-machine'
 
 export * from 'xstate/guards'
 

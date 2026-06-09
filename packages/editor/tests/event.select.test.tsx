@@ -8,7 +8,7 @@ import {
   raise,
   type BehaviorEvent,
 } from '../src/behaviors'
-import type {EditorEmittedEvent} from '../src/editor/relay-machine'
+import type {EditorEmittedEvent} from '../src/editor/publish'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'

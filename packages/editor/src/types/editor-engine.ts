@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import type {Publisher} from '../editor/publish'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {Operation as EngineOperation} from '../engine/interfaces/operation'
@@ -65,4 +66,11 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * also read it directly to avoid building snapshots ad-hoc.
    */
   snapshot: EditorSnapshot
+
+  /**
+   * Internal publication channel backing `editor.on`. Sites that need to
+   * emit user-visible events (focus/blur, mount lifecycle) reach for this
+   * instead of routing through the actor system.
+   */
+  publisher: Publisher
 }
