@@ -1066,7 +1066,7 @@ function updateBlock({
               }
 
               editorEngine.apply({
-                type: 'insert_text',
+                type: 'insert.text',
                 path,
                 offset: 0,
                 text: currentBlockChild.text,

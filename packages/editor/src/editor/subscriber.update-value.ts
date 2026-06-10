@@ -34,11 +34,11 @@ export function subscribeUpdateValue(
   const unsubscribeIndexMaps = subscribeToOperations(editor, (event) => {
     const operation = event.operation
 
-    if (operation.type === 'set_selection') {
+    if (operation.type === 'set.selection') {
       return
     }
 
-    if (operation.type === 'insert_text' || operation.type === 'remove_text') {
+    if (operation.type === 'insert.text' || operation.type === 'remove.text') {
       // Inserting and removing text has no effect on index maps so there is
       // no need to rebuild those.
       return

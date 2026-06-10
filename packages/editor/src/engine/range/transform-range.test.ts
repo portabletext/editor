@@ -19,7 +19,7 @@ describe(transformRange.name, () => {
       transformRange(
         null,
         {
-          type: 'insert_text',
+          type: 'insert.text',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
           offset: 0,
           text: 'x',
@@ -35,7 +35,7 @@ describe(transformRange.name, () => {
       focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
     }
     const op: InsertTextOperation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 0,
       text: 'foo',
@@ -52,7 +52,7 @@ describe(transformRange.name, () => {
       focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
     }
     const op: InsertTextOperation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 'other'}],
       offset: 0,
       text: 'foo',

@@ -5,7 +5,7 @@ export function deselect(editor: Editor): void {
 
   if (selection) {
     editor.apply({
-      type: 'set_selection',
+      type: 'set.selection',
       properties: selection,
       newProperties: null,
     })

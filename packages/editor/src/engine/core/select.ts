@@ -22,7 +22,7 @@ export function select(editor: Editor, target: Location): void {
   }
 
   editor.apply({
-    type: 'set_selection',
+    type: 'set.selection',
     properties: selection,
     newProperties: target,
   })

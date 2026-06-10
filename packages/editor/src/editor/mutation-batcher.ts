@@ -126,7 +126,7 @@ export function createMutationBatcher({
   }
 
   function handleOperation(operationType: string) {
-    if (operationType === 'insert_text' || operationType === 'remove_text') {
+    if (operationType === 'insert.text' || operationType === 'remove.text') {
       isTyping = true
 
       if (typeDebounce !== undefined) {

@@ -30,7 +30,7 @@ export function setSelection(editor: Editor, props: Partial<Range>): void {
 
   if (Object.keys(oldProps).length > 0) {
     editor.apply({
-      type: 'set_selection',
+      type: 'set.selection',
       properties: oldProps,
       newProperties: newProps,
     })

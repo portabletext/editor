@@ -14,7 +14,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Merge a node at the given path into its previous sibling using only
- * patch-compliant operations (insert_text/insert + unset).
+ * patch-compliant operations (insert.text/insert + unset).
  *
  * Because the decomposed operations would produce different ref-transform
  * semantics than a single merge, we pre-transform all active refs with
@@ -196,7 +196,7 @@ export function applyMergeNode(
         // Merge text: insert the text into the previous sibling at the position
         if (node.text.length > 0) {
           editor.apply({
-            type: 'insert_text',
+            type: 'insert.text',
             path: prevPath,
             offset: position,
             text: node.text,

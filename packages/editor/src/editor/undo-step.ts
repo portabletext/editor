@@ -42,7 +42,7 @@ export function createUndoSteps({
   }
 
   if (
-    op.type === 'set_selection' &&
+    op.type === 'set.selection' &&
     currentUndoStepId === undefined &&
     previousUndoStepId !== undefined
   ) {
@@ -51,7 +51,7 @@ export function createUndoSteps({
   }
 
   if (
-    op.type === 'set_selection' &&
+    op.type === 'set.selection' &&
     currentUndoStepId !== undefined &&
     previousUndoStepId !== undefined &&
     previousUndoStepId !== currentUndoStepId
@@ -62,7 +62,7 @@ export function createUndoSteps({
 
   // Handle case when both IDs are undefined
   if (currentUndoStepId === undefined && previousUndoStepId === undefined) {
-    if (op.type === 'set_selection') {
+    if (op.type === 'set.selection') {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
@@ -70,8 +70,8 @@ export function createUndoSteps({
 
     if (
       lastOp &&
-      op.type === 'insert_text' &&
-      lastOp.type === 'insert_text' &&
+      op.type === 'insert.text' &&
+      lastOp.type === 'insert.text' &&
       op.offset === lastOp.offset + lastOp.text.length &&
       pathEquals(op.path, lastOp.path) &&
       op.text !== ' '
@@ -81,8 +81,8 @@ export function createUndoSteps({
 
     if (
       lastOp &&
-      op.type === 'remove_text' &&
-      lastOp.type === 'remove_text' &&
+      op.type === 'remove.text' &&
+      lastOp.type === 'remove.text' &&
       op.offset + op.text.length === lastOp.offset &&
       pathEquals(op.path, lastOp.path)
     ) {
@@ -103,8 +103,8 @@ export function createUndoSteps({
 
     if (
       lastOp &&
-      op.type === 'insert_text' &&
-      lastOp.type === 'insert_text' &&
+      op.type === 'insert.text' &&
+      lastOp.type === 'insert.text' &&
       op.offset === lastOp.offset + lastOp.text.length &&
       pathEquals(op.path, lastOp.path) &&
       op.text !== ' '
@@ -114,8 +114,8 @@ export function createUndoSteps({
 
     if (
       lastOp &&
-      op.type === 'remove_text' &&
-      lastOp.type === 'remove_text' &&
+      op.type === 'remove.text' &&
+      lastOp.type === 'remove.text' &&
       op.offset + op.text.length === lastOp.offset &&
       pathEquals(op.path, lastOp.path)
     ) {
@@ -130,8 +130,8 @@ export function createUndoSteps({
 
     if (
       lastOp &&
-      op.type === 'insert_text' &&
-      lastOp.type === 'insert_text' &&
+      op.type === 'insert.text' &&
+      lastOp.type === 'insert.text' &&
       op.offset === lastOp.offset + lastOp.text.length &&
       pathEquals(op.path, lastOp.path) &&
       op.text !== ' '
@@ -153,7 +153,7 @@ function createNewStep(
       ? [op]
       : [
           {
-            type: 'set_selection' as const,
+            type: 'set.selection' as const,
             properties: {...selectionBeforeApply},
             newProperties: {...selectionBeforeApply},
           },

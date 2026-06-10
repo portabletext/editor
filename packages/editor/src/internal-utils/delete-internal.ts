@@ -114,7 +114,7 @@ export function applyDelete(
     const reinsert = removedText.slice(0, removedText.length - 1)
     if (editor.snapshot.context.selection) {
       const {path, offset} = editor.snapshot.context.selection.anchor
-      editor.apply({type: 'insert_text', path, offset, text: reinsert})
+      editor.apply({type: 'insert.text', path, offset, text: reinsert})
     }
   }
 }
@@ -460,7 +460,7 @@ function removeTextRange(
   if (text.length === 0) {
     return null
   }
-  editor.apply({type: 'remove_text', path, offset: startOffset, text})
+  editor.apply({type: 'remove.text', path, offset: startOffset, text})
   return capture ? text : null
 }
 
@@ -476,7 +476,7 @@ function removeTextFromOffset(
     return null
   }
   const text = span.node.text.slice(offset)
-  editor.apply({type: 'remove_text', path, offset, text})
+  editor.apply({type: 'remove.text', path, offset, text})
   return capture ? text : null
 }
 
@@ -494,7 +494,7 @@ function removeTextUpToOffset(
     return
   }
   editor.apply({
-    type: 'remove_text',
+    type: 'remove.text',
     path,
     offset: 0,
     text: span.node.text.slice(0, offset),

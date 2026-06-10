@@ -78,8 +78,8 @@ const tableContainers: Containers = resolveContainers(schema, [
 ])
 
 describe(getDirtyPaths.name, () => {
-  describe('insert_text / remove_text', () => {
-    test('insert_text returns path levels of the operation path', () => {
+  describe('insert.text / remove.text', () => {
+    test('insert.text returns path levels of the operation path', () => {
       expect(
         getDirtyPaths(
           {
@@ -88,7 +88,7 @@ describe(getDirtyPaths.name, () => {
             value: [],
           },
           {
-            type: 'insert_text',
+            type: 'insert.text',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}],
             offset: 0,
             text: 'hello',
@@ -97,7 +97,7 @@ describe(getDirtyPaths.name, () => {
       ).toEqual([[], [{_key: 'b1'}], [{_key: 'b1'}, 'children', {_key: 's1'}]])
     })
 
-    test('remove_text returns path levels of the operation path', () => {
+    test('remove.text returns path levels of the operation path', () => {
       expect(
         getDirtyPaths(
           {
@@ -106,7 +106,7 @@ describe(getDirtyPaths.name, () => {
             value: [],
           },
           {
-            type: 'remove_text',
+            type: 'remove.text',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}],
             offset: 0,
             text: 'hello',
@@ -115,7 +115,7 @@ describe(getDirtyPaths.name, () => {
       ).toEqual([[], [{_key: 'b1'}], [{_key: 'b1'}, 'children', {_key: 's1'}]])
     })
 
-    test('insert_text inside callout text block returns path levels at each node boundary', () => {
+    test('insert.text inside callout text block returns path levels at each node boundary', () => {
       expect(
         getDirtyPaths(
           {
@@ -124,7 +124,7 @@ describe(getDirtyPaths.name, () => {
             value: [],
           },
           {
-            type: 'insert_text',
+            type: 'insert.text',
             path: [
               {_key: 'c1'},
               'content',
@@ -144,7 +144,7 @@ describe(getDirtyPaths.name, () => {
       ])
     })
 
-    test('remove_text inside callout text block returns path levels at each node boundary', () => {
+    test('remove.text inside callout text block returns path levels at each node boundary', () => {
       expect(
         getDirtyPaths(
           {
@@ -153,7 +153,7 @@ describe(getDirtyPaths.name, () => {
             value: [],
           },
           {
-            type: 'remove_text',
+            type: 'remove.text',
             path: [
               {_key: 'c1'},
               'content',

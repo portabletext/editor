@@ -536,7 +536,7 @@ function applyPostInsertSelection(
 
     if (editor.snapshot.context.selection) {
       editor.apply({
-        type: 'set_selection',
+        type: 'set.selection',
         properties: editor.snapshot.context.selection,
         newProperties: null,
       })
@@ -796,7 +796,7 @@ function adjustFragmentKeys(args: {
 
 /**
  * Insert a text block's children at a point within another text block.
- * Prepending a single span at offset 0 uses insert_text so React's DOM
+ * Prepending a single span at offset 0 uses insert.text so React's DOM
  * selection stays valid through deferred normalization.
  */
 function insertFragmentChildren(
@@ -829,7 +829,7 @@ function insertFragmentChildren(
     ) {
       if (firstChild.text.length > 0) {
         editor.apply({
-          type: 'insert_text',
+          type: 'insert.text',
           path: at.path,
           offset: 0,
           text: firstChild.text,

@@ -55,19 +55,19 @@ export function subscribePatchGeneration({
     if (
       editorWasEmpty &&
       !editorIsEmpty &&
-      operation.type !== 'set_selection'
+      operation.type !== 'set.selection'
     ) {
       patches.push(insert(previousValue, 'before', [0]))
     }
 
     switch (operation.type) {
-      case 'insert_text':
+      case 'insert.text':
         patches = [
           ...patches,
           ...textPatch(editor.snapshot, operation, previousValue),
         ]
         break
-      case 'remove_text':
+      case 'remove.text':
         patches = [
           ...patches,
           ...textPatch(editor.snapshot, operation, previousValue),
@@ -90,7 +90,7 @@ export function subscribePatchGeneration({
     if (
       !editorWasEmpty &&
       editorIsEmpty &&
-      ['set', 'unset', 'remove_text'].includes(operation.type)
+      ['set', 'unset', 'remove.text'].includes(operation.type)
     ) {
       patches = [...patches, unset([])]
     }

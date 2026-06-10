@@ -15,12 +15,12 @@ export function inverseOperation(op: Operation): Operation {
       }
     }
 
-    case 'insert_text': {
-      return {...op, type: 'remove_text'}
+    case 'insert.text': {
+      return {...op, type: 'remove.text'}
     }
 
-    case 'remove_text': {
-      return {...op, type: 'insert_text'}
+    case 'remove.text': {
+      return {...op, type: 'insert.text'}
     }
 
     case 'set': {
@@ -71,7 +71,7 @@ export function inverseOperation(op: Operation): Operation {
       }
     }
 
-    case 'set_selection': {
+    case 'set.selection': {
       const {properties, newProperties} = op
 
       if (properties == null) {

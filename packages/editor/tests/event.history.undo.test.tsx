@@ -743,7 +743,7 @@ describe('event.history.undo', () => {
     })
 
     // Second undo reverts the forwarded 'i' and the first raise ('!' after 'h')
-    // These merge because the raise's insert_text is adjacent to the forward's
+    // These merge because the raise's insert.text is adjacent to the forward's
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
