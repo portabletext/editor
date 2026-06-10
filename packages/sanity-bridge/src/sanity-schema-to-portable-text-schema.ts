@@ -95,6 +95,14 @@ function sanitySchemaTypeToSchema(
   const lists = resolveEnabledListItems(blockType)
   const annotations = (spanType as SpanSchemaType).annotations
 
+  // Sanity compiles a shared canonical type instance for each named type,
+  // so the same member instance is reached through every position that
+  // embeds it. Converting each instance once and sharing the result keeps
+  // the walk linear in the size of the compiled schema. Without it, the
+  // per-branch ancestor sets below enumerate every simple path through
+  // mutually-embedding types, which grows combinatorially.
+  const memo = new Map<SchemaType, OfDefinition>()
+
   return {
     block: {
       name: blockType.name,
@@ -121,21 +129,21 @@ function sanitySchemaTypeToSchema(
       name: annotation.name,
       title: annotation.title,
       fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set()),
+        sanityFieldToSchemaField(field, new Set(), memo),
       ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
       fields: blockObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([blockObject.name])),
+        sanityFieldToSchemaField(field, new Set([blockObject.name]), memo),
       ),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
       fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name])),
+        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
       ),
     })),
   }
@@ -159,6 +167,7 @@ function sanityFieldToSchemaField(
     type: SchemaType
   },
   ancestorNames: ReadonlySet<string>,
+  memo: Map<SchemaType, OfDefinition>,
 ): FieldDefinition {
   if (field.type.jsonType === 'array') {
     const ofMembers = safeGetOf(field.type)
@@ -168,7 +177,7 @@ function sanityFieldToSchemaField(
       ...(field.type.title ? {title: field.type.title} : {}),
       of: ofMembers
         ? ofMembers.map((member) =>
-            sanityOfMemberToOfDefinition(member, ancestorNames),
+            sanityOfMemberToOfDefinition(member, ancestorNames, memo),
           )
         : [],
     }
@@ -184,6 +193,7 @@ function sanityFieldToSchemaField(
 function sanityOfMemberToOfDefinition(
   memberType: SchemaType,
   ancestorNames: ReadonlySet<string>,
+  memo: Map<SchemaType, OfDefinition>,
 ): OfDefinition {
   if (findBlockType(memberType)) {
     return {type: 'block'}
@@ -207,16 +217,27 @@ function sanityOfMemberToOfDefinition(
     }
   }
 
+  // Each distinct member instance is expanded exactly once per conversion;
+  // every later position that reaches the same instance shares the first
+  // expansion. Keyed by instance (not name) so that same-named but
+  // structurally different inline declarations keep their own shapes.
+  const memoized = memo.get(memberType)
+  if (memoized) {
+    return memoized
+  }
+
   const nextAncestors = new Set(ancestorNames)
   nextAncestors.add(memberType.name)
-  return {
+  const definition: OfDefinition = {
     type: 'object',
     name: memberType.name,
     ...(memberType.title ? {title: memberType.title} : {}),
     fields: (memberType as ObjectSchemaType).fields.map((field) =>
-      sanityFieldToSchemaField(field, nextAncestors),
+      sanityFieldToSchemaField(field, nextAncestors, memo),
     ),
   }
+  memo.set(memberType, definition)
+  return definition
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {
