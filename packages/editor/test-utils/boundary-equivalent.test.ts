@@ -1,6 +1,16 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import {buildIndexMaps} from '../src/internal-utils/build-index-maps'
 import {boundaryEquivalentSelections} from './boundary-equivalent'
+
+function snapshotFor(schema: any, value: any, containers: any): any {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return {context: {schema, value, containers}, blockIndexMap}
+}
 
 const schema = compileSchema(defineSchema({}))
 const containers = new Map()
@@ -8,10 +18,7 @@ const containers = new Map()
 describe(boundaryEquivalentSelections.name, () => {
   test('returns no variants when selection is null', () => {
     expect(
-      boundaryEquivalentSelections(
-        {context: {schema, value: [], containers}, blockIndexMap: new Map()},
-        null,
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [], containers), null),
     ).toEqual([])
   })
 
@@ -29,13 +36,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 1,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: point, focus: point, backward: false},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: point,
+        focus: point,
+        backward: false,
+      }),
     ).toEqual([])
   })
 
@@ -50,13 +55,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 3,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: endOfS1, focus: endOfS1, backward: false},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: endOfS1,
+        focus: endOfS1,
+        backward: false,
+      }),
     ).toEqual([])
   })
 
@@ -78,13 +81,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 0,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: endOfS1, focus: endOfS1, backward: false},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: endOfS1,
+        focus: endOfS1,
+        backward: false,
+      }),
     ).toEqual([{anchor: startOfS2, focus: startOfS2, backward: false}])
   })
 
@@ -106,13 +107,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 0,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: startOfS2, focus: startOfS2, backward: false},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: startOfS2,
+        focus: startOfS2,
+        backward: false,
+      }),
     ).toEqual([{anchor: endOfS1, focus: endOfS1, backward: false}])
   })
 
@@ -130,13 +129,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 3,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: endOfS1, focus: endOfS1, backward: false},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: endOfS1,
+        focus: endOfS1,
+        backward: false,
+      }),
     ).toEqual([])
   })
 
@@ -167,13 +164,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 0,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: endOfS1, focus: endOfS2, backward: false},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: endOfS1,
+        focus: endOfS2,
+        backward: false,
+      }),
     ).toEqual([
       {anchor: endOfS1, focus: startOfS3, backward: false},
       {anchor: startOfS2, focus: endOfS2, backward: false},
@@ -199,13 +194,11 @@ describe(boundaryEquivalentSelections.name, () => {
       offset: 0,
     }
     expect(
-      boundaryEquivalentSelections(
-        {
-          context: {schema, value: [block], containers},
-          blockIndexMap: new Map(),
-        },
-        {anchor: endOfS1, focus: endOfS1, backward: true},
-      ),
+      boundaryEquivalentSelections(snapshotFor(schema, [block], containers), {
+        anchor: endOfS1,
+        focus: endOfS1,
+        backward: true,
+      }),
     ).toEqual([{anchor: startOfS2, focus: startOfS2, backward: true}])
   })
 })

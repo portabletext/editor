@@ -4,6 +4,7 @@ import {
   type PortableTextBlock,
   type PortableTextSpan,
 } from '@portabletext/schema'
+import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {getNodeChildren} from '../../traversal/get-children'
 import {getNode} from '../../traversal/get-node'
@@ -182,12 +183,12 @@ export const modifyDescendant = <N extends Node>(
   if (rootNumericIndex !== undefined) {
     rootIndex = rootNumericIndex
   } else if (keyedSegments.length > 0) {
-    const rootKey = keyedSegments[0]!._key
-    if (editor.blockIndexMap.has(rootKey)) {
-      rootIndex = editor.blockIndexMap.get(rootKey)!
-    } else {
-      rootIndex = findIndexByKey(editor.snapshot.context.value, rootKey)
-    }
+    const rootSegment = keyedSegments[0]!
+    const mapIndex = editor.blockIndexMap.get(serializePath([rootSegment]))
+    rootIndex =
+      mapIndex !== undefined
+        ? mapIndex
+        : findIndexByKey(editor.snapshot.context.value, rootSegment._key)
   } else {
     const firstSegment = path[0]
     rootIndex = typeof firstSegment === 'number' ? firstSegment : -1
