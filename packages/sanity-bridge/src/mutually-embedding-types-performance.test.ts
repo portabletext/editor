@@ -68,4 +68,152 @@ describe('mutually-embedding block objects', () => {
     // unmemoized walk does not finish in any practical amount of time.
     expect(durationMs).toBeLessThan(2_000)
   }, 10_000)
+
+  test('a marketing-site schema converts to a PTE schema that container resolution can walk at every depth', () => {
+    const layoutBlockNames = [
+      'hero',
+      'card',
+      'callout',
+      'accordion',
+      'tabs',
+      'columns',
+      'gallery',
+      'quote',
+      'cta',
+      'testimonial',
+      'section',
+      'banner',
+    ] as const
+
+    const layoutBlockTypes = layoutBlockNames.map((name) =>
+      defineType({
+        type: 'object',
+        name,
+        fields: [
+          defineField({name: 'title', type: 'string'}),
+          defineField({name: 'body', type: 'pageBody'}),
+        ],
+      }),
+    )
+
+    const pageBodyType = defineType({
+      type: 'array',
+      name: 'pageBody',
+      of: [
+        defineArrayMember({type: 'block'}),
+        ...layoutBlockNames.map((name) => defineArrayMember({type: name})),
+      ],
+    })
+
+    const pageType = defineType({
+      type: 'document',
+      name: 'page',
+      fields: [
+        defineField({name: 'title', type: 'string'}),
+        defineField({name: 'body', type: 'pageBody'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [pageType, pageBodyType, ...layoutBlockTypes],
+    })
+
+    const startedAt = performance.now()
+    const schema = sanitySchemaToPortableTextSchema(
+      sanitySchema.get('pageBody'),
+    )
+    const durationMs = performance.now() - startedAt
+
+    expect(durationMs).toBeLessThan(2_000)
+
+    // The non-recursive parts of the converted schema mirror what a
+    // default Portable Text array carries - block, span, the standard
+    // decorators / styles / lists, the default link annotation, and an
+    // empty inline-objects list (the schema only uses block objects).
+    expect({
+      block: schema.block,
+      span: schema.span,
+      styles: schema.styles,
+      lists: schema.lists,
+      decorators: schema.decorators,
+      annotations: schema.annotations,
+      inlineObjects: schema.inlineObjects,
+    }).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [
+        {name: 'normal', title: 'Normal', value: 'normal'},
+        {name: 'h1', title: 'Heading 1', value: 'h1'},
+        {name: 'h2', title: 'Heading 2', value: 'h2'},
+        {name: 'h3', title: 'Heading 3', value: 'h3'},
+        {name: 'h4', title: 'Heading 4', value: 'h4'},
+        {name: 'h5', title: 'Heading 5', value: 'h5'},
+        {name: 'h6', title: 'Heading 6', value: 'h6'},
+        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+      ],
+      lists: [
+        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
+        {name: 'number', title: 'Numbered list', value: 'number'},
+      ],
+      decorators: [
+        {name: 'strong', title: 'Strong', value: 'strong'},
+        {name: 'em', title: 'Italic', value: 'em'},
+        {name: 'code', title: 'Code', value: 'code'},
+        {name: 'underline', title: 'Underline', value: 'underline'},
+        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+      ],
+      annotations: [
+        {
+          name: 'link',
+          title: 'Link',
+          fields: [{name: 'href', title: 'Link', type: 'string'}],
+        },
+      ],
+      inlineObjects: [],
+    })
+
+    // Every layout block ends up as a top-level block-object that
+    // `containers.get(_type)` can look up - the global half of
+    // container resolution.
+    expect(
+      schema.blockObjects.map((blockObject) => ({
+        name: blockObject.name,
+        title: blockObject.title,
+      })),
+    ).toEqual([
+      {name: 'hero', title: 'Hero'},
+      {name: 'card', title: 'Card'},
+      {name: 'callout', title: 'Callout'},
+      {name: 'accordion', title: 'Accordion'},
+      {name: 'tabs', title: 'Tabs'},
+      {name: 'columns', title: 'Columns'},
+      {name: 'gallery', title: 'Gallery'},
+      {name: 'quote', title: 'Quote'},
+      {name: 'cta', title: 'Cta'},
+      {name: 'testimonial', title: 'Testimonial'},
+      {name: 'section', title: 'Section'},
+      {name: 'banner', title: 'Banner'},
+    ])
+
+    // The positional half of container resolution walks the parent's
+    // `of` array at the current depth. Every block-object's body
+    // field is an array whose `of` covers every layout block -
+    // either inline (first reach during the walk) or as a name-only stub
+    // (after the type has been visited along an ancestor chain). Either
+    // way, a container registered against any of these types resolves at
+    // any depth inside the tree.
+    const allowedMemberTypes = ['block', ...layoutBlockNames].sort()
+    for (const blockObject of schema.blockObjects) {
+      const bodyField = blockObject.fields.find(
+        (field) => field.name === 'body',
+      )
+      if (bodyField?.type !== 'array' || bodyField.of === undefined) {
+        throw new Error(`${blockObject.name}.body should be an array field`)
+      }
+      const memberTypeNames = bodyField.of
+        .map((member) => (member.type === 'object' ? member.name : member.type))
+        .sort()
+      expect(memberTypeNames).toEqual(allowedMemberTypes)
+    }
+  }, 10_000)
 })
