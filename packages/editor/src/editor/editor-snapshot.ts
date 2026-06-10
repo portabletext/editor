@@ -41,7 +41,7 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
-  blockIndexMap: Map<string, number>
+  blockIndexMap: ReadonlyMap<string, number>
   /**
    * @beta
    * Subject to change

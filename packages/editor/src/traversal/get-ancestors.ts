@@ -1,6 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {serializePath} from '../paths/serialize-path'
+import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -16,7 +18,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Walks from root to the target in a single pass collecting each ancestor
  * as it goes.
  *
- * Every ancestor is a `PortableTextBlock` — only text blocks and object
+ * Every ancestor is a `PortableTextBlock`: only text blocks and object
  * nodes can contain children.
  *
  * @beta
@@ -40,10 +42,7 @@ export function getAncestors(
 
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
-  let isRootLevel = true
-  let currentParent:
-    | import('../schema/resolve-containers').RegisteredContainer
-    | undefined
+  let currentParent: RegisteredContainer | undefined
 
   const ancestorsByDepth: Array<{node: PortableTextBlock; path: Path}> = []
   const resolvedPath: Path = []
@@ -64,17 +63,24 @@ export function getAncestors(
 
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      if (isRootLevel) {
-        const index = blockIndexMap.get(segment._key)
-        node =
-          index !== undefined
-            ? currentChildren[index]
-            : currentChildren.find((child) => child._key === segment._key)
-      } else {
-        node = currentChildren.find((child) => child._key === segment._key)
-      }
       resolvedPath.push(segment)
-      isRootLevel = false
+      const index = blockIndexMap.get(serializePath(resolvedPath))
+      if (
+        index !== undefined &&
+        currentChildren[index]?._key === segment._key
+      ) {
+        node = currentChildren[index]
+      } else {
+        // The map can miss (unkeyed transient nodes, e.g. `{_type:'table'}`
+        // inserted by a remote patch before normalize mints a key) or
+        // disagree with the traversed value (snapshots that pair the live
+        // map with a pre-apply value, e.g. `textPatch`). Fall back to a
+        // linear scan in both cases.
+        node = currentChildren.find((child) => child._key === segment._key)
+        if (node && node._key !== undefined) {
+          resolvedPath[resolvedPath.length - 1] = {_key: node._key}
+        }
+      }
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
       if (node) {

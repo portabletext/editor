@@ -4,7 +4,6 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'
 
 function blockObject(_key: string, name: string) {
@@ -29,7 +28,7 @@ function textBlock(
     _type: 'block',
     children: [
       {
-        _key: defaultKeyGenerator(),
+        _key: `${_key}-s0`,
         _type: 'span',
         text: `${listItem}-${level}`,
       },
@@ -51,7 +50,10 @@ describe(buildIndexMaps.name, () => {
   const listIndexMap = new Map<string, number>()
 
   test('empty', () => {
-    buildIndexMaps({schema, value: []}, {blockIndexMap, listIndexMap})
+    buildIndexMaps(
+      {schema, containers: new Map(), value: []},
+      {blockIndexMap, listIndexMap},
+    )
     expect(blockIndexMap).toEqual(new Map())
     expect(listIndexMap).toEqual(new Map())
   })
@@ -61,10 +63,19 @@ describe(buildIndexMaps.name, () => {
    */
   test('single list item', () => {
     buildIndexMaps(
-      {schema, value: [textBlock('k0', {listItem: 'number', level: 1})]},
+      {
+        schema,
+        containers: new Map(),
+        value: [textBlock('k0', {listItem: 'number', level: 1})],
+      },
       {blockIndexMap, listIndexMap},
     )
-    expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
+    expect(blockIndexMap).toEqual(
+      new Map([
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+      ]),
+    )
     expect(listIndexMap).toEqual(new Map([['[_key=="k0"]', 1]]))
   })
 
@@ -73,10 +84,19 @@ describe(buildIndexMaps.name, () => {
    */
   test('single indented list item', () => {
     buildIndexMaps(
-      {schema, value: [textBlock('k0', {listItem: 'number', level: 2})]},
+      {
+        schema,
+        containers: new Map(),
+        value: [textBlock('k0', {listItem: 'number', level: 2})],
+      },
       {blockIndexMap, listIndexMap},
     )
-    expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
+    expect(blockIndexMap).toEqual(
+      new Map([
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+      ]),
+    )
     expect(listIndexMap).toEqual(new Map([['[_key=="k0"]', 1]]))
   })
 
@@ -91,6 +111,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -103,11 +124,16 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
-        ['k4', 4],
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k1"].children[_key=="k1-s0"]', 0],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k2"].children[_key=="k2-s0"]', 0],
+        ['[_key=="k3"]', 3],
+        ['[_key=="k3"].children[_key=="k3-s0"]', 0],
+        ['[_key=="k4"]', 4],
+        ['[_key=="k4"].children[_key=="k4-s0"]', 0],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -131,6 +157,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -143,11 +170,15 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
-        ['k4', 4],
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k1"].children[_key=="k1-s0"]', 0],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k3"]', 3],
+        ['[_key=="k3"].children[_key=="k3-s0"]', 0],
+        ['[_key=="k4"]', 4],
+        ['[_key=="k4"].children[_key=="k4-s0"]', 0],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -169,6 +200,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'bullet', level: 1}),
@@ -179,9 +211,12 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k1"].children[_key=="k1-s0"]', 0],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k2"].children[_key=="k2-s0"]', 0],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -202,6 +237,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'bullet', level: 2}),
@@ -230,6 +266,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -263,6 +300,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -296,6 +334,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 2}),
@@ -307,10 +346,14 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k1"].children[_key=="k1-s0"]', 0],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k2"].children[_key=="k2-s0"]', 0],
+        ['[_key=="k3"]', 3],
+        ['[_key=="k3"].children[_key=="k3-s0"]', 0],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -332,6 +375,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 2}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -342,9 +386,12 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k1"].children[_key=="k1-s0"]', 0],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k2"].children[_key=="k2-s0"]', 0],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -371,6 +418,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 3}),
@@ -387,15 +435,24 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
-        ['k4', 4],
-        ['k5', 5],
-        ['k6', 6],
-        ['k7', 7],
-        ['k8', 8],
+        ['[_key=="k0"]', 0],
+        ['[_key=="k0"].children[_key=="k0-s0"]', 0],
+        ['[_key=="k1"]', 1],
+        ['[_key=="k1"].children[_key=="k1-s0"]', 0],
+        ['[_key=="k2"]', 2],
+        ['[_key=="k2"].children[_key=="k2-s0"]', 0],
+        ['[_key=="k3"]', 3],
+        ['[_key=="k3"].children[_key=="k3-s0"]', 0],
+        ['[_key=="k4"]', 4],
+        ['[_key=="k4"].children[_key=="k4-s0"]', 0],
+        ['[_key=="k5"]', 5],
+        ['[_key=="k5"].children[_key=="k5-s0"]', 0],
+        ['[_key=="k6"]', 6],
+        ['[_key=="k6"].children[_key=="k6-s0"]', 0],
+        ['[_key=="k7"]', 7],
+        ['[_key=="k7"].children[_key=="k7-s0"]', 0],
+        ['[_key=="k8"]', 8],
+        ['[_key=="k8"].children[_key=="k8-s0"]', 0],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -422,6 +479,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'bullet', level: 1}),
           textBlock('k1', {listItem: 'number', level: 2}),
@@ -448,6 +506,7 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
         value: [
           textBlock('k0', {listItem: 'number', level: 2}),
           textBlock('k1', {listItem: 'bullet', level: 1}),

@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import type {Node} from '../engine/interfaces/node'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {
   defineContainer,
   type ContainerRenderProps,
@@ -9,6 +10,19 @@ import {buildPublicContainers} from '../schema/build-public-containers'
 import {resolveNestedContainer} from '../schema/resolve-containers-batch'
 import {getAncestors} from './get-ancestors'
 import type {TraversalSnapshot} from './traversal-snapshot'
+
+function buildBlockIndexMap(
+  schema: any,
+  containers: any,
+  value: any,
+): Map<string, number> {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return blockIndexMap
+}
 
 /**
  * Regression: `getAncestors` must descend with positional awareness
@@ -134,10 +148,7 @@ describe('getAncestors with same _type under different parents', () => {
   const diagramNode = {_key: 'd1', _type: 'diagram', shapes: [diagramCell]}
 
   const value: Array<Node> = [tableNode as Node, diagramNode as Node]
-  const blockIndexMap = new Map<string, number>([
-    [tableNode._key, 0],
-    [diagramNode._key, 1],
-  ])
+  const blockIndexMap = buildBlockIndexMap(schema, containers, value)
 
   const snapshot: TraversalSnapshot = {
     context: {schema, containers, value},

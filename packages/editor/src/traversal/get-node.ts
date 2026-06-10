@@ -1,5 +1,7 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {serializePath} from '../paths/serialize-path'
+import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -28,11 +30,8 @@ export function getNode(
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
   let node: Node | undefined
-  let currentParent:
-    | import('../schema/resolve-containers').RegisteredContainer
-    | undefined
+  let currentParent: RegisteredContainer | undefined
   const resolvedPath: Path = []
-  let isRootLevel = true
 
   for (let i = 0; i < path.length; i++) {
     const segment = path[i]
@@ -43,23 +42,24 @@ export function getNode(
     }
 
     if (isKeyedSegment(segment)) {
-      if (isRootLevel) {
-        const index = blockIndexMap.get(segment._key)
-        if (index !== undefined) {
-          const candidate = currentChildren[index]
-          if (candidate && candidate._key === segment._key) {
-            node = candidate
-          } else {
-            node = currentChildren.find((child) => child._key === segment._key)
-          }
-        } else {
-          node = currentChildren.find((child) => child._key === segment._key)
-        }
-      } else {
-        node = currentChildren.find((child) => child._key === segment._key)
-      }
       resolvedPath.push(segment)
-      isRootLevel = false
+      const index = blockIndexMap.get(serializePath(resolvedPath))
+      if (
+        index !== undefined &&
+        currentChildren[index]?._key === segment._key
+      ) {
+        node = currentChildren[index]
+      } else {
+        // The map can miss (unkeyed transient nodes, e.g. `{_type:'table'}`
+        // inserted by a remote patch before normalize mints a key) or
+        // disagree with the traversed value (snapshots that pair the live
+        // map with a pre-apply value, e.g. `textPatch`). Fall back to a
+        // linear scan in both cases.
+        node = currentChildren.find((child) => child._key === segment._key)
+        if (node && node._key !== undefined) {
+          resolvedPath[resolvedPath.length - 1] = {_key: node._key}
+        }
+      }
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
       if (node) {

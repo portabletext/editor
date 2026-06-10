@@ -1,11 +1,25 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import type {
   ChildArrayField,
   RegisteredContainer,
 } from '../schema/resolve-containers'
 import {isLeafObject} from './is-leaf-object'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
+
+function buildBlockIndexMap(
+  schema: any,
+  containers: any,
+  value: any,
+): Map<string, number> {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return blockIndexMap
+}
 
 function registeredContainerFor(
   type: string,
@@ -220,7 +234,7 @@ describe(isLeafObject.name, () => {
 
     const context = {
       context: {schema, containers, value: [table]},
-      blockIndexMap: new Map(),
+      blockIndexMap: buildBlockIndexMap(schema, containers, [table]),
     }
 
     test('image inside cell is void', () => {
@@ -292,7 +306,7 @@ describe(isLeafObject.name, () => {
 
     const context = {
       context: {schema, containers, value: [gallery]},
-      blockIndexMap: new Map(),
+      blockIndexMap: buildBlockIndexMap(schema, containers, [gallery]),
     }
 
     test('gallery is not void', () => {
