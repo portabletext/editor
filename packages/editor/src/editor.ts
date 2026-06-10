@@ -5,7 +5,7 @@ import type {ExternalBehaviorEvent} from './behaviors/behavior.types.event'
 import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
-import type {EditorEmittedEvent} from './editor/relay-machine'
+import type {EditorEmittedEvent} from './editor/relay'
 import type {RegistrableNode} from './renderers/renderer.types'
 
 /**

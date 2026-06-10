@@ -1,5 +1,5 @@
 import {useEffect} from 'react'
-import type {EditorEmittedEvent} from '../editor/relay-machine'
+import type {EditorEmittedEvent} from '../editor/relay'
 import {useEditor} from '../editor/use-editor'
 
 /**

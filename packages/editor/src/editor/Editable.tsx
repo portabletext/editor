@@ -44,7 +44,7 @@ import {parseBlocks} from '../utils/parse-blocks'
 import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
-import {RelayActorContext} from './relay-actor-context'
+import {RelayContext} from './relay-context'
 import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
@@ -135,7 +135,7 @@ export const PortableTextEditable = forwardRef<
   const [hasInvalidValue, setHasInvalidValue] = useState(false)
 
   const editorActor = useContext(EditorActorContext)
-  const relayActor = useContext(RelayActorContext)
+  const relay = useContext(RelayContext)
   const editorEngine = useEngine()
   const schema = editorEngine.snapshot.context.schema
   const readOnly = useSelector(editorActor, (s) =>
@@ -393,7 +393,7 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
-        relayActor.send({type: 'loading'})
+        relay.send({type: 'loading'})
 
         Promise.resolve(onPasteResult)
           .then((result) => {
@@ -459,7 +459,7 @@ export const PortableTextEditable = forwardRef<
             return error
           })
           .finally(() => {
-            relayActor.send({type: 'done loading'})
+            relay.send({type: 'done loading'})
           })
       } else if (event.nativeEvent.clipboardData) {
         // Prevent the engine from handling the event
@@ -490,7 +490,7 @@ export const PortableTextEditable = forwardRef<
 
       debug.behaviors('No result from custom paste handler, pasting normally')
     },
-    [editorActor, onPaste, portableTextEditor, relayActor, editorEngine],
+    [editorActor, onPaste, portableTextEditor, relay, editorEngine],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
@@ -500,7 +500,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       if (!event.isDefaultPrevented()) {
-        relayActor.send({type: 'focused', event})
+        relay.send({type: 'focused', event})
 
         if (
           !editorEngine.snapshot.context.selection &&
@@ -515,7 +515,7 @@ export const PortableTextEditable = forwardRef<
         }
       }
     },
-    [onFocus, relayActor, editorEngine],
+    [onFocus, relay, editorEngine],
   )
 
   const handleClick = useCallback(
@@ -555,10 +555,10 @@ export const PortableTextEditable = forwardRef<
         onBlur(event)
       }
       if (!event.isPropagationStopped()) {
-        relayActor.send({type: 'blurred', event})
+        relay.send({type: 'blurred', event})
       }
     },
-    [relayActor, onBlur],
+    [relay, onBlur],
   )
 
   const handleOnBeforeInput = useCallback(

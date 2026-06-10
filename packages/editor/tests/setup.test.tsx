@@ -2,10 +2,7 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {
-  EditorEmittedEvent,
-  MutationEvent,
-} from '../src/editor/relay-machine'
+import type {EditorEmittedEvent, MutationEvent} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
