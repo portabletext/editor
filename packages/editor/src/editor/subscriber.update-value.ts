@@ -1,37 +1,48 @@
-import type {EditorContext} from '../editor/editor-snapshot'
+import {subscribeToOperations} from '../engine/core/operation-channel'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {EditorContext} from './editor-snapshot'
 
-export function updateValuePlugin(
+/**
+ * Keeps `blockIndexMap` and `listIndexMap` in sync with the value. Rebuilds
+ * them synchronously within the apply that changed the value, so subsequent
+ * operations and readers never observe stale maps.
+ */
+export function subscribeUpdateValue(
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
   editor: PortableTextEditorEngine,
-) {
-  const {apply} = editor
+): () => void {
+  // Only subscribed when normalization debugging is on (resolved once at
+  // module init), keeping the per-operation `before` phase free of
+  // debug-only listeners in production.
+  const unsubscribeNormalizationLog = debug.normalization.enabled
+    ? subscribeToOperations(
+        editor,
+        (event) => {
+          if (event.isNormalizingNode) {
+            debug.normalization(
+              `((engine operation))\n${safeStringify(event.operation, 2)}`,
+            )
+          }
+        },
+        {phase: 'before'},
+      )
+    : undefined
 
-  editor.apply = (operation) => {
-    if (editor.isNormalizingNode) {
-      if (debug.normalization.enabled) {
-        debug.normalization(
-          `((engine operation))\n${safeStringify(operation, 2)}`,
-        )
-      }
-    }
+  const unsubscribeIndexMaps = subscribeToOperations(editor, (event) => {
+    const operation = event.operation
 
     if (operation.type === 'set_selection') {
-      apply(operation)
       return
     }
 
     if (operation.type === 'insert_text' || operation.type === 'remove_text') {
       // Inserting and removing text has no effect on index maps so there is
       // no need to rebuild those.
-      apply(operation)
       return
     }
-
-    apply(operation)
 
     // Operations deep inside blocks (path length > 2) only modify nested
     // structure and cannot affect root-level blockIndexMap or listIndexMap.
@@ -50,7 +61,10 @@ export function updateValuePlugin(
         },
       )
     }
-  }
+  })
 
-  return editor
+  return () => {
+    unsubscribeNormalizationLog?.()
+    unsubscribeIndexMaps()
+  }
 }

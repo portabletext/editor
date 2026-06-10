@@ -12,9 +12,20 @@ import {transformRangeRef} from '../range-ref/transform-range-ref'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import type {WithEditorFirstArg} from '../utils/types'
 import {applyOperation} from './apply-operation'
+import {createOperationEvent, emitOperationEvent} from './operation-channel'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
+  const beforeListeners = editor.operationListeners.before
+  const operationEvent =
+    beforeListeners.length > 0 || editor.operationListeners.after.length > 0
+      ? createOperationEvent(editor, op)
+      : undefined
+
+  if (operationEvent) {
+    emitOperationEvent(beforeListeners, operationEvent)
+  }
+
   for (const ref of editor.pathRefs) {
     PathRef.transform(ref, op)
   }
@@ -129,5 +140,11 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
       editor.onChange({operation: op})
       editor.operations = []
     })
+  }
+
+  if (operationEvent) {
+    // Emitted last so that, when normalization fixes re-enter `apply`, a fix
+    // operation's `after` listeners run before the triggering operation's.
+    emitOperationEvent(editor.operationListeners.after, operationEvent)
   }
 }

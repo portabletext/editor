@@ -1,5 +1,5 @@
+import {subscribeToOperations} from '../../core/operation-channel'
 import type {Editor} from '../../interfaces/editor'
-import type {Operation} from '../../interfaces/operation'
 import {isPoint} from '../../point/is-point'
 import {
   transformPendingPoint,
@@ -15,7 +15,7 @@ import type {DOMEditor} from './dom-editor'
 
 export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   const e = editor as T & DOMEditor
-  const {apply, onChange} = e
+  const {onChange} = e
 
   // Initialize DOMEditor state properties
   e.isNodeMapDirty = false
@@ -33,39 +33,52 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.pendingSelection = null
   e.forceRender = null
 
-  e.apply = (op: Operation) => {
-    const pendingDiffs = e.pendingDiffs
-    if (pendingDiffs?.length) {
-      const transformed = pendingDiffs
-        .map((textDiff) => transformTextDiff(textDiff, op))
-        .filter(Boolean) as TextDiff[]
+  subscribeToOperations(
+    e,
+    (event) => {
+      const operation = event.operation
 
-      e.pendingDiffs = transformed
-    }
+      const pendingDiffs = e.pendingDiffs
+      if (pendingDiffs?.length) {
+        const transformed = pendingDiffs
+          .map((textDiff) => transformTextDiff(textDiff, operation))
+          .filter(Boolean) as TextDiff[]
 
-    const pendingSelection = e.pendingSelection
-    if (pendingSelection) {
-      e.pendingSelection = transformPendingRange(e, pendingSelection, op)
-    }
+        e.pendingDiffs = transformed
+      }
 
-    const pendingAction = e.pendingAction
-    if (pendingAction?.at) {
-      const at = isPoint(pendingAction?.at)
-        ? transformPendingPoint(e, pendingAction.at, op)
-        : transformPendingRange(e, pendingAction.at, op)
+      const pendingSelection = e.pendingSelection
+      if (pendingSelection) {
+        e.pendingSelection = transformPendingRange(
+          e,
+          pendingSelection,
+          operation,
+        )
+      }
 
-      e.pendingAction = at ? {...pendingAction, at} : null
-    }
+      const pendingAction = e.pendingAction
+      if (pendingAction?.at) {
+        const at = isPoint(pendingAction?.at)
+          ? transformPendingPoint(e, pendingAction.at, operation)
+          : transformPendingRange(e, pendingAction.at, operation)
 
-    if (op.type === 'set_selection') {
-      // Selection was manually set, don't restore the user selection after the change.
-      e.userSelection?.unref()
-      e.userSelection = null
-    }
+        e.pendingAction = at ? {...pendingAction, at} : null
+      }
 
-    apply(op)
+      if (operation.type === 'set_selection') {
+        // Selection was manually set, don't restore the user selection after the change.
+        e.userSelection?.unref()
+        e.userSelection = null
+      }
+    },
+    {phase: 'before'},
+  )
 
-    switch (op.type) {
+  // Subscribed at engine creation, so this runs first among `after`
+  // listeners — `isNodeMapDirty` must be set before patch generation
+  // notifies synchronous `internal.patch` consumers.
+  subscribeToOperations(e, (event) => {
+    switch (event.operation.type) {
       case 'insert':
       case 'unset':
       case 'insert_text':
@@ -76,7 +89,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
         e.isNodeMapDirty = true
       }
     }
-  }
+  })
 
   e.onChange = (options) => {
     const onContextChange = e.onContextChange

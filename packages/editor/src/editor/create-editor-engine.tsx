@@ -7,6 +7,10 @@ import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
+import {setupRemotePatches} from './remote-patches'
+import {subscribeHistory} from './subscriber.history'
+import {subscribePatchGeneration} from './subscriber.patch-generation'
+import {subscribeUpdateValue} from './subscriber.update-value'
 
 type EditorEngineConfig = {
   editorActor: EditorActor
@@ -78,8 +82,23 @@ export function createEditorEngine(
 
   const editorEngine = plugins(withDOM(editor), {
     editorActor: config.editorActor,
+  })
+
+  subscribeUpdateValue(context, editorEngine)
+  subscribePatchGeneration({
+    editorActor: config.editorActor,
     relayActor: config.relayActor,
+    editor: editorEngine,
+  })
+  setupRemotePatches({
+    editorActor: config.editorActor,
     subscriptions: config.subscriptions,
+    editor: editorEngine,
+  })
+  subscribeHistory({
+    editorActor: config.editorActor,
+    subscriptions: config.subscriptions,
+    editor: editorEngine,
   })
 
   buildIndexMaps(
