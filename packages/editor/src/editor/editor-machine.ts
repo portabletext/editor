@@ -31,11 +31,7 @@ import {
   registerNodeOnEngine,
   unregisterNodeOnEngine,
 } from './register-node-on-engine'
-import type {
-  EditorEmittedEvent,
-  MutationEvent,
-  PatchEvent,
-} from './relay-machine'
+import type {EditorEmittedEvent, MutationEvent, PatchEvent} from './relay'
 
 export * from 'xstate/guards'
 

@@ -14,16 +14,16 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {mutationMachine, type MutationActor} from './mutation-machine'
-import {relayMachine, type RelayActor} from './relay-machine'
+import {createRelay, type Relay} from './relay'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
     mutationActor: MutationActor
-    relayActor: RelayActor
     syncActor: SyncActor
   }
+  relay: Relay
   editor: Editor
   editable: EditableAPI
   editorEngine: PortableTextEditorEngine
@@ -35,16 +35,16 @@ export function createInternalEditor(config: EditorConfig): {
   const editorActor = createActor(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
-  const relayActor = createActor(relayMachine)
+  const relay = createRelay()
   const editorEngine = createEditorEngine({
     editorActor,
-    relayActor,
+    relay,
     subscriptions,
   })
   const editable = createEditableAPI(editorEngine, editorActor)
   const {mutationActor, syncActor} = createActors({
     editorActor,
-    relayActor,
+    relay,
     editorEngine,
     subscriptions,
   })
@@ -110,7 +110,7 @@ export function createInternalEditor(config: EditorConfig): {
       }
     },
     on: (event, listener) => {
-      const subscription = relayActor.on(event, (event) => {
+      const subscription = relay.on(event, (event) => {
         switch (event.type) {
           case 'blurred':
           case 'done loading':
@@ -146,9 +146,9 @@ export function createInternalEditor(config: EditorConfig): {
     actors: {
       editorActor,
       mutationActor,
-      relayActor,
       syncActor,
     },
+    relay,
     editor,
     editable,
     editorEngine,
@@ -170,7 +170,7 @@ function editorConfigToMachineInput(config: EditorConfig) {
 
 function createActors(config: {
   editorActor: EditorActor
-  relayActor: RelayActor
+  relay: Relay
   editorEngine: PortableTextEditorEngine
   subscriptions: Array<() => () => void>
 }): {
@@ -211,7 +211,7 @@ function createActors(config: {
         })
       }
       if (event.type === 'patch') {
-        config.relayActor.send(event)
+        config.relay.send(event)
       }
     })
 
@@ -227,10 +227,10 @@ function createActors(config: {
     const subscription = syncActor.on('*', (event) => {
       switch (event.type) {
         case 'invalid value':
-          config.relayActor.send(event)
+          config.relay.send(event)
           break
         case 'value changed':
-          config.relayActor.send(event)
+          config.relay.send(event)
           break
         case 'patch':
           config.editorActor.send({
@@ -274,7 +274,7 @@ function createActors(config: {
         case 'ready':
         case 'read only':
         case 'selection':
-          config.relayActor.send(event)
+          config.relay.send(event)
           break
         case 'internal.patch':
           mutationActor.send({...event, type: 'patch'})

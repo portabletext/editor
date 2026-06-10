@@ -41,7 +41,7 @@ export {usePortableTextEditor} from './editor/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/usePortableTextEditorSelection'
 export {defaultKeyGenerator as keyGenerator} from './utils/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
-export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
+export type {EditorEmittedEvent, MutationEvent} from './editor/relay'
 export {useEditor} from './editor/use-editor'
 export {
   defineBlockObject,

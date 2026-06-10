@@ -8,7 +8,7 @@ import type {
   EditorEmittedEvent,
   MutationEvent,
   PatchEvent,
-} from '../src/editor/relay-machine'
+} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 import {

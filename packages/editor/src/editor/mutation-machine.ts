@@ -18,7 +18,7 @@ import {isNormalizing} from '../engine/editor/is-normalizing'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSchema} from './editor-schema'
-import type {PatchEvent} from './relay-machine'
+import type {PatchEvent} from './relay'
 
 export type MutationActor = ActorRefFrom<typeof mutationMachine>
 

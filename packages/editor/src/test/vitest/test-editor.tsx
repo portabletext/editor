@@ -14,7 +14,7 @@ import {
   type PortableTextEditableProps,
 } from '../../editor/Editable'
 import {EditorProvider} from '../../editor/editor-provider'
-import type {EditorEmittedEvent} from '../../editor/relay-machine'
+import type {EditorEmittedEvent} from '../../editor/relay'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
