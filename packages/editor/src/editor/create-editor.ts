@@ -2,11 +2,14 @@ import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
+import {subscribeToOperations} from '../engine/core/operation-channel'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {Operation} from '../types/operation'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
 import {createEditorEngine} from './create-editor-engine'
@@ -117,6 +120,7 @@ export function createInternalEditor(config: EditorConfig): {
           case 'invalid value':
           case 'loading':
           case 'mutation':
+          case 'operation':
           case 'patch':
           case 'read only':
           case 'ready':
@@ -165,6 +169,28 @@ function editorConfigToMachineInput(config: EditorConfig) {
   } as const
 }
 
+/**
+ * The public operation types. The `Record` keying makes completeness
+ * compile-checked: adding a variant to the public `Operation` union in
+ * `types/operation.ts` (which carries the tripwire that fires when the
+ * engine vocabulary grows) errors here until the allowlist catches up.
+ */
+const publicOperationTypeRecord: Record<Operation['type'], true> = {
+  'insert': true,
+  'insert.text': true,
+  'remove.text': true,
+  'set': true,
+  'unset': true,
+}
+
+const publicOperationTypes: ReadonlySet<string> = new Set(
+  Object.keys(publicOperationTypeRecord),
+)
+
+function isPublicOperation(operation: EngineOperation): operation is Operation {
+  return publicOperationTypes.has(operation.type)
+}
+
 function createActors(config: {
   editorActor: EditorActor
   relay: Relay
@@ -194,6 +220,22 @@ function createActors(config: {
   })
 
   config.subscriptions.push(mutationBatcher.subscribe)
+
+  config.subscriptions.push(() => {
+    return subscribeToOperations(config.editorEngine, (event) => {
+      if (!isPublicOperation(event.operation)) {
+        // Allowlist, not blocklist: a new engine operation must be an
+        // explicit decision to expose, both here and in the public
+        // `Operation` type (which carries a compile-time tripwire for the
+        // same purpose). `set.selection` stays excluded because selection
+        // movements are the highest-frequency operation and the
+        // `selection` event serves selection observers.
+        return
+      }
+
+      config.relay.send({type: 'operation', operation: event.operation})
+    })
+  })
 
   config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {

@@ -62,10 +62,73 @@ describe('Setup', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
     })
 
-    expect(events.slice(0, 2)).toEqual([
-      expect.objectContaining({
+    expect(events.slice(0, 7)).toEqual([
+      // Sync applies the valid first block (replacing the seed block `k5`,
+      // with parse fix-ups for the missing `markDefs`/`style`), then stops
+      // at the unknown block object.
+      {
+        type: 'operation',
+        operation: {type: 'unset', path: [{_key: 'k5'}]},
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k1', text: 'foo'}],
+          },
+        },
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
+          value: [],
+          inverse: {
+            type: 'unset',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
+          },
+        },
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: 'k0'}, 'markDefs'],
+          value: [],
+          inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
+        },
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: 'k0'}, 'style'],
+          value: 'normal',
+          inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
+        },
+      },
+      {
         type: 'invalid value',
-      }),
+        resolution: {
+          action: 'Remove the block',
+          description: "Block with _key 'k2' has invalid _type 'image'",
+          i18n: {
+            action: 'inputs.portable-text.invalid-value.disallowed-type.action',
+            description:
+              'inputs.portable-text.invalid-value.disallowed-type.description',
+            values: {key: 'k2', typeName: 'image'},
+          },
+          item: {_key: 'k2', _type: 'image'},
+          patches: [{type: 'unset', path: [{_key: 'k2'}]}],
+        },
+        value: initialValue,
+      },
       {type: 'ready'},
     ])
 
