@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.1
+
+### Patch Changes
+
+- [#2774](https://github.com/portabletext/editor/pull/2774) [`ba0f5e9`](https://github.com/portabletext/editor/commit/ba0f5e99bd060dffd18bdc94f891ab0f820d5941) Thanks [@tfreeborough](https://github.com/tfreeborough)! - fix: avoid combinatorial blow-up converting mutually-embedding types
+
 ## 3.1.0
 
 ### Minor Changes
