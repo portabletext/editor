@@ -38,7 +38,6 @@ export function createInternalEditor(config: EditorConfig): {
   const relay = createRelay()
   const editorEngine = createEditorEngine({
     editorActor,
-    relay,
     subscriptions,
   })
   const editable = createEditableAPI(editorEngine, editorActor)

@@ -6,7 +6,6 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
-import type {Relay} from './relay'
 import {setupRemotePatches} from './remote-patches'
 import {subscribeHistory} from './subscriber.history'
 import {subscribePatchGeneration} from './subscriber.patch-generation'
@@ -14,7 +13,6 @@ import {subscribeUpdateValue} from './subscriber.update-value'
 
 type EditorEngineConfig = {
   editorActor: EditorActor
-  relay: Relay
   subscriptions: Array<() => () => void>
 }
 
@@ -87,7 +85,6 @@ export function createEditorEngine(
   subscribeUpdateValue(context, editorEngine)
   subscribePatchGeneration({
     editorActor: config.editorActor,
-    relay: config.relay,
     editor: editorEngine,
   })
   setupRemotePatches({
