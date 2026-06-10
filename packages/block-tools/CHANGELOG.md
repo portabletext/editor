@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.1.3
+
+### Patch Changes
+
+- Updated dependencies [[`ba0f5e9`](https://github.com/portabletext/editor/commit/ba0f5e99bd060dffd18bdc94f891ab0f820d5941)]:
+  - @portabletext/sanity-bridge@3.1.1
+
 ## 5.1.2
 
 ### Patch Changes

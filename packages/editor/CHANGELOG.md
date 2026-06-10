@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.3.3
+
+### Patch Changes
+
+- [#2768](https://github.com/portabletext/editor/pull/2768) [`1e0d25d`](https://github.com/portabletext/editor/commit/1e0d25d2e909272298c80193f71b604dfde9d7ea) Thanks [@christianhg](https://github.com/christianhg)! - fix: key patch generation off the operation's own pre-apply value
+
+  Patches emitted through `patch` and `mutation` events could be computed against a value that already included the edit when that edit triggered normalization, producing incorrect text diffs and unset payloads. Each operation's patches are now derived from the value exactly as it was before that operation applied.
+
 ## 7.3.2
 
 ### Patch Changes
