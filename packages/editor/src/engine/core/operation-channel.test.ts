@@ -186,6 +186,107 @@ describe('operation channel', () => {
     })
   })
 
+  test('operations replace the value instead of mutating it, keeping `beforeValue` intact', () => {
+    const operationCases: Array<{name: string; operation: Operation}> = [
+      {
+        name: 'insert_text on a span',
+        operation: insertTextOperation,
+      },
+      {
+        name: 'set on a block property',
+        operation: {type: 'set', path: [{_key: 'b1'}, 'style'], value: 'h1'},
+      },
+      {
+        name: 'insert of a block',
+        operation: {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          node: {
+            _type: 'block',
+            _key: 'b2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 's2', text: '', marks: []}],
+          },
+        },
+      },
+      {
+        name: 'unset of a block',
+        operation: {type: 'unset', path: [{_key: 'b2'}]},
+      },
+      {
+        name: 'root-level set',
+        operation: {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: 'b3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 's3', text: 'new', marks: []}],
+            },
+          ],
+        },
+      },
+    ]
+
+    for (const operationCase of operationCases) {
+      const initialValue: Array<PortableTextBlock> = [
+        ...createDefaultValue(),
+        {
+          _type: 'block',
+          _key: 'b2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 's2', text: 'second', marks: []}],
+        },
+      ]
+      const editor = createBareEditor(initialValue)
+      const preApplyValue = structuredClone(initialValue)
+      let capturedEvent: OperationEvent | undefined
+
+      subscribeToOperations(editor, (event) => {
+        capturedEvent = capturedEvent ?? event
+      })
+
+      editor.apply(operationCase.operation)
+
+      expect(
+        capturedEvent?.beforeValue,
+        `${operationCase.name}: the value array is replaced`,
+      ).not.toBe(editor.snapshot.context.value)
+      expect(
+        capturedEvent?.beforeValue,
+        `${operationCase.name}: \`beforeValue\` is not mutated in place`,
+      ).toEqual(preApplyValue)
+    }
+  })
+
+  test('operations replace the selection instead of mutating it, keeping `beforeSelection` intact', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const preApplySelection = {
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      backward: false,
+    }
+    editor.snapshot.context.selection = preApplySelection
+    let capturedEvent: OperationEvent | undefined
+
+    subscribeToOperations(editor, (event) => {
+      capturedEvent = capturedEvent ?? event
+    })
+
+    editor.apply({...insertTextOperation, offset: 0})
+
+    expect(capturedEvent?.beforeSelection).toBe(preApplySelection)
+    expect(editor.snapshot.context.selection).not.toBe(preApplySelection)
+    expect(preApplySelection.anchor.offset).toBe(3)
+    expect(editor.snapshot.context.selection?.anchor.offset).toBe(6)
+  })
+
   test('engine flags are snapshotted onto the event and derive `origin`', () => {
     const editor = createBareEditor(createDefaultValue())
     const origins: Array<OperationEvent['origin']> = []
