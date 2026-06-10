@@ -20,6 +20,7 @@ export const createEditor = (): Editor => {
   const e: any = {
     [EDITOR_BRAND]: true,
     operations: [],
+    operationListeners: {before: [], after: []},
     marks: null,
     dirtyPaths: [],
     dirtyPathKeys: new Set(),

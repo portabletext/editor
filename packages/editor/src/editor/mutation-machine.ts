@@ -13,6 +13,7 @@ import {
   setup,
   type AnyEventObject,
 } from 'xstate'
+import {subscribeToOperations} from '../engine/core/operation-channel'
 import {isNormalizing} from '../engine/editor/is-normalizing'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -147,20 +148,23 @@ export const mutationMachine = setup({
       {editorEngine: PortableTextEditorEngine},
       {type: 'typing'} | {type: 'not typing'}
     >(({input, sendBack}) => {
-      const originalApply = input.editorEngine.apply
-
-      input.editorEngine.apply = (op) => {
-        if (op.type === 'insert_text' || op.type === 'remove_text') {
-          sendBack({type: 'typing'})
-        } else {
-          sendBack({type: 'not typing'})
-        }
-        originalApply(op)
-      }
-
-      return () => {
-        input.editorEngine.apply = originalApply
-      }
+      return subscribeToOperations(
+        input.editorEngine,
+        (event) => {
+          if (
+            event.operation.type === 'insert_text' ||
+            event.operation.type === 'remove_text'
+          ) {
+            sendBack({type: 'typing'})
+          } else {
+            // `not typing` flushes pending mutations, so it has to fire
+            // before the operation's own patches reach the machine —
+            // hence the `before` phase.
+            sendBack({type: 'not typing'})
+          }
+        },
+        {phase: 'before'},
+      )
     }),
     'mutation interval': fromCallback(({sendBack}) => {
       const interval = setInterval(

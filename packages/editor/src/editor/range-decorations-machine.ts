@@ -7,6 +7,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {Operation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
@@ -27,19 +28,19 @@ const engineOperationCallback: CallbackLogicFunction<
   {type: 'engine operation'; operation: Operation},
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
-  const originalApply = input.editorEngine.apply
-
-  input.editorEngine.apply = (op) => {
-    if (op.type !== 'set_selection') {
-      sendBack({type: 'engine operation', operation: op})
-    }
-
-    originalApply(op)
-  }
-
-  return () => {
-    input.editorEngine.apply = originalApply
-  }
+  return subscribeToOperations(
+    input.editorEngine,
+    (event) => {
+      if (event.operation.type !== 'set_selection') {
+        // `transform range decorations` reads the editor snapshot
+        // synchronously and needs the pre-apply tree (removed nodes must
+        // still be present to resolve document order) — hence the
+        // `before` phase.
+        sendBack({type: 'engine operation', operation: event.operation})
+      }
+    },
+    {phase: 'before'},
+  )
 }
 
 export type DecoratedRange = Range & {rangeDecoration: RangeDecoration}
