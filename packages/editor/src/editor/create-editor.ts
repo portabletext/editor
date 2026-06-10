@@ -13,14 +13,13 @@ import {createEditorEngine} from './create-editor-engine'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
-import {mutationMachine, type MutationActor} from './mutation-machine'
+import {createMutationBatcher} from './mutation-batcher'
 import {createRelay, type Relay} from './relay'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
-    mutationActor: MutationActor
     syncActor: SyncActor
   }
   relay: Relay
@@ -41,7 +40,7 @@ export function createInternalEditor(config: EditorConfig): {
     subscriptions,
   })
   const editable = createEditableAPI(editorEngine, editorActor)
-  const {mutationActor, syncActor} = createActors({
+  const {syncActor} = createActors({
     editorActor,
     relay,
     editorEngine,
@@ -144,7 +143,6 @@ export function createInternalEditor(config: EditorConfig): {
   return {
     actors: {
       editorActor,
-      mutationActor,
       syncActor,
     },
     relay,
@@ -173,19 +171,14 @@ function createActors(config: {
   editorEngine: PortableTextEditorEngine
   subscriptions: Array<() => () => void>
 }): {
-  mutationActor: MutationActor
   syncActor: SyncActor
 } {
   debug.setup('creating new actors')
 
-  const mutationActor = createActor(mutationMachine, {
-    input: {
-      readOnly: config.editorActor
-        .getSnapshot()
-        .matches({'edit mode': 'read only'}),
-      schema: config.editorActor.getSnapshot().context.schema,
-      editorEngine: config.editorEngine,
-    },
+  const mutationBatcher = createMutationBatcher({
+    editorActor: config.editorActor,
+    editorEngine: config.editorEngine,
+    relay: config.relay,
   })
 
   const syncActor = createActor(syncMachine, {
@@ -200,27 +193,7 @@ function createActors(config: {
     },
   })
 
-  config.subscriptions.push(() => {
-    const subscription = mutationActor.on('*', (event) => {
-      if (event.type === 'mutation') {
-        config.editorActor.send({
-          type: 'mutation',
-          patches: event.patches,
-          value: event.snapshot,
-        })
-      }
-      if (event.type === 'patch') {
-        config.relay.send(event)
-      }
-    })
-
-    return () => {
-      // Flushing pending patches and mutations before unmounting
-      mutationActor.send({type: 'emit changes'})
-
-      subscription.unsubscribe()
-    }
-  })
+  config.subscriptions.push(mutationBatcher.subscribe)
 
   config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
@@ -252,10 +225,8 @@ function createActors(config: {
   config.subscriptions.push(() => {
     const subscription = config.editorActor.subscribe((snapshot) => {
       if (snapshot.matches({'edit mode': 'read only'})) {
-        mutationActor.send({type: 'update readOnly', readOnly: true})
         syncActor.send({type: 'update readOnly', readOnly: true})
       } else {
-        mutationActor.send({type: 'update readOnly', readOnly: false})
         syncActor.send({type: 'update readOnly', readOnly: false})
       }
     })
@@ -275,9 +246,6 @@ function createActors(config: {
         case 'selection':
           config.relay.send(event)
           break
-        case 'internal.patch':
-          mutationActor.send({...event, type: 'patch'})
-          break
       }
     })
 
@@ -287,7 +255,6 @@ function createActors(config: {
   })
 
   return {
-    mutationActor,
     syncActor,
   }
 }
