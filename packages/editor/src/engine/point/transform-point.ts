@@ -14,10 +14,10 @@ import {pathEquals} from '../path/path-equals'
  * - insert: no-op (new node has its own key, doesn't shift siblings)
  * - unset (node removal): invalidates if the point is at or inside the removed node
  * - unset (property removal): collapses offset when `text` is unset from a span
- * - insert_text: adjusts offset if in the same span
- * - remove_text: adjusts offset if in the same span
+ * - insert.text: adjusts offset if in the same span
+ * - remove.text: adjusts offset if in the same span
  * - set: updates keyed segments when `_key` changes, clamps offset when `text` changes
- * - set_selection: no-op
+ * - set.selection: no-op
  */
 export function transformPoint(
   point: Point | null,
@@ -31,7 +31,7 @@ export function transformPoint(
   const {affinity = 'forward'} = options
 
   switch (op.type) {
-    case 'insert_text': {
+    case 'insert.text': {
       if (
         pathEquals(op.path, point.path) &&
         (op.offset < point.offset ||
@@ -43,7 +43,7 @@ export function transformPoint(
       return point
     }
 
-    case 'remove_text': {
+    case 'remove.text': {
       if (pathEquals(op.path, point.path) && op.offset <= point.offset) {
         return {
           path: point.path,
@@ -129,7 +129,7 @@ export function transformPoint(
       return point
     }
 
-    // set_selection: no transform needed
+    // set.selection: no transform needed
     default:
       return point
   }

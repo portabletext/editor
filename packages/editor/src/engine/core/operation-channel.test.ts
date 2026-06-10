@@ -58,7 +58,7 @@ function getSpanText(value: Array<PortableTextBlock>): string {
 }
 
 const insertTextOperation: Operation = {
-  type: 'insert_text',
+  type: 'insert.text',
   path: [{_key: 'b1'}, 'children', {_key: 's1'}],
   offset: 3,
   text: 'bar',
@@ -174,7 +174,7 @@ describe('operation channel', () => {
     }
 
     editor.apply({
-      type: 'set_selection',
+      type: 'set.selection',
       properties: null,
       newProperties: range,
     })
@@ -189,7 +189,7 @@ describe('operation channel', () => {
   test('operations replace the value instead of mutating it, keeping `beforeValue` intact', () => {
     const operationCases: Array<{name: string; operation: Operation}> = [
       {
-        name: 'insert_text on a span',
+        name: 'insert.text on a span',
         operation: insertTextOperation,
       },
       {
@@ -341,8 +341,8 @@ describe('operation channel', () => {
     // operation’s.
     expect(eventLog).toEqual([
       'before:set:local',
-      'before:insert_text:normalization',
-      'after:insert_text:normalization',
+      'before:insert.text:normalization',
+      'after:insert.text:normalization',
       'after:set:local',
     ])
   })

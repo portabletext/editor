@@ -55,30 +55,30 @@ describe(inverseOperation.name, () => {
     })
   })
 
-  test('insert_text -> remove_text', () => {
+  test('insert.text -> remove.text', () => {
     const op: Operation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
       text: 'abc',
     }
     expect(inverseOperation(op)).toEqual({
-      type: 'remove_text',
+      type: 'remove.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
       text: 'abc',
     })
   })
 
-  test('remove_text -> insert_text', () => {
+  test('remove.text -> insert.text', () => {
     const op: Operation = {
-      type: 'remove_text',
+      type: 'remove.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
       text: 'ab',
     }
     expect(inverseOperation(op)).toEqual({
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
       text: 'ab',

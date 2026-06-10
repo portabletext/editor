@@ -115,7 +115,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       break
     }
 
-    case 'insert_text': {
+    case 'insert.text': {
       const {path, offset, text} = op
       if (text.length === 0) {
         break
@@ -135,7 +135,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       break
     }
 
-    case 'remove_text': {
+    case 'remove.text': {
       const {path, offset, text} = op
       if (text.length === 0) {
         break
@@ -481,7 +481,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       break
     }
 
-    case 'set_selection': {
+    case 'set.selection': {
       const {newProperties} = op
 
       if (newProperties == null) {
@@ -492,7 +492,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       if (editor.snapshot.context.selection == null) {
         if (!isRange(newProperties)) {
           throw new Error(
-            `Cannot apply an incomplete "set_selection" operation properties ${safeStringify(
+            `Cannot apply an incomplete "set.selection" operation properties ${safeStringify(
               newProperties,
             )} when there is no current selection.`,
           )
@@ -546,7 +546,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       // move the point. If neither endpoint moved, the selection is identity-
       // stable and we leave `editor.snapshot.context.selection` alone. This lets internal sync
       // paths (e.g. remote patches arriving via `update value`) run set/unset/
-      // insert_text operations without forcing downstream consumers to re-derive
+      // insert.text operations without forcing downstream consumers to re-derive
       // selection-keyed state for no semantic reason.
       editor.snapshot.context.selection = {
         anchor,

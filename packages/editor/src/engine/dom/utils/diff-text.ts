@@ -314,7 +314,7 @@ export function transformTextDiff(
   const {path, diff, id} = textDiff
 
   switch (op.type) {
-    case 'insert_text': {
+    case 'insert.text': {
       if (!pathEquals(op.path, path) || op.offset >= diff.end) {
         return textDiff
       }
@@ -341,7 +341,7 @@ export function transformTextDiff(
         path,
       }
     }
-    case 'remove_text': {
+    case 'remove.text': {
       if (!pathEquals(op.path, path) || op.offset >= diff.end) {
         return textDiff
       }

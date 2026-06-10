@@ -66,7 +66,7 @@ export function unwrapContainer(
     const anchor = transformPoint(previousSelection.anchor, innerPrefix)
     const focus = transformPoint(previousSelection.focus, innerPrefix)
     editor.apply({
-      type: 'set_selection',
+      type: 'set.selection',
       properties: editor.snapshot.context.selection,
       newProperties: {anchor, focus},
     })

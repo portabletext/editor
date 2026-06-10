@@ -89,8 +89,8 @@ export function getDirtyPaths(
   op: Operation,
 ): Array<Path> {
   switch (op.type) {
-    case 'insert_text':
-    case 'remove_text': {
+    case 'insert.text':
+    case 'remove.text': {
       return pathLevels(op.path)
     }
 

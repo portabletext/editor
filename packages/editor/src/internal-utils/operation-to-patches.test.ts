@@ -215,7 +215,7 @@ describe('operationToPatches', () => {
       textPatch(
         editor.snapshot,
         {
-          type: 'insert_text',
+          type: 'insert.text',
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           text: '1',
           offset: 0,
@@ -271,7 +271,7 @@ describe('operationToPatches', () => {
           blockIndexMap: new Map(),
         },
         {
-          type: 'insert_text',
+          type: 'insert.text',
           path: [{_key: 'img1'}, 'children', {_key: 'void-child'}],
           text: 'foo',
           offset: 0,
@@ -288,7 +288,7 @@ describe('operationToPatches', () => {
       textPatch(
         editor.snapshot,
         {
-          type: 'remove_text',
+          type: 'remove.text',
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           text: '1',
           offset: 1,

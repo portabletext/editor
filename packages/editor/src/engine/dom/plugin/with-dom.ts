@@ -65,7 +65,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
         e.pendingAction = at ? {...pendingAction, at} : null
       }
 
-      if (operation.type === 'set_selection') {
+      if (operation.type === 'set.selection') {
         // Selection was manually set, don't restore the user selection after the change.
         e.userSelection?.unref()
         e.userSelection = null
@@ -81,9 +81,9 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
     switch (event.operation.type) {
       case 'insert':
       case 'unset':
-      case 'insert_text':
-      case 'remove_text':
-      case 'set_selection': {
+      case 'insert.text':
+      case 'remove.text':
+      case 'set.selection': {
         // FIXME: Rename to something like IS_DOM_EDITOR_DESYNCED
         // to better reflect reality, see #5792
         e.isNodeMapDirty = true

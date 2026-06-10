@@ -31,7 +31,7 @@ const engineOperationCallback: CallbackLogicFunction<
   return subscribeToOperations(
     input.editorEngine,
     (event) => {
-      if (event.operation.type !== 'set_selection') {
+      if (event.operation.type !== 'set.selection') {
         // `transform range decorations` reads the editor snapshot
         // synchronously and needs the pre-apply tree (removed nodes must
         // still be present to resolve document order) — hence the

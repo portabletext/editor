@@ -96,7 +96,7 @@ export function subscribeHistory({
         operation.type === 'unset' ||
         operation.type === 'insert') &&
         !operation.inverse) ||
-      ((operation.type === 'insert_text' || operation.type === 'remove_text') &&
+      ((operation.type === 'insert.text' || operation.type === 'remove.text') &&
         operation.text.length === 0)
 
     if (isNoOp) {
@@ -104,7 +104,7 @@ export function subscribeHistory({
       return
     }
 
-    if (operation.type !== 'set_selection') {
+    if (operation.type !== 'set.selection') {
       // Clear the redo steps if any actual changes are made
       if (editor.history.redos.length > 0) {
         editor.history.redos = []

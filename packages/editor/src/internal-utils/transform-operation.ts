@@ -97,13 +97,13 @@ export function transformOperation(
         }
       })
       // Adjust accordingly if someone inserted text in the same node before us
-      if (transformedOperation.type === 'insert_text') {
+      if (transformedOperation.type === 'insert.text') {
         if (changedOffset < transformedOperation.offset) {
           transformedOperation.offset += adjustOffsetBy
         }
       }
       // Adjust accordingly if someone removed text in the same node before us
-      if (transformedOperation.type === 'remove_text') {
+      if (transformedOperation.type === 'remove.text') {
         if (
           changedOffset <=
           transformedOperation.offset - transformedOperation.text.length
@@ -111,8 +111,8 @@ export function transformOperation(
           transformedOperation.offset += adjustOffsetBy
         }
       }
-      // Adjust set_selection operation's points to new offset
-      if (transformedOperation.type === 'set_selection') {
+      // Adjust set.selection operation's points to new offset
+      if (transformedOperation.type === 'set.selection') {
         const currentFocus = transformedOperation.properties?.focus
           ? {...transformedOperation.properties.focus}
           : undefined
@@ -157,7 +157,7 @@ function findOperationTargetBlock(
   editor: PortableTextEditorEngine,
   operation: Operation,
 ): Node | undefined {
-  if (operation.type === 'set_selection' && editor.snapshot.context.selection) {
+  if (operation.type === 'set.selection' && editor.snapshot.context.selection) {
     const block = getEnclosingBlock(
       snapshot,
       editor.snapshot.context.selection.focus.path,

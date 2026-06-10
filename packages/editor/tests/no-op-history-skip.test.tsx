@@ -40,7 +40,7 @@ describe('no-op operations are not recorded to history', () => {
     })
   })
 
-  test('Scenario: insert_text with empty text does not pollute history', async () => {
+  test('Scenario: insert.text with empty text does not pollute history', async () => {
     const engineRef = React.createRef<PortableTextEditorEngine>()
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -70,7 +70,7 @@ describe('no-op operations are not recorded to history', () => {
     })
   })
 
-  test('Scenario: remove_text with empty text does not pollute history', async () => {
+  test('Scenario: remove.text with empty text does not pollute history', async () => {
     const engineRef = React.createRef<PortableTextEditorEngine>()
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),

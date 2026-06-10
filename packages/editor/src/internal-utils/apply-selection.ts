@@ -188,14 +188,14 @@ export function applySelect(
 
     if (Object.keys(oldProps).length > 0) {
       editor.apply({
-        type: 'set_selection',
+        type: 'set.selection',
         properties: oldProps,
         newProperties: newProps,
       })
     }
   } else {
     editor.apply({
-      type: 'set_selection',
+      type: 'set.selection',
       properties: null,
       newProperties: range,
     })
@@ -210,7 +210,7 @@ export function applyDeselect(editor: PortableTextEditorEngine): void {
 
   if (selection) {
     editor.apply({
-      type: 'set_selection',
+      type: 'set.selection',
       properties: selection,
       newProperties: null,
     })

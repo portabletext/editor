@@ -93,7 +93,7 @@ function diffMatchPatch(
   for (const [op, text] of diff) {
     if (op === DIFF_INSERT) {
       editor.apply({
-        type: 'insert_text',
+        type: 'insert.text',
         path: spanEntry.path,
         offset,
         text,
@@ -101,7 +101,7 @@ function diffMatchPatch(
       offset += text.length
     } else if (op === DIFF_DELETE) {
       editor.apply({
-        type: 'remove_text',
+        type: 'remove.text',
         path: spanEntry.path,
         offset,
         text,

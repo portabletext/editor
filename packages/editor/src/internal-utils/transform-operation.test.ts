@@ -10,7 +10,7 @@ const testSchema = compileSchema(defineSchema({}))
 /**
  * Minimal editor mock. transformOperation only reads editor.snapshot.context.value,
  * editor.snapshot.context.schema, editor.containers (for block resolution), and
- * editor.snapshot.context.selection (for set_selection target resolution).
+ * editor.snapshot.context.selection (for set.selection target resolution).
  */
 function createMockEditor(
   children: Array<{_key: string; _type: string; [key: string]: unknown}>,
@@ -43,7 +43,7 @@ describe('transformOperation', () => {
       }
 
       const insertTextOperation: Operation = {
-        type: 'insert_text',
+        type: 'insert.text',
         path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
         offset: 0,
         text: 'hello',
@@ -57,7 +57,7 @@ describe('transformOperation', () => {
 
       expect(result).toEqual([
         {
-          type: 'insert_text',
+          type: 'insert.text',
           path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
           offset: 0,
           text: 'hello',
@@ -76,7 +76,7 @@ describe('transformOperation', () => {
       }
 
       const insertTextOperation: Operation = {
-        type: 'insert_text',
+        type: 'insert.text',
         path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
         offset: 0,
         text: 'hello',
@@ -96,7 +96,7 @@ describe('transformOperation', () => {
       }
 
       const insertTextOperation: Operation = {
-        type: 'insert_text',
+        type: 'insert.text',
         path: [{_key: 'block2'}, 'children', {_key: 'span2'}],
         offset: 0,
         text: 'world',
@@ -106,7 +106,7 @@ describe('transformOperation', () => {
 
       expect(result).toEqual([
         {
-          type: 'insert_text',
+          type: 'insert.text',
           path: [{_key: 'block2'}, 'children', {_key: 'span2'}],
           offset: 0,
           text: 'world',
@@ -114,7 +114,7 @@ describe('transformOperation', () => {
       ])
     })
 
-    test('preserves set_selection operation (no path property)', () => {
+    test('preserves set.selection operation (no path property)', () => {
       const editor = createMockEditor([{_key: 'block2', _type: 'block'}])
 
       const unsetPatch: Patch = {
@@ -123,7 +123,7 @@ describe('transformOperation', () => {
       }
 
       const setSelectionOperation: Operation = {
-        type: 'set_selection',
+        type: 'set.selection',
         properties: {
           anchor: {
             path: [{_key: 'block2'}, 'children', {_key: 'span2'}],
@@ -154,7 +154,7 @@ describe('transformOperation', () => {
 
       expect(result).toEqual([
         {
-          type: 'set_selection',
+          type: 'set.selection',
           properties: {
             anchor: {
               path: [{_key: 'block2'}, 'children', {_key: 'span2'}],

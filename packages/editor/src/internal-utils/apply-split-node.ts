@@ -13,7 +13,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Split a node at the given path and position using only patch-compliant
- * operations (remove_text/unset + insert).
+ * operations (remove.text/unset + insert).
  *
  * Because the decomposed operations would produce different ref-transform
  * semantics than a single split, we pre-transform all active refs with
@@ -151,7 +151,7 @@ export function applySplitNode(
         const afterText = node.text.slice(position)
         const newNode = {...properties, _key: newKey, text: afterText} as Node
         editor.apply({
-          type: 'remove_text',
+          type: 'remove.text',
           path,
           offset: position,
           text: afterText,

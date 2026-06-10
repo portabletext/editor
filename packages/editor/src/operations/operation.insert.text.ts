@@ -19,7 +19,7 @@ export const insertTextOperationImplementation: OperationImplementation<
     }
 
     operation.editor.apply({
-      type: 'insert_text',
+      type: 'insert.text',
       path: operation.at,
       offset: operation.offset,
       text: operation.text,
@@ -69,7 +69,7 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   if (operation.text.length > 0) {
     editor.apply({
-      type: 'insert_text',
+      type: 'insert.text',
       path,
       offset,
       text: operation.text,

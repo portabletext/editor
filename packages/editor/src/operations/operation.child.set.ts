@@ -40,14 +40,14 @@ export const childSetOperationImplementation: OperationImplementation<
     if (typeof text === 'string') {
       if (child.text !== text) {
         operation.editor.apply({
-          type: 'remove_text',
+          type: 'remove.text',
           path: textPath,
           offset: 0,
           text: child.text,
         })
 
         operation.editor.apply({
-          type: 'insert_text',
+          type: 'insert.text',
           path: textPath,
           offset: 0,
           text,

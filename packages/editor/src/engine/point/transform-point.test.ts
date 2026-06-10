@@ -5,7 +5,7 @@ import {transformPoint} from './transform-point'
 describe(transformPoint.name, () => {
   test('null point returns null', () => {
     const op: Operation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 0,
       text: 'hello',
@@ -13,13 +13,13 @@ describe(transformPoint.name, () => {
     expect(transformPoint(null, op)).toEqual(null)
   })
 
-  test('insert_text adjusts offset forward', () => {
+  test('insert.text adjusts offset forward', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     }
     const op: Operation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
       text: 'abc',
@@ -30,13 +30,13 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('insert_text before offset is no-op', () => {
+  test('insert.text before offset is no-op', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
     }
     const op: Operation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
       text: 'abc',
@@ -47,13 +47,13 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('insert_text different path is no-op', () => {
+  test('insert.text different path is no-op', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     }
     const op: Operation = {
-      type: 'insert_text',
+      type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
       offset: 0,
       text: 'abc',
@@ -64,13 +64,13 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('remove_text adjusts offset backward', () => {
+  test('remove.text adjusts offset backward', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     }
     const op: Operation = {
-      type: 'remove_text',
+      type: 'remove.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
       text: 'ab',
@@ -137,13 +137,13 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('set_selection is no-op', () => {
+  test('set.selection is no-op', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
     const op: Operation = {
-      type: 'set_selection',
+      type: 'set.selection',
       properties: null,
       newProperties: {
         anchor: {path: [], offset: 0},

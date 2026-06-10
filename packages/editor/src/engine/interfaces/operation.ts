@@ -11,14 +11,14 @@ export type InsertOperation = {
 }
 
 export type InsertTextOperation = {
-  type: 'insert_text'
+  type: 'insert.text'
   path: Path
   offset: number
   text: string
 }
 
 export type RemoveTextOperation = {
-  type: 'remove_text'
+  type: 'remove.text'
   path: Path
   offset: number
   text: string
@@ -80,17 +80,17 @@ type UnsetOperation = {
 
 type SetSelectionOperation =
   | {
-      type: 'set_selection'
+      type: 'set.selection'
       properties: null
       newProperties: Range
     }
   | {
-      type: 'set_selection'
+      type: 'set.selection'
       properties: Partial<Range>
       newProperties: Partial<Range>
     }
   | {
-      type: 'set_selection'
+      type: 'set.selection'
       properties: Range
       newProperties: null
     }
