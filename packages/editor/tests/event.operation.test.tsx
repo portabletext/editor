@@ -53,7 +53,7 @@ describe('event.operation', () => {
 
     await vi.waitFor(() => {
       expect(
-        operations.filter((operation) => operation.type === 'insert'),
+        operations.filter((operation) => operation.type === 'insert.node'),
       ).not.toHaveLength(0)
     })
 
@@ -62,6 +62,191 @@ describe('event.operation', () => {
     expect(
       operations.filter((operation) => 'inverse' in operation),
     ).toHaveLength(0)
+  })
+
+  test('Scenario: `set` operations split by what they target', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [createBlock('b1', 'one')],
+    })
+    const operations: Array<EditorOperation> = []
+
+    editor.on('operation', (event) => {
+      operations.push(event.operation)
+    })
+
+    // Property write — remote `set` patch with a property-terminated path.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'style'],
+          value: 'h1',
+          origin: 'remote',
+        },
+      ],
+      snapshot: [{...createBlock('b1', 'one'), style: 'h1'}],
+    })
+
+    // Value replace — remote `set` patch with a root path.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: 'c1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'c1-span', text: 'replaced', marks: []},
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [createBlock('c1', 'replaced')],
+    })
+
+    // Full node replace — remote `set` patch with a keyed-terminated path.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'c1'}],
+          value: {
+            _type: 'block',
+            _key: 'c1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'c1-span',
+                text: 'fully-replaced',
+                marks: [],
+              },
+            ],
+          },
+          origin: 'remote',
+        },
+      ],
+      snapshot: [createBlock('c1', 'fully-replaced')],
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        operations.find((operation) => operation.type === 'set.property'),
+      ).toEqual({
+        type: 'set.property',
+        path: [{_key: 'b1'}],
+        propertyName: 'style',
+        value: 'h1',
+      })
+      expect(
+        operations.find((operation) => operation.type === 'set.value'),
+      ).toEqual({
+        type: 'set.value',
+        value: [
+          {
+            _type: 'block',
+            _key: 'c1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'c1-span', text: 'replaced', marks: []},
+            ],
+          },
+        ],
+      })
+      expect(
+        operations.find((operation) => operation.type === 'set.node'),
+      ).toEqual({
+        type: 'set.node',
+        path: [{_key: 'c1'}],
+        node: {
+          _type: 'block',
+          _key: 'c1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: 'c1-span',
+              text: 'fully-replaced',
+              marks: [],
+            },
+          ],
+        },
+      })
+    })
+  })
+
+  test('Scenario: `unset` operations split by what they target', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [createBlock('b1', 'one'), createBlock('b2', 'two')],
+    })
+    const operations: Array<EditorOperation> = []
+
+    editor.on('operation', (event) => {
+      operations.push(event.operation)
+    })
+
+    // Node removal: local delete of a block.
+    editor.send({
+      type: 'delete.block',
+      at: [{_key: 'b2'}],
+    })
+
+    // Property removal — remote `unset` patch with property-terminated path.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: 'b1'}, 'style'],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [{...createBlock('b1', 'one'), style: undefined}],
+    })
+
+    // Value clear — remote `unset` patch with a root path.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        operations.find((operation) => operation.type === 'unset.node'),
+      ).toEqual({
+        type: 'unset.node',
+        path: [{_key: 'b2'}],
+      })
+      expect(
+        operations.find((operation) => operation.type === 'unset.property'),
+      ).toEqual({
+        type: 'unset.property',
+        path: [{_key: 'b1'}],
+        propertyName: 'style',
+      })
+      expect(
+        operations.find((operation) => operation.type === 'unset.value'),
+      ).toEqual({type: 'unset.value'})
+    })
   })
 
   test('Scenario: Maintaining a block index map in userland', async () => {

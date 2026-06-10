@@ -1,15 +1,20 @@
-import {compileSchema} from '@portabletext/schema'
+import {compileSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Operation as EngineOperation} from '../engine/interfaces/operation'
+import type {Path} from '../engine/interfaces/path'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
-import type {EditorOperation} from '../types/operation'
+import type {
+  EditorInsertNodeOperation,
+  EditorOperation,
+  EditorSetNodeOperation,
+} from '../types/operation'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
 import {createEditorEngine} from './create-editor-engine'
@@ -273,14 +278,77 @@ function createActors(config: {
 }
 
 function toPublicOperation(operation: EngineOperation): EditorOperation {
-  if ('inverse' in operation && operation.inverse !== undefined) {
-    // The engine's undo bookkeeping is not part of the public operation
-    // shape, and the type alone doesn't hide it from consumers that log
-    // or spread the object. Only local `insert`/`set`/`unset` operations
-    // carry an inverse, so typing and selection operations pass through
-    // without allocating.
-    const {inverse: _inverse, ...publicOperation} = operation
-    return publicOperation
+  // The engine's `set`/`unset` ops are path-polymorphic — the public union
+  // splits them into property/node/value variants based on the path-shape
+  // discriminator. The engine's `insert` op is `insert.node` publicly so
+  // it pairs with `insert.text` under the same family. The `inverse`
+  // bookkeeping is engine-internal and not part of the public shape.
+  switch (operation.type) {
+    case 'insert':
+      return {
+        type: 'insert.node',
+        path: operation.path,
+        node: operation.node as EditorInsertNodeOperation['node'],
+        position: operation.position,
+      }
+    case 'insert.text':
+      return {
+        type: 'insert.text',
+        path: operation.path,
+        offset: operation.offset,
+        text: operation.text,
+      }
+    case 'remove.text':
+      return {
+        type: 'remove.text',
+        path: operation.path,
+        offset: operation.offset,
+        text: operation.text,
+      }
+    case 'set.selection':
+      return operation as EditorOperation
+    case 'set':
+      return toPublicSetOperation(operation.path, operation.value)
+    case 'unset':
+      return toPublicUnsetOperation(operation.path)
   }
-  return operation
+}
+
+function toPublicSetOperation(path: Path, value: unknown): EditorOperation {
+  if (path.length === 0) {
+    return {type: 'set.value', value: value as Array<PortableTextBlock>}
+  }
+  const lastSegment = path.at(-1)
+  if (typeof lastSegment === 'string') {
+    // Property write: path ends in a property name. Lift the property name
+    // out of the path so consumers don't have to slice it back off.
+    return {
+      type: 'set.property',
+      path: path.slice(0, -1),
+      propertyName: lastSegment,
+      value,
+    }
+  }
+  // Full node replace: path ends in a keyed or numeric segment pointing at
+  // the node, `value` is the new node.
+  return {
+    type: 'set.node',
+    path,
+    node: value as EditorSetNodeOperation['node'],
+  }
+}
+
+function toPublicUnsetOperation(path: Path): EditorOperation {
+  if (path.length === 0) {
+    return {type: 'unset.value'}
+  }
+  const lastSegment = path.at(-1)
+  if (typeof lastSegment === 'string') {
+    return {
+      type: 'unset.property',
+      path: path.slice(0, -1),
+      propertyName: lastSegment,
+    }
+  }
+  return {type: 'unset.node', path}
 }
