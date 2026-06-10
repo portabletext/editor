@@ -1,5 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {
   defineBlockObject,
   defineContainer,
@@ -16,6 +17,19 @@ import {
   resolveNestedContainer,
   type ResolvedContainers,
 } from './resolve-containers'
+
+function buildBlockIndexMap(
+  schema: any,
+  containers: any,
+  value: any,
+): Map<string, number> {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return blockIndexMap
+}
 
 const containerRender: Container['render'] = ({children}) => children
 const leafRender: BlockObject['render'] = ({children}) => children
@@ -51,7 +65,7 @@ function makeSnapshot(args: {
       containers,
       value: args.value as never,
     },
-    blockIndexMap: new Map(args.value.map((node, index) => [node._key, index])),
+    blockIndexMap: buildBlockIndexMap(args.schema, args.containers, args.value),
   }
 }
 

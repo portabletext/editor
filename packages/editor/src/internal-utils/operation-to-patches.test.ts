@@ -11,7 +11,21 @@ import {plugins} from '../engine-plugins/engine-plugins'
 import {createEditor} from '../engine/create-editor'
 import type {Node} from '../engine/interfaces/node'
 import {defaultKeyGenerator} from '../utils/key-generator'
+import {buildIndexMaps} from './build-index-maps'
 import {insertNodePatch, textPatch} from './operation-to-patches'
+
+function buildBlockIndexMap(
+  schema: any,
+  containers: any,
+  value: any,
+): Map<string, number> {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return blockIndexMap
+}
 
 const schemaDefinition = defineSchema({
   inlineObjects: [{name: 'someObject'}],
@@ -94,6 +108,17 @@ describe(insertNodePatch.name, () => {
 describe('operationToPatches', () => {
   beforeEach(() => {
     editor.snapshot.context.value = createDefaultChildren()
+    buildIndexMaps(
+      {
+        schema: editor.snapshot.context.schema,
+        containers: editor.snapshot.context.containers,
+        value: editor.snapshot.context.value as Array<PortableTextBlock>,
+      },
+      {
+        blockIndexMap: editor.snapshot.blockIndexMap as Map<string, number>,
+        listIndexMap: new Map<string, number>(),
+      },
+    )
     editor.onChange()
   })
 
@@ -268,7 +293,11 @@ describe('operationToPatches', () => {
             containers: new Map(),
             value: blockObjectChildren,
           },
-          blockIndexMap: new Map(),
+          blockIndexMap: buildBlockIndexMap(
+            blockObjectSchema,
+            new Map(),
+            blockObjectChildren,
+          ),
         },
         {
           type: 'insert.text',
@@ -284,6 +313,7 @@ describe('operationToPatches', () => {
   it('produces correct remove text patch', () => {
     const before = createDefaultChildren()
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
+
     expect(
       textPatch(
         editor.snapshot,
