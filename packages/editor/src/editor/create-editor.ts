@@ -2,11 +2,14 @@ import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
+import {subscribeToOperations} from '../engine/core/operation-channel'
+import type {Operation as EngineOperation} from '../engine/interfaces/operation'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {EditorOperation} from '../types/operation'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
 import {createEditorEngine} from './create-editor-engine'
@@ -117,6 +120,7 @@ export function createInternalEditor(config: EditorConfig): {
           case 'invalid value':
           case 'loading':
           case 'mutation':
+          case 'operation':
           case 'patch':
           case 'read only':
           case 'ready':
@@ -196,6 +200,15 @@ function createActors(config: {
   config.subscriptions.push(mutationBatcher.subscribe)
 
   config.subscriptions.push(() => {
+    return subscribeToOperations(config.editorEngine, (event) => {
+      config.relay.send({
+        type: 'operation',
+        operation: toPublicOperation(event.operation),
+      })
+    })
+  })
+
+  config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
       switch (event.type) {
         case 'invalid value':
@@ -257,4 +270,17 @@ function createActors(config: {
   return {
     syncActor,
   }
+}
+
+function toPublicOperation(operation: EngineOperation): EditorOperation {
+  if ('inverse' in operation && operation.inverse !== undefined) {
+    // The engine's undo bookkeeping is not part of the public operation
+    // shape, and the type alone doesn't hide it from consumers that log
+    // or spread the object. Only local `insert`/`set`/`unset` operations
+    // carry an inverse, so typing and selection operations pass through
+    // without allocating.
+    const {inverse: _inverse, ...publicOperation} = operation
+    return publicOperation
+  }
+  return operation
 }

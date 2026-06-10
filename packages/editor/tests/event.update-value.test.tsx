@@ -508,6 +508,11 @@ describe('event.update value', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
+            if (event.type === 'operation') {
+              // These scenarios assert exact event sequences; the
+              // per-operation stream is not under test here.
+              return
+            }
             events.push(event)
           }}
         />
@@ -760,6 +765,11 @@ describe('event.update value', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
+            if (event.type === 'operation') {
+              // These scenarios assert exact event sequences; the
+              // per-operation stream is not under test here.
+              return
+            }
             emittedEvents.push(event)
           }}
         />

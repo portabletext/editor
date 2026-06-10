@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {EditorOperation} from '../types/operation'
 
 /**
  * @public
@@ -37,6 +38,18 @@ export type EditorEmittedEvent =
       type: 'loading'
     }
   | MutationEvent
+  | {
+      /**
+       * @beta
+       * Emitted synchronously for every operation the engine applies,
+       * including operations from initial value sync and normalization —
+       * unlike `patch` and `mutation` events, which are held back until the
+       * editor is dirty. Do not dispatch editor events from a listener;
+       * read current state via `editor.getSnapshot()`.
+       */
+      type: 'operation'
+      operation: EditorOperation
+    }
   | PatchEvent
   | {
       type: 'read only'
@@ -92,6 +105,8 @@ type RelayListener = (event: EditorEmittedEvent) => void
  *   events sent after `stop()` are dropped.
  * - Consecutive `selection` events carrying the same selection reference are
  *   deduplicated, unless the previous event was `focused`.
+ * - A throwing listener does not prevent delivery to the remaining
+ *   listeners; the error is reported via `console.error`.
  */
 export type Relay = {
   send: (event: EditorEmittedEvent) => void
@@ -123,15 +138,29 @@ export function createRelay(): Relay {
     const typeListeners = listeners.get(event.type)
     if (typeListeners) {
       for (let index = 0; index < typeListeners.length; index++) {
-        typeListeners[index]?.(event)
+        callListener(typeListeners[index], event)
       }
     }
 
     const everyEventListeners = listeners.get('*')
     if (everyEventListeners) {
       for (let index = 0; index < everyEventListeners.length; index++) {
-        everyEventListeners[index]?.(event)
+        callListener(everyEventListeners[index], event)
       }
+    }
+  }
+
+  function callListener(
+    listener: RelayListener | undefined,
+    event: EditorEmittedEvent,
+  ) {
+    try {
+      listener?.(event)
+    } catch (error) {
+      // One consumer's throwing listener must not starve other listeners of
+      // the event, nor break the editor flow that emitted it — `operation`
+      // events deliver synchronously inside the engine's apply.
+      console.error(error)
     }
   }
 
@@ -178,8 +207,9 @@ export function createRelay(): Relay {
         }
       }
     } finally {
-      // A throwing listener must not leave the relay stuck mid-dispatch.
-      // Drop everything up to and including the throwing event and let the
+      // Listener errors are contained in `callListener`, so this only
+      // triggers on unexpected dispatch failures — recover rather than
+      // staying stuck mid-dispatch: drop the processed events and let the
       // error propagate; later sends keep working.
       mailbox.splice(0, index)
       dispatching = false

@@ -106,4 +106,5 @@ export type {
   ScrollSelectionIntoViewFunction,
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'
+export type {EditorOperation} from './types/operation'
 export type {AnnotationPath, BlockPath, ChildPath, Path} from './types/paths'
