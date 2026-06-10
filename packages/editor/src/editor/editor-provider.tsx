@@ -59,7 +59,6 @@ export function EditorProvider(props: EditorProviderProps) {
       type: 'add editor engine',
       editor: internalEditor.editorEngine,
     })
-    internalEditor.actors.mutationActor.start()
     internalEditor.relay.start()
     internalEditor.actors.syncActor.start()
 
@@ -69,7 +68,6 @@ export function EditorProvider(props: EditorProviderProps) {
       }
 
       stopActor(internalEditor.actors.editorActor)
-      stopActor(internalEditor.actors.mutationActor)
       internalEditor.relay.stop()
       stopActor(internalEditor.actors.syncActor)
     }
