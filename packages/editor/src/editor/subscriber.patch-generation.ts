@@ -5,7 +5,6 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {
   insertNodePatch,
@@ -29,47 +28,31 @@ export function subscribePatchGeneration({
   relayActor: RelayActor
   editor: PortableTextEditorEngine
 }): () => void {
-  // The previous editor value is needed to figure out the _key of deleted
-  // nodes. The editor.snapshot.context.value would no longer contain that
-  // information if the node is already deleted.
-  //
-  // A shared closure rather than `event.beforeValue`: when a normalization
-  // fix applies nested operations, the triggering operation's `after`
-  // listener reads the value as of the most recent (nested) apply, not its
-  // own pre-apply capture.
-  let previousValue: Array<PortableTextBlock> = [
-    ...editor.snapshot.context.value,
-  ]
+  return subscribeToOperations(editor, (event) => {
+    if (!event.isPatching) {
+      // Remote patch application and value sync apply operations with
+      // patching suppressed; bail before computing anything so those hot
+      // paths pay nothing here.
+      return
+    }
 
-  const unsubscribeBefore = subscribeToOperations(
-    editor,
-    () => {
-      previousValue = editor.snapshot.context.value
-    },
-    {phase: 'before'},
-  )
-
-  const unsubscribeAfter = subscribeToOperations(editor, (event) => {
     const operation = event.operation
+    // The pre-apply value is needed to figure out the `_key` of deleted
+    // nodes. The editor.snapshot.context.value would no longer contain
+    // that information if the node is already deleted.
+    const previousValue = event.beforeValue
     let patches: Patch[] = []
 
     const snapshot = editorActor.getSnapshot()
     const {initialValue, schema} = snapshot.context
 
-    // `event.beforeValue` rather than the `previousValue` closure: whether
-    // the editor was empty is judged against this operation's own pre-apply
-    // value, which nested operations may have overwritten in the closure.
     const editorWasEmpty =
-      event.beforeValue.length === 1 &&
-      isEqualToEmptyEditor(initialValue, event.beforeValue, schema)
+      previousValue.length === 1 &&
+      isEqualToEmptyEditor(initialValue, previousValue, schema)
 
     const editorIsEmpty =
       editor.snapshot.context.value.length === 1 &&
       isEqualToEmptyEditor(initialValue, editor.snapshot.context.value, schema)
-
-    if (!event.isPatching) {
-      return
-    }
 
     // If the editor was empty and now isn't, insert the placeholder into it.
     if (
@@ -136,9 +119,4 @@ export function subscribePatchGeneration({
       }
     }
   })
-
-  return () => {
-    unsubscribeBefore()
-    unsubscribeAfter()
-  }
 }
