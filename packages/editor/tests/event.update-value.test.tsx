@@ -546,9 +546,73 @@ describe('event.update value', () => {
     await vi.waitFor(() => {
       expect(events).toEqual([
         {type: 'ready'},
-        expect.objectContaining({
+        // Sync applies the valid first block (replacing the seed block,
+        // with parse fix-ups for the missing `markDefs`/`style`), then
+        // stops at the unknown block object.
+        {
+          type: 'operation',
+          operation: {type: 'unset', path: [{_key: 'k0'}]},
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            node: {
+              _type: 'block',
+              _key: 'k2',
+              children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+            },
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: 'k2'}, 'markDefs'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: 'k2'}, 'style'],
+            value: 'normal',
+            inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
+          },
+        },
+        {
           type: 'invalid value',
-        }),
+          resolution: {
+            action: 'Remove the block',
+            description: "Block with _key 'k4' has invalid _type 'image'",
+            i18n: {
+              action:
+                'inputs.portable-text.invalid-value.disallowed-type.action',
+              description:
+                'inputs.portable-text.invalid-value.disallowed-type.description',
+              values: {key: 'k4', typeName: 'image'},
+            },
+            item: {_key: 'k4', _type: 'image'},
+            patches: [{type: 'unset', path: [{_key: 'k4'}]}],
+          },
+          value: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+            },
+            {_key: 'k4', _type: 'image'},
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+            },
+          ],
+        },
       ])
     })
   })
@@ -766,20 +830,39 @@ describe('event.update value', () => {
       ),
     })
 
-    await vi.waitFor(() => {
-      expect(emittedEvents).toEqual([
-        {
-          type: 'value changed',
-          value: [
-            {
-              _type: 'image',
-              _key: imageKey,
-              src: 'https://example.com/image.jpg',
-            },
-          ],
+    const syncEvents = [
+      {
+        type: 'operation',
+        operation: {type: 'unset', path: [{_key: 'k1'}]},
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _type: 'image',
+            _key: imageKey,
+            src: 'https://example.com/image.jpg',
+          },
         },
-        {type: 'ready'},
-      ])
+      },
+      {
+        type: 'value changed',
+        value: [
+          {
+            _type: 'image',
+            _key: imageKey,
+            src: 'https://example.com/image.jpg',
+          },
+        ],
+      },
+      {type: 'ready'},
+    ]
+
+    await vi.waitFor(() => {
+      expect(emittedEvents).toEqual(syncEvents)
     })
 
     editor.send({
@@ -795,20 +878,10 @@ describe('event.update value', () => {
       ])
     })
 
+    // Syncing the identical value emits nothing new: no operations, no
+    // `value changed`.
     await vi.waitFor(() => {
-      expect(emittedEvents).toEqual([
-        {
-          type: 'value changed',
-          value: [
-            {
-              _type: 'image',
-              _key: imageKey,
-              src: 'https://example.com/image.jpg',
-            },
-          ],
-        },
-        {type: 'ready'},
-      ])
+      expect(emittedEvents).toEqual(syncEvents)
     })
   })
 

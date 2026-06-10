@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {Operation} from '../types/operation'
 
 /**
  * @public
@@ -37,6 +38,29 @@ export type EditorEmittedEvent =
       type: 'loading'
     }
   | MutationEvent
+  | {
+      /**
+       * @beta
+       * Emitted synchronously for every document-changing operation the
+       * engine applies (`set.selection` is excluded; the `selection` event
+       * serves selection observers), including operations from initial
+       * value sync and normalization, unlike `patch` and `mutation`
+       * events, which are held back until the editor is dirty. Do not
+       * dispatch editor events from a listener; read current state via
+       * `editor.getSnapshot()`.
+       *
+       * The `operation` object is the engine's own, passed by reference:
+       * treat it as read-only and copy anything you retain. Normalization
+       * fix operations are delivered adjacent to the operation that
+       * triggered them, but not in a guaranteed order; see the
+       * {@link Operation} docs for the delivery-order contract. Subscribers
+       * attached after setup receive only subsequent operations: seed
+       * derived state from `editor.getSnapshot()` when subscribing, then
+       * apply deltas.
+       */
+      type: 'operation'
+      operation: Operation
+    }
   | PatchEvent
   | {
       type: 'read only'
