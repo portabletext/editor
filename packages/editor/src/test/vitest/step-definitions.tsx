@@ -19,6 +19,7 @@ import {
 } from '../../../test-utils/text-selection'
 import {toTextspec} from '../../../test-utils/to-textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
+import {createTestSnapshot} from '../../internal-utils/build-index-maps'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
@@ -167,7 +168,7 @@ async function assertEditorState(
     // Accept any boundary-equivalent selection that produces the expected
     // textspec.
     for (const variant of boundaryEquivalentSelections(
-      {context: {schema, containers, value}, blockIndexMap: new Map()},
+      createTestSnapshot({schema, containers, value}),
       selection,
     )) {
       if (renderActual(variant) === expected) {

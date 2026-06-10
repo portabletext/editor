@@ -29,7 +29,7 @@ export function textPatch(
       containers: snapshot.context.containers,
       value: beforeValue as Array<Node>,
     },
-    blockIndexMap: new Map(),
+    blockIndexMap: snapshot.blockIndexMap,
   }
   const prevSpan = getSpan(beforeSnapshot, operation.path)
   const patch = diffMatchPatch(prevSpan?.node.text ?? '', span.node.text, [

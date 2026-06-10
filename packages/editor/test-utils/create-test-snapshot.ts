@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSnapshot} from '../src/editor/editor-snapshot'
+import {buildIndexMaps} from '../src/internal-utils/build-index-maps'
 
 export function createTestSnapshot(snapshot: {
   context?: Partial<EditorSnapshot['context']>
@@ -16,10 +17,14 @@ export function createTestSnapshot(snapshot: {
     selection: snapshot.context?.selection ?? null,
   }
   const blockIndexMap = new Map<string, number>()
-
-  snapshot.context?.value?.forEach((block, index) => {
-    blockIndexMap.set(block._key, index)
-  })
+  buildIndexMaps(
+    {
+      schema: context.schema,
+      value: context.value,
+      containers: context.containers,
+    },
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
 
   return {
     blockIndexMap,

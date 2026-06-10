@@ -2,6 +2,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../engine/interfaces/path'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {siblingPath} from '../engine/path/sibling-path'
+import {serializePath} from '../paths/serialize-path'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
@@ -24,7 +25,7 @@ function getUniqueBlockKey(
       return snapshot.context.keyGenerator()
     }
 
-    if (snapshot.blockIndexMap.has(blockKey)) {
+    if (snapshot.blockIndexMap.has(serializePath([{_key: blockKey}]))) {
       return snapshot.context.keyGenerator()
     }
 

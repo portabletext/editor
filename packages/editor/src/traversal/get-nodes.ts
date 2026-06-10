@@ -2,11 +2,11 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {serializePath} from '../paths/serialize-path'
 import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren, getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -118,104 +118,61 @@ function* getNodesSimple(
 /**
  * Compare two keyed paths in document order. Returns -1, 0, or 1.
  *
- * Descends both paths from the root in a single pass, advancing
- * `currentNode` and `currentChildren` together so each level costs
- * one keyed-segment scan instead of an O(depth) walk from root.
- *
- * Uses `blockIndexMap` for O(1) lookup at the root level. Deeper
- * levels fall back to a linear scan of the current sibling array.
+ * Walks both paths in parallel; at the first divergence, consults
+ * `blockIndexMap` for the sibling indices and compares them.
  */
 function comparePathsInTree(
   snapshot: TraversalSnapshot,
   pathA: Path,
   pathB: Path,
 ): -1 | 0 | 1 {
-  const keysA = pathA.filter(isKeyedSegment)
-  const keysB = pathB.filter(isKeyedSegment)
+  // Walk both full paths in parallel; at the first divergent keyed
+  // segment, consult blockIndexMap for the sibling indices. The map is
+  // keyed by serialized paths that include both keyed and field-name
+  // segments, so we keep the full path prefix as we descend.
+  const minLength = Math.min(pathA.length, pathB.length)
+  const prefix: Path = []
 
-  const {context} = snapshot
-  let currentChildren: Array<Node> = context.value
-  let currentParent: RegisteredContainer | undefined
-  let isRootLevel = true
+  for (let i = 0; i < minLength; i++) {
+    const segA = pathA[i]!
+    const segB = pathB[i]!
 
-  const minDepth = Math.min(keysA.length, keysB.length)
-
-  for (let depth = 0; depth < minDepth; depth++) {
-    const keyA = keysA[depth]!
-    const keyB = keysB[depth]!
-
-    if (keyA._key === keyB._key) {
-      // Same node at this depth: descend into its children for the next
-      // iteration. The root level can short-circuit via blockIndexMap;
-      // deeper levels scan the current sibling array.
-      let matchedNode: Node | undefined
-      if (isRootLevel && snapshot.blockIndexMap.has(keyA._key)) {
-        const index = snapshot.blockIndexMap.get(keyA._key)
-        if (index !== undefined) {
-          matchedNode = currentChildren[index]
-        }
-      } else {
-        matchedNode = currentChildren.find((c) => c._key === keyA._key)
-      }
-      if (!matchedNode) {
-        return 0
-      }
-      const next = getNodeChildren(context, matchedNode, currentParent)
-      if (!next) {
-        return 0
-      }
-      currentChildren = next.children
-      currentParent = next.parent
-
-      isRootLevel = false
+    if (
+      typeof segA === 'string' ||
+      typeof segB === 'string' ||
+      typeof segA === 'number' ||
+      typeof segB === 'number' ||
+      Array.isArray(segA) ||
+      Array.isArray(segB)
+    ) {
+      prefix.push(segA as never)
       continue
     }
 
-    if (isRootLevel) {
-      const indexA = snapshot.blockIndexMap.get(keyA._key) ?? -1
-      const indexB = snapshot.blockIndexMap.get(keyB._key) ?? -1
-      if (indexA !== -1 && indexB !== -1) {
-        if (indexA < indexB) {
-          return -1
-        }
-        if (indexA > indexB) {
-          return 1
-        }
-        return 0
-      }
+    if (segA._key === segB._key) {
+      prefix.push(segA)
+      continue
     }
 
-    let indexA = -1
-    let indexB = -1
-    for (let i = 0; i < currentChildren.length; i++) {
-      const sibling = currentChildren[i]!
-      if (sibling._key === keyA._key) {
-        indexA = i
-      }
-      if (sibling._key === keyB._key) {
-        indexB = i
-      }
-      if (indexA !== -1 && indexB !== -1) {
-        break
-      }
-    }
-
+    const indexA =
+      snapshot.blockIndexMap.get(serializePath([...prefix, segA])) ?? -1
+    const indexB =
+      snapshot.blockIndexMap.get(serializePath([...prefix, segB])) ?? -1
     if (indexA < indexB) {
       return -1
     }
     if (indexA > indexB) {
       return 1
     }
-
     return 0
   }
 
-  // One path is a prefix of the other (ancestor relationship)
-  // In DFS order, shorter path (ancestor) comes first
-  if (keysA.length < keysB.length) {
+  // One path is a prefix of the other (ancestor relationship).
+  // In DFS order, shorter path (ancestor) comes first.
+  if (pathA.length < pathB.length) {
     return -1
   }
-  if (keysA.length > keysB.length) {
+  if (pathA.length > pathB.length) {
     return 1
   }
 
