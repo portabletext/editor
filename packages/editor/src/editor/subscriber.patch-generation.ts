@@ -13,7 +13,6 @@ import {
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
-import type {Relay} from './relay'
 
 /**
  * Converts every applied operation into `@portabletext/patches` and sends
@@ -21,11 +20,9 @@ import type {Relay} from './relay'
  */
 export function subscribePatchGeneration({
   editorActor,
-  relay,
   editor,
 }: {
   editorActor: EditorActor
-  relay: Relay
   editor: PortableTextEditorEngine
 }): () => void {
   return subscribeToOperations(editor, (event) => {
@@ -96,10 +93,6 @@ export function subscribePatchGeneration({
       ['set', 'unset', 'remove_text'].includes(operation.type)
     ) {
       patches = [...patches, unset([])]
-      relay.send({
-        type: 'unset',
-        previousValue,
-      })
     }
 
     // Prepend patches with setIfMissing if going from empty editor to something involving a patch.

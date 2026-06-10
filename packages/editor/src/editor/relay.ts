@@ -63,8 +63,6 @@ type ErrorEvent = {
   data: unknown
 }
 
-type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
-
 /**
  * @public
  */
@@ -79,15 +77,7 @@ export type PatchEvent = {
   patch: Patch
 }
 
-type UnsetEvent = {
-  /**
-   * @deprecated Use `'patch'` events instead
-   */
-  type: 'unset'
-  previousValue: Array<PortableTextBlock>
-}
-
-type RelayListener = (event: InternalEditorEmittedEvent) => void
+type RelayListener = (event: EditorEmittedEvent) => void
 
 /**
  * Fans editor events out to consumers (`editor.on(...)`).
@@ -104,12 +94,11 @@ type RelayListener = (event: InternalEditorEmittedEvent) => void
  *   deduplicated, unless the previous event was `focused`.
  */
 export type Relay = {
-  send: (event: InternalEditorEmittedEvent) => void
-  on: <TType extends InternalEditorEmittedEvent['type'] | '*'>(
+  send: (event: EditorEmittedEvent) => void
+  on: <TType extends EditorEmittedEvent['type'] | '*'>(
     type: TType,
     listener: (
-      event: InternalEditorEmittedEvent &
-        (TType extends '*' ? unknown : {type: TType}),
+      event: EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType}),
     ) => void,
   ) => {unsubscribe: () => void}
   start: () => void
@@ -124,13 +113,13 @@ export function createRelay(): Relay {
   // unsubscribe during a pass cannot affect who receives the in-flight
   // event.
   const listeners = new Map<string, Array<RelayListener>>()
-  const mailbox: Array<InternalEditorEmittedEvent> = []
+  const mailbox: Array<EditorEmittedEvent> = []
   let status: 'created' | 'started' | 'stopped' = 'created'
   let dispatching = false
   let prevSelection: EditorSelection = null
   let lastEventWasFocused = false
 
-  function deliver(event: InternalEditorEmittedEvent) {
+  function deliver(event: EditorEmittedEvent) {
     const typeListeners = listeners.get(event.type)
     if (typeListeners) {
       for (let index = 0; index < typeListeners.length; index++) {
@@ -146,7 +135,7 @@ export function createRelay(): Relay {
     }
   }
 
-  function dispatch(event: InternalEditorEmittedEvent) {
+  function dispatch(event: EditorEmittedEvent) {
     if (event.type === 'focused') {
       lastEventWasFocused = true
       deliver(event)
