@@ -1,6 +1,7 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {parentPath} from '../engine/path/parent-path'
+import {serializePath} from '../paths/serialize-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -58,11 +59,9 @@ export function getSibling(
   const parent = parentPath(path)
   const children = getChildren(snapshot, parent)
 
-  const currentIndex = children.findIndex(
-    (child) => child.node._key === lastSegment._key,
-  )
+  const currentIndex = snapshot.blockIndexMap.get(serializePath(path))
 
-  if (currentIndex === -1) {
+  if (currentIndex === undefined) {
     return undefined
   }
 

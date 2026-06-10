@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSchema} from '../editor/editor-schema'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import type {RegisteredContainer} from '../schema/container-types'
 import {resolveContainerField} from '../schema/resolve-container-field'
@@ -249,15 +250,15 @@ export function createNodeTraversalTestbed() {
   )
 
   const value = [textBlock1, image, textBlock2, codeBlock, table]
-  const blockIndexMap = new Map<string, number>()
-  for (let i = 0; i < value.length; i++) {
-    blockIndexMap.set(value[i]!._key, i)
-  }
-
   const containers = resolveTestbedContainers(schema, [
     codeBlockContainer,
     ...tableContainers,
   ])
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, containers, value},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
 
   const context = {
     schema,

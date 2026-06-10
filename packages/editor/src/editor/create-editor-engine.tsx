@@ -1,6 +1,7 @@
 import {plugins} from '../engine-plugins/engine-plugins'
 import {createEditor} from '../engine/create-editor'
 import {withDOM} from '../engine/dom/plugin/with-dom'
+import {BlockIndexMap} from '../internal-utils/block-index-map'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -21,6 +22,8 @@ export function createEditorEngine(
 
   const context = config.editorActor.getSnapshot().context
 
+  const blockIndexMap = new BlockIndexMap()
+
   const placeholderBlock = createPlaceholderBlock({
     context: {
       schema: context.schema,
@@ -30,7 +33,7 @@ export function createEditorEngine(
       value: [],
       keyGenerator: context.keyGenerator,
     },
-    blockIndexMap: new Map(),
+    blockIndexMap,
   })
 
   const editor = createEditor()
@@ -40,7 +43,7 @@ export function createEditorEngine(
   // identity) when the editor settles; inner mutable values
   // (selection, value, etc) are mutated in place by operations.
   editor.snapshot = {
-    blockIndexMap: new Map<string, number>(),
+    blockIndexMap,
     context: {
       containers: new Map(),
       converters: context.initialConverters,
@@ -60,7 +63,7 @@ export function createEditorEngine(
   editor.textBlocks = new Map()
 
   editor.decoratedRanges = []
-  editor.blockIndexMap = editor.snapshot.blockIndexMap
+  editor.blockIndexMap = blockIndexMap
   editor.history = {undos: [], redos: []}
 
   editor.listIndexMap = new Map<string, number>()
@@ -86,6 +89,7 @@ export function createEditorEngine(
     {
       schema: context.schema,
       value: editorEngine.snapshot.context.value,
+      containers: editorEngine.snapshot.context.containers,
     },
     {
       blockIndexMap: editorEngine.blockIndexMap,

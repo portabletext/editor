@@ -14,5 +14,5 @@ export type TraversalSnapshot = {
     containers: Containers
     value: Array<Node>
   }
-  blockIndexMap: Map<string, number>
+  blockIndexMap: ReadonlyMap<string, number>
 }

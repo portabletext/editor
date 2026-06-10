@@ -7,9 +7,11 @@ import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {getValue} from '../../internal-utils/get-value'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {serializePath} from '../../paths/serialize-path'
 import {getNode} from '../../traversal/get-node'
 import {getNodes} from '../../traversal/get-nodes'
 import type {EditorSelection} from '../../types/editor'
+import type {KeyedSegment} from '../../types/paths'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
@@ -41,9 +43,6 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const {path} = op
       let {node} = op
 
-      const isRootInsert = parentPath(path).length === 0
-      let insertIndex = -1
-
       modifyChildren(editor, parentPath(path), (children) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
         if (
@@ -62,9 +61,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
         if (isKeyedSegment(lastSegment)) {
           const siblingIndex = resolveChildIndex(
-            children,
-            lastSegment._key,
-            isRootInsert ? editor.blockIndexMap : undefined,
+            editor.blockIndexMap,
+            path.slice(0, -1),
+            lastSegment,
           )
           if (siblingIndex === -1) {
             throw new Error(
@@ -96,20 +95,8 @@ export function applyOperation(editor: Editor, op: Operation): void {
           }
         }
 
-        insertIndex = index
         return insertChildren(children, index, node)
       })
-
-      if (isRootInsert && insertIndex !== -1) {
-        if (insertIndex < editor.blockIndexMap.size) {
-          for (const [key, idx] of editor.blockIndexMap) {
-            if (idx >= insertIndex) {
-              editor.blockIndexMap.set(key, idx + 1)
-            }
-          }
-        }
-        editor.blockIndexMap.set(node._key, insertIndex)
-      }
 
       transformSelection = true
       break
@@ -171,14 +158,6 @@ export function applyOperation(editor: Editor, op: Operation): void {
         if (Array.isArray(value)) {
           editor.snapshot.context.value =
             value as unknown as PortableTextBlock[]
-          // Rebuild blockIndexMap
-          editor.blockIndexMap.clear()
-          for (let i = 0; i < editor.snapshot.context.value.length; i++) {
-            const child = editor.snapshot.context.value[i]
-            if (child) {
-              editor.blockIndexMap.set(child._key, i)
-            }
-          }
         }
         transformSelection = true
         break
@@ -218,25 +197,6 @@ export function applyOperation(editor: Editor, op: Operation): void {
           modifyDescendant(editor, setNodePath, (node) => {
             return {...node, [propertyName]: value} as typeof node
           })
-
-          // Update blockIndexMap when _key changes on a root-level block.
-          // The preamble above guarantees op.inverse is populated; if it's a
-          // 'set' (existing key being renamed), the surgical delete+set keeps
-          // the map consistent. A 'unset' inverse means the node didn't have
-          // a _key before — no map entry to migrate, nothing to do.
-          if (
-            propertyName === '_key' &&
-            setNodePath.length === 1 &&
-            op.inverse?.type === 'set' &&
-            typeof op.inverse.value === 'string' &&
-            typeof value === 'string'
-          ) {
-            const blockIndex = editor.blockIndexMap.get(op.inverse.value)
-            if (blockIndex !== undefined) {
-              editor.blockIndexMap.delete(op.inverse.value)
-              editor.blockIndexMap.set(value, blockIndex)
-            }
-          }
         } else {
           // Multiple property segments: deep set on the resolved node
           modifyDescendant(editor, setNodePath, (node) => {
@@ -245,12 +205,12 @@ export function applyOperation(editor: Editor, op: Operation): void {
         }
       } else {
         // Node not found (e.g., markDefs path): apply on the root block
-        const blockKey = findBlockKey(path)
-        if (!blockKey) {
+        const blockSegment = findBlockSegment(path)
+        if (!blockSegment) {
           break
         }
 
-        const blockIndex = resolveBlockIndex(editor, blockKey)
+        const blockIndex = resolveBlockIndex(editor, blockSegment)
         if (blockIndex === -1) {
           break
         }
@@ -286,7 +246,6 @@ export function applyOperation(editor: Editor, op: Operation): void {
           }
         }
         editor.snapshot.context.value = []
-        editor.blockIndexMap.clear()
         transformSelection = true
         break
       }
@@ -360,18 +319,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
             : null
         }
 
-        const isRootRemove = parentPath(path).length === 0
-        let removeIndex = -1
-        let removedKey: string | undefined
-
         modifyChildren(editor, parentPath(path), (children) => {
           let index: number
 
           if (isKeyedSegment(lastSegment)) {
             index = resolveChildIndex(
-              children,
-              lastSegment._key,
-              isRootRemove ? editor.blockIndexMap : undefined,
+              editor.blockIndexMap,
+              path.slice(0, -1),
+              lastSegment,
             )
           } else {
             index = lastSegment
@@ -402,19 +357,8 @@ export function applyOperation(editor: Editor, op: Operation): void {
             }
           }
 
-          removedKey = children[index]?._key
-          removeIndex = index
           return removeChildren(children, index, 1)
         })
-
-        if (isRootRemove && removeIndex !== -1 && removedKey) {
-          editor.blockIndexMap.delete(removedKey)
-          for (const [key, idx] of editor.blockIndexMap) {
-            if (idx > removeIndex) {
-              editor.blockIndexMap.set(key, idx - 1)
-            }
-          }
-        }
 
         break
       }
@@ -455,12 +399,12 @@ export function applyOperation(editor: Editor, op: Operation): void {
         }
       } else {
         // Node not found (e.g., markDefs path): apply on the root block
-        const blockKey = findBlockKey(path)
-        if (!blockKey) {
+        const blockSegment = findBlockSegment(path)
+        if (!blockSegment) {
           break
         }
 
-        const blockIndex = resolveBlockIndex(editor, blockKey)
+        const blockIndex = resolveBlockIndex(editor, blockSegment)
         if (blockIndex === -1) {
           break
         }
@@ -570,48 +514,33 @@ function replaceLastSegment(path: Path, segment: Path[number]): Path {
 }
 
 /**
- * Resolve a child index by key, using blockIndexMap for O(1) lookup when available.
- * Falls back to linear scan when the map is unavailable or stale.
+ * Resolve a child index by keyed segment via `blockIndexMap`.
  */
 function resolveChildIndex(
-  children: Array<Node>,
-  key: string,
-  blockIndexMap: Map<string, number> | undefined,
+  blockIndexMap: ReadonlyMap<string, number>,
+  parentSegments: Path,
+  segment: KeyedSegment,
 ): number {
-  if (blockIndexMap) {
-    const index = blockIndexMap.get(key)
-    if (index !== undefined) {
-      const candidate = children[index]
-      if (candidate && candidate._key === key) {
-        return index
-      }
-    }
-  }
-  return children.findIndex((child) => child._key === key)
+  const index = blockIndexMap.get(serializePath([...parentSegments, segment]))
+  return index ?? -1
 }
 
 /**
  * Extract the block key from the first segment of a path.
  */
-function findBlockKey(path: Path): string | undefined {
+function findBlockSegment(path: Path): KeyedSegment | undefined {
   const firstSegment = path[0]
   if (isKeyedSegment(firstSegment)) {
-    return firstSegment._key
+    return firstSegment
   }
   return undefined
 }
 
 /**
- * Resolve a block index by key, using blockIndexMap for O(1) lookup.
+ * Resolve a root block's index via `blockIndexMap`.
  */
-function resolveBlockIndex(editor: Editor, blockKey: string): number {
-  const mapIndex = editor.blockIndexMap.get(blockKey)
-  if (mapIndex !== undefined) {
-    return mapIndex
-  }
-  return editor.snapshot.context.value.findIndex(
-    (child) => child._key === blockKey,
-  )
+function resolveBlockIndex(editor: Editor, segment: KeyedSegment): number {
+  return editor.blockIndexMap.get(serializePath([segment])) ?? -1
 }
 
 /**

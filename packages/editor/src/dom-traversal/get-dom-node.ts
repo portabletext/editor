@@ -26,7 +26,7 @@ export function getDomNode(
   const blockSegment = path[0]
 
   if (isKeyedSegment(blockSegment)) {
-    const blockIndex = editor.blockIndexMap.get(blockSegment._key)
+    const blockIndex = editor.blockIndexMap.get(serializePath([blockSegment]))
 
     if (blockIndex !== undefined) {
       const blockNode = editorElement.children[blockIndex]
