@@ -13,16 +13,17 @@ export type OperationSnapshot = {
   blockIndexMap: TraversalSnapshot['blockIndexMap']
 }
 
-export type OperationImplementation<TOperationType extends Operation['type']> =
-  ({
-    snapshot,
-    operation,
-  }: {
-    snapshot: OperationSnapshot
-    operation: PickFromUnion<Operation, 'type', TOperationType>
-  }) => void
+export type OperationImplementation<
+  TOperationType extends InternalOperation['type'],
+> = ({
+  snapshot,
+  operation,
+}: {
+  snapshot: OperationSnapshot
+  operation: PickFromUnion<InternalOperation, 'type', TOperationType>
+}) => void
 
-export type Operation = OmitFromUnion<
+export type InternalOperation = OmitFromUnion<
   SyntheticBehaviorEvent,
   'type',
   AbstractBehaviorEventType
@@ -31,5 +32,5 @@ export type Operation = OmitFromUnion<
 }
 
 export type OperationImplementations = {
-  [TOperationType in Operation['type']]: OperationImplementation<TOperationType>
+  [TOperationType in InternalOperation['type']]: OperationImplementation<TOperationType>
 }

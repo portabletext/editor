@@ -21,7 +21,7 @@ import {removeTextOperationImplementation} from './operation.remove.text'
 import {selectOperationImplementation} from './operation.select'
 import {setOperationImplementation} from './operation.set'
 import type {
-  Operation,
+  InternalOperation,
   OperationImplementations,
   OperationSnapshot,
 } from './operation.types'
@@ -56,13 +56,16 @@ export function performOperation({
   operation,
 }: {
   snapshot: OperationSnapshot
-  operation: Operation
+  operation: InternalOperation
 }) {
   const perform = () => {
     try {
       const implementation = operationImplementations[
         operation.type
-      ] as (args: {snapshot: OperationSnapshot; operation: Operation}) => void
+      ] as (args: {
+        snapshot: OperationSnapshot
+        operation: InternalOperation
+      }) => void
       implementation({snapshot, operation})
     } catch (error) {
       console.error(
