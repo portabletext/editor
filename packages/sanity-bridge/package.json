@@ -45,11 +45,11 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/schema": "^5.13.0",
-    "@sanity/types": "^5.13.0"
+    "@sanity/schema": "^6.0.0",
+    "@sanity/types": "^6.0.0"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^10.2.1",
+    "@sanity/pkg-utils": "^10.5.3",
     "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
     "vitest": "^4.1.8"
