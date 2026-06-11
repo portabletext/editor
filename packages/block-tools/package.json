@@ -56,7 +56,7 @@
     "@sanity/types": "^5.13.0"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^10.2.1",
+    "@sanity/pkg-utils": "^10.5.3",
     "@sanity/schema": "^5.13.0",
     "@types/jsdom": "^27.0.0",
     "@vitest/coverage-v8": "^4.1.8",

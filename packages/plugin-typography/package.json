@@ -57,7 +57,7 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/pkg-utils": "^10.2.1",
+    "@sanity/pkg-utils": "^10.5.3",
     "@sanity/tsconfig": "^2.1.0",
     "@types/react": "^19.2.14",
     "@vitejs/plugin-react": "^5.2.0",

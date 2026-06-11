@@ -102,7 +102,7 @@
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^10.2.1",
+    "@sanity/pkg-utils": "^10.5.3",
     "@sanity/tsconfig": "^2.1.0",
     "@textspec/notation": "^1.0.2",
     "@types/debug": "^4.1.12",
