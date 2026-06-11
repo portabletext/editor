@@ -1,5 +1,5 @@
 import {transformPath} from '../path/transform-path'
-import type {Operation} from './operation'
+import type {EngineOperation} from './operation'
 import type {Path} from './path'
 
 /**
@@ -15,12 +15,12 @@ export interface PathRef {
 }
 
 interface PathRefInterface {
-  transform: (ref: PathRef, op: Operation) => void
+  transform: (ref: PathRef, op: EngineOperation) => void
 }
 
 // eslint-disable-next-line no-redeclare
 export const PathRef: PathRefInterface = {
-  transform(ref: PathRef, op: Operation): void {
+  transform(ref: PathRef, op: EngineOperation): void {
     const {current} = ref
 
     if (current == null) {

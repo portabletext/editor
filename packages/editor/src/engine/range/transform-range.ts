@@ -1,5 +1,5 @@
 import type {Node} from '../interfaces/node'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {Range, RangeTransformOptions} from '../interfaces/range'
 import {transformPoint} from '../point/transform-point'
 import {resolveRangeAffinities} from './resolve-range-affinities'
@@ -11,7 +11,7 @@ import {resolveRangeAffinities} from './resolve-range-affinities'
  */
 export function transformRange(
   range: Range | null,
-  op: Operation,
+  op: EngineOperation,
   root: {value: Array<Node>},
   options: RangeTransformOptions = {},
 ): Range | null {

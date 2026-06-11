@@ -1,7 +1,7 @@
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {Range} from '../interfaces/range'
 
-export function inverseOperation(op: Operation): Operation {
+export function inverseOperation(op: EngineOperation): EngineOperation {
   switch (op.type) {
     case 'insert': {
       if (!op.inverse) {

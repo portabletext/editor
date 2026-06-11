@@ -1,6 +1,6 @@
 import {transformPoint} from '../point/transform-point'
 import type {TextDirection} from '../types/types'
-import type {Operation} from './operation'
+import type {EngineOperation} from './operation'
 import type {Point} from './point'
 
 /**
@@ -16,12 +16,12 @@ export interface PointRef {
 }
 
 interface PointRefInterface {
-  transform: (ref: PointRef, op: Operation) => void
+  transform: (ref: PointRef, op: EngineOperation) => void
 }
 
 // eslint-disable-next-line no-redeclare
 export const PointRef: PointRefInterface = {
-  transform(ref: PointRef, op: Operation): void {
+  transform(ref: PointRef, op: EngineOperation): void {
     const {current, affinity} = ref
 
     if (current == null) {

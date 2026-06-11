@@ -8,7 +8,7 @@ import {isLeafObject} from '../../../traversal/is-leaf-object'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import type {BaseEditor, Editor} from '../../interfaces/editor'
-import type {Operation} from '../../interfaces/operation'
+import type {EngineOperation} from '../../interfaces/operation'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
 import type {RangeRef} from '../../interfaces/range-ref'
@@ -62,7 +62,7 @@ export interface DOMEditor extends BaseEditor {
   focused: boolean
   composing: boolean
   userSelection: RangeRef | null
-  onContextChange: ((options?: {operation?: Operation}) => void) | null
+  onContextChange: ((options?: {operation?: EngineOperation}) => void) | null
   scheduleFlush: (() => void) | null
   pendingDiffs: TextDiff[]
   pendingAction: Action | null

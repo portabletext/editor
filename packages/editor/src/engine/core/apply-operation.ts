@@ -13,7 +13,7 @@ import type {EditorSelection} from '../../types/editor'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import type {Range} from '../interfaces/range'
 import {commonPath} from '../path/common-path'
@@ -33,7 +33,7 @@ import {
   removeChildren,
 } from '../utils/modify'
 
-export function applyOperation(editor: Editor, op: Operation): void {
+export function applyOperation(editor: Editor, op: EngineOperation): void {
   let transformSelection = false
 
   switch (op.type) {

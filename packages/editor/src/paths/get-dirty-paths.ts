@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
-import type {Operation} from '../engine/interfaces/operation'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
 import {parentPath} from '../engine/path/parent-path'
 import {pathLevels} from '../engine/path/path-levels'
@@ -86,7 +86,7 @@ export function getDirtyPaths(
     containers: Containers
     value: Array<Node>
   },
-  op: Operation,
+  op: EngineOperation,
 ): Array<Path> {
   switch (op.type) {
     case 'insert.text':

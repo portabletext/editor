@@ -95,7 +95,7 @@ type SetSelectionOperation =
       newProperties: null
     }
 
-export type Operation =
+export type EngineOperation =
   | InsertOperation
   | SetOperation
   | UnsetOperation
