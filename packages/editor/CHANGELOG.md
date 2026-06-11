@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.3.4
+
+### Patch Changes
+
+- [#2777](https://github.com/portabletext/editor/pull/2777) [`9173892`](https://github.com/portabletext/editor/commit/91738928cf069ba7b6bf33bb60afea14de678af7) Thanks [@christianhg](https://github.com/christianhg)! - fix: a throwing `editor.on` listener no longer affects other listeners
+
+  When a listener registered via `editor.on(...)` threw, it prevented the remaining listeners from receiving that event and propagated the error into the editor flow that emitted it — a throwing `patch` listener, for example, could interrupt the mutation batcher mid-flush. Listener errors are now contained per listener and reported via `console.error`; delivery to the other listeners continues, and the emitting flow is unaffected.
+
 ## 7.3.3
 
 ### Patch Changes
