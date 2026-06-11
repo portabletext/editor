@@ -92,6 +92,8 @@ type RelayListener = (event: EditorEmittedEvent) => void
  *   events sent after `stop()` are dropped.
  * - Consecutive `selection` events carrying the same selection reference are
  *   deduplicated, unless the previous event was `focused`.
+ * - A throwing listener does not prevent delivery to the remaining
+ *   listeners; the error is reported via `console.error`.
  */
 export type Relay = {
   send: (event: EditorEmittedEvent) => void
@@ -123,15 +125,29 @@ export function createRelay(): Relay {
     const typeListeners = listeners.get(event.type)
     if (typeListeners) {
       for (let index = 0; index < typeListeners.length; index++) {
-        typeListeners[index]?.(event)
+        callListener(typeListeners[index], event)
       }
     }
 
     const everyEventListeners = listeners.get('*')
     if (everyEventListeners) {
       for (let index = 0; index < everyEventListeners.length; index++) {
-        everyEventListeners[index]?.(event)
+        callListener(everyEventListeners[index], event)
       }
+    }
+  }
+
+  function callListener(
+    listener: RelayListener | undefined,
+    event: EditorEmittedEvent,
+  ) {
+    try {
+      listener?.(event)
+    } catch (error) {
+      // One consumer's throwing listener must not starve other listeners of
+      // the event, nor break the editor flow that emitted it — patch events,
+      // for example, are sent synchronously from the mutation batcher.
+      console.error(error)
     }
   }
 
@@ -178,8 +194,9 @@ export function createRelay(): Relay {
         }
       }
     } finally {
-      // A throwing listener must not leave the relay stuck mid-dispatch.
-      // Drop everything up to and including the throwing event and let the
+      // Listener errors are contained in `callListener`, so this only
+      // triggers on unexpected dispatch failures — recover rather than
+      // staying stuck mid-dispatch: drop the processed events and let the
       // error propagate; later sends keep working.
       mailbox.splice(0, index)
       dispatching = false
