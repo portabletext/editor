@@ -3,7 +3,7 @@ import type {OperationListener} from '../core/operation-channel'
 import type {DOMEditor} from '../dom/plugin/dom-editor'
 import type {Location} from './location'
 import type {Node} from './node'
-import type {Operation} from './operation'
+import type {EngineOperation} from './operation'
 import type {Path} from './path'
 import type {PathRef} from './path-ref'
 import type {PointRef} from './point-ref'
@@ -17,7 +17,7 @@ import type {RangeRef} from './range-ref'
 export interface BaseEditor {
   // Core state.
 
-  operations: Operation[]
+  operations: EngineOperation[]
   operationListeners: {
     before: Array<OperationListener>
     after: Array<OperationListener>
@@ -32,14 +32,14 @@ export interface BaseEditor {
 
   // Overrideable core methods.
 
-  apply: (operation: Operation) => void
+  apply: (operation: EngineOperation) => void
   normalizeNode: (
     entry: [Editor | Node, Path],
     options?: {
-      operation?: Operation
+      operation?: EngineOperation
     },
   ) => void
-  onChange: (options?: {operation?: Operation}) => void
+  onChange: (options?: {operation?: EngineOperation}) => void
   shouldNormalize: ({
     iteration,
     dirtyPaths,
@@ -48,7 +48,7 @@ export interface BaseEditor {
     iteration: number
     initialDirtyPathsLength: number
     dirtyPaths: Path[]
-    operation?: Operation
+    operation?: EngineOperation
   }) => boolean
 
   // Overrideable commands.

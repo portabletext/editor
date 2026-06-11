@@ -9,7 +9,7 @@ import {
 } from 'xstate'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
-import type {Operation} from '../engine/interfaces/operation'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeIntersection} from '../engine/range/range-intersection'
@@ -25,7 +25,7 @@ import type {EditorSchema} from './editor-schema'
 
 const engineOperationCallback: CallbackLogicFunction<
   AnyEventObject,
-  {type: 'engine operation'; operation: Operation},
+  {type: 'engine operation'; operation: EngineOperation},
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
   return subscribeToOperations(
@@ -72,7 +72,7 @@ export const rangeDecorationsMachine = setup({
         }
       | {
           type: 'engine operation'
-          operation: Operation
+          operation: EngineOperation
         }
       | {
           type: 'update read only'

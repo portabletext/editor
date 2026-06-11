@@ -6,7 +6,7 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import type {Node} from '../engine/interfaces/node'
-import type {Operation} from '../engine/interfaces/operation'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {pathContains} from '../traversal/path-contains'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
@@ -24,8 +24,8 @@ import {debug} from './debug'
 export function transformOperation(
   editor: PortableTextEditorEngine,
   patch: Patch,
-  operation: Operation,
-): Operation[] {
+  operation: EngineOperation,
+): EngineOperation[] {
   const snapshot: TraversalSnapshot = editor.snapshot
   const transformedOperation = {...operation}
 
@@ -155,7 +155,7 @@ export function transformOperation(
 function findOperationTargetBlock(
   snapshot: TraversalSnapshot,
   editor: PortableTextEditorEngine,
-  operation: Operation,
+  operation: EngineOperation,
 ): Node | undefined {
   if (operation.type === 'set.selection' && editor.snapshot.context.selection) {
     const block = getEnclosingBlock(

@@ -1,10 +1,10 @@
 import {describe, expect, test} from 'vitest'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import {inverseOperation} from './inverse-operation'
 
 describe(inverseOperation.name, () => {
   test('insert -> unset', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       node: {_key: 's2', _type: 'span', text: ''},
@@ -18,7 +18,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('unset (node removal) -> insert', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
       inverse: {
@@ -37,7 +37,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('unset (node removal) first child -> insert before', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       inverse: {
@@ -56,7 +56,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('insert.text -> remove.text', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
@@ -71,7 +71,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('remove.text -> insert.text', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'remove.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
@@ -86,7 +86,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('set with existing property inverts to set with old value', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'set',
       path: [{_key: 'b1'}, 'style'],
       value: 'h1',
@@ -101,7 +101,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('set with new property inverts to unset', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'set',
       path: [{_key: 'b1'}, 'listItem'],
       value: 'bullet',
@@ -119,7 +119,7 @@ describe(inverseOperation.name, () => {
   })
 
   test('unset (property removal) inverts to set with old value', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b1'}, 'listItem'],
       inverse: {

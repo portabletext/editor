@@ -6,7 +6,7 @@ import {getSpan} from '../../../traversal/get-span'
 import {hasNode} from '../../../traversal/has-node'
 import {after} from '../../editor/after'
 import type {Editor} from '../../interfaces/editor'
-import type {Operation} from '../../interfaces/operation'
+import type {EngineOperation} from '../../interfaces/operation'
 import type {Path} from '../../interfaces/path'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
@@ -239,7 +239,7 @@ export function normalizeRange(editor: Editor, range: Range): Range | null {
 export function transformPendingPoint(
   editor: Editor,
   point: Point,
-  op: Operation,
+  op: EngineOperation,
 ): Point | null {
   const pendingDiffs = editor.pendingDiffs
   const textDiff = pendingDiffs?.find(({path}) => pathEquals(path, point.path))
@@ -288,7 +288,7 @@ export function transformPendingPoint(
 export function transformPendingRange(
   editor: Editor,
   range: Range,
-  op: Operation,
+  op: EngineOperation,
 ): Range | null {
   const anchor = transformPendingPoint(editor, range.anchor, op)
   if (!anchor) {
@@ -309,7 +309,7 @@ export function transformPendingRange(
 
 export function transformTextDiff(
   textDiff: TextDiff,
-  op: Operation,
+  op: EngineOperation,
 ): TextDiff | null {
   const {path, diff, id} = textDiff
 

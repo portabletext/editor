@@ -4,14 +4,14 @@ import {getNode} from '../../traversal/get-node'
 import {getNodes} from '../../traversal/get-nodes'
 import {hasNode} from '../../traversal/has-node'
 import type {Editor} from '../interfaces/editor'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import {isNormalizing} from './is-normalizing'
 import {withoutNormalizing} from './without-normalizing'
 
 export function normalize(
   editor: Editor,
-  options: {force?: boolean; operation?: Operation} = {},
+  options: {force?: boolean; operation?: EngineOperation} = {},
 ): void {
   const {force = false, operation} = options
   const getDirtyPaths = (editor: Editor) => {

@@ -1,6 +1,6 @@
 import {pathContains} from '../../traversal/path-contains'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import type {Point, PointTransformOptions} from '../interfaces/point'
 import {pathEquals} from '../path/path-equals'
@@ -21,7 +21,7 @@ import {pathEquals} from '../path/path-equals'
  */
 export function transformPoint(
   point: Point | null,
-  op: Operation,
+  op: EngineOperation,
   options: PointTransformOptions = {},
 ): Point | null {
   if (point === null) {

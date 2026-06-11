@@ -1,11 +1,11 @@
 import type {Node} from '../interfaces/node'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {RangeRef} from '../interfaces/range-ref'
 import {transformRange} from '../range/transform-range'
 
 export function transformRangeRef(
   ref: RangeRef,
-  op: Operation,
+  op: EngineOperation,
   root: {value: Array<Node>},
 ): void {
   const {current, affinity} = ref

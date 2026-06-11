@@ -1,10 +1,10 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelection} from '../../types/editor'
 import type {Editor} from '../interfaces/editor'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 
 /**
- * The operation channel is the single place to observe every `Operation` the
+ * The operation channel is the single place to observe every `EngineOperation` the
  * engine applies.
  *
  * Guarantees:
@@ -31,7 +31,7 @@ export type OperationEvent = {
    * populated and inserted nodes may be re-keyed — so `after` listeners
    * observe the final operation.
    */
-  operation: Operation
+  operation: EngineOperation
   /**
    * `editor.snapshot.context.value` captured at apply entry. Operations
    * replace the value array instead of mutating it, so this reference keeps
@@ -103,7 +103,7 @@ export function subscribeToOperations(
  */
 export function createOperationEvent(
   editor: Editor,
-  operation: Operation,
+  operation: EngineOperation,
 ): OperationEvent {
   const isNormalizingNode = Boolean(editor.isNormalizingNode)
   const isProcessingRemoteChanges = Boolean(editor.isProcessingRemoteChanges)

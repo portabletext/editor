@@ -1,6 +1,6 @@
 import {pathContains} from '../../traversal/path-contains'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 
 /**
@@ -11,7 +11,7 @@ import type {Path} from '../interfaces/path'
  */
 export function transformPath(
   path: Path | null,
-  operation: Operation,
+  operation: EngineOperation,
 ): Path | null {
   if (!path) {
     return null

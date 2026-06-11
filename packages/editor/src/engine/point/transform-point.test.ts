@@ -1,10 +1,10 @@
 import {describe, expect, test} from 'vitest'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import {transformPoint} from './transform-point'
 
 describe(transformPoint.name, () => {
   test('null point returns null', () => {
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 0,
@@ -18,7 +18,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
@@ -35,7 +35,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
@@ -52,7 +52,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert.text',
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
       offset: 0,
@@ -69,7 +69,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'remove.text',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
@@ -86,7 +86,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
     }
@@ -98,7 +98,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b1'}],
     }
@@ -110,7 +110,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b2'}],
     }
@@ -125,7 +125,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'insert',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       node: {_key: 's2', _type: 'span', text: ''},
@@ -142,7 +142,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'set.selection',
       properties: null,
       newProperties: {
@@ -161,7 +161,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'set',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}, '_key'],
       value: 's2',
@@ -182,7 +182,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'set',
       path: [{_key: 'b1'}, 'style'],
       value: 'h1',
@@ -203,7 +203,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 4,
     }
-    const op: Operation = {
+    const op: EngineOperation = {
       type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
       inverse: {

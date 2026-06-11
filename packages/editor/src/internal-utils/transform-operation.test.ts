@@ -1,7 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {Operation} from '../engine/interfaces/operation'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {transformOperation} from './transform-operation'
 
@@ -42,7 +42,7 @@ describe('transformOperation', () => {
         position: 'after',
       }
 
-      const insertTextOperation: Operation = {
+      const insertTextOperation: EngineOperation = {
         type: 'insert.text',
         path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
         offset: 0,
@@ -75,7 +75,7 @@ describe('transformOperation', () => {
         path: [{_key: 'block1'}],
       }
 
-      const insertTextOperation: Operation = {
+      const insertTextOperation: EngineOperation = {
         type: 'insert.text',
         path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
         offset: 0,
@@ -95,7 +95,7 @@ describe('transformOperation', () => {
         path: [{_key: 'block1'}],
       }
 
-      const insertTextOperation: Operation = {
+      const insertTextOperation: EngineOperation = {
         type: 'insert.text',
         path: [{_key: 'block2'}, 'children', {_key: 'span2'}],
         offset: 0,
@@ -122,7 +122,7 @@ describe('transformOperation', () => {
         path: [{_key: 'block1'}],
       }
 
-      const setSelectionOperation: Operation = {
+      const setSelectionOperation: EngineOperation = {
         type: 'set.selection',
         properties: {
           anchor: {

@@ -8,7 +8,7 @@ import {
 import {describe, expect, test} from 'vitest'
 import {createEditor} from '../create-editor'
 import type {Editor} from '../interfaces/editor'
-import type {Operation} from '../interfaces/operation'
+import type {EngineOperation} from '../interfaces/operation'
 import {subscribeToOperations, type OperationEvent} from './operation-channel'
 
 const schema = compileSchema(defineSchema({}))
@@ -57,7 +57,7 @@ function getSpanText(value: Array<PortableTextBlock>): string {
   return span.text
 }
 
-const insertTextOperation: Operation = {
+const insertTextOperation: EngineOperation = {
   type: 'insert.text',
   path: [{_key: 'b1'}, 'children', {_key: 's1'}],
   offset: 3,
@@ -187,7 +187,7 @@ describe('operation channel', () => {
   })
 
   test('operations replace the value instead of mutating it, keeping `beforeValue` intact', () => {
-    const operationCases: Array<{name: string; operation: Operation}> = [
+    const operationCases: Array<{name: string; operation: EngineOperation}> = [
       {
         name: 'insert.text on a span',
         operation: insertTextOperation,

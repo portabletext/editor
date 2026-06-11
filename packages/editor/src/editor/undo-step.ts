@@ -1,9 +1,9 @@
-import type {Operation} from '../engine/interfaces/operation'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
 import {pathEquals} from '../engine/path/path-equals'
 
 type UndoStep = {
-  operations: Array<Operation>
+  operations: Array<EngineOperation>
   timestamp: Date
 }
 
@@ -17,7 +17,7 @@ export function createUndoSteps({
   selectionBeforeApply,
 }: {
   steps: Array<UndoStep>
-  op: Operation
+  op: EngineOperation
   currentUndoStepId: string | undefined
   previousUndoStepId: string | undefined
   /** Snapshots of pre-apply editor state — volatile during apply. */
@@ -145,7 +145,7 @@ export function createUndoSteps({
 
 function createNewStep(
   steps: Array<UndoStep>,
-  op: Operation,
+  op: EngineOperation,
   selectionBeforeApply: Range | null,
 ): Array<UndoStep> {
   const operations =
@@ -171,7 +171,7 @@ function createNewStep(
 function mergeIntoLastStep(
   steps: Array<UndoStep>,
   lastStep: UndoStep,
-  op: Operation,
+  op: EngineOperation,
 ): Array<UndoStep> {
   lastStep.operations.push(op)
 
