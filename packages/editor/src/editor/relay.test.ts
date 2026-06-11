@@ -1,4 +1,4 @@
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {EditorSelection} from '../types/editor'
 import {createRelay} from './relay'
 
@@ -119,6 +119,30 @@ describe('relay', () => {
     relay.stop()
     relay.send({type: 'ready'})
     expect(deliveries).toEqual(['ready'])
+  })
+
+  test('a throwing listener does not prevent delivery to remaining listeners', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const relay = createRelay()
+    relay.start()
+    const deliveries: Array<string> = []
+
+    relay.on('ready', () => {
+      throw new Error('listener bug')
+    })
+    relay.on('ready', () => {
+      deliveries.push('second')
+    })
+    relay.on('*', () => {
+      deliveries.push('star')
+    })
+
+    relay.send({type: 'ready'})
+    relay.send({type: 'ready'})
+
+    expect(deliveries).toEqual(['second', 'star', 'second', 'star'])
+    expect(consoleError).toHaveBeenCalledTimes(2)
+    consoleError.mockRestore()
   })
 
   test('unsubscribing during dispatch does not skip other listeners', () => {
