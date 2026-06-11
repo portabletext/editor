@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.2
+
+### Patch Changes
+
+- [#2781](https://github.com/portabletext/editor/pull/2781) [`78fef3d`](https://github.com/portabletext/editor/commit/78fef3d0210c0940274263bb4e853955b79dcb72) Thanks [@renovate](https://github.com/apps/renovate)! - Add changeset for the Sanity v6 dependency update.
+
 ## 3.1.1
 
 ### Patch Changes

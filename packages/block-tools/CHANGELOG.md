@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.1.4
+
+### Patch Changes
+
+- [#2781](https://github.com/portabletext/editor/pull/2781) [`78fef3d`](https://github.com/portabletext/editor/commit/78fef3d0210c0940274263bb4e853955b79dcb72) Thanks [@renovate](https://github.com/apps/renovate)! - Add changeset for the Sanity v6 dependency update.
+
+- Updated dependencies [[`78fef3d`](https://github.com/portabletext/editor/commit/78fef3d0210c0940274263bb4e853955b79dcb72)]:
+  - @portabletext/sanity-bridge@3.1.2
+
 ## 5.1.3
 
 ### Patch Changes
