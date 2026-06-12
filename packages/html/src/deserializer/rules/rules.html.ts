@@ -11,7 +11,7 @@ import {
   HTML_SPAN_TAGS,
   type PartialBlock,
 } from '../constants'
-import {isElement, tagName} from '../helpers'
+import {getCodeBlockObjectName, isElement, tagName} from '../helpers'
 import {keyGenerator} from '../random-key'
 import type {SchemaMatchers} from '../schema-matchers'
 import {whitespaceTextNodeRule} from './rules.whitespace-text-node'
@@ -43,13 +43,29 @@ export function createHTMLRules(
     whitespaceTextNodeRule,
     {
       // Pre element
-      deserialize(el) {
+      deserialize(el, _next, createBlock) {
         if (tagName(el) !== 'pre') {
           return undefined
         }
 
-        const isCodeEnabled = schema.styles.some(
-          (style) => style.name === 'code',
+        const text = el.textContent || ''
+
+        // Highest fidelity: a dedicated `code` block object with a `code`
+        // string field, like the one in the default schema.
+        const codeBlockObjectName = getCodeBlockObjectName(schema)
+        if (codeBlockObjectName !== undefined) {
+          return createBlock({
+            _type: codeBlockObjectName,
+            // Trim whitespace-only leading/trailing artifacts of the HTML
+            // source markup (mirroring what the whitespace handling did for
+            // the text block fallback) while preserving inner indentation
+            code: text.trim(),
+          })
+        }
+
+        // Fall back to a regular text block with the `code` decorator.
+        const isCodeEnabled = schema.decorators.some(
+          (decorator) => decorator.name === 'code',
         )
 
         return {
@@ -60,7 +76,7 @@ export function createHTMLRules(
             {
               ...DEFAULT_SPAN,
               marks: isCodeEnabled ? ['code'] : [],
-              text: el.textContent || '',
+              text,
             },
           ],
         }
