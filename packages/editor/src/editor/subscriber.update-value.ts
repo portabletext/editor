@@ -1,14 +1,18 @@
 import {subscribeToOperations} from '../engine/core/operation-channel'
-import {buildIndexMaps} from '../internal-utils/build-index-maps'
+import {buildListIndexMap} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
+import {transformBlockIndexMap} from '../internal-utils/transform-block-index-map'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorContext} from './editor-snapshot'
 
 /**
- * Keeps `blockIndexMap` and `listIndexMap` in sync with the value. Rebuilds
- * them synchronously within the apply that changed the value, so subsequent
- * operations and readers never observe stale maps.
+ * Keeps `blockIndexMap` and `listIndexMap` in sync with the value.
+ * `blockIndexMap` is transformed incrementally per operation;
+ * `listIndexMap` is rebuilt because list-item numbering depends on
+ * root-block adjacency, which any shallow op can disturb non-locally.
+ * Both update synchronously within the apply that changed the value, so
+ * subsequent operations and readers never observe stale maps.
  */
 export function subscribeUpdateValue(
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
@@ -44,21 +48,28 @@ export function subscribeUpdateValue(
       return
     }
 
-    // Operations deep inside blocks (path length > 2) only modify nested
-    // structure and cannot affect root-level blockIndexMap or listIndexMap.
-    // Root-level inserts/removes are already handled incrementally by
-    // applyOperation, so we only need a full rebuild for operations at or
-    // near the root level.
+    transformBlockIndexMap(
+      editor.blockIndexMap,
+      operation,
+      event.beforeValue,
+      editor.snapshot.context.value,
+      {
+        schema: context.schema,
+        containers: editor.snapshot.context.containers,
+      },
+    )
+
+    // List index can only change as a result of root-level insert/remove or
+    // a property change on a root block. Deeper ops cannot shift list
+    // indexes.
     if (operation.path.length <= 2) {
-      buildIndexMaps(
+      buildListIndexMap(
         {
           schema: context.schema,
           value: editor.snapshot.context.value,
+          containers: editor.snapshot.context.containers,
         },
-        {
-          blockIndexMap: editor.blockIndexMap,
-          listIndexMap: editor.listIndexMap,
-        },
+        editor.listIndexMap,
       )
     }
   })

@@ -5,7 +5,21 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
+
+function buildBlockIndexMap(
+  schema: any,
+  containers: any,
+  value: any,
+): Map<string, number> {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return blockIndexMap
+}
 
 const schema = compileSchema(defineSchema({}))
 
@@ -34,7 +48,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -53,7 +67,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -74,7 +88,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -93,7 +107,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -137,7 +151,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -156,7 +170,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -177,7 +191,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -196,7 +210,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -217,7 +231,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -236,7 +250,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
           blockOffsetToSpanSelectionPoint({
             snapshot: {
               context: {schema, value, containers: new Map()},
-              blockIndexMap: new Map(),
+              blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -283,7 +297,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       blockOffsetToSpanSelectionPoint({
         snapshot: {
           context: {schema, value, containers: new Map()},
-          blockIndexMap: new Map(),
+          blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -296,7 +310,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       blockOffsetToSpanSelectionPoint({
         snapshot: {
           context: {schema, value, containers: new Map()},
-          blockIndexMap: new Map(),
+          blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -321,7 +335,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       blockOffsetToSpanSelectionPoint({
         snapshot: {
           context: {schema, value, containers: new Map()},
-          blockIndexMap: new Map(),
+          blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -362,7 +376,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       blockOffsetToSpanSelectionPoint({
         snapshot: {
           context: {schema, value, containers: new Map()},
-          blockIndexMap: new Map(),
+          blockIndexMap: buildBlockIndexMap(schema, new Map(), value),
         },
         blockOffset: {
           path: [{_key: b1}],

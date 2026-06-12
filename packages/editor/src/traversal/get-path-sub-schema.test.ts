@@ -1,8 +1,22 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getPathSubSchema} from './get-path-sub-schema'
+
+function buildBlockIndexMap(
+  schema: any,
+  containers: any,
+  value: any,
+): Map<string, number> {
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps(
+    {schema, value, containers},
+    {blockIndexMap, listIndexMap: new Map<string, number>()},
+  )
+  return blockIndexMap
+}
 
 const testRender: Container['render'] = ({children}) => children
 
@@ -121,7 +135,7 @@ describe(getPathSubSchema.name, () => {
     ]
     const context = {
       context: {schema, containers, value},
-      blockIndexMap: new Map(),
+      blockIndexMap: buildBlockIndexMap(schema, containers, value),
     }
 
     const subSchema = getPathSubSchema(context, [
