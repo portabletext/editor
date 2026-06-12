@@ -7,7 +7,6 @@ import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
-import {serializePath} from '../paths/serialize-path'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,
@@ -41,9 +40,8 @@ export function RenderTextBlock(props: {
     name: props.schema.block.name,
     fields: props.schema.block.fields ?? [],
   } satisfies BlockObjectSchemaType
-  const serializedPath = serializePath(props.path)
-  const selected = useIsSelectedContainer(serializedPath)
-  const focused = useIsFocusedContainer(serializedPath)
+  const selected = useIsSelectedContainer(props.path)
+  const focused = useIsFocusedContainer(props.path)
   const listIndex = useEngineSelector((editor) =>
     editor.listIndexMap.get(serializedPath),
   )

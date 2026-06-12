@@ -34,11 +34,9 @@ export type ContainerNodeForType<TType extends string> = TType extends
 export type ContainerRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
-  focused: boolean
   node: PortableTextObject
   path: Path
   readOnly: boolean
-  selected: boolean
   /**
    * Render this position with the engine's default wrapper. Call from
    * inside a custom render to fall back to or wrap the default:
@@ -69,11 +67,9 @@ export type ContainerRender = (props: ContainerRenderProps) => ReactElement
 export type SpanRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
-  focused: boolean
   node: PortableTextSpan
   path: Path
   readOnly: boolean
-  selected: boolean
   /**
    * Render this position with the engine's default wrapper.
    * See {@link ContainerRenderProps.renderDefault}.
@@ -97,11 +93,9 @@ export type SpanRender = (props: SpanRenderProps) => ReactElement
 export type BlockObjectRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
-  focused: boolean
   node: PortableTextObject
   path: Path
   readOnly: boolean
-  selected: boolean
   /**
    * Render this position with the engine's default wrapper.
    * See {@link ContainerRenderProps.renderDefault}.
@@ -125,11 +119,9 @@ export type BlockObjectRender = (props: BlockObjectRenderProps) => ReactElement
 export type InlineObjectRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
-  focused: boolean
   node: PortableTextObject
   path: Path
   readOnly: boolean
-  selected: boolean
   /**
    * Render this position with the engine's default wrapper.
    * See {@link ContainerRenderProps.renderDefault}.
@@ -224,11 +216,9 @@ export type TextBlock = {
 export type TextBlockRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
-  focused: boolean
   node: PortableTextTextBlock
   path: Path
   readOnly: boolean
-  selected: boolean
   /**
    * Render this position with the engine's default wrapper.
    * See {@link ContainerRenderProps.renderDefault}.
@@ -353,11 +343,9 @@ export function defineContainer<const TType extends string>(config: {
   render?: (props: {
     attributes: Record<string, unknown>
     children: ReactElement
-    focused: boolean
     node: ContainerNodeForType<TType>
     path: Path
     readOnly: boolean
-    selected: boolean
     renderDefault: (props: ContainerRenderProps) => ReactElement
   }) => ReactElement
   of?: ReadonlyArray<Container | TextBlock | BlockObject>

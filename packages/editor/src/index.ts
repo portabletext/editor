@@ -36,6 +36,16 @@ export {
   type StyleDefinition,
 } from '@portabletext/schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
+export {
+  createEditorSlice,
+  type EditorSliceStore,
+} from './editor/create-editor-slice'
+export {
+  useIsFocusedContainer,
+  useIsFocusedLeaf,
+  useIsSelectedContainer,
+  useIsSelectedLeaf,
+} from './editor/selection-state-context'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/usePortableTextEditorSelection'

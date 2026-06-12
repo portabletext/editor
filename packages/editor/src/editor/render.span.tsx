@@ -5,7 +5,6 @@ import type {
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {RenderLeafProps} from '../engine/react/components/editable'
-import {serializePath} from '../paths/serialize-path'
 import type {SpanRenderProps} from '../renderers/renderer.types'
 import type {
   BlockAnnotationRenderProps,
@@ -51,9 +50,8 @@ export function RenderSpan(props: RenderSpanProps) {
   const spanConfig = useSpanConfig(child ?? props.leaf, props.path)
 
   const isInNewPipeline = useContext(NewPipelineContext)
-  const serializedPath = serializePath(props.path)
-  const focused = useIsFocusedLeaf(serializedPath)
-  const selected = useIsSelectedLeaf(serializedPath)
+  const focused = useIsFocusedLeaf(props.path)
+  const selected = useIsSelectedLeaf(props.path)
 
   const decoratorSchemaTypes = subSchema.decorators.map(
     (decorator) => decorator.name,
@@ -166,12 +164,10 @@ export function RenderSpan(props: RenderSpanProps) {
     const renderProps: SpanRenderProps = {
       attributes: props.attributes,
       children,
-      focused,
       node: (child ?? props.leaf) as PortableTextSpan,
       path: props.path,
       readOnly: props.readOnly,
       renderDefault: renderDefaultSpan,
-      selected,
     }
     return render ? render(renderProps) : renderDefaultSpan(renderProps)
   }
