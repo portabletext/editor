@@ -1,4 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
+import {getRangeIntersection} from '../../../traversal/get-range-intersection'
 import {isEditor} from '../../editor/is-editor'
 import {range as editorRange} from '../../editor/range'
 import type {Editor} from '../../interfaces/editor'
@@ -8,7 +9,6 @@ import type {Range} from '../../interfaces/range'
 import type {DecoratedRange} from '../../interfaces/text'
 import {rangeEdges} from '../../range/range-edges'
 import {rangeEquals} from '../../range/range-equals'
-import {rangeIntersection} from '../../range/range-intersection'
 
 const shallowCompare = (
   obj1: {[key: string]: unknown},
@@ -170,10 +170,10 @@ export const splitDecorationsByChild = (
   }
 
   for (const decoration of decorations) {
-    const decorationRange = rangeIntersection(
+    const decorationRange = getRangeIntersection(
+      editor.snapshot,
       ancestorRange,
       decoration,
-      editor.snapshot.context,
     )
     if (!decorationRange) {
       continue
@@ -196,10 +196,10 @@ export const splitDecorationsByChild = (
       if (!childRange) {
         continue
       }
-      const childDecorationRange = rangeIntersection(
+      const childDecorationRange = getRangeIntersection(
+        editor.snapshot,
         childRange,
         decoration,
-        editor.snapshot.context,
       )
       if (!childDecorationRange) {
         continue

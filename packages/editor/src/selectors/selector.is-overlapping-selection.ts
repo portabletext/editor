@@ -1,5 +1,5 @@
-import {rangesOverlap} from '../engine/range/ranges-overlap'
 import {hasNode} from '../traversal/has-node'
+import {rangesOverlap} from '../traversal/ranges-overlap'
 import type {EditorSelection} from '../types/editor'
 import type {EditorSelector} from './../editor/editor-selector'
 
@@ -31,8 +31,6 @@ export function isOverlappingSelection(
       return false
     }
 
-    return rangesOverlap(selection, editorSelection, {
-      value: snapshot.context.value,
-    })
+    return rangesOverlap(snapshot, selection, editorSelection)
   }
 }
