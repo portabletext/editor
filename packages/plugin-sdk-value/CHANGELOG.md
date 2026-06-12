@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.0.15
+
+### Patch Changes
+
+- Updated dependencies [[`8ed6233`](https://github.com/portabletext/editor/commit/8ed623380c516add8851fedec26eba62edd13198)]:
+  - @portabletext/editor@7.4.0
+
 ## 7.0.14
 
 ### Patch Changes

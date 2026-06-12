@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.8
+
+### Patch Changes
+
+- [#2787](https://github.com/portabletext/editor/pull/2787) [`c226c48`](https://github.com/portabletext/editor/commit/c226c48e249c1b2eb4ed21eb6efc2b0d37dd423a) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update cucumber
+
 ## 2.0.7
 
 ### Patch Changes

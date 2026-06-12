@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-table",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": true,
   "description": "📊 Table support for the Portable Text Editor",
   "keywords": [
