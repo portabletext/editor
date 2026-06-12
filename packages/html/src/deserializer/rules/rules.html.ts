@@ -43,13 +43,35 @@ export function createHTMLRules(
     whitespaceTextNodeRule,
     {
       // Pre element
-      deserialize(el) {
+      deserialize(el, _next, createBlock) {
         if (tagName(el) !== 'pre') {
           return undefined
         }
 
-        const isCodeEnabled = schema.styles.some(
-          (style) => style.name === 'code',
+        const text = el.textContent || ''
+
+        // Highest fidelity: a dedicated `code` block object with a `code`
+        // string field, like the one in the default schema.
+        const codeBlockObject = schema.blockObjects.find(
+          (blockObject) => blockObject.name === 'code',
+        )
+        if (
+          codeBlockObject?.fields.some(
+            (field) => field.name === 'code' && field.type === 'string',
+          )
+        ) {
+          return createBlock({
+            _type: codeBlockObject.name,
+            // Trim whitespace-only leading/trailing artifacts of the HTML
+            // source markup (mirroring what the whitespace handling did for
+            // the text block fallback) while preserving inner indentation
+            code: text.trim(),
+          })
+        }
+
+        // Fall back to a regular text block with the `code` decorator.
+        const isCodeEnabled = schema.decorators.some(
+          (decorator) => decorator.name === 'code',
         )
 
         return {
@@ -60,7 +82,7 @@ export function createHTMLRules(
             {
               ...DEFAULT_SPAN,
               marks: isCodeEnabled ? ['code'] : [],
-              text: el.textContent || '',
+              text,
             },
           ],
         }
