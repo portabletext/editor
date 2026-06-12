@@ -103,6 +103,58 @@ export function isPlaceholderAnnotation(
   return node._type === '__annotation'
 }
 
+/**
+ * Matches inline `font-family` declarations that signal code: either the
+ * generic `monospace` keyword (Google Docs always appends it to its code
+ * fonts, e.g. `font-family:'Roboto Mono',monospace`) or a well-known
+ * monospace font name for sources that omit the generic fallback.
+ */
+const MONOSPACE_FONT_FAMILY_REGEX =
+  /font-family\s*:[^;]*(?:\bmonospace\b|courier|consolas|menlo|monaco|roboto mono|source code pro|fira code|fira mono|jetbrains mono|ibm plex mono|ubuntu mono)/i
+
+/**
+ * Returns true when the element's inline `style` declares a monospace
+ * font-family. This is the only signal Google Docs emits for code: it has no
+ * semantic code markup, a code paragraph is just a `<p>` whose spans carry
+ * `font-family:'Roboto Mono',monospace`.
+ */
+export function hasMonospaceFontFamily(el: Node): boolean {
+  const style = isElement(el) && el.getAttribute('style')
+  return style ? MONOSPACE_FONT_FAMILY_REGEX.test(style) : false
+}
+
+/**
+ * Returns true when the element's inline `style` declares a whitespace-
+ * preserving `white-space`. Google Docs sets `white-space:pre-wrap` on its
+ * spans; sources that merely use a monospace font without it (e.g. Word's
+ * `font-family:"Roboto Mono"` spans) wrap their HTML source freely, so
+ * their intra-span whitespace is formatting, not content.
+ */
+export function hasPreservedWhitespaceStyle(el: Node): boolean {
+  const style = isElement(el) && el.getAttribute('style')
+  return style
+    ? /white-space\s*:\s*(?:pre|pre-wrap|break-spaces)/.test(style)
+    : false
+}
+
+/**
+ * Returns the name of the schema's code block object when it can hold
+ * deserialized code: a block object named `code` with a `code` string field,
+ * the shape of the default schema's code object. The single source of truth
+ * for the gate shared by the `pre` rule and the Google Docs rules.
+ */
+export function getCodeBlockObjectName(schema: Schema): string | undefined {
+  const codeBlockObject = schema.blockObjects.find(
+    (blockObject) => blockObject.name === 'code',
+  )
+
+  return codeBlockObject?.fields.some(
+    (field) => field.name === 'code' && field.type === 'string',
+  )
+    ? codeBlockObject.name
+    : undefined
+}
+
 export function isElement(node: Node): node is Element {
   return node.nodeType === 1
 }

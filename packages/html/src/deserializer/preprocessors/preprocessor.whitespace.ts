@@ -1,4 +1,5 @@
 import {PRESERVE_WHITESPACE_TAGS} from '../constants'
+import {hasMonospaceFontFamily, hasPreservedWhitespaceStyle} from '../helpers'
 import {_XPathResult} from './xpathResult'
 
 // Elements that only contain block-level children (not inline text content)
@@ -21,6 +22,18 @@ export function preprocessWhitespace(_: string, doc: Document): Document {
       node.nodeType === _XPathResult.BOOLEAN_TYPE &&
       !PRESERVE_WHITESPACE_TAGS.includes(
         node.parentElement?.tagName.toLowerCase() || '',
+      ) &&
+      // Whitespace inside monospace elements that also declare a
+      // whitespace-preserving `white-space` is content (e.g. code
+      // indentation in Google Docs, where code lines are spans carrying a
+      // monospace `font-family` and `white-space:pre-wrap` rather than
+      // `pre`/`code` tags). Monospace alone is not enough: Word styles code
+      // spans with monospace fonts but wraps its HTML source freely, so its
+      // intra-span whitespace is formatting, not content.
+      !(
+        node.parentElement &&
+        hasMonospaceFontFamily(node.parentElement) &&
+        hasPreservedWhitespaceStyle(node.parentElement)
       )
     ) {
       const normalized =

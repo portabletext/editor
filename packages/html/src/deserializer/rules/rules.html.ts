@@ -11,7 +11,7 @@ import {
   HTML_SPAN_TAGS,
   type PartialBlock,
 } from '../constants'
-import {isElement, tagName} from '../helpers'
+import {getCodeBlockObjectName, isElement, tagName} from '../helpers'
 import {keyGenerator} from '../random-key'
 import type {SchemaMatchers} from '../schema-matchers'
 import {whitespaceTextNodeRule} from './rules.whitespace-text-node'
@@ -52,16 +52,10 @@ export function createHTMLRules(
 
         // Highest fidelity: a dedicated `code` block object with a `code`
         // string field, like the one in the default schema.
-        const codeBlockObject = schema.blockObjects.find(
-          (blockObject) => blockObject.name === 'code',
-        )
-        if (
-          codeBlockObject?.fields.some(
-            (field) => field.name === 'code' && field.type === 'string',
-          )
-        ) {
+        const codeBlockObjectName = getCodeBlockObjectName(schema)
+        if (codeBlockObjectName !== undefined) {
           return createBlock({
-            _type: codeBlockObject.name,
+            _type: codeBlockObjectName,
             // Trim whitespace-only leading/trailing artifacts of the HTML
             // source markup (mirroring what the whitespace handling did for
             // the text block fallback) while preserving inner indentation
