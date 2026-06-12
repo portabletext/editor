@@ -148,12 +148,16 @@ export function createGDocsRules(schema: Schema): DeserializerRule[] {
           tagName(el) === 'br' &&
           isGoogleDocs(el) &&
           isElement(el) &&
-          el.classList.contains('apple-interchange-newline')
+          // The class is `Apple-interchange-newline`; compare
+          // case-insensitively since `classList.contains` is case-sensitive
+          Array.from(el.classList).some(
+            (className) =>
+              className.toLowerCase() === 'apple-interchange-newline',
+          )
         ) {
-          return {
-            ...DEFAULT_SPAN,
-            text: '',
-          }
+          // Clipboard plumbing, not content: swallow it instead of letting
+          // it fall through to the generic `br` rule as a trailing newline
+          return []
         }
 
         // BRs inside empty paragraphs
