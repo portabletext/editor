@@ -60,8 +60,10 @@ export function RenderBlockObject(props: {
       attributes: {
         ...ptAttributes,
         'data-pt-block': 'object',
+        'draggable': !props.readOnly,
       },
       children: props.children,
+      dropPosition: props.dropPosition,
       focused,
       node: props.element,
       path: props.path,

@@ -206,6 +206,10 @@ export function RenderElement(props: {
       rendered = (
         <RenderTextBlockConfig
           attributes={{...rest, 'data-pt-block': 'text'}}
+          dropPosition={resolveElementDropPosition(
+            props.dropPosition,
+            props.path,
+          )}
           render={renderableTextBlockConfig.textBlock.render}
           node={props.element}
           path={props.path}
@@ -335,6 +339,7 @@ function RenderTextBlockConfig(props: {
     'data-pt-block': 'text'
   }
   children: ReactElement
+  dropPosition?: DropPosition['position']
   node: PortableTextTextBlock
   path: Path
   readOnly: boolean
@@ -343,11 +348,16 @@ function RenderTextBlockConfig(props: {
   const serializedPath = serializePath(props.path)
   const focused = useIsFocusedContainer(serializedPath)
   const selected = useIsSelectedContainer(serializedPath)
+  const listIndex = useEngineSelector((editor) =>
+    editor.listIndexMap.get(props.node._key),
+  )
   const renderDefault = renderDefaultTextBlock
   return props.render({
     attributes: props.attributes,
     children: props.children,
+    dropPosition: props.dropPosition,
     focused,
+    listIndex,
     node: props.node,
     path: props.path,
     readOnly: props.readOnly,

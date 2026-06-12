@@ -56,6 +56,7 @@ export function RenderInlineObject(props: {
       attributes: {
         ...props.attributes,
         'data-pt-inline': 'object',
+        'draggable': !props.readOnly,
       },
       children: props.children,
       focused,
