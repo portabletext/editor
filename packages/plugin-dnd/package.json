@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-dnd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A helper plugin for tracking the drop position during drag and drop",
   "keywords": [
     "portabletext",
