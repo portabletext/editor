@@ -1,5 +1,26 @@
 # Changelog
 
+## 7.5.0
+
+### Minor Changes
+
+- [#2769](https://github.com/portabletext/editor/pull/2769) [`5ee8bff`](https://github.com/portabletext/editor/commit/5ee8bffd81826885930b78c35144726fe36b7eb1) Thanks [@christianhg](https://github.com/christianhg)! - feat: extend `blockIndexMap` to every keyed node
+
+  `blockIndexMap` now indexes every keyed node in the tree (root
+  blocks, spans, inline objects, and nodes nested inside registered
+  containers). Entries are keyed by the serialized full path from the
+  document root.
+
+  Sibling-navigation selectors (`getPreviousBlock`, `getNextBlock`,
+  `getNextSpan`, `getPreviousSpan`, `getNextInlineObject`,
+  `getPreviousInlineObject`) and behavior `getSibling` calls resolve
+  in constant time at any depth.
+
+  `.get`/`.has` still accept bare root-block `_key`s, so point lookups
+  keep working unchanged. Code that iterates the map (or reads `.size`)
+  will see the new serialized-path keys and an entry for every keyed
+  node instead of root blocks only.
+
 ## 7.4.0
 
 ### Minor Changes
