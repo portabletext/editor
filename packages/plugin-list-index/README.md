@@ -22,8 +22,17 @@ Typical use: custom text-block renders (`defineTextBlock`) that need to render n
 
 ```tsx
 function TextBlock(props: TextBlockRenderProps) {
+  // The 1-based position within the list, or `undefined` for a block that
+  // is not a list item. Render it as the marker for ordered lists.
   const listIndex = useListIndex(props.path)
-  return <div {...props.attributes}>{props.children}</div>
+  return (
+    <div {...props.attributes}>
+      {listIndex !== undefined ? (
+        <span contentEditable={false}>{listIndex}. </span>
+      ) : null}
+      {props.children}
+    </div>
+  )
 }
 
 defineTextBlock({type: '*', render: (props) => <TextBlock {...props} />})
