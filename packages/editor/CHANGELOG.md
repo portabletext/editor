@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.5.1
+
+### Patch Changes
+
+- [#2795](https://github.com/portabletext/editor/pull/2795) [`68e1f0b`](https://github.com/portabletext/editor/commit/68e1f0b64e59c5923a8cd715cf4fbd59d16f011c) Thanks [@christianhg](https://github.com/christianhg)! - fix: select the inline object on dragstart instead of its text block
+
+  Starting a drag on an inline object now drags only that inline object. Previously the entire enclosing text block was picked up and dragged instead.
+
 ## 7.5.0
 
 ### Minor Changes
