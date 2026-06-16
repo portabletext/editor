@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.5.2
+
+### Patch Changes
+
+- [#2798](https://github.com/portabletext/editor/pull/2798) [`c98ddb6`](https://github.com/portabletext/editor/commit/c98ddb6a99829cd6fb14b4b84b65b0857699f0a1) Thanks [@christianhg](https://github.com/christianhg)! - fix: re-render only the block at the drop position while dragging
+
+  Dragging a block in a large document no longer re-renders the whole editor on
+  every pointer move. Only the block gaining or losing the drop indicator
+  re-renders now, so drag latency stays flat as the document grows instead of
+  scaling with the number of blocks.
+
 ## 7.5.1
 
 ### Patch Changes
