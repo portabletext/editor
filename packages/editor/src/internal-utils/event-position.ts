@@ -10,6 +10,7 @@ import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getNode} from '../traversal/get-node'
+import {isLeafObject} from '../traversal/is-leaf-object'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -63,6 +64,27 @@ export function getEventPosition({
     event,
   })
   const eventSelection = getSelectionFromEvent(editorEngine, event) ?? null
+
+  if (
+    eventBlockPath &&
+    eventPositionBlock &&
+    !eventSelection &&
+    isLeafObject(editorEngine.snapshot, eventNode, eventPath) &&
+    eventPath.length > eventBlockPath.length
+  ) {
+    // An inline object produces no DOM caret selection on `dragstart`, so the
+    // whole-block fallback below would widen to the enclosing text block.
+    // Select the inline object itself instead.
+    return {
+      block: eventPositionBlock,
+      isEditor: false,
+      isContainer: false,
+      selection: {
+        anchor: {path: eventPath, offset: 0},
+        focus: {path: eventPath, offset: 0},
+      },
+    }
+  }
 
   if (
     eventBlock &&

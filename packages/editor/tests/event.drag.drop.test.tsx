@@ -8,6 +8,77 @@ import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.drag.drop', () => {
+  test('Scenario: dragstart on an inline object drags only the inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const barKey = keyGenerator()
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+            {_key: barKey, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    const stockTickerPath = [
+      {_key: blockKey},
+      'children',
+      {_key: stockTickerKey},
+    ]
+
+    // Unlike the other drag scenarios in this file, this one dispatches a real
+    // DOM `dragstart` instead of sending a hand-built `position`. The
+    // regression lives in `getEventPosition`, the DOM-event -> `position`
+    // translation that every payload-style drag test skips: a `dragstart` on
+    // an inline object produces no DOM caret selection, and the null-selection
+    // fallback used to widen to the whole enclosing text block. Dispatching the
+    // native event is the only seam that exercises that translation, and the
+    // resulting drag selection (which `drag.dragstart` writes back via
+    // `select`) is the observable proof of what was dragged.
+    const draggableElement = locator
+      .element()
+      .querySelector('[data-pt-inline="object"] [draggable="true"]')
+    assert(draggableElement, 'Expected the inline object to have a drag source')
+
+    const rect = draggableElement.getBoundingClientRect()
+    draggableElement.dispatchEvent(
+      new DragEvent('dragstart', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: new DataTransfer(),
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+      }),
+    )
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: stockTickerPath, offset: 0},
+        focus: {path: stockTickerPath, offset: 0},
+        backward: false,
+      })
+    })
+  })
+
   test('Scenario: Dragging inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
