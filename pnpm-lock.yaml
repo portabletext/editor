@@ -388,7 +388,7 @@ importers:
         specifier: ^8.46.1
         version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       vite:
-        specifier: ^5.4.10
+        specifier: ^7.3.1
         version: 7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/block-tools:
