@@ -4,7 +4,6 @@ import type {
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useCallback, useContext, useMemo, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
@@ -31,7 +30,6 @@ import {RenderContainer} from './render.container'
 import {renderDefaultTextBlock} from './render.default'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
-import {resolveElementDropPosition} from './resolve-element-drop-position'
 import {
   useIsFocusedContainer,
   useIsSelectedContainer,
@@ -41,7 +39,6 @@ import {tupleRefEqual} from './tuple-ref-equal'
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
-  dropPosition?: DropPosition
   element: PortableTextTextBlock | PortableTextObject
   legacy: LegacyRenderHooks
   path: Path
@@ -227,10 +224,6 @@ export function RenderElement(props: {
       rendered = (
         <RenderTextBlock
           attributes={props.attributes}
-          dropPosition={resolveElementDropPosition(
-            props.dropPosition,
-            props.path,
-          )}
           element={props.element}
           legacy={props.legacy}
           path={props.path}
@@ -306,7 +299,6 @@ export function RenderElement(props: {
     <RenderBlockObject
       attributes={props.attributes}
       blockObject={props.element}
-      dropPosition={resolveElementDropPosition(props.dropPosition, props.path)}
       element={props.element}
       blockObjectConfig={blockObjectConfig}
       legacy={props.legacy}

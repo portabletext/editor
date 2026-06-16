@@ -1,4 +1,3 @@
-import type {Dispatch, SetStateAction} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {EventPositionBlock} from '../internal-utils/event-position'
 import {corePriority} from '../priority/priority.core'
@@ -18,7 +17,7 @@ export type DropPosition = {
 export function createDropPositionBehaviorsConfig({
   setDropPosition,
 }: {
-  setDropPosition: Dispatch<SetStateAction<DropPosition | undefined>>
+  setDropPosition: (next: DropPosition | undefined) => void
 }) {
   return [
     {

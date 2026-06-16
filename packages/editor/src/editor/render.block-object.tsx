@@ -1,6 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
@@ -9,6 +8,7 @@ import type {
   BlockObjectRenderProps,
 } from '../renderers/renderer.types'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
+import {useElementDropPosition} from './drop-position-state-context'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {renderDefaultBlockObject} from './render.default'
@@ -19,7 +19,6 @@ import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
   blockObject: PortableTextObject | undefined
-  dropPosition?: DropPosition['position']
   children: ReactElement
   element: PortableTextObject
   blockObjectConfig?: BlockObjectConfig
@@ -33,6 +32,7 @@ export function RenderBlockObject(props: {
   const serializedPath = serializePath(props.path)
   const selected = useIsSelectedLeaf(serializedPath)
   const focused = useIsFocusedLeaf(serializedPath)
+  const dropPosition = useElementDropPosition(props.path)
 
   const blockObjectSchemaType = props.schema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
@@ -102,7 +102,7 @@ export function RenderBlockObject(props: {
 
   return (
     <div {...attributes}>
-      {props.dropPosition === 'start' ? <DropIndicator /> : null}
+      {dropPosition === 'start' ? <DropIndicator /> : null}
       {props.children}
       <div
         ref={blockObjectRef}
@@ -111,7 +111,7 @@ export function RenderBlockObject(props: {
       >
         {innerContent}
       </div>
-      {props.dropPosition === 'end' ? <DropIndicator /> : null}
+      {dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
 }
