@@ -3,7 +3,6 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {useRef, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
@@ -16,6 +15,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {useElementDropPosition} from './drop-position-state-context'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {DropIndicator} from './render.drop-indicator'
@@ -28,7 +28,6 @@ import {useBlockSubSchema} from './use-block-sub-schema'
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
-  dropPosition?: DropPosition['position']
   element: PortableTextTextBlock
   legacy: LegacyRenderHooks
   path: Path
@@ -44,6 +43,7 @@ export function RenderTextBlock(props: {
   const serializedPath = serializePath(props.path)
   const selected = useIsSelectedContainer(serializedPath)
   const focused = useIsFocusedContainer(serializedPath)
+  const dropPosition = useElementDropPosition(props.path)
   const listIndex = useEngineSelector((editor) =>
     editor.listIndexMap.get(serializedPath),
   )
@@ -151,7 +151,7 @@ export function RenderTextBlock(props: {
           }
         : {})}
     >
-      {props.dropPosition === 'start' ? <DropIndicator /> : null}
+      {dropPosition === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
         {props.legacy.renderBlock ? (
           <RenderBlock
@@ -172,7 +172,7 @@ export function RenderTextBlock(props: {
           children
         )}
       </div>
-      {props.dropPosition === 'end' ? <DropIndicator /> : null}
+      {dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
 }

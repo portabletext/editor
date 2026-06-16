@@ -41,6 +41,7 @@ import type {
 import type {HotkeyOptions} from '../types/options'
 import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
+import {DropPositionStateProvider} from './drop-position-state-context'
 import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
@@ -49,7 +50,6 @@ import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
 import {SelectionStateProvider} from './selection-state-context'
-import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
 
@@ -160,8 +160,6 @@ export const PortableTextEditable = forwardRef<
     rangeDecorationsActor,
     (s) => s.context.decorate?.fn,
   )
-  const dropPosition = useDropPosition()
-
   useEffect(() => {
     rangeDecorationsActor.send({
       type: 'update read only',
@@ -190,13 +188,12 @@ export const PortableTextEditable = forwardRef<
     (eProps: RenderElementProps) => (
       <RenderElement
         {...eProps}
-        dropPosition={dropPosition}
         legacy={legacy}
         readOnly={readOnly}
         schema={schema}
       />
     ),
-    [dropPosition, schema, readOnly, legacy],
+    [schema, readOnly, legacy],
   )
 
   const renderLeaf = useCallback(
@@ -967,36 +964,38 @@ export const PortableTextEditable = forwardRef<
 
   return hasInvalidValue ? null : (
     <SelectionStateProvider>
-      <EngineEditable
-        {...restProps}
-        ref={callbackRef}
-        editorActor={editorActor}
-        data-read-only={readOnly}
-        autoFocus={false}
-        className={restProps.className || 'pt-editable'}
-        decorate={decorate}
-        onBlur={handleOnBlur}
-        onCopy={handleCopy}
-        onCut={handleCut}
-        onClick={handleClick}
-        onDOMBeforeInput={handleOnBeforeInput}
-        onDragStart={handleDragStart}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onDragLeave={handleDragLeave}
-        onFocus={handleOnFocus}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        onPaste={handlePaste}
-        readOnly={readOnly}
-        renderElement={renderElement}
-        renderLeaf={renderLeaf}
-        renderText={renderText}
-        scrollSelectionIntoView={scrollSelectionIntoViewToEngine}
-      />
+      <DropPositionStateProvider>
+        <EngineEditable
+          {...restProps}
+          ref={callbackRef}
+          editorActor={editorActor}
+          data-read-only={readOnly}
+          autoFocus={false}
+          className={restProps.className || 'pt-editable'}
+          decorate={decorate}
+          onBlur={handleOnBlur}
+          onCopy={handleCopy}
+          onCut={handleCut}
+          onClick={handleClick}
+          onDOMBeforeInput={handleOnBeforeInput}
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragLeave={handleDragLeave}
+          onFocus={handleOnFocus}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          onPaste={handlePaste}
+          readOnly={readOnly}
+          renderElement={renderElement}
+          renderLeaf={renderLeaf}
+          renderText={renderText}
+          scrollSelectionIntoView={scrollSelectionIntoViewToEngine}
+        />
+      </DropPositionStateProvider>
     </SelectionStateProvider>
   )
 })
