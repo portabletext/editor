@@ -66,10 +66,7 @@ export {
   type TextBlockRender,
   type TextBlockRenderProps,
 } from './renderers/renderer.types'
-export {
-  resolveContainerAt,
-  resolveContainerOf,
-} from './schema/resolve-containers'
+export {resolveContainerAt} from './schema/resolve-containers'
 export type {
   Containers,
   RegisteredBlockObject,

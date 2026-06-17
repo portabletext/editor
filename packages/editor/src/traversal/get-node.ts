@@ -3,7 +3,7 @@ import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getChildrenOf} from './get-children'
+import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -83,7 +83,7 @@ export function getNode(
     }
 
     if (hasMoreSegments) {
-      const next = getChildrenOf(context, node, currentParent)
+      const next = getNodeChildren(context, node, currentParent)
 
       if (!next) {
         return undefined

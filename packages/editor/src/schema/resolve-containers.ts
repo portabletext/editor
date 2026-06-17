@@ -21,7 +21,6 @@ export {descendToParent} from './descend-to-parent'
 export {resolveContainerAt} from './resolve-container-at'
 export {resolveContainerByPath} from './resolve-container-by-path'
 export {resolveContainerField} from './resolve-container-field'
-export {resolveContainerOf} from './resolve-container-of'
 export {
   resolveContainers,
   resolveContainersRich,

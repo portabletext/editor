@@ -45,7 +45,7 @@ function collectDescendantPaths(
   }
 
   // Resolve through the parent's `of` positional overrides first;
-  // fall back to the top-level entry. Mirrors getChildrenOf logic
+  // fall back to the top-level entry. Mirrors getNodeChildren logic
   // so positional same-`_type`-different-`arrayField` configurations
   // emit correct paths.
   let resolved: RegisteredContainer | undefined

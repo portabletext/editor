@@ -7,7 +7,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {getChildrenAt, getChildrenOf} from './get-children'
+import {getChildrenAt, getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -74,7 +74,7 @@ function* walkStandalone(
   isRoot: boolean,
   parent?: RegisteredContainer,
 ): Generator<{node: Node; path: Path}, void, undefined> {
-  const next = getChildrenOf(context, node, parent)
+  const next = getNodeChildren(context, node, parent)
   if (!next) {
     return
   }

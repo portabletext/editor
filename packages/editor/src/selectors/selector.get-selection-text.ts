@@ -3,7 +3,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import type {RegisteredContainer} from '../schema/resolve-containers'
-import {getChildrenOf} from '../traversal/get-children'
+import {getNodeChildren} from '../traversal/get-children'
 import {getSelectedValue} from './selector.get-selected-value'
 
 /**
@@ -32,7 +32,7 @@ function collectText(
       continue
     }
 
-    const childInfo = getChildrenOf(context, block, parent)
+    const childInfo = getNodeChildren(context, block, parent)
 
     if (!childInfo) {
       continue
