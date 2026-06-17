@@ -1,4 +1,5 @@
 import {describe, expect, test} from 'vitest'
+import {serializePath} from '../paths/serialize-path'
 import {getChildren} from './get-children'
 import {
   codeBlockContainer,
@@ -194,5 +195,30 @@ describe(getChildren.name, () => {
         [{_key: 'k26'}],
       ),
     ).toEqual([])
+  })
+
+  // The existing cases above run with a populated `blockIndexMap`, so they
+  // exercise the O(1) fast path. These pin the linear-scan fallback.
+  test('resolves correctly when blockIndexMap is empty (fallback)', () => {
+    const snapshot = {
+      ...testbed.snapshot,
+      blockIndexMap: new Map<string, number>(),
+    }
+    expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
+      {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
+      {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
+    ])
+  })
+
+  test('resolves correctly when blockIndexMap disagrees with the value (fallback)', () => {
+    // Point the `k11` lookup at the wrong sibling; the `_key` check rejects it
+    // and rescans, so the result is unchanged.
+    const staleMap = new Map(testbed.snapshot.blockIndexMap)
+    staleMap.set(serializePath([{_key: 'k11'}]), 0)
+    const snapshot = {...testbed.snapshot, blockIndexMap: staleMap}
+    expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
+      {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
+      {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
+    ])
   })
 })

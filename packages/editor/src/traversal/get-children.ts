@@ -2,6 +2,7 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {serializePath} from '../paths/serialize-path'
 import type {
   Containers,
   RegisteredContainer,
@@ -32,7 +33,17 @@ export function getChildren(
 
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      node = currentChildren.find((child) => child._key === segment._key)
+      // Resolve via `blockIndexMap` (O(1)) and fall back to a linear scan on a
+      // miss or when the snapshot's map disagrees with the value, mirroring
+      // `getNode`. The candidate path is this segment's full keyed path.
+      const candidatePath: Path = isRoot
+        ? [{_key: segment._key}]
+        : [...currentPath, currentFieldName, {_key: segment._key}]
+      const index = snapshot.blockIndexMap.get(serializePath(candidatePath))
+      node =
+        index !== undefined && currentChildren[index]?._key === segment._key
+          ? currentChildren[index]
+          : currentChildren.find((child) => child._key === segment._key)
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
     }
