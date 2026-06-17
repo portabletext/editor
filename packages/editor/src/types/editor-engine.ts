@@ -52,6 +52,16 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * per render, regardless of how many operations a batch applied.
    */
   listIndexMapDirty: boolean
+  /**
+   * Whether the root sibling group (the editor's direct children) is known
+   * to carry no duplicate `_key`s. Normalization sets it after a clean scan
+   * and the op stream clears it whenever a root-level membership change
+   * could introduce a collision, letting per-node duplicate-key
+   * normalization skip re-scanning an unchanged root group. Nested groups
+   * track the same verdict by parent-node reference inside `normalizeNode`;
+   * the root has no stable parent node, so it needs an explicit flag.
+   */
+  rootKeysVerifiedUnique: boolean
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
 

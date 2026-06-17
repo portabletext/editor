@@ -30,6 +30,41 @@ import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 
+/**
+ * Parent nodes whose direct children have been verified to carry no
+ * duplicate `_key`s. A node is an immutable reference: any structural
+ * change to its children mints a fresh parent reference, which is simply
+ * absent from the map, so the verdict can never go stale. A `WeakMap`
+ * lets collected nodes drop their entries.
+ *
+ * The root sibling group has no parent node (its container is the editor,
+ * whose reference never changes), so its verdict can't be tracked by
+ * reference. It lives in `editor.rootKeysVerifiedUnique` and is
+ * invalidated explicitly by the op stream whenever a root-level
+ * membership change occurs (see `subscribeUpdateValue`).
+ */
+const verifiedUniqueSiblingGroups = new WeakMap<object, true>()
+
+function siblingGroupIsVerifiedUnique(
+  editor: Editor,
+  parent: {node: Node} | undefined,
+): boolean {
+  return parent
+    ? verifiedUniqueSiblingGroups.has(parent.node)
+    : editor.rootKeysVerifiedUnique
+}
+
+function markSiblingGroupVerified(
+  editor: Editor,
+  parent: {node: Node} | undefined,
+): void {
+  if (parent) {
+    verifiedUniqueSiblingGroups.set(parent.node, true)
+  } else {
+    editor.rootKeysVerifiedUnique = true
+  }
+}
+
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
   entry,
@@ -169,49 +204,81 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Fix duplicate _key among siblings
   if (path.length > 0 && nodeRecord['_key'] !== undefined) {
     const parent = getParent(editor.snapshot, path)
-    const siblings = parent
-      ? getChildren(editor.snapshot, parent.path)
-      : editor.snapshot.context.value.map((child, index) => ({
-          node: child,
-          path: [{_key: child._key}],
-          index,
-        }))
+    // Verifying a sibling group has no duplicate keys is O(siblings); doing
+    // it per node is O(siblings^2) across the group. Skip the scan when the
+    // group was already verified unique (and not invalidated since). Without
+    // this, a bulk insert of n pre-keyed root blocks rescans the whole root
+    // group n times.
+    if (!siblingGroupIsVerifiedUnique(editor, parent)) {
+      const key = nodeRecord['_key'] as string
+      // The child array holding this node is the field segment right after
+      // the parent's path, so read it straight off the parent node instead
+      // of re-resolving children from the root through the schema. Fall
+      // back to `getChildren` only if that field isn't a plain array.
+      const childFieldName = parent ? path[parent.path.length] : undefined
+      const rawSiblings =
+        parent && typeof childFieldName === 'string'
+          ? (parent.node as Record<string, unknown>)[childFieldName]
+          : undefined
+      const siblingNodes: ReadonlyArray<{_key?: string}> = !parent
+        ? editor.snapshot.context.value
+        : Array.isArray(rawSiblings)
+          ? (rawSiblings as ReadonlyArray<{_key?: string}>)
+          : getChildren(editor.snapshot, parent.path).map((entry) => entry.node)
 
-    const siblingList = [...siblings]
-    const key = nodeRecord['_key'] as string
+      let groupIsUnique = true
+      let duplicateIndexOfKey = -1
 
-    // Find all siblings with this key
-    let firstIndex = -1
-    for (let i = 0; i < siblingList.length; i++) {
-      if (siblingList[i]!.node._key === key) {
-        if (firstIndex === -1) {
-          firstIndex = i
-        } else {
-          // Found a duplicate: rename the later occurrence
-          const newKey = editor.snapshot.context.keyGenerator()
-          debug.normalization('Fixing duplicate key on node')
-          const dupParentPath = parent ? parent.path : []
-          const numericPath: Path =
-            dupParentPath.length === 0
-              ? [i]
-              : [
-                  ...dupParentPath,
-                  getChildFieldName(editor.snapshot.context, parent!.path) ??
-                    'children',
-                  i,
-                ]
-          editor.apply({
+      // A group of zero or one child can't hold a duplicate key, so skip
+      // the set-building scan. This is the common shape for container
+      // fields (a row's single cell, a cell's single content block).
+      if (siblingNodes.length > 1) {
+        const seenKeys = new Set<string>()
+        for (let index = 0; index < siblingNodes.length; index++) {
+          const siblingKey = siblingNodes[index]?._key
+          if (siblingKey === undefined) {
+            continue
+          }
+          if (seenKeys.has(siblingKey)) {
+            groupIsUnique = false
+            // The second occurrence of this node's own key is the one the
+            // previous per-node implementation renamed; preserve that so
+            // generated keys land on the same node.
+            if (siblingKey === key && duplicateIndexOfKey === -1) {
+              duplicateIndexOfKey = index
+            }
+          } else {
+            seenKeys.add(siblingKey)
+          }
+        }
+      }
+
+      if (duplicateIndexOfKey !== -1) {
+        const newKey = editor.snapshot.context.keyGenerator()
+        debug.normalization('Fixing duplicate key on node')
+        const numericPath: Path = parent
+          ? [
+              ...parent.path,
+              getChildFieldName(editor.snapshot.context, parent.path) ??
+                'children',
+              duplicateIndexOfKey,
+            ]
+          : [duplicateIndexOfKey]
+        editor.apply({
+          type: 'set',
+          path: [...numericPath, '_key'],
+          value: newKey,
+          inverse: {
             type: 'set',
             path: [...numericPath, '_key'],
-            value: newKey,
-            inverse: {
-              type: 'set',
-              path: [...numericPath, '_key'],
-              value: key,
-            },
-          })
-          return
-        }
+            value: key,
+          },
+        })
+        return
+      }
+
+      if (groupIsUnique) {
+        markSiblingGroupVerified(editor, parent)
       }
     }
   }
