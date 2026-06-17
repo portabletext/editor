@@ -1,5 +1,4 @@
 import {subscribeToOperations} from '../engine/core/operation-channel'
-import {buildListIndexMap} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
 import {transformBlockIndexMap} from '../internal-utils/transform-block-index-map'
@@ -7,12 +6,15 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorContext} from './editor-snapshot'
 
 /**
- * Keeps `blockIndexMap` and `listIndexMap` in sync with the value.
- * `blockIndexMap` is transformed incrementally per operation;
- * `listIndexMap` is rebuilt because list-item numbering depends on
- * root-block adjacency, which any shallow op can disturb non-locally.
- * Both update synchronously within the apply that changed the value, so
- * subsequent operations and readers never observe stale maps.
+ * Keeps `blockIndexMap` in sync with the value, transforming it
+ * incrementally per operation so the operation pipeline (which resolves
+ * keyed paths through it) never observes a stale map.
+ *
+ * `listIndexMap` is only consumed by the text-block renderer, never by
+ * operations or selectors, so it is invalidated here and rebuilt lazily
+ * on read (`getListIndexMap`) instead of per operation. List-item
+ * numbering depends on block adjacency that any structural op can disturb
+ * non-locally, so any structural op marks it dirty.
  */
 export function subscribeUpdateValue(
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
@@ -59,19 +61,11 @@ export function subscribeUpdateValue(
       },
     )
 
-    // List index can only change as a result of root-level insert/remove or
-    // a property change on a root block. Deeper ops cannot shift list
-    // indexes.
-    if (operation.path.length <= 2) {
-      buildListIndexMap(
-        {
-          schema: context.schema,
-          value: editor.snapshot.context.value,
-          containers: editor.snapshot.context.containers,
-        },
-        editor.listIndexMap,
-      )
-    }
+    // List-item numbering depends on block adjacency that a structural op
+    // anywhere in the tree can disturb non-locally, so invalidate rather
+    // than reason about which paths matter. The map is rebuilt lazily the
+    // next time the renderer reads it.
+    editor.listIndexMapDirty = true
   })
 
   return () => {

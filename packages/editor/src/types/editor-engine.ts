@@ -43,6 +43,15 @@ export interface PortableTextEditorEngine extends DOMEditor {
   blockIndexMap: Map<string, number>
   history: History
   listIndexMap: Map<string, number>
+  /**
+   * `listIndexMap` is derived from the whole value (list-item numbering
+   * depends on block adjacency), so structural operations invalidate it
+   * rather than rebuild it. The only reader is the text-block renderer,
+   * which rebuilds on demand via `getListIndexMap`. Deferring the rebuild
+   * to read time collapses a per-operation O(value) walk into one rebuild
+   * per render, regardless of how many operations a batch applied.
+   */
+  listIndexMapDirty: boolean
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
 

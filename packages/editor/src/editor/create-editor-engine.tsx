@@ -69,6 +69,7 @@ export function createEditorEngine(
   editor.history = {undos: [], redos: []}
 
   editor.listIndexMap = new Map<string, number>()
+  editor.listIndexMapDirty = false
   editor.remotePatches = []
   editor.undoStepId = undefined
 

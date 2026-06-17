@@ -57,11 +57,10 @@ export function buildIndexMaps(
 
 /**
  * Mutates `listIndexMap` in place. Recomputes list-item indices for every
- * root block. Called per op by `updateValuePlugin` because list-item
- * numbering depends on root-block adjacency, which any structural op can
- * disturb non-locally.
+ * root block. Called lazily by `getListIndexMap` when the map is read after
+ * a structural change, and once at startup by `buildIndexMaps`.
  */
-export function buildListIndexMap(
+function buildListIndexMap(
   context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
   listIndexMap: Map<string, number>,
 ): void {
@@ -175,6 +174,26 @@ export function buildListIndexMap(
       level: block.level,
     }
   }
+}
+
+/**
+ * Return `listIndexMap`, rebuilding it first if a structural operation has
+ * marked it dirty since the last read. The renderer is the only reader, so
+ * deferring the rebuild to read time turns a per-operation O(value) walk
+ * into at most one rebuild per render.
+ */
+export function getListIndexMap(editor: {
+  listIndexMap: Map<string, number>
+  listIndexMapDirty: boolean
+  snapshot: {
+    context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
+  }
+}): Map<string, number> {
+  if (editor.listIndexMapDirty) {
+    buildListIndexMap(editor.snapshot.context, editor.listIndexMap)
+    editor.listIndexMapDirty = false
+  }
+  return editor.listIndexMap
 }
 
 export function collectDescendantIndexes(
