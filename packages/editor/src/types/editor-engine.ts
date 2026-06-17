@@ -52,6 +52,19 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * per render, regardless of how many operations a batch applied.
    */
   listIndexMapDirty: boolean
+  /**
+   * Serialized paths of sibling groups (a node's keyed child array, or the
+   * root value array as `''`) whose children have been verified to carry no
+   * duplicate `_key`s. Per-node duplicate-key normalization skips groups
+   * listed here. The op stream removes a group only when an operation
+   * changes that group's own direct membership (insert/remove/re-key/replace
+   * of a direct child), so an edit deep inside one group never forces a
+   * re-scan of its ancestors, and an operation that introduces a subtree
+   * also removes that subtree's groups so a reused key can't inherit a stale
+   * verdict. Works identically at every depth; the root is just the group
+   * with the empty path.
+   */
+  verifiedUniqueChildGroups: Set<string>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
 

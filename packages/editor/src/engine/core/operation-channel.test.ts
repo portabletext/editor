@@ -19,6 +19,7 @@ function createBareEditor(value: Array<PortableTextBlock>): Editor {
   editor.containers = new Map()
   editor.blockIndexMap = new Map()
   editor.listIndexMap = new Map()
+  editor.verifiedUniqueChildGroups = new Set()
   editor.snapshot = {
     blockIndexMap: editor.blockIndexMap,
     context: {
