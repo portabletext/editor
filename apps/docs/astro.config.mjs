@@ -3,6 +3,7 @@ import starlight from '@astrojs/starlight'
 import tailwindcss from '@tailwindcss/vite'
 import {defineConfig} from 'astro/config'
 import starlightLinksValidator from 'starlight-links-validator'
+import starlightLlmsTxt from 'starlight-llms-txt'
 import {createStarlightTypeDocPlugin} from 'starlight-typedoc'
 
 const [editorTypeDoc, editorTypeDocSidebar] = createStarlightTypeDocPlugin()
@@ -194,6 +195,14 @@ export default defineConfig({
         },
       ],
       plugins: [
+        starlightLlmsTxt({
+          description:
+            'Portable Text is a JSON-based specification for structured block content, with an official headless React editor and serializers for React, HTML, Markdown, Vue, and Svelte.',
+          // The splash page mounts a live <PortableTextEditor> React island, and
+          // the plugin's container has no React renderer, so it serves the raw
+          // MDX body instead of trying to render framework components to text.
+          rawContent: true,
+        }),
         editorTypeDoc({
           entryPoints: ['../../packages/editor/src/index.ts'],
           output: 'api/editor',

@@ -46,5 +46,8 @@
     "ts-morph": "^27.0.2",
     "typedoc": "^0.28.15",
     "typedoc-plugin-markdown": "^4.8.0"
+  },
+  "devDependencies": {
+    "starlight-llms-txt": "^0.10.0"
   }
 }
