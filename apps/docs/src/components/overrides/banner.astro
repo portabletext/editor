@@ -1,0 +1,25 @@
+---
+import Default from '@astrojs/starlight/components/Banner.astro'
+
+// Agent-facing directive: a visually hidden pointer to the Markdown variants and
+// the llms.txt index, rendered at the top of <main> on every page. This is what
+// the "llms.txt directive in HTML" check scans for. Splash pages have no `id`
+// and no Markdown variant, so they only advertise the index.
+const id = Astro.locals.starlightRoute.entry.id
+const markdownHref = id ? `/${id}.md` : undefined
+---
+
+<Default {...Astro.props}><slot /></Default>
+
+<div class="sr-only" data-llms-txt>
+  {
+    markdownHref ? (
+      <span>
+        This page is available as Markdown at{' '}
+        <a href={markdownHref}>{markdownHref}</a>.{' '}
+      </span>
+    ) : null
+  }
+  For the full documentation index, see <a href="/llms.txt">/llms.txt</a>, or
+  the complete corpus at <a href="/llms-full.txt">/llms-full.txt</a>.
+</div>

@@ -47,6 +47,7 @@ export default defineConfig({
       title: 'Portable Text',
       components: {
         PageTitle: './src/components/overrides/page-title.astro',
+        Banner: './src/components/overrides/banner.astro',
       },
       customCss: ['./src/styles/globals.css'],
       editLink: {
