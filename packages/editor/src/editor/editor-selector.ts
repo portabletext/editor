@@ -34,6 +34,21 @@ export type EditorSelector<TSelected> = (snapshot: EditorSnapshot) => TSelected
  *  const schema = useEditorSelector(editor, (snapshot) => snapshot.context.schema)
  * }
  * ```
+ * @example
+ * Pass a `compare` function as the third argument for selectors that
+ * return a fresh array or object on every call. Selectors like
+ * {@link getSelectedValue}, {@link getFocusBlock}, and
+ * {@link getApplicableSchema} allocate new aggregates per read. The
+ * default `===` comparator will treat each as a change and trigger a
+ * re-render even when the underlying state is identical.
+ * ```tsx
+ * import { useEditorSelector, getSelectedValue } from '@portabletext/editor'
+ * import { isEqual } from 'lodash'
+ *
+ * function MyComponent(editor) {
+ *  const selected = useEditorSelector(editor, getSelectedValue, isEqual)
+ * }
+ * ```
  * @group Hooks
  */
 export function useEditorSelector<TSelected>(

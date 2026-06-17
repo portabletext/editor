@@ -30,6 +30,13 @@ export type ContainerNodeForType<TType extends string> = TType extends
  * `node` is `PortableTextObject` because containers cannot register the
  * built-in `'span'` or `'block'` types (those are leaves and text blocks
  * respectively).
+ *
+ * `focused` and `selected` are not equivalent. `focused` is true only for
+ * the nearest container ancestor of a collapsed selection focus. For a
+ * caret inside a container's editable children, the inner text block
+ * resolves as the focus block, so the outer container reports
+ * `focused: false`, `selected: true`. Gate caret-inside-container UI on
+ * `selected`, not `focused`.
  */
 export type ContainerRenderProps = {
   attributes: Record<string, unknown>
