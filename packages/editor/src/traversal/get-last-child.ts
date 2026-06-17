@@ -1,6 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {getChildren} from './get-children'
+import {getChildrenAt} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -12,7 +12,7 @@ export function getLastChild(
   snapshot: TraversalSnapshot,
   path: Path,
 ): {node: Node; path: Path} | undefined {
-  const children = getChildren(snapshot, path)
+  const children = getChildrenAt(snapshot, path)
 
   return children.at(-1)
 }

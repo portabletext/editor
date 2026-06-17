@@ -1,6 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {getChildren} from './get-children'
+import {getChildrenAt} from './get-children'
 import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -22,12 +22,12 @@ export function getLeaf(
 
   // If starting from root (empty path), descend into first/last child
   if (currentPath.length === 0) {
-    const children = getChildren(snapshot, [])
+    const children = getChildrenAt(snapshot, [])
     if (children.length === 0) {
       return undefined
     }
     const firstOrLast = edge === 'end' ? children.at(-1)! : children.at(0)!
-    const nodeChildren = getChildren(snapshot, firstOrLast.path)
+    const nodeChildren = getChildrenAt(snapshot, firstOrLast.path)
     if (nodeChildren.length === 0) {
       return firstOrLast
     }
@@ -38,7 +38,7 @@ export function getLeaf(
     if (!entry) {
       return undefined
     }
-    const children = getChildren(snapshot, currentPath)
+    const children = getChildrenAt(snapshot, currentPath)
     if (children.length === 0) {
       return entry
     }
@@ -46,7 +46,7 @@ export function getLeaf(
 
   // Descend to deepest leaf
   while (true) {
-    const children = getChildren(snapshot, currentPath)
+    const children = getChildrenAt(snapshot, currentPath)
     if (children.length === 0) {
       const entry = getNode(snapshot, currentPath)
       return entry ?? undefined

@@ -14,7 +14,7 @@ import {unsetMatchedNodesInRange} from '../internal-utils/unset-matched-in-range
 import {unwrapContainer} from '../internal-utils/unwrap-container'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {getAncestor} from '../traversal/get-ancestor'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getParent} from '../traversal/get-parent'
 import {isBlock} from '../traversal/is-block'
@@ -123,7 +123,7 @@ export const deleteOperationImplementation: OperationImplementation<
       },
     )
     const enclosingContainerChildren = enclosingContainer
-      ? getChildren(operation.editor.snapshot, enclosingContainer.path)
+      ? getChildrenAt(operation.editor.snapshot, enclosingContainer.path)
       : undefined
     const [firstChild] = enclosingContainerChildren ?? []
     if (

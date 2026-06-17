@@ -1,7 +1,7 @@
 import type {Path} from '../engine/interfaces/path'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 
 /**
@@ -44,7 +44,7 @@ export function getUnwrapTarget(
       return current
     }
 
-    if (getChildren(snapshot, enclosing.path).length !== 1) {
+    if (getChildrenAt(snapshot, enclosing.path).length !== 1) {
       return undefined
     }
 

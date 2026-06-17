@@ -1,7 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {parentPath} from '../engine/path/parent-path'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {isObject} from '../traversal/is-object'
 import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -29,7 +29,7 @@ export const getPreviousInlineObjects: EditorSelector<
     return []
   }
 
-  const children = getChildren(snapshot, parentPath(point.path))
+  const children = getChildrenAt(snapshot, parentPath(point.path))
   const inlineObjects: Array<{node: PortableTextObject; path: ChildPath}> = []
 
   for (const child of children) {

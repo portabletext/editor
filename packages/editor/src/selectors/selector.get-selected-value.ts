@@ -8,7 +8,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Path} from '../engine/interfaces/path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
-import {getNodeChildren} from '../traversal/get-children'
+import {getChildrenOf} from '../traversal/get-children'
 import type {EditorSelectionPoint} from '../types/editor'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
@@ -130,7 +130,7 @@ function sliceArray({
       continue
     }
 
-    const childInfo = getNodeChildren(context, block, parent)
+    const childInfo = getChildrenOf(context, block, parent)
 
     if (!childInfo) {
       result.push(block)

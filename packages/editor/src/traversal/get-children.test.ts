@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {serializePath} from '../paths/serialize-path'
-import {getChildren} from './get-children'
+import {getChildrenAt} from './get-children'
 import {
   codeBlockContainer,
   createNodeTraversalTestbed,
@@ -8,11 +8,11 @@ import {
   tableContainers,
 } from './node-traversal-testbed'
 
-describe(getChildren.name, () => {
+describe(getChildrenAt.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('root children', () => {
-    expect(getChildren(testbed.snapshot, [])).toEqual([
+    expect(getChildrenAt(testbed.snapshot, [])).toEqual([
       {node: testbed.textBlock1, path: [{_key: 'k3'}]},
       {node: testbed.image, path: [{_key: 'k4'}]},
       {node: testbed.textBlock2, path: [{_key: 'k6'}]},
@@ -22,7 +22,7 @@ describe(getChildren.name, () => {
   })
 
   test('text block children', () => {
-    expect(getChildren(testbed.snapshot, [{_key: 'k3'}])).toEqual([
+    expect(getChildrenAt(testbed.snapshot, [{_key: 'k3'}])).toEqual([
       {node: testbed.span1, path: [{_key: 'k3'}, 'children', {_key: 'k0'}]},
       {
         node: testbed.stockTicker1,
@@ -33,7 +33,7 @@ describe(getChildren.name, () => {
   })
 
   test('code block children (code lines)', () => {
-    expect(getChildren(testbed.snapshot, [{_key: 'k11'}])).toEqual([
+    expect(getChildrenAt(testbed.snapshot, [{_key: 'k11'}])).toEqual([
       {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
       {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
     ])
@@ -41,7 +41,7 @@ describe(getChildren.name, () => {
 
   test('code line children', () => {
     expect(
-      getChildren(testbed.snapshot, [{_key: 'k11'}, 'code', {_key: 'k8'}]),
+      getChildrenAt(testbed.snapshot, [{_key: 'k11'}, 'code', {_key: 'k8'}]),
     ).toEqual([
       {
         node: testbed.codeSpan1,
@@ -51,7 +51,7 @@ describe(getChildren.name, () => {
   })
 
   test('table children (rows)', () => {
-    expect(getChildren(testbed.snapshot, [{_key: 'k26'}])).toEqual([
+    expect(getChildrenAt(testbed.snapshot, [{_key: 'k26'}])).toEqual([
       {node: testbed.row1, path: [{_key: 'k26'}, 'rows', {_key: 'k21'}]},
       {node: testbed.row2, path: [{_key: 'k26'}, 'rows', {_key: 'k25'}]},
     ])
@@ -59,7 +59,7 @@ describe(getChildren.name, () => {
 
   test('row children (cells)', () => {
     expect(
-      getChildren(testbed.snapshot, [{_key: 'k26'}, 'rows', {_key: 'k21'}]),
+      getChildrenAt(testbed.snapshot, [{_key: 'k26'}, 'rows', {_key: 'k21'}]),
     ).toEqual([
       {
         node: testbed.cell1,
@@ -74,7 +74,7 @@ describe(getChildren.name, () => {
 
   test('cell with multiple blocks', () => {
     expect(
-      getChildren(testbed.snapshot, [
+      getChildrenAt(testbed.snapshot, [
         {_key: 'k26'},
         'rows',
         {_key: 'k21'},
@@ -111,7 +111,7 @@ describe(getChildren.name, () => {
 
   test('block inside cell children', () => {
     expect(
-      getChildren(testbed.snapshot, [
+      getChildrenAt(testbed.snapshot, [
         {_key: 'k26'},
         'rows',
         {_key: 'k21'},
@@ -154,16 +154,16 @@ describe(getChildren.name, () => {
 
   test('leaf node returns empty array', () => {
     expect(
-      getChildren(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
+      getChildrenAt(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
     ).toEqual([])
   })
 
   test('block object without children returns empty array', () => {
-    expect(getChildren(testbed.snapshot, [{_key: 'k4'}])).toEqual([])
+    expect(getChildrenAt(testbed.snapshot, [{_key: 'k4'}])).toEqual([])
   })
 
   test('invalid path returns empty array', () => {
-    expect(getChildren(testbed.snapshot, [{_key: 'nonexistent'}])).toEqual([])
+    expect(getChildrenAt(testbed.snapshot, [{_key: 'nonexistent'}])).toEqual([])
   })
 
   test('non-editable code block returns empty array', () => {
@@ -172,7 +172,7 @@ describe(getChildren.name, () => {
       tableContainers,
     )
     expect(
-      getChildren(
+      getChildrenAt(
         {
           ...testbed.snapshot,
           context: {...testbed.snapshot.context, containers: tableOnly},
@@ -187,7 +187,7 @@ describe(getChildren.name, () => {
       codeBlockContainer,
     ])
     expect(
-      getChildren(
+      getChildrenAt(
         {
           ...testbed.snapshot,
           context: {...testbed.snapshot.context, containers: codeOnly},
@@ -204,7 +204,7 @@ describe(getChildren.name, () => {
       ...testbed.snapshot,
       blockIndexMap: new Map<string, number>(),
     }
-    expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
+    expect(getChildrenAt(snapshot, [{_key: 'k11'}])).toEqual([
       {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
       {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
     ])
@@ -216,7 +216,7 @@ describe(getChildren.name, () => {
     const staleMap = new Map(testbed.snapshot.blockIndexMap)
     staleMap.set(serializePath([{_key: 'k11'}]), 0)
     const snapshot = {...testbed.snapshot, blockIndexMap: staleMap}
-    expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
+    expect(getChildrenAt(snapshot, [{_key: 'k11'}])).toEqual([
       {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
       {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
     ])

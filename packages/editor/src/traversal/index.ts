@@ -1,7 +1,7 @@
 export {getAncestor} from './get-ancestor'
 export {getAncestors} from './get-ancestors'
 export {getBlock, isBlock} from './is-block'
-export {getChildren} from './get-children'
+export {getChildrenAt, getChildrenOf} from './get-children'
 export {getEnclosingBlock} from './get-enclosing-block'
 export {getFirstChild} from './get-first-child'
 export {getLastChild} from './get-last-child'

@@ -6,7 +6,7 @@ import {
 } from '@portabletext/schema'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerAt} from '../../schema/resolve-container-at'
-import {getNodeChildren} from '../../traversal/get-children'
+import {getChildrenOf} from '../../traversal/get-children'
 import {getNode} from '../../traversal/get-node'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
@@ -102,7 +102,7 @@ export const modifyDescendant = <N extends Node>(
       | undefined
 
     for (let i = 0; i < keyedSegments.length; i++) {
-      const result = getNodeChildren(context, currentNode, currentParent)
+      const result = getChildrenOf(context, currentNode, currentParent)
       if (!result) {
         return
       }
@@ -209,7 +209,7 @@ export const modifyDescendant = <N extends Node>(
  *
  * When path is empty, modifies the editor's children directly.
  * When path points to a node, resolves the correct child field name
- * via getNodeChildren and modifies that field.
+ * via getChildrenOf and modifies that field.
  */
 export const modifyChildren = (
   editor: Editor,

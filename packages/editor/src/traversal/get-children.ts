@@ -3,6 +3,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
+import {resolveContainerOf} from '../schema/resolve-container-of'
 import type {
   Containers,
   RegisteredContainer,
@@ -12,11 +13,20 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
- * Get the children of a node at a given path.
+ * Get the children of the node at a given path.
+ *
+ * Resolves positional registrations (containers registered only inside a
+ * parent's `of`) as it descends. Returns `[]` when the path doesn't
+ * resolve, when the target node has no editable children, or when an
+ * ancestor's `_type` is not registered as a container.
+ *
+ * Path-based variant. When the caller already holds the node, prefer
+ * {@link getChildrenOf} for an `O(1)` lookup that doesn't re-walk from
+ * the root.
  *
  * @beta
  */
-export function getChildren(
+export function getChildrenAt(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: Node; path: Path}> {
@@ -57,7 +67,7 @@ export function getChildren(
       : [...currentPath, currentFieldName, {_key: node._key}]
     isRoot = false
 
-    const next = getNodeChildren(snapshot.context, node, currentParent)
+    const next = getChildrenOf(snapshot.context, node, currentParent)
 
     if (!next) {
       return []
@@ -77,18 +87,20 @@ export function getChildren(
 }
 
 /**
- * Resolve a node's editable child array.
+ * Get the editable children of a held node, plus the field name they
+ * live on and the resolved container registration for the node itself.
  *
- * When `parent` is provided and its `of` declares a positional entry
- * matching `node._type`, that positional entry's `field` is used.
- * Otherwise the top-level `containers.get(node._type)` provides the
- * fallback.
+ * Returns `undefined` when the node has no editable children at this
+ * position (unregistered `_type`, leaf, or non-container shape).
  *
- * The returned `parent` is the resolved container entry for `node`
- * itself (used by the caller to thread further descent).
+ * Node-based variant. The companion to {@link getChildrenAt} for
+ * consumers iterating the value tree recursively; descend with the
+ * returned `parent` to thread positional resolution down the next
+ * level.
  *
+ * @beta
  */
-export function getNodeChildren(
+export function getChildrenOf(
   context: {
     schema: EditorSchema
     containers: Containers
@@ -116,7 +128,7 @@ export function getNodeChildren(
     node._type !== context.schema.block.name &&
     node._type !== context.schema.span.name
   ) {
-    const resolved = resolveNodeContainer(context.containers, parent, node)
+    const resolved = resolveContainerOf(context.containers, parent, node)
 
     if (!resolved) {
       return undefined
@@ -150,28 +162,4 @@ export function getNodeChildren(
   }
 
   return undefined
-}
-
-/**
- * Pick the positional override from `parent.of` if present; fall back
- * to the top-level entry. Returns only `RegisteredContainer` entries
- * since leaves do not have editable children.
- */
-function resolveNodeContainer(
-  containers: Containers,
-  parent: RegisteredContainer | undefined,
-  node: Node,
-): RegisteredContainer | undefined {
-  if (parent?.of) {
-    for (const entry of parent.of) {
-      if (entry.type === node._type) {
-        // Only return container entries; leaves have no editable children.
-        if ('field' in entry) {
-          return entry
-        }
-        return undefined
-      }
-    }
-  }
-  return containers.get(node._type)
 }

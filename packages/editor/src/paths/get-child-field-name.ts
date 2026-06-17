@@ -5,7 +5,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {getNodeChildren} from '../traversal/get-children'
+import {getChildrenOf} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
@@ -23,7 +23,7 @@ export function getChildFieldName(
   },
   path: Path,
 ): string | undefined {
-  let nodeChildren = getNodeChildren(context, {value: context.value})
+  let nodeChildren = getChildrenOf(context, {value: context.value})
   let currentParent: RegisteredContainer | undefined = nodeChildren?.parent
 
   for (let i = 0; i < path.length; i++) {
@@ -50,11 +50,11 @@ export function getChildFieldName(
     }
 
     if (i === path.length - 1) {
-      const targetInfo = getNodeChildren(context, node, currentParent)
+      const targetInfo = getChildrenOf(context, node, currentParent)
       return targetInfo?.fieldName
     }
 
-    nodeChildren = getNodeChildren(context, node, currentParent)
+    nodeChildren = getChildrenOf(context, node, currentParent)
     currentParent = nodeChildren?.parent
   }
 

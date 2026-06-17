@@ -16,7 +16,7 @@ import {rangeStart} from '../engine/range/range-start'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
@@ -82,7 +82,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    const reversedChildren = getChildren(editor.snapshot, blockPath)
+    const reversedChildren = getChildrenAt(editor.snapshot, blockPath)
 
     for (let index = reversedChildren.length - 1; index >= 0; index--) {
       const entry = reversedChildren[index]
@@ -111,7 +111,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    for (const {node: child, path: childPath} of getChildren(
+    for (const {node: child, path: childPath} of getChildrenAt(
       editor.snapshot,
       blockPath,
     )) {
@@ -200,7 +200,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           continue
         }
 
-        const children = getChildren(editor.snapshot, blockPath)
+        const children = getChildrenAt(editor.snapshot, blockPath)
 
         for (const {node: child, path: childPath} of children) {
           if (!isSpan({schema: editor.snapshot.context.schema}, child)) {

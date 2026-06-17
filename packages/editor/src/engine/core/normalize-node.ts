@@ -12,7 +12,7 @@ import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {setNodeProperties} from '../../internal-utils/set-node-properties'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
-import {getChildren} from '../../traversal/get-children'
+import {getChildrenAt} from '../../traversal/get-children'
 import {getNode} from '../../traversal/get-node'
 import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
@@ -55,7 +55,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Merge spans with same set of .marks
    */
   if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
-    const children = getChildren(editor.snapshot, path)
+    const children = getChildrenAt(editor.snapshot, path)
 
     for (let i = 0; i < children.length - 1; i++) {
       const {node: child} = children[i]!
@@ -170,7 +170,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (path.length > 0 && nodeRecord['_key'] !== undefined) {
     const parent = getParent(editor.snapshot, path)
     const siblings = parent
-      ? getChildren(editor.snapshot, parent.path)
+      ? getChildrenAt(editor.snapshot, parent.path)
       : editor.snapshot.context.value.map((child, index) => ({
           node: child,
           path: [{_key: child._key}],
@@ -307,7 +307,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       (decorator) => decorator.name,
     )
 
-    for (const {node: child, path: childPath} of getChildren(
+    for (const {node: child, path: childPath} of getChildrenAt(
       editor.snapshot,
       path,
     )) {
@@ -509,7 +509,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // visited individually, but container children may not be visited if
   // containers gates traversal. Handle it at the parent level as well.
   if (isObject(editor.snapshot, node)) {
-    const children = [...getChildren(editor.snapshot, path)]
+    const children = [...getChildrenAt(editor.snapshot, path)]
 
     if (children.length > 1) {
       const seen = new Map<string, number>()

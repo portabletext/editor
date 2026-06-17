@@ -6,7 +6,7 @@ import type {Path} from '../engine/interfaces/path'
 import {parentPath as getParentPath} from '../engine/path/parent-path'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/container-types'
-import {getNodeChildren} from '../traversal/get-children'
+import {getChildrenOf} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {BlockIndexMap} from './block-index-map'
 import {buildIndexMaps, collectDescendantIndexes} from './build-index-maps'
@@ -239,7 +239,7 @@ function resolveSiblingContext(
   if (!resolvedParent) {
     return undefined
   }
-  const childrenResult = getNodeChildren(
+  const childrenResult = getChildrenOf(
     context,
     resolvedParent.node,
     resolvedParent.containerOfParent,
@@ -318,7 +318,7 @@ function pruneSubtreeAtPath(
 /**
  * Generic walk over keyed-child arrays in a node. Iterates every
  * array-valued field; for each entry with a `_key`, recurses. Mirrors
- * `getNodeChildren` shape but without requiring container resolution.
+ * `getChildrenOf` shape but without requiring container resolution.
  */
 function walkKeyedChildrenInValue(
   node: Node,
@@ -381,7 +381,7 @@ function addSubtree(
  * resolved container field. Returns `undefined` when any field segment
  * isn't the registered container field at that level, since such paths are
  * never indexed. Also returns the container entry of the node's parent,
- * which `getNodeChildren`/`collectDescendantIndexes` need to resolve
+ * which `getChildrenOf`/`collectDescendantIndexes` need to resolve
  * positional `of` shapes for further descent.
  */
 function resolveIndexableNode(
@@ -401,7 +401,7 @@ function resolveIndexableNode(
   let containerOfParent: RegisteredContainer | undefined
   let index = 0
   while (index < keyedPath.length) {
-    const childrenResult = getNodeChildren(context, current, containerOfParent)
+    const childrenResult = getChildrenOf(context, current, containerOfParent)
     if (!childrenResult) {
       return undefined
     }

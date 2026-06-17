@@ -8,7 +8,7 @@ import {
 } from '../renderers/renderer.types'
 import {buildPublicContainers} from '../schema/build-public-containers'
 import {resolveNestedContainer} from '../schema/resolve-containers-batch'
-import {getChildren} from './get-children'
+import {getChildrenAt} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 function buildBlockIndexMap(
@@ -39,7 +39,7 @@ function buildBlockIndexMap(
  *
  * Two cells, two different fields, no top-level `cell` registration.
  */
-describe('getChildren with same _type registered under different parents', () => {
+describe('getChildrenAt with same _type registered under different parents', () => {
   const schema = compileSchema(
     defineSchema({
       blockObjects: [
@@ -172,8 +172,8 @@ describe('getChildren with same _type registered under different parents', () =>
     blockIndexMap,
   }
 
-  test('getChildren of cell inside table resolves content array', () => {
-    const result = getChildren(snapshot, [{_key: 't1'}, 'rows', {_key: 'tc'}])
+  test('getChildrenAt of cell inside table resolves content array', () => {
+    const result = getChildrenAt(snapshot, [{_key: 't1'}, 'rows', {_key: 'tc'}])
     expect(result).toHaveLength(1)
     expect(result[0]?.node).toBe(tableCellTextBlock)
     expect(result[0]?.path).toEqual([
@@ -185,8 +185,12 @@ describe('getChildren with same _type registered under different parents', () =>
     ])
   })
 
-  test('getChildren of cell inside diagram resolves markers array', () => {
-    const result = getChildren(snapshot, [{_key: 'd1'}, 'shapes', {_key: 'dc'}])
+  test('getChildrenAt of cell inside diagram resolves markers array', () => {
+    const result = getChildrenAt(snapshot, [
+      {_key: 'd1'},
+      'shapes',
+      {_key: 'dc'},
+    ])
     expect(result).toHaveLength(1)
     expect(result[0]?.node).toBe(diagramCellTextBlock)
     expect(result[0]?.path).toEqual([

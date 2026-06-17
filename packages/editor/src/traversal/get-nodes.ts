@@ -7,7 +7,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {getChildren, getNodeChildren} from './get-children'
+import {getChildrenAt, getChildrenOf} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -74,7 +74,7 @@ function* walkStandalone(
   isRoot: boolean,
   parent?: RegisteredContainer,
 ): Generator<{node: Node; path: Path}, void, undefined> {
-  const next = getNodeChildren(context, node, parent)
+  const next = getChildrenOf(context, node, parent)
   if (!next) {
     return
   }
@@ -102,7 +102,7 @@ function* getNodesSimple(
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {match, reverse = false} = options
 
-  const children = getChildren(snapshot, path)
+  const children = getChildrenAt(snapshot, path)
 
   const entries = reverse ? [...children].reverse() : children
 
@@ -197,7 +197,7 @@ function* getNodesInRange(
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {from, to, match, reverse = false} = options
 
-  const children = getChildren(snapshot, path)
+  const children = getChildrenAt(snapshot, path)
   const entries = reverse ? [...children].reverse() : children
 
   for (const entry of entries) {

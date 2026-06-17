@@ -1,6 +1,6 @@
 import {parentPath} from '../engine/path/parent-path'
 import {pathEquals} from '../engine/path/path-equals'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getSibling} from '../traversal/get-sibling'
 import {raise} from './behavior.types.action'
@@ -25,7 +25,7 @@ export const abstractMoveBehaviors = [
         return false
       }
 
-      const siblings = getChildren(snapshot, parentPath(originEntry.path))
+      const siblings = getChildrenAt(snapshot, parentPath(originEntry.path))
       const originIndex = siblings.findIndex(
         (sibling) => sibling.node._key === originEntry.node._key,
       )

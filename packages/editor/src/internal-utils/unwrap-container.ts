@@ -1,7 +1,7 @@
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {getUnwrapTarget} from './get-unwrap-target'
 
@@ -28,7 +28,7 @@ export function unwrapContainer(
   originPath: Path,
   position: 'before' | 'after',
 ): void {
-  const children = getChildren(editor.snapshot, originPath)
+  const children = getChildrenAt(editor.snapshot, originPath)
   if (children.length === 0) {
     editor.apply({type: 'unset', path: originPath})
     return

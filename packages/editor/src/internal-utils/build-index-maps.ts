@@ -5,7 +5,7 @@ import type {Path} from '../engine/interfaces/path'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/container-types'
-import {getNodeChildren} from '../traversal/get-children'
+import {getChildrenOf} from '../traversal/get-children'
 import type {KeyedSegment} from '../types/paths'
 
 // Maps for each list type, keeping track of the current list count for each
@@ -184,7 +184,7 @@ export function collectDescendantIndexes(
   parent: RegisteredContainer | undefined,
   blockIndexMap: Map<string, number>,
 ): void {
-  const result = getNodeChildren(context, node, parent)
+  const result = getChildrenOf(context, node, parent)
   if (!result) {
     return
   }

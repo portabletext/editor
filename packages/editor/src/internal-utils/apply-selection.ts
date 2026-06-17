@@ -7,7 +7,7 @@ import type {Range} from '../engine/interfaces/range'
 import {isPoint} from '../engine/point/is-point'
 import {pointEquals} from '../engine/point/point-equals'
 import {isRange} from '../engine/range/is-range'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {getLeaf} from '../traversal/get-leaf'
 import {getNode} from '../traversal/get-node'
 import {isBlock} from '../traversal/is-block'
@@ -96,7 +96,7 @@ function resolveSelectionPoint(
   const entry = getNode(snapshot, selectionPoint.path)
 
   if (entry) {
-    const children = getChildren(snapshot, entry.path)
+    const children = getChildrenAt(snapshot, entry.path)
 
     // Leaf node (span, inline object, block object). Clamp offset.
     if (children.length === 0) {

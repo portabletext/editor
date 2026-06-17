@@ -14,7 +14,7 @@ import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
@@ -159,7 +159,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
         }
       }
 
-      const children = getChildren(editor.snapshot, blockPath)
+      const children = getChildrenAt(editor.snapshot, blockPath)
 
       // Use the tracked range (updated after splits) or fall back to editor.selection
       const selectionRange = ref?.current ?? editor.snapshot.context.selection

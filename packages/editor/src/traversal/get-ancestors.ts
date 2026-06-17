@@ -4,7 +4,7 @@ import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getNodeChildren} from './get-children'
+import {getChildrenOf} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -94,12 +94,12 @@ export function getAncestors(
       return []
     }
 
-    // Descend with positional awareness. `getNodeChildren` checks the
+    // Descend with positional awareness. `getChildrenOf` checks the
     // current parent's `of` for a positional override before falling
     // back to the top-level `containers` map - so same-`_type`
     // registered under different parents with different `field`
     // resolves to the right entry at this position.
-    const next = getNodeChildren(context, node, currentParent)
+    const next = getChildrenOf(context, node, currentParent)
     if (!next) {
       return []
     }

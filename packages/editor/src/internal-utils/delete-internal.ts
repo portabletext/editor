@@ -9,7 +9,7 @@ import {rangeEdges} from '../engine/range/range-edges'
 import type {TextUnit} from '../engine/types/types'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {resolveContainerByPath} from '../schema/resolve-container-by-path'
-import {getChildren} from '../traversal/get-children'
+import {getChildrenAt} from '../traversal/get-children'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getFirstChild} from '../traversal/get-first-child'
 import {getNode} from '../traversal/get-node'
@@ -573,7 +573,7 @@ function clearContainerContents(
     return
   }
 
-  for (const child of getChildren(editor.snapshot, containerPath)) {
+  for (const child of getChildrenAt(editor.snapshot, containerPath)) {
     clearContainerContents(editor, child.path)
   }
 }
