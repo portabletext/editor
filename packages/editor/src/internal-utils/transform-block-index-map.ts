@@ -320,7 +320,7 @@ function pruneSubtreeAtPath(
  * array-valued field; for each entry with a `_key`, recurses. Mirrors
  * `getNodeChildren` shape but without requiring container resolution.
  */
-function walkKeyedChildrenInValue(
+export function walkKeyedChildrenInValue(
   node: Node,
   nodePath: Path,
   visit: (childPath: Path) => void,

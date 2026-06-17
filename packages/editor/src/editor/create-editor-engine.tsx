@@ -70,6 +70,7 @@ export function createEditorEngine(
 
   editor.listIndexMap = new Map<string, number>()
   editor.listIndexMapDirty = false
+  editor.verifiedUniqueChildGroups = new Set<string>()
   editor.remotePatches = []
   editor.undoStepId = undefined
 

@@ -11,6 +11,7 @@ import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {setNodeProperties} from '../../internal-utils/set-node-properties'
 import {getChildFieldName} from '../../paths/get-child-field-name'
+import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
 import {getNode} from '../../traversal/get-node'
@@ -169,37 +170,71 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Fix duplicate _key among siblings
   if (path.length > 0 && nodeRecord['_key'] !== undefined) {
     const parent = getParent(editor.snapshot, path)
-    const siblings = parent
-      ? getChildren(editor.snapshot, parent.path)
-      : editor.snapshot.context.value.map((child, index) => ({
-          node: child,
-          path: [{_key: child._key}],
-          index,
-        }))
-
-    const siblingList = [...siblings]
     const key = nodeRecord['_key'] as string
+    // The child array holding this node is the field segment right after
+    // the parent's path. Read it straight off the parent node rather than
+    // re-resolving children from the root through the schema; fall back to
+    // `getChildren` only if that field isn't a plain array.
+    const childFieldName = parent
+      ? (path[parent.path.length] as string)
+      : undefined
+    const rawSiblings =
+      parent && typeof childFieldName === 'string'
+        ? (parent.node as Record<string, unknown>)[childFieldName]
+        : undefined
+    const siblingNodes: ReadonlyArray<{_key?: string}> = !parent
+      ? editor.snapshot.context.value
+      : Array.isArray(rawSiblings)
+        ? (rawSiblings as ReadonlyArray<{_key?: string}>)
+        : getChildren(editor.snapshot, parent.path).map((entry) => entry.node)
 
-    // Find all siblings with this key
-    let firstIndex = -1
-    for (let i = 0; i < siblingList.length; i++) {
-      if (siblingList[i]!.node._key === key) {
-        if (firstIndex === -1) {
-          firstIndex = i
-        } else {
-          // Found a duplicate: rename the later occurrence
+    // A group of zero or one child can't hold a duplicate key, so it needs
+    // neither a scan nor a cache entry: re-checking it is already O(1). This
+    // is the common shape for container fields (a row's single cell, a
+    // cell's single content block) and single-span text blocks, so only
+    // genuinely multi-child groups ever cost a serialized id.
+    if (siblingNodes.length > 1) {
+      // Identify the group by its serialized path (the root group is `''`).
+      // The verdict survives edits elsewhere in the tree: it is dropped only
+      // when the op stream sees this group's own membership change (see
+      // `subscribeUpdateValue`). Verifying a group is O(siblings); caching
+      // the verdict keeps a bulk insert of n pre-keyed siblings at O(n)
+      // instead of O(n^2).
+      const groupId =
+        parent && typeof childFieldName === 'string'
+          ? serializePath([...parent.path, childFieldName])
+          : ''
+
+      if (!editor.verifiedUniqueChildGroups.has(groupId)) {
+        const seenKeys = new Set<string>()
+        let groupIsUnique = true
+        let duplicateIndexOfKey = -1
+
+        for (let index = 0; index < siblingNodes.length; index++) {
+          const siblingKey = siblingNodes[index]?._key
+          if (siblingKey === undefined) {
+            continue
+          }
+          if (seenKeys.has(siblingKey)) {
+            groupIsUnique = false
+            // The second occurrence of this node's own key is the one the
+            // previous per-node implementation renamed; preserve that so
+            // generated keys land on the same node.
+            if (siblingKey === key && duplicateIndexOfKey === -1) {
+              duplicateIndexOfKey = index
+            }
+          } else {
+            seenKeys.add(siblingKey)
+          }
+        }
+
+        if (duplicateIndexOfKey !== -1) {
           const newKey = editor.snapshot.context.keyGenerator()
           debug.normalization('Fixing duplicate key on node')
-          const dupParentPath = parent ? parent.path : []
           const numericPath: Path =
-            dupParentPath.length === 0
-              ? [i]
-              : [
-                  ...dupParentPath,
-                  getChildFieldName(editor.snapshot.context, parent!.path) ??
-                    'children',
-                  i,
-                ]
+            parent && typeof childFieldName === 'string'
+              ? [...parent.path, childFieldName, duplicateIndexOfKey]
+              : [duplicateIndexOfKey]
           editor.apply({
             type: 'set',
             path: [...numericPath, '_key'],
@@ -211,6 +246,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             },
           })
           return
+        }
+
+        if (groupIsUnique) {
+          editor.verifiedUniqueChildGroups.add(groupId)
         }
       }
     }
