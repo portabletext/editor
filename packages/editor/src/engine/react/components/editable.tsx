@@ -629,7 +629,15 @@ export const Editable = forwardRef(
             // Chrome has issues correctly editing the start of nodes: https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
             // When there is an inline element, e.g. a link, and you select
             // right after it (the start of the next node).
-            selection.anchor.offset !== 0
+            selection.anchor.offset !== 0 &&
+            // A pending decorator toggle (e.g. Cmd+B on a collapsed cursor)
+            // makes the next `insert.text` create a NEW span carrying the
+            // toggled marks instead of extending the focus span. Native
+            // character insertion mutates the focus span's text node in place,
+            // so that mutation would land in the wrong (old) span and never be
+            // reconciled away, leaving a ghost character in the DOM. Defer to
+            // the model insert here so React renders the new span cleanly.
+            Object.keys(editor.snapshot.decoratorState).length === 0
           ) {
             native = true
 
