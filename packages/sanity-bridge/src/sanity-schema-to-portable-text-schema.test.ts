@@ -1,4 +1,9 @@
-import type {Schema} from '@portabletext/schema'
+import {
+  getSubSchema,
+  type FieldDefinition,
+  type OfDefinition,
+  type Schema,
+} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
 import {builtinTypes} from '@sanity/schema/_internal'
 import {
@@ -821,5 +826,269 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         of: [{type: 'block'}, cInline],
       },
     ])
+  })
+
+  test('a container whose block member restricts marks/styles/lists produces a sub-schema that does not leak the root schema', () => {
+    // A code-block container: `lines` is an array of a block that strips
+    // every mark, every style except `code`, and every list. This is the
+    // Sanity shape Canvas uses (decorators/annotations under `marks`,
+    // `styles`/`lists` top-level). The resolved sub-schema for the lines
+    // must reflect those restrictions, otherwise markdown-shortcuts and
+    // character-pair-decorator (which gate on the sub-schema) fire inside
+    // the container and corrupt content.
+    const codeBlockType = defineType({
+      type: 'object',
+      name: 'code-block',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'lines',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              name: 'block',
+              styles: [{title: 'Code', value: 'code'}],
+              lists: [],
+              marks: {decorators: [], annotations: []},
+              of: [],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'code-block'}),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({types: [portableTextType, codeBlockType]}).get(
+        'body',
+      ),
+    )
+
+    const codeBlock = schema.blockObjects?.find(
+      (bo) => bo.name === 'code-block',
+    )
+    const linesField = codeBlock?.fields?.find(
+      (field) => field.name === 'lines',
+    ) as {of: ReadonlyArray<OfDefinition>} | undefined
+    const subSchema = getSubSchema(schema, linesField?.of ?? [])
+
+    expect({
+      styles: subSchema.styles.map((style) => style.name),
+      decorators: subSchema.decorators.map((decorator) => decorator.name),
+      annotations: subSchema.annotations.map((annotation) => annotation.name),
+      lists: subSchema.lists.map((list) => list.name),
+    }).toEqual({
+      // Sanity always injects the `normal` style; the restriction strips
+      // everything else (no headings), all decorators, all annotations,
+      // and all lists.
+      styles: ['normal', 'code'],
+      decorators: [],
+      annotations: [],
+      lists: [],
+    })
+  })
+
+  test('the restriction is honored at arbitrary nesting depth', () => {
+    // table → row → cell → content[block]. The deepest block-member
+    // strips every mark and every style except `normal`. The PR's
+    // resolveBlockOfMember compares against the root block's enabled
+    // names; the intermediate containers must not shadow that
+    // comparison, so the restriction must survive at depth.
+    const tableType = defineType({
+      type: 'object',
+      name: 'table',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'rows',
+          of: [
+            defineArrayMember({
+              type: 'object',
+              name: 'row',
+              fields: [
+                defineField({
+                  type: 'array',
+                  name: 'cells',
+                  of: [
+                    defineArrayMember({
+                      type: 'object',
+                      name: 'cell',
+                      fields: [
+                        defineField({
+                          type: 'array',
+                          name: 'content',
+                          of: [
+                            defineArrayMember({
+                              type: 'block',
+                              name: 'block',
+                              styles: [{title: 'Normal', value: 'normal'}],
+                              lists: [],
+                              marks: {decorators: [], annotations: []},
+                              of: [],
+                            }),
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'table'}),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({types: [portableTextType, tableType]}).get('body'),
+    )
+
+    // Walk down to the deepest `of` array.
+    const table = schema.blockObjects?.find((bo) => bo.name === 'table')
+    const rowsField = table?.fields?.find((f) => f.name === 'rows') as
+      | {of: ReadonlyArray<OfDefinition>}
+      | undefined
+    const row = rowsField?.of?.find(
+      (
+        member,
+      ): member is OfDefinition & {
+        name: string
+        fields: ReadonlyArray<FieldDefinition>
+      } => (member as {name?: string}).name === 'row',
+    )
+    const cellsField = row?.fields?.find((f) => f.name === 'cells') as
+      | {of: ReadonlyArray<OfDefinition>}
+      | undefined
+    const cell = cellsField?.of?.find(
+      (
+        member,
+      ): member is OfDefinition & {
+        name: string
+        fields: ReadonlyArray<FieldDefinition>
+      } => (member as {name?: string}).name === 'cell',
+    )
+    const contentField = cell?.fields?.find((f) => f.name === 'content') as
+      | {of: ReadonlyArray<OfDefinition>}
+      | undefined
+    const subSchema = getSubSchema(schema, contentField?.of ?? [])
+
+    expect({
+      styles: subSchema.styles.map((style) => style.name),
+      decorators: subSchema.decorators.map((decorator) => decorator.name),
+      annotations: subSchema.annotations.map((annotation) => annotation.name),
+      lists: subSchema.lists.map((list) => list.name),
+    }).toEqual({
+      styles: ['normal'],
+      decorators: [],
+      annotations: [],
+      lists: [],
+    })
+  })
+
+  test('two restricted block members in the same container resolve independently', () => {
+    // A container whose `lines` declares two block types with different
+    // restrictions: `code-line` strips everything; `quote-line` allows the
+    // `em` decorator and the `blockquote` style. Each member's resolved
+    // shape must reflect its OWN restrictions, not be cross-contaminated
+    // by the sibling member's resolution.
+    const codeBlockType = defineType({
+      type: 'object',
+      name: 'code-block',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'lines',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              name: 'code-line',
+              styles: [{title: 'Code', value: 'code'}],
+              lists: [],
+              marks: {decorators: [], annotations: []},
+              of: [],
+            }),
+            defineArrayMember({
+              type: 'block',
+              name: 'quote-line',
+              styles: [{title: 'Quote', value: 'blockquote'}],
+              lists: [],
+              marks: {
+                decorators: [{title: 'Emphasis', value: 'em'}],
+                annotations: [],
+              },
+              of: [],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'code-block'}),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({types: [portableTextType, codeBlockType]}).get(
+        'body',
+      ),
+    )
+
+    const codeBlock = schema.blockObjects?.find(
+      (bo) => bo.name === 'code-block',
+    )
+    const linesField = codeBlock?.fields?.find(
+      (field) => field.name === 'lines',
+    ) as {of: ReadonlyArray<OfDefinition>} | undefined
+    const of = linesField?.of ?? []
+
+    // Each member's resolved shape, asserted independently.
+    // Sanity drops the `name` field on bridge output, so members are
+    // identified by their position in the `of` array.
+    const codeLine = of[0]
+    const quoteLine = of[1]
+
+    expect({
+      codeLine: {
+        styles: (
+          codeLine as {styles?: ReadonlyArray<{value: string}>}
+        )?.styles?.map((s) => s.value),
+        decorators: (
+          codeLine as {decorators?: ReadonlyArray<{value: string}>}
+        )?.decorators?.map((d) => d.value),
+      },
+      quoteLine: {
+        styles: (
+          quoteLine as {styles?: ReadonlyArray<{value: string}>}
+        )?.styles?.map((s) => s.value),
+        decorators: (
+          quoteLine as {decorators?: ReadonlyArray<{value: string}>}
+        )?.decorators?.map((d) => d.value),
+      },
+    }).toEqual({
+      // Sanity always injects the `normal` style on every block, so the
+      // restricted set is `['normal', <restriction>]` not just the
+      // restriction value.
+      codeLine: {styles: ['normal', 'code'], decorators: []},
+      quoteLine: {styles: ['normal', 'blockquote'], decorators: ['em']},
+    })
   })
 })
