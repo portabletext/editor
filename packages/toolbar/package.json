@@ -52,7 +52,7 @@
   "dependencies": {
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@xstate/react": "^6.1.0",
-    "xstate": "^5.32.0"
+    "xstate": "^5.32.1"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
