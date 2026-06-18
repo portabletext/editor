@@ -272,6 +272,11 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
+      /**
+       * Select a container at its own path as a block-object instead of
+       * descending into its first leaf. Set by the container chrome click.
+       */
+      selectContainerAsBlockObject?: boolean
     }
   | {
       /**

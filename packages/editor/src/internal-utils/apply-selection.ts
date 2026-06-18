@@ -7,6 +7,7 @@ import type {Range} from '../engine/interfaces/range'
 import {isPoint} from '../engine/point/is-point'
 import {pointEquals} from '../engine/point/point-equals'
 import {isRange} from '../engine/range/is-range'
+import {isEditableContainer} from '../schema/is-editable-container'
 import {getChildren} from '../traversal/get-children'
 import {getLeaf} from '../traversal/get-leaf'
 import {getNode} from '../traversal/get-node'
@@ -31,16 +32,20 @@ type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
 export function resolveSelection(
   editor: ResolveSelectionEditor,
   selection: EditorSelection,
+  options?: {selectContainerAsBlockObject?: boolean},
 ): Range | null {
   if (!selection) {
     return null
   }
+
+  const holdContainers = options?.selectContainerAsBlockObject ?? false
 
   if (isEqualSelectionPoints(selection.anchor, selection.focus)) {
     const anchorPoint = resolveSelectionPoint(
       editor,
       selection.anchor,
       selection.backward ? 'backward' : 'forward',
+      holdContainers,
     )
 
     if (!anchorPoint) {
@@ -57,11 +62,13 @@ export function resolveSelection(
     editor,
     selection.anchor,
     selection.backward ? 'forward' : 'backward',
+    holdContainers,
   )
   const focusPoint = resolveSelectionPoint(
     editor,
     selection.focus,
     selection.backward ? 'backward' : 'forward',
+    holdContainers,
   )
 
   if (!anchorPoint || !focusPoint) {
@@ -78,6 +85,7 @@ function resolveSelectionPoint(
   editor: ResolveSelectionEditor,
   selectionPoint: {path: Path; offset: number},
   direction: 'forward' | 'backward',
+  holdContainers: boolean,
 ):
   | {
       path: Path
@@ -130,6 +138,17 @@ function resolveSelectionPoint(
       if (spanPoint) {
         return spanPoint
       }
+    }
+
+    // When selecting (not resolving an operation's `at`), a collapsed point
+    // on a container selects the container as a block-object, so hold it at
+    // its own path rather than descending into the first leaf. Operations
+    // (insert, delete, annotate) keep descending into the container.
+    if (
+      holdContainers &&
+      isEditableContainer(snapshot, entry.node, entry.path)
+    ) {
+      return {path: entry.path, offset: 0}
     }
 
     // Non-leaf, non-text-block (container or text block without offset).

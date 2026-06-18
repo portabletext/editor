@@ -8,7 +8,9 @@ import type {OperationImplementation} from './operation.types'
 export const selectOperationImplementation: OperationImplementation<
   'select'
 > = ({operation}) => {
-  const newSelection = resolveSelection(operation.editor, operation.at)
+  const newSelection = resolveSelection(operation.editor, operation.at, {
+    selectContainerAsBlockObject: operation.selectContainerAsBlockObject,
+  })
 
   if (newSelection) {
     applySelect(operation.editor, newSelection)

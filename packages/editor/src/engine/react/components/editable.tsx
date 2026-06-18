@@ -18,6 +18,7 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
+import {isEditableContainer} from '../../../schema/is-editable-container'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
@@ -304,7 +305,42 @@ export const Editable = forwardRef(
               })
 
               if (range) {
-                if (
+                // When a container is selected as a block-object (a collapsed
+                // selection held on the container path) the DOM selection can
+                // drift into the container's editable body, for example when
+                // focusing the editor after a chrome click. Slate cannot hold
+                // a DOM selection on a non-void container, so keep the
+                // block-object selection rather than letting the drift
+                // overwrite it.
+                const current = editor.snapshot.context.selection
+                const heldContainerPath =
+                  current && pathEquals(current.anchor.path, current.focus.path)
+                    ? (() => {
+                        const entry = getNode(
+                          editor.snapshot,
+                          current.focus.path,
+                        )
+                        return entry &&
+                          isEditableContainer(
+                            editor.snapshot,
+                            entry.node,
+                            current.focus.path,
+                          )
+                          ? current.focus.path
+                          : undefined
+                      })()
+                    : undefined
+                const driftedIntoHeldContainer =
+                  heldContainerPath !== undefined &&
+                  range.focus.path.length > heldContainerPath.length &&
+                  pathEquals(
+                    range.focus.path.slice(0, heldContainerPath.length),
+                    heldContainerPath,
+                  )
+
+                if (driftedIntoHeldContainer) {
+                  // Keep the block-object selection on the container.
+                } else if (
                   !editor.composing &&
                   !androidInputManager?.hasPendingChanges() &&
                   !androidInputManager?.isFlushing()
@@ -1239,6 +1275,55 @@ export const Editable = forwardRef(
                   editor,
                   attributes.onBlur,
                 ],
+              )}
+              onMouseDown={useCallback(
+                (event: React.MouseEvent<HTMLDivElement>) => {
+                  if (
+                    !DOMEditor.hasTarget(editor, event.target) ||
+                    isEventHandled(event, attributes.onMouseDown) ||
+                    !isDOMNode(event.target)
+                  ) {
+                    return
+                  }
+
+                  const path = getDomNodePath(event.target)
+
+                  if (!path) {
+                    return
+                  }
+
+                  const entry = getNode(editor.snapshot, path)
+
+                  // A mousedown that resolves to a container path lands on the
+                  // container's chrome or outer, not its editable body content
+                  // (which carries deeper `data-pt-path`s). Select the
+                  // container as a block-object, and prevent the native caret
+                  // from landing in the nearest editable body, which would
+                  // otherwise win the selection.
+                  if (
+                    entry &&
+                    isEditableContainer(editor.snapshot, entry.node, path)
+                  ) {
+                    event.preventDefault()
+                    editorActor.send({
+                      type: 'behavior event',
+                      behaviorEvent: {
+                        type: 'select',
+                        at: {
+                          anchor: {path, offset: 0},
+                          focus: {path, offset: 0},
+                        },
+                        selectContainerAsBlockObject: true,
+                      },
+                      editor,
+                    })
+                    // `preventDefault` stops the native caret from landing in
+                    // the body, but also suppresses focus; focus the editor so
+                    // keyboard behaviors (delete, arrows) act on the selection.
+                    DOMEditor.focus(editor)
+                  }
+                },
+                [editor, attributes.onMouseDown],
               )}
               onClick={useCallback(
                 (event: React.MouseEvent<HTMLDivElement>) => {

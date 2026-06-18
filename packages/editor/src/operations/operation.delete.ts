@@ -27,7 +27,13 @@ export const deleteOperationImplementation: OperationImplementation<
   'delete'
 > = ({operation}) => {
   const at = operation.at
-    ? resolveSelection(operation.editor, operation.at)
+    ? // Hold a collapsed point on a container at the container path so a
+      // block-level delete (e.g. deleting a container selected as a
+      // block-object) targets the container itself rather than descending
+      // into its content. Range deletes have leaf endpoints, unaffected.
+      resolveSelection(operation.editor, operation.at, {
+        selectContainerAsBlockObject: true,
+      })
     : operation.editor.snapshot.context.selection
 
   if (!at) {
