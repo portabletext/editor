@@ -1,5 +1,6 @@
 import type {Editor, TextBlockRenderProps} from '@portabletext/editor'
 import {
+  defineContainer,
   defineTextBlock,
   EditorProvider,
   PortableTextEditable,
@@ -40,6 +41,96 @@ describe('data-list-index in the new render pipeline', () => {
 
     await expectListIndices({b0: null, b3: '1', b1: '2', b2: '3'})
   })
+
+  test('Scenario: list items nested in a container number within their own array', async () => {
+    await renderEditorWithListIndexRender(
+      [
+        callout('cal1', [
+          numberListItem('a0'),
+          numberListItem('a1'),
+          numberListItem('a2'),
+        ]),
+        callout('cal2', [numberListItem('b0'), numberListItem('b1')]),
+      ],
+      {
+        schemaDefinition: defineSchema({
+          lists: [{name: 'bullet'}, {name: 'number'}],
+          blockObjects: [
+            {
+              name: 'callout',
+              fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+            },
+          ],
+        }),
+        nodes: [
+          ...textBlockNodes,
+          defineContainer({type: 'callout', arrayField: 'content'}),
+        ],
+      },
+    )
+
+    // Each callout's content numbers within its own array; the second
+    // callout's list restarts at 1.
+    await expectListIndices({a0: '1', a1: '2', a2: '3', b0: '1', b1: '2'})
+  })
+
+  test('Scenario: a deep edit inside a container re-numbers that container', async () => {
+    const calloutSchema = defineSchema({
+      lists: [{name: 'bullet'}, {name: 'number'}],
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+    const calloutNodes = [
+      ...textBlockNodes,
+      defineContainer({type: 'callout', arrayField: 'content'}),
+    ]
+
+    const editor = await renderEditorWithListIndexRender(
+      [callout('cal1', [numberListItem('a0'), numberListItem('a1')])],
+      {schemaDefinition: calloutSchema, nodes: calloutNodes},
+    )
+
+    await expectListIndices({a0: '1', a1: '2'})
+
+    // Split the first list item inside the callout (Enter mid-text). This is
+    // a deep op (path inside `content`); the old `path.length > 2` gate
+    // skipped it, so the new sibling shifted `a1` would never re-number.
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'cal1'},
+            'content',
+            {_key: 'a0'},
+            'children',
+            {_key: 'a0-span'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'cal1'},
+            'content',
+            {_key: 'a0'},
+            'children',
+            {_key: 'a0-span'},
+          ],
+          offset: 1,
+        },
+      },
+    })
+    editor.send({type: 'insert.break'})
+
+    // A new list item now sits between `a0` and `a1`, so `a1` becomes the
+    // third item.
+    await expectListIndices({a0: '1', a1: '3'})
+  })
 })
 
 function TextBlockWithListIndex(props: TextBlockRenderProps) {
@@ -74,21 +165,27 @@ const textBlockNodes = [
  */
 async function renderEditorWithListIndexRender(
   initialValue: Array<PortableTextBlock>,
+  options?: {
+    schemaDefinition?: ReturnType<typeof defineSchema>
+    nodes?: Parameters<typeof NodePlugin>[0]['nodes']
+  },
 ): Promise<Editor> {
   const editorRef = createRef<Editor>()
 
   await render(
     <EditorProvider
       initialConfig={{
-        schemaDefinition: defineSchema({
-          lists: [{name: 'bullet'}, {name: 'number'}],
-        }),
+        schemaDefinition:
+          options?.schemaDefinition ??
+          defineSchema({
+            lists: [{name: 'bullet'}, {name: 'number'}],
+          }),
         initialValue,
         keyGenerator: createTestKeyGenerator(),
       }}
     >
       <EditorRefPlugin ref={editorRef} />
-      <NodePlugin nodes={textBlockNodes} />
+      <NodePlugin nodes={options?.nodes ?? textBlockNodes} />
       <ListIndexProvider>
         <PortableTextEditable />
       </ListIndexProvider>
@@ -135,4 +232,11 @@ function numberListItem(key: string): PortableTextBlock {
     listItem: 'number',
     level: 1,
   }
+}
+
+function callout(
+  key: string,
+  content: Array<PortableTextBlock>,
+): PortableTextBlock {
+  return {_type: 'callout', _key: key, content} as unknown as PortableTextBlock
 }

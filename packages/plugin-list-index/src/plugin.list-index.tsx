@@ -99,18 +99,13 @@ function createListIndexStore(editor: Editor): ListIndexStore {
       rebuild()
 
       const subscription = editor.on('operation', (event) => {
+        // Text ops never change list structure; every other document-changing
+        // op can (including deep edits inside a container), so rebuild. The
+        // rebuild coalesces below and the diff drops no-op changes.
         if (
           event.operation.type === 'insert.text' ||
           event.operation.type === 'remove.text'
         ) {
-          // Inserting and removing text has no effect on list indices so
-          // there is no need to rebuild those.
-          return
-        }
-
-        if (event.operation.path.length > 2) {
-          // Operations deep inside blocks only modify nested structure and
-          // cannot affect root-level list indices.
           return
         }
 
