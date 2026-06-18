@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.3
+
+### Patch Changes
+
+- [#2817](https://github.com/portabletext/editor/pull/2817) [`0cf0e97`](https://github.com/portabletext/editor/commit/0cf0e975d9707ca5a46c4e8e1f84974f6c690946) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve container block-member schema restrictions in `sanitySchemaToPortableTextSchema`
+
+  Converting a Sanity schema with a container (e.g. a code block) whose block member restricts decorators, annotations, styles, or lists now carries those restrictions into the resulting sub-schema. Previously every restricted list fell back to the root schema, so schema-driven plugins like `@portabletext/plugin-markdown-shortcuts` and `@portabletext/plugin-character-pair-decorator` would fire inside the container (turning `# ` into a heading, `**bold**` into bold) and produce schema-invalid content.
+
 ## 3.1.2
 
 ### Patch Changes
