@@ -9,6 +9,7 @@ import type {
 } from '../schema/resolve-containers'
 import {isTypedObject} from '../utils/asserters'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {getContainerChildren} from './get-container-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -87,6 +88,10 @@ export function getChildren(
  * The returned `parent` is the resolved container entry for `node`
  * itself (used by the caller to thread further descent).
  *
+ * Internal descent kernel shared by the positional traversal utilities
+ * (`getChildren`, `getNode`, `getNodes`, `getAncestors`); it folds the
+ * text-block, container, and root-document cases. Public consumers that
+ * only need to descend containers use {@link getContainerChildren}.
  */
 export function getNodeChildren(
   context: {
@@ -111,27 +116,15 @@ export function getNodeChildren(
     }
   }
 
-  if (
-    isTypedObject(node) &&
-    node._type !== context.schema.block.name &&
-    node._type !== context.schema.span.name
-  ) {
-    const resolved = resolveNodeContainer(context.containers, parent, node)
+  if (isTypedObject(node)) {
+    const result = getContainerChildren(context.containers, node, parent)
 
-    if (!resolved) {
-      return undefined
-    }
-
-    const fieldValue = (node as Record<string, unknown>)[resolved.field.name]
-
-    if (!Array.isArray(fieldValue)) {
-      return undefined
-    }
-
-    return {
-      children: fieldValue as Array<Node>,
-      fieldName: resolved.field.name,
-      parent: resolved,
+    if (result) {
+      return {
+        children: result.children,
+        fieldName: result.container.field.name,
+        parent: result.container,
+      }
     }
   }
 
@@ -150,28 +143,4 @@ export function getNodeChildren(
   }
 
   return undefined
-}
-
-/**
- * Pick the positional override from `parent.of` if present; fall back
- * to the top-level entry. Returns only `RegisteredContainer` entries
- * since leaves do not have editable children.
- */
-function resolveNodeContainer(
-  containers: Containers,
-  parent: RegisteredContainer | undefined,
-  node: Node,
-): RegisteredContainer | undefined {
-  if (parent?.of) {
-    for (const entry of parent.of) {
-      if (entry.type === node._type) {
-        // Only return container entries; leaves have no editable children.
-        if ('field' in entry) {
-          return entry
-        }
-        return undefined
-      }
-    }
-  }
-  return containers.get(node._type)
 }
