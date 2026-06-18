@@ -55,6 +55,15 @@ const EngineString = (props: {
   path: Path
   text: PortableTextSpan
 }) => {
+  // `EngineString` returns a `<TextString>` element whose only prop is the
+  // leaf's text. React Compiler memoizes that element on `text`, so when the
+  // text is unchanged it reuses the previous element and React bails on
+  // re-rendering `TextString`. That defeats `TextString`'s reconcile-on-render
+  // layout effect (see below), which is the only thing that resets a text node
+  // the browser mutated out from under the model (native insertion). Opt this
+  // component out of the compiler so the element is recreated every render and
+  // `TextString` always gets a chance to reconcile.
+  'use no memo'
   const {isLast, leaf, parent, path, text} = props
   const editor = useEngineStatic()
   const parentPath = getParentPath(path)
@@ -92,6 +101,12 @@ const EngineString = (props: {
  * Leaf strings with text in them.
  */
 const TextString = (props: {text: string; isTrailing?: boolean}) => {
+  // This component reconciles the DOM text node against the model on every
+  // render (the dependency-less layout effect below). React Compiler must not
+  // memoize it: a skipped render is a skipped reconcile, which strands any
+  // text the browser wrote ahead of the model. Keep it uncompiled regardless
+  // of which build (lib, tests, playground) sets the react-compiler boundary.
+  'use no memo'
   const {text, isTrailing = false} = props
   const isInNewPipeline = useContext(NewPipelineContext)
   const ref = useRef<HTMLSpanElement>(null)
