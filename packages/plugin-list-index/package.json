@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-list-index",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A helper plugin for calculating list indices for flat blocks based on listItem and level",
   "keywords": [
     "portabletext",

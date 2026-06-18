@@ -1,5 +1,34 @@
 # Changelog
 
+## 7.6.0
+
+### Minor Changes
+
+- [#2804](https://github.com/portabletext/editor/pull/2804) [`0768dc5`](https://github.com/portabletext/editor/commit/0768dc5ecff4a5ee90b58242f35a54ac3f6cfbb0) Thanks [@christianhg](https://github.com/christianhg)! - feat: export `getContainerChildren` from `@portabletext/editor/traversal`
+
+  Adds `getContainerChildren` to `@portabletext/editor/traversal`. Given a
+  node (and optionally its resolved parent container), it returns
+  `{children, container}` when the node is a registered container and
+  `undefined` for anything that is not (text blocks, spans, leaves,
+  unregistered objects). `children` is the node's editable child array and
+  `container` is the node's own container registration: read
+  `container.field.name` for the path segment that reaches the children,
+  and thread `container` back in as the parent when descending into them.
+  It resolves in one step from a node already in hand, with no path
+  re-walk, so recursive descent over containers stays linear in nesting
+  depth.
+
+### Patch Changes
+
+- [#2811](https://github.com/portabletext/editor/pull/2811) [`2668d66`](https://github.com/portabletext/editor/commit/2668d66c7eb23bed7e4f5f6ad04ed6753f8a0d68) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update xstate to ^5.32.1
+
+- [#2806](https://github.com/portabletext/editor/pull/2806) [`737d618`](https://github.com/portabletext/editor/commit/737d618ac78a3ae133701862861f03b9c39a3656) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): resolve `getChildren` segments via `blockIndexMap`
+
+  `getChildren` now resolves keyed path segments through the editor's
+  `blockIndexMap` (O(1)) with a linear-scan fallback, matching `getNode`,
+  `getAncestors`, and `getSibling`. Behavior is unchanged; resolution is faster
+  on wide sibling arrays and on repeated descents into the same subtree.
+
 ## 7.5.2
 
 ### Patch Changes

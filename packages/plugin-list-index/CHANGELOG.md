@@ -1,5 +1,19 @@
 # @portabletext/plugin-list-index
 
+## 1.0.4
+
+### Patch Changes
+
+- [#2804](https://github.com/portabletext/editor/pull/2804) [`6aaafd8`](https://github.com/portabletext/editor/commit/6aaafd848adfef4877962bacd4fb9ad5c753f2bb) Thanks [@christianhg](https://github.com/christianhg)! - fix: number list items nested in containers
+
+  `useListIndex` now returns an index for list items inside a container
+  (for example a table cell), numbering within their own array and
+  restarting at 1 in each. Previously `buildListIndexMap` walked only the
+  top-level blocks, so cell-nested list items rendered unnumbered.
+
+- Updated dependencies [[`2668d66`](https://github.com/portabletext/editor/commit/2668d66c7eb23bed7e4f5f6ad04ed6753f8a0d68), [`0768dc5`](https://github.com/portabletext/editor/commit/0768dc5ecff4a5ee90b58242f35a54ac3f6cfbb0), [`737d618`](https://github.com/portabletext/editor/commit/737d618ac78a3ae133701862861f03b9c39a3656)]:
+  - @portabletext/editor@7.6.0
+
 ## 1.0.3
 
 ### Patch Changes
