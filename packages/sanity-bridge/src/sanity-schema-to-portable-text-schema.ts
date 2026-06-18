@@ -1,4 +1,9 @@
-import type {FieldDefinition, OfDefinition, Schema} from '@portabletext/schema'
+import type {
+  BlockOfDefinition,
+  FieldDefinition,
+  OfDefinition,
+  Schema,
+} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
 import {builtinTypes} from '@sanity/schema/_internal'
 import type {
@@ -101,7 +106,23 @@ function sanitySchemaTypeToSchema(
   // the walk linear in the size of the compiled schema. Without it, the
   // per-branch ancestor sets below enumerate every simple path through
   // mutually-embedding types, which grows combinatorially.
-  const memo = new Map<SchemaType, OfDefinition>()
+  //
+  // The root block's enabled names ride along so a nested `{type: 'block'}`
+  // member can be compared against them: a member that enables the same
+  // marks/styles/lists as the root inherits the root sub-schema (emitted as
+  // a bare `{type: 'block'}`), while a member that restricts any of them is
+  // resolved so the restriction survives in `getSubSchema`.
+  const context: ConversionContext = {
+    memo: new Map<SchemaType, OfDefinition>(),
+    rootBlockNames: {
+      styles: styles.map((style: BlockStyleDefinition) => style.value),
+      decorators: decorators.map(
+        (decorator: BlockDecoratorDefinition) => decorator.value,
+      ),
+      lists: lists.map((list: BlockListDefinition) => list.value),
+      annotations: annotations.map((annotation) => annotation.name),
+    },
+  }
 
   return {
     block: {
@@ -129,24 +150,141 @@ function sanitySchemaTypeToSchema(
       name: annotation.name,
       title: annotation.title,
       fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set(), memo),
+        sanityFieldToSchemaField(field, new Set(), context),
       ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
       fields: blockObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([blockObject.name]), memo),
+        sanityFieldToSchemaField(field, new Set([blockObject.name]), context),
       ),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
       fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
+        sanityFieldToSchemaField(field, new Set([inlineObject.name]), context),
       ),
     })),
   }
+}
+
+type ConversionContext = {
+  memo: Map<SchemaType, OfDefinition>
+  rootBlockNames: {
+    styles: ReadonlyArray<string>
+    decorators: ReadonlyArray<string>
+    lists: ReadonlyArray<string>
+    annotations: ReadonlyArray<string>
+  }
+}
+
+/**
+ * Resolve a container's `{type: 'block'}` `of` member.
+ *
+ * A nested block declares its sub-schema the same way the root block does:
+ * `styles`/`lists` as field options, `decorators`/`annotations` on the
+ * span. Each list is emitted only when the member restricts it relative to
+ * the root block (the enabled names differ); when the member enables the
+ * same set as the root, the list is omitted so `getSubSchema` inherits the
+ * root schema (the documented `BlockOfDefinition` contract). Without this, a
+ * restricted nested block (e.g. a code-block line that strips marks and
+ * styles) would fall back to the root schema and let markdown-shortcuts and
+ * character-pair-decorator fire inside the container.
+ *
+ * `inlineObjects` is intentionally left to inherit the root: the compiled
+ * span shape can't distinguish "no inline objects declared" from "inline
+ * objects restricted to none", and no current consumer gates on it.
+ */
+function resolveBlockOfMember(
+  blockType: BlockSchemaType,
+  ancestorNames: ReadonlySet<string>,
+  context: ConversionContext,
+): BlockOfDefinition {
+  const root = context.rootBlockNames
+
+  const styleList = blockType.fields?.find((field) => field.name === 'style')
+    ?.type.options?.list
+  const styles = (Array.isArray(styleList) ? styleList : [])
+    .filter((style: BlockStyleDefinition) => style.value)
+    .map((style: BlockStyleDefinition) => ({
+      name: style.value,
+      title: style.title,
+      value: style.value,
+    }))
+
+  const listItemList = blockType.fields?.find(
+    (field) => field.name === 'listItem',
+  )?.type.options?.list
+  const lists = (Array.isArray(listItemList) ? listItemList : [])
+    .filter((list: BlockListDefinition) => list.value)
+    .map((list: BlockListDefinition) => ({
+      name: list.value,
+      title: list.title,
+      value: list.value,
+    }))
+
+  const spanType = (
+    blockType.fields?.find((field) => field.name === 'children') as
+      | {type: ArraySchemaType}
+      | undefined
+  )?.type.of?.find((memberType) => memberType.name === 'span') as
+    | ObjectSchemaType
+    | undefined
+  const spanDecorators = (
+    spanType as unknown as {
+      decorators?: ReadonlyArray<BlockDecoratorDefinition>
+    }
+  )?.decorators
+  const decorators = (Array.isArray(spanDecorators) ? spanDecorators : []).map(
+    (decorator: BlockDecoratorDefinition) => ({
+      name: decorator.value,
+      title: decorator.title,
+      value: decorator.value,
+    }),
+  )
+  const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
+  const annotations = (
+    Array.isArray(spanAnnotations) ? spanAnnotations : []
+  ).map((annotation) => ({
+    name: annotation.name,
+    title: annotation.title,
+    fields: annotation.fields.map((field) =>
+      sanityFieldToSchemaField(field, ancestorNames, context),
+    ),
+  }))
+
+  return {
+    type: 'block',
+    ...(Array.isArray(styleList) && !sameNames(styles, root.styles)
+      ? {styles}
+      : {}),
+    ...(Array.isArray(listItemList) && !sameNames(lists, root.lists)
+      ? {lists}
+      : {}),
+    ...(Array.isArray(spanDecorators) && !sameNames(decorators, root.decorators)
+      ? {decorators}
+      : {}),
+    ...(Array.isArray(spanAnnotations) &&
+    !sameNames(annotations, root.annotations)
+      ? {annotations}
+      : {}),
+  }
+}
+
+/**
+ * `true` when the resolved members enable exactly the root block's names in
+ * the same order, i.e. the nested block does not restrict this list.
+ */
+function sameNames(
+  members: ReadonlyArray<{name: string}>,
+  rootNames: ReadonlyArray<string>,
+): boolean {
+  return (
+    members.length === rootNames.length &&
+    members.every((member, index) => member.name === rootNames[index])
+  )
 }
 
 function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
@@ -167,7 +305,7 @@ function sanityFieldToSchemaField(
     type: SchemaType
   },
   ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
+  context: ConversionContext,
 ): FieldDefinition {
   if (field.type.jsonType === 'array') {
     const ofMembers = safeGetOf(field.type)
@@ -177,7 +315,7 @@ function sanityFieldToSchemaField(
       ...(field.type.title ? {title: field.type.title} : {}),
       of: ofMembers
         ? ofMembers.map((member) =>
-            sanityOfMemberToOfDefinition(member, ancestorNames, memo),
+            sanityOfMemberToOfDefinition(member, ancestorNames, context),
           )
         : [],
     }
@@ -193,10 +331,18 @@ function sanityFieldToSchemaField(
 function sanityOfMemberToOfDefinition(
   memberType: SchemaType,
   ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
+  context: ConversionContext,
 ): OfDefinition {
+  // `findBlockType` walks up the `type.type` chain to the base `block`, so
+  // it only detects *whether* this member is a block. A block member's own
+  // marks/styles/lists live on `memberType`, which `resolveBlockOfMember`
+  // reads and compares against the root block to emit only restrictions.
   if (findBlockType(memberType)) {
-    return {type: 'block'}
+    return resolveBlockOfMember(
+      memberType as BlockSchemaType,
+      ancestorNames,
+      context,
+    )
   }
 
   // If this member has fields and isn't already in the ancestor chain,
@@ -221,7 +367,7 @@ function sanityOfMemberToOfDefinition(
   // every later position that reaches the same instance shares the first
   // expansion. Keyed by instance (not name) so that same-named but
   // structurally different inline declarations keep their own shapes.
-  const memoized = memo.get(memberType)
+  const memoized = context.memo.get(memberType)
   if (memoized) {
     return memoized
   }
@@ -233,10 +379,10 @@ function sanityOfMemberToOfDefinition(
     name: memberType.name,
     ...(memberType.title ? {title: memberType.title} : {}),
     fields: (memberType as ObjectSchemaType).fields.map((field) =>
-      sanityFieldToSchemaField(field, nextAncestors, memo),
+      sanityFieldToSchemaField(field, nextAncestors, context),
     ),
   }
-  memo.set(memberType, definition)
+  context.memo.set(memberType, definition)
   return definition
 }
 
