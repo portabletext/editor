@@ -55,7 +55,7 @@ const tableSchema = defineSchema({
 })
 
 describe('container render focused, selected, and path', () => {
-  test('Only the innermost container is focused; ancestors are selected', async () => {
+  test('Every container ancestor reports focused; ancestors are selected', async () => {
     const calloutValues: Array<{
       focused: boolean
       selected: boolean
@@ -131,7 +131,7 @@ describe('container render focused, selected, and path', () => {
         path: [{_key: 'callout'}, 'content', {_key: 'inner'}],
       })
       expect(calloutValues.at(-1)).toEqual({
-        focused: false,
+        focused: true,
         selected: true,
         path: [{_key: 'callout'}],
       })
@@ -197,7 +197,7 @@ describe('container render focused, selected, and path', () => {
     })
   })
 
-  test('selected cascades up nested containers; focused stays on the innermost', async () => {
+  test('selected and focused both cascade up nested containers', async () => {
     const tableValues: Array<{focused: boolean; selected: boolean}> = []
     const rowValues: Array<{focused: boolean; selected: boolean}> = []
     const cellValues: Array<{focused: boolean; selected: boolean}> = []
@@ -298,9 +298,9 @@ describe('container render focused, selected, and path', () => {
     editor.send({type: 'select', at: {anchor: caret, focus: caret}})
 
     await vi.waitFor(() => {
-      expect(tableValues.at(-1)).toEqual({focused: false, selected: true})
-      expect(rowValues.at(-1)).toEqual({focused: false, selected: true})
-      expect(cellValues.at(-1)).toEqual({focused: false, selected: true})
+      expect(tableValues.at(-1)).toEqual({focused: true, selected: true})
+      expect(rowValues.at(-1)).toEqual({focused: true, selected: true})
+      expect(cellValues.at(-1)).toEqual({focused: true, selected: true})
       expect(cellBlockValues.at(-1)).toEqual({focused: true, selected: true})
     })
   })

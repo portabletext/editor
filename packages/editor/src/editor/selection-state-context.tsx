@@ -17,7 +17,7 @@ const emptySet = new Set<string>()
 const defaultSelectionState: SelectionState = {
   focusedLeafPath: undefined,
   selectedLeafPaths: emptySet,
-  focusedContainerPath: undefined,
+  focusedContainerPaths: emptySet,
   selectedContainerPaths: emptySet,
 }
 
@@ -38,8 +38,15 @@ function selectionStatesEqual(
   if (prev.focusedLeafPath !== next.focusedLeafPath) {
     return false
   }
-  if (prev.focusedContainerPath !== next.focusedContainerPath) {
-    return false
+  if (prev.focusedContainerPaths !== next.focusedContainerPaths) {
+    if (prev.focusedContainerPaths.size !== next.focusedContainerPaths.size) {
+      return false
+    }
+    for (const path of prev.focusedContainerPaths) {
+      if (!next.focusedContainerPaths.has(path)) {
+        return false
+      }
+    }
   }
   if (prev.selectedLeafPaths !== next.selectedLeafPaths) {
     if (prev.selectedLeafPaths.size !== next.selectedLeafPaths.size) {
@@ -214,9 +221,8 @@ export function SelectionStateProvider({
  */
 export function useIsFocusedContainer(serializedPath: string): boolean {
   const store = useContext(SelectionStateStoreContext)
-  return useSyncExternalStore(
-    store.subscribe,
-    () => store.getSnapshot().focusedContainerPath === serializedPath,
+  return useSyncExternalStore(store.subscribe, () =>
+    store.getSnapshot().focusedContainerPaths.has(serializedPath),
   )
 }
 

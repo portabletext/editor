@@ -17,11 +17,19 @@ export type SelectionState = {
    */
   selectedLeafPaths: Set<string>
   /**
-   * Serialized path of the focused container (text block or editable
-   * container). Set when the selection is collapsed and has a container
-   * ancestor.
+   * Set of serialized paths of containers that fully contain the
+   * current selection.
+   *
+   * For a collapsed caret, every container ancestor satisfies this:
+   * the caret is a point, and every ancestor contains that point. So
+   * every ancestor is in the set.
+   *
+   * For an expanded selection, only containers whose subtree contains
+   * both endpoints satisfy this. Computed as the intersection of the
+   * anchor's container ancestors and the focus's container ancestors -
+   * a container holds both endpoints iff it is an ancestor of both.
    */
-  focusedContainerPath: string | undefined
+  focusedContainerPaths: Set<string>
   /**
    * Set of serialized paths of containers within the current selection.
    */
@@ -33,7 +41,7 @@ const emptySet = new Set<string>()
 const emptyState: SelectionState = {
   focusedLeafPath: undefined,
   selectedLeafPaths: emptySet,
-  focusedContainerPath: undefined,
+  focusedContainerPaths: emptySet,
   selectedContainerPaths: emptySet,
 }
 
@@ -44,9 +52,12 @@ const emptyState: SelectionState = {
  * container. All other nodes (spans, inline objects, block objects) are
  * leaves.
  *
- * For a collapsed selection:
- * - `focusedLeafPath` is the focus path when it resolves to a leaf.
- * - `focusedContainerPath` is the nearest ancestor container of the focus.
+ * - `focusedLeafPath` is the focus path when collapsed and it resolves
+ *   to a leaf.
+ * - `focusedContainerPaths` is the set of containers that fully
+ *   contain the current selection (every ancestor for a collapsed
+ *   caret; the intersection of anchor and focus ancestors for an
+ *   expanded selection).
  */
 export function getSelectionState(
   snapshot: TraversalSnapshot,
@@ -86,7 +97,7 @@ export function getSelectionState(
   }
 
   let focusedLeafPath: string | undefined
-  let focusedContainerPath: string | undefined
+  const focusedContainerPaths = new Set<string>()
 
   if (selection.isCollapsed) {
     const serializedFocusPath = serializePath(selection.focusPath)
@@ -95,15 +106,44 @@ export function getSelectionState(
       focusedLeafPath = serializedFocusPath
     }
 
-    for (const {path: ancestorPath} of getAncestors(
+    for (const {node, path: ancestorPath} of getAncestors(
       snapshot,
       selection.focusPath,
     )) {
-      const serializedAncestorPath = serializePath(ancestorPath)
-
-      if (selectedContainerPaths.has(serializedAncestorPath)) {
-        focusedContainerPath = serializedAncestorPath
-        break
+      if (
+        isTextBlock({schema: snapshot.context.schema}, node) ||
+        isEditableContainer(snapshot, node, ancestorPath)
+      ) {
+        focusedContainerPaths.add(serializePath(ancestorPath))
+      }
+    }
+  } else {
+    // A container fully contains an expanded selection iff it is an
+    // ancestor of BOTH endpoints. Intersect anchor-side and focus-side
+    // container ancestors.
+    const anchorContainerAncestors = new Set<string>()
+    for (const {node, path: ancestorPath} of getAncestors(
+      snapshot,
+      selection.anchorPath,
+    )) {
+      if (
+        isTextBlock({schema: snapshot.context.schema}, node) ||
+        isEditableContainer(snapshot, node, ancestorPath)
+      ) {
+        anchorContainerAncestors.add(serializePath(ancestorPath))
+      }
+    }
+    for (const {node, path: ancestorPath} of getAncestors(
+      snapshot,
+      selection.focusPath,
+    )) {
+      const serialized = serializePath(ancestorPath)
+      if (
+        anchorContainerAncestors.has(serialized) &&
+        (isTextBlock({schema: snapshot.context.schema}, node) ||
+          isEditableContainer(snapshot, node, ancestorPath))
+      ) {
+        focusedContainerPaths.add(serialized)
       }
     }
   }
@@ -112,7 +152,8 @@ export function getSelectionState(
     focusedLeafPath,
     selectedLeafPaths:
       selectedLeafPaths.size > 0 ? selectedLeafPaths : emptySet,
-    focusedContainerPath,
+    focusedContainerPaths:
+      focusedContainerPaths.size > 0 ? focusedContainerPaths : emptySet,
     selectedContainerPaths:
       selectedContainerPaths.size > 0 ? selectedContainerPaths : emptySet,
   }

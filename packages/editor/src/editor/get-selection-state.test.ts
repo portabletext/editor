@@ -10,7 +10,7 @@ describe(getSelectionState.name, () => {
     expect(getSelectionState(testbed.snapshot, null)).toEqual({
       focusedLeafPath: undefined,
       selectedLeafPaths: new Set(),
-      focusedContainerPath: undefined,
+      focusedContainerPaths: new Set(),
       selectedContainerPaths: new Set(),
     })
   })
@@ -34,9 +34,9 @@ describe(getSelectionState.name, () => {
       expect(result.focusedLeafPath).toEqual(serializePath(focusPath))
     })
 
-    test('focused container is the text block', () => {
-      expect(result.focusedContainerPath).toEqual(
-        serializePath([{_key: testbed.textBlock1._key}]),
+    test('focused containers contain the text block', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([serializePath([{_key: testbed.textBlock1._key}])]),
       )
     })
 
@@ -68,8 +68,8 @@ describe(getSelectionState.name, () => {
       expect(result.focusedLeafPath).toEqual(serializePath(focusPath))
     })
 
-    test('no focused container (image is root-level leaf)', () => {
-      expect(result.focusedContainerPath).toBeUndefined()
+    test('no focused containers (image is root-level leaf)', () => {
+      expect(result.focusedContainerPaths).toEqual(new Set())
     })
 
     test('selected leaves contain the image', () => {
@@ -102,9 +102,9 @@ describe(getSelectionState.name, () => {
       expect(result.focusedLeafPath).toEqual(serializePath(focusPath))
     })
 
-    test('focused container is the text block', () => {
-      expect(result.focusedContainerPath).toEqual(
-        serializePath([{_key: testbed.textBlock1._key}]),
+    test('focused containers contain the text block', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([serializePath([{_key: testbed.textBlock1._key}])]),
       )
     })
   })
@@ -134,16 +134,31 @@ describe(getSelectionState.name, () => {
       expect(result.focusedLeafPath).toEqual(serializePath(focusPath))
     })
 
-    test('focused container is the nearest ancestor (text block)', () => {
-      expect(result.focusedContainerPath).toEqual(
-        serializePath([
-          {_key: testbed.table._key},
-          'rows',
-          {_key: testbed.row1._key},
-          'cells',
-          {_key: testbed.cell1._key},
-          'content',
-          {_key: testbed.cellBlock1._key},
+    test('every container ancestor is focused', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([
+          serializePath([{_key: testbed.table._key}]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+          ]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+          ]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+            'content',
+            {_key: testbed.cellBlock1._key},
+          ]),
         ]),
       )
     })
@@ -209,16 +224,31 @@ describe(getSelectionState.name, () => {
       expect(result.focusedLeafPath).toEqual(serializePath(focusPath))
     })
 
-    test('focused container is the nearest text block', () => {
-      expect(result.focusedContainerPath).toEqual(
-        serializePath([
-          {_key: testbed.table._key},
-          'rows',
-          {_key: testbed.row1._key},
-          'cells',
-          {_key: testbed.cell1._key},
-          'content',
-          {_key: testbed.cellBlock1._key},
+    test('every container ancestor is focused', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([
+          serializePath([{_key: testbed.table._key}]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+          ]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+          ]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+            'content',
+            {_key: testbed.cellBlock1._key},
+          ]),
         ]),
       )
     })
@@ -248,8 +278,10 @@ describe(getSelectionState.name, () => {
       expect(result.focusedLeafPath).toBeUndefined()
     })
 
-    test('no focused container (selection is expanded)', () => {
-      expect(result.focusedContainerPath).toBeUndefined()
+    test('the text block fully contains the selection and is focused', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([serializePath([{_key: testbed.textBlock1._key}])]),
+      )
     })
 
     test('selected leaves include all three children of the text block', () => {
@@ -291,6 +323,10 @@ describe(getSelectionState.name, () => {
       focusPath,
       backward: false,
       isCollapsed: false,
+    })
+
+    test('no container fully contains the selection', () => {
+      expect(result.focusedContainerPaths).toEqual(new Set())
     })
 
     test('selected containers include both text blocks', () => {
@@ -353,6 +389,19 @@ describe(getSelectionState.name, () => {
       focusPath,
       backward: false,
       isCollapsed: false,
+    })
+
+    test('table and row are focused but neither cell is', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([
+          serializePath([{_key: testbed.table._key}]),
+          serializePath([
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+          ]),
+        ]),
+      )
     })
 
     test('selected containers include the table, row, both cells, and text blocks in range', () => {
@@ -445,7 +494,7 @@ describe(getSelectionState.name, () => {
     const testbed = createNodeTraversalTestbed()
     // Caret sits at offset 0 of span2 (the span after the inline object).
     // Shift+Left extends the focus backwards to the end of span1,
-    // so anchor=span2 and focus=span1 — i.e. anchor is LATER than focus
+    // so anchor=span2 and focus=span1 - i.e. anchor is LATER than focus
     // in document order.
     const anchorPath = [
       {_key: testbed.textBlock1._key},
@@ -463,6 +512,12 @@ describe(getSelectionState.name, () => {
       focusPath,
       backward: true,
       isCollapsed: false,
+    })
+
+    test('the text block fully contains the selection and is focused', () => {
+      expect(result.focusedContainerPaths).toEqual(
+        new Set([serializePath([{_key: testbed.textBlock1._key}])]),
+      )
     })
 
     test('inline object between anchor and focus is in selectedLeafPaths', () => {
