@@ -45,11 +45,21 @@ export const abstractSerializeBehaviors = [
         return false
       }
 
+      // Forward the `position` field from the originating native event
+      // so converters can branch on it. Currently only `drag.dragstart`
+      // carries a relevant signal (`isContainer` distinguishes chrome
+      // drag from in-content drag); other origins pass `undefined`.
+      const position =
+        event.originEvent.type === 'drag.dragstart'
+          ? {isContainer: event.originEvent.position.isContainer}
+          : undefined
+
       return converter.serialize({
         snapshot,
         event: {
           type: 'serialize',
           originEvent: event.originEvent.type,
+          position,
         },
       })
     },

@@ -1,5 +1,5 @@
 import {safeParse, safeStringify} from '../internal-utils/safe-json'
-import {getFragment} from '../selectors/selector.get-fragment'
+import {getDragFragment, getFragment} from '../selectors/selector.get-fragment'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
@@ -17,7 +17,18 @@ export const converterPortableText = defineConverter({
       }
     }
 
-    const blocks = getFragment(snapshot).map((entry) => entry.node)
+    // Dragging a container by its chrome serializes the container
+    // envelope intact: dropping a callout that wraps a paragraph should
+    // re-create the callout at the destination, not just the paragraph.
+    // Every other origin (clipboard copy/cut, in-content drag) unwraps
+    // to the smallest top-level-valid fragment so the destination shape
+    // wins.
+    const draggingContainer =
+      event.originEvent === 'drag.dragstart' &&
+      event.position?.isContainer === true
+    const blocks = (
+      draggingContainer ? getDragFragment(snapshot) : getFragment(snapshot)
+    ).map((entry) => entry.node)
 
     if (blocks.length === 0) {
       return {

@@ -3,7 +3,9 @@ import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../editor/editor-machine'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {isDOMNode} from '../engine/dom/utils/dom'
+import {end} from '../engine/editor/end'
 import {isEditor} from '../engine/editor/is-editor'
+import {start} from '../engine/editor/start'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
@@ -82,6 +84,32 @@ export function getEventPosition({
       selection: {
         anchor: {path: eventPath, offset: 0},
         focus: {path: eventPath, offset: 0},
+      },
+    }
+  }
+
+  if (
+    eventPositionBlock &&
+    !isEditor(eventNode) &&
+    isEditableContainer(editorEngine.snapshot, eventNode, eventPath)
+  ) {
+    // Event originates from a container's own outer wrapper (its chrome)
+    // rather than from a block inside it. `getDomNodePath` resolved up
+    // past any chrome DOM (no `data-pt-path` between the event target
+    // and the container's outer) and landed on the container path. Hold
+    // a selection that wraps the container's entire content so the drag
+    // pipeline serializes the container envelope as the dragged unit -
+    // see `getDragFragment` and the converter's `isContainer` branch.
+    // Without this override `caretPositionFromPoint` would resolve to
+    // the nearest editable position inside the body and narrow the drag
+    // to a single inner block.
+    return {
+      block: eventPositionBlock,
+      isEditor: false,
+      isContainer: true,
+      selection: {
+        anchor: start(editorEngine, eventPath),
+        focus: end(editorEngine, eventPath),
       },
     }
   }

@@ -671,7 +671,7 @@ type DragBehaviorEvent =
         clientY: number
         dataTransfer: DataTransfer
       }
-      position: Pick<EventPosition, 'selection'>
+      position: Pick<EventPosition, 'selection' | 'isContainer'>
     }
   | {
       type: StrictExtract<NativeBehaviorEventType, 'drag.drag'>

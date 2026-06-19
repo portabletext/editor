@@ -1,8 +1,11 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {isSpan, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {Path} from '../engine/interfaces/path'
+import {pathEquals} from '../engine/path/path-equals'
 import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
 import {resolveContainerAt} from '../schema/resolve-container-at'
+import {getLeaf} from '../traversal/get-leaf'
 import type {BlockPath} from '../types/paths'
 import {getSelectedValue} from './selector.get-selected-value'
 
@@ -29,7 +32,41 @@ import {getSelectedValue} from './selector.get-selected-value'
  */
 export const getFragment: EditorSelector<
   Array<{node: PortableTextBlock; path: BlockPath}>
-> = (snapshot) => {
+> = (snapshot) => walkFragment(snapshot, {stopAtCoveredContainer: false})
+
+/**
+ * Returns the fragment that should be serialized at drag time when the
+ * user grabs a container as a unit.
+ *
+ * Same as {@link getFragment}, except the unwrap stops as soon as the
+ * selection covers a single container's entire content (start at its
+ * first leaf, end at its last leaf). Without this guard a container
+ * wrapping root-accepted blocks (a callout around a paragraph) would
+ * unwrap to its inner blocks and the container envelope would be lost
+ * on drop.
+ *
+ * Should only be used when the drag event originated from a container's
+ * own chrome - {@link getEventPosition} sets `EventPosition.isContainer`
+ * to signal this, and the portable-text converter routes here when that
+ * flag is set on the originating `drag.dragstart` event. Selection
+ * shape alone cannot distinguish a chrome drag from a multi-block
+ * content drag that happens to span the container's full extent, so
+ * the routing belongs at the event-origin layer, not in this function.
+ *
+ * Destination-fit unwrap stays the drop side's responsibility: dropping
+ * the container envelope into a destination that doesn't accept it is
+ * handled by the drop pipeline.
+ *
+ * @public
+ */
+export const getDragFragment: EditorSelector<
+  Array<{node: PortableTextBlock; path: BlockPath}>
+> = (snapshot) => walkFragment(snapshot, {stopAtCoveredContainer: true})
+
+function walkFragment(
+  snapshot: EditorSnapshot,
+  options: {stopAtCoveredContainer: boolean},
+): Array<{node: PortableTextBlock; path: BlockPath}> {
   const envelope = getSelectedValue(snapshot)
 
   if (envelope.length === 0) {
@@ -53,6 +90,17 @@ export const getFragment: EditorSelector<
     const container = resolveContainerAt(containers, value, singlePath)
 
     if (!container || !('field' in container)) {
+      break
+    }
+
+    if (
+      options.stopAtCoveredContainer &&
+      selectionCoversNode(snapshot, singlePath)
+    ) {
+      // Drag-of-container caller asked to stop unwrapping here. Return
+      // the container itself as the fragment.
+      lastRootValid = [single]
+      lastRootValidPrefix = pathPrefix
       break
     }
 
@@ -90,4 +138,46 @@ export const getFragment: EditorSelector<
     node: block,
     path: [...lastRootValidPrefix, {_key: block._key}],
   }))
+}
+
+/**
+ * True when the current selection's endpoints coincide with the node at
+ * `nodePath`'s first leaf at offset 0 and its last leaf at the leaf's
+ * end. Used by {@link getDragFragment} to decide whether to stop
+ * unwrapping at the container level.
+ */
+function selectionCoversNode(
+  snapshot: EditorSnapshot,
+  nodePath: Path,
+): boolean {
+  const selection = snapshot.context.selection
+  if (!selection) {
+    return false
+  }
+
+  const firstLeaf = getLeaf(snapshot, nodePath, {edge: 'start'})
+  const lastLeaf = getLeaf(snapshot, nodePath, {edge: 'end'})
+  if (!firstLeaf || !lastLeaf) {
+    return false
+  }
+
+  const startPoint = selection.backward ? selection.focus : selection.anchor
+  const endPoint = selection.backward ? selection.anchor : selection.focus
+
+  if (!pathEquals(startPoint.path, firstLeaf.path)) {
+    return false
+  }
+  if (!pathEquals(endPoint.path, lastLeaf.path)) {
+    return false
+  }
+  if (startPoint.offset !== 0) {
+    return false
+  }
+  const lastLeafEndOffset = isSpan(
+    {schema: snapshot.context.schema},
+    lastLeaf.node as PortableTextBlock,
+  )
+    ? (lastLeaf.node as unknown as {text: string}).text.length
+    : 0
+  return endPoint.offset === lastLeafEndOffset
 }
