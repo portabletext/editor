@@ -15,6 +15,42 @@ import {
 import {describe, expect, test} from 'vitest'
 import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
 
+// The resolved sub-schema for an unmodified nested block member: the bridge
+// emits each block member's own resolved lists, and an unmodified block
+// resolves to Sanity's defaults.
+const defaultBlockOfMember = {
+  type: 'block',
+  styles: [
+    {name: 'normal', title: 'Normal', value: 'normal'},
+    {name: 'h1', title: 'Heading 1', value: 'h1'},
+    {name: 'h2', title: 'Heading 2', value: 'h2'},
+    {name: 'h3', title: 'Heading 3', value: 'h3'},
+    {name: 'h4', title: 'Heading 4', value: 'h4'},
+    {name: 'h5', title: 'Heading 5', value: 'h5'},
+    {name: 'h6', title: 'Heading 6', value: 'h6'},
+    {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+  ],
+  lists: [
+    {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
+    {name: 'number', title: 'Numbered list', value: 'number'},
+  ],
+  decorators: [
+    {name: 'strong', title: 'Strong', value: 'strong'},
+    {name: 'em', title: 'Italic', value: 'em'},
+    {name: 'code', title: 'Code', value: 'code'},
+    {name: 'underline', title: 'Underline', value: 'underline'},
+    {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+  ],
+  annotations: [
+    {
+      name: 'link',
+      title: 'Link',
+      fields: [{name: 'href', title: 'Link', type: 'string'}],
+    },
+  ],
+  inlineObjects: [],
+}
+
 describe(sanitySchemaToPortableTextSchema.name, () => {
   const defaultSchema: Schema = {
     block: {
@@ -385,7 +421,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                         name: 'content',
                         type: 'array',
                         title: 'Content',
-                        of: [{type: 'block'}],
+                        of: [defaultBlockOfMember],
                       },
                     ],
                   },
@@ -480,7 +516,10 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                         name: 'content',
                         type: 'array',
                         title: 'Content',
-                        of: [{type: 'block'}, {type: 'table', title: 'Table'}],
+                        of: [
+                          defaultBlockOfMember,
+                          {type: 'table', title: 'Table'},
+                        ],
                       },
                     ],
                   },
@@ -537,7 +576,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         name: 'input',
         type: 'array',
         title: 'Input',
-        of: [{type: 'block'}, {type: 'aiTask', title: 'Ai Task'}],
+        of: [defaultBlockOfMember, {type: 'aiTask', title: 'Ai Task'}],
       },
     ])
   })
@@ -600,7 +639,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         type: 'array',
         title: 'Content',
         of: [
-          {type: 'block'},
+          defaultBlockOfMember,
           {
             type: 'object',
             name: 'b',
@@ -610,7 +649,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                 name: 'content',
                 type: 'array',
                 title: 'Content',
-                of: [{type: 'block'}, {type: 'a', title: 'A'}],
+                of: [defaultBlockOfMember, {type: 'a', title: 'A'}],
               },
             ],
           },
@@ -625,7 +664,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         type: 'array',
         title: 'Content',
         of: [
-          {type: 'block'},
+          defaultBlockOfMember,
           {
             type: 'object',
             name: 'a',
@@ -635,7 +674,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                 name: 'content',
                 type: 'array',
                 title: 'Content',
-                of: [{type: 'block'}, {type: 'b', title: 'B'}],
+                of: [defaultBlockOfMember, {type: 'b', title: 'B'}],
               },
             ],
           },
@@ -713,7 +752,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         type: 'array',
         title: 'Content',
         of: [
-          {type: 'block'},
+          defaultBlockOfMember,
           {
             type: 'object',
             name: 'b',
@@ -724,7 +763,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                 type: 'array',
                 title: 'Content',
                 of: [
-                  {type: 'block'},
+                  defaultBlockOfMember,
                   {
                     type: 'object',
                     name: 'c',
@@ -734,7 +773,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                         name: 'content',
                         type: 'array',
                         title: 'Content',
-                        of: [{type: 'block'}, {type: 'a', title: 'A'}],
+                        of: [defaultBlockOfMember, {type: 'a', title: 'A'}],
                       },
                     ],
                   },
@@ -815,7 +854,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         name: 'content',
         type: 'array',
         title: 'Content',
-        of: [{type: 'block'}, cInline],
+        of: [defaultBlockOfMember, cInline],
       },
     ])
     expect(b?.fields).toEqual([
@@ -823,7 +862,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         name: 'content',
         type: 'array',
         title: 'Content',
-        of: [{type: 'block'}, cInline],
+        of: [defaultBlockOfMember, cInline],
       },
     ])
   })
@@ -1090,5 +1129,145 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       codeLine: {styles: ['normal', 'code'], decorators: []},
       quoteLine: {styles: ['normal', 'blockquote'], decorators: ['em']},
     })
+  })
+
+  test('a container block member that allows no inline objects does not inherit the root inline objects', () => {
+    // The root block allows a `stock-ticker` inline object; the code-block
+    // line declares `of: []`. The line's sub-schema must advertise no
+    // inline objects, otherwise the restriction leaks the root's.
+    const stockTicker = defineType({
+      type: 'object',
+      name: 'stock-ticker',
+      fields: [defineField({name: 'symbol', type: 'string'})],
+    })
+    const codeBlockType = defineType({
+      type: 'object',
+      name: 'code-block',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'lines',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              name: 'block',
+              styles: [{title: 'Code', value: 'code'}],
+              lists: [],
+              marks: {decorators: [], annotations: []},
+              of: [],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          of: [{type: 'stock-ticker'}],
+        }),
+        defineArrayMember({type: 'code-block'}),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [portableTextType, codeBlockType, stockTicker],
+      }).get('body'),
+    )
+
+    expect(schema.inlineObjects?.map((object) => object.name)).toEqual([
+      'stock-ticker',
+    ])
+
+    const codeBlock = schema.blockObjects?.find(
+      (bo) => bo.name === 'code-block',
+    )
+    const linesField = codeBlock?.fields?.find(
+      (field) => field.name === 'lines',
+    ) as {of: ReadonlyArray<OfDefinition>} | undefined
+    const subSchema = getSubSchema(schema, linesField?.of ?? [])
+
+    expect(subSchema.inlineObjects.map((object) => object.name)).toEqual([])
+  })
+
+  test('a container inline object that shares a name with the root but differs in shape keeps its own shape', () => {
+    // Root allows inline `widget` with field `a`; the code-block line
+    // allows inline `widget` with field `b`. The name matches but the
+    // shape differs, so the line's sub-schema must keep its own `widget`
+    // (field `b`), not inherit the root's (field `a`).
+    const codeBlockType = defineType({
+      type: 'object',
+      name: 'code-block',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'lines',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              name: 'block',
+              styles: [{title: 'Code', value: 'code'}],
+              lists: [],
+              marks: {decorators: [], annotations: []},
+              of: [
+                {
+                  type: 'object',
+                  name: 'widget',
+                  fields: [{name: 'b', type: 'string'}],
+                },
+              ],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          of: [
+            {
+              type: 'object',
+              name: 'widget',
+              fields: [{name: 'a', type: 'string'}],
+            },
+          ],
+        }),
+        defineArrayMember({type: 'code-block'}),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({types: [portableTextType, codeBlockType]}).get(
+        'body',
+      ),
+    )
+
+    expect(
+      schema.inlineObjects
+        ?.find((object) => object.name === 'widget')
+        ?.fields.map((field) => field.name),
+    ).toEqual(['a'])
+
+    const codeBlock = schema.blockObjects?.find(
+      (bo) => bo.name === 'code-block',
+    )
+    const linesField = codeBlock?.fields?.find(
+      (field) => field.name === 'lines',
+    ) as {of: ReadonlyArray<OfDefinition>} | undefined
+    const subSchema = getSubSchema(schema, linesField?.of ?? [])
+
+    expect(
+      subSchema.inlineObjects
+        .find((object) => object.name === 'widget')
+        ?.fields.map((field) => field.name),
+    ).toEqual(['b'])
   })
 })
