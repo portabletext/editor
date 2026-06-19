@@ -1,22 +1,27 @@
 import {defineContainer} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
+import {DragHandle} from './drag-handle'
+import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 
 const tableContainer = defineContainer({
   type: 'table',
   arrayField: 'rows',
-  render: ({attributes, children, node, selected}) => (
-    <table
+  render: ({attributes, children, node, readOnly, selected}) => (
+    <div
       {...attributes}
       data-header-rows={
         typeof node.headerRows === 'number' ? node.headerRows : 0
       }
       data-selected={selected ? '' : undefined}
-      className="playground-table"
+      className="playground-table-chrome group"
     >
-      <tbody>{children}</tbody>
-    </table>
+      <table className="playground-table cursor-text">
+        <tbody>{children}</tbody>
+      </table>
+      <DragHandle readOnly={readOnly} />
+    </div>
   ),
   of: [
     defineContainer({
