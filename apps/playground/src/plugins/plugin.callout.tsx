@@ -74,14 +74,15 @@ const calloutImageLeaf = defineBlockObject({
 const calloutContainer = defineContainer({
   type: 'callout',
   arrayField: 'content',
-  render: ({attributes, children, node, selected}) => {
+  render: ({attributes, children, node, readOnly, selected}) => {
     const tone = typeof node.tone === 'string' ? node.tone : 'note'
     const toneStyle = toneClassName[tone] ?? defaultToneClassName
     return (
       <aside
         {...attributes}
+        draggable={!readOnly}
         data-selected={selected ? '' : undefined}
-        className={`my-3 flex gap-2.5 rounded-md border-l-4 px-4 py-3 transition-shadow data-[selected]:shadow-md ${toneStyle}`}
+        className={`my-3 flex cursor-grab gap-2.5 rounded-md border-l-4 p-3 transition-shadow data-[selected]:shadow-md ${toneStyle}`}
       >
         <span
           contentEditable={false}
@@ -89,7 +90,9 @@ const calloutContainer = defineContainer({
         >
           <ToneIcon tone={tone} />
         </span>
-        <div className="min-w-0 flex-1">{children}</div>
+        <div draggable={false} className="min-w-0 flex-1 cursor-text">
+          {children}
+        </div>
       </aside>
     )
   },

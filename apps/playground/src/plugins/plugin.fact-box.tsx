@@ -1,25 +1,23 @@
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
-import {LayersIcon} from 'lucide-react'
 import type {JSX} from 'react'
 
 const factBoxContainer = defineContainer({
   type: 'fact-box',
   arrayField: 'content',
-  render: ({attributes, children, selected}) => (
+  render: ({attributes, children, readOnly, selected}) => (
     <section
       {...attributes}
+      draggable={!readOnly}
       data-selected={selected ? '' : undefined}
-      className="my-4 rounded-lg border border-stone-300 bg-stone-50 px-5 py-4 shadow-sm transition-shadow data-[selected]:border-stone-500 data-[selected]:shadow-lg dark:border-stone-600 dark:bg-stone-800/40 dark:data-[selected]:border-stone-400"
+      className="my-4 cursor-grab rounded-lg border border-stone-300 bg-stone-50 p-4 shadow-sm transition-shadow data-[selected]:border-stone-500 data-[selected]:shadow-lg dark:border-stone-600 dark:bg-stone-800/40 dark:data-[selected]:border-stone-400"
     >
       <div
-        contentEditable={false}
-        className="-mx-5 -mt-4 mb-3 flex items-center gap-2 rounded-t-lg border-stone-300 border-b bg-stone-100 px-5 py-2 font-mono text-stone-600 text-xs uppercase tracking-wider dark:border-stone-600 dark:bg-stone-900/60 dark:text-stone-300"
+        draggable={false}
+        className="cursor-text text-stone-800 dark:text-stone-100"
       >
-        <LayersIcon aria-hidden className="h-3.5 w-3.5" />
-        <span>Fact box</span>
+        {children}
       </div>
-      <div className="text-stone-800 dark:text-stone-100">{children}</div>
     </section>
   ),
   of: [

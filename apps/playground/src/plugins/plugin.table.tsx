@@ -6,17 +6,20 @@ import {cellImageLeaf} from './plugin.image'
 const tableContainer = defineContainer({
   type: 'table',
   arrayField: 'rows',
-  render: ({attributes, children, node, selected}) => (
-    <table
+  render: ({attributes, children, node, readOnly, selected}) => (
+    <div
       {...attributes}
+      draggable={!readOnly}
       data-header-rows={
         typeof node.headerRows === 'number' ? node.headerRows : 0
       }
       data-selected={selected ? '' : undefined}
-      className="playground-table"
+      className="playground-table-chrome"
     >
-      <tbody>{children}</tbody>
-    </table>
+      <table draggable={false} className="playground-table cursor-text">
+        <tbody>{children}</tbody>
+      </table>
+    </div>
   ),
   of: [
     defineContainer({
