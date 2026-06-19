@@ -103,6 +103,53 @@ describe('Performance', () => {
     })
   })
 
+  describe('Deleting', () => {
+    test('Removing 1000 blocks via select all and delete', async () => {
+      const {editor, locator} = await createTestEditor()
+
+      editor.send({
+        type: 'insert.blocks',
+        blocks: Array.from({length: 1000}, (_, i) => ({
+          _type: 'block',
+          _key: `b${i}`,
+          children: [{_type: 'span', _key: `s${i}`, text: `b${i}`, marks: []}],
+          markDefs: [],
+          style: 'normal',
+        })),
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1000)
+
+        expect(locator.getByText('b999')).toBeInTheDocument()
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+          focus: {
+            path: [{_key: 'b999'}, 'children', {_key: 's999'}],
+            offset: 'b999'.length,
+          },
+        },
+      })
+
+      const start = performance.now()
+
+      editor.send({type: 'delete'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1)
+      })
+
+      const duration = performance.now() - start
+
+      console.warn(`Removed 1000 blocks in ${duration.toFixed(2)}ms`)
+    })
+  })
+
   describe('Containers', () => {
     const schemaDefinition = defineSchema({
       blockObjects: [

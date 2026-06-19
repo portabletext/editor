@@ -695,16 +695,27 @@ function removeLeadingChildrenOf(
 /**
  * Remove every sibling block strictly between `startBlockPath` and
  * `endBlockPath`. Both paths must share the same parent.
+ *
+ * Removes from the end of the range backward. Each removal reindexes the
+ * block-index map for the removed node's following siblings; taking the
+ * last in-range block first leaves nothing after it to reindex, so the
+ * whole range is O(n) instead of the O(n^2) a front-to-back walk incurs
+ * (every removal there shifts, and reserializes, all later siblings).
  */
 function removeBlocksBetween(
   editor: PortableTextEditorEngine,
   startBlockPath: Path,
   endBlockPath: Path,
 ): void {
-  let cursor = getSibling(editor.snapshot, startBlockPath, {direction: 'next'})
-  while (cursor && !pathEquals(cursor.path, endBlockPath)) {
+  let cursor = getSibling(editor.snapshot, endBlockPath, {
+    direction: 'previous',
+  })
+  while (cursor && !pathEquals(cursor.path, startBlockPath)) {
+    const previous = getSibling(editor.snapshot, cursor.path, {
+      direction: 'previous',
+    })
     removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor.snapshot, startBlockPath, {direction: 'next'})
+    cursor = previous
   }
 }
 
