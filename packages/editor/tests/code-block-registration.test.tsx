@@ -81,8 +81,8 @@ function tableContainers() {
   return defineContainer({
     type: 'table',
     arrayField: 'rows',
-    render: ({attributes, children}) => (
-      <div data-testid="table" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <div data-testid="table" {...attributes} {...childrenAttributes}>
         {children}
       </div>
     ),
@@ -90,8 +90,8 @@ function tableContainers() {
       defineContainer({
         type: 'row',
         arrayField: 'cells',
-        render: ({attributes, children}) => (
-          <div data-testid="row" {...attributes}>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div data-testid="row" {...attributes} {...childrenAttributes}>
             {children}
           </div>
         ),
@@ -99,8 +99,8 @@ function tableContainers() {
           defineContainer({
             type: 'cell',
             arrayField: 'content',
-            render: ({attributes, children}) => (
-              <div data-testid="cell" {...attributes}>
+            render: ({attributes, childrenAttributes, children}) => (
+              <div data-testid="cell" {...attributes} {...childrenAttributes}>
                 {children}
               </div>
             ),
@@ -161,8 +161,12 @@ describe('code-block resolution through normalisation', () => {
             defineContainer({
               type: 'code-block',
               arrayField: 'lines',
-              render: ({attributes, children}) => (
-                <div data-testid="code-block" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="code-block"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -216,8 +220,12 @@ describe('code-block resolution through normalisation', () => {
               // Plugin asks for `lines`; schema says `content`.
               type: 'code-block',
               arrayField: 'lines',
-              render: ({attributes, children}) => (
-                <div data-testid="code-block" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="code-block"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),

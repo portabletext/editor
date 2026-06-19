@@ -269,10 +269,11 @@ describe('renderDefault wraps default', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({renderDefault, attributes, ...rest}) =>
+      render: ({renderDefault, attributes, childrenAttributes, ...rest}) =>
         renderDefault({
           ...rest,
           attributes: {...attributes, 'data-extra': 'x'},
+          childrenAttributes,
           renderDefault,
         }),
     })

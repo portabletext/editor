@@ -77,8 +77,12 @@ describe('normalisation walks registered container chains to completion', () => 
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children}) => (
-                <div data-testid="table" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="table"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -86,8 +90,12 @@ describe('normalisation walks registered container chains to completion', () => 
                 defineContainer({
                   type: 'cell',
                   arrayField: 'content',
-                  render: ({attributes, children}) => (
-                    <div data-testid="cell" {...attributes}>
+                  render: ({attributes, childrenAttributes, children}) => (
+                    <div
+                      data-testid="cell"
+                      {...attributes}
+                      {...childrenAttributes}
+                    >
                       {children}
                     </div>
                   ),
@@ -188,8 +196,12 @@ describe('normalisation walks registered container chains to completion', () => 
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children}) => (
-                <div data-testid="table" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="table"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -197,8 +209,12 @@ describe('normalisation walks registered container chains to completion', () => 
                 defineContainer({
                   type: 'row',
                   arrayField: 'cells',
-                  render: ({attributes, children}) => (
-                    <div data-testid="row" {...attributes}>
+                  render: ({attributes, childrenAttributes, children}) => (
+                    <div
+                      data-testid="row"
+                      {...attributes}
+                      {...childrenAttributes}
+                    >
                       {children}
                     </div>
                   ),
@@ -206,8 +222,12 @@ describe('normalisation walks registered container chains to completion', () => 
                     defineContainer({
                       type: 'cell',
                       arrayField: 'content',
-                      render: ({attributes, children}) => (
-                        <div data-testid="cell" {...attributes}>
+                      render: ({attributes, childrenAttributes, children}) => (
+                        <div
+                          data-testid="cell"
+                          {...attributes}
+                          {...childrenAttributes}
+                        >
                           {children}
                         </div>
                       ),
@@ -302,8 +322,12 @@ describe('normalisation walks registered container chains to completion', () => 
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children}) => (
-                <div data-testid="table" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="table"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -311,8 +335,12 @@ describe('normalisation walks registered container chains to completion', () => 
                 defineContainer({
                   type: 'row',
                   arrayField: 'cells',
-                  render: ({attributes, children}) => (
-                    <div data-testid="row" {...attributes}>
+                  render: ({attributes, childrenAttributes, children}) => (
+                    <div
+                      data-testid="row"
+                      {...attributes}
+                      {...childrenAttributes}
+                    >
                       {children}
                     </div>
                   ),
@@ -320,8 +348,12 @@ describe('normalisation walks registered container chains to completion', () => 
                     defineContainer({
                       type: 'cell',
                       arrayField: 'content',
-                      render: ({attributes, children}) => (
-                        <div data-testid="cell" {...attributes}>
+                      render: ({attributes, childrenAttributes, children}) => (
+                        <div
+                          data-testid="cell"
+                          {...attributes}
+                          {...childrenAttributes}
+                        >
                           {children}
                         </div>
                       ),

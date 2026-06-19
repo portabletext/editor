@@ -130,8 +130,8 @@ describe('Inline-level positional override: defineInlineObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -177,8 +177,8 @@ describe('Inline-level positional override: defineInlineObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -225,8 +225,8 @@ describe('Inline-level positional override: defineInlineObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -258,8 +258,8 @@ describe('Inline-level positional override: defineInlineObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -340,8 +340,8 @@ describe('Inline-level positional override: defineSpan', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -387,8 +387,8 @@ describe('Inline-level positional override: defineSpan', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -438,8 +438,8 @@ describe('Inline-level positional override: defineSpan', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -471,8 +471,8 @@ describe('Inline-level positional override: defineSpan', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),

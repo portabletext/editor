@@ -34,8 +34,8 @@ const schemaDefinition = defineSchema({
 const calloutContainer = defineContainer({
   type: 'callout',
   arrayField: 'content',
-  render: ({attributes, children}) => (
-    <div data-testid="callout" {...attributes}>
+  render: ({attributes, childrenAttributes, children}) => (
+    <div data-testid="callout" {...attributes} {...childrenAttributes}>
       {children}
     </div>
   ),
@@ -114,7 +114,7 @@ describe('container rendering', () => {
           '</span>',
           '</div>',
           '</div>',
-          '<div data-testid="callout" data-pt-block="container" data-pt-path="[_key==&quot;k2&quot;]">',
+          '<div data-testid="callout" data-pt-block="container" data-pt-path="[_key==&quot;k2&quot;]" contenteditable="true" draggable="true" data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;k2&quot;].content[_key==&quot;content-block&quot;]"',
           ' data-pt-block="text">',
@@ -145,10 +145,10 @@ describe('container rendering', () => {
     const trackingContainer = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children, node}) => {
+      render: ({attributes, childrenAttributes, children, node}) => {
         receivedNodes.push({_type: node._type, _key: node._key})
         return (
-          <div data-testid="callout" {...attributes}>
+          <div data-testid="callout" {...attributes} {...childrenAttributes}>
             {children}
           </div>
         )
@@ -242,9 +242,9 @@ describe('table with nested rows and cells', () => {
   const tableContainer = defineContainer({
     type: 'table',
     arrayField: 'rows',
-    render: ({attributes, children}) => (
+    render: ({attributes, childrenAttributes, children}) => (
       <table data-testid="table" {...attributes}>
-        <tbody>{children}</tbody>
+        <tbody {...childrenAttributes}>{children}</tbody>
       </table>
     ),
   })
@@ -252,8 +252,8 @@ describe('table with nested rows and cells', () => {
   const rowContainer = defineContainer({
     type: 'row',
     arrayField: 'cells',
-    render: ({attributes, children}) => (
-      <tr data-testid="row" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <tr data-testid="row" {...attributes} {...childrenAttributes}>
         {children}
       </tr>
     ),
@@ -262,8 +262,8 @@ describe('table with nested rows and cells', () => {
   const cellContainer = defineContainer({
     type: 'cell',
     arrayField: 'content',
-    render: ({attributes, children}) => (
-      <td data-testid="cell" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <td data-testid="cell" {...attributes} {...childrenAttributes}>
         {children}
       </td>
     ),
@@ -321,16 +321,22 @@ describe('table with nested rows and cells', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          '<table data-testid="table" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]">',
-          '<tbody>',
+          '<table data-testid="table" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]" contenteditable="false" draggable="true">',
+          '<tbody data-pt-container-children="" contenteditable="true">',
           '<tr',
           ' data-testid="row"',
           ' data-pt-block="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]">',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
+          ' contenteditable="true"',
+          ' draggable="true"',
+          ' data-pt-container-children="">',
           '<td',
           ' data-testid="cell"',
           ' data-pt-block="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]">',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
+          ' contenteditable="true"',
+          ' draggable="true"',
+          ' data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
           ' data-pt-block="text">',
@@ -378,8 +384,8 @@ describe('container with non-editable fields', () => {
   const cardContainer = defineContainer({
     type: 'card',
     arrayField: 'body',
-    render: ({attributes, children}) => (
-      <div data-testid="card" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <div data-testid="card" {...attributes} {...childrenAttributes}>
         {children}
       </div>
     ),
@@ -424,7 +430,7 @@ describe('container with non-editable fields', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          '<div data-testid="card" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]">',
+          '<div data-testid="card" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]" contenteditable="true" draggable="true" data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].body[_key==&quot;body-block&quot;]"',
           ' data-pt-block="text">',
@@ -502,8 +508,12 @@ describe('positional block-leaf override', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -602,7 +612,7 @@ describe('container and renderer independence', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          '<div data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]">',
+          '<div data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]" contenteditable="false" draggable="true">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].content[_key==&quot;content-block&quot;]"',
           ' data-pt-block="text">',
@@ -695,9 +705,9 @@ describe('code block container', () => {
   const codeBlockContainer = defineContainer({
     type: 'code-block',
     arrayField: 'code',
-    render: ({attributes, children}) => (
+    render: ({attributes, childrenAttributes, children}) => (
       <pre data-testid="code-block" {...attributes}>
-        <code>{children}</code>
+        <code {...childrenAttributes}>{children}</code>
       </pre>
     ),
   })
@@ -753,8 +763,8 @@ describe('code block container', () => {
       expect(editorElement).not.toEqual(null)
       expect(editorElement!.innerHTML).toEqual(
         [
-          '<pre data-testid="code-block" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]">',
-          '<code>',
+          '<pre data-testid="code-block" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]" contenteditable="false" draggable="true">',
+          '<code data-pt-container-children="" contenteditable="true">',
           '<div data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;]" data-pt-block="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;].children[_key==&quot;span-0&quot;]"',
@@ -808,8 +818,8 @@ describe('gallery with void block objects', () => {
   const galleryContainer = defineContainer({
     type: 'gallery',
     arrayField: 'items',
-    render: ({attributes, children}) => (
-      <div data-testid="gallery" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <div data-testid="gallery" {...attributes} {...childrenAttributes}>
         {children}
       </div>
     ),
@@ -848,7 +858,7 @@ describe('gallery with void block objects', () => {
       expect(editorElement).not.toEqual(null)
       expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
         [
-          '<div data-testid="gallery" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]">',
+          '<div data-testid="gallery" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]" contenteditable="true" draggable="true" data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-0&quot;]"',
           ' data-pt-block="object">',
@@ -939,9 +949,9 @@ describe('cell with mixed content', () => {
   const tableContainer = defineContainer({
     type: 'table',
     arrayField: 'rows',
-    render: ({attributes, children}) => (
+    render: ({attributes, childrenAttributes, children}) => (
       <table data-testid="table" {...attributes}>
-        <tbody>{children}</tbody>
+        <tbody {...childrenAttributes}>{children}</tbody>
       </table>
     ),
   })
@@ -949,8 +959,8 @@ describe('cell with mixed content', () => {
   const rowContainer = defineContainer({
     type: 'row',
     arrayField: 'cells',
-    render: ({attributes, children}) => (
-      <tr data-testid="row" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <tr data-testid="row" {...attributes} {...childrenAttributes}>
         {children}
       </tr>
     ),
@@ -959,8 +969,8 @@ describe('cell with mixed content', () => {
   const cellContainer = defineContainer({
     type: 'cell',
     arrayField: 'content',
-    render: ({attributes, children}) => (
-      <td data-testid="cell" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <td data-testid="cell" {...attributes} {...childrenAttributes}>
         {children}
       </td>
     ),
@@ -1036,16 +1046,22 @@ describe('cell with mixed content', () => {
       expect(editorElement).not.toEqual(null)
       expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
         [
-          '<table data-testid="table" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]">',
-          '<tbody>',
+          '<table data-testid="table" data-pt-block="container" data-pt-path="[_key==&quot;k0&quot;]" contenteditable="false" draggable="true">',
+          '<tbody data-pt-container-children="" contenteditable="true">',
           '<tr',
           ' data-testid="row"',
           ' data-pt-block="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]">',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
+          ' contenteditable="true"',
+          ' draggable="true"',
+          ' data-pt-container-children="">',
           '<td',
           ' data-testid="cell"',
           ' data-pt-block="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]">',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
+          ' contenteditable="true"',
+          ' draggable="true"',
+          ' data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
           ' data-pt-block="text">',
@@ -1131,8 +1147,8 @@ describe('self-referential containers', () => {
   const listContainer = defineContainer({
     type: 'list',
     arrayField: 'items',
-    render: ({attributes, children}) => (
-      <ul data-testid="list" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <ul data-testid="list" {...attributes} {...childrenAttributes}>
         {children}
       </ul>
     ),
@@ -1141,8 +1157,8 @@ describe('self-referential containers', () => {
   const listItemContainer = defineContainer({
     type: 'list-item',
     arrayField: 'content',
-    render: ({attributes, children}) => (
-      <li data-testid="list-item" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <li data-testid="list-item" {...attributes} {...childrenAttributes}>
         {children}
       </li>
     ),

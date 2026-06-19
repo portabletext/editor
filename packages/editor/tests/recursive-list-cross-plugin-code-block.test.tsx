@@ -116,8 +116,8 @@ function listPluginContainers() {
     defineContainer({
       type: 'list',
       arrayField: 'items',
-      render: ({attributes, children}) => (
-        <ul data-testid="list" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <ul data-testid="list" {...attributes} {...childrenAttributes}>
           {children}
         </ul>
       ),
@@ -125,8 +125,8 @@ function listPluginContainers() {
         defineContainer({
           type: 'list-item',
           arrayField: 'content',
-          render: ({attributes, children}) => (
-            <li data-testid="list-item" {...attributes}>
+          render: ({attributes, childrenAttributes, children}) => (
+            <li data-testid="list-item" {...attributes} {...childrenAttributes}>
               {children}
             </li>
           ),
@@ -140,8 +140,8 @@ function codeBlockPluginContainer() {
   return defineContainer({
     type: 'code-block',
     arrayField: 'lines',
-    render: ({attributes, children}) => (
-      <pre data-testid="code-block" {...attributes}>
+    render: ({attributes, childrenAttributes, children}) => (
+      <pre data-testid="code-block" {...attributes} {...childrenAttributes}>
         {children}
       </pre>
     ),

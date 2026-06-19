@@ -66,8 +66,8 @@ const schemaDefinition = defineSchema({
 const listContainer = defineContainer({
   type: 'list',
   arrayField: 'items',
-  render: ({attributes, children}) => (
-    <ul data-testid="list" {...attributes}>
+  render: ({attributes, childrenAttributes, children}) => (
+    <ul data-testid="list" {...attributes} {...childrenAttributes}>
       {children}
     </ul>
   ),
@@ -76,8 +76,8 @@ const listContainer = defineContainer({
 const listItemContainer = defineContainer({
   type: 'list-item',
   arrayField: 'content',
-  render: ({attributes, children}) => (
-    <li data-testid="list-item" {...attributes}>
+  render: ({attributes, childrenAttributes, children}) => (
+    <li data-testid="list-item" {...attributes} {...childrenAttributes}>
       {children}
     </li>
   ),
@@ -86,8 +86,8 @@ const listItemContainer = defineContainer({
 const codeBlockContainer = defineContainer({
   type: 'code-block',
   arrayField: 'lines',
-  render: ({attributes, children}) => (
-    <pre data-testid="code-block" {...attributes}>
+  render: ({attributes, childrenAttributes, children}) => (
+    <pre data-testid="code-block" {...attributes} {...childrenAttributes}>
       {children}
     </pre>
   ),

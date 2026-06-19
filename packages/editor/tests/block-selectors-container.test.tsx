@@ -29,8 +29,8 @@ const schemaDefinition = defineSchema({
 const codeBlockContainer = defineContainer({
   type: 'code-block',
   arrayField: 'lines',
-  render: ({attributes, children}) => (
-    <pre data-testid="code-block" {...attributes}>
+  render: ({attributes, childrenAttributes, children}) => (
+    <pre data-testid="code-block" {...attributes} {...childrenAttributes}>
       {children}
     </pre>
   ),

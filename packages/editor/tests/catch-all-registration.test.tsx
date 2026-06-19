@@ -129,8 +129,12 @@ describe('catch-all registration: global blockObject', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -239,8 +243,12 @@ describe('catch-all registration: global textBlock', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -289,8 +297,12 @@ describe('catch-all registration: positional', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -341,8 +353,12 @@ describe('catch-all registration: positional', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -406,8 +422,12 @@ describe('catch-all registration: positional', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -476,8 +496,12 @@ describe('catch-all registration: cross-rung precedence', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -538,8 +562,12 @@ describe('catch-all registration: cross-rung precedence', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -597,8 +625,12 @@ describe('catch-all registration: cross-rung precedence', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),

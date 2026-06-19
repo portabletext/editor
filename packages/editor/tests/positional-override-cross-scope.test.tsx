@@ -77,8 +77,8 @@ describe('Cross-scope positional override', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -229,8 +229,8 @@ describe('Cross-scope positional override', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),

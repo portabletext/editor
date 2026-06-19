@@ -65,27 +65,47 @@ const containers = [
   defineContainer({
     type: 'code-block',
     arrayField: 'lines',
-    render: ({attributes, children}) => <pre {...attributes}>{children}</pre>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <pre {...attributes} {...childrenAttributes}>
+        {children}
+      </pre>
+    ),
   }),
   defineContainer({
     type: 'callout',
     arrayField: 'content',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
   defineContainer({
     type: 'table',
     arrayField: 'rows',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
   defineContainer({
     type: 'row',
     arrayField: 'cells',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
   defineContainer({
     type: 'cell',
     arrayField: 'content',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
 ]
 
@@ -996,22 +1016,38 @@ const tableContainers = [
   defineContainer({
     type: 'table',
     arrayField: 'rows',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
   defineContainer({
     type: 'row',
     arrayField: 'cells',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
   defineContainer({
     type: 'cell',
     arrayField: 'content',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
   defineContainer({
     type: 'callout',
     arrayField: 'content',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
 ]
 
@@ -2258,15 +2294,19 @@ describe('cross-container range delete: deep structures', () => {
       defineContainer({
         type: 'code-block',
         arrayField: 'lines',
-        render: ({attributes, children}) => (
-          <pre {...attributes}>{children}</pre>
+        render: ({attributes, childrenAttributes, children}) => (
+          <pre {...attributes} {...childrenAttributes}>
+            {children}
+          </pre>
         ),
       }),
       defineContainer({
         type: 'callout',
         arrayField: 'content',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
         of: [
           defineTextBlock({
@@ -2280,22 +2320,28 @@ describe('cross-container range delete: deep structures', () => {
       defineContainer({
         type: 'table',
         arrayField: 'rows',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
       }),
       defineContainer({
         type: 'row',
         arrayField: 'cells',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
       }),
       defineContainer({
         type: 'cell',
         arrayField: 'content',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
       }),
     ]
@@ -2588,22 +2634,28 @@ describe('cross-container range delete: deep structures', () => {
       defineContainer({
         type: 'table',
         arrayField: 'rows',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
         of: [
           defineContainer({
             type: 'row',
             arrayField: 'cells',
-            render: ({attributes, children}) => (
-              <div {...attributes}>{children}</div>
+            render: ({attributes, childrenAttributes, children}) => (
+              <div {...attributes} {...childrenAttributes}>
+                {children}
+              </div>
             ),
             of: [
               defineContainer({
                 type: 'cell',
                 arrayField: 'content',
-                render: ({attributes, children}) => (
-                  <div {...attributes}>{children}</div>
+                render: ({attributes, childrenAttributes, children}) => (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
                 ),
               }),
             ],

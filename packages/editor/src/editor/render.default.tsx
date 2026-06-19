@@ -5,16 +5,26 @@ import type {
 } from '../renderers/renderer.types'
 
 /**
- * Engine-default wrapper for Container nodes. Spreads engine-emitted
- * `attributes` (including `data-pt-*` markers) on a `<div>` and
- * renders the children. Used both as the fallback when no `render`
- * is provided and as the `renderDefault` prop on `ContainerRenderProps`.
+ * Engine-default wrapper for Container nodes. Spreads the chrome
+ * `attributes` on an outer `<div>` and the body `childrenAttributes`
+ * on an inner `<div>` that wraps the children. The split lets the
+ * browser route clicks on the outer to block-object selection (via
+ * `contentEditable={false}`) and clicks in the inner to caret
+ * placement (via `contentEditable={true}` on the body).
+ *
+ * Used both as the fallback when no `render` is provided and as the
+ * `renderDefault` prop on `ContainerRenderProps`.
  */
 export function renderDefaultContainer(props: {
   attributes: Record<string, unknown>
+  childrenAttributes: Record<string, unknown>
   children: ReactElement
 }): ReactElement {
-  return <div {...props.attributes}>{props.children}</div>
+  return (
+    <div {...props.attributes}>
+      <div {...props.childrenAttributes}>{props.children}</div>
+    </div>
+  )
 }
 
 /**

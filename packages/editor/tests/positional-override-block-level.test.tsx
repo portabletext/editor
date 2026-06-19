@@ -93,8 +93,12 @@ describe('Block-level positional override: defineContainer', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout-global" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside
+          data-testid="callout-global"
+          {...attributes}
+          {...childrenAttributes}
+        >
           {children}
         </aside>
       ),
@@ -136,8 +140,8 @@ describe('Block-level positional override: defineContainer', () => {
     const rowGlobal = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: ({attributes, children}) => (
-        <div data-testid="row-global" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="row-global" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -145,8 +149,12 @@ describe('Block-level positional override: defineContainer', () => {
     const rowPositional = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: ({attributes, children}) => (
-        <div data-testid="row-positional" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div
+          data-testid="row-positional"
+          {...attributes}
+          {...childrenAttributes}
+        >
           {children}
         </div>
       ),
@@ -154,8 +162,8 @@ describe('Block-level positional override: defineContainer', () => {
     const table = defineContainer({
       type: 'table',
       arrayField: 'rows',
-      render: ({attributes, children}) => (
-        <div data-testid="table" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="table" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -204,8 +212,8 @@ describe('Block-level positional override: defineContainer', () => {
     const rowGlobal = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: ({attributes, children}) => (
-        <div data-testid="row-global" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="row-global" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -218,8 +226,8 @@ describe('Block-level positional override: defineContainer', () => {
     const table = defineContainer({
       type: 'table',
       arrayField: 'rows',
-      render: ({attributes, children}) => (
-        <div data-testid="table" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="table" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -278,8 +286,8 @@ describe('Block-level positional override: defineContainer', () => {
     const rowGlobal = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: ({attributes, children}) => (
-        <div data-testid="row-global" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="row-global" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -293,8 +301,8 @@ describe('Block-level positional override: defineContainer', () => {
     const table = defineContainer({
       type: 'table',
       arrayField: 'rows',
-      render: ({attributes, children}) => (
-        <div data-testid="table" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="table" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -348,8 +356,8 @@ describe('Block-level positional override: defineContainer', () => {
     const table = defineContainer({
       type: 'table',
       arrayField: 'rows',
-      render: ({attributes, children}) => (
-        <div data-testid="table" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div data-testid="table" {...attributes} {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -459,8 +467,8 @@ describe('Block-level positional override: defineTextBlock', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -521,8 +529,8 @@ describe('Block-level positional override: defineTextBlock', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -585,8 +593,8 @@ describe('Block-level positional override: defineTextBlock', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -635,8 +643,8 @@ describe('Block-level positional override: defineTextBlock', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -729,8 +737,8 @@ describe('Block-level positional override: defineBlockObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -777,8 +785,8 @@ describe('Block-level positional override: defineBlockObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -834,8 +842,8 @@ describe('Block-level positional override: defineBlockObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),
@@ -874,8 +882,8 @@ describe('Block-level positional override: defineBlockObject', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <aside data-testid="callout" {...attributes} {...childrenAttributes}>
           {children}
         </aside>
       ),

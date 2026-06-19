@@ -43,8 +43,12 @@ describe('register-node-clean-dom', () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <div data-testid="callout-subtree" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <div
+          data-testid="callout-subtree"
+          {...attributes}
+          {...childrenAttributes}
+        >
           {children}
         </div>
       ),

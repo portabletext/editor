@@ -61,7 +61,11 @@ describe('inline-object void wrapper contenteditable', () => {
     const cellContainer = defineContainer({
       type: 'cell',
       arrayField: 'content',
-      render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+      render: ({attributes, childrenAttributes, children}) => (
+        <div {...attributes} {...childrenAttributes}>
+          {children}
+        </div>
+      ),
     })
 
     await createTestEditor({

@@ -30,9 +30,29 @@ export type ContainerNodeForType<TType extends string> = TType extends
  * `node` is `PortableTextObject` because containers cannot register the
  * built-in `'span'` or `'block'` types (those are leaves and text blocks
  * respectively).
+ *
+ * `attributes` is the **chrome bag**: spread on the container's outer
+ * wrapper. Carries the markers that make this element behave like
+ * void-block chrome (`data-pt-block="container"`, `data-pt-path`,
+ * `contentEditable={false}`, `draggable={!readOnly}`). Clicks on the
+ * outer wrapper route to block-object selection of the container.
+ *
+ * `childrenAttributes` is the **body bag**: spread on the element where
+ * children mount. Carries `data-pt-container-children` and
+ * `contentEditable={true}`, re-enabling caret editing inside the
+ * otherwise non-editable outer.
+ *
+ * When the container is a single DOM element (cell, list item), spread
+ * BOTH bags on the same element with `childrenAttributes` LAST so its
+ * `contentEditable={true}` overrides the outer's `false`:
+ *
+ * ```tsx
+ * <td {...attributes} {...childrenAttributes}>{children}</td>
+ * ```
  */
 export type ContainerRenderProps = {
   attributes: Record<string, unknown>
+  childrenAttributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
   node: PortableTextObject
@@ -352,6 +372,7 @@ export function defineContainer<const TType extends string>(config: {
   arrayField: string
   render?: (props: {
     attributes: Record<string, unknown>
+    childrenAttributes: Record<string, unknown>
     children: ReactElement
     focused: boolean
     node: ContainerNodeForType<TType>

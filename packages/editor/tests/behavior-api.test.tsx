@@ -845,8 +845,10 @@ describe('Behavior API', () => {
       const calloutContainer = defineContainer({
         type: 'callout',
         arrayField: 'content',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
         of: [
           // Positioned text-block override: text blocks inside callout
@@ -944,8 +946,10 @@ describe('Behavior API', () => {
       const calloutContainer = defineContainer({
         type: 'callout',
         arrayField: 'content',
-        render: ({attributes, children}) => (
-          <div {...attributes}>{children}</div>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div {...attributes} {...childrenAttributes}>
+            {children}
+          </div>
         ),
         of: [
           // Positioned text-block override: text blocks inside callout

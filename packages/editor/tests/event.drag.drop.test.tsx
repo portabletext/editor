@@ -440,22 +440,28 @@ describe('event.drag.drop', () => {
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children}) => (
-                <div {...attributes}>{children}</div>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div {...attributes} {...childrenAttributes}>
+                  {children}
+                </div>
               ),
               of: [
                 defineContainer({
                   type: 'row',
                   arrayField: 'cells',
-                  render: ({attributes, children}) => (
-                    <div {...attributes}>{children}</div>
+                  render: ({attributes, childrenAttributes, children}) => (
+                    <div {...attributes} {...childrenAttributes}>
+                      {children}
+                    </div>
                   ),
                   of: [
                     defineContainer({
                       type: 'cell',
                       arrayField: 'content',
-                      render: ({attributes, children}) => (
-                        <div {...attributes}>{children}</div>
+                      render: ({attributes, childrenAttributes, children}) => (
+                        <div {...attributes} {...childrenAttributes}>
+                          {children}
+                        </div>
                       ),
                     }),
                   ],
@@ -729,22 +735,28 @@ describe('event.drag.drop', () => {
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children}) => (
-                <div {...attributes}>{children}</div>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div {...attributes} {...childrenAttributes}>
+                  {children}
+                </div>
               ),
               of: [
                 defineContainer({
                   type: 'row',
                   arrayField: 'cells',
-                  render: ({attributes, children}) => (
-                    <div {...attributes}>{children}</div>
+                  render: ({attributes, childrenAttributes, children}) => (
+                    <div {...attributes} {...childrenAttributes}>
+                      {children}
+                    </div>
                   ),
                   of: [
                     defineContainer({
                       type: 'cell',
                       arrayField: 'content',
-                      render: ({attributes, children}) => (
-                        <div {...attributes}>{children}</div>
+                      render: ({attributes, childrenAttributes, children}) => (
+                        <div {...attributes} {...childrenAttributes}>
+                          {children}
+                        </div>
                       ),
                     }),
                   ],

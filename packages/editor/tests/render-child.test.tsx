@@ -394,9 +394,9 @@ describe('renderChild', () => {
     const tableContainer = defineContainer({
       type: 'table',
       arrayField: 'rows',
-      render: ({attributes, children}) => (
+      render: ({attributes, childrenAttributes, children}) => (
         <table {...attributes}>
-          <tbody>{children}</tbody>
+          <tbody {...childrenAttributes}>{children}</tbody>
         </table>
       ),
     })
@@ -404,14 +404,18 @@ describe('renderChild', () => {
     const rowContainer = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+      render: ({attributes, childrenAttributes, children}) => (
+        <tr {...attributes} {...childrenAttributes}>
+          {children}
+        </tr>
+      ),
     })
 
     const cellContainer = defineContainer({
       type: 'cell',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <td data-testid="cell" {...attributes}>
+      render: ({attributes, childrenAttributes, children}) => (
+        <td data-testid="cell" {...attributes} {...childrenAttributes}>
           {children}
         </td>
       ),

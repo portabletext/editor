@@ -147,8 +147,8 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
             defineContainer({
               type: 'cell',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="cell" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div data-testid="cell" {...attributes} {...childrenAttributes}>
                   {children}
                 </div>
               ),
@@ -159,8 +159,8 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
             defineContainer({
               type: 'list',
               arrayField: 'items',
-              render: ({attributes, children}) => (
-                <div data-testid="list" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div data-testid="list" {...attributes} {...childrenAttributes}>
                   {children}
                 </div>
               ),
@@ -209,8 +209,12 @@ describe('Registration silent-skip behavior', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -219,8 +223,8 @@ describe('Registration silent-skip behavior', () => {
             defineContainer({
               type: 'list',
               arrayField: 'items',
-              render: ({attributes, children}) => (
-                <div data-testid="list" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div data-testid="list" {...attributes} {...childrenAttributes}>
                   {children}
                 </div>
               ),
@@ -277,8 +281,12 @@ describe('Registration silent-skip behavior', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="callout" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -288,8 +296,12 @@ describe('Registration silent-skip behavior', () => {
                 defineContainer({
                   type: 'chart',
                   arrayField: 'series',
-                  render: ({attributes, children}) => (
-                    <div data-testid="chart" {...attributes}>
+                  render: ({attributes, childrenAttributes, children}) => (
+                    <div
+                      data-testid="chart"
+                      {...attributes}
+                      {...childrenAttributes}
+                    >
                       {children}
                     </div>
                   ),
@@ -351,8 +363,12 @@ describe('Registration silent-skip behavior', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'body',
-              render: ({attributes, children}) => (
-                <div data-testid="callout-custom" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="callout-custom"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -415,8 +431,12 @@ describe('Rule 2: container chains are rooted in the editor value array', () => 
             defineContainer({
               type: 'organism',
               arrayField: 'cells',
-              render: ({attributes, children}) => (
-                <div data-testid="organism" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div
+                  data-testid="organism"
+                  {...attributes}
+                  {...childrenAttributes}
+                >
                   {children}
                 </div>
               ),
@@ -424,8 +444,8 @@ describe('Rule 2: container chains are rooted in the editor value array', () => 
             defineContainer({
               type: 'cell',
               arrayField: 'content',
-              render: ({attributes, children}) => (
-                <div data-testid="cell" {...attributes}>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div data-testid="cell" {...attributes} {...childrenAttributes}>
                   {children}
                 </div>
               ),

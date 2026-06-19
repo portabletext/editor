@@ -93,9 +93,20 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected, path}) => {
+              render: ({
+                attributes,
+                childrenAttributes,
+                children,
+                focused,
+                selected,
+                path,
+              }) => {
                 calloutValues.push({focused, selected, path})
-                return <div {...attributes}>{children}</div>
+                return (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
+                )
               },
               of: [
                 defineTextBlock({
@@ -176,9 +187,19 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'callout',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({
+                attributes,
+                childrenAttributes,
+                children,
+                focused,
+                selected,
+              }) => {
                 calloutValues.push({focused, selected})
-                return <div {...attributes}>{children}</div>
+                return (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
+                )
               },
             }),
           ]}
@@ -246,25 +267,55 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({
+                attributes,
+                childrenAttributes,
+                children,
+                focused,
+                selected,
+              }) => {
                 tableValues.push({focused, selected})
-                return <div {...attributes}>{children}</div>
+                return (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
+                )
               },
             }),
             defineContainer({
               type: 'row',
               arrayField: 'cells',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({
+                attributes,
+                childrenAttributes,
+                children,
+                focused,
+                selected,
+              }) => {
                 rowValues.push({focused, selected})
-                return <div {...attributes}>{children}</div>
+                return (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
+                )
               },
             }),
             defineContainer({
               type: 'cell',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected}) => {
+              render: ({
+                attributes,
+                childrenAttributes,
+                children,
+                focused,
+                selected,
+              }) => {
                 cellValues.push({focused, selected})
-                return <div {...attributes}>{children}</div>
+                return (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
+                )
               },
               of: [
                 defineTextBlock({
@@ -375,23 +426,38 @@ describe('container render focused, selected, and path', () => {
             defineContainer({
               type: 'table',
               arrayField: 'rows',
-              render: ({attributes, children}) => (
-                <div {...attributes}>{children}</div>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div {...attributes} {...childrenAttributes}>
+                  {children}
+                </div>
               ),
             }),
             defineContainer({
               type: 'row',
               arrayField: 'cells',
-              render: ({attributes, children}) => (
-                <div {...attributes}>{children}</div>
+              render: ({attributes, childrenAttributes, children}) => (
+                <div {...attributes} {...childrenAttributes}>
+                  {children}
+                </div>
               ),
             }),
             defineContainer({
               type: 'cell',
               arrayField: 'content',
-              render: ({attributes, children, focused, selected, node}) => {
+              render: ({
+                attributes,
+                childrenAttributes,
+                children,
+                focused,
+                selected,
+                node,
+              }) => {
                 cellValues.push({key: node._key, focused, selected})
-                return <div {...attributes}>{children}</div>
+                return (
+                  <div {...attributes} {...childrenAttributes}>
+                    {children}
+                  </div>
+                )
               },
             }),
           ]}

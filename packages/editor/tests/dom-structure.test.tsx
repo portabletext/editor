@@ -250,8 +250,8 @@ describe('DOM structure', () => {
     const galleryContainer = defineContainer({
       type: 'gallery',
       arrayField: 'items',
-      render: ({attributes, children}) => (
-        <div {...attributes} className="gallery">
+      render: ({attributes, childrenAttributes, children}) => (
+        <div {...attributes} className="gallery" {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -275,7 +275,7 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          '<div data-pt-block="container" data-pt-path="[_key==&quot;g0&quot;]" class="gallery">',
+          '<div data-pt-block="container" data-pt-path="[_key==&quot;g0&quot;]" contenteditable="true" draggable="true" class="gallery" data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;g0&quot;].items[_key==&quot;img0&quot;]"',
           ' data-pt-block="object">',
@@ -363,21 +363,29 @@ describe('DOM structure', () => {
     const tableContainer = defineContainer({
       type: 'table',
       arrayField: 'rows',
-      render: ({attributes, children}) => (
+      render: ({attributes, childrenAttributes, children}) => (
         <table {...attributes}>
-          <tbody>{children}</tbody>
+          <tbody {...childrenAttributes}>{children}</tbody>
         </table>
       ),
     })
     const rowContainer = defineContainer({
       type: 'row',
       arrayField: 'cells',
-      render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+      render: ({attributes, childrenAttributes, children}) => (
+        <tr {...attributes} {...childrenAttributes}>
+          {children}
+        </tr>
+      ),
     })
     const cellContainer = defineContainer({
       type: 'cell',
       arrayField: 'content',
-      render: ({attributes, children}) => <td {...attributes}>{children}</td>,
+      render: ({attributes, childrenAttributes, children}) => (
+        <td {...attributes} {...childrenAttributes}>
+          {children}
+        </td>
+      ),
     })
     await createTestEditor({
       schemaDefinition: tableSchemaDefinition,
@@ -421,12 +429,15 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          '<table data-pt-block="container" data-pt-path="[_key==&quot;t0&quot;]">',
-          '<tbody>',
-          '<tr data-pt-block="container" data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;]">',
+          '<table data-pt-block="container" data-pt-path="[_key==&quot;t0&quot;]" contenteditable="false" draggable="true">',
+          '<tbody data-pt-container-children="" contenteditable="true">',
+          '<tr data-pt-block="container" data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;]" contenteditable="true" draggable="true" data-pt-container-children="">',
           '<td',
           ' data-pt-block="container"',
-          ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;]">',
+          ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;]"',
+          ' contenteditable="true"',
+          ' draggable="true"',
+          ' data-pt-container-children="">',
           '<div',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;].content[_key==&quot;b0&quot;]"',
           ' data-pt-block="text">',
@@ -489,9 +500,9 @@ describe('DOM structure', () => {
     const codeContainer = defineContainer({
       type: 'code',
       arrayField: 'lines',
-      render: ({attributes, children}) => (
+      render: ({attributes, childrenAttributes, children}) => (
         <pre {...attributes}>
-          <code>{children}</code>
+          <code {...childrenAttributes}>{children}</code>
         </pre>
       ),
     })
@@ -530,8 +541,8 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          '<pre data-pt-block="container" data-pt-path="[_key==&quot;c0&quot;]">',
-          '<code>',
+          '<pre data-pt-block="container" data-pt-path="[_key==&quot;c0&quot;]" contenteditable="false" draggable="true">',
+          '<code data-pt-container-children="" contenteditable="true">',
           '<div data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l0&quot;]" data-pt-block="text">',
           '<span',
           ' data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l0&quot;].children[_key==&quot;s0&quot;]"',
@@ -587,8 +598,8 @@ describe('DOM structure', () => {
     const calloutContainer = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <div {...attributes} className="callout">
+      render: ({attributes, childrenAttributes, children}) => (
+        <div {...attributes} className="callout" {...childrenAttributes}>
           {children}
         </div>
       ),
@@ -661,8 +672,8 @@ describe('DOM structure', () => {
     const calloutContainer = defineContainer({
       type: 'callout',
       arrayField: 'content',
-      render: ({attributes, children}) => (
-        <div {...attributes} className="callout">
+      render: ({attributes, childrenAttributes, children}) => (
+        <div {...attributes} className="callout" {...childrenAttributes}>
           {children}
         </div>
       ),
