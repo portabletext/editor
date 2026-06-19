@@ -1,8 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {assert, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {defineContainer, defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.drag.drop self-drop semantics', () => {
@@ -398,5 +399,108 @@ describe('event.drag.drop self-drop semantics', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).not.toEqual(initialValue)
     })
+  })
+
+  test('Scenario: chrome drop inside the dragged container is suppressed', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+    const lineKey = keyGenerator()
+    const lineSpanKey = keyGenerator()
+
+    const codeBlockContainer = defineContainer({
+      type: 'code-block',
+      arrayField: 'lines',
+    })
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'code-block',
+            fields: [{name: 'lines', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: codeBlockKey,
+          _type: 'code-block',
+          lines: [
+            {
+              _key: lineKey,
+              _type: 'block',
+              children: [
+                {_key: lineSpanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[codeBlockContainer]} />,
+    })
+
+    await userEvent.click(locator)
+
+    const dragSelection = {
+      anchor: {path: [{_key: codeBlockKey}], offset: 0},
+      focus: {path: [{_key: codeBlockKey}], offset: 0},
+    }
+    const dropSelection = {
+      anchor: {
+        path: [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: lineKey},
+          'children',
+          {_key: lineSpanKey},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: lineKey},
+          'children',
+          {_key: lineSpanKey},
+        ],
+        offset: 1,
+      },
+    }
+
+    const initialValue = editor.getSnapshot().context.value
+
+    const json = converterPortableText.serialize({
+      snapshot: {
+        ...editor.getSnapshot(),
+        context: {...editor.getSnapshot().context, selection: dragSelection},
+      },
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: dragSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: dropSelection,
+      },
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })

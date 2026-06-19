@@ -75,22 +75,15 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
   },
 })
 
-// This function will handle unexpected DOM changes inside the Editable rendering,
-// and make sure that we can maintain a stable editorEngine.snapshot.context.selection when that happens.
-//
-// For example, if this Editable is rendered inside something that might re-render
-// this component (hidden contexts) while the user is still actively changing the
-// contentEditable, this could interfere with the intermediate DOM selection,
-// which again could be picked up by DOMEditor's event listeners.
-// If that range is invalid at that point, the engine's selection could be
-// set either wrong, or invalid, to which editorEngine will throw exceptions
-// that are impossible to recover properly from or result in a wrong selection.
-//
-// Also the other way around, when the DOMEditor will try to create a DOM Range
-// from the current editorEngine.snapshot.context.selection, it may throw unrecoverable errors
-// if the current editor.snapshot.context.selection is invalid according to the DOM.
-// If this is the case, default to selecting the top of the document, if the
-// user already had a selection.
+// This function handles unexpected DOM changes inside the Editable so the
+// engine's model selection stays stable. The Editable can be re-rendered while
+// the user is still actively changing the contentEditable (hidden contexts,
+// outer state); the intermediate DOM selection it observes can be invalid
+// against the engine's snapshot, and synchronously syncing either direction
+// without guards leads to unrecoverable errors. When `toDOMRange` can't
+// resolve the engine's selection on the current DOM (typically a race ahead
+// of React's commit), this pass skips the sync and the next MutationObserver
+// tick retries once the DOM catches up.
 function validateSelection(
   editorEngine: PortableTextEditorEngine,
   editorElement: HTMLDivElement,

@@ -45,8 +45,23 @@ export const abstractSerializeBehaviors = [
         return false
       }
 
+      // Drag origins carry the grabbed selection on the originating event;
+      // the drag pipeline does not update `snapshot.context.selection` on
+      // dragstart, so override the snapshot here so converters see the
+      // grabbed unit through plain `snapshot.context.selection` reads.
+      const snapshotForConverter =
+        event.originEvent.type === 'drag.dragstart'
+          ? {
+              ...snapshot,
+              context: {
+                ...snapshot.context,
+                selection: event.originEvent.position.selection,
+              },
+            }
+          : snapshot
+
       return converter.serialize({
-        snapshot,
+        snapshot: snapshotForConverter,
         event: {
           type: 'serialize',
           originEvent: event.originEvent.type,

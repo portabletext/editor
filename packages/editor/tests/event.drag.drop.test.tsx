@@ -3,8 +3,12 @@ import {assert, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
+import {safeParse} from '../src/internal-utils/safe-json'
 import {NodePlugin} from '../src/plugins/plugin.node'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {
+  defineBlockObject,
+  defineContainer,
+} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.drag.drop', () => {
@@ -15,7 +19,7 @@ describe('event.drag.drop', () => {
     const stockTickerKey = keyGenerator()
     const barKey = keyGenerator()
 
-    const {locator, editor} = await createTestEditor({
+    const {locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         inlineObjects: [
@@ -39,43 +43,157 @@ describe('event.drag.drop', () => {
 
     await userEvent.click(locator)
 
-    const stockTickerPath = [
-      {_key: blockKey},
-      'children',
-      {_key: stockTickerKey},
-    ]
-
-    // Unlike the other drag scenarios in this file, this one dispatches a real
-    // DOM `dragstart` instead of sending a hand-built `position`. The
-    // regression lives in `getEventPosition`, the DOM-event -> `position`
-    // translation that every payload-style drag test skips: a `dragstart` on
-    // an inline object produces no DOM caret selection, and the null-selection
-    // fallback used to widen to the whole enclosing text block. Dispatching the
-    // native event is the only seam that exercises that translation, and the
-    // resulting drag selection (which `drag.dragstart` writes back via
-    // `select`) is the observable proof of what was dragged.
+    // Unlike the other drag scenarios in this file, this one dispatches a
+    // real DOM `dragstart` rather than sending a hand-built `position`. The
+    // wire payload it produces is the observable proof of what the
+    // dragstart handler decided to carry.
     const draggableElement = locator
       .element()
       .querySelector('[data-pt-inline="object"] [draggable="true"]')
     assert(draggableElement, 'Expected the inline object to have a drag source')
 
     const rect = draggableElement.getBoundingClientRect()
+    const dataTransfer = new DataTransfer()
     draggableElement.dispatchEvent(
       new DragEvent('dragstart', {
         bubbles: true,
         cancelable: true,
-        dataTransfer: new DataTransfer(),
+        dataTransfer,
         clientX: rect.left + rect.width / 2,
         clientY: rect.top + rect.height / 2,
       }),
     )
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: stockTickerPath, offset: 0},
-        focus: {path: stockTickerPath, offset: 0},
-        backward: false,
-      })
+      const ptData = dataTransfer.getData('application/x-portable-text')
+      const blocks = safeParse(ptData)
+      expect(blocks).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: dropping an inline object inside another text block moves the inline without duplicating its surrounding text', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sourceBlockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const barKey = keyGenerator()
+    const destBlockKey = keyGenerator()
+    const destSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: sourceBlockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+            {_key: barKey, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: destBlockKey,
+          _type: 'block',
+          children: [
+            {_key: destSpanKey, _type: 'span', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const stockTickerSelection = {
+      anchor: {
+        path: [{_key: sourceBlockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: sourceBlockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+    }
+
+    const serialized = converterPortableText.serialize({
+      snapshot: {
+        ...editor.getSnapshot(),
+        context: {
+          ...editor.getSnapshot().context,
+          selection: stockTickerSelection,
+        },
+      },
+      event: {
+        type: 'serialize',
+        originEvent: 'drag.dragstart',
+      },
+    })
+    if (serialized.type === 'serialization.failure') {
+      assert.fail(serialized.reason)
+    }
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(serialized.mimeType, serialized.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: stockTickerSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+            offset: 0,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: sourceBlockKey,
+          _type: 'block',
+          children: [{_key: fooKey, _type: 'span', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: destBlockKey,
+          _type: 'block',
+          children: [
+            {_key: 'k8', _type: 'span', text: '', marks: []},
+            {_key: stockTickerKey, _type: 'stock-ticker', symbol: 'AAPL'},
+            {_key: 'k9', _type: 'span', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 
@@ -870,6 +988,225 @@ describe('event.drag.drop', () => {
         'block',
         'image',
         'block',
+      ])
+    })
+  })
+
+  test('Scenario: dragging a block-object into a cell whose schema also lists the same _type as an inline-object stays a block, not an inline', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const rootBlockKey = keyGenerator()
+    const rootSpanKey = keyGenerator()
+    const rootImageKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const cellBlockKey = keyGenerator()
+    const cellSpanKey = keyGenerator()
+
+    const imageLeaf = defineBlockObject({type: 'image'})
+    const cellContainer = defineContainer({
+      type: 'cell',
+      arrayField: 'content',
+      of: [imageLeaf],
+    })
+    const rowContainer = defineContainer({
+      type: 'row',
+      arrayField: 'cells',
+      of: [cellContainer],
+    })
+    const tableContainer = defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      of: [rowContainer],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {type: 'block'},
+                                  {
+                                    type: 'object',
+                                    name: 'image',
+                                    fields: [{name: 'src', type: 'string'}],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        inlineObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: rootBlockKey,
+          _type: 'block',
+          children: [
+            {_key: rootSpanKey, _type: 'span', text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: rootImageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: cellSpanKey,
+                          _type: 'span',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[tableContainer]} />,
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: rootImageKey}], offset: 0},
+      focus: {path: [{_key: rootImageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const cellSpanPath = [
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'content',
+      {_key: cellBlockKey},
+      'children',
+      {_key: cellSpanKey},
+    ]
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: cellSpanPath, offset: 0},
+          focus: {path: cellSpanPath, offset: 0},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: rootBlockKey,
+          _type: 'block',
+          children: [
+            {_key: rootSpanKey, _type: 'span', text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: rootImageKey,
+                      _type: 'image',
+                      src: 'https://example.com/image.jpg',
+                    },
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      children: [
+                        {_key: cellSpanKey, _type: 'span', text: '', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ])
     })
   })
