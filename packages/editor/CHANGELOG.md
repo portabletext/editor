@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.6.2
+
+### Patch Changes
+
+- [#2816](https://github.com/portabletext/editor/pull/2816) [`29091fe`](https://github.com/portabletext/editor/commit/29091fe7c4d11c5bfc2907d24d921c3a0206bf8a) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep `EngineString`/`TextString` uncompiled so the DOM-reconcile effect runs every render
+
+  In builds that compile the editor with React Compiler, a browser edit that
+  diverged from the model could leave a stray character in the rendered text
+  while the document itself stayed correct (for example, typing immediately
+  after toggling a decorator at a collapsed cursor). The rendered text now
+  always matches the document again.
+
 ## 7.6.1
 
 ### Patch Changes
