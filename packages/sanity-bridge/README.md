@@ -93,6 +93,47 @@ const sanitySchema = Schema.compile({
 const portableTextSchema = sanitySchemaToPortableTextSchema(sanitySchema)
 ```
 
+#### Container sub-schemas
+
+When a block object holds an array field with a nested `{type: 'block'}`
+member (a code block, callout, table cell, ...), the nested block is
+resolved from its own Sanity definition: its styles, decorators,
+annotations, lists, and inline objects come from that block as Sanity
+compiles it, not from the top-level block.
+
+```ts
+const codeBlockType = defineType({
+  type: 'object',
+  name: 'code-block',
+  fields: [
+    defineField({
+      type: 'array',
+      name: 'lines',
+      of: [
+        // A code line: only the `code` style, no marks, no inline objects.
+        {
+          type: 'block',
+          styles: [{title: 'Code', value: 'code'}],
+          lists: [],
+          marks: {decorators: [], annotations: []},
+          of: [],
+        },
+      ],
+    }),
+  ],
+})
+```
+
+In the converted schema the `code-block`'s line carries those restrictions,
+so an editor that gates on the sub-schema offers no decorators, annotations,
+or headings inside it.
+
+Sanity has no notion of a nested block inheriting from an enclosing block, so
+an undeclared property resolves to Sanity's defaults for that block. Declare
+whatever a container should allow on the block member itself. The resulting
+`Schema` follows the resolution rules documented in
+[`@portabletext/schema`](../schema/README.md#containers-and-sub-schemas).
+
 ### Convert Portable Text Schema to Sanity Schema
 
 ```ts
