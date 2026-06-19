@@ -36,8 +36,8 @@ describe('stock-ticker rule respects the sub-schema at the focus', () => {
       defineContainer({
         type: 'callout',
         arrayField: 'content',
-        render: ({attributes, children}) => (
-          <div data-testid="callout" {...attributes}>
+        render: ({attributes, childrenAttributes, children}) => (
+          <div data-testid="callout" {...attributes} {...childrenAttributes}>
             {children}
           </div>
         ),

@@ -27,7 +27,11 @@ const containers = [
   defineContainer({
     type: 'callout',
     arrayField: 'content',
-    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+    render: ({attributes, childrenAttributes, children}) => (
+      <div {...attributes} {...childrenAttributes}>
+        {children}
+      </div>
+    ),
   }),
 ]
 
