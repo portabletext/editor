@@ -372,4 +372,115 @@ describe(getFragment.name, () => {
       },
     ])
   })
+
+  test('unwraps to the block containing an inline object when selection is collapsed on an inline inside a table cell', () => {
+    const tableSchema = compileSchema(
+      defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const defs = [
+      defineContainer({type: 'table', arrayField: 'rows'}),
+      defineContainer({type: 'row', arrayField: 'cells'}),
+      defineContainer({type: 'cell', arrayField: 'content'}),
+    ]
+
+    const stockTicker = {
+      _type: 'stock-ticker',
+      _key: 'st1',
+    }
+    const block: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'b1',
+      children: [
+        {_type: 'span', _key: 'b1c1', text: 'foo', marks: []},
+        stockTicker,
+        {_type: 'span', _key: 'b1c2', text: 'bar', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    }
+    const cell = {_type: 'cell', _key: 'cell1', content: [block]}
+    const row = {_type: 'row', _key: 'row1', cells: [cell]}
+    const table = {_type: 'table', _key: 'table1', rows: [row]}
+
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 'st1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 'st1'},
+        ],
+        offset: 0,
+      },
+    }
+
+    expect(
+      getFragment(
+        createCalloutSnapshot([table], selection, tableSchema, defs),
+      ).map((entry) => entry.node),
+    ).toEqual([
+      {
+        ...block,
+        children: [stockTicker],
+      },
+    ])
+  })
 })

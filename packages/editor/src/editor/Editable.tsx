@@ -24,6 +24,7 @@ import {resolveSelection} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {safeStringify} from '../internal-utils/safe-json'
+import {getDragSelection} from '../selectors/drag-selection'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -689,9 +690,22 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
+      // The drag-position selection from `getEventPosition` reflects where
+      // the pointer is. When the user has an expanded model selection that
+      // covers the drag point, the drag should carry the whole model
+      // selection - the drag image already shows it. Widen here so the
+      // captured drag origin and the forwarded event agree on the source.
+      const dragPosition = {
+        ...position,
+        selection: getDragSelection({
+          snapshot: editorEngine.snapshot,
+          eventSelection: position.selection,
+        }),
+      }
+
       editorActor.send({
         type: 'dragstart',
-        origin: position,
+        origin: dragPosition,
       })
 
       editorActor.send({
@@ -703,7 +717,7 @@ export const PortableTextEditable = forwardRef<
             clientY: event.clientY,
             dataTransfer: event.dataTransfer,
           },
-          position,
+          position: dragPosition,
         },
         editor: editorEngine,
       })

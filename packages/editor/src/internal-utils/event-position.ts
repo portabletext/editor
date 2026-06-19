@@ -34,6 +34,10 @@ export type EventPosition = {
 }
 export type EventPositionBlock = EventPosition['block']
 
+function isDragEvent(event: DragEvent | MouseEvent): event is DragEvent {
+  return 'dataTransfer' in event
+}
+
 export function getEventPosition({
   editorActor,
   editorEngine,
@@ -79,6 +83,27 @@ export function getEventPosition({
       block: eventPositionBlock,
       isEditor: false,
       isContainer: false,
+      selection: {
+        anchor: {path: eventPath, offset: 0},
+        focus: {path: eventPath, offset: 0},
+      },
+    }
+  }
+
+  if (
+    eventPositionBlock &&
+    !isEditor(eventNode) &&
+    isEditableContainer(editorEngine.snapshot, eventNode, eventPath) &&
+    isDragEvent(event)
+  ) {
+    // Chrome drag: point the selection at the container so downstream
+    // selectors resolve the container, not whatever leaf
+    // `caretPositionFromPoint` would land on. Scoped to drag events
+    // because clicks don't need the override.
+    return {
+      block: eventPositionBlock,
+      isEditor: false,
+      isContainer: true,
       selection: {
         anchor: {path: eventPath, offset: 0},
         focus: {path: eventPath, offset: 0},

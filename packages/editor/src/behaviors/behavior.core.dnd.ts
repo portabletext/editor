@@ -1,4 +1,5 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {comparePoints} from '../engine/point/compare-points'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeEdges} from '../engine/range/range-edges'
@@ -10,6 +11,7 @@ import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire
 import type {EditorSelection} from '../types/editor'
 import {effect, forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import {fitBlocksToDestination} from './fit-blocks-to-destination'
 
 /**
  * Self-drop suppression: returns true when the drop position lands inside the
@@ -19,12 +21,26 @@ import {defineBehavior} from './behavior.types.behavior'
  * as a self-drop — the drop position covers an adjacent block (typical when
  * dragging a block-object onto the next block via the expanded fallback in
  * `getEventPosition`), and the user genuinely wants the drop to happen.
+ *
+ * Chrome drags emit a collapsed selection pointing AT the dragged container.
+ * A drop position whose path descends into that container is dropping the
+ * container into itself; suppress it.
  */
 function isDropTargetingDragOrigin(
   dropSelection: NonNullable<EditorSelection>,
   dragOriginSelection: NonNullable<EditorSelection>,
   snapshot: EditorSnapshot,
 ): boolean {
+  if (isCollapsedRange(dragOriginSelection)) {
+    const originPath = dragOriginSelection.anchor.path
+    if (
+      isAncestorPath(originPath, dropSelection.anchor.path) ||
+      isAncestorPath(originPath, dropSelection.focus.path)
+    ) {
+      return true
+    }
+  }
+
   const overlapping = isOverlappingSelection(dropSelection)({
     ...snapshot,
     context: {
@@ -79,34 +95,25 @@ export const coreDndBehaviors = [
           selection: dragSelection,
         },
       })
+      const dragSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dragSelection,
+        },
+      }
       const draggedDomNodes = {
-        blockNodes: dom.getBlockNodes({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: dragSelection,
-          },
-        }),
-        childNodes: dom.getChildNodes({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: dragSelection,
-          },
-        }),
+        blockNodes: dom.getBlockNodes(dragSnapshot),
+        childNodes: dom.getChildNodes(dragSnapshot),
       }
 
       return {
-        dragSelection,
         draggedDomNodes,
         selectingEntireBlocks,
       }
     },
     actions: [
-      (
-        {dom, event},
-        {dragSelection, draggedDomNodes, selectingEntireBlocks},
-      ) => {
+      ({dom, event}, {draggedDomNodes, selectingEntireBlocks}) => {
         const dragGhost = document.createElement('div')
 
         if (selectingEntireBlocks) {
@@ -146,10 +153,6 @@ export const coreDndBehaviors = [
             dragGhost.style.height = `${customGhostRect.height}px`
 
             return [
-              raise({
-                type: 'select',
-                at: dragSelection,
-              }),
               effect(() => {
                 dom.setDragGhost({
                   event,
@@ -172,10 +175,6 @@ export const coreDndBehaviors = [
             dragGhost.style.height = `${blocksDomRect.height}px`
 
             return [
-              raise({
-                type: 'select',
-                at: dragSelection,
-              }),
               effect(() => {
                 dom.setDragGhost({
                   event,
@@ -208,10 +207,6 @@ export const coreDndBehaviors = [
           dragGhost.style.height = `${childrenDomRect.height}px`
 
           return [
-            raise({
-              type: 'select',
-              at: dragSelection,
-            }),
             effect(() => {
               dom.setDragGhost({
                 event,
@@ -325,29 +320,36 @@ export const coreDndBehaviors = [
         ? isDropTargetingDragOrigin(dropPosition, dragSelection, snapshot)
         : false
 
-      const draggingEntireBlocks = isSelectingEntireBlocks({
+      const dragSnapshot = {
         ...snapshot,
         context: {
           ...snapshot.context,
           selection: dragSelection,
         },
-      })
+      }
 
-      const draggedBlocks = getFragment({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: dragSelection,
+      const draggingEntireBlocks = isSelectingEntireBlocks(dragSnapshot)
+
+      const draggedNodes = getFragment(dragSnapshot)
+      const fittedBlocks = fitBlocksToDestination(
+        {
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: dropPosition,
+          },
         },
-      })
+        event.data,
+      )
 
       if (!droppingOnDragOrigin) {
         return {
           dropPosition,
           draggingEntireBlocks,
-          draggedBlocks,
+          draggedNodes,
           dragOrigin,
           originEvent: event.originEvent,
+          fittedBlocks,
         }
       }
 
@@ -355,24 +357,23 @@ export const coreDndBehaviors = [
     },
     actions: [
       (
-        {event},
+        _,
         {
           draggingEntireBlocks,
-          draggedBlocks,
+          draggedNodes,
           dragOrigin,
           dropPosition,
           originEvent,
+          fittedBlocks,
         },
-      ) => [
-        raise({
-          type: 'select',
-          at: dropPosition,
-        }),
-        ...(draggingEntireBlocks
-          ? draggedBlocks.map((block) =>
+      ) => {
+        // Source removal mirrors what the serializer carried: per dragged
+        // node for an entire-blocks drag, by text range for a partial drag.
+        const deleteEvents = draggingEntireBlocks
+          ? draggedNodes.map((entry) =>
               raise({
-                type: 'delete.block',
-                at: block.path,
+                type: 'unset',
+                at: entry.path,
               }),
             )
           : [
@@ -380,19 +381,27 @@ export const coreDndBehaviors = [
                 type: 'delete',
                 at: dragOrigin.selection,
               }),
-            ]),
-        raise({
-          type: 'insert.blocks',
-          blocks: event.data,
-          placement: draggingEntireBlocks
-            ? originEvent.position.block === 'start'
-              ? 'before'
-              : originEvent.position.block === 'end'
-                ? 'after'
-                : 'auto'
-            : 'auto',
-        }),
-      ],
+            ]
+
+        return [
+          raise({
+            type: 'select',
+            at: dropPosition,
+          }),
+          ...deleteEvents,
+          raise({
+            type: 'insert.blocks',
+            blocks: fittedBlocks,
+            placement: draggingEntireBlocks
+              ? originEvent.position.block === 'start'
+                ? 'before'
+                : originEvent.position.block === 'end'
+                  ? 'after'
+                  : 'auto'
+              : 'auto',
+          }),
+        ]
+      },
     ],
   }),
 ]

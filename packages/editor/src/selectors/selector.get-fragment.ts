@@ -19,6 +19,13 @@ import {getSelectedValue} from './selector.get-selected-value'
  * cells in one row) ends the walk and the last root-valid wrapping is
  * returned.
  *
+ * A selection whose endpoints terminate at the root level (collapsed at
+ * a root-level node, or expanded across root siblings without descending
+ * into them) is treated as the user pointing AT the named node(s) rather
+ * than INTO them; the envelope is returned as-is and the unwrap walk is
+ * skipped. This is how a chrome drag carries the container itself rather
+ * than its unwrapped content.
+ *
  * Backs every registered clipboard converter, `editor.getFragment()`
  * (which projects to blocks only), and the drag preview pipeline (which
  * uses the paths to find DOM nodes). Exposed for custom converters and
@@ -34,6 +41,18 @@ export const getFragment: EditorSelector<
 
   if (envelope.length === 0) {
     return []
+  }
+
+  const selection = snapshot.context.selection
+  if (
+    selection &&
+    selection.anchor.path.length <= 1 &&
+    selection.focus.path.length <= 1
+  ) {
+    return envelope.map((block) => ({
+      node: block,
+      path: [{_key: block._key}],
+    }))
   }
 
   const {schema, containers, value} = snapshot.context

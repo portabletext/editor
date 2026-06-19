@@ -1,6 +1,7 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {getSubSchema, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
+import {resolveContainerAt} from '../schema/resolve-container-at'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 
@@ -23,7 +24,11 @@ import {getPathSubSchema} from '../traversal/get-path-sub-schema'
  *
  * The destination is derived from the snapshot's selection: the
  * sub-schema view that applies at the focus block's path is the
- * accept-list. For an empty editor or a snapshot with no selection,
+ * accept-list. When the selection points at a registered container
+ * directly (chrome-drop semantics, where the drop target is the
+ * container itself, not a node inside it), the destination is the
+ * container's own content - its `of` is the accept-list, not its
+ * parent's. For an empty editor or a snapshot with no selection,
  * the fragment is returned unchanged - the downstream
  * `operation.insert.block` will validate against the root schema and
  * no-op invalid blocks.
@@ -44,7 +49,15 @@ export function fitBlocksToDestination(
     return [...blocks]
   }
 
-  const subSchema = getPathSubSchema(snapshot, startBlock.path)
+  const resolvedAt = resolveContainerAt(
+    snapshot.context.containers,
+    snapshot.context.value,
+    startBlock.path,
+  )
+  const subSchema =
+    resolvedAt && 'field' in resolvedAt && resolvedAt.of
+      ? getSubSchema(snapshot.context.schema, resolvedAt.of)
+      : getPathSubSchema(snapshot, startBlock.path)
   const accepted = getRootAcceptedTypes(subSchema)
 
   if (accepted.size === 0) {
