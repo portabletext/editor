@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.6.1
+
+### Patch Changes
+
+- Updated dependencies [[`95e2b8d`](https://github.com/portabletext/editor/commit/95e2b8d51525adf5ff16a2930aee569a6f05da8a)]:
+  - @portabletext/schema@2.2.1
+  - @portabletext/html@1.0.3
+  - @portabletext/markdown@1.4.1
+
 ## 7.6.0
 
 ### Minor Changes

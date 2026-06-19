@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.1
+
+### Patch Changes
+
+- [#2823](https://github.com/portabletext/editor/pull/2823) [`95e2b8d`](https://github.com/portabletext/editor/commit/95e2b8d51525adf5ff16a2930aee569a6f05da8a) Thanks [@christianhg](https://github.com/christianhg)! - fix: inherit a nested block's sub-schema from its enclosing container, not always the root
+
+  A `{type: 'block'}` member nested inside a container now inherits any property it doesn't declare (`styles`, `decorators`, `annotations`, `lists`, `inlineObjects`) from the nearest enclosing container's block, falling back to the root only when no enclosing container declares a block of its own. Previously every absent property fell back to the root, so a block nested inside a container that restricts its own text (e.g. a callout limited to `strong`) could end up allowing more than its container. Schemas with single-level containers, or structural nesting where intermediate containers declare no block, are unaffected.
+
 ## 2.2.0
 
 ### Minor Changes

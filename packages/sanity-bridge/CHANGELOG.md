@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.5
+
+### Patch Changes
+
+- Updated dependencies [[`95e2b8d`](https://github.com/portabletext/editor/commit/95e2b8d51525adf5ff16a2930aee569a6f05da8a)]:
+  - @portabletext/schema@2.2.1
+
 ## 3.1.4
 
 ### Patch Changes
