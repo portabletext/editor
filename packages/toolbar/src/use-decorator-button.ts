@@ -7,6 +7,7 @@ import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
+import {subscribeToEditorChange} from './subscribe-to-editor-change'
 import {useDecoratorKeyboardShortcut} from './use-decorator-keyboard-shortcut'
 import {useMutuallyExclusiveDecorator} from './use-mutually-exclusive-decorator'
 import type {ToolbarDecoratorSchemaType} from './use-toolbar-schema'
@@ -27,7 +28,7 @@ const activeListener = fromCallback<
     sendBack({type: 'set inactive'})
   }
 
-  return input.editor.on('*', () => {
+  return subscribeToEditorChange(input.editor, () => {
     const snapshot = input.editor.getSnapshot()
 
     if (selectors.isActiveDecorator(input.schemaType.name)(snapshot)) {
@@ -35,7 +36,7 @@ const activeListener = fromCallback<
     } else {
       sendBack({type: 'set inactive'})
     }
-  }).unsubscribe
+  })
 })
 
 const decoratorButtonMachine = setup({

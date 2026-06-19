@@ -3,6 +3,7 @@ import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
+import {subscribeToEditorChange} from './subscribe-to-editor-change'
 import type {ToolbarListSchemaType} from './use-toolbar-schema'
 
 const activeListener = fromCallback<
@@ -21,7 +22,7 @@ const activeListener = fromCallback<
     sendBack({type: 'set inactive'})
   }
 
-  return input.editor.on('*', () => {
+  return subscribeToEditorChange(input.editor, () => {
     const snapshot = input.editor.getSnapshot()
 
     if (selectors.isActiveListItem(input.schemaType.name)(snapshot)) {
@@ -29,7 +30,7 @@ const activeListener = fromCallback<
     } else {
       sendBack({type: 'set inactive'})
     }
-  }).unsubscribe
+  })
 })
 
 const listButtonMachine = setup({

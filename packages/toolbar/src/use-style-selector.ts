@@ -7,6 +7,7 @@ import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {assign, fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
+import {subscribeToEditorChange} from './subscribe-to-editor-change'
 import {useStyleKeyboardShortcuts} from './use-style-keyboard-shortcuts'
 import type {ToolbarStyleSchemaType} from './use-toolbar-schema'
 
@@ -24,12 +25,12 @@ const activeListener = fromCallback<
   const activeStyle = selectors.getActiveStyle(input.editor.getSnapshot())
   sendBack({type: 'set active style', style: activeStyle})
 
-  return input.editor.on('*', () => {
+  return subscribeToEditorChange(input.editor, () => {
     const snapshot = input.editor.getSnapshot()
     const activeStyle = selectors.getActiveStyle(snapshot)
 
     sendBack({type: 'set active style', style: activeStyle})
-  }).unsubscribe
+  })
 })
 
 const styleSelectorMachine = setup({

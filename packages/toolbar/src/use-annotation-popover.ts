@@ -11,6 +11,7 @@ import * as React from 'react'
 import type {RefObject} from 'react'
 import {assign, fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
+import {subscribeToEditorChange} from './subscribe-to-editor-change'
 import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
 
 type ActiveContext = {
@@ -35,7 +36,7 @@ const activeListener = fromCallback<
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>},
   ActiveListenerEvent
 >(({input, sendBack}) => {
-  return input.editor.on('*', () => {
+  return subscribeToEditorChange(input.editor, () => {
     const snapshot = input.editor.getSnapshot()
     const activeAnnotations = selectors.getActiveAnnotations(snapshot)
     const focusBlock = selectors.getFocusBlock(snapshot)
@@ -75,7 +76,7 @@ const activeListener = fromCallback<
       }),
       elementRef,
     })
-  }).unsubscribe
+  })
 })
 
 const annotationPopoverMachine = setup({
