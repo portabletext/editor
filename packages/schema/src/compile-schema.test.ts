@@ -392,7 +392,7 @@ describe(compileSchema.name, () => {
       ])
     })
 
-    test('deeply nested blocks inherit from root, not from intermediate containers', () => {
+    test('a nested block inherits the root when no enclosing container declares its own block', () => {
       expect(
         compileSchema({
           decorators: [{name: 'strong'}],
@@ -458,6 +458,282 @@ describe(compileSchema.name, () => {
                               type: 'array',
                               of: [
                                 {
+                                  type: 'block',
+                                  styles: [
+                                    {
+                                      name: 'normal',
+                                      value: 'normal',
+                                      title: 'Normal',
+                                    },
+                                  ],
+                                  decorators: [
+                                    {name: 'strong', value: 'strong'},
+                                  ],
+                                  annotations: [],
+                                  lists: [],
+                                  inlineObjects: [],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test("a callout nested in a cell inherits the cell's overridden block, not the root", () => {
+      // `table`/`row` are structural and declare no block of their own, so
+      // they pass the root through. The `cell` overrides the root decorators
+      // down to `strong`. A `callout` nested inside the cell omits
+      // decorators, so it inherits the cell's `strong`, not the root's
+      // `strong`/`em`/`code`.
+      expect(
+        compileSchema({
+          decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
+          blockObjects: [
+            {
+              name: 'table',
+              fields: [
+                {
+                  name: 'rows',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'row',
+                      fields: [
+                        {
+                          name: 'cells',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'object',
+                              name: 'cell',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [
+                                    {
+                                      type: 'block',
+                                      decorators: [{name: 'strong'}],
+                                    },
+                                    {
+                                      type: 'object',
+                                      name: 'callout',
+                                      fields: [
+                                        {
+                                          name: 'content',
+                                          type: 'array',
+                                          of: [{type: 'block'}],
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'table',
+          fields: [
+            {
+              name: 'rows',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'row',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'object',
+                          name: 'cell',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [
+                                {
+                                  // The cell overrides the root: `strong` only.
+                                  type: 'block',
+                                  styles: [
+                                    {
+                                      name: 'normal',
+                                      value: 'normal',
+                                      title: 'Normal',
+                                    },
+                                  ],
+                                  decorators: [
+                                    {name: 'strong', value: 'strong'},
+                                  ],
+                                  annotations: [],
+                                  lists: [],
+                                  inlineObjects: [],
+                                },
+                                {
+                                  type: 'object',
+                                  name: 'callout',
+                                  fields: [
+                                    {
+                                      name: 'content',
+                                      type: 'array',
+                                      of: [
+                                        {
+                                          // Inherits the cell's block, not the
+                                          // root (which also allows `em`/`code`).
+                                          type: 'block',
+                                          styles: [
+                                            {
+                                              name: 'normal',
+                                              value: 'normal',
+                                              title: 'Normal',
+                                            },
+                                          ],
+                                          decorators: [
+                                            {name: 'strong', value: 'strong'},
+                                          ],
+                                          annotations: [],
+                                          lists: [],
+                                          inlineObjects: [],
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a nested block inherits the nearest declaring container, not a more distant one', () => {
+      // `outer` declares `[strong, em]`; `inner` (nested in outer) declares
+      // `[strong]`; `leaf` (nested in inner) declares nothing. The leaf block
+      // resolves to `inner`'s `[strong]` (the nearest declaring container),
+      // not `outer`'s `[strong, em]` and not the root's `[strong, em, code]`.
+      expect(
+        compileSchema({
+          decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
+          blockObjects: [
+            {
+              name: 'outer',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      decorators: [{name: 'strong'}, {name: 'em'}],
+                    },
+                    {
+                      type: 'object',
+                      name: 'inner',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [
+                            {type: 'block', decorators: [{name: 'strong'}]},
+                            {
+                              type: 'object',
+                              name: 'leaf',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'outer',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
+                  decorators: [
+                    {name: 'strong', value: 'strong'},
+                    {name: 'em', value: 'em'},
+                  ],
+                  annotations: [],
+                  lists: [],
+                  inlineObjects: [],
+                },
+                {
+                  type: 'object',
+                  name: 'inner',
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'block',
+                          styles: [
+                            {name: 'normal', value: 'normal', title: 'Normal'},
+                          ],
+                          decorators: [{name: 'strong', value: 'strong'}],
+                          annotations: [],
+                          lists: [],
+                          inlineObjects: [],
+                        },
+                        {
+                          type: 'object',
+                          name: 'leaf',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [
+                                {
+                                  // Inherits `inner` (nearest), not `outer`
+                                  // or the root.
                                   type: 'block',
                                   styles: [
                                     {

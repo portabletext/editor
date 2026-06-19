@@ -51,12 +51,19 @@ function compileOfMember(
   return member
 }
 
-function compileBlockOfMember(
+/**
+ * Resolve the five sub-schema properties of a block of-member (`styles`,
+ * `decorators`, `annotations`, `lists`, `inlineObjects`): each is the
+ * member's own declaration (overriding) when present, or the inherited
+ * value when absent. The result is also threaded as the inheritance for the
+ * member's sibling containers (see `compileField`), so a nested container
+ * inherits the block of the container that encloses it rather than the root.
+ */
+function resolveBlockInheritance(
   member: BlockOfDefinition,
   inheritance: BlockInheritance,
-): BlockOfDefinition {
+): BlockInheritance {
   return {
-    ...member,
     styles: member.styles
       ? member.styles.map((style) => ({...style, value: style.name}))
       : inheritance.styles,
@@ -90,6 +97,13 @@ function compileBlockOfMember(
   }
 }
 
+function compileBlockOfMember(
+  member: BlockOfDefinition,
+  inheritance: BlockInheritance,
+): BlockOfDefinition {
+  return {...member, ...resolveBlockInheritance(member, inheritance)}
+}
+
 function compileInlineObjectOfMember(
   member: InlineObjectOfDefinition,
   inheritance: BlockInheritance,
@@ -105,9 +119,24 @@ function compileField(
   inheritance: BlockInheritance,
 ): FieldDefinition {
   if (field.type === 'array' && field.of) {
+    // A container's `{type: 'block'}` member defines the text schema at this
+    // position, and its sibling containers inherit that block rather than the
+    // root. The block member itself still resolves against the enclosing
+    // `inheritance` (its own parent container, or the root at the top level).
+    const blockMember = field.of.find(isBlockOfMember)
+    const childInheritance = blockMember
+      ? resolveBlockInheritance(blockMember, inheritance)
+      : inheritance
     return {
       ...field,
-      of: field.of.map((member) => compileOfMember(member, inheritance)),
+      of: field.of.map((member) =>
+        // The block member is `childInheritance` already resolved against the
+        // enclosing `inheritance`; reuse it rather than resolving twice. Its
+        // sibling containers inherit it.
+        member === blockMember
+          ? {...member, ...childInheritance}
+          : compileOfMember(member, childInheritance),
+      ),
     }
   }
   return field
