@@ -1,6 +1,6 @@
 # `@portabletext/plugin-dnd`
 
-A helper plugin for tracking the drop position during drag and drop.
+> Track the drop position during drag and drop for custom drop indicators
 
 ## Installation
 

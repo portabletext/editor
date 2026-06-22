@@ -10,7 +10,7 @@ npm install @portabletext/sanity-bridge
 
 ## Usage
 
-### Convert Sanity Schema to Portable Text Schema
+### Convert Sanity schema to Portable Text schema
 
 ```ts
 import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
@@ -135,7 +135,7 @@ whatever a container should allow on the block member itself. The resulting
 `Schema` follows the resolution rules documented in
 [`@portabletext/schema`](../schema/README.md#containers-and-sub-schemas).
 
-### Convert Portable Text Schema to Sanity Schema
+### Convert Portable Text schema to Sanity schema
 
 ```ts
 import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'

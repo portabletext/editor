@@ -71,7 +71,7 @@ export function MyMarkdownPlugin() {
 
 > **Tip:** The [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) package is already built using Input Rules and provides common markdown shortcuts out of the box.
 
-## Text Transformation Rules
+## Text transformation rules
 
 Text transformations are so common that the plugin provides a high-level `defineTextTransformRule` helper to configure them without any boilerplate:
 
@@ -93,14 +93,14 @@ export function MyTypographyPlugin() {
 
 In fact, the production-ready [`@portabletext/plugin-typography`](../plugin-typography/) is built on top of Input Rules and comes packed with common text transformations like this.
 
-## Advanced Examples
+## Advanced examples
 
 Input Rules can handle more complex transformations. Here are two advanced examples:
 
 1. **Markdown Link**: Automatically convert `[text](url)` syntax into proper links
 2. **Stock Ticker**: Convert `{SYMBOL}` patterns into stock ticker objects
 
-### Markdown Link Rule
+### Markdown link rule
 
 This example shows how to convert markdown-style link syntax `[text](url)` into proper link annotations:
 
@@ -187,7 +187,7 @@ const markdownLinkRule = defineInputRule({
 })
 ```
 
-### Stock Ticker Rule
+### Stock ticker rule
 
 This example demonstrates how to convert text patterns like `{AAPL}` into custom inline objects:
 

@@ -46,7 +46,7 @@ function App() {
 }
 ```
 
-## Rules Included
+## Rules included
 
 The plugin includes the following typographic transformation rules:
 
@@ -82,11 +82,11 @@ The plugin includes the following typographic transformation rules:
 | `oneQuarter`       | `1/4` → `¼`                      |
 | `threeQuarters`    | `3/4` → `¾`                      |
 
-## Configuring Rules
+## Configuring rules
 
 The plugin supports flexible configuration through `preset`, `enable`, and `disable` props:
 
-### Using Presets
+### Using presets
 
 The `preset` prop provides quick configuration:
 
@@ -105,7 +105,7 @@ The `preset` prop provides quick configuration:
 <TypographyPlugin preset="none" enable={['emDash', 'ellipsis']} />
 ```
 
-### Enabling Additional Rules
+### Enabling additional rules
 
 Use `enable` to add rules beyond the preset:
 
@@ -117,7 +117,7 @@ Use `enable` to add rules beyond the preset:
 <TypographyPlugin preset="all" disable={['emDash', 'ellipsis']} />
 ```
 
-### Disabling Rules
+### Disabling rules
 
 Use `disable` to remove rules from the preset:
 
@@ -133,7 +133,7 @@ Use `disable` to remove rules from the preset:
 />
 ```
 
-### Combining Options
+### Combining options
 
 All three props work together. The order of operations is:
 
@@ -155,7 +155,7 @@ All three props work together. The order of operations is:
 />
 ```
 
-## Controlling when Text Transformations Run
+## Controlling when text transformations run
 
 The `TypographyPlugin` has an optional `guard` prop that accepts any type of `BehaviorGuard`. Here, you'll have access to the current `EditorSnapshot` as well as information about the current rule being matched.
 
@@ -188,7 +188,7 @@ block the guard sees that container's sub-schema rather than the top-level
 one, which is what lets a guard keyed on the `code` decorator suppress
 transformations inside a code block whose sub-schema defines `code`.
 
-## Using Individual Rules with `InputRulePlugin`
+## Using individual rules with `InputRulePlugin`
 
 All included typographic rules are exported from the plugin. To use them in your own abstraction, import them from this plugin and use them with the `InputRulePlugin`:
 

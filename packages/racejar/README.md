@@ -86,7 +86,7 @@ for (const scenario of feature.scenarios) {
 }
 ```
 
-## Define Steps and Parameter Types
+## Define steps and parameter types
 
 `stepDefinitions` can be defined inline or separately. They are defined using `Given`, `When`, `Then` exported from `racejar`:
 
@@ -106,7 +106,7 @@ import {createParameterType} from 'racejar'
 const parameterTypes = [createParameterType(/* ... */)]
 ```
 
-## Basic Example
+## Basic example
 
 ```ts
 import {Given, Then, When} from 'racejar'
@@ -143,7 +143,7 @@ Feature({
 })
 ```
 
-## Advanced Example
+## Advanced example
 
 The following example is taken from the [`editor`](/packages/editor/) package in this repository. For a full example of how to use `racejar`, head over to [/packages/editor/gherkin-tests/](/packages/editor/gherkin-tests/). The package uses `racejar` to run a [Playwright](https://playwright.dev/) E2E test suite powered by [Vitest Browser Mode](https://vitest.dev/guide/browser/).
 

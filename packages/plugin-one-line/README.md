@@ -1,6 +1,6 @@
 # `@portabletext/plugin-one-line`
 
-> Restricts the Portable Text Editor to a single line
+> Restrict the Portable Text Editor to a single line
 
 ## Installation
 

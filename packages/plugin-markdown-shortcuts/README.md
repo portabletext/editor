@@ -1,6 +1,6 @@
 # `@portabletext/plugin-markdown-shortcuts`
 
-> Adds helpful Markdown shortcuts to the editor
+> Add helpful Markdown shortcuts to the editor
 
 ## Installation
 

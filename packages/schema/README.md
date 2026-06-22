@@ -10,7 +10,7 @@ npm install @portabletext/schema
 
 ## Usage
 
-### Define a Schema
+### Define a schema
 
 ```ts
 import {defineSchema} from '@portabletext/schema'
@@ -23,7 +23,7 @@ const schemaDefinition = defineSchema({
 })
 ```
 
-### Compile Schema
+### Compile schema
 
 ```ts
 import {compileSchema} from '@portabletext/schema'

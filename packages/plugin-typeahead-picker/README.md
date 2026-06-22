@@ -1,6 +1,6 @@
 # `@portabletext/plugin-typeahead-picker`
 
-> Generic typeahead picker infrastructure for the Portable Text Editor
+> Build typeahead pickers (emoji, mentions, slash commands) for the Portable Text Editor
 
 ## Installation
 
@@ -8,7 +8,7 @@
 npm install @portabletext/plugin-typeahead-picker
 ```
 
-## Quick Start
+## Quick start
 
 The `useTypeaheadPicker` hook provides the state and logic needed to build typeahead pickers (emoji pickers, mention pickers, slash commands, etc.) for the Portable Text Editor. It manages keyword matching, keyboard navigation, and triggering of actions, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.
 
@@ -99,7 +99,7 @@ function MyEditor() {
 
 The picker component must be rendered inside `EditorProvider` to access the editor context. Position it as a sibling to `PortableTextEditable` - you'll handle the visual positioning (popover, dropdown, etc.) separately with CSS or a positioning library.
 
-## How It Works
+## How it works
 
 The picker activates when users type the `trigger` pattern (e.g., `:` or `@`). The `keyword` pattern then matches characters typed after the trigger.
 
@@ -224,7 +224,7 @@ The guard is useful for:
 - Avoiding conflicts when another picker or dialog is already open
 - Checking editor state or mode before allowing the picker
 
-## API Reference
+## API reference
 
 ### `defineTypeaheadPicker(config)`
 
@@ -295,11 +295,11 @@ React hook that activates a picker and returns its state.
 | `send(event)`                    | Dispatch events: `{type: 'select'}`, `{type: 'dismiss'}`, `{type: 'navigate to', index}`                     |
 | `snapshot.context.error`         | Error from `getMatches` if it threw/rejected, otherwise `undefined`                                          |
 
-## Async Mode
+## Async mode
 
 When `mode: 'async'` is configured, the picker handles asynchronous `getMatches` functions with loading states and race condition protection.
 
-### Loading States
+### Loading states
 
 Use `snapshot.matches()` to check nested loading states:
 
@@ -331,11 +331,11 @@ function MentionPicker() {
 }
 ```
 
-### Race Condition Handling
+### Race condition handling
 
 When users type quickly, earlier slow requests may complete after later fast requests. The picker automatically ignores stale results to prevent them from overwriting fresh data.
 
-## Error Handling
+## Error handling
 
 If `getMatches` throws or rejects, the error is captured in `snapshot.context.error`. The picker transitions to `'no matches'` state and continues to function.
 
@@ -410,9 +410,9 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
 | `event`    | The select event with `match`, `keyword`, and `patternSelection`              |
 | `snapshot` | Current editor snapshot with `context.schema`, `context.keyGenerator()`, etc. |
 
-## Performance Guidelines
+## Performance guidelines
 
-### Match List Size
+### Match list size
 
 Keep your match lists reasonably sized for smooth keyboard navigation:
 
@@ -427,7 +427,7 @@ getMatches: async ({keyword}) => {
 }
 ```
 
-### Debounce Timing
+### Debounce timing
 
 Choose debounce values based on your data source:
 
@@ -458,7 +458,7 @@ const mentionPicker = defineTypeaheadPicker({
 })
 ```
 
-### Memory Considerations
+### Memory considerations
 
 - Avoid storing large datasets in component state
 - For emoji pickers, consider lazy-loading the emoji database
@@ -468,7 +468,7 @@ const mentionPicker = defineTypeaheadPicker({
 
 The picker manages keyboard navigation and selection internally, but you're responsible for the UI semantics.
 
-### Recommended ARIA Attributes
+### Recommended ARIA attributes
 
 ```tsx
 function PickerUI() {
@@ -493,7 +493,7 @@ function PickerUI() {
 }
 ```
 
-### Keyboard Handling
+### Keyboard handling
 
 The following keyboard shortcuts are handled automatically by the picker:
 
@@ -505,7 +505,7 @@ The following keyboard shortcuts are handled automatically by the picker:
 | `Escape`  | Dismiss picker                |
 | `Space`   | Dismiss picker (configurable) |
 
-### Screen Reader Considerations
+### Screen reader considerations
 
 - Announce match count changes with live regions if desired
 - Ensure selected item is visible (scroll into view)
