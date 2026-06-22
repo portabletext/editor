@@ -4,10 +4,7 @@ import type {ExternalBehaviorEvent} from './behaviors/behavior.types.event'
 import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
-import type {
-  EditorEmittedEvent,
-  EditorEventListenerOptions,
-} from './editor/relay'
+import type {EditorEmittedEvent} from './editor/relay'
 import type {RegistrableNode} from './renderers/renderer.types'
 
 /**
@@ -54,13 +51,36 @@ export type Editor = {
    */
   registerNode: (config: {node: RegistrableNode}) => () => void
   send: (event: EditorEvent) => void
-  on: <TType extends EditorEmittedEvent['type'] | '*'>(
-    type: TType,
-    listener: (
-      event: EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType}),
-    ) => void,
-    options?: EditorEventListenerOptions,
-  ) => {unsubscribe: () => void}
+  /**
+   * Register an event listener.
+   *
+   * With `{batch: true}` the listener is called once per burst with
+   * `Array<Event>`, every matching event emitted before control returns to the
+   * event loop (one synchronous `editor.send` worth, normalization included),
+   * in delivery order, on the trailing microtask. That is the same boundary at
+   * which the editor settles its own state, so each call is one fully-applied,
+   * normalized change. Without it (the default), the listener runs
+   * synchronously for every event and receives a single event.
+   */
+  on: {
+    <TType extends EditorEmittedEvent['type'] | '*'>(
+      type: TType,
+      listener: (
+        events: Array<
+          EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType})
+        >,
+      ) => void,
+      options: {batch: true},
+    ): {unsubscribe: () => void}
+    <TType extends EditorEmittedEvent['type'] | '*'>(
+      type: TType,
+      listener: (
+        event: EditorEmittedEvent &
+          (TType extends '*' ? unknown : {type: TType}),
+      ) => void,
+      options?: {batch?: false},
+    ): {unsubscribe: () => void}
+  }
   /**
    * Subscribe to editor state changes. The observer's `next` callback fires
    * with the current `EditorSnapshot` on every relevant transition (selection

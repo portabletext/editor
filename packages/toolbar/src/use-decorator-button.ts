@@ -38,7 +38,7 @@ const activeListener = fromCallback<
         sendBack({type: 'set inactive'})
       }
     },
-    {schedule: 'microtask'},
+    {batch: true},
   ).unsubscribe
 })
 

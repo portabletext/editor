@@ -17,7 +17,12 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
-import {createRelay, type Relay} from './relay'
+import {
+  createRelay,
+  type EditorEmittedEvent,
+  type EditorEventListenerOptions,
+  type Relay,
+} from './relay'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export function createInternalEditor(config: EditorConfig): {
@@ -110,33 +115,49 @@ export function createInternalEditor(config: EditorConfig): {
           )
       }
     },
-    on: (event, listener, options) => {
-      const subscription = relay.on(
-        event,
-        (event) => {
-          switch (event.type) {
-            case 'blurred':
-            case 'done loading':
-            case 'editable':
-            case 'focused':
-            case 'invalid value':
-            case 'loading':
-            case 'mutation':
-            case 'operation':
-            case 'patch':
-            case 'read only':
-            case 'ready':
-            case 'selection':
-            case 'value changed':
-              listener(event)
-              break
-          }
-        },
-        options,
-      )
+    on: ((
+      type: EditorEmittedEvent['type'] | '*',
+      listener: (
+        eventOrEvents: EditorEmittedEvent | Array<EditorEmittedEvent>,
+      ) => void,
+      options?: EditorEventListenerOptions,
+    ) => {
+      // Batched delivery hands the listener the whole coalesced burst as an
+      // array. The per-event `switch` below applies only to unbatched (sync)
+      // delivery; its sole filtering effect is dropping the deprecated
+      // `'error'` event, which is no longer emitted, so batched and sync
+      // delivery agree on every event type that actually occurs. A future
+      // non-public `EditorEmittedEvent` type would need gating in both paths.
+      if (options?.batch) {
+        return relay.on(
+          type,
+          (events) => {
+            listener(events)
+          },
+          {batch: true},
+        )
+      }
 
-      return subscription
-    },
+      return relay.on(type, (event) => {
+        switch (event.type) {
+          case 'blurred':
+          case 'done loading':
+          case 'editable':
+          case 'focused':
+          case 'invalid value':
+          case 'loading':
+          case 'mutation':
+          case 'operation':
+          case 'patch':
+          case 'read only':
+          case 'ready':
+          case 'selection':
+          case 'value changed':
+            listener(event)
+            break
+        }
+      })
+    }) as Editor['on'],
     subscribe(observer) {
       const actorSubscription = editorActor.subscribe({
         next: () => observer.next?.(editor.getSnapshot()),

@@ -24,6 +24,6 @@ export const disableListener = fromCallback<
         sendBack({type: 'enable'})
       }
     },
-    {schedule: 'microtask'},
+    {batch: true},
   ).unsubscribe
 })
