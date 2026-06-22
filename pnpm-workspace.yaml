@@ -7,9 +7,9 @@ catalog:
   '@portabletext/react': ^6.2.0
   '@sanity/diff-match-patch': ^3.2.0
   '@sanity/pkg-utils': ^10.2.1
-  '@sanity/schema': ^6.0.0
+  '@sanity/schema': ^6.1.0
   '@sanity/tsconfig': ^2.1.0
-  '@sanity/types': ^6.0.0
+  '@sanity/types': ^6.1.0
   '@tailwindcss/vite': ^4.1.18
   '@types/jsdom': ^27.0.0
   '@types/node': ^20
