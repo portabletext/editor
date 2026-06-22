@@ -11,6 +11,7 @@ import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {EditorActorContext} from './editor-actor-context'
 import {getSelectionState, type SelectionState} from './get-selection-state'
+import {subscribeCoalesced} from './subscribe-coalesced'
 
 const emptySet = new Set<string>()
 
@@ -161,19 +162,12 @@ export function SelectionStateProvider({
       }
     }
 
-    let pendingRecompute = false
-
-    const subscription = editorActor.subscribe(() => {
-      // Coalesce bursts of actor updates into one selection-state
-      // recompute per microtask. The microtask drains before React's
-      // commit phase, so subscribers re-render in the same commit as
-      // the actor's state change.
-      if (pendingRecompute) {
-        return
-      }
-      pendingRecompute = true
-      queueMicrotask(() => {
-        pendingRecompute = false
+    // Coalesce bursts of actor updates into one selection-state recompute per
+    // microtask (shared with `editor.subscribe`). The microtask drains before
+    // React's commit phase, so subscribers re-render in the same commit as the
+    // actor's state change.
+    const subscription = subscribeCoalesced(editorActor, {
+      next: () => {
         const newState = computeCurrent()
         if (!selectionStatesEqual(stateRef.current, newState)) {
           stateRef.current = newState
@@ -181,7 +175,7 @@ export function SelectionStateProvider({
             cb()
           }
         }
-      })
+      },
     })
 
     return () => subscription.unsubscribe()
