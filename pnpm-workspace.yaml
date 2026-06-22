@@ -4,7 +4,38 @@ packages:
   - 'examples/*'
 
 catalog:
+  '@portabletext/react': ^6.2.0
+  '@sanity/diff-match-patch': ^3.2.0
+  '@sanity/pkg-utils': ^10.2.1
+  '@sanity/schema': ^6.0.0
+  '@sanity/tsconfig': ^2.1.0
+  '@sanity/types': ^6.0.0
+  '@tailwindcss/vite': ^4.1.18
+  '@types/jsdom': ^27.0.0
+  '@types/node': ^20
+  '@types/react': ^19.2.14
+  '@types/react-dom': ^19.2.3
+  '@vitejs/plugin-react': ^5.2.0
+  '@vitest/browser': ^4.1.8
+  '@vitest/browser-playwright': ^4.1.8
+  '@xstate/react': ^6.1.0
+  babel-plugin-react-compiler: ^1.0.0
+  eslint: ^9.39.1
+  eslint-formatter-gha: ^1.6.0
+  eslint-plugin-react-hooks: ^7.1.1
+  jsdom: ^27.2.0
+  lucide-react: ^0.562.0
+  react: ^19.2.5
+  react-dom: ^19.2.5
+  remeda: ^2.32.0
+  tailwind-merge: ^3.3.1
+  tailwindcss: ^4.1.18
   typescript: 5.9.3
+  typescript-eslint: ^8.48.0
+  vite: ^7.3.1
+  vitest: ^4.1.8
+  vitest-browser-react: ^2.2.0
+  xstate: ^5.32.1
 
 minimumReleaseAge: 4320
 minimumReleaseAgeExclude:

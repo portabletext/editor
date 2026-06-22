@@ -53,16 +53,16 @@
     "@portabletext/html": "workspace:^",
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^6.0.0"
+    "@sanity/types": "catalog:"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/schema": "^6.0.0",
-    "@types/jsdom": "^27.0.0",
+    "@sanity/pkg-utils": "catalog:",
+    "@sanity/schema": "catalog:",
+    "@types/jsdom": "catalog:",
     "@vitest/coverage-v8": "^4.1.8",
-    "jsdom": "^27.0.0",
+    "jsdom": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^4.1.8"
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
