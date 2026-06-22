@@ -1,6 +1,6 @@
 # `@portabletext/toolbar`
 
-Powered by [Behaviors](https://www.portabletext.org/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of robust React hooks for building toolbars and related UI components
+Powered by [Behaviors](https://www.portabletext.org/editor/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of robust React hooks for building toolbars and related UI components
 for the Portable Text editor.
 
 Refer to the toolbar in the [Portable Text Playground](../../apps/playground/) for a comprehensive example.
@@ -27,6 +27,7 @@ import {
   useToolbarSchema,
   type ExtendAnnotationSchemaType,
   type ExtendDecoratorSchemaType,
+  type ToolbarDecoratorSchemaType,
 } from '@portabletext/toolbar'
 
 /**
