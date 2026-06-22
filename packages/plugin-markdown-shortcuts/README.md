@@ -2,6 +2,14 @@
 
 > ⬇️ Adds helpful Markdown shortcuts to the editor
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-markdown-shortcuts
+```
+
+## Usage
+
 Import the `MarkdownShortcutsPlugin` React component and place it inside the `EditorProvider` and tell it about your schema:
 
 ```tsx
@@ -14,7 +22,7 @@ import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 
 const schemaDefinition = defineSchema({
   blockObjects: [{name: 'break'}],
-  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}]
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
   decorators: [
     {name: 'em'},
     {name: 'code'},
