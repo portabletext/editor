@@ -72,7 +72,7 @@ const tersePt = getTersePt({
 // ['foo', 'bar']
 ```
 
-## Key Generator
+## Key generator
 
 Generate predictable keys for test fixtures:
 

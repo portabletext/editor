@@ -1,6 +1,6 @@
 # `@portabletext/plugin-paste-link`
 
-> Allows pasting links in the Portable Text Editor
+> Allow pasting links in the Portable Text Editor
 
 ## Installation
 

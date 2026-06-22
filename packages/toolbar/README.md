@@ -17,7 +17,7 @@ Refer to the toolbar in the [Portable Text Playground](../../apps/playground/) f
 npm install @portabletext/toolbar
 ```
 
-## Basic Example
+## Basic example
 
 ```tsx
 import {bold, link} from '@portabletext/keyboard-shortcuts'

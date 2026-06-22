@@ -30,7 +30,7 @@ const result = applyAll({count: 0}, [
 ])
 ```
 
-## Patch Types
+## Patch types
 
 - `set` - Set a value at a path
 - `setIfMissing` - Set a value only if it doesn't exist

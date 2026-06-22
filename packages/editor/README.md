@@ -53,7 +53,7 @@ import type {
 import {EventListenerPlugin} from '@portabletext/editor/plugins'
 ```
 
-### Define the Schema
+### Define the schema
 
 Before you can render the editor, you need a schema. The editor schema configures the types of content rendered by the editor.
 
@@ -358,7 +358,7 @@ The Behavior API is a way of interfacing with the PTE. It allows you to think of
 
 Learn more about the [Behaviors](https://www.portabletext.org/editor/concepts/behavior/) and how to [create your own behaviors](https://www.portabletext.org/editor/guides/create-behavior/) in the documentation.
 
-## Related Packages
+## Related packages
 
 [`@portabletext/toolbar`](../toolbar/) provides React hooks for building toolbars and related UI components.
 
@@ -366,7 +366,7 @@ Learn more about the [Behaviors](https://www.portabletext.org/editor/concepts/be
 
 Extend the editor with [official plugins](../../#editor-plugins).
 
-## End-User Experience
+## End-user experience
 
 In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](./gherkin-spec/).
 

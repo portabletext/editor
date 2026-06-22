@@ -26,23 +26,23 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | [`@portabletext/schema`](./packages/schema/)   | Define and compile Portable Text schemas with full type safety |
 | [`@portabletext/toolbar`](./packages/toolbar/) | React hooks for building toolbars and related UI components    |
 
-## Editor Plugins
+## Editor plugins
 
 | Package                                                                                        | Description                                                               |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | [`@portabletext/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/) | Automatically match a pair of characters and decorate the text in between |
-| [`@portabletext/plugin-dnd`](./packages/plugin-dnd/)                                           | Tracks the drop position during drag and drop for custom drop indicators  |
+| [`@portabletext/plugin-dnd`](./packages/plugin-dnd/)                                           | Track the drop position during drag and drop for custom drop indicators   |
 | [`@portabletext/plugin-emoji-picker`](./packages/plugin-emoji-picker/)                         | Easily configure an Emoji Picker for the Portable Text Editor             |
 | [`@portabletext/plugin-input-rule`](./packages/plugin-input-rule/)                             | Easily configure Input Rules in the Portable Text Editor                  |
-| [`@portabletext/plugin-list-index`](./packages/plugin-list-index/)                             | Computes the list index of each list item for custom list rendering       |
-| [`@portabletext/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)             | Adds helpful Markdown shortcuts to the editor                             |
-| [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restricts the Portable Text Editor to a single line                       |
-| [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allows pasting links in the Portable Text Editor                          |
-| [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connects a Portable Text Editor with a Sanity document using the SDK      |
-| [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Generic typeahead picker infrastructure (emoji, mentions, slash commands) |
+| [`@portabletext/plugin-list-index`](./packages/plugin-list-index/)                             | Compute the list index of each list item for custom list rendering        |
+| [`@portabletext/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)             | Add helpful Markdown shortcuts to the editor                              |
+| [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restrict the Portable Text Editor to a single line                        |
+| [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allow pasting links in the Portable Text Editor                           |
+| [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connect a Portable Text Editor with a Sanity document using the SDK       |
+| [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Build typeahead pickers (emoji, mentions, slash commands)                 |
 | [`@portabletext/plugin-typography`](./packages/plugin-typography/)                             | Automatically transform text to typographic variants                      |
 
-## Other Libraries
+## Other libraries
 
 | Package                                                              | Description                                                        |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------ |

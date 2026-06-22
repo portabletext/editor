@@ -15,7 +15,7 @@ A TypeScript library for creating platform-aware keyboard shortcuts with automat
 npm install @portabletext/keyboard-shortcuts
 ```
 
-## API Reference
+## API reference
 
 ### `KeyboardEventDefinition`
 
@@ -77,7 +77,7 @@ type KeyboardShortcut<TKeyboardEvent> = {
 - `guard`: Function that determines if a keyboard event matches this shortcut
 - `keys`: Display-friendly key combination for the current platform
 
-### Core Functions
+### Core functions
 
 #### `createKeyboardShortcut(definition)`
 
@@ -137,7 +137,7 @@ const definition = {
 const isMatch = isKeyboardShortcut(definition, keyboardEvent)
 ```
 
-### Common Shortcuts
+### Common shortcuts
 
 The library provides pre-defined shortcuts for common text editing operations:
 
@@ -160,9 +160,9 @@ import {
 } from '@portabletext/keyboard-shortcuts'
 ```
 
-### Usage Examples
+### Usage examples
 
-#### Basic Usage
+#### Basic usage
 
 ```typescript
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
@@ -200,7 +200,7 @@ document.addEventListener('keydown', (event) => {
 console.log(saveShortcut.keys.join('+')) // "Ctrl+S" or "⌘+S"
 ```
 
-#### Using Pre-defined Shortcuts
+#### Using pre-defined shortcuts
 
 ```typescript
 import {bold, italic} from '@portabletext/keyboard-shortcuts'
@@ -216,7 +216,7 @@ document.addEventListener('keydown', (event) => {
 })
 ```
 
-#### Multiple Key Combinations
+#### Multiple key combinations
 
 ```typescript
 const deleteShortcut = createKeyboardShortcut({

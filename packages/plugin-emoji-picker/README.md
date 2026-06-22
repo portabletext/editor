@@ -8,7 +8,7 @@
 npm install @portabletext/plugin-emoji-picker
 ```
 
-## Quick Start
+## Quick start
 
 The `useEmojiPicker` hook handles the state and logic needed to create an emoji picker for the Portable Text Editor. It manages keyword matching, keyboard navigation, and emoji insertion, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.
 
@@ -72,7 +72,7 @@ const matchEmojis = createMatchEmojis({
 })
 ```
 
-## How It Works
+## How it works
 
 The emoji picker activates when users type `:` followed by a keyword (e.g., `:smile` or `:joy`).
 
@@ -82,7 +82,7 @@ The emoji picker activates when users type `:` followed by a keyword (e.g., `:sm
   - `Esc` dismisses the picker
 - **Mouse interactions are opt-in**: Use `onNavigateTo` and `onSelect` to enable hover and click
 
-## API Reference
+## API reference
 
 ### `useEmojiPicker(props)`
 
@@ -99,7 +99,7 @@ The emoji picker activates when users type `:` followed by a keyword (e.g., `:sm
 - `onSelect()`: Select the current match.
 - `onDismiss()`: Dismiss the emoji picker.
 
-## Custom Search Algorithm
+## Custom search algorithm
 
 You can implement a custom search algorithm with your own matching logic and data structures. The only requirement is that your function adheres to the `MatchEmojis` type and returns matches that extend `BaseEmojiMatch`:
 

@@ -1,6 +1,6 @@
 # `@portabletext/plugin-list-index`
 
-A helper plugin for calculating list indices for flat blocks based on `listItem` and `level`.
+> Compute the list index of each list item for custom list rendering
 
 ## Installation
 
