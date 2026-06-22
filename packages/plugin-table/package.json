@@ -2,7 +2,7 @@
   "name": "@portabletext/plugin-table",
   "version": "0.0.17",
   "private": true,
-  "description": "📊 Table support for the Portable Text Editor",
+  "description": "Add table support to the Portable Text Editor",
   "keywords": [
     "portabletext",
     "plugin",
