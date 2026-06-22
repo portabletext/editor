@@ -15,11 +15,15 @@ export const disableListener = fromCallback<
     sendBack({type: 'enable'})
   }
 
-  return input.editor.on('*', () => {
-    if (input.editor.getSnapshot().context.readOnly) {
-      sendBack({type: 'disable'})
-    } else {
-      sendBack({type: 'enable'})
-    }
-  }).unsubscribe
+  return input.editor.on(
+    '*',
+    () => {
+      if (input.editor.getSnapshot().context.readOnly) {
+        sendBack({type: 'disable'})
+      } else {
+        sendBack({type: 'enable'})
+      }
+    },
+    {schedule: 'microtask'},
+  ).unsubscribe
 })
