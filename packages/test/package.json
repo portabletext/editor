@@ -47,10 +47,10 @@
   "browserslist": "extends @sanity/browserslist-config",
   "devDependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/pkg-utils": "^9.0.0",
-    "@sanity/tsconfig": "^1.0.0",
+    "@sanity/pkg-utils": "catalog:",
+    "@sanity/tsconfig": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^4.0.4"
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

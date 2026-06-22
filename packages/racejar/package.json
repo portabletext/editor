@@ -66,10 +66,10 @@
   "devDependencies": {
     "@jest/globals": "^30.3.0",
     "@playwright/test": "^1.60.0",
-    "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/tsconfig": "^2.1.0",
+    "@sanity/pkg-utils": "catalog:",
+    "@sanity/tsconfig": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^4.1.8"
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@jest/globals": "^30.3.0",

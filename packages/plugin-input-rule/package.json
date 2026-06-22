@@ -52,27 +52,27 @@
     "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
   },
   "dependencies": {
-    "@xstate/react": "^6.1.0",
-    "xstate": "^5.32.1"
+    "@xstate/react": "catalog:",
+    "xstate": "catalog:"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:*",
-    "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/tsconfig": "^2.1.0",
-    "@types/react": "^19.2.14",
-    "@vitejs/plugin-react": "^5.2.0",
-    "@vitest/browser": "^4.1.8",
-    "@vitest/browser-playwright": "^4.1.8",
-    "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.39.1",
-    "eslint-formatter-gha": "^1.6.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
+    "@sanity/pkg-utils": "catalog:",
+    "@sanity/tsconfig": "catalog:",
+    "@types/react": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "babel-plugin-react-compiler": "catalog:",
+    "eslint": "catalog:",
+    "eslint-formatter-gha": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
     "racejar": "workspace:*",
-    "react": "^19.2.5",
+    "react": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.48.0",
-    "vitest": "^4.1.8"
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^7.6.2",
