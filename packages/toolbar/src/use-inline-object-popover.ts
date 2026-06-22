@@ -34,53 +34,57 @@ const activeListener = fromCallback<
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>},
   ActiveListenerEvent
 >(({input, sendBack}) => {
-  return input.editor.on('selection', () => {
-    const snapshot = input.editor.getSnapshot()
+  return input.editor.on(
+    'selection',
+    () => {
+      const snapshot = input.editor.getSnapshot()
 
-    if (!selectors.isSelectionCollapsed(snapshot)) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!selectors.isSelectionCollapsed(snapshot)) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const focusInlineObject = selectors.getFocusInlineObject(snapshot)
+      const focusInlineObject = selectors.getFocusInlineObject(snapshot)
 
-    if (!focusInlineObject) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!focusInlineObject) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const schemaType = input.schemaTypes.find(
-      (schemaType) => schemaType.name === focusInlineObject.node._type,
-    )
+      const schemaType = input.schemaTypes.find(
+        (schemaType) => schemaType.name === focusInlineObject.node._type,
+      )
 
-    if (!schemaType) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!schemaType) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const selectedNodes = input.editor.dom.getChildNodes(snapshot)
-    const firstSelectedNode = selectedNodes.at(0)
+      const selectedNodes = input.editor.dom.getChildNodes(snapshot)
+      const firstSelectedNode = selectedNodes.at(0)
 
-    if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const elementRef = React.createRef<Element>()
-    elementRef.current = firstSelectedNode
+      const elementRef = React.createRef<Element>()
+      elementRef.current = firstSelectedNode
 
-    sendBack({
-      type: 'set active',
-      inlineObjects: [
-        {
-          value: focusInlineObject.node,
-          schemaType,
-          at: focusInlineObject.path,
-        },
-      ],
-      elementRef,
-    })
-  }).unsubscribe
+      sendBack({
+        type: 'set active',
+        inlineObjects: [
+          {
+            value: focusInlineObject.node,
+            schemaType,
+            at: focusInlineObject.path,
+          },
+        ],
+        elementRef,
+      })
+    },
+    {schedule: 'microtask'},
+  ).unsubscribe
 })
 
 const inlineObjectPopoverMachine = setup({

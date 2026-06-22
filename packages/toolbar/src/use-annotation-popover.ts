@@ -35,47 +35,51 @@ const activeListener = fromCallback<
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>},
   ActiveListenerEvent
 >(({input, sendBack}) => {
-  return input.editor.on('*', () => {
-    const snapshot = input.editor.getSnapshot()
-    const activeAnnotations = selectors.getActiveAnnotations(snapshot)
-    const focusBlock = selectors.getFocusBlock(snapshot)
+  return input.editor.on(
+    '*',
+    () => {
+      const snapshot = input.editor.getSnapshot()
+      const activeAnnotations = selectors.getActiveAnnotations(snapshot)
+      const focusBlock = selectors.getFocusBlock(snapshot)
 
-    if (activeAnnotations.length === 0 || !focusBlock) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (activeAnnotations.length === 0 || !focusBlock) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const selectedChildren = input.editor.dom.getChildNodes(snapshot)
-    const firstSelectedChild = selectedChildren.at(0)
+      const selectedChildren = input.editor.dom.getChildNodes(snapshot)
+      const firstSelectedChild = selectedChildren.at(0)
 
-    if (!firstSelectedChild || !(firstSelectedChild instanceof Element)) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!firstSelectedChild || !(firstSelectedChild instanceof Element)) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const elementRef = React.createRef<Element>()
-    elementRef.current = firstSelectedChild
+      const elementRef = React.createRef<Element>()
+      elementRef.current = firstSelectedChild
 
-    sendBack({
-      type: 'set active',
-      annotations: activeAnnotations.flatMap((annotation) => {
-        const schemaType = input.schemaTypes.find(
-          (schemaType) => schemaType.name === annotation._type,
-        )
+      sendBack({
+        type: 'set active',
+        annotations: activeAnnotations.flatMap((annotation) => {
+          const schemaType = input.schemaTypes.find(
+            (schemaType) => schemaType.name === annotation._type,
+          )
 
-        if (!schemaType) {
-          return []
-        }
+          if (!schemaType) {
+            return []
+          }
 
-        return {
-          value: annotation,
-          schemaType,
-          at: [...focusBlock.path, 'markDefs', {_key: annotation._key}],
-        }
-      }),
-      elementRef,
-    })
-  }).unsubscribe
+          return {
+            value: annotation,
+            schemaType,
+            at: [...focusBlock.path, 'markDefs', {_key: annotation._key}],
+          }
+        }),
+        elementRef,
+      })
+    },
+    {schedule: 'microtask'},
+  ).unsubscribe
 })
 
 const annotationPopoverMachine = setup({

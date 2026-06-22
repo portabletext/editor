@@ -24,12 +24,16 @@ const activeListener = fromCallback<
   const activeStyle = selectors.getActiveStyle(input.editor.getSnapshot())
   sendBack({type: 'set active style', style: activeStyle})
 
-  return input.editor.on('*', () => {
-    const snapshot = input.editor.getSnapshot()
-    const activeStyle = selectors.getActiveStyle(snapshot)
+  return input.editor.on(
+    '*',
+    () => {
+      const snapshot = input.editor.getSnapshot()
+      const activeStyle = selectors.getActiveStyle(snapshot)
 
-    sendBack({type: 'set active style', style: activeStyle})
-  }).unsubscribe
+      sendBack({type: 'set active style', style: activeStyle})
+    },
+    {schedule: 'microtask'},
+  ).unsubscribe
 })
 
 const styleSelectorMachine = setup({

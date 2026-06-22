@@ -21,15 +21,19 @@ const activeListener = fromCallback<
     sendBack({type: 'set inactive'})
   }
 
-  return input.editor.on('*', () => {
-    const snapshot = input.editor.getSnapshot()
+  return input.editor.on(
+    '*',
+    () => {
+      const snapshot = input.editor.getSnapshot()
 
-    if (selectors.isActiveListItem(input.schemaType.name)(snapshot)) {
-      sendBack({type: 'set active'})
-    } else {
-      sendBack({type: 'set inactive'})
-    }
-  }).unsubscribe
+      if (selectors.isActiveListItem(input.schemaType.name)(snapshot)) {
+        sendBack({type: 'set active'})
+      } else {
+        sendBack({type: 'set inactive'})
+      }
+    },
+    {schedule: 'microtask'},
+  ).unsubscribe
 })
 
 const listButtonMachine = setup({

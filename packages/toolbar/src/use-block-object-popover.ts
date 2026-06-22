@@ -34,53 +34,57 @@ const activeListener = fromCallback<
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>},
   ActiveListenerEvent
 >(({input, sendBack}) => {
-  return input.editor.on('selection', () => {
-    const snapshot = input.editor.getSnapshot()
+  return input.editor.on(
+    'selection',
+    () => {
+      const snapshot = input.editor.getSnapshot()
 
-    if (!selectors.isSelectionCollapsed(snapshot)) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!selectors.isSelectionCollapsed(snapshot)) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+      const focusBlockObject = selectors.getFocusBlockObject(snapshot)
 
-    if (!focusBlockObject) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!focusBlockObject) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const schemaType = input.schemaTypes.find(
-      (schemaType) => schemaType.name === focusBlockObject.node._type,
-    )
+      const schemaType = input.schemaTypes.find(
+        (schemaType) => schemaType.name === focusBlockObject.node._type,
+      )
 
-    if (!schemaType) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!schemaType) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const selectedNodes = input.editor.dom.getBlockNodes(snapshot)
-    const firstSelectedNode = selectedNodes.at(0)
+      const selectedNodes = input.editor.dom.getBlockNodes(snapshot)
+      const firstSelectedNode = selectedNodes.at(0)
 
-    if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-      sendBack({type: 'set inactive'})
-      return
-    }
+      if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
+        sendBack({type: 'set inactive'})
+        return
+      }
 
-    const elementRef = React.createRef<Element>()
-    elementRef.current = firstSelectedNode
+      const elementRef = React.createRef<Element>()
+      elementRef.current = firstSelectedNode
 
-    sendBack({
-      type: 'set active',
-      blockObjects: [
-        {
-          value: focusBlockObject.node,
-          schemaType,
-          at: focusBlockObject.path,
-        },
-      ],
-      elementRef,
-    })
-  }).unsubscribe
+      sendBack({
+        type: 'set active',
+        blockObjects: [
+          {
+            value: focusBlockObject.node,
+            schemaType,
+            at: focusBlockObject.path,
+          },
+        ],
+        elementRef,
+      })
+    },
+    {schedule: 'microtask'},
+  ).unsubscribe
 })
 
 const blockObjectPopoverMachine = setup({
