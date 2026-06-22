@@ -1,7 +1,5 @@
 import {setup} from 'xstate'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
-import {start} from '../engine/editor/start'
-import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
@@ -75,15 +73,22 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
   },
 })
 
-// This function handles unexpected DOM changes inside the Editable so the
-// engine's model selection stays stable. The Editable can be re-rendered while
-// the user is still actively changing the contentEditable (hidden contexts,
-// outer state); the intermediate DOM selection it observes can be invalid
-// against the engine's snapshot, and synchronously syncing either direction
-// without guards leads to unrecoverable errors. When `toDOMRange` can't
-// resolve the engine's selection on the current DOM (typically a race ahead
-// of React's commit), this pass skips the sync and the next MutationObserver
-// tick retries once the DOM catches up.
+// This function will handle unexpected DOM changes inside the Editable rendering,
+// and make sure that we can maintain a stable editorEngine.snapshot.context.selection when that happens.
+//
+// For example, if this Editable is rendered inside something that might re-render
+// this component (hidden contexts) while the user is still actively changing the
+// contentEditable, this could interfere with the intermediate DOM selection,
+// which again could be picked up by DOMEditor's event listeners.
+// If that range is invalid at that point, the engine's selection could be
+// set either wrong, or invalid, to which editorEngine will throw exceptions
+// that are impossible to recover properly from or result in a wrong selection.
+//
+// Also the other way around, when the DOMEditor will try to create a DOM Range
+// from the current editorEngine.snapshot.context.selection, it may throw unrecoverable errors
+// if the current editor.snapshot.context.selection is invalid according to the DOM.
+// When that happens this pass skips the sync; the MutationObserver driving
+// the machine will fire again once React commits and the next pass will succeed.
 function validateSelection(
   editorEngine: PortableTextEditorEngine,
   editorElement: HTMLDivElement,
@@ -129,13 +134,9 @@ function validateSelection(
       domSelection.addRange(newDOMRange)
     }
   } catch {
-    debug.selection(`Could not resolve selection, selecting top document`)
-    // Deselect the editor
-    applyDeselect(editorEngine)
-    // Select top document if there is a top block to select
-    if (editorEngine.snapshot.context.value.length > 0) {
-      applySelect(editorEngine, start(editorEngine, []))
-    }
-    editorEngine.onChange()
+    // `toDOMRange` raced ahead of React's commit. The MutationObserver
+    // driving this machine will fire again once the DOM catches up, and
+    // the next pass will succeed. Don't touch the model selection here.
+    debug.selection(`Could not resolve selection, skipping DOM sync this tick`)
   }
 }
