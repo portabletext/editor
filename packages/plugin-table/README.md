@@ -1,6 +1,6 @@
 # `@portabletext/plugin-table`
 
-> 📊 Table support for the Portable Text Editor
+> Table support for the Portable Text Editor
 
 **Status:** skeleton package, private. Not yet published to npm.
 

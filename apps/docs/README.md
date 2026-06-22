@@ -2,7 +2,7 @@
 
 [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
 
-## 🚀 Docs Project Structure
+## Docs Project Structure
 
 Inside of your Astro + Starlight project, you'll see the following folders and files:
 
@@ -28,7 +28,7 @@ Images can be added to `src/assets/` and embedded in Markdown with a relative li
 
 Static assets, like favicons, can be placed in the `public/` directory.
 
-## 🧞 Commands
+## Commands
 
 All commands are run from `apps/docs/`, from a terminal:
 
@@ -103,6 +103,6 @@ export default defineConfig({
 })
 ```
 
-## 👀 Want to learn more?
+## Want to learn more?
 
 Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).

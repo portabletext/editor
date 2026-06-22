@@ -1,6 +1,6 @@
 # `@portabletext/plugin-character-pair-decorator`
 
-> ✨ Automatically match a pair of characters and decorate the text in between
+> Automatically match a pair of characters and decorate the text in between
 
 ## Installation
 

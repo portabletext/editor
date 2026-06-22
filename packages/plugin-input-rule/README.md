@@ -69,7 +69,7 @@ export function MyMarkdownPlugin() {
 }
 ```
 
-> 💡 **Tip:** The [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) package is already built using Input Rules and provides common markdown shortcuts out of the box.
+> **Tip:** The [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) package is already built using Input Rules and provides common markdown shortcuts out of the box.
 
 ## Text Transformation Rules
 
