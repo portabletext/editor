@@ -17,7 +17,13 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
-import {createRelay, type Relay} from './relay'
+import {
+  createRelay,
+  type BufferedEditorEventListenerOptions,
+  type EditorEmittedEvent,
+  type EditorEventListenerOptions,
+  type Relay,
+} from './relay'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export function createInternalEditor(config: EditorConfig): {
@@ -110,9 +116,27 @@ export function createInternalEditor(config: EditorConfig): {
           )
       }
     },
-    on: (event, listener, options) => {
-      const subscription = relay.on(
-        event,
+    on: ((
+      type: EditorEmittedEvent['type'] | '*',
+      listener: (
+        eventOrEvents: EditorEmittedEvent | Array<EditorEmittedEvent>,
+      ) => void,
+      options?: EditorEventListenerOptions & {buffer?: boolean},
+    ) => {
+      // Buffered microtask delivery hands the listener the whole burst as an
+      // array; the per-event narrowing below does not apply.
+      if (options?.buffer) {
+        return relay.on(
+          type,
+          (events) => {
+            listener(events)
+          },
+          options as BufferedEditorEventListenerOptions,
+        )
+      }
+
+      return relay.on(
+        type,
         (event) => {
           switch (event.type) {
             case 'blurred':
@@ -134,9 +158,7 @@ export function createInternalEditor(config: EditorConfig): {
         },
         options,
       )
-
-      return subscription
-    },
+    }) as Editor['on'],
     subscribe(observer) {
       const actorSubscription = editorActor.subscribe({
         next: () => observer.next?.(editor.getSnapshot()),

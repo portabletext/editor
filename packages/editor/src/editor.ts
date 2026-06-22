@@ -5,6 +5,7 @@ import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
 import type {
+  BufferedEditorEventListenerOptions,
   EditorEmittedEvent,
   EditorEventListenerOptions,
 } from './editor/relay'
@@ -54,13 +55,31 @@ export type Editor = {
    */
   registerNode: (config: {node: RegistrableNode}) => () => void
   send: (event: EditorEvent) => void
-  on: <TType extends EditorEmittedEvent['type'] | '*'>(
-    type: TType,
-    listener: (
-      event: EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType}),
-    ) => void,
-    options?: EditorEventListenerOptions,
-  ) => {unsubscribe: () => void}
+  /**
+   * With `{schedule: 'microtask', buffer: true}` the listener receives the
+   * array of every matching event coalesced during the microtask burst, in
+   * delivery order, instead of the single trailing event. Otherwise it
+   * receives one event per call.
+   */
+  on: {
+    <TType extends EditorEmittedEvent['type'] | '*'>(
+      type: TType,
+      listener: (
+        events: Array<
+          EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType})
+        >,
+      ) => void,
+      options: BufferedEditorEventListenerOptions,
+    ): {unsubscribe: () => void}
+    <TType extends EditorEmittedEvent['type'] | '*'>(
+      type: TType,
+      listener: (
+        event: EditorEmittedEvent &
+          (TType extends '*' ? unknown : {type: TType}),
+      ) => void,
+      options?: EditorEventListenerOptions,
+    ): {unsubscribe: () => void}
+  }
   /**
    * Subscribe to editor state changes. The observer's `next` callback fires
    * with the current `EditorSnapshot` on every relevant transition (selection

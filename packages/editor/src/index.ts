@@ -42,6 +42,7 @@ export {usePortableTextEditorSelection} from './editor/usePortableTextEditorSele
 export {defaultKeyGenerator as keyGenerator} from './utils/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {
+  BufferedEditorEventListenerOptions,
   EditorEmittedEvent,
   EditorEventListenerOptions,
   MutationEvent,

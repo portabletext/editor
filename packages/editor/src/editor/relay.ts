@@ -122,6 +122,20 @@ export type EditorEventListenerOptions = {
 }
 
 /**
+ * @public
+ * Options for the buffered variant of microtask scheduling. Instead of the
+ * single trailing event, the listener receives the array of every matching
+ * event coalesced during the burst, in delivery order. Use it when the
+ * listener must inspect the whole burst (e.g. "did any structural operation
+ * occur?") rather than only the latest event. Buffering applies to coalesced
+ * delivery, so `schedule: 'microtask'` is required.
+ */
+export type BufferedEditorEventListenerOptions = {
+  schedule: 'microtask'
+  buffer: true
+}
+
+/**
  * Fans editor events out to consumers (`editor.on(...)`).
  *
  * Guarantees:
@@ -139,13 +153,25 @@ export type EditorEventListenerOptions = {
  */
 export type Relay = {
   send: (event: EditorEmittedEvent) => void
-  on: <TType extends EditorEmittedEvent['type'] | '*'>(
-    type: TType,
-    listener: (
-      event: EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType}),
-    ) => void,
-    options?: EditorEventListenerOptions,
-  ) => {unsubscribe: () => void}
+  on: {
+    <TType extends EditorEmittedEvent['type'] | '*'>(
+      type: TType,
+      listener: (
+        events: Array<
+          EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType})
+        >,
+      ) => void,
+      options: BufferedEditorEventListenerOptions,
+    ): {unsubscribe: () => void}
+    <TType extends EditorEmittedEvent['type'] | '*'>(
+      type: TType,
+      listener: (
+        event: EditorEmittedEvent &
+          (TType extends '*' ? unknown : {type: TType}),
+      ) => void,
+      options?: EditorEventListenerOptions,
+    ): {unsubscribe: () => void}
+  }
   start: () => void
   stop: () => void
 }
@@ -246,6 +272,88 @@ export function createRelay(): Relay {
     }
   }
 
+  // `'microtask'` listeners are stored as a coalescing wrapper: `deliver`
+  // calls the wrapper per event (cheap: record the event, schedule once),
+  // and the original listener runs once on the trailing microtask. By
+  // default it receives the last event of the burst; with `buffer`, it
+  // receives the array of every event in the burst, in delivery order, so it
+  // can inspect the whole burst rather than only the latest event. This
+  // collapses a burst (e.g. one operation event per block during a large
+  // delete) into a single recompute.
+  const on = (
+    type: EditorEmittedEvent['type'] | '*',
+    listener: (
+      eventOrEvents: EditorEmittedEvent | Array<EditorEmittedEvent>,
+    ) => void,
+    options?: EditorEventListenerOptions & {buffer?: boolean},
+  ): {unsubscribe: () => void} => {
+    let stored: RelayListener
+    let unsubscribed = false
+
+    if (options?.schedule === 'microtask') {
+      const buffered = options.buffer === true
+      let scheduled = false
+      let pendingEvent: EditorEmittedEvent | undefined
+      const pendingEvents: Array<EditorEmittedEvent> = []
+      stored = (event) => {
+        if (buffered) {
+          pendingEvents.push(event)
+        } else {
+          pendingEvent = event
+        }
+        if (scheduled) {
+          return
+        }
+        scheduled = true
+        queueMicrotask(() => {
+          scheduled = false
+          if (unsubscribed || status === 'stopped') {
+            pendingEvents.length = 0
+            pendingEvent = undefined
+            return
+          }
+          if (buffered) {
+            const events = pendingEvents.slice()
+            pendingEvents.length = 0
+            if (events.length > 0) {
+              try {
+                listener(events)
+              } catch (error) {
+                // Contain a throwing listener, matching `callListener`.
+                console.error(error)
+              }
+            }
+          } else {
+            const event = pendingEvent
+            pendingEvent = undefined
+            if (event !== undefined) {
+              callListener(listener, event)
+            }
+          }
+        })
+      }
+    } else {
+      stored = listener
+    }
+
+    listeners.set(type, [...(listeners.get(type) ?? []), stored])
+
+    return {
+      unsubscribe: () => {
+        unsubscribed = true
+        const current = listeners.get(type) ?? []
+        const index = current.indexOf(stored)
+
+        if (index !== -1) {
+          listeners.set(type, [
+            ...current.slice(0, index),
+            ...current.slice(index + 1),
+          ])
+        }
+      },
+    }
+  }
+
   return {
     send: (event) => {
       if (status === 'stopped') {
@@ -258,57 +366,7 @@ export function createRelay(): Relay {
         drainMailbox()
       }
     },
-    on: (type, listener, options) => {
-      // `'microtask'` listeners are stored as a coalescing wrapper: `deliver`
-      // calls the wrapper per event (cheap: record the event, schedule once),
-      // and the original listener runs once on the trailing microtask with
-      // the last event. This collapses a burst (e.g. one operation event per
-      // block during a large delete) into a single recompute.
-      let stored: RelayListener
-      let unsubscribed = false
-
-      if (options?.schedule === 'microtask') {
-        let scheduled = false
-        let pendingEvent: EditorEmittedEvent | undefined
-        stored = (event) => {
-          pendingEvent = event
-          if (scheduled) {
-            return
-          }
-          scheduled = true
-          queueMicrotask(() => {
-            scheduled = false
-            if (unsubscribed || status === 'stopped') {
-              return
-            }
-            const event = pendingEvent
-            pendingEvent = undefined
-            if (event !== undefined) {
-              callListener(listener as RelayListener, event)
-            }
-          })
-        }
-      } else {
-        stored = listener as RelayListener
-      }
-
-      listeners.set(type, [...(listeners.get(type) ?? []), stored])
-
-      return {
-        unsubscribe: () => {
-          unsubscribed = true
-          const current = listeners.get(type) ?? []
-          const index = current.indexOf(stored)
-
-          if (index !== -1) {
-            listeners.set(type, [
-              ...current.slice(0, index),
-              ...current.slice(index + 1),
-            ])
-          }
-        },
-      }
-    },
+    on: on as Relay['on'],
     start: () => {
       status = 'started'
       drainMailbox()
