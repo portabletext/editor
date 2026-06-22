@@ -2,6 +2,12 @@
 
 > ⚡️ Easily configure an Emoji Picker for the Portable Text Editor
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-emoji-picker
+```
+
 ## Quick Start
 
 The `useEmojiPicker` hook handles the state and logic needed to create an emoji picker for the Portable Text Editor. It manages keyword matching, keyboard navigation, and emoji insertion, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.

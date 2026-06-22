@@ -2,6 +2,12 @@
 
 > Generic typeahead picker infrastructure for the Portable Text Editor
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-typeahead-picker
+```
+
 ## Quick Start
 
 The `useTypeaheadPicker` hook provides the state and logic needed to build typeahead pickers (emoji pickers, mention pickers, slash commands, etc.) for the Portable Text Editor. It manages keyword matching, keyboard navigation, and triggering of actions, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.

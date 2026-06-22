@@ -2,6 +2,14 @@
 
 > Easily configure Input Rules in the Portable Text Editor
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-input-rule
+```
+
+## Why
+
 1. How do you implement undo functionality correctly?
 2. What about smart undo with <kbd>Backspace</kbd>?
 3. Have you considered `insert.text` events that carry more than one character? (Android, anyone?)
@@ -12,7 +20,7 @@ _This is why this plugin exists_. It brings the concept of "Input Rules" to the 
 import type {EditorSchema} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
-import {defineInputRule} from '@portabletext/plugin-input-rule'
+import {defineInputRule, InputRulePlugin} from '@portabletext/plugin-input-rule'
 
 const unorderedListRule = defineInputRule({
   // Listen for a RegExp pattern instead of a raw event
@@ -68,6 +76,11 @@ export function MyMarkdownPlugin() {
 Text transformations are so common that the plugin provides a high-level `defineTextTransformRule` helper to configure them without any boilerplate:
 
 ```tsx
+import {
+  defineTextTransformRule,
+  InputRulePlugin,
+} from '@portabletext/plugin-input-rule'
+
 const emDashRule = defineTextTransformRule({
   on: /--/,
   transform: () => '—',

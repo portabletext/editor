@@ -2,6 +2,14 @@
 
 A helper plugin for tracking the drop position during drag and drop.
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-dnd
+```
+
+## Usage
+
 When a consumer takes over block rendering through the `defineX` pipeline, the engine renders no drop-indicator chrome: where a dragged block would land is deliberately left to the consumer, since drop indication is pointer-driven UI, not document structure. This plugin tracks the position for you, derived from the editor's public `drag.*` behavior events.
 
 ```tsx

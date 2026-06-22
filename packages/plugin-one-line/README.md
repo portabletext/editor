@@ -1,6 +1,14 @@
-# One-Line Plugin
+# `@portabletext/plugin-one-line`
 
 > 🤏 Restricts the Portable Text Editor to a single line
+
+## Installation
+
+```sh
+npm install @portabletext/plugin-one-line
+```
+
+## Usage
 
 The plugin blocks `insert.break` events and provides smart handling of other `insert.*` events like `insert.block`.
 

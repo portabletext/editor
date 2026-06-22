@@ -119,7 +119,9 @@ const boldShortcut = createKeyboardShortcut({
 // On Apple platforms: ⌘+B
 ```
 
-**Example:**
+#### `isKeyboardShortcut(definition, event)`
+
+Checks whether a keyboard event matches a single `KeyboardEventDefinition`. Returns `true` on a match.
 
 ```typescript
 import {isKeyboardShortcut} from '@portabletext/keyboard-shortcuts'

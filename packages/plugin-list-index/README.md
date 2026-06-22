@@ -2,6 +2,14 @@
 
 A helper plugin for calculating list indices for flat blocks based on `listItem` and `level`.
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-list-index
+```
+
+## Usage
+
 Portable Text has no nested list structure: a list is a run of flat sibling blocks carrying `listItem` and `level` properties. That makes the 1-based position of an item within its list a _derived_ value: same-type items count up across consecutive blocks on the same level, deeper levels restart at 1, and non-list blocks break the sequence. This plugin derives it for you and keeps it correct as the value changes.
 
 ```tsx
