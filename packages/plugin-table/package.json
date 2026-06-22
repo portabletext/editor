@@ -48,9 +48,9 @@
     "@portabletext/editor": "workspace:^",
     "@sanity/tsconfig": "catalog:",
     "@types/react": "catalog:",
-    "babel-plugin-react-compiler": "catalog:",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "react": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:"
