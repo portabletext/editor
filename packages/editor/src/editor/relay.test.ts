@@ -1,6 +1,6 @@
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorSelection} from '../types/editor'
-import {createRelay} from './relay'
+import {createRelay, type EditorEmittedEvent} from './relay'
 
 function createSelection(offset: number): NonNullable<EditorSelection> {
   return {
@@ -162,5 +162,156 @@ describe('relay', () => {
     relay.send({type: 'ready'})
 
     expect(deliveries).toEqual(['first', 'second', 'second'])
+  })
+})
+
+describe('relay batch delivery (batch: true)', () => {
+  test('coalesces a synchronous burst into one call carrying the events in order', async () => {
+    const relay = createRelay()
+    relay.start()
+    const deliveries: Array<Array<EditorEmittedEvent>> = []
+
+    relay.on(
+      '*',
+      (events) => {
+        deliveries.push(events)
+      },
+      {batch: true},
+    )
+
+    relay.send({type: 'ready'})
+    relay.send({type: 'editable'})
+
+    // Nothing is delivered synchronously.
+    expect(deliveries).toEqual([])
+
+    await Promise.resolve()
+
+    expect(deliveries).toEqual([[{type: 'ready'}, {type: 'editable'}]])
+  })
+
+  test('delivers separate microtask bursts as separate calls', async () => {
+    const relay = createRelay()
+    relay.start()
+    const deliveries: Array<Array<EditorEmittedEvent>> = []
+
+    relay.on(
+      '*',
+      (events) => {
+        deliveries.push(events)
+      },
+      {batch: true},
+    )
+
+    relay.send({type: 'ready'})
+    await Promise.resolve()
+    relay.send({type: 'editable'})
+    await Promise.resolve()
+
+    expect(deliveries).toEqual([[{type: 'ready'}], [{type: 'editable'}]])
+  })
+
+  test('a sync and a batch listener on the same type coexist: sync per event, batch coalesced', async () => {
+    const relay = createRelay()
+    relay.start()
+    const sync: Array<string> = []
+    const batched: Array<Array<string>> = []
+
+    relay.on('ready', (event) => {
+      sync.push(event.type)
+    })
+    relay.on(
+      'ready',
+      (events) => {
+        batched.push(events.map((event) => event.type))
+      },
+      {batch: true},
+    )
+
+    relay.send({type: 'ready'})
+    relay.send({type: 'ready'})
+
+    // The sync listener has already fired once per event; the batch listener
+    // has not fired yet.
+    expect(sync).toEqual(['ready', 'ready'])
+    expect(batched).toEqual([])
+
+    await Promise.resolve()
+
+    expect(batched).toEqual([['ready', 'ready']])
+  })
+
+  test('does not deliver a pending burst after unsubscribe', async () => {
+    const relay = createRelay()
+    relay.start()
+    const deliveries: Array<Array<EditorEmittedEvent>> = []
+
+    const subscription = relay.on(
+      '*',
+      (events) => {
+        deliveries.push(events)
+      },
+      {batch: true},
+    )
+
+    relay.send({type: 'ready'})
+    subscription.unsubscribe()
+    await Promise.resolve()
+
+    expect(deliveries).toEqual([])
+  })
+
+  test('does not deliver a pending burst after stop', async () => {
+    const relay = createRelay()
+    relay.start()
+    const deliveries: Array<Array<EditorEmittedEvent>> = []
+
+    relay.on(
+      '*',
+      (events) => {
+        deliveries.push(events)
+      },
+      {batch: true},
+    )
+
+    relay.send({type: 'ready'})
+    relay.stop()
+    await Promise.resolve()
+
+    expect(deliveries).toEqual([])
+  })
+
+  test('a throwing batch listener is contained, and both it and a co-listener keep receiving later bursts', async () => {
+    const relay = createRelay()
+    relay.start()
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const coListenerBursts: Array<Array<string>> = []
+
+    relay.on(
+      'ready',
+      () => {
+        throw new Error('boom')
+      },
+      {batch: true},
+    )
+    relay.on(
+      'ready',
+      (events) => {
+        coListenerBursts.push(events.map((event) => event.type))
+      },
+      {batch: true},
+    )
+
+    relay.send({type: 'ready'})
+    await Promise.resolve()
+    relay.send({type: 'ready'})
+    await Promise.resolve()
+
+    // The throw is contained per burst (so a second burst still flushes), and
+    // the co-subscribed listener receives both bursts unaffected.
+    expect(errorSpy).toHaveBeenCalledTimes(2)
+    expect(coListenerBursts).toEqual([['ready'], ['ready']])
+
+    errorSpy.mockRestore()
   })
 })

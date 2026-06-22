@@ -83,7 +83,7 @@ const activeListener = fromCallback<
         elementRef,
       })
     },
-    {schedule: 'microtask'},
+    {batch: true},
   ).unsubscribe
 })
 
