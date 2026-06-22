@@ -6,7 +6,7 @@ import type {EditorActor} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
 import {createRelay} from './relay'
 
-const FLUSH_INTERVAL = 250
+const FLUSH_INTERVAL = 500
 
 function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const editorEngine = createEditor() as PortableTextEditorEngine

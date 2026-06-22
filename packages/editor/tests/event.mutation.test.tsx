@@ -109,12 +109,17 @@ describe('event.mutation', () => {
       ),
     })
 
+    // Each burst flushes into a single mutation: the keystrokes share one undo
+    // step (the key the batcher merges on) and a burst finishes well inside the
+    // batcher's `FLUSH_INTERVAL`, so the fixed flush cadence never fires
+    // mid-burst. Waiting on the settled count (rather than sleeping a fixed
+    // period) lets the first burst flush via its typing debounce before the
+    // second burst opens a fresh undo step.
     await userEvent.type(locator, 'foo')
-    await new Promise((resolve) => setTimeout(resolve, 250))
+    await vi.waitFor(() => expect(mutations).toHaveLength(1))
     await userEvent.type(locator, 'bar')
-    await new Promise((resolve) => setTimeout(resolve, 250))
+    await vi.waitFor(() => expect(mutations).toHaveLength(2))
 
-    expect(mutations).toHaveLength(2)
     expect(mutations[0]!.value).toEqual([
       {
         _type: 'block',
