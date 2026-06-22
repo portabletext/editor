@@ -14,9 +14,16 @@ type PendingMutation = {
 
 const TYPE_DEBOUNCE = 250
 
+// A typed burst splits into two mutations mid-word if this fixed flush cadence
+// fires before the burst finishes typing, so in test mode the interval has to
+// be comfortably longer than a real burst takes to type. It also can't be too
+// long: the interval is the flush path for non-typing pending work, and tests
+// wait on those mutations within a default 1s `waitFor`. 500ms balances both —
+// a burst must take over 500ms to type to split, while non-typing work still
+// flushes well inside 1s. Production never approaches its 1s cadence.
 const FLUSH_INTERVAL =
   // @ts-expect-error - dot notation required for Vite to replace at build time
-  process.env.NODE_ENV === 'test' ? 250 : 1000
+  process.env.NODE_ENV === 'test' ? 500 : 1000
 
 /**
  * Batches `internal.patch` events into debounced `mutation` events.
