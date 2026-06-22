@@ -27,29 +27,6 @@ type ListIndexStore = {
 function createListIndexStore(editor: Editor): ListIndexStore {
   let listIndexMap = buildListIndexMap(editor.getSnapshot().context)
   const subscribers = new Map<string, Set<() => void>>()
-  let rebuildScheduled = false
-  let subscribed = false
-
-  function scheduleRebuild() {
-    if (rebuildScheduled) {
-      return
-    }
-
-    rebuildScheduled = true
-
-    // Coalesce per microtask: bulk transactions (value sync, multi-block
-    // inserts) deliver one operation per affected block, and rebuilding per
-    // operation would be O(blocks^2). The map has only React consumers and
-    // they read post-commit, so deferring to the end of the JS turn is
-    // safe; the microtask drains before React's commit.
-    queueMicrotask(() => {
-      rebuildScheduled = false
-
-      if (subscribed) {
-        rebuild()
-      }
-    })
-  }
 
   function rebuild() {
     const previousListIndexMap = listIndexMap
@@ -92,28 +69,36 @@ function createListIndexStore(editor: Editor): ListIndexStore {
       }
     },
     subscribe: () => {
-      subscribed = true
-
       // Operations applied between store creation (render) and subscription
       // (effect) are not observed, so reconcile once up front.
       rebuild()
 
-      const subscription = editor.on('operation', (event) => {
-        // Text ops never change list structure; every other document-changing
-        // op can (including deep edits inside a container), so rebuild. The
-        // rebuild coalesces below and the diff drops no-op changes.
-        if (
-          event.operation.type === 'insert.text' ||
-          event.operation.type === 'remove.text'
-        ) {
-          return
-        }
-
-        scheduleRebuild()
-      })
+      // Batched delivery coalesces a burst (e.g. one operation per block
+      // during a large delete, insert, or undo) into a single call carrying
+      // the whole burst, so the map rebuilds at most once per burst instead
+      // of once per operation. Text ops never change list structure; every
+      // other document-changing op can (including deep edits inside a
+      // container), so rebuild only when the burst contains one. Inspecting
+      // the whole burst is why this needs `batch` rather than a last-event
+      // delivery, which would drop a structural op whenever a text op
+      // happened to be last in the burst.
+      const subscription = editor.on(
+        'operation',
+        (events) => {
+          if (
+            events.some(
+              (event) =>
+                event.operation.type !== 'insert.text' &&
+                event.operation.type !== 'remove.text',
+            )
+          ) {
+            rebuild()
+          }
+        },
+        {batch: true},
+      )
 
       return () => {
-        subscribed = false
         subscription.unsubscribe()
       }
     },
@@ -134,10 +119,11 @@ const ListIndexContext = createContext<ListIndexStore | undefined>(undefined)
  * </EditorProvider>
  * ```
  *
- * The map is rebuilt at most once per editor operation, regardless of how
- * many components read it, and only for operations that can affect list
- * indices. Reads via {@link useListIndex} only re-render when the index at
- * their own path changes.
+ * The map is rebuilt at most once per microtask burst of operations,
+ * regardless of how many operations the burst contains or how many
+ * components read it, and only when the burst contains an operation that can
+ * affect list indices. Reads via {@link useListIndex} only re-render when the
+ * index at their own path changes.
  *
  * @beta
  */
