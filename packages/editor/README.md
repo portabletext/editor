@@ -60,7 +60,7 @@ Before you can render the editor, you need a schema. The editor schema configure
 We'll start with a schema that includes some common rich text elements.
 
 > [!NOTE]
-> This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](https://www.portabletext.org/guides/custom-rendering/) for additional examples.
+> This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](https://www.portabletext.org/editor/guides/custom-rendering/) for additional examples.
 
 ```tsx
 // App.tsx
@@ -92,7 +92,7 @@ const schemaDefinition = defineSchema({
 })
 ```
 
-Learn more about the different types that exist in schema in the [Portable Text Overview](https://www.portabletext.org/concepts/portabletext/).
+Learn more about the different types that exist in schema in the [Portable Text Overview](https://www.portabletext.org/editor/concepts/portabletext/).
 
 ### Render the editor
 
@@ -208,7 +208,7 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 
 Update the `PortableTextEditable` with each corresponding function to attach them to the editor.
 
-You may notice that we skipped a few types from the schema. Declare these inline in the configuration, like in the code below. You can learn more about [customizing the render functions](https://www.portabletext.org/guides/custom-rendering/) in the documentation.
+You may notice that we skipped a few types from the schema. Declare these inline in the configuration, like in the code below. You can learn more about [customizing the render functions](https://www.portabletext.org/editor/guides/custom-rendering/) in the documentation.
 
 ```tsx
 <PortableTextEditable
@@ -224,7 +224,7 @@ Before you can see if anything changed, you need a way to interact with the edit
 
 ### Create a toolbar
 
-A toolbar is a collection of UI elements for interacting with the editor. The PTE library gives you the necessary hooks to create a toolbar however you like. Learn more about [creating your own toolbar](https://www.portabletext.org/guides/customize-toolbar/) in the documentation.
+A toolbar is a collection of UI elements for interacting with the editor. The PTE library gives you the necessary hooks to create a toolbar however you like. Learn more about [creating your own toolbar](https://www.portabletext.org/editor/guides/customize-toolbar/) in the documentation.
 
 1. Create a `Toolbar` component in the same file.
 2. Import the `useEditor` hook, and declare an `editor` constant in the component.
@@ -286,7 +286,7 @@ function Toolbar() {
 }
 ```
 
-The `useEditor` hook gives you access to the active editor. `send` lets you send events to the editor. You can view the full list of events in the [Behavior API reference](https://www.portabletext.org/reference/behavior-api/).
+The `useEditor` hook gives you access to the active editor. `send` lets you send events to the editor. You can view the full list of events in the [Behavior API reference](https://www.portabletext.org/editor/reference/behavior-api/).
 
 > [!NOTE]
 > The example above sends a `focus` event after each action. Normally when interacting with a button, the browser removes focus from the text editing area. This event returns focus to the field to prevent interrupting the user.
@@ -333,7 +333,7 @@ function App() {
 // ...
 ```
 
-You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](https://www.portabletext.org/guides/custom-rendering/) and the [toolbar customization guide](https://www.portabletext.org/guides/customize-toolbar/) for options.
+You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](https://www.portabletext.org/editor/guides/custom-rendering/) and the [toolbar customization guide](https://www.portabletext.org/editor/guides/customize-toolbar/) for options.
 
 ### View the Portable Text data
 
@@ -345,18 +345,18 @@ You can preview the Portable Text from the editor by reading the state. Add the 
 </pre>
 ```
 
-This displays the raw Portable Text. To customize how Portable Text renders in your apps, explore the [collection of serializers](https://www.portabletext.org/integrations/serializers/).
+This displays the raw Portable Text. To customize how Portable Text renders in your apps, explore the [collection of serializers](https://www.portabletext.org/rendering/).
 
 ## Behavior API
 
-The Behavior API is a new way of interfacing with the Portable Text Editor. It allows you to think of and treat the editor as a state machine by:
+The Behavior API is a way of interfacing with the Portable Text Editor. It allows you to think of and treat the editor as a state machine by:
 
 - Declaratively hooking into editor **events** and defining new behaviors.
 - Imperatively triggering **events**.
 - Deriving editor **state** using **pure functions**.
 - Subscribing to **emitted** editor **events**.
 
-Learn more about the [Behaviors](https://www.portabletext.org/concepts/behavior/) and how to [create your own behaviors](https://www.portabletext.org/guides/create-behavior/) in the documentation.
+Learn more about the [Behaviors](https://www.portabletext.org/editor/concepts/behavior/) and how to [create your own behaviors](https://www.portabletext.org/editor/guides/create-behavior/) in the documentation.
 
 ## Related Packages
 
