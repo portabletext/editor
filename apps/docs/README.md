@@ -11,9 +11,11 @@ Inside of your Astro + Starlight project, you'll see the following folders and f
 ├── public/
 ├── src/
 │   ├── assets/
+│   ├── components/
 │   ├── content/
-│   │   ├── docs/
-│   │   └── config.ts
+│   │   └── docs/
+│   ├── styles/
+│   ├── content.config.ts
 │   └── env.d.ts
 ├── astro.config.mjs
 ├── package.json
@@ -28,16 +30,16 @@ Static assets, like favicons, can be placed in the `public/` directory.
 
 ## 🧞 Commands
 
-All commands are run from the root of the project, from a terminal:
+All commands are run from `apps/docs/`, from a terminal:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+| Command                | Action                                           |
+| :--------------------- | :----------------------------------------------- |
+| `pnpm install`         | Installs dependencies                            |
+| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
+| `pnpm build`           | Build your production site to `./dist/`          |
+| `pnpm preview`         | Preview your build locally, before deploying     |
+| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `pnpm astro -- --help` | Get help using the Astro CLI                     |
 
 ## Common tasks
 
@@ -48,7 +50,7 @@ We use the [multiple instance](https://starlight-typedoc.vercel.app/guides/multi
 1. Call `createStarlightTypeDocPlugin()` to create a plugin instance and a sidebar group.
 2. Add and configure the plugin in the `plugins` array of the starlight config.
 3. Create a sidebar group.
-4. Create an 'overview' mdx file in content/docs/reference. Use an existing overview, like `toolbar.mdx` as an example.
+4. Create an 'overview' mdx file in content/docs/editor/reference. Use an existing overview, like `editor/reference/toolbar.mdx` as an example.
 
 For steps 1-3, update the `astro.config.mjs`:
 
@@ -89,7 +91,7 @@ export default defineConfig({
             {
               label: 'Toolbar',
               items: [
-                {label: 'Overview', slug: 'reference/toolbar'},
+                {label: 'Overview', slug: 'editor/reference/toolbar'},
                 {...toolbarTypeDocSidebar, badge: 'Generated'},
               ],
             },

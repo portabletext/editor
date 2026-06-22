@@ -1,50 +1,25 @@
-# React + TypeScript + Vite
+# Basic Portable Text Editor example
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A single-file React example showing how to set up [`@portabletext/editor`](../../packages/editor/): a schema with decorators, annotations, styles, lists, a block object (image) and an inline object (stock ticker), the matching render functions, a small toolbar built with `useEditor` and `useEditorSelector`, and a live JSON preview of the Portable Text value.
 
-Currently, two official plugins are available:
+The whole example lives in [`src/App.tsx`](./src/App.tsx).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Run it
 
-## Expanding the ESLint configuration
+From the repository root:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```sh
+pnpm install
+pnpm --filter example-basic dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Then open the local URL Vite prints (defaults to `http://localhost:5173`).
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## What it demonstrates
 
-export default tseslint.config({
-  // Set the react version
-  settings: {react: {version: '18.3'}},
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- Defining a schema with `defineSchema` (decorators, annotations, styles, lists, block and inline objects)
+- Render functions: `renderDecorator`, `renderAnnotation`, `renderStyle`, `renderBlock`, `renderChild`
+- A toolbar that toggles marks, styles, and lists using `useEditor` and `useEditorSelector` with selectors from `@portabletext/editor/selectors`
+- Reading the editor value through `EventListenerPlugin` and rendering it as JSON
+
+For a guided walkthrough of the same setup, see [Getting started](https://www.portabletext.org/editor/getting-started/).
