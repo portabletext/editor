@@ -288,6 +288,33 @@ describe('chrome drag', () => {
         },
       ])
     })
+
+    // The caret lands on the dropped code-block (end of its last line), not at
+    // the top of the document. Pinning this against the validate-selection
+    // fix that prevents toDOMRange races from resetting model selection.
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: line2Key},
+          'children',
+          {_key: line2SpanKey},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: line2Key},
+          'children',
+          {_key: line2SpanKey},
+        ],
+        offset: 1,
+      },
+      backward: false,
+    })
   })
 
   test('Scenario: dragging an image from inside a table cell drops just the image, not the whole table', async () => {
