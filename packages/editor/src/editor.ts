@@ -1,11 +1,13 @@
 import type {PortableTextBlock, SchemaDefinition} from '@portabletext/schema'
-import type {ActorRef, EventObject, Snapshot} from 'xstate'
 import type {Behavior} from './behaviors/behavior.types.behavior'
 import type {ExternalBehaviorEvent} from './behaviors/behavior.types.event'
 import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
-import type {EditorEmittedEvent} from './editor/relay'
+import type {
+  EditorEmittedEvent,
+  EditorEventListenerOptions,
+} from './editor/relay'
 import type {RegistrableNode} from './renderers/renderer.types'
 
 /**
@@ -52,7 +54,13 @@ export type Editor = {
    */
   registerNode: (config: {node: RegistrableNode}) => () => void
   send: (event: EditorEvent) => void
-  on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
+  on: <TType extends EditorEmittedEvent['type'] | '*'>(
+    type: TType,
+    listener: (
+      event: EditorEmittedEvent & (TType extends '*' ? unknown : {type: TType}),
+    ) => void,
+    options?: EditorEventListenerOptions,
+  ) => {unsubscribe: () => void}
   /**
    * Subscribe to editor state changes. The observer's `next` callback fires
    * with the current `EditorSnapshot` on every relevant transition (selection
