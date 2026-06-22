@@ -38,19 +38,34 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | [`@portabletext/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)             | Adds helpful Markdown shortcuts to the editor                             |
 | [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restricts the Portable Text Editor to a single line                       |
 | [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allows pasting links in the Portable Text Editor                          |
-| [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Generic typeahead picker infrastructure (emoji, mentions, slash commands) |
 | [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connects a Portable Text Editor with a Sanity document using the SDK      |
+| [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Generic typeahead picker infrastructure (emoji, mentions, slash commands) |
 | [`@portabletext/plugin-typography`](./packages/plugin-typography/)                             | Automatically transform text to typographic variants                      |
 
 ## Other Libraries
 
-| Package                                                              | Description                                              |
-| -------------------------------------------------------------------- | -------------------------------------------------------- |
-| [`@portabletext/html`](./packages/html/)                             | Convert HTML to Portable Text                            |
-| [`@portabletext/block-tools`](./packages/block-tools/)               | Sanity-flavored HTML to Portable Text (wraps html)       |
-| [`@portabletext/markdown`](./packages/markdown/)                     | Convert Portable Text to Markdown and back again         |
-| [`@portabletext/keyboard-shortcuts`](./packages/keyboard-shortcuts/) | Platform-aware keyboard shortcuts                        |
-| [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas |
-| [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                          |
-| [`@portabletext/test`](./packages/test/)                             | Testing utilities for the Portable Text Editor           |
-| [`racejar`](./packages/racejar/)                                     | A testing framework agnostic Gherkin driver              |
+| Package                                                              | Description                                                        |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [`@portabletext/html`](./packages/html/)                             | Convert HTML to Portable Text                                      |
+| [`@portabletext/block-tools`](./packages/block-tools/)               | Sanity-flavored HTML to Portable Text (wraps `@portabletext/html`) |
+| [`@portabletext/markdown`](./packages/markdown/)                     | Convert Portable Text to Markdown and back again                   |
+| [`@portabletext/keyboard-shortcuts`](./packages/keyboard-shortcuts/) | Platform-aware keyboard shortcuts                                  |
+| [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas           |
+| [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                                    |
+| [`@portabletext/test`](./packages/test/)                             | Testing utilities for the Portable Text Editor                     |
+| [`racejar`](./packages/racejar/)                                     | A testing framework agnostic Gherkin driver                        |
+
+## Contributing
+
+This is a [pnpm](https://pnpm.io/) and [Turborepo](https://turbo.build/) monorepo.
+
+```sh
+pnpm install   # install dependencies
+pnpm build     # build every package
+```
+
+Run `pnpm test` for the test suites and `pnpm check:types`, `pnpm check:lint`, and `pnpm check:format` for the checks CI runs.
+
+## License
+
+[MIT](./LICENSE) © [Sanity.io](https://www.sanity.io/)
