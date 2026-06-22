@@ -69,6 +69,17 @@ You can customize the link annotation with the `link` prop:
 />
 ```
 
+The `link` callback returns an annotation built from a `context.schema`
+lookup (`context.schema.annotations.find(...)`) instead of a hardcoded type.
+That lookup is what makes paste-link schema-aware: when the schema has no
+matching annotation the callback returns `undefined` and pasting a URL falls
+through to the default paste handling, so the plugin never adds an annotation
+the schema does not declare. Because `context.schema` is resolved at the
+caret, the same gating follows
+[containers](../schema/README.md#containers-and-sub-schemas): the lookup sees
+the container's sub-schema, so a link is only added where that container
+actually allows it.
+
 ## Behaviors
 
 ### Paste URL on selected text

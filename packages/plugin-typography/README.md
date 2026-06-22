@@ -179,6 +179,15 @@ return (
 )
 ```
 
+The `decorators` callback derives its allowed list from `context.schema`
+rather than hardcoding decorator names, so the guard tracks whatever the
+schema actually declares instead of a fixed list that can drift from it.
+Because `context.schema` is resolved at the caret, it also follows
+[containers](../schema/README.md#containers-and-sub-schemas): inside a code
+block the guard sees that container's sub-schema rather than the top-level
+one, which is what lets a guard keyed on the `code` decorator suppress
+transformations inside a code block whose sub-schema defines `code`.
+
 ## Using Individual Rules with `InputRulePlugin`
 
 All included typographic rules are exported from the plugin. To use them in your own abstraction, import them from this plugin and use them with the `InputRulePlugin`:
