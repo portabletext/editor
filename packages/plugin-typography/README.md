@@ -10,6 +10,12 @@ Automatically handles smart undo with <kbd>Backspace</kbd> right after insertion
 
 ![Smart undo with Backspace](./assets/smart-undo-with-backspace.gif)
 
+## Installation
+
+```sh
+npm install @portabletext/plugin-typography
+```
+
 ## Usage
 
 Import the `TypographyPlugin` React component and place it inside the `EditorProvider`:
@@ -153,7 +159,7 @@ All three props work together. The order of operations is:
 
 The `TypographyPlugin` has an optional `guard` prop that accepts any type of `BehaviorGuard`. Here, you'll have access to the current `EditorSnapshot` as well as information about the current rule being matched.
 
-Because disallowing text transformations inside code is a common use case, this plugin ships a built-in `createDecoratorGuard` function. use that to create a `guard` that only allows text transformations inside certain decorators:
+Because disallowing text transformations inside code is a common use case, this plugin ships a built-in `createDecoratorGuard` function. Use that to create a `guard` that only allows text transformations inside certain decorators:
 
 ```tsx
 import {
@@ -175,7 +181,7 @@ return (
 
 ## Using Individual Rules with `InputRulePlugin`
 
-All included typographic rules are exported from the plugin. To use them in your own abstraction, import them from this from plugin and use them with the `InputRulePlugin`:
+All included typographic rules are exported from the plugin. To use them in your own abstraction, import them from this plugin and use them with the `InputRulePlugin`:
 
 ```tsx
 import {InputRulePlugin} from '@portabletext/plugin-input-rule'

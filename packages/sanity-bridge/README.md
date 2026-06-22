@@ -13,6 +13,7 @@ npm install @portabletext/sanity-bridge
 ### Convert Sanity Schema to Portable Text Schema
 
 ```ts
+import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
 import {Schema} from '@sanity/schema'
 import {defineField, defineType} from '@sanity/types'
 

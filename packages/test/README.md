@@ -1,6 +1,12 @@
-# @portabletext/test
+# `@portabletext/test`
 
 Testing utilities for the Portable Text Editor.
+
+## Installation
+
+```sh
+npm install --save-dev @portabletext/test
+```
 
 ## Terse PT
 
@@ -9,6 +15,9 @@ A compact syntax for writing Portable Text in tests, making test data more reada
 ### Parsing Terse PT
 
 ```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator, parseTersePt} from '@portabletext/test'
+
 const tersePt = [
   'h1:Hello, world!',
   '{image}',
@@ -40,6 +49,9 @@ const blocks = parseTersePt(
 ### Producing Terse PT
 
 ```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {getTersePt} from '@portabletext/test'
+
 const blocks = [
   {
     _key: 'k0',

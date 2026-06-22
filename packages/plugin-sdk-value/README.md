@@ -1,8 +1,14 @@
-# SDK Value Plugin
+# `@portabletext/plugin-sdk-value`
 
 > 🔗 Connects a Portable Text Editor with a Sanity document using the SDK
 
 The SDK Value plugin provides seamless two-way synchronization between a Portable Text Editor instance and a specific field in a Sanity document. This enables real-time collaboration and ensures that changes made through the editor are immediately reflected in the document, and vice versa.
+
+## Installation
+
+```sh
+npm install @portabletext/plugin-sdk-value
+```
 
 ## Features
 

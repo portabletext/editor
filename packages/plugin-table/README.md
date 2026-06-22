@@ -1,4 +1,4 @@
-# Table Plugin
+# `@portabletext/plugin-table`
 
 > 📊 Table support for the Portable Text Editor
 
