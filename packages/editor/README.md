@@ -9,7 +9,7 @@
 
 > The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
 
-## Get started with the Portable Text Editor
+## Get started with the Portable Text Editor (PTE)
 
 This library provides you with the building blocks to create a completely custom editor experience built on top of Portable Text. We recommend [checking out the official documentation](https://www.portabletext.org/). The following guide includes the basics to get your started.
 
@@ -349,7 +349,7 @@ This displays the raw Portable Text. To customize how Portable Text renders in y
 
 ## Behavior API
 
-The Behavior API is a way of interfacing with the Portable Text Editor. It allows you to think of and treat the editor as a state machine by:
+The Behavior API is a way of interfacing with the PTE. It allows you to think of and treat the editor as a state machine by:
 
 - Declaratively hooking into editor **events** and defining new behaviors.
 - Imperatively triggering **events**.
