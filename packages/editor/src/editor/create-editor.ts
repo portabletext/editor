@@ -110,26 +110,30 @@ export function createInternalEditor(config: EditorConfig): {
           )
       }
     },
-    on: (event, listener) => {
-      const subscription = relay.on(event, (event) => {
-        switch (event.type) {
-          case 'blurred':
-          case 'done loading':
-          case 'editable':
-          case 'focused':
-          case 'invalid value':
-          case 'loading':
-          case 'mutation':
-          case 'operation':
-          case 'patch':
-          case 'read only':
-          case 'ready':
-          case 'selection':
-          case 'value changed':
-            listener(event)
-            break
-        }
-      })
+    on: (event, listener, options) => {
+      const subscription = relay.on(
+        event,
+        (event) => {
+          switch (event.type) {
+            case 'blurred':
+            case 'done loading':
+            case 'editable':
+            case 'focused':
+            case 'invalid value':
+            case 'loading':
+            case 'mutation':
+            case 'operation':
+            case 'patch':
+            case 'read only':
+            case 'ready':
+            case 'selection':
+            case 'value changed':
+              listener(event)
+              break
+          }
+        },
+        options,
+      )
 
       return subscription
     },
