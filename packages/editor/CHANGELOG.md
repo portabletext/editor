@@ -1,5 +1,57 @@
 # Changelog
 
+## 7.7.0
+
+### Minor Changes
+
+- [#2833](https://github.com/portabletext/editor/pull/2833) [`b268769`](https://github.com/portabletext/editor/commit/b26876928247ef3357b3c238dc069e569289e555) Thanks [@christianhg](https://github.com/christianhg)! - feat: add a `batch` option to `editor.on` to coalesce event bursts
+
+  `editor.on(type, listener, options)` now accepts `{batch}`:
+
+  ```ts
+  editor.on(
+    'operation',
+    (events) => recomputeFromSnapshot(editor.getSnapshot()),
+    {
+      batch: true,
+    },
+  )
+  ```
+
+  With `batch: true`, a synchronous burst of matching events coalesces into a
+  single listener call on the next microtask, and the listener receives
+  `Array<Event>`: every event of the burst, in delivery order, with nothing
+  dropped. A single user action emits one event per underlying operation, so a
+  listener that reacts per event runs O(operations) times (quadratic when it
+  also scans the selection); coalescing collapses that burst to one call while
+  still handing the listener every event, so it can both recompute once and
+  inspect what happened (e.g. "did any structural operation occur?").
+
+  The default (no `batch`, or `batch: false`) is unchanged: the listener runs
+  synchronously for every event and receives a single `Event`.
+
+### Patch Changes
+
+- [#2842](https://github.com/portabletext/editor/pull/2842) [`38867cb`](https://github.com/portabletext/editor/commit/38867cb45f3c024cdb402a7caf98511121f88383) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): coalesce `editor.subscribe` notifications to one per microtask burst
+
+  The editor's actor emits once per applied operation, so a single action that applies many operations (undoing a large delete, inserting many blocks) notified snapshot subscribers once per operation. `useEditorSelector` (and any `editor.subscribe` consumer) therefore re-ran its selector once per operation; a selector that scans the selection became O(operations × selection) and could freeze the main thread on a large undo.
+
+  `editor.subscribe` now coalesces a synchronous burst of transitions into a single `next` with the settled snapshot on the next microtask, the same boundary the editor's render already coalesces to. `useEditorSelector` re-runs its selector once per burst instead of once per operation. The snapshot is cumulative, so the delivered value is unchanged; only intermediate per-operation states within a burst are skipped. A consumer that must observe every operation should use `editor.on('operation', ...)`.
+
+- [#2828](https://github.com/portabletext/editor/pull/2828) [`cdf16f9`](https://github.com/portabletext/editor/commit/cdf16f909eea6fdff36a49265884324e9881eaab) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): remove blocks in a range back-to-front when deleting
+
+  Deleting a selection that spans many blocks (such as select-all in a large
+  document) no longer slows down quadratically with the number of blocks
+  removed. The blocks between the endpoints are now removed from the back of
+  the range forward, so the work scales linearly.
+
+- [#2802](https://github.com/portabletext/editor/pull/2802) [`3aa6a39`](https://github.com/portabletext/editor/commit/3aa6a398534e71a01a9c711cbeb474eb815d4fdd) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): rebuild the list-index map lazily on read instead of per operation
+
+  The map behind `data-list-index` on list items is now rebuilt once when the
+  renderer reads it, rather than recomputed after every structural operation.
+  Inserting or moving many blocks in one go no longer does per-block work that
+  grows with document size, and the rendered index values are unchanged.
+
 ## 7.6.2
 
 ### Patch Changes

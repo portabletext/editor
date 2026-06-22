@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.0.22
+
+### Patch Changes
+
+- [#2833](https://github.com/portabletext/editor/pull/2833) [`b268769`](https://github.com/portabletext/editor/commit/b26876928247ef3357b3c238dc069e569289e555) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): coalesce toolbar editor listeners with `batch: true`
+
+  Toolbar buttons no longer freeze the editor while recomputing their active
+  state during large edits. Each button listened for every editor event and
+  recomputed its active state by scanning the selection, so deleting or changing
+  a big selection recomputed every button once per underlying operation. The
+  listeners now pass `{batch: true}` to `editor.on`, so a burst of
+  events coalesces into a single recompute over the settled state.
+
+- Updated dependencies [[`38867cb`](https://github.com/portabletext/editor/commit/38867cb45f3c024cdb402a7caf98511121f88383), [`cdf16f9`](https://github.com/portabletext/editor/commit/cdf16f909eea6fdff36a49265884324e9881eaab), [`b268769`](https://github.com/portabletext/editor/commit/b26876928247ef3357b3c238dc069e569289e555), [`3aa6a39`](https://github.com/portabletext/editor/commit/3aa6a398534e71a01a9c711cbeb474eb815d4fdd)]:
+  - @portabletext/editor@7.7.0
+
 ## 8.0.21
 
 ### Patch Changes

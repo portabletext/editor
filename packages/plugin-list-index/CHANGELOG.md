@@ -1,5 +1,16 @@
 # @portabletext/plugin-list-index
 
+## 1.0.7
+
+### Patch Changes
+
+- [#2833](https://github.com/portabletext/editor/pull/2833) [`22c8939`](https://github.com/portabletext/editor/commit/22c893922cdc0be90814b70ac7170a8d46a71fbf) Thanks [@christianhg](https://github.com/christianhg)! - fix: coalesce list-index rebuilds via the editor's batched `editor.on`
+
+  `ListIndexProvider` now rebuilds the list-index map through the editor's batched event delivery (`editor.on('operation', ..., {batch: true})`) instead of a private microtask scheduler. List numbering and the per-path re-render behavior of `useListIndex` are unchanged. The plugin now requires a version of `@portabletext/editor` whose `editor.on` supports batched delivery.
+
+- Updated dependencies [[`38867cb`](https://github.com/portabletext/editor/commit/38867cb45f3c024cdb402a7caf98511121f88383), [`cdf16f9`](https://github.com/portabletext/editor/commit/cdf16f909eea6fdff36a49265884324e9881eaab), [`b268769`](https://github.com/portabletext/editor/commit/b26876928247ef3357b3c238dc069e569289e555), [`3aa6a39`](https://github.com/portabletext/editor/commit/3aa6a398534e71a01a9c711cbeb474eb815d4fdd)]:
+  - @portabletext/editor@7.7.0
+
 ## 1.0.6
 
 ### Patch Changes
