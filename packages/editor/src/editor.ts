@@ -83,8 +83,15 @@ export type Editor = {
   }
   /**
    * Subscribe to editor state changes. The observer's `next` callback fires
-   * with the current `EditorSnapshot` on every relevant transition (selection
+   * with the current `EditorSnapshot` on relevant transitions (selection
    * updates, content mutations, behavior dispatch, configuration changes).
+   *
+   * Notifications are coalesced: a synchronous burst of transitions (e.g. the
+   * many operations one action applies, like undoing a large delete) delivers
+   * a single `next` with the settled snapshot on the next microtask, rather
+   * than one `next` per transition. The snapshot is cumulative, so only
+   * intermediate per-transition states are skipped. To observe every
+   * operation, use `editor.on('operation', ...)`.
    *
    * The editor has no terminal state and no error path, so `error` and
    * `complete` are part of the observable contract but never fire. They are

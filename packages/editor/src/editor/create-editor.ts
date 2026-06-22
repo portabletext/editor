@@ -23,6 +23,7 @@ import {
   type EditorEventListenerOptions,
   type Relay,
 } from './relay'
+import {subscribeCoalesced} from './subscribe-coalesced'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export function createInternalEditor(config: EditorConfig): {
@@ -159,13 +160,16 @@ export function createInternalEditor(config: EditorConfig): {
       })
     }) as Editor['on'],
     subscribe(observer) {
-      const actorSubscription = editorActor.subscribe({
+      // Coalesce the actor's per-operation emissions to one settled-state
+      // notification per microtask burst (see `subscribeCoalesced`). A single
+      // action that applies many operations (undo of a large delete) then
+      // notifies snapshot subscribers, e.g. `useEditorSelector`, once instead
+      // of once per operation.
+      return subscribeCoalesced(editorActor, {
         next: () => observer.next?.(editor.getSnapshot()),
         error: observer.error,
         complete: observer.complete,
       })
-
-      return {unsubscribe: () => actorSubscription.unsubscribe()}
     },
   }
 

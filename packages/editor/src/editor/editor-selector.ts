@@ -41,6 +41,10 @@ export function useEditorSelector<TSelected>(
   selector: EditorSelector<TSelected>,
   compare: (a: TSelected, b: TSelected) => boolean = defaultCompare,
 ) {
+  // The selector re-runs once per microtask burst, not once per operation,
+  // because `editor.subscribe` coalesces the actor's emissions; see
+  // `subscribeCoalesced`.
+  //
   // `useSelector` is typed against xstate's `Subscribable<T>` which has both
   // observer-form and the deprecated function-form `subscribe` overloads.
   // We only expose the modern observer-form; the cast bridges that gap
