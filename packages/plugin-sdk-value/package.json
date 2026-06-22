@@ -1,7 +1,7 @@
 {
   "name": "@portabletext/plugin-sdk-value",
   "version": "7.0.21",
-  "description": "Synchronizes the Portable Text Editor value with the Sanity SDK, allowing for two-way editing.",
+  "description": "Connect a Portable Text Editor with a Sanity document using the SDK",
   "keywords": [
     "portabletext",
     "plugin",

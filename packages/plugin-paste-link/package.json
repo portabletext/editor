@@ -1,7 +1,7 @@
 {
   "name": "@portabletext/plugin-paste-link",
   "version": "4.0.21",
-  "description": "Allows pasting links in the Portable Text Editor",
+  "description": "Allow pasting links in the Portable Text Editor",
   "keywords": [
     "portabletext",
     "plugin",
