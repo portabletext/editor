@@ -112,7 +112,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/browser": "catalog:",
     "@vitest/browser-playwright": "catalog:",
-    "@vitest/coverage-istanbul": "^4.1.8",
+    "@vitest/coverage-istanbul": "^4.1.9",
     "babel-plugin-react-compiler": "catalog:",
     "eslint": "catalog:",
     "eslint-formatter-gha": "catalog:",
