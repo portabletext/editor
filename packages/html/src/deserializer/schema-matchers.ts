@@ -23,6 +23,15 @@ export type ImageSchemaMatcher = ObjectSchemaMatcher<{
   [key: string]: string | undefined
 }>
 
+/**
+ * Use the current `Schema` to determine what Portable Text Object to use to
+ * represent a code block.
+ */
+export type CodeBlockSchemaMatcher = ObjectSchemaMatcher<{
+  language: string | undefined
+  code: string
+}>
+
 export type SchemaMatchers = {
   /**
    * Called whenever the HTML parsing encounters an `<img>` element that is
@@ -34,4 +43,9 @@ export type SchemaMatchers = {
    * inferred to be an inline element.
    */
   inlineImage?: ImageSchemaMatcher
+  /**
+   * Called whenever the HTML parsing encounters a code block, e.g. a `<pre>`
+   * tag or a run of monospace paragraphs pasted from Google Docs.
+   */
+  code?: CodeBlockSchemaMatcher
 }

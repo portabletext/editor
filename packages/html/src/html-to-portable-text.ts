@@ -1,10 +1,40 @@
 import type {Schema} from '@portabletext/schema'
-import {defaultSchema} from './default-schema'
+import {defaultCodeObjectDefinition, defaultSchema} from './default-schema'
 import {HtmlDeserializer} from './deserializer/html-deserializer'
 import {normalizeBlock} from './deserializer/normalize-block'
 import type {SchemaMatchers} from './deserializer/schema-matchers'
-import type {ObjectMatcher} from './matchers'
+import {
+  buildObjectMatcher,
+  type ExtractValue,
+  type ObjectMatcher,
+} from './matchers'
 import type {DeserializerRule} from './types'
+
+/**
+ * Default matcher for a code block. Resolves against the schema's `code`
+ * block object when it declares a `code` string field, the shape of the
+ * default schema's code object and of `@sanity/code-input`. Schemas that
+ * do not declare such an object fall through and the deserializer emits a
+ * `code`-decorated text block (or plain text) as the lower-fidelity
+ * fallback. Consumers with a different shape can pass their own matcher via
+ * `types.code`.
+ */
+const codeBlockMatcher: ObjectMatcher<
+  ExtractValue<typeof defaultCodeObjectDefinition>
+> = ({context, value, isInline}) => {
+  const defaultMatcher = buildObjectMatcher(defaultCodeObjectDefinition)
+  const codeObject = defaultMatcher({context, value, isInline})
+
+  if (!codeObject) {
+    return undefined
+  }
+
+  if (!('code' in codeObject)) {
+    return undefined
+  }
+
+  return codeObject
+}
 
 /**
  * Options for converting HTML to Portable Text
@@ -19,6 +49,7 @@ export type HtmlToPortableTextOptions = {
   whitespaceMode?: 'preserve' | 'remove' | 'normalize'
   types?: {
     image?: ObjectMatcher<{src?: string; alt?: string}>
+    code?: ObjectMatcher<{language: string | undefined; code: string}>
   }
 }
 
@@ -64,28 +95,47 @@ export function htmlToPortableText(
 function toSchemaMatchers(
   types: HtmlToPortableTextOptions['types'],
 ): SchemaMatchers | undefined {
-  if (!types?.image) {
+  const imageMatcher = types?.image
+  const codeMatcher = types?.code ?? codeBlockMatcher
+
+  if (!imageMatcher && !codeMatcher) {
     return undefined
   }
 
-  const objectMatcher = types.image
+  const matchers: SchemaMatchers = {}
 
-  const adapt =
-    (isInline: boolean): NonNullable<SchemaMatchers['image']> =>
-    ({context, props}) => {
-      const result = objectMatcher({
+  if (imageMatcher) {
+    const adaptImage =
+      (isInline: boolean): NonNullable<SchemaMatchers['image']> =>
+      ({context, props}) => {
+        const result = imageMatcher({
+          context,
+          value: props as {src?: string; alt?: string},
+          isInline,
+        })
+        if (!result) {
+          return undefined
+        }
+        return result as ReturnType<NonNullable<SchemaMatchers['image']>>
+      }
+
+    matchers.image = adaptImage(false)
+    matchers.inlineImage = adaptImage(true)
+  }
+
+  if (codeMatcher) {
+    matchers.code = ({context, props}) => {
+      const result = codeMatcher({
         context,
-        value: props as {src?: string; alt?: string},
-        isInline,
+        value: props as {language: string | undefined; code: string},
+        isInline: false,
       })
       if (!result) {
         return undefined
       }
-      return result as ReturnType<NonNullable<SchemaMatchers['image']>>
+      return result as ReturnType<NonNullable<SchemaMatchers['code']>>
     }
-
-  return {
-    image: adapt(false),
-    inlineImage: adapt(true),
   }
+
+  return matchers
 }
