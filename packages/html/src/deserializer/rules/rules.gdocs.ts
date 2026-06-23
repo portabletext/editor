@@ -8,7 +8,9 @@ import {
   HTML_HEADER_TAGS,
   HTML_LIST_CONTAINER_TAGS,
 } from '../constants'
-import {isElement, tagName} from '../helpers'
+import {hasMonospaceFontFamily, isElement, tagName} from '../helpers'
+import {keyGenerator} from '../random-key'
+import type {SchemaMatchers} from '../schema-matchers'
 
 const LIST_CONTAINER_TAGS = Object.keys(HTML_LIST_CONTAINER_TAGS)
 
@@ -93,8 +95,155 @@ function getBlockStyle(schema: Schema, el: Node): string {
   return block.style
 }
 
-export function createGDocsRules(schema: Schema): DeserializerRule[] {
+/**
+ * A Google Docs code block has no semantic markup: it is a run of `<p>`
+ * elements (one per line) whose spans carry a monospace `font-family`. A
+ * paragraph qualifies when it has at least one text-bearing span and every
+ * text-bearing span is monospace.
+ */
+function isMonospaceParagraph(el: Node): boolean {
+  if (!isElement(el) || tagName(el) !== 'p') {
+    return false
+  }
+
+  const spans = Array.from(el.querySelectorAll('span')).filter(
+    (span) => (span.textContent ?? '').trim() !== '',
+  )
+
+  return spans.length > 0 && spans.every(hasMonospaceFontFamily)
+}
+
+/**
+ * A blank line inside a Google Docs code block is a `<p>` whose monospace
+ * span contains only a `<br>`, so it has no text-bearing spans and fails
+ * `isMonospaceParagraph`. Treat blank paragraphs as run members when they
+ * sit between monospace paragraphs.
+ */
+function isBlankParagraph(el: Node): boolean {
+  return (
+    isElement(el) && tagName(el) === 'p' && (el.textContent ?? '').trim() === ''
+  )
+}
+
+/**
+ * Find the nearest non-blank paragraph sibling in the given direction and
+ * return it when it is a monospace paragraph.
+ */
+function findAdjacentMonospaceParagraph(
+  el: Element,
+  direction: 'previous' | 'next',
+): Element | undefined {
+  let sibling =
+    direction === 'previous' ? el.previousElementSibling : el.nextElementSibling
+
+  while (sibling && isBlankParagraph(sibling)) {
+    sibling =
+      direction === 'previous'
+        ? sibling.previousElementSibling
+        : sibling.nextElementSibling
+  }
+
+  return sibling && isMonospaceParagraph(sibling) ? sibling : undefined
+}
+
+export function createGDocsRules(
+  schema: Schema,
+  options: {keyGenerator?: () => string; matchers?: SchemaMatchers},
+): DeserializerRule[] {
+  const context = {
+    schema,
+    keyGenerator: options.keyGenerator ?? keyGenerator,
+  }
+  const codeMatcher = options.matchers?.code
+
+  // Decide once whether the schema can hold a code block, so both code
+  // rules can fall through without walking siblings when it cannot. The
+  // probe uses a no-op key generator since only the matcher's defined /
+  // undefined return is consumed; the real generator is left untouched.
+  const schemaCanHoldCode =
+    codeMatcher?.({
+      context: {schema, keyGenerator: () => ''},
+      props: {language: undefined, code: ''},
+    }) !== undefined
+
   return [
+    {
+      // Runs of monospace paragraphs become a single code block object,
+      // when the schema can hold one
+      deserialize(el, _next, createBlock) {
+        if (
+          !isElement(el) ||
+          !isGoogleDocs(el) ||
+          !isRootNode(el) ||
+          !isMonospaceParagraph(el) ||
+          !schemaCanHoldCode
+        ) {
+          // The schema cannot hold a code block object. Fall through to the
+          // regular paragraph handling, where the span rule applies the
+          // `code` decorator when the schema has one.
+          return undefined
+        }
+
+        // The deserializer visits every sibling, so only the first paragraph
+        // of a run emits the code block; the rest are swallowed. Blank
+        // paragraphs between monospace paragraphs belong to the run, so the
+        // run start is the paragraph with no monospace paragraph before it.
+        if (findAdjacentMonospaceParagraph(el, 'previous')) {
+          return []
+        }
+
+        const lines = [el.textContent ?? '']
+        let pendingBlankLines = 0
+        let sibling = el.nextElementSibling
+        while (sibling) {
+          if (isMonospaceParagraph(sibling)) {
+            // Flush blank lines only when more code follows, so trailing
+            // blank paragraphs stay outside the run
+            while (pendingBlankLines > 0) {
+              lines.push('')
+              pendingBlankLines--
+            }
+            lines.push(sibling.textContent ?? '')
+          } else if (isBlankParagraph(sibling)) {
+            pendingBlankLines++
+          } else {
+            break
+          }
+          sibling = sibling.nextElementSibling
+        }
+
+        const codeObject = codeMatcher?.({
+          context,
+          props: {language: undefined, code: lines.join('\n')},
+        })
+
+        if (codeObject === undefined) {
+          return undefined
+        }
+
+        return createBlock(codeObject)
+      },
+    },
+    {
+      // Blank paragraphs inside a run of monospace paragraphs are part of
+      // the code block emitted by the rule above; swallow them
+      deserialize(el) {
+        if (
+          !isElement(el) ||
+          !isGoogleDocs(el) ||
+          !isRootNode(el) ||
+          !isBlankParagraph(el) ||
+          !schemaCanHoldCode
+        ) {
+          return undefined
+        }
+
+        return findAdjacentMonospaceParagraph(el, 'previous') &&
+          findAdjacentMonospaceParagraph(el, 'next')
+          ? []
+          : undefined
+      },
+    },
     {
       deserialize(el, next) {
         if (isElement(el) && tagName(el) === 'span' && isGoogleDocs(el)) {
@@ -122,6 +271,12 @@ export function createGDocsRules(schema: Schema): DeserializerRule[] {
           }
           if (isEmphasis(el)) {
             span.marks.push('em')
+          }
+          if (
+            hasMonospaceFontFamily(el) &&
+            schema.decorators.some((decorator) => decorator.name === 'code')
+          ) {
+            span.marks.push('code')
           }
           return span
         }
