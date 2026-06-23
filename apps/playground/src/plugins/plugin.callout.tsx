@@ -71,7 +71,7 @@ const calloutImageLeaf = defineBlockObject({
   },
 })
 
-const calloutContainer = defineContainer({
+export const calloutContainer = defineContainer({
   type: 'callout',
   arrayField: 'content',
   render: ({attributes, children, node, readOnly, selected}) => {
