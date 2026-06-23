@@ -44,6 +44,7 @@ const blocks = htmlToPortableText('<h1>Hello <strong>world</strong></h1>')
 | Underline            | Yes                   |
 | Strikethrough        | Yes                   |
 | Inline code          | Yes                   |
+| Code blocks          | Yes\*                 |
 | Links                | Yes                   |
 | Blockquotes          | Yes                   |
 | Ordered lists        | Yes                   |
@@ -105,14 +106,18 @@ import {htmlToPortableText} from '@portabletext/html'
 const blocks = htmlToPortableText(html, {
   rules: [
     {
-      deserialize(el, next, createBlock) {
-        // Convert <pre><code> to a custom code block type
-        if (el.tagName?.toLowerCase() !== 'pre') return undefined
-        const code = el.querySelector('code')
+      deserialize(el, _next, createBlock) {
+        // Convert <aside class="callout"> to a custom callout block type
+        if (
+          el.tagName?.toLowerCase() !== 'aside' ||
+          !el.classList?.contains('callout')
+        ) {
+          return undefined
+        }
         return createBlock({
-          _type: 'code',
-          text: (code ?? el).textContent ?? '',
-          language: code?.className?.replace('language-', '') ?? undefined,
+          _type: 'callout',
+          tone: el.getAttribute('data-tone') ?? 'info',
+          text: el.textContent ?? '',
         })
       },
     },
@@ -189,6 +194,48 @@ const blocks = htmlToPortableText(html, {
 ```
 
 The matcher is called with `isInline: false` for block-level images and `isInline: true` for inline images. Return `undefined` to skip the image.
+
+### Code block handling
+
+`<pre>` elements and runs of monospace paragraphs pasted from Google Docs are deserialized into a code block object via the `types.code` matcher. The default matcher resolves against the schema's `code` block object when it declares a `code` string field (the shape of the default schema's code object, and of [`@sanity/code-input`](https://www.npmjs.com/package/@sanity/code-input)). Schemas without such an object fall through to a `code`-decorated text block when the schema defines the decorator, or to plain text otherwise.
+
+Consumers with a different shape can pass their own matcher:
+
+```ts
+import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
+const schema = compileSchema(
+  defineSchema({
+    blockObjects: [
+      {
+        name: 'codeSnippet',
+        fields: [
+          {name: 'source', type: 'string'},
+          {name: 'lang', type: 'string'},
+        ],
+      },
+    ],
+  }),
+)
+
+const codeMatcher: ObjectMatcher<{
+  language: string | undefined
+  code: string
+}> = ({context, value}) => ({
+  _key: context.keyGenerator(),
+  _type: 'codeSnippet',
+  source: value.code,
+  lang: value.language,
+})
+
+const blocks = htmlToPortableText(html, {
+  schema,
+  types: {code: codeMatcher},
+})
+```
+
+The matcher receives `{language: string | undefined, code: string}` and returns the Portable Text Object to emit, or `undefined` to fall through to a `code`-decorated text block.
 
 ### Table flattening
 

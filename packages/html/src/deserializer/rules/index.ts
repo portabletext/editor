@@ -15,7 +15,7 @@ export function createRules(
     ...createWordRules(),
     ...createWordOnlineRules(schema, options),
     ...createNotionRules(),
-    ...createGDocsRules(schema),
+    ...createGDocsRules(schema, options),
     ...createHTMLRules(schema, options),
   ]
 }

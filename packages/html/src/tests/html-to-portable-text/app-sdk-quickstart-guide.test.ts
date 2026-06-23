@@ -23,7 +23,25 @@ describe('App SDK Quickstart Guide', () => {
       )
       .toString()
 
-    expect(getTersePt({schema, value: transform([htmlGdocs])})).toEqual(tersePt)
+    // Google Docs gets its own fixture: it is the only export that carries a
+    // monospace `font-family` signal, so inline code becomes `code`-decorated
+    // spans (visible as extra span boundaries in the terse format). The Word
+    // exports of the same document carry no monospace signal at all, so they
+    // share the plain fixture.
+    const tersePtGdocs = JSON.parse(
+      fs
+        .readFileSync(
+          path.resolve(
+            __dirname,
+            'app-sdk-quickstart-guide.gdocs.terse-pt.json',
+          ),
+        )
+        .toString(),
+    )
+
+    expect(getTersePt({schema, value: transform([htmlGdocs])})).toEqual(
+      tersePtGdocs,
+    )
   })
 
   test('Word', () => {
