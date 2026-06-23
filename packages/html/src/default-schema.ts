@@ -92,7 +92,10 @@ const defaultLinkObjectDefinition = {
  * Default object definitions
  ********************/
 
-const defaultCodeObjectDefinition = {
+/**
+ * @public
+ */
+export const defaultCodeObjectDefinition = {
   name: 'code',
   fields: [
     {name: 'language', type: 'string'},
