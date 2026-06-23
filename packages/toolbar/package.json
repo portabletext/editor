@@ -74,7 +74,7 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^7.7.0",
-    "react": "^19.2.5"
+    "react": "^19.2.7"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

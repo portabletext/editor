@@ -128,7 +128,7 @@
     "vitest-browser-react": "catalog:"
   },
   "peerDependencies": {
-    "react": "^19.2.5"
+    "react": "^19.2.7"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
