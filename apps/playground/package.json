@@ -36,7 +36,7 @@
     "react": "catalog:",
     "react-aria-components": "^1.11.0",
     "react-dom": "catalog:",
-    "react-is": "^19.2.5",
+    "react-is": "^19.2.7",
     "remeda": "catalog:",
     "shiki": "^3.17.0",
     "xstate": "catalog:",
