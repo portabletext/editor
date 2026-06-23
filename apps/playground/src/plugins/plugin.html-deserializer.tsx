@@ -25,6 +25,42 @@ const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
   }
 }
 
+// Map html→pt's flat `{_type:'code', code:'a\nb\nc', language?}` into
+// the playground's editable code-block container shape. Each source line
+// becomes its own text block inside `lines` (the same shape produced by
+// MarkdownDeserializerPlugin's `code` matcher).
+const codeMatcher: ObjectMatcher<{
+  language: string | undefined
+  code: string
+}> = ({context, value}) => {
+  if (
+    !context.schema.blockObjects.some((object) => object.name === 'code-block')
+  ) {
+    return undefined
+  }
+
+  const lines = value.code.split('\n').map((text) => ({
+    _type: 'block',
+    _key: context.keyGenerator(),
+    style: 'normal',
+    children: [
+      {
+        _type: 'span',
+        _key: context.keyGenerator(),
+        text,
+        marks: [],
+      },
+    ],
+    markDefs: [],
+  }))
+
+  return {
+    _type: 'code-block',
+    _key: context.keyGenerator(),
+    lines,
+  }
+}
+
 export function HtmlDeserializerPlugin() {
   const editor = useEditor()
 
@@ -42,6 +78,7 @@ export function HtmlDeserializerPlugin() {
             keyGenerator: snapshot.context.keyGenerator,
             types: {
               image: imageMatcher,
+              code: codeMatcher,
             },
             rules: [
               createFlattenTableRule({
