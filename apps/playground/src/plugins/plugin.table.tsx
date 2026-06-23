@@ -41,7 +41,7 @@ const tableContainer = defineContainer({
               {children}
             </td>
           ),
-          of: [cellImageLeaf],
+          of: [cellImageLeaf, calloutContainer],
         }),
       ],
     }),
