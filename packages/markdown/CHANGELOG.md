@@ -1,5 +1,14 @@
 # @portabletext/markdown
 
+## 1.4.2
+
+### Patch Changes
+
+- [#2847](https://github.com/portabletext/editor/pull/2847) [`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update vitest to ^4.1.9
+
+- Updated dependencies [[`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645)]:
+  - @portabletext/schema@2.2.2
+
 ## 1.4.1
 
 ### Patch Changes

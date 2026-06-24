@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.1.8
+
+### Patch Changes
+
+- [#2847](https://github.com/portabletext/editor/pull/2847) [`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update vitest to ^4.1.9
+
+- Updated dependencies [[`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645), [`e64adc8`](https://github.com/portabletext/editor/commit/e64adc84ec77e73ef39a3c20c0aea46200fe2a02), [`e8beb17`](https://github.com/portabletext/editor/commit/e8beb1732b3e1483d787ddddd419e145d7cae51d), [`01194f7`](https://github.com/portabletext/editor/commit/01194f78252045e13a3187e0fb5d1639a93bd4e8)]:
+  - @portabletext/html@1.1.0
+  - @portabletext/sanity-bridge@3.1.6
+  - @portabletext/schema@2.2.2
+
 ## 5.1.7
 
 ### Patch Changes
