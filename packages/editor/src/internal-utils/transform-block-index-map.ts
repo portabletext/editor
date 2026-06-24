@@ -43,13 +43,11 @@ export function transformBlockIndexMap(
     case 'set.selection':
       return
     case 'insert': {
-      const lastSegment = op.path[op.path.length - 1]
-      // Resolve the anchor index (the path's last segment addresses an
-      // existing sibling for keyed paths, or a literal index for numeric).
-      const anchorIndex =
-        typeof lastSegment === 'number'
-          ? lastSegment
-          : resolveChildIndexInValue(beforeValue, op.path)
+      // Resolve the anchor index. The path's last segment addresses an
+      // existing sibling (keyed) or is a literal index (numeric); for keyed
+      // paths the map already holds the index (it reflects `beforeValue` here,
+      // before this op mutates it), so this is O(1) instead of a linear scan.
+      const anchorIndex = childIndexFromMap(map, beforeValue, op.path)
       if (anchorIndex < 0) {
         // The anchor doesn't exist in `beforeValue`, so the operation
         // cannot have changed the tree.
@@ -88,10 +86,7 @@ export function transformBlockIndexMap(
         }
         return
       }
-      const removeIndex =
-        typeof lastSegment === 'number'
-          ? lastSegment
-          : resolveChildIndexInValue(beforeValue, op.path)
+      const removeIndex = childIndexFromMap(map, beforeValue, op.path)
       pruneSubtreeAtPath(map, beforeValue, op.path)
       if (removeIndex >= 0) {
         const siblingContext = resolveSiblingContext(
@@ -149,7 +144,7 @@ export function transformBlockIndexMap(
       // Last segment is keyed or numeric (full node replacement). The
       // replacement may carry a different `_key` than the path
       // addresses, so locate the new node by index instead of by key.
-      const childIndex = resolveChildIndexInValue(beforeValue, op.path)
+      const childIndex = childIndexFromMap(map, beforeValue, op.path)
       pruneSubtreeAtPath(map, beforeValue, op.path)
       if (childIndex >= 0) {
         addSubtree(map, context, afterValue, [
@@ -167,6 +162,42 @@ export function transformBlockIndexMap(
  * value. Used when an op's path ends in a `KeyedSegment` instead of a
  * numeric index. Returns `-1` if not resolvable.
  */
+/**
+ * Resolve a child index for `path`'s last segment. Numeric last segments are
+ * the index directly; for keyed segments the block-index map holds it, and the
+ * map reflects `beforeValue` at the call sites (before this operation mutates
+ * the map), so it is an O(1) lookup instead of the linear scan in
+ * `resolveChildIndexInValue`. A numeric path segment can't form the map's keyed
+ * id, and a map miss falls back to the scan; the oracle/fuzz tests pin
+ * equivalence.
+ */
+function childIndexFromMap(
+  map: ReadonlyMap<string, number>,
+  beforeValue: ReadonlyArray<Node>,
+  path: Path,
+): number {
+  const last = path[path.length - 1]
+  if (typeof last === 'number') {
+    return last
+  }
+  if (isKeyedSegment(last)) {
+    let keyed = true
+    for (let i = 0; i < path.length - 1; i++) {
+      if (typeof path[i] === 'number') {
+        keyed = false
+        break
+      }
+    }
+    if (keyed) {
+      const index = map.get(serializePath(path))
+      if (index !== undefined) {
+        return index
+      }
+    }
+  }
+  return resolveChildIndexInValue(beforeValue, path)
+}
+
 function resolveChildIndexInValue(
   value: ReadonlyArray<Node>,
   path: Path,
