@@ -18,6 +18,7 @@ import {
   type RenderStyleFunction,
 } from '@portabletext/editor'
 import {portableTextToMarkdown} from '@portabletext/markdown'
+import {ListIndexProvider} from '@portabletext/plugin-list-index'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {PasteLinkPlugin} from '@portabletext/plugin-paste-link'
@@ -159,54 +160,56 @@ export function Editor(props: {
                 </PortableTextToolbar>
               </FullscreenAwareToolbarWrapper>
             ) : null}
-            <FullscreenAwareContainer>
-              {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
-              {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
-              {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
-              {featureFlags.tablePlugin ? <TablePlugin /> : null}
-              <InlineObjectsPlugin />
-              {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
-              {featureFlags.mentionPickerPlugin ? (
-                <MentionPickerPlugin />
-              ) : null}
-              {featureFlags.slashCommandPlugin ? (
-                <SlashCommandPickerPlugin />
-              ) : null}
-              {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
-              {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
-              {featureFlags.imageDeserializerPlugin ? (
-                <ImageDeserializerPlugin />
-              ) : null}
-              {featureFlags.htmlDeserializerPlugin ? (
-                <HtmlDeserializerPlugin />
-              ) : null}
-              {featureFlags.textFileDeserializerPlugin ? (
-                <TextFileDeserializerPlugin />
-              ) : null}
-              {featureFlags.markdownDeserializerPlugin ? (
-                <MarkdownDeserializerPlugin />
-              ) : null}
-              {featureFlags.markdownPlugin ? (
-                <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
-              ) : null}
-              {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
-              {featureFlags.typographyPlugin ? (
-                <TypographyPlugin
-                  guard={createDecoratorGuard({
-                    decorators: ({context}) =>
-                      context.schema.decorators.flatMap((decorator) =>
-                        decorator.name === 'code' ? [] : [decorator.name],
-                      ),
-                  })}
+            <ListIndexProvider>
+              <FullscreenAwareContainer>
+                {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
+                {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
+                {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
+                {featureFlags.tablePlugin ? <TablePlugin /> : null}
+                <InlineObjectsPlugin />
+                {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+                {featureFlags.mentionPickerPlugin ? (
+                  <MentionPickerPlugin />
+                ) : null}
+                {featureFlags.slashCommandPlugin ? (
+                  <SlashCommandPickerPlugin />
+                ) : null}
+                {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
+                {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
+                {featureFlags.imageDeserializerPlugin ? (
+                  <ImageDeserializerPlugin />
+                ) : null}
+                {featureFlags.htmlDeserializerPlugin ? (
+                  <HtmlDeserializerPlugin />
+                ) : null}
+                {featureFlags.textFileDeserializerPlugin ? (
+                  <TextFileDeserializerPlugin />
+                ) : null}
+                {featureFlags.markdownDeserializerPlugin ? (
+                  <MarkdownDeserializerPlugin />
+                ) : null}
+                {featureFlags.markdownPlugin ? (
+                  <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
+                ) : null}
+                {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
+                {featureFlags.typographyPlugin ? (
+                  <TypographyPlugin
+                    guard={createDecoratorGuard({
+                      decorators: ({context}) =>
+                        context.schema.decorators.flatMap((decorator) =>
+                          decorator.name === 'code' ? [] : [decorator.name],
+                        ),
+                    })}
+                  />
+                ) : null}
+                <FullscreenAwareEditable
+                  rangeDecorations={props.rangeDecorations}
+                  featureFlags={featureFlags}
+                  loading={loading}
                 />
-              ) : null}
-              <FullscreenAwareEditable
-                rangeDecorations={props.rangeDecorations}
-                featureFlags={featureFlags}
-                loading={loading}
-              />
-              <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
-            </FullscreenAwareContainer>
+                <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
+              </FullscreenAwareContainer>
+            </ListIndexProvider>
           </EditorProvider>
         </FullscreenProvider>
       </ErrorBoundary>

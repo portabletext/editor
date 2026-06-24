@@ -22,6 +22,7 @@
     "@portabletext/markdown": "workspace:*",
     "@portabletext/patches": "workspace:*",
     "@portabletext/plugin-emoji-picker": "workspace:*",
+    "@portabletext/plugin-list-index": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",
     "@portabletext/plugin-one-line": "workspace:*",
     "@portabletext/plugin-paste-link": "workspace:*",
