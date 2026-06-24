@@ -1,5 +1,36 @@
 # Changelog
 
+## 7.8.0
+
+### Minor Changes
+
+- [#2825](https://github.com/portabletext/editor/pull/2825) [`4c41139`](https://github.com/portabletext/editor/commit/4c41139245fe2e496465a6ef46bbcd70f1ef56c9) Thanks [@christianhg](https://github.com/christianhg)! - feat: drag a container by its chrome to drop the whole container
+
+  **Drag and copy out of a container reflect what's inside.** Selecting an image inside a table cell drags just the image. With a draggable image (or other draggable child) inside a container, selecting across multiple sibling blocks and grabbing by that image drags those blocks, not the surrounding container. A nested code block grabbed by its chrome inside a table cell drags that code block, not the whole table.
+
+  **Grabbing a container by its chrome drags the whole container.** When the drag originates on the container itself (not on its children), the serializer carries the container intact. Drops and pastes preserve the container when the destination accepts its type, and unwrap to accepted descendants when it doesn't.
+
+  **Internal-move source-deletion follows the destination fit.** When the destination accepts the dragged blocks whole, the source is removed at the root path. When the destination unwraps them, the source is removed per inner block. No more empty container shells left behind after a move.
+
+  **The drag pipeline no longer mutates `snapshot.context.selection`.** During a drag, the model selection stays where it was before `dragstart`. The drag selection lives on `event.position.selection` for the duration of the gesture, and on `event.originEvent.position.selection` through the serialize/deserialize boundary. If you had a behavior reading `editor.getSnapshot().context.selection` mid-drag to learn the dragged unit, read it from the event instead.
+
+### Patch Changes
+
+- [#2845](https://github.com/portabletext/editor/pull/2845) [`6958b15`](https://github.com/portabletext/editor/commit/6958b15f6aba430a65630b2a6aef4db2d6eeb79e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo
+
+- [#2847](https://github.com/portabletext/editor/pull/2847) [`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update vitest to ^4.1.9
+
+- [#2825](https://github.com/portabletext/editor/pull/2825) [`80c6a80`](https://github.com/portabletext/editor/commit/80c6a8032c0295109c2729b4b9426fc31da59aa5) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep the selection on a block after dropping it inside the editor
+
+  After an internal drop, `validate-selection-machine` could overwrite the engine's just-updated model selection with a stale DOM selection when `toDOMRange` ran before React had committed the post-drop DOM. The caret would jump to the top of the editor instead of staying on the dropped block. The machine now skips overwriting the model selection in this race window.
+
+- Updated dependencies [[`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645), [`e64adc8`](https://github.com/portabletext/editor/commit/e64adc84ec77e73ef39a3c20c0aea46200fe2a02), [`e8beb17`](https://github.com/portabletext/editor/commit/e8beb1732b3e1483d787ddddd419e145d7cae51d), [`01194f7`](https://github.com/portabletext/editor/commit/01194f78252045e13a3187e0fb5d1639a93bd4e8)]:
+  - @portabletext/html@1.1.0
+  - @portabletext/keyboard-shortcuts@2.1.3
+  - @portabletext/markdown@1.4.2
+  - @portabletext/patches@2.0.5
+  - @portabletext/schema@2.2.2
+
 ## 7.7.0
 
 ### Minor Changes

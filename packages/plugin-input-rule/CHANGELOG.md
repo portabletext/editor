@@ -1,5 +1,16 @@
 # @portabletext/plugin-input-rule
 
+## 5.0.23
+
+### Patch Changes
+
+- [#2845](https://github.com/portabletext/editor/pull/2845) [`6958b15`](https://github.com/portabletext/editor/commit/6958b15f6aba430a65630b2a6aef4db2d6eeb79e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo
+
+- [#2847](https://github.com/portabletext/editor/pull/2847) [`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update vitest to ^4.1.9
+
+- Updated dependencies [[`6958b15`](https://github.com/portabletext/editor/commit/6958b15f6aba430a65630b2a6aef4db2d6eeb79e), [`76af976`](https://github.com/portabletext/editor/commit/76af9766fd17334a40b24140e08d114967a31645), [`4c41139`](https://github.com/portabletext/editor/commit/4c41139245fe2e496465a6ef46bbcd70f1ef56c9), [`80c6a80`](https://github.com/portabletext/editor/commit/80c6a8032c0295109c2729b4b9426fc31da59aa5)]:
+  - @portabletext/editor@7.8.0
+
 ## 5.0.22
 
 ### Patch Changes
