@@ -1,7 +1,8 @@
-import {defineContainer} from '@portabletext/editor'
+import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
 import {DragHandle} from './drag-handle'
+import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 
@@ -41,7 +42,24 @@ const tableContainer = defineContainer({
               {children}
             </td>
           ),
-          of: [cellImageLeaf, calloutContainer],
+          of: [
+            defineTextBlock({
+              type: 'block',
+              render: ({attributes, children, node, path}) =>
+                node.listItem !== undefined ? (
+                  <ListItemBlock
+                    attributes={attributes}
+                    node={node}
+                    path={path}
+                    children={children}
+                  />
+                ) : (
+                  <div {...attributes}>{children}</div>
+                ),
+            }),
+            cellImageLeaf,
+            calloutContainer,
+          ],
         }),
       ],
     }),

@@ -304,7 +304,8 @@ export const playgroundSchemaDefinition = defineSchema({
     // ARCHETYPE 3 - selective subsets: ONE-OF in every dimension.
     // Decorators: only strong. Annotations: only comment.
     // Styles: normal + h1 + h2 + h3 + blockquote.
-    // Lists: only bullet (no number - exercises narrowed-list filter).
+    // Lists: bullet + number (narrowing still exercised by the nested
+    // callouts below, which stay bullet-only / empty).
     // Inline objects: only mention.
     // Allows image + nested callout (recursive same-type nesting).
     {
@@ -337,7 +338,10 @@ export const playgroundSchemaDefinition = defineSchema({
                   fields: [{name: 'text', title: 'Text', type: 'string'}],
                 },
               ],
-              lists: [{title: 'Bulleted list', name: 'bullet'}],
+              lists: [
+                {title: 'Bulleted list', name: 'bullet'},
+                {title: 'Numbered list', name: 'number'},
+              ],
               inlineObjects: [
                 {
                   title: 'Mention',
@@ -390,7 +394,7 @@ export const playgroundSchemaDefinition = defineSchema({
     },
     // ARCHETYPE 4 - deep structural nesting + heterogeneous depth.
     // table → row → cell. cell.content allows strong + em decorators,
-    // link annotation, normal style, no lists, no inline objects.
+    // link annotation, normal style, bullet + number lists, no inline objects.
     // PLUS cell.content allows nested callout (different sub-schema
     // than cell). Tests deep traversal AND voting across multiple
     // sub-schemas at different depths.
@@ -447,7 +451,10 @@ export const playgroundSchemaDefinition = defineSchema({
                                   ],
                                 },
                               ],
-                              lists: [],
+                              lists: [
+                                {title: 'Bulleted list', name: 'bullet'},
+                                {title: 'Numbered list', name: 'number'},
+                              ],
                             },
                             {
                               type: 'object',
