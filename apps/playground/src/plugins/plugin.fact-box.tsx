@@ -2,6 +2,7 @@ import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
 import {DragHandle} from './drag-handle'
+import {ListItemBlock} from './list-item-block'
 
 const factBoxContainer = defineContainer({
   type: 'fact-box',
@@ -21,12 +22,15 @@ const factBoxContainer = defineContainer({
   of: [
     defineTextBlock({
       type: 'block',
-      render: ({attributes, children, node}) => {
+      render: ({attributes, children, node, path}) => {
         if (node.listItem !== undefined) {
           return (
-            <div {...attributes} className="my-1">
-              {children}
-            </div>
+            <ListItemBlock
+              attributes={attributes}
+              node={node}
+              path={path}
+              children={children}
+            />
           )
         }
 

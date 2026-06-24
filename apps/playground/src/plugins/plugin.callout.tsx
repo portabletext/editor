@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type {JSX} from 'react'
 import {DragHandle} from './drag-handle'
+import {ListItemBlock} from './list-item-block'
 
 const toneClassName: Record<string, string> = {
   note: 'border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-100',
@@ -98,12 +99,15 @@ export const calloutContainer = defineContainer({
   of: [
     defineTextBlock({
       type: 'block',
-      render: ({attributes, children, node}) => {
+      render: ({attributes, children, node, path}) => {
         if (node.listItem !== undefined) {
           return (
-            <div {...attributes} className="my-1">
-              {children}
-            </div>
+            <ListItemBlock
+              attributes={attributes}
+              node={node}
+              path={path}
+              children={children}
+            />
           )
         }
 
