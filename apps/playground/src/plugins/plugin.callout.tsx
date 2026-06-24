@@ -12,8 +12,21 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react'
 import type {JSX} from 'react'
+import {BlockDropIndicator} from './block-drop-indicator'
+import {ContainerTextBlock} from './container-text-block'
 import {DragHandle} from './drag-handle'
-import {ListItemBlock} from './list-item-block'
+
+const calloutTextStyles = {
+  normal: {tag: 'p', className: 'my-1'},
+  h1: {tag: 'h1', className: 'my-2 font-bold text-2xl'},
+  h2: {tag: 'h2', className: 'my-2 font-bold text-xl'},
+  h3: {tag: 'h3', className: 'my-2 font-bold text-lg'},
+  blockquote: {
+    tag: 'blockquote',
+    className:
+      'my-1 border-l-2 border-amber-600 pl-2 italic dark:border-amber-300',
+  },
+} as const
 
 const toneClassName: Record<string, string> = {
   note: 'border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-100',
@@ -76,7 +89,7 @@ const calloutImageLeaf = defineBlockObject({
 export const calloutContainer = defineContainer({
   type: 'callout',
   arrayField: 'content',
-  render: ({attributes, children, node, readOnly, selected}) => {
+  render: ({attributes, children, node, path, readOnly, selected}) => {
     const tone = typeof node.tone === 'string' ? node.tone : 'note'
     const toneStyle = toneClassName[tone] ?? defaultToneClassName
     return (
@@ -93,60 +106,22 @@ export const calloutContainer = defineContainer({
         </span>
         <div className="min-w-0 flex-1 cursor-text">{children}</div>
         <DragHandle readOnly={readOnly} />
+        <BlockDropIndicator path={path} />
       </aside>
     )
   },
   of: [
     defineTextBlock({
       type: 'block',
-      render: ({attributes, children, node, path}) => {
-        if (node.listItem !== undefined) {
-          return (
-            <ListItemBlock
-              attributes={attributes}
-              node={node}
-              path={path}
-              children={children}
-            />
-          )
-        }
-
-        switch (node.style) {
-          case 'h1':
-            return (
-              <h1 {...attributes} className="my-2 font-bold text-2xl">
-                {children}
-              </h1>
-            )
-          case 'h2':
-            return (
-              <h2 {...attributes} className="my-2 font-bold text-xl">
-                {children}
-              </h2>
-            )
-          case 'h3':
-            return (
-              <h3 {...attributes} className="my-2 font-bold text-lg">
-                {children}
-              </h3>
-            )
-          case 'blockquote':
-            return (
-              <blockquote
-                {...attributes}
-                className="my-1 border-l-2 border-amber-600 pl-2 italic dark:border-amber-300"
-              >
-                {children}
-              </blockquote>
-            )
-          default:
-            return (
-              <p {...attributes} className="my-1">
-                {children}
-              </p>
-            )
-        }
-      },
+      render: ({attributes, children, node, path}) => (
+        <ContainerTextBlock
+          attributes={attributes}
+          node={node}
+          path={path}
+          styles={calloutTextStyles}
+          children={children}
+        />
+      ),
     }),
     calloutImageLeaf,
   ],

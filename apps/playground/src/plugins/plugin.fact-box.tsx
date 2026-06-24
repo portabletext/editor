@@ -1,13 +1,29 @@
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
+import {BlockDropIndicator} from './block-drop-indicator'
+import {ContainerTextBlock} from './container-text-block'
 import {DragHandle} from './drag-handle'
-import {ListItemBlock} from './list-item-block'
+
+const factBoxTextStyles = {
+  normal: {tag: 'p', className: 'my-1'},
+  h1: {tag: 'h1', className: 'my-2 font-bold text-2xl'},
+  h2: {tag: 'h2', className: 'my-2 font-bold text-xl'},
+  h3: {tag: 'h3', className: 'my-2 font-bold text-lg'},
+  h4: {tag: 'h4', className: 'my-2 font-bold'},
+  h5: {tag: 'h5', className: 'my-2 font-semibold'},
+  h6: {tag: 'h6', className: 'my-2 font-semibold'},
+  blockquote: {
+    tag: 'blockquote',
+    className:
+      'my-1 border-l-2 border-stone-500 pl-2 italic dark:border-stone-300',
+  },
+} as const
 
 const factBoxContainer = defineContainer({
   type: 'fact-box',
   arrayField: 'content',
-  render: ({attributes, children, readOnly, selected}) => (
+  render: ({attributes, children, path, readOnly, selected}) => (
     <section
       {...attributes}
       data-selected={selected ? '' : undefined}
@@ -17,77 +33,21 @@ const factBoxContainer = defineContainer({
         {children}
       </div>
       <DragHandle readOnly={readOnly} />
+      <BlockDropIndicator path={path} />
     </section>
   ),
   of: [
     defineTextBlock({
       type: 'block',
-      render: ({attributes, children, node, path}) => {
-        if (node.listItem !== undefined) {
-          return (
-            <ListItemBlock
-              attributes={attributes}
-              node={node}
-              path={path}
-              children={children}
-            />
-          )
-        }
-
-        switch (node.style) {
-          case 'h1':
-            return (
-              <h1 {...attributes} className="my-2 font-bold text-2xl">
-                {children}
-              </h1>
-            )
-          case 'h2':
-            return (
-              <h2 {...attributes} className="my-2 font-bold text-xl">
-                {children}
-              </h2>
-            )
-          case 'h3':
-            return (
-              <h3 {...attributes} className="my-2 font-bold text-lg">
-                {children}
-              </h3>
-            )
-          case 'h4':
-            return (
-              <h4 {...attributes} className="my-2 font-bold">
-                {children}
-              </h4>
-            )
-          case 'h5':
-            return (
-              <h5 {...attributes} className="my-2 font-semibold">
-                {children}
-              </h5>
-            )
-          case 'h6':
-            return (
-              <h6 {...attributes} className="my-2 font-semibold">
-                {children}
-              </h6>
-            )
-          case 'blockquote':
-            return (
-              <blockquote
-                {...attributes}
-                className="my-1 border-l-2 border-stone-500 pl-2 italic dark:border-stone-300"
-              >
-                {children}
-              </blockquote>
-            )
-          default:
-            return (
-              <p {...attributes} className="my-1">
-                {children}
-              </p>
-            )
-        }
-      },
+      render: ({attributes, children, node, path}) => (
+        <ContainerTextBlock
+          attributes={attributes}
+          node={node}
+          path={path}
+          styles={factBoxTextStyles}
+          children={children}
+        />
+      ),
     }),
   ],
 })

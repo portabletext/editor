@@ -1,15 +1,18 @@
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
+import {BlockDropIndicator} from './block-drop-indicator'
+import {ContainerTextBlock} from './container-text-block'
 import {DragHandle} from './drag-handle'
-import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
+
+const cellTextStyles = {normal: {tag: 'div', className: ''}} as const
 
 const tableContainer = defineContainer({
   type: 'table',
   arrayField: 'rows',
-  render: ({attributes, children, node, readOnly, selected}) => (
+  render: ({attributes, children, node, path, readOnly, selected}) => (
     <div
       {...attributes}
       data-header-rows={
@@ -22,6 +25,7 @@ const tableContainer = defineContainer({
         <tbody>{children}</tbody>
       </table>
       <DragHandle readOnly={readOnly} />
+      <BlockDropIndicator path={path} />
     </div>
   ),
   of: [
@@ -45,17 +49,15 @@ const tableContainer = defineContainer({
           of: [
             defineTextBlock({
               type: 'block',
-              render: ({attributes, children, node, path}) =>
-                node.listItem !== undefined ? (
-                  <ListItemBlock
-                    attributes={attributes}
-                    node={node}
-                    path={path}
-                    children={children}
-                  />
-                ) : (
-                  <div {...attributes}>{children}</div>
-                ),
+              render: ({attributes, children, node, path}) => (
+                <ContainerTextBlock
+                  attributes={attributes}
+                  node={node}
+                  path={path}
+                  styles={cellTextStyles}
+                  children={children}
+                />
+              ),
             }),
             cellImageLeaf,
             calloutContainer,
