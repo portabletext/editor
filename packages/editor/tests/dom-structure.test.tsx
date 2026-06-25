@@ -703,4 +703,86 @@ describe('DOM structure', () => {
       expect(paragraph!.hasAttribute('data-slate-node')).toEqual(false)
     })
   })
+
+  test('9. root text block rendered via `defineTextBlock` catch-all omits `data-slate-*`/`data-child-*` on spans and inline objects', async () => {
+    await createTestEditor({
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello ', marks: []},
+            {_key: 'i0', _type: 'stock-ticker'},
+            {_key: 's1', _type: 'span', text: ' world', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineTextBlock({
+              type: '*',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+    await vi.waitFor(() => {
+      const el = document.querySelector('[data-slate-editor]')
+      expect(el).not.toEqual(null)
+      expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
+        [
+          '<div',
+          ' data-pt-path="[_key==&quot;b0&quot;]"',
+          ' data-pt-block="text">',
+          '<span',
+          ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s0&quot;]"',
+          ' data-pt-inline="span">',
+          '<span data-pt-marks="true">',
+          '<span data-pt-text="true">',
+          'hello ',
+          '</span>',
+          '</span>',
+          '</span>',
+          '<span',
+          ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;i0&quot;]"',
+          ' contenteditable="false"',
+          ' data-pt-inline="object">',
+          '<span',
+          ' data-pt-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
+          '<span>',
+          '<span data-pt-marks="true">',
+          '<span data-pt-zero-width="true">',
+          '\uFEFF',
+          '</span>',
+          '</span>',
+          '</span>',
+          '</span>',
+          '<span contenteditable="false">',
+          '[stock-ticker: i0]',
+          '</span>',
+          '</span>',
+          '<span',
+          ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s1&quot;]"',
+          ' data-pt-inline="span">',
+          '<span data-pt-marks="true">',
+          '<span data-pt-text="true">',
+          ' world',
+          '</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+        ].join(''),
+      )
+    })
+  })
 })
