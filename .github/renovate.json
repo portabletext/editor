@@ -40,22 +40,9 @@
     },
     {
       "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
-      "matchPackageNames": [
-        "@portabletext/*",
-        "react",
-        "rxjs",
-        "slate",
-        "slate-dom",
-        "slate-react",
-        "typescript"
-      ],
+      "matchPackageNames": ["@portabletext/*", "react", "rxjs", "typescript"],
       "dependencyDashboardApproval": false,
       "schedule": ["every weekday"]
-    },
-    {
-      "description": "Group Slate packages",
-      "matchPackageNames": ["/slate/"],
-      "groupName": "slate"
     },
     {
       "description": "Group Tailwind packages",
