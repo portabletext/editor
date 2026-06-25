@@ -37,9 +37,30 @@ export function createPortableTextMemberSchemaTypes(
   if (!portableTextType) {
     throw new Error("Parameter 'portabletextType' missing (required)")
   }
-  const blockType = portableTextType.of?.find(findBlockType) as
-    | BlockSchemaType
-    | undefined
+  return createPortableTextMemberSchemaTypesFromOf(
+    portableTextType,
+    portableTextType.of ?? [],
+  )
+}
+
+/**
+ * Bucketize an `of` array into the `PortableTextMemberSchemaTypes` shape.
+ *
+ * The root entry point ({@link createPortableTextMemberSchemaTypes}) calls
+ * this with the root's own `of`. Path-aware resolution calls it with the
+ * enclosing container's `of` — yielding the same shape sourced from the
+ * container's sub-schema instead of root. Mirrors the fractal structure
+ * of `@portabletext/schema`'s `getSubSchema`, where everything is a
+ * schema view and containers produce schema views.
+ *
+ * `rootPortableTextType` is threaded through because the result's
+ * `portableText` back-reference always points at root.
+ */
+export function createPortableTextMemberSchemaTypesFromOf(
+  rootPortableTextType: ArraySchemaType<PortableTextBlock>,
+  of: ReadonlyArray<SchemaType>,
+): PortableTextMemberSchemaTypes {
+  const blockType = of.find(findBlockType) as BlockSchemaType | undefined
   if (!blockType) {
     throw new Error('Block type is not defined in this schema (required)')
   }
@@ -64,7 +85,7 @@ export function createPortableTextMemberSchemaTypes(
   const inlineObjectTypes = (ofType.filter(
     (memberType) => memberType.name !== 'span',
   ) || []) as ObjectSchemaType[]
-  const blockObjectTypes = (portableTextType.of?.filter(
+  const blockObjectTypes = (of.filter(
     (field) => field.name !== blockType.name,
   ) || []) as ObjectSchemaType[]
 
@@ -74,7 +95,7 @@ export function createPortableTextMemberSchemaTypes(
     lists: resolveEnabledListItems(blockType),
     block: blockType,
     span: spanType,
-    portableText: portableTextType,
+    portableText: rootPortableTextType,
     inlineObjects: inlineObjectTypes,
     blockObjects: blockObjectTypes,
     annotations: (spanType as SpanSchemaType).annotations,
