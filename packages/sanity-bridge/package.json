@@ -40,6 +40,7 @@
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
+    "test:bench": "vitest bench --run",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest watch"
   },
