@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.0.24
+
+### Patch Changes
+
+- Updated dependencies [[`8a84ef6`](https://github.com/portabletext/editor/commit/8a84ef66b97560d00884b63e41cc4d4dd5e90ce4)]:
+  - @portabletext/editor@7.8.1
+  - @portabletext/plugin-character-pair-decorator@8.0.24
+  - @portabletext/plugin-input-rule@5.0.24
+
 ## 8.0.23
 
 ### Patch Changes

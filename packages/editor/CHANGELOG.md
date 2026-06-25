@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.8.1
+
+### Patch Changes
+
+- [#2859](https://github.com/portabletext/editor/pull/2859) [`8a84ef6`](https://github.com/portabletext/editor/commit/8a84ef66b97560d00884b63e41cc4d4dd5e90ce4) Thanks [@christianhg](https://github.com/christianhg)! - fix: gate span `data-child-*` on the pipeline, not container nesting
+
+  Spans rendered through the new pipeline (a `defineX` text-block registration, or any descendant of a container) no longer emit the legacy `data-child-key`/`data-child-name`/`data-child-type` attributes. Previously they appeared on top-level spans even when the text block was rendered through a catch-all registration, inconsistent with `data-slate-*`, which the new pipeline already omitted. Spans in the legacy pipeline (no `defineX` registration) are unchanged and still carry them.
+
 ## 7.8.0
 
 ### Minor Changes
