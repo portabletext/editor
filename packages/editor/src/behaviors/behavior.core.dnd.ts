@@ -5,6 +5,7 @@ import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {getDragSelection} from '../selectors/drag-selection'
+import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFragment} from '../selectors/selector.get-fragment'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
@@ -330,6 +331,12 @@ export const coreDndBehaviors = [
 
       const draggingEntireBlocks = isSelectingEntireBlocks(dragSnapshot)
 
+      // A collapsed drag on a single inline object: the moved object keeps its
+      // `_key`, so it can be re-selected at the destination after the move.
+      const movedInlineObjectKey = draggingEntireBlocks
+        ? undefined
+        : getFocusInlineObject(dragSnapshot)?.node._key
+
       const draggedNodes = getFragment(dragSnapshot)
       const fittedBlocks = fitBlocksToDestination(
         {
@@ -350,6 +357,7 @@ export const coreDndBehaviors = [
           dragOrigin,
           originEvent: event.originEvent,
           fittedBlocks,
+          movedInlineObjectKey,
         }
       }
 
@@ -365,8 +373,26 @@ export const coreDndBehaviors = [
           dropPosition,
           originEvent,
           fittedBlocks,
+          movedInlineObjectKey,
         },
       ) => {
+        // The dropped object lives in the drop position's block, keyed by its
+        // preserved `_key`. Re-selecting it keeps the moved inline object
+        // selected, mirroring inserting an inline object, instead of leaving
+        // the caret on the span that follows it.
+        const movedInlineObjectSelection = movedInlineObjectKey
+          ? (() => {
+              const objectPath = [
+                ...dropPosition.anchor.path.slice(0, -2),
+                'children' as const,
+                {_key: movedInlineObjectKey},
+              ]
+              return {
+                anchor: {path: objectPath, offset: 0},
+                focus: {path: objectPath, offset: 0},
+              }
+            })()
+          : undefined
         // Source removal mirrors what the serializer carried: per dragged
         // node for an entire-blocks drag, by text range for a partial drag.
         const deleteEvents = draggingEntireBlocks
@@ -399,7 +425,11 @@ export const coreDndBehaviors = [
                   ? 'after'
                   : 'auto'
               : 'auto',
+            select: movedInlineObjectSelection ? 'none' : undefined,
           }),
+          ...(movedInlineObjectSelection
+            ? [raise({type: 'select', at: movedInlineObjectSelection})]
+            : []),
         ]
       },
     ],
