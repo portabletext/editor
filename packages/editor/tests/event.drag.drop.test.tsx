@@ -197,6 +197,221 @@ describe('event.drag.drop', () => {
     })
   })
 
+  test('Scenario: dropping an inline object selects it at the destination, not the caret after it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sourceBlockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const barKey = keyGenerator()
+    const destBlockKey = keyGenerator()
+    const destSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: sourceBlockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+            {_key: barKey, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: destBlockKey,
+          _type: 'block',
+          children: [
+            {_key: destSpanKey, _type: 'span', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const stockTickerSelection = {
+      anchor: {
+        path: [{_key: sourceBlockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: sourceBlockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+    }
+
+    const serialized = converterPortableText.serialize({
+      snapshot: {
+        ...editor.getSnapshot(),
+        context: {
+          ...editor.getSnapshot().context,
+          selection: stockTickerSelection,
+        },
+      },
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (serialized.type === 'serialization.failure') {
+      assert.fail(serialized.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(serialized.mimeType, serialized.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: stockTickerSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+            offset: 0,
+          },
+        },
+      },
+    })
+
+    // The moved inline object keeps its `_key`. After the drop, the selection
+    // should be collapsed on the object itself (path ending at the object's
+    // key), mirroring what inserting an inline object does, not on the span
+    // that follows it.
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: destBlockKey}, 'children', {_key: stockTickerKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: destBlockKey}, 'children', {_key: stockTickerKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: dropping a text range ending on an inline object preserves the default destination selection', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sourceBlockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const barKey = keyGenerator()
+    const destBlockKey = keyGenerator()
+    const destSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: sourceBlockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+            {_key: barKey, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: destBlockKey,
+          _type: 'block',
+          children: [
+            {_key: destSpanKey, _type: 'span', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    // A text range spanning "foo" through the inline object — the focus
+    // lands on the inline object but the drag is a range, not a single
+    // object move.
+    const rangeSelection = {
+      anchor: {
+        path: [{_key: sourceBlockKey}, 'children', {_key: fooKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: sourceBlockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+    }
+
+    const serialized = converterPortableText.serialize({
+      snapshot: {
+        ...editor.getSnapshot(),
+        context: {
+          ...editor.getSnapshot().context,
+          selection: rangeSelection,
+        },
+      },
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (serialized.type === 'serialization.failure') {
+      assert.fail(serialized.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(serialized.mimeType, serialized.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: rangeSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+            offset: 0,
+          },
+        },
+      },
+    })
+
+    // The drop should keep `insert.blocks`' default selection at the start of
+    // the destination span, not collapse onto the moved inline object's path.
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: destBlockKey}, 'children', {_key: destSpanKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
   test('Scenario: Dragging inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
