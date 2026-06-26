@@ -18,6 +18,8 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
+import {applySelect} from '../../../internal-utils/apply-selection'
+import {isEditableContainer} from '../../../schema/is-editable-container'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
@@ -291,9 +293,26 @@ export const Editable = forwardRef(
 
             const {anchorNode, focusNode} = domSelection
 
+            // A container's spacer lives in non-editable chrome, so it is
+            // neither an editable target nor inside a void; accept it so a
+            // selection on it (selecting the container as a block-object)
+            // syncs, the same way a void's spacer does.
+            const anchorElement =
+              anchorNode instanceof Element
+                ? anchorNode
+                : (anchorNode?.parentElement ?? null)
+            const anchorSpacer = anchorElement?.closest('[data-pt-spacer]')
+            const anchorInContainerSpacer =
+              anchorSpacer != null &&
+              anchorSpacer
+                .closest('[data-pt-block]')
+                ?.getAttribute('data-pt-block') === 'container' &&
+              DOMEditor.hasTarget(editor, anchorNode)
+
             const anchorNodeSelectable =
               DOMEditor.hasEditableTarget(editor, anchorNode) ||
-              DOMEditor.isTargetInsideNonReadonlyVoid(editor, anchorNode)
+              DOMEditor.isTargetInsideNonReadonlyVoid(editor, anchorNode) ||
+              anchorInContainerSpacer
 
             const focusNodeInEditor = DOMEditor.hasTarget(editor, focusNode)
 
@@ -304,7 +323,28 @@ export const Editable = forwardRef(
               })
 
               if (range) {
-                if (
+                // A selection on a container's spacer resolves (via
+                // `toSelectionPoint`) to a collapsed point on the container
+                // itself, selecting it as a block-object. It is already
+                // resolved, so commit it as-is; routing it through
+                // `editor.select` would re-resolve and drill into the
+                // container's first leaf.
+                const containerEntry =
+                  pathEquals(range.anchor.path, range.focus.path) &&
+                  range.anchor.offset === range.focus.offset
+                    ? getNode(editor.snapshot, range.focus.path)
+                    : undefined
+                const selectingContainer =
+                  containerEntry !== undefined &&
+                  isEditableContainer(
+                    editor.snapshot,
+                    containerEntry.node,
+                    range.focus.path,
+                  )
+
+                if (selectingContainer) {
+                  applySelect(editor, range)
+                } else if (
                   !editor.composing &&
                   !androidInputManager?.hasPendingChanges() &&
                   !androidInputManager?.isFlushing()
