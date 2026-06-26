@@ -332,10 +332,13 @@ export const coreDndBehaviors = [
       const draggingEntireBlocks = isSelectingEntireBlocks(dragSnapshot)
 
       // A collapsed drag on a single inline object: the moved object keeps its
-      // `_key`, so it can be re-selected at the destination after the move.
-      const movedInlineObjectKey = draggingEntireBlocks
-        ? undefined
-        : getFocusInlineObject(dragSnapshot)?.node._key
+      // `_key`, so it can be re-selected at the destination after the move. A
+      // text-range drag ending on an inline object is excluded by the
+      // collapsed-range guard so we don't mistake it for a single-object drag.
+      const movedInlineObjectKey =
+        !draggingEntireBlocks && isCollapsedRange(dragSelection)
+          ? getFocusInlineObject(dragSnapshot)?.node._key
+          : undefined
 
       const draggedNodes = getFragment(dragSnapshot)
       const fittedBlocks = fitBlocksToDestination(
@@ -380,18 +383,18 @@ export const coreDndBehaviors = [
         // preserved `_key`. Re-selecting it keeps the moved inline object
         // selected, mirroring inserting an inline object, instead of leaving
         // the caret on the span that follows it.
-        const movedInlineObjectSelection = movedInlineObjectKey
-          ? (() => {
-              const objectPath = [
-                ...dropPosition.anchor.path.slice(0, -2),
-                'children' as const,
-                {_key: movedInlineObjectKey},
-              ]
-              return {
-                anchor: {path: objectPath, offset: 0},
-                focus: {path: objectPath, offset: 0},
-              }
-            })()
+        const movedInlineObjectPath = movedInlineObjectKey
+          ? [
+              ...dropPosition.anchor.path.slice(0, -2),
+              'children' as const,
+              {_key: movedInlineObjectKey},
+            ]
+          : undefined
+        const movedInlineObjectSelection = movedInlineObjectPath
+          ? {
+              anchor: {path: movedInlineObjectPath, offset: 0},
+              focus: {path: movedInlineObjectPath, offset: 0},
+            }
           : undefined
         // Source removal mirrors what the serializer carried: per dragged
         // node for an entire-blocks drag, by text range for a partial drag.
