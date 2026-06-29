@@ -49,10 +49,10 @@
     "@sanity/diff-match-patch": "catalog:"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "catalog:",
-    "@sanity/tsconfig": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "@sanity/pkg-utils": "catalog:tooling",
+    "@sanity/tsconfig": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

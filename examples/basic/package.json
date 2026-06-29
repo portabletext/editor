@@ -18,16 +18,16 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "catalog:",
-    "babel-plugin-react-compiler": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
+    "@types/react": "catalog:tooling",
+    "@types/react-dom": "catalog:tooling",
+    "@vitejs/plugin-react": "catalog:tooling",
+    "babel-plugin-react-compiler": "catalog:tooling",
+    "eslint": "catalog:tooling",
+    "eslint-plugin-react-hooks": "catalog:tooling",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.11.0",
-    "typescript": "catalog:",
-    "typescript-eslint": "catalog:",
-    "vite": "catalog:"
+    "typescript": "catalog:tooling",
+    "typescript-eslint": "catalog:tooling",
+    "vite": "catalog:tooling"
   }
 }

@@ -46,14 +46,14 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
-    "@sanity/tsconfig": "catalog:",
-    "@types/react": "catalog:",
-    "babel-plugin-react-compiler": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
+    "@sanity/tsconfig": "catalog:tooling",
+    "@types/react": "catalog:tooling",
+    "babel-plugin-react-compiler": "catalog:tooling",
+    "eslint": "catalog:tooling",
+    "eslint-plugin-react-hooks": "catalog:tooling",
     "react": "catalog:",
-    "typescript": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript": "catalog:tooling",
+    "typescript-eslint": "catalog:tooling"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",

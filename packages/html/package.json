@@ -55,13 +55,13 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@sanity/pkg-utils": "catalog:",
-    "@sanity/tsconfig": "catalog:",
-    "@types/jsdom": "catalog:",
-    "@types/node": "catalog:",
-    "jsdom": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "@sanity/pkg-utils": "catalog:tooling",
+    "@sanity/tsconfig": "catalog:tooling",
+    "@types/jsdom": "catalog:tooling",
+    "@types/node": "catalog:tooling",
+    "jsdom": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
