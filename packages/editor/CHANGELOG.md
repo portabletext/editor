@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.6.6
+
+### Patch Changes
+
+- [#2872](https://github.com/portabletext/editor/pull/2872) [`504936c`](https://github.com/portabletext/editor/commit/504936c956c8e19faa8881f25f6471d012a11991) Thanks [@christianhg](https://github.com/christianhg)! - fix: write a `text`-named field on an inline object during value sync
+
+  An inline object with a custom field named `text` now picks up changes to that
+  field when the editor receives an updated value. Previously the change was
+  dropped: the editor reconciled the field as if it were span text, so the new
+  value never reached the inline object even though the incoming value carried it.
+
 ## 6.6.5
 
 ### Patch Changes
