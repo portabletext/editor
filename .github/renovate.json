@@ -28,19 +28,13 @@
     {
       "matchFileNames": ["packages/editor/package.json"],
       "matchDepTypes": ["devDependencies"],
-      "matchPackageNames": ["react", "rxjs"],
+      "matchPackageNames": ["react"],
       "rangeStrategy": "bump",
       "semanticCommitType": "fix"
     },
     {
-      "matchFileNames": ["packages/editor/package.json"],
-      "matchPackageNames": ["racejar"],
-      "rangeStrategy": "bump",
-      "semanticCommitType": "chore"
-    },
-    {
       "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
-      "matchPackageNames": ["@portabletext/*", "react", "rxjs", "typescript"],
+      "matchPackageNames": ["@portabletext/*", "react", "typescript"],
       "dependencyDashboardApproval": false,
       "schedule": ["every weekday"]
     },
@@ -53,11 +47,6 @@
       "description": "Group XState packages",
       "matchPackageNames": ["/xstate/"],
       "groupName": "xstate"
-    },
-    {
-      "description": "Group @portabletext/plugin-* packages",
-      "matchPackageNames": ["@portabletext/plugin-*"],
-      "groupName": "portabletext-plugins"
     },
     {
       "description": "Group Cucumber packages",
