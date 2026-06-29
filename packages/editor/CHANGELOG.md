@@ -1,5 +1,35 @@
 # Changelog
 
+## 7.9.0
+
+### Minor Changes
+
+- [#2879](https://github.com/portabletext/editor/pull/2879) [`e8b43db`](https://github.com/portabletext/editor/commit/e8b43db6f14358904a2a328dc17a01f011010ac5) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `getAnnotation` to `@portabletext/editor/traversal`
+
+  `getAnnotation(snapshot, path)` resolves a path of the shape
+  `[..., {_key: block}, 'markDefs', {_key: annotation}, ...]` to the
+  annotation node on the enclosing text block. Annotations live in
+  `markDefs` alongside `children` rather than inside the value tree, so
+  they aren't reachable through `getNode`. The walker is schema-aware:
+  a container whose own array field happens to be named `markDefs` does
+  not resolve to an annotation.
+
+### Patch Changes
+
+- [#2880](https://github.com/portabletext/editor/pull/2880) [`50424f9`](https://github.com/portabletext/editor/commit/50424f921d2b6d484cec190b974c28b551ebc1e8) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop `getNode` at sidecar field boundaries
+
+  `getNode(snapshot, path)` walks a path through the editor value. When the path crossed into a sidecar field that isn't the node's structural child array — e.g. `[{_key: 'block1'}, 'markDefs', {_key: 'mark1'}]` digging into an annotation on a text block — the walker kept looking up keyed segments against the wrong child list. It silently returned `undefined` only because the markDef `_key` didn't happen to collide with a span `_key`; if it did, `getNode` would have returned the unrelated span.
+
+  The walker now consults the field name produced by each `getNodeChildren` and only descends into a string segment that matches. Paths that try to dig past the sidecar boundary return `undefined` explicitly (use `getAnnotation` to resolve an annotation node). Paths that end on a trailing field name on a valid node continue to return the node with that name stripped from `entry.path`.
+
+  The schema decides what's structural: a text block descends into `children`, a container descends into its configured `arrayField` — including `'markDefs'` if a consumer registers a container with that name, which the previous string-name behavior couldn't distinguish from a real annotation path.
+
+- [#2876](https://github.com/portabletext/editor/pull/2876) [`24996df`](https://github.com/portabletext/editor/commit/24996df6b0471233a7adeeefbddda4a0965a1ae7) Thanks [@christianhg](https://github.com/christianhg)! - fix: return a path that identifies the node from `getNode`
+
+  `getNode(snapshot, path)` follows a path through the editor value and returns the deepest node it reaches. When the input path ended on a field-name string — e.g. `[{_key: 'image1'}, 'caption']` pointing into a block object's primitive field — the walker still resolved to the block but returned the input path verbatim, including the trailing field name. The contract was lying: `entry.path` didn't identify `entry.node`, and `getNode(snapshot, entry.path)` round-tripped to a different shape than the input had implied.
+
+  The walker now strips trailing field-name segments from the returned path. `getNode` always returns a path that resolves back to the same node — `getNode(snapshot, entry.path).node === entry.node`.
+
 ## 7.8.2
 
 ### Patch Changes
