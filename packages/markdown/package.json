@@ -54,11 +54,11 @@
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@portabletext/types": "^4.0.2",
-    "@sanity/pkg-utils": "catalog:",
-    "@sanity/tsconfig": "catalog:",
+    "@sanity/pkg-utils": "catalog:tooling",
+    "@sanity/tsconfig": "catalog:tooling",
     "@types/markdown-it": "^14.1.2",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
