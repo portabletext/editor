@@ -21,6 +21,7 @@
     "@portabletext/keyboard-shortcuts": "workspace:*",
     "@portabletext/markdown": "workspace:*",
     "@portabletext/patches": "workspace:*",
+    "@portabletext/plugin-dnd": "workspace:*",
     "@portabletext/plugin-emoji-picker": "workspace:*",
     "@portabletext/plugin-list-index": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",

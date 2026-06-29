@@ -298,6 +298,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
+      '@portabletext/plugin-dnd':
+        specifier: workspace:*
+        version: link:../../packages/plugin-dnd
       '@portabletext/plugin-emoji-picker':
         specifier: workspace:*
         version: link:../../packages/plugin-emoji-picker
@@ -16679,7 +16682,7 @@ snapshots:
     dependencies:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
-      vitest: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.9(@types/node@20.19.25)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
     optionalDependencies:
       '@types/react': 19.2.17
       '@types/react-dom': 19.2.3(@types/react@19.2.17)
