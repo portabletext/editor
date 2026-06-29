@@ -110,10 +110,6 @@ overrides:
 importers:
 
   .:
-    dependencies:
-      '@sanity/pkg-utils':
-        specifier: ^10.2.1
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.16
@@ -755,6 +751,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../schema
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -806,6 +805,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -985,6 +987,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1043,6 +1048,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1088,6 +1096,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1118,6 +1129,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1185,6 +1199,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/sdk-react':
         specifier: ^2.13.0
         version: 2.13.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.2)
@@ -1242,6 +1259,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0

@@ -53,9 +53,6 @@
       "pnpm format:staged"
     ]
   },
-  "dependencies": {
-    "@sanity/pkg-utils": "^10.2.1"
-  },
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
     "@changesets/changelog-github": "^0.5.2",

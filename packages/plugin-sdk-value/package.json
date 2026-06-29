@@ -68,6 +68,7 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/test": "workspace:^",
+    "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/sdk-react": "^2.13.0",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
