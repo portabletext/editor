@@ -56,6 +56,19 @@ const emptyBlock = {
   markDefs: [],
   style: 'normal',
 }
+const secondEmptySpan = {
+  _key: keyGenerator(),
+  _type: 'span',
+  text: '',
+  marks: [],
+}
+const secondEmptyBlock = {
+  _key: keyGenerator(),
+  _type: 'block',
+  children: [secondEmptySpan],
+  markDefs: [],
+  style: 'normal',
+}
 const image = {_key: keyGenerator(), _type: 'image'}
 
 const fooStart = {
@@ -76,6 +89,14 @@ const bazStart = {
 }
 const emptySpanStart = {
   path: [{_key: emptyBlock._key}, 'children', {_key: emptySpan._key}],
+  offset: 0,
+}
+const secondEmptySpanStart = {
+  path: [
+    {_key: secondEmptyBlock._key},
+    'children',
+    {_key: secondEmptySpan._key},
+  ],
   offset: 0,
 }
 const imageStart = {
@@ -160,17 +181,11 @@ describe(unhangRange.name, () => {
     })
   })
 
-  test('Lands on an empty span when it is the last span before the end block', () => {
+  test('Preserves the range when an empty block sits between the endpoints', () => {
     const context = buildContext(fooBlock, emptyBlock, bazBlock)
-    // unhangRange walks reverse spans and stops at the first one whose path
-    // is before the end's block — even if that span is empty. The middle
-    // block's empty span is the unhang target.
     const range = {anchor: fooStart, focus: bazStart}
 
-    expect(unhangRange(context, range)).toEqual({
-      anchor: fooStart,
-      focus: emptySpanStart,
-    })
+    expect(unhangRange(context, range)).toEqual(range)
   })
 
   test('Preserves the range when a void block sits between the endpoints', () => {
@@ -188,6 +203,41 @@ describe(unhangRange.name, () => {
     // The PERF early-exit catches this: image has fooBlock as a previous
     // sibling, so the range isn't structurally hanging.
     const range = {anchor: fooStart, focus: imageStart}
+
+    expect(unhangRange(context, range)).toEqual(range)
+  })
+
+  test('Preserves the range across two empty same-parent blocks', () => {
+    const context = buildContext(emptyBlock, secondEmptyBlock)
+    const range = {anchor: emptySpanStart, focus: secondEmptySpanStart}
+
+    expect(unhangRange(context, range)).toEqual(range)
+  })
+
+  test('Preserves the range across three empty same-parent blocks', () => {
+    const thirdEmptySpan = {
+      _key: keyGenerator(),
+      _type: 'span',
+      text: '',
+      marks: [],
+    }
+    const thirdEmptyBlock = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [thirdEmptySpan],
+      markDefs: [],
+      style: 'normal',
+    }
+    const thirdEmptySpanStart = {
+      path: [
+        {_key: thirdEmptyBlock._key},
+        'children',
+        {_key: thirdEmptySpan._key},
+      ],
+      offset: 0,
+    }
+    const context = buildContext(emptyBlock, secondEmptyBlock, thirdEmptyBlock)
+    const range = {anchor: emptySpanStart, focus: thirdEmptySpanStart}
 
     expect(unhangRange(context, range)).toEqual(range)
   })

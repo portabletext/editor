@@ -1855,7 +1855,7 @@ describe('cross-container range delete: deep structures', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
-  test('Selecting only the first two of three empty cells in a row is a no-op', async () => {
+  test('Selecting only the first two of three empty cells in a row collapses the selection without removing structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
@@ -1976,9 +1976,9 @@ describe('cross-container range delete: deep structures', () => {
         'TABLE:',
         '  ROW:',
         '    CELL:',
-        '      B: ^',
-        '    CELL:',
         '      B: |',
+        '    CELL:',
+        '      B: ',
         '    CELL:',
         '      B: ',
       ].join('\n'),

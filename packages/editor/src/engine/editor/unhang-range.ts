@@ -5,10 +5,8 @@ import {getParent} from '../../traversal/get-parent'
 import {getSibling} from '../../traversal/get-sibling'
 import {isLeafObject} from '../../traversal/is-leaf-object'
 import type {TraversalSnapshot} from '../../traversal/traversal-snapshot'
-import type {Path} from '../interfaces/path'
 import type {Range} from '../interfaces/range'
 import {isAncestorPath} from '../path/is-ancestor-path'
-import {isBeforePath} from '../path/is-before-path'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import {rangeEdges} from '../range/range-edges'
 
@@ -24,10 +22,13 @@ import {rangeEdges} from '../range/range-edges'
  * - a void block or editable container sits strictly between the start and
  *   end (the user's range explicitly covers it, and unhanging would silently
  *   change the deletion target)
+ * - no non-empty span sits between the endpoints, or any empty span sits
+ *   between the endpoints and a non-empty one (the empty blocks were part
+ *   of the user's selection and must remain in the deletion range)
  */
 export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
   const {context} = snapshot
-  let [start, end] = rangeEdges(range, {value: context.value})
+  const [start, end] = rangeEdges(range, {value: context.value})
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
   // A range can only hang when end is at offset 0 of the first child in a block.
@@ -43,7 +44,9 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
   const endBlock = getParent(snapshot, end.path, {
     match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
   })
-  const blockPath: Path = endBlock ? endBlock.path : []
+  if (!endBlock) {
+    return range
+  }
 
   // If a void block or editable container sits strictly between the
   // endpoints, the range explicitly covers it. Unhanging would walk back
@@ -62,6 +65,7 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
   }
 
   let skip = true
+  let sawEmpty = false
 
   for (const {node, path: nodePath} of getNodes(snapshot, {
     from: start.path,
@@ -78,14 +82,25 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
       continue
     }
 
-    if (
-      node.text !== '' ||
-      isBeforePath(nodePath, blockPath, {value: context.value})
-    ) {
-      end = {path: nodePath, offset: node.text.length}
-      break
+    if (node.text === '') {
+      sawEmpty = true
+      continue
+    }
+
+    // If we passed an empty span on the way here, the user's selection
+    // covered the empty block(s) between the endpoints. Anchoring at this
+    // non-empty span would silently drop those empty blocks from the
+    // range, so leave the range alone and let the cross-block delete run
+    // at the user's boundary.
+    if (sawEmpty) {
+      return range
+    }
+
+    return {
+      anchor: start,
+      focus: {path: nodePath, offset: node.text.length},
     }
   }
 
-  return {anchor: start, focus: end}
+  return range
 }
