@@ -798,6 +798,13 @@ function adjustFragmentKeys(args: {
  * Insert a text block's children at a point within another text block.
  * Prepending a single span at offset 0 uses insert.text so React's DOM
  * selection stays valid through deferred normalization.
+ *
+ * Spans in the fragment with no marks inherit the decorators of the span at
+ * the caret position. This matches the abstract `text/plain` -> `insert.span`
+ * behavior that consumer-deserializer plugins bypass when they raise
+ * `deserialization.success` directly. The fragment's annotation keys are not
+ * inherited; those are threaded explicitly via `event.annotations` on the
+ * `insert.span` pathway.
  */
 function insertFragmentChildren(
   editor: PortableTextEditorEngine,
@@ -818,6 +825,20 @@ function insertFragmentChildren(
 
   const parent = parentPath(at.path)
   let firstInsertedKey: string | undefined
+
+  // Resolve the caret span's decorators so empty-marks spans in the fragment
+  // can inherit them. The caret span sits at `at.path` whether or not we
+  // just split (split leaves the left half at the original path).
+  const caretSpanEntry = getSpanNode(editor, at.path)
+  const decoratorNames = new Set(
+    editor.schema.decorators.map((decorator) => decorator.name),
+  )
+  const inheritedDecorators =
+    caretSpanEntry &&
+    isSpan({schema: editor.schema}, caretSpanEntry.node) &&
+    Array.isArray(caretSpanEntry.node.marks)
+      ? caretSpanEntry.node.marks.filter((mark) => decoratorNames.has(mark))
+      : []
 
   if (at.offset === 0 && block.children.length === 1) {
     const firstChild = block.children[0]!
@@ -842,10 +863,17 @@ function insertFragmentChildren(
   let insertAfterPath = at.path
 
   for (const child of block.children) {
+    const inheritedChild =
+      inheritedDecorators.length > 0 &&
+      isSpan({schema: editor.schema}, child) &&
+      (!Array.isArray(child.marks) || child.marks.length === 0)
+        ? {...child, marks: [...inheritedDecorators]}
+        : child
+
     const operation: InsertOperation = {
       type: 'insert',
       path: insertAfterPath,
-      node: child,
+      node: inheritedChild,
       position:
         at.offset > 0 || child !== block.children[0] ? 'after' : 'before',
     }
