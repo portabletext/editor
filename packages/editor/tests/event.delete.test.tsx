@@ -1039,4 +1039,91 @@ describe('event.delete', () => {
       ])
     })
   })
+
+  test('Scenario: Deleting a range across two empty same-parent blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'h1',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+    })
+  })
+
+  test('Scenario: Deleting a range across three empty same-parent blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'h1',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+    })
+  })
 })
