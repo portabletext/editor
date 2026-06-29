@@ -11,11 +11,21 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * The path can be either keyed (KeyedSegment + field name strings) or
  * indexed (numbers). Keyed segments are resolved by matching `_key`,
- * field name strings are skipped (they're structural), and numbers
- * are resolved by index.
+ * field name strings name a structural descent into the previous
+ * node's children, and numbers are resolved by index.
  *
- * The returned path is always fully keyed, even if the input path
- * contained numeric indices.
+ * The returned `path` always identifies the returned node: it's fully
+ * keyed (numeric indices are converted to `KeyedSegment`s) and any
+ * trailing segments in the input that point outside the value tree —
+ * e.g. an object node's primitive field, or an annotation reached via
+ * `'markDefs'` on a text block — are stripped so that
+ * `getNode(snapshot, entry.path).node === entry.node`.
+ *
+ * The walk stops when a string segment names a field that isn't the
+ * current node's structural child array. Annotations live in
+ * `markDefs` on a text block, alongside `children` rather than inside
+ * it, so `getNode` resolves an annotation path to the enclosing text
+ * block. Use `getAnnotation` to resolve the annotation itself.
  *
  * @beta
  */
@@ -29,6 +39,7 @@ export function getNode(
 
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
+  let currentFieldName: string | undefined
   let node: Node | undefined
   let currentParent: RegisteredContainer | undefined
   const resolvedPath: Path = []
@@ -37,8 +48,16 @@ export function getNode(
     const segment = path[i]
 
     if (typeof segment === 'string') {
-      resolvedPath.push(segment)
-      continue
+      // A string segment names a structural descent. If it matches the
+      // field name produced by the previous node's `getNodeChildren`,
+      // it's part of the value-tree descent — push it and continue.
+      // Otherwise it's a sidecar (markDefs on a text block, a primitive
+      // field on an object) and the rest of the path is suffix.
+      if (currentFieldName !== undefined && segment === currentFieldName) {
+        resolvedPath.push(segment)
+        continue
+      }
+      break
     }
 
     if (isKeyedSegment(segment)) {
@@ -90,12 +109,27 @@ export function getNode(
       }
 
       currentChildren = next.children
+      currentFieldName = next.fieldName
       currentParent = next.parent
+    } else {
+      currentFieldName = undefined
     }
   }
 
   if (!node) {
     return undefined
+  }
+
+  // Strip trailing field-name segments. The walker may have pushed
+  // matching field names during structural descent; if the deepest
+  // reached keyed segment was the last keyed segment in the input,
+  // any further field names that followed are part of the input but
+  // don't identify the returned node.
+  while (
+    resolvedPath.length > 0 &&
+    typeof resolvedPath[resolvedPath.length - 1] === 'string'
+  ) {
+    resolvedPath.pop()
   }
 
   return {node, path: resolvedPath}
