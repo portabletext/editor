@@ -14,8 +14,11 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * field name strings are skipped (they're structural), and numbers
  * are resolved by index.
  *
- * The returned path is always fully keyed, even if the input path
- * contained numeric indices.
+ * The returned `path` always identifies the returned node: it's fully
+ * keyed (numeric indices are converted to `KeyedSegment`s) and any
+ * trailing field-name segments in the input — e.g. `[{_key},'caption']`
+ * pointing into an object node's primitive field — are stripped so
+ * that `getNode(snapshot, entry.path).node === entry.node`.
  *
  * @beta
  */
@@ -96,6 +99,19 @@ export function getNode(
 
   if (!node) {
     return undefined
+  }
+
+  // Strip trailing field-name segments. The walker pushes every string
+  // segment onto `resolvedPath` unconditionally, but a string segment
+  // that follows the deepest reached node is a field reference inside
+  // the node, not part of the node's path. Returning the input path
+  // verbatim would mean `entry.path` doesn't identify `entry.node`,
+  // which breaks every reasonable composition.
+  while (
+    resolvedPath.length > 0 &&
+    typeof resolvedPath[resolvedPath.length - 1] === 'string'
+  ) {
+    resolvedPath.pop()
   }
 
   return {node, path: resolvedPath}
