@@ -60,6 +60,7 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:*",
+    "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
     "@vitejs/plugin-react": "catalog:tooling",
