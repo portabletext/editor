@@ -314,4 +314,59 @@ describe(`${getNode.name} strips trailing field-name segments`, () => {
     expect(second?.node).toBe(testbed.image)
     expect(second?.path).toEqual([{_key: 'k4'}])
   })
+
+  test('annotation path returns undefined (use getAnnotation instead)', () => {
+    // `markDefs` is a sidecar field on a text block: annotations live
+    // alongside `children`, not inside the value tree's descent. A path
+    // that digs into `markDefs` past the field name can't be resolved
+    // by `getNode` — use `getAnnotation`.
+    expect(
+      getNode(testbed.snapshot, [{_key: 'k3'}, 'markDefs', {_key: 'mark1'}]),
+    ).toBeUndefined()
+  })
+
+  test('annotation path with trailing field returns undefined', () => {
+    expect(
+      getNode(testbed.snapshot, [
+        {_key: 'k3'},
+        'markDefs',
+        {_key: 'mark1'},
+        'href',
+      ]),
+    ).toBeUndefined()
+  })
+
+  test('descends into a container whose array field is named markDefs', () => {
+    // A container registered with `arrayField: 'markDefs'` makes
+    // `'markDefs'` a structural field. The walker consults each
+    // descent's field name (not a hardcoded list), so the path
+    // resolves to the child inside the container.
+    const child = {_key: 'm0', _type: 'note'}
+    const containerBlock = {
+      _key: 'b0',
+      _type: 'sidebar',
+      markDefs: [child],
+    }
+    const snapshot = {
+      ...testbed.snapshot,
+      context: {
+        ...testbed.snapshot.context,
+        value: [containerBlock],
+        containers: new Map([
+          [
+            'sidebar',
+            {
+              kind: 'container' as const,
+              type: 'sidebar',
+              field: {name: 'markDefs', of: [{name: 'note'}]} as never,
+            },
+          ],
+        ]),
+      },
+      blockIndexMap: new Map([['[_key=="b0"]', 0]]),
+    }
+    const entry = getNode(snapshot, [{_key: 'b0'}, 'markDefs', {_key: 'm0'}])
+    expect(entry?.node).toBe(child)
+    expect(entry?.path).toEqual([{_key: 'b0'}, 'markDefs', {_key: 'm0'}])
+  })
 })
