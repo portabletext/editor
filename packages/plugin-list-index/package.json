@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-list-index",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Compute the list index of each list item for custom list rendering",
   "keywords": [
     "portabletext",
