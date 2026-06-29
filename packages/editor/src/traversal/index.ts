@@ -1,5 +1,6 @@
 export {getAncestor} from './get-ancestor'
 export {getAncestors} from './get-ancestors'
+export {getAnnotation} from './get-annotation'
 export {getBlock, isBlock} from './is-block'
 export {getChildren} from './get-children'
 export {getContainerChildren} from './get-container-children'
