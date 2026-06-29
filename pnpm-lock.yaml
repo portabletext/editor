@@ -25,8 +25,8 @@ catalogs:
       specifier: ^19.2.7
       version: 19.2.7
     xstate:
-      specifier: ^5.32.1
-      version: 5.32.1
+      specifier: ^5.32.2
+      version: 5.32.2
   tooling:
     '@portabletext/react':
       specifier: ^6.2.0
@@ -328,7 +328,7 @@ importers:
         version: link:../../packages/toolbar
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       emojilib:
         specifier: ^4.0.2
         version: 4.0.2
@@ -358,7 +358,7 @@ importers:
         version: 3.21.0
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
       zod:
         specifier: ^4.1.12
         version: 4.1.13
@@ -545,7 +545,7 @@ importers:
         version: 5.0.2
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       debug:
         specifier: ^4.4.3
         version: 4.4.3
@@ -554,7 +554,7 @@ importers:
         version: 3.1.0
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/test':
         specifier: workspace:^
@@ -744,10 +744,10 @@ importers:
     dependencies:
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -856,10 +856,10 @@ importers:
         version: link:../plugin-input-rule
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -917,10 +917,10 @@ importers:
     dependencies:
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -1168,10 +1168,10 @@ importers:
         version: 1.0.5
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -1187,7 +1187,7 @@ importers:
         version: link:../test
       '@sanity/sdk-react':
         specifier: ^2.13.0
-        version: 2.13.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.1)
+        version: 2.13.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.2)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1277,10 +1277,10 @@ importers:
         version: link:../plugin-input-rule
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -1488,10 +1488,10 @@ importers:
         version: link:../keyboard-shortcuts
       '@xstate/react':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)
+        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)
       xstate:
         specifier: 'catalog:'
-        version: 5.32.1
+        version: 5.32.2
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -8379,8 +8379,8 @@ packages:
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
-  xstate@5.32.1:
-    resolution: {integrity: sha512-IGX9q5vEOplWjVq79edfgjJfVV/lXCup9p/fQGgUabAveZrlRwWJ/mC2iZEE7wswXbWITBCoS7gmoFfcuWAwsQ==}
+  xstate@5.32.2:
+    resolution: {integrity: sha512-uDrojEQYYb4cEeB/SpKDBQlnL2969N5ltmVak4jUMUC6VVRuhi7PCnTBxe4YlQ8YLzdaOEOuVR48CRQPE2o0Uw==}
 
   xxhash-wasm@1.1.0:
     resolution: {integrity: sha512-147y/6YNh+tlp6nd/2pWq38i9h6mz/EuQ6njIrmW8D1BS5nCqs0P6DG+m6zTGnNz5I+uhZ0SHxBs9BsPrwcKDA==}
@@ -11728,7 +11728,7 @@ snapshots:
     dependencies:
       rxjs: 7.8.2
       uuid: 13.0.0
-      xstate: 5.32.1
+      xstate: 5.32.2
 
   '@sanity/descriptors@1.3.0':
     dependencies:
@@ -11767,7 +11767,7 @@ snapshots:
     dependencies:
       '@sanity/comlink': 4.0.1
 
-  '@sanity/mutate@0.18.1(xstate@5.32.1)':
+  '@sanity/mutate@0.18.1(xstate@5.32.2)':
     dependencies:
       '@isaacs/ttlcache': 2.1.5
       '@sanity/client': 7.22.1
@@ -11779,7 +11779,7 @@ snapshots:
       nanoid: 5.1.11
       rxjs: 7.8.2
     optionalDependencies:
-      xstate: 5.32.1
+      xstate: 5.32.2
 
   '@sanity/parse-package-json@2.0.0':
     dependencies:
@@ -11927,11 +11927,11 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@sanity/sdk-react@2.13.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.1)':
+  '@sanity/sdk-react@2.13.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.2)':
     dependencies:
       '@sanity/client': 7.22.1
       '@sanity/message-protocol': 0.23.0
-      '@sanity/sdk': 2.13.0(@types/react@19.2.17)(immer@11.0.1)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.1)
+      '@sanity/sdk': 2.13.0(@types/react@19.2.17)(immer@11.0.1)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.2)
       '@sanity/types': 5.31.1(@types/react@19.2.17)
       groq: 3.88.1-typegen-experimental.0
       react: 19.2.7
@@ -11946,7 +11946,7 @@ snapshots:
       - use-sync-external-store
       - xstate
 
-  '@sanity/sdk@2.13.0(@types/react@19.2.17)(immer@11.0.1)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.1)':
+  '@sanity/sdk@2.13.0(@types/react@19.2.17)(immer@11.0.1)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.2)':
     dependencies:
       '@sanity/bifur-client': 1.0.0
       '@sanity/client': 7.22.1
@@ -11957,7 +11957,7 @@ snapshots:
       '@sanity/image-url': 2.1.1
       '@sanity/json-match': 1.0.5
       '@sanity/message-protocol': 0.23.0
-      '@sanity/mutate': 0.18.1(xstate@5.32.1)
+      '@sanity/mutate': 0.18.1(xstate@5.32.2)
       '@sanity/telemetry': 1.1.0(react@19.2.7)
       '@sanity/types': 5.31.1(@types/react@19.2.17)
       groq: 3.88.1-typegen-experimental.0
@@ -12699,13 +12699,13 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@xstate/react@6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.1)':
+  '@xstate/react@6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.2)':
     dependencies:
       react: 19.2.7
       use-isomorphic-layout-effect: 1.2.1(@types/react@19.2.17)(react@19.2.7)
       use-sync-external-store: 1.6.0(react@19.2.7)
     optionalDependencies:
-      xstate: 5.32.1
+      xstate: 5.32.2
     transitivePeerDependencies:
       - '@types/react'
 
@@ -16808,7 +16808,7 @@ snapshots:
 
   xmlchars@2.2.0: {}
 
-  xstate@5.32.1: {}
+  xstate@5.32.2: {}
 
   xxhash-wasm@1.1.0: {}
 
