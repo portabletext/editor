@@ -1740,4 +1740,61 @@ describe('event.update value', () => {
       expect(editor.getSnapshot().context.value).toEqual([block1, block3])
     })
   })
+
+  test("Scenario: Updating an inline object's `text` field", async () => {
+    const schemaDefinition = defineSchema({
+      inlineObjects: [
+        {name: 'inlineNote', fields: [{name: 'text', type: 'string'}]},
+      ],
+    })
+    const {editor} = await createTestEditor({
+      schemaDefinition,
+      initialValue: [
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [
+            {_key: 's1', _type: 'span', text: '', marks: []},
+            {_key: 'n1', _type: 'inlineNote', text: ''},
+            {_key: 's2', _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [
+            {_key: 's1', _type: 'span', text: '', marks: []},
+            {_key: 'n1', _type: 'inlineNote', text: 'hello'},
+            {_key: 's2', _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [
+            {_key: 's1', _type: 'span', text: '', marks: []},
+            {_key: 'n1', _type: 'inlineNote', text: 'hello'},
+            {_key: 's2', _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })
