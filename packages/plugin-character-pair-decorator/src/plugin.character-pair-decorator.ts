@@ -1,9 +1,13 @@
-import type {BlockOffset, Editor, EditorContext} from '@portabletext/editor'
+import type {
+  BlockOffset,
+  Editor,
+  EditorContext,
+  EditorSelection,
+} from '@portabletext/editor'
 import {useEditor} from '@portabletext/editor'
 import {defineBehavior, effect, raise} from '@portabletext/editor/behaviors'
 import * as utils from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
-import {isDeepEqual} from 'remeda'
 import {
   assign,
   fromCallback,
@@ -53,6 +57,7 @@ type DecoratorPairEvent =
         anchor: BlockOffset
         focus: BlockOffset
       }
+      selection: EditorSelection
     }
   | {
       type: 'delete.backward'
@@ -99,7 +104,7 @@ const selectionListenerCallback: CallbackLogicFunction<
   // behavior events.
   const subscription = input.editor.on('selection', (event) => {
     if (!event.selection) {
-      sendBack({type: 'selection', blockOffsets: undefined})
+      sendBack({type: 'selection', blockOffsets: undefined, selection: null})
       return
     }
 
@@ -114,11 +119,19 @@ const selectionListenerCallback: CallbackLogicFunction<
     })
 
     if (!anchor || !focus) {
-      sendBack({type: 'selection', blockOffsets: undefined})
+      sendBack({
+        type: 'selection',
+        blockOffsets: undefined,
+        selection: event.selection,
+      })
       return
     }
 
-    sendBack({type: 'selection', blockOffsets: {anchor, focus}})
+    sendBack({
+      type: 'selection',
+      blockOffsets: {anchor, focus},
+      selection: event.selection,
+    })
   })
 
   return () => subscription.unsubscribe()
@@ -163,6 +176,7 @@ const decoratorPairMachine = setup({
       }) => string | undefined
       editor: Editor
       offsetAfterDecorator?: BlockOffset
+      endSelection: EditorSelection
       pair: {char: string; amount: number}
     },
     input: {} as {
@@ -191,6 +205,7 @@ const decoratorPairMachine = setup({
   context: ({input}) => ({
     decorator: input.decorator,
     editor: input.editor,
+    endSelection: null,
     pair: input.pair,
   }),
   initial: 'idle',
@@ -211,6 +226,8 @@ const decoratorPairMachine = setup({
           target: 'decorator added',
           actions: assign({
             offsetAfterDecorator: ({event}) => event.blockOffset,
+            endSelection: ({context}) =>
+              context.editor.getSnapshot().context.selection,
           }),
         },
       },
@@ -235,15 +252,41 @@ const decoratorPairMachine = setup({
         'selection': {
           target: 'idle',
           guard: ({context, event}) => {
-            const selectionChanged = !isDeepEqual(
-              {
-                anchor: context.offsetAfterDecorator,
-                focus: context.offsetAfterDecorator,
-              },
-              event.blockOffsets,
-            )
+            const offsetAfterDecorator = context.offsetAfterDecorator
 
-            return selectionChanged
+            if (event.blockOffsets && offsetAfterDecorator) {
+              // Block offsets are compared rather than raw selection points
+              // because they normalize away span-level differences (e.g. the
+              // cursor at the same position but in a different span after
+              // normalization).
+              const decoratorBlock = offsetAfterDecorator.path.at(-1)
+              const anchorBlock = event.blockOffsets.anchor.path.at(-1)
+              const focusBlock = event.blockOffsets.focus.path.at(-1)
+
+              if (
+                !utils.isKeyedSegment(decoratorBlock) ||
+                !utils.isKeyedSegment(anchorBlock) ||
+                !utils.isKeyedSegment(focusBlock)
+              ) {
+                return false
+              }
+
+              const anchorChanged =
+                decoratorBlock._key !== anchorBlock._key ||
+                offsetAfterDecorator.offset !== event.blockOffsets.anchor.offset
+              const focusChanged =
+                decoratorBlock._key !== focusBlock._key ||
+                offsetAfterDecorator.offset !== event.blockOffsets.focus.offset
+
+              return anchorChanged || focusChanged
+            }
+
+            // Block offsets can't be computed when the cursor is on an inline
+            // object, so fall back to comparing the raw selections.
+            return !utils.isEqualSelections(
+              context.endSelection,
+              event.selection,
+            )
           },
         },
         'delete.backward': {

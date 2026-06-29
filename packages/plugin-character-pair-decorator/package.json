@@ -55,7 +55,6 @@
   },
   "dependencies": {
     "@xstate/react": "catalog:",
-    "remeda": "catalog:",
     "xstate": "catalog:"
   },
   "devDependencies": {
