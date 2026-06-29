@@ -292,4 +292,34 @@ describe(getSibling.name, () => {
     expect(entry?.node).toBe(testbed.codeLine1)
     expect(entry?.path).toEqual([{_key: 'k11'}, 'code', {_key: 'k8'}])
   })
+
+  test('resolves the sibling from the value when the blockIndexMap misses', () => {
+    // getNode/getChildren/getAncestors linear-scan the value when
+    // blockIndexMap misses (unkeyed transient nodes) or disagrees with it (a
+    // textPatch snapshot pairs the live map with a pre-apply value).
+    // getSibling must be equally robust: an empty map stands in for either
+    // case, and the sibling still lives in the value.
+    const snapshot = {
+      context: testbed.snapshot.context,
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    const next = getSibling(snapshot, [{_key: 'k3'}], {direction: 'next'})
+    expect(next?.node).toBe(testbed.image)
+    expect(next?.path).toEqual([{_key: 'k4'}])
+
+    const previous = getSibling(snapshot, [{_key: 'k4'}], {
+      direction: 'previous',
+    })
+    expect(previous?.node).toBe(testbed.textBlock1)
+    expect(previous?.path).toEqual([{_key: 'k3'}])
+
+    const nestedSpan = getSibling(
+      snapshot,
+      [{_key: 'k3'}, 'children', {_key: 'k0'}],
+      {direction: 'next'},
+    )
+    expect(nestedSpan?.node).toBe(testbed.stockTicker1)
+    expect(nestedSpan?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k1'}])
+  })
 })

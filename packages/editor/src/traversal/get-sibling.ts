@@ -59,9 +59,28 @@ export function getSibling(
   const parent = parentPath(path)
   const children = getChildren(snapshot, parent)
 
-  const currentIndex = snapshot.blockIndexMap.get(serializePath(path))
+  // Prefer the O(1) `blockIndexMap` lookup, but validate it against the
+  // resolved children before trusting it. The map can miss (an unkeyed
+  // transient node) or disagree with the traversed value (a snapshot that
+  // pairs the live map with a pre-apply value, e.g. `textPatch`); only then
+  // fall back to an O(n) scan of `children`, which is value-derived and the
+  // source of truth. Mirrors the fast-path-then-scan in `getNode`/
+  // `getChildren`.
+  let currentIndex = snapshot.blockIndexMap.get(serializePath(path)) ?? -1
+  const mappedSegment = children[currentIndex]?.path.at(-1)
 
-  if (currentIndex === undefined) {
+  if (
+    !(isKeyedSegment(mappedSegment) && mappedSegment._key === lastSegment._key)
+  ) {
+    currentIndex = children.findIndex((child) => {
+      const childSegment = child.path.at(-1)
+      return (
+        isKeyedSegment(childSegment) && childSegment._key === lastSegment._key
+      )
+    })
+  }
+
+  if (currentIndex === -1) {
     return undefined
   }
 
