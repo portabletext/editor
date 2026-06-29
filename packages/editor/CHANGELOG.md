@@ -1,5 +1,32 @@
 # Changelog
 
+## 7.8.2
+
+### Patch Changes
+
+- [#2850](https://github.com/portabletext/editor/pull/2850) [`1fbedd4`](https://github.com/portabletext/editor/commit/1fbedd4bf013fcb76dbcfb36b3e8d9fa3e163f39) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): resolve block-index-map child indices via the map, not a linear scan
+
+- [#2850](https://github.com/portabletext/editor/pull/2850) [`e71e642`](https://github.com/portabletext/editor/commit/e71e642956c6b6988416a02ddf71db2dc53a9483) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): scan each sibling group for duplicate keys once instead of per node
+
+- [#2870](https://github.com/portabletext/editor/pull/2870) [`ed1845e`](https://github.com/portabletext/editor/commit/ed1845ef9c7075b58596405c62435de14389893e) Thanks [@christianhg](https://github.com/christianhg)! - fix: delete a range that spans only empty same-parent blocks
+
+  Selecting across several empty blocks and pressing delete (or backspace) used to leave most of them behind. With two empty blocks the deletion was a silent no-op; with three or more, one block was removed and the rest stayed put. The user's selection extent was being silently dropped before the deletion ran.
+
+  The range-unhang step that normally pulls a trailing offset-0 focus back to the end of the previous block's content treated empty blocks as a valid anchor too, which either collapsed the range onto itself or shrank it to skip the trailing blocks. It now only anchors at non-empty content, and leaves the range alone when the walked region is fully empty so the deletion runs across every selected block.
+
+- [#2874](https://github.com/portabletext/editor/pull/2874) [`39f9c40`](https://github.com/portabletext/editor/commit/39f9c406b371ce546df0629f9abc684941245c3c) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.32.2
+
+- [`cd56b64`](https://github.com/portabletext/editor/commit/cd56b641480a00125d098ff09472394aba631f13) Thanks [@christianhg](https://github.com/christianhg)! - fix: select a dragged inline object at its destination instead of the caret after it
+
+  Dragging an inline object to a new position now leaves that object selected, the same as inserting one. Previously the caret was placed on the span immediately following the dropped object.
+
+- [#2871](https://github.com/portabletext/editor/pull/2871) [`46593d5`](https://github.com/portabletext/editor/commit/46593d537ff9d4aa1ef7f3e0ab3333266c749bbb) Thanks [@christianhg](https://github.com/christianhg)! - fix: write a `text`-named field on an inline object during value sync
+
+  An inline object with a custom field named `text` now picks up changes to that
+  field when the editor receives an updated value. Previously the change was
+  dropped: the editor reconciled the field as if it were span text, so the new
+  value never reached the inline object even though the incoming value carried it.
+
 ## 7.8.1
 
 ### Patch Changes
