@@ -1879,4 +1879,83 @@ describe.skipIf(!isChromium)('Composition (IME)', () => {
       })
     })
   })
+
+  describe('Cross-block composition', () => {
+    test('composition replacing a cross-block selection merges blocks', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const block0Key = keyGenerator()
+      const span0Key = keyGenerator()
+      const block1Key = keyGenerator()
+      const span1Key = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _key: block0Key,
+            _type: 'block',
+            children: [{_key: span0Key, _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: block1Key,
+            _type: 'block',
+            children: [{_key: span1Key, _type: 'span', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      await userEvent.click(locator)
+
+      const selection = {
+        anchor: {
+          path: [{_key: block0Key}, 'children', {_key: span0Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 2,
+        },
+        backward: false,
+      }
+      editor.send({
+        type: 'select',
+        at: selection,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual(selection)
+      })
+
+      enableCompositionKeyEvents()
+
+      const session = cdp()
+
+      // Compose 'x' via IME to replace the cross-block selection
+      await session.send('Input.imeSetComposition', {
+        text: 'x',
+        selectionStart: 1,
+        selectionEnd: 1,
+      })
+      await delay()
+      await session.send('Input.insertText', {text: 'x'})
+
+      // Assert: blocks should be merged into one with 'fxr'
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: block0Key,
+            _type: 'block',
+            children: [{_key: span0Key, _type: 'span', text: 'fxr', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+  })
 })

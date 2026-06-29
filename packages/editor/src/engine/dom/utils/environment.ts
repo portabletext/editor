@@ -1,8 +1,3 @@
-export const IS_IOS =
-  typeof navigator !== 'undefined' &&
-  typeof window !== 'undefined' &&
-  /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-  !(window as any).MSStream
 export const IS_ANDROID =
   typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
 
@@ -33,23 +28,6 @@ const IS_ANDROID_CHROME_LEGACY =
   typeof navigator !== 'undefined' &&
   /Chrome?\/(?:[0-5]?\d)(?:\.)/i.test(navigator.userAgent)
 
-// Firefox did not support `beforeInput` until `v87`.
-export const IS_FIREFOX_LEGACY =
-  typeof navigator !== 'undefined' &&
-  /^(?!.*Seamonkey)(?=.*Firefox\/(?:[0-7][0-9]|[0-8][0-6])(?:\.)).*/i.test(
-    navigator.userAgent,
-  )
-
-// UC mobile browser
-export const IS_UC_MOBILE =
-  typeof navigator !== 'undefined' && /.*UCBrowser/.test(navigator.userAgent)
-
-// Wechat browser (not including mac wechat)
-export const IS_WECHATBROWSER =
-  typeof navigator !== 'undefined' &&
-  /.*Wechat/.test(navigator.userAgent) &&
-  !/.*MacWechat/.test(navigator.userAgent) && // avoid lookbehind (buggy in safari < 16.4)
-  (!IS_CHROME || IS_CHROME_LEGACY) // wechat and low chrome is real wechat
 // Check if DOM is available as React does internally.
 // https://github.com/facebook/react/blob/master/packages/shared/ExecutionEnvironment.js
 export const CAN_USE_DOM = !!(
