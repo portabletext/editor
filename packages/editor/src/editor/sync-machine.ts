@@ -1002,14 +1002,21 @@ function updateBlock({
             oldBlockChild,
           )
 
-          const {text: _text, ...childProps} =
-            currentBlockChild as unknown as Record<string, unknown>
-
-          applySetNode(slateEditor, childProps, path)
-
           const isSpanNode =
             isSpan({schema: context.schema}, currentBlockChild) &&
             isSpan({schema: context.schema}, oldBlockChild)
+
+          const childProps = {
+            ...(currentBlockChild as unknown as Record<string, unknown>),
+          }
+
+          // A span's `text` is applied below via text operations. On an
+          // inline object `text` is an ordinary field and is written here.
+          if (isSpanNode) {
+            delete childProps['text']
+          }
+
+          applySetNode(slateEditor, childProps, path)
 
           if (isSpanNode && isTextChanged) {
             if (oldBlockChild.text.length > 0) {
