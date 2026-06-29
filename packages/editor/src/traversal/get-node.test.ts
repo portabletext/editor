@@ -267,3 +267,51 @@ describe(getNode.name, () => {
     ).toBeUndefined()
   })
 })
+
+describe(`${getNode.name} strips trailing field-name segments`, () => {
+  const testbed = createNodeTraversalTestbed()
+
+  test('block-object path with trailing primitive field returns the block path', () => {
+    // `image` is a block object. A path that points into a primitive
+    // field of the block resolves to the block node itself; the
+    // returned path identifies the block, not the field.
+    const entry = getNode(testbed.snapshot, [{_key: 'k4'}, 'caption'])
+    expect(entry?.node).toBe(testbed.image)
+    expect(entry?.path).toEqual([{_key: 'k4'}])
+  })
+
+  test('span path with trailing `text` returns the span path', () => {
+    // `span1` has a primitive `text` field. A path that points into
+    // it resolves to the span itself.
+    const entry = getNode(testbed.snapshot, [
+      {_key: 'k3'},
+      'children',
+      {_key: 'k0'},
+      'text',
+    ])
+    expect(entry?.node).toBe(testbed.span1)
+    expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k0'}])
+  })
+
+  test('inline-object path with trailing primitive field returns the inline-object path', () => {
+    // `stockTicker1` is an inline object. A path that points into
+    // any field of it resolves to the inline object itself.
+    const entry = getNode(testbed.snapshot, [
+      {_key: 'k3'},
+      'children',
+      {_key: 'k1'},
+      'symbol',
+    ])
+    expect(entry?.node).toBe(testbed.stockTicker1)
+    expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k1'}])
+  })
+
+  test('returned path round-trips through `getNode`', () => {
+    // A second `getNode` call against the returned path resolves to
+    // the same node — the path is a stable identifier.
+    const first = getNode(testbed.snapshot, [{_key: 'k4'}, 'caption'])
+    const second = getNode(testbed.snapshot, first?.path ?? [])
+    expect(second?.node).toBe(testbed.image)
+    expect(second?.path).toEqual([{_key: 'k4'}])
+  })
+})
