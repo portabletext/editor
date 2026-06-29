@@ -96,13 +96,20 @@ export function resolveTestbedContainers(
 export function createNodeTraversalTestbed() {
   const keyGenerator = createTestKeyGenerator()
 
-  const span1 = {_key: keyGenerator(), _type: 'span', text: 'hello '}
+  const link1 = {_key: 'mark1', _type: 'link', href: 'https://a'}
+  const span1 = {
+    _key: keyGenerator(),
+    _type: 'span',
+    text: 'hello ',
+    marks: ['mark1'],
+  }
   const stockTicker1 = {_key: keyGenerator(), _type: 'stock-ticker'}
   const span2 = {_key: keyGenerator(), _type: 'span', text: ' world'}
   const textBlock1 = {
     _key: keyGenerator(),
     _type: 'block',
     children: [span1, stockTicker1, span2],
+    markDefs: [link1],
   }
 
   const image = {_key: keyGenerator(), _type: 'image'}
@@ -198,6 +205,7 @@ export function createNodeTraversalTestbed() {
 
   const schema = compileSchema(
     defineSchema({
+      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
       inlineObjects: [{name: 'stock-ticker'}],
       blockObjects: [
         {name: 'image'},
@@ -277,6 +285,7 @@ export function createNodeTraversalTestbed() {
     context,
     snapshot,
     textBlock1,
+    link1,
     span1,
     stockTicker1,
     span2,
