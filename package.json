@@ -93,6 +93,9 @@
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom",
       "@types/react-is": "$@types/react-is"
+    },
+    "patchedDependencies": {
+      "node-fetch@2.7.0": "patches/node-fetch@2.7.0.patch"
     }
   }
 }

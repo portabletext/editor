@@ -1,0 +1,39 @@
+diff --git a/lib/index.es.js b/lib/index.es.js
+index aae9799c1a8798d5899ffed6deda4c98b7007b48..ef123d67e2d89775ba8542c96dc7a6372f10ea3a 100644
+--- a/lib/index.es.js
++++ b/lib/index.es.js
+@@ -1740,7 +1740,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
+ 				// if a data listener is still present we didn't end cleanly
+ 				const hasDataListener = socket && socket.listenerCount('data') > 0;
+ 
+-				if (hasDataListener && !hadError) {
++				if (hasDataListener && !hadError && !response.complete) {
+ 					const err = new Error('Premature close');
+ 					err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+ 					errorCallback(err);
+diff --git a/lib/index.js b/lib/index.js
+index 567ff5da58e83683bec0ea9e86221041ddf9435f..580872b1135530f3744f94f998a78dd0c3b8d307 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1744,7 +1744,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
+ 				// if a data listener is still present we didn't end cleanly
+ 				const hasDataListener = socket && socket.listenerCount('data') > 0;
+ 
+-				if (hasDataListener && !hadError) {
++				if (hasDataListener && !hadError && !response.complete) {
+ 					const err = new Error('Premature close');
+ 					err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+ 					errorCallback(err);
+diff --git a/lib/index.mjs b/lib/index.mjs
+index 2863dd9c318754a77c6bfb57ec5e7db8759abd8b..8a491b962fa6f44e27d22244ee2377521b21d68e 100644
+--- a/lib/index.mjs
++++ b/lib/index.mjs
+@@ -1738,7 +1738,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
+ 				// if a data listener is still present we didn't end cleanly
+ 				const hasDataListener = socket && socket.listenerCount('data') > 0;
+ 
+-				if (hasDataListener && !hadError) {
++				if (hasDataListener && !hadError && !response.complete) {
+ 					const err = new Error('Premature close');
+ 					err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+ 					errorCallback(err);

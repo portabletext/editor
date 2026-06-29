@@ -107,6 +107,11 @@ overrides:
   '@types/react-dom': ^19.2.3
   '@types/react-is': ^19.2.0
 
+patchedDependencies:
+  node-fetch@2.7.0:
+    hash: b0d5cc14560f7561e59b22f6ce0c4264b42472f44800c61d491f2f774d06c486
+    path: patches/node-fetch@2.7.0.patch
+
 importers:
 
   .:
@@ -9069,7 +9074,7 @@ snapshots:
   '@changesets/get-github-info@0.7.0':
     dependencies:
       dataloader: 1.4.0
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(patch_hash=b0d5cc14560f7561e59b22f6ce0c4264b42472f44800c61d491f2f774d06c486)
     transitivePeerDependencies:
       - encoding
 
@@ -15049,7 +15054,7 @@ snapshots:
 
   node-fetch-native@1.6.7: {}
 
-  node-fetch@2.7.0:
+  node-fetch@2.7.0(patch_hash=b0d5cc14560f7561e59b22f6ce0c4264b42472f44800c61d491f2f774d06c486):
     dependencies:
       whatwg-url: 5.0.0
 
