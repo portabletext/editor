@@ -33,6 +33,13 @@ export type ContainerNodeForType<TType extends string> = TType extends
  */
 export type ContainerRenderProps = {
   attributes: Record<string, unknown>
+  /**
+   * A hidden, selectable proxy the engine always provides. Render it
+   * anywhere in the container's chrome to make the container selectable as a
+   * block-object: a selection on the spacer selects the container itself.
+   * Don't render it and the container stays caret-only, as before.
+   */
+  spacer?: ReactElement
   children: ReactElement
   focused: boolean
   node: PortableTextObject
@@ -352,6 +359,13 @@ export function defineContainer<const TType extends string>(config: {
   arrayField: string
   render?: (props: {
     attributes: Record<string, unknown>
+    /**
+     * A hidden, selectable proxy the engine always provides. Render it in
+     * the container's chrome to make the container selectable as a
+     * block-object: a selection on the spacer selects the container itself.
+     * Don't render it and the container stays caret-only.
+     */
+    spacer?: ReactElement
     children: ReactElement
     focused: boolean
     node: ContainerNodeForType<TType>
