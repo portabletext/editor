@@ -1,5 +1,6 @@
 import {defineContainer} from '@portabletext/editor'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {deleteBehaviors} from './behaviors/delete'
 import {insertBehaviors} from './behaviors/insert'
 import {moveBehaviors} from './behaviors/move'
 import {unsetBehaviors} from './behaviors/unset'
@@ -39,6 +40,9 @@ const tableContainer = defineContainer({
  * `custom.insert.column`, `custom.unset.row`, `custom.unset.column`,
  * `custom.unset.table`, `custom.move.row`, or `custom.move.column`.
  *
+ * Also intercepts `delete` and `split` when the selection spans more than
+ * one cell, clearing the selected rectangle instead of deleting structure.
+ *
  * @alpha
  */
 export function TablePlugin() {
@@ -46,7 +50,12 @@ export function TablePlugin() {
     <>
       <NodePlugin nodes={[tableContainer]} />
       <BehaviorPlugin
-        behaviors={[...insertBehaviors, ...unsetBehaviors, ...moveBehaviors]}
+        behaviors={[
+          ...insertBehaviors,
+          ...unsetBehaviors,
+          ...moveBehaviors,
+          ...deleteBehaviors,
+        ]}
       />
     </>
   )
