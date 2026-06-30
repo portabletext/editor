@@ -310,6 +310,9 @@ importers:
       '@portabletext/plugin-paste-link':
         specifier: workspace:*
         version: link:../../packages/plugin-paste-link
+      '@portabletext/plugin-table':
+        specifier: workspace:*
+        version: link:../../packages/plugin-table
       '@portabletext/plugin-typeahead-picker':
         specifier: workspace:*
         version: link:../../packages/plugin-typeahead-picker

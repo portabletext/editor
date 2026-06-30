@@ -49,12 +49,12 @@ export const markdownOptions: Partial<PortableTextRenderers> = {
     // each cell to a single line of inline-rendered text since markdown
     // tables do not support multi-line cells.
     'table': (({value, renderNode}) => {
-      const tableValue = value as {headerRows?: number; rows?: Array<Row>}
+      const tableValue = value as {headerRow?: boolean; rows?: Array<Row>}
       const rows = tableValue.rows ?? []
       if (rows.length === 0 || rows[0]?.cells.length === 0) {
         return ''
       }
-      const headerRows = tableValue.headerRows ?? 0
+      const headerRow = tableValue.headerRow === true
       const renderCell = (cell: Cell): string => {
         return cell.content
           .map((block, index) =>
@@ -70,18 +70,13 @@ export const markdownOptions: Partial<PortableTextRenderers> = {
           .trim()
       }
       const lines: Array<string> = []
-      for (let i = 0; i < headerRows; i++) {
-        const row = rows[i]
-        if (!row) {
-          continue
-        }
-        lines.push(`| ${row.cells.map(renderCell).join(' | ')} |`)
-      }
-      if (headerRows > 0) {
+      const bodyStart = headerRow ? 1 : 0
+      if (headerRow) {
+        lines.push(`| ${rows[0]!.cells.map(renderCell).join(' | ')} |`)
         const sep = rows[0]!.cells.map(() => ' --- ').join('|')
         lines.push(`|${sep}|`)
       }
-      for (let i = headerRows; i < rows.length; i++) {
+      for (let i = bodyStart; i < rows.length; i++) {
         const row = rows[i]
         if (!row) {
           continue

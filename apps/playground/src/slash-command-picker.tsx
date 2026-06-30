@@ -36,7 +36,7 @@ type CommandMatch = {
   icon: JSX.Element
   keywords: string[]
   action:
-    | {type: 'insert.block'; block: {_type: string}}
+    | {type: 'insert.block'; block: {_type: string; [field: string]: unknown}}
     | {type: 'style.toggle'; style: string}
     | {type: 'list item.toggle'; listItem: string}
 }
@@ -161,7 +161,7 @@ const commands: CommandMatch[] = [
     keywords: ['table', 'grid', 'rows', 'columns'],
     action: {
       type: 'insert.block',
-      block: {_type: 'table'},
+      block: {_type: 'table', headerRow: true},
     },
   },
   {
