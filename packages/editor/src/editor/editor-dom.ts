@@ -1,8 +1,10 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {getDomNode} from '../dom-traversal/get-dom-node'
+import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {rangeEdges} from '../engine/range/range-edges'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
 import {getFragment} from '../selectors/selector.get-fragment'
 import {getNodes} from '../traversal/get-nodes'
@@ -14,6 +16,10 @@ export type EditorDom = {
   getBlockNodes: (snapshot: EditorSnapshot) => Array<Node>
   getChildNodes: (snapshot: EditorSnapshot) => Array<Node>
   getEditorElement: () => Element | undefined
+  /**
+   * The bounding rect of the snapshot's selection. A collapsed selection gives
+   * a caret rect.
+   */
   getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
   getStartBlockElement: (snapshot: EditorSnapshot) => Element | null
   getEndBlockElement: (snapshot: EditorSnapshot) => Element | null
@@ -42,7 +48,7 @@ export function createEditorDom(
     getBlockNodes: (snapshot) => getBlockNodes(editorEngine, snapshot),
     getChildNodes: (snapshot) => getChildNodes(editorEngine, snapshot),
     getEditorElement: () => getEditorElement(editorEngine),
-    getSelectionRect: (snapshot) => getSelectionRect(snapshot),
+    getSelectionRect: (snapshot) => getSelectionRect(editorEngine, snapshot),
     getStartBlockElement: (snapshot) =>
       getStartBlockElement(editorEngine, snapshot),
     getEndBlockElement: (snapshot) =>
@@ -127,21 +133,29 @@ function getEditorElement(editorEngine: PortableTextEditorEngine) {
   return getDomNode(editorEngine, [])
 }
 
-function getSelectionRect(snapshot: EditorSnapshot) {
-  if (!snapshot.context.selection) {
+function getSelectionRect(
+  editorEngine: PortableTextEditorEngine,
+  snapshot: EditorSnapshot,
+): DOMRect | null {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return null
   }
 
   try {
-    const selection = window.getSelection()
+    const engineRange = resolveSelection({snapshot}, selection)
 
-    if (!selection) {
+    if (!engineRange) {
       return null
     }
 
-    const range = selection.getRangeAt(0)
-    return range.getBoundingClientRect()
+    return DOMEditor.toDOMRange(
+      editorEngine,
+      engineRange,
+    ).getBoundingClientRect()
   } catch {
+    // `toDOMRange` throws when the selection isn't rendered (unmounted, virtualized).
     return null
   }
 }
