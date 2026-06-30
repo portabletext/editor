@@ -310,6 +310,9 @@ importers:
       '@portabletext/plugin-paste-link':
         specifier: workspace:*
         version: link:../../packages/plugin-paste-link
+      '@portabletext/plugin-table':
+        specifier: workspace:*
+        version: link:../../packages/plugin-table
       '@portabletext/plugin-typeahead-picker':
         specifier: workspace:*
         version: link:../../packages/plugin-typeahead-picker
@@ -1259,6 +1262,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@portabletext/test':
+        specifier: workspace:^
+        version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
@@ -1268,6 +1274,15 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@vitejs/plugin-react':
+        specifier: catalog:tooling
+        version: 5.2.0(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/browser':
+        specifier: catalog:tooling
+        version: 4.1.9(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.9)
+      '@vitest/browser-playwright':
+        specifier: catalog:tooling
+        version: 4.1.9(playwright@1.60.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.9)
       babel-plugin-react-compiler:
         specifier: catalog:tooling
         version: 1.0.0
@@ -1286,6 +1301,9 @@ importers:
       typescript-eslint:
         specifier: catalog:tooling
         version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+      vitest:
+        specifier: catalog:tooling
+        version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/plugin-typeahead-picker:
     dependencies:

@@ -403,9 +403,9 @@ export const playgroundSchemaDefinition = defineSchema({
       name: 'table',
       fields: [
         {
-          name: 'headerRows',
-          title: 'Header rows',
-          type: 'number',
+          name: 'headerRow',
+          title: 'Header row',
+          type: 'boolean',
         },
         {
           name: 'rows',
