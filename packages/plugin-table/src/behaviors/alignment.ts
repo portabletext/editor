@@ -42,3 +42,19 @@ export function alignmentRemoveAction(
     alignment.filter((_, index) => index !== columnIndex),
   )
 }
+
+export function alignmentMoveAction(
+  table: Table,
+  tablePath: Path,
+  fromIndex: number,
+  toIndex: number,
+) {
+  const alignment = table.alignment
+  if (!alignment) {
+    return undefined
+  }
+  const next = [...alignment]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved ?? null)
+  return setAlignment(tablePath, next)
+}

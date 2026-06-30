@@ -1,6 +1,7 @@
 import {defineContainer} from '@portabletext/editor'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {insertBehaviors} from './behaviors/insert'
+import {moveBehaviors} from './behaviors/move'
 import {unsetBehaviors} from './behaviors/unset'
 
 // `table` -> `row` -> `cell` nested containers. The render is intentionally
@@ -33,10 +34,10 @@ const tableContainer = defineContainer({
 })
 
 /**
- * Registers the table containers and the row/column insert and unset
- * behaviors. Drive them by dispatching `custom.insert.row`,
- * `custom.insert.column`, `custom.unset.row`, `custom.unset.column`, or
- * `custom.unset.table`.
+ * Registers the table containers and the row/column insert, unset, and
+ * move behaviors. Drive them by dispatching `custom.insert.row`,
+ * `custom.insert.column`, `custom.unset.row`, `custom.unset.column`,
+ * `custom.unset.table`, `custom.move.row`, or `custom.move.column`.
  *
  * @alpha
  */
@@ -44,7 +45,9 @@ export function TablePlugin() {
   return (
     <>
       <NodePlugin nodes={[tableContainer]} />
-      <BehaviorPlugin behaviors={[...insertBehaviors, ...unsetBehaviors]} />
+      <BehaviorPlugin
+        behaviors={[...insertBehaviors, ...unsetBehaviors, ...moveBehaviors]}
+      />
     </>
   )
 }
