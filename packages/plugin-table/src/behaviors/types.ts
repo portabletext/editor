@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/editor'
+import type {Path, PortableTextBlock} from '@portabletext/editor'
 
 export type Cell = {
   _type: 'cell'
@@ -28,4 +28,10 @@ export function isCell(node: PortableTextBlock): node is Cell {
 export function isTable(node: PortableTextBlock): node is Table {
   // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
   return node._type === 'table' && 'rows' in node && Array.isArray(node['rows'])
+}
+
+export type TableSelection = {
+  tablePath: Path
+  rowRange: [number, number]
+  colRange: [number, number]
 }
