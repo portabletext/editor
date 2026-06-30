@@ -10,11 +10,11 @@ catalogs:
       specifier: ^3.2.0
       version: 3.2.0
     '@sanity/schema':
-      specifier: ^6.1.0
-      version: 6.1.0
+      specifier: ^6.3.0
+      version: 6.3.0
     '@sanity/types':
-      specifier: ^6.1.0
-      version: 6.1.0
+      specifier: ^6.3.0
+      version: 6.3.0
     '@xstate/react':
       specifier: ^6.1.0
       version: 6.1.0
@@ -495,14 +495,14 @@ importers:
         version: link:../schema
       '@sanity/types':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.3.0(@types/react@19.2.17)
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
       '@sanity/schema':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.3.0(@types/react@19.2.17)
       '@types/jsdom':
         specifier: catalog:tooling
         version: 27.0.0
@@ -1465,10 +1465,10 @@ importers:
         version: link:../schema
       '@sanity/schema':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.3.0(@types/react@19.2.17)
       '@sanity/types':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.3.0(@types/react@19.2.17)
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
@@ -4412,6 +4412,10 @@ packages:
     resolution: {integrity: sha512-DrQqLAes7W9Ek2iKgTZ+ffY1v3DURJ6//iXJZMEQSUeRbxls2ifRTdV1gRS26v8nMkL0OCH+WCoUUseD4vhuQQ==}
     engines: {node: '>=20'}
 
+  '@sanity/client@7.23.0':
+    resolution: {integrity: sha512-4VFcLeP/lD0lhe5TD102tSnoW72ERT6xD/ZLb9pdLNMbZgbOciAy3m0hAYvs1vjA6663ZjNM6SLwl1Utq97DHA==}
+    engines: {node: '>=20'}
+
   '@sanity/comlink@4.0.1':
     resolution: {integrity: sha512-vdGOd6sxNjqTo2H3Q3L2/Gepy+cDBiQ1mr9ck7c/A9o4NnmBLoDliifsNHIwgNwBUz37oH4+EIz/lIjNy8hSew==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -4481,8 +4485,8 @@ packages:
     peerDependencies:
       prettier: ^3.7.3
 
-  '@sanity/schema@6.1.0':
-    resolution: {integrity: sha512-+/nIeQrkUJDWBBnKUP4F0TxFaxi16UrtfckrbTSLH4wd8mWUtrPdnxmzMTedQ2dhMj3VRLMuuu1+h/lh3iy50Q==}
+  '@sanity/schema@6.3.0':
+    resolution: {integrity: sha512-2Bud3VCBSiS0B4KwHlCx4jYUAWX3OWVByq+JwnfCKrDWGFgxRohrmS0Lx8G9fjbUJ4fUX868HFEdyTt1METW7w==}
 
   '@sanity/sdk-react@2.13.0':
     resolution: {integrity: sha512-A8atYKn9kmdefqDe1v8pykaW6PVjQz+RTyasNftiZlEZVH689WUNSHfcLIt3JouREiiaH/jx0Svj4AcrXykH7w==}
@@ -4513,8 +4517,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.17
 
-  '@sanity/types@6.1.0':
-    resolution: {integrity: sha512-EtkC/oB1585wkTEiVyuBsIJYLGlbNldWzMuYPvi91WKBGhMyJ1OJqMfpZDcqWpsvTqjV8TH+/YlVwi+CQBKcTA==}
+  '@sanity/types@6.3.0':
+    resolution: {integrity: sha512-IMll1cRPr8DGHEwiOoYiGIvRCA4i0ug25V5tzrCBeWhvJPX9vr4vA7jTHf6dEzvSZW9q6Fo/0X/9aBS42IOrxQ==}
     peerDependencies:
       '@types/react': ^19.2.17
 
@@ -5139,9 +5143,9 @@ packages:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
 
-  arrify@2.0.1:
-    resolution: {integrity: sha512-3duEwti880xqi4eAMN8AyR4a0ByT90zoYdLlevfrvU43vb0YZwZVfxOgxWrLXXXpyugL0hNZc9G6BiB5B3nUug==}
-    engines: {node: '>=8'}
+  arrify@3.0.0:
+    resolution: {integrity: sha512-tLkvA81vQG/XqE2mjDkGQHoOINtMHtysSnemrmoGe6PydDPMRbVugqyk4A6V/WDWEfm3l+0d8anA9r8cv/5Jaw==}
+    engines: {node: '>=12'}
 
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
@@ -5874,6 +5878,10 @@ packages:
     resolution: {integrity: sha512-Fcv6n05iKMY/obxWb7wL0T8xOiUN/5ptBlg/Vf2WAvfs175wAV7Qf+UtWKp7Jdneu+KbUe6MIL0js2WBzoAoyg==}
     engines: {node: '>=14.0.0'}
 
+  get-it@8.8.0:
+    resolution: {integrity: sha512-vRyooMBzoIdEbARGT3JcvWqMD67YzC5SKlMqofyfck1ebLh2zzlpD4hVQ3xiuuiADk4jNs0rTezVlxCMqOlZfA==}
+    engines: {node: '>=14.0.0'}
+
   get-latest-version@5.1.0:
     resolution: {integrity: sha512-Q6IBWr/zzw57zIkJmNhI23eRTw3nZ4BWWK034meLwOYU9L3J3IpXiyM73u2pYUwN6U7ahkerCwg2T0jlxiLwsw==}
     engines: {node: '>=14.18'}
@@ -5959,6 +5967,10 @@ packages:
 
   groq-js@1.30.2:
     resolution: {integrity: sha512-FqF7NNzBxya6Oq4VkTl9lg3W5Gjd3Cjwc6Et2OeAcTdmHOClwcYeAZkWR6wIm+KPtvESSYtzP59aj/+9egOKZQ==}
+    engines: {node: '>= 14'}
+
+  groq-js@1.30.3:
+    resolution: {integrity: sha512-X3Zppy8KO/mDLSu5RylcO9zON+IwxV6y6aeIWsfNNBz0PaRboUmsTVgk3Zndqp9TgWCTFvCk+Z2W0uu0R3i5DA==}
     engines: {node: '>= 14'}
 
   groq@3.88.1-typegen-experimental.0:
@@ -6386,9 +6398,9 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  leven@3.1.0:
-    resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
-    engines: {node: '>=6'}
+  leven@4.1.0:
+    resolution: {integrity: sha512-KZ9W9nWDT7rF7Dazg8xyLHGLrmpgq2nVNFUckhqdW3szVP6YhCpp/RAnpmVExA9JvrMynjwSLVrEj3AepHR6ew==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -11759,6 +11771,13 @@ snapshots:
       nanoid: 3.3.12
       rxjs: 7.8.2
 
+  '@sanity/client@7.23.0':
+    dependencies:
+      '@sanity/eventsource': 5.0.2
+      get-it: 8.8.0
+      nanoid: 3.3.12
+      rxjs: 7.8.2
+
   '@sanity/comlink@4.0.1':
     dependencies:
       rxjs: 7.8.2
@@ -11947,15 +11966,15 @@ snapshots:
       prettier: 3.7.4
       prettier-plugin-packagejson: 2.5.20(prettier@3.7.4)
 
-  '@sanity/schema@6.1.0(@types/react@19.2.17)':
+  '@sanity/schema@6.3.0(@types/react@19.2.17)':
     dependencies:
       '@sanity/descriptors': 1.3.0
       '@sanity/generate-help-url': 4.0.0
-      '@sanity/types': 6.1.0(@types/react@19.2.17)
-      arrify: 2.0.1
-      groq-js: 1.30.2
+      '@sanity/types': 6.3.0(@types/react@19.2.17)
+      arrify: 3.0.0
+      groq-js: 1.30.3
       humanize-list: 1.0.1
-      leven: 3.1.0
+      leven: 4.1.0
       lodash-es: 4.18.1
       object-inspect: 1.13.4
     transitivePeerDependencies:
@@ -12028,9 +12047,9 @@ snapshots:
       '@sanity/media-library-types': 1.4.0
       '@types/react': 19.2.17
 
-  '@sanity/types@6.1.0(@types/react@19.2.17)':
+  '@sanity/types@6.3.0(@types/react@19.2.17)':
     dependencies:
-      '@sanity/client': 7.22.1
+      '@sanity/client': 7.23.0
       '@sanity/media-library-types': 1.4.0
       '@types/react': 19.2.17
 
@@ -12822,7 +12841,7 @@ snapshots:
 
   array-union@2.1.0: {}
 
-  arrify@2.0.1: {}
+  arrify@3.0.0: {}
 
   assertion-error@2.0.1: {}
 
@@ -13657,6 +13676,13 @@ snapshots:
       through2: 4.0.2
       tunnel-agent: 0.6.0
 
+  get-it@8.8.0:
+    dependencies:
+      decompress-response: 7.0.0
+      is-retry-allowed: 2.2.0
+      through2: 4.0.2
+      tunnel-agent: 0.6.0
+
   get-latest-version@5.1.0:
     dependencies:
       get-it: 8.7.3
@@ -13756,6 +13782,12 @@ snapshots:
   graphemer@1.4.0: {}
 
   groq-js@1.30.2:
+    dependencies:
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
+  groq-js@1.30.3:
     dependencies:
       debug: 4.4.3
     transitivePeerDependencies:
@@ -14369,7 +14401,7 @@ snapshots:
       yaml: 2.8.2
       zod: 4.1.13
 
-  leven@3.1.0: {}
+  leven@4.1.0: {}
 
   levn@0.4.1:
     dependencies:
