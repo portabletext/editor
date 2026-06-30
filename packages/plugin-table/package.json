@@ -46,15 +46,20 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
+    "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
+    "@vitejs/plugin-react": "catalog:tooling",
+    "@vitest/browser": "catalog:tooling",
+    "@vitest/browser-playwright": "catalog:tooling",
     "babel-plugin-react-compiler": "catalog:tooling",
     "eslint": "catalog:tooling",
     "eslint-plugin-react-hooks": "catalog:tooling",
     "react": "catalog:",
     "typescript": "catalog:tooling",
-    "typescript-eslint": "catalog:tooling"
+    "typescript-eslint": "catalog:tooling",
+    "vitest": "catalog:tooling"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
