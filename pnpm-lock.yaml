@@ -83,8 +83,8 @@ catalogs:
       specifier: ^4.1.18
       version: 4.1.18
     typescript:
-      specifier: 5.9.3
-      version: 5.9.3
+      specifier: 6.0.3
+      version: 6.0.3
     typescript-eslint:
       specifier: ^8.48.0
       version: 8.48.0
@@ -251,7 +251,7 @@ importers:
         version: 0.12.0(@astrojs/starlight@0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)))
       starlight-typedoc:
         specifier: ^0.21.5
-        version: 0.21.5(@astrojs/starlight@0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)))(typedoc-plugin-markdown@4.9.0(typedoc@0.28.15(typescript@5.9.3)))(typedoc@0.28.15(typescript@5.9.3))
+        version: 0.21.5(@astrojs/starlight@0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)))(typedoc-plugin-markdown@4.9.0(typedoc@0.28.15(typescript@6.0.3)))(typedoc@0.28.15(typescript@6.0.3))
       tailwind-merge:
         specifier: catalog:tooling
         version: 3.4.0
@@ -266,10 +266,10 @@ importers:
         version: 27.0.2
       typedoc:
         specifier: ^0.28.15
-        version: 0.28.15(typescript@5.9.3)
+        version: 0.28.15(typescript@6.0.3)
       typedoc-plugin-markdown:
         specifier: ^4.8.0
-        version: 4.9.0(typedoc@0.28.15(typescript@5.9.3))
+        version: 4.9.0(typedoc@0.28.15(typescript@6.0.3))
     devDependencies:
       starlight-llms-txt:
         specifier: ^0.10.0
@@ -403,10 +403,10 @@ importers:
         version: 2.0.1(tailwindcss@4.1.18)
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vite:
         specifier: catalog:tooling
         version: 7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -431,7 +431,7 @@ importers:
         version: 5.2.0(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vite:
         specifier: catalog:tooling
         version: 7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -477,10 +477,10 @@ importers:
         version: 15.15.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vite:
         specifier: catalog:tooling
         version: 7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -502,7 +502,7 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/schema':
         specifier: 'catalog:'
         version: 6.1.0(@types/react@19.2.17)
@@ -517,7 +517,7 @@ importers:
         version: 27.2.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -563,7 +563,7 @@ importers:
         version: 3.2.0
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -620,10 +620,10 @@ importers:
         version: 19.2.7(react@19.2.7)
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vite:
         specifier: catalog:tooling
         version: 7.3.5(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -648,7 +648,7 @@ importers:
         version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -663,7 +663,7 @@ importers:
         version: 27.2.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@20.19.25)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -672,13 +672,13 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -706,7 +706,7 @@ importers:
         version: 4.0.2
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -715,7 +715,7 @@ importers:
         version: 14.1.2
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -728,13 +728,13 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -756,7 +756,7 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -789,10 +789,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -810,7 +810,7 @@ importers:
         version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -843,10 +843,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -874,7 +874,7 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -910,10 +910,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -935,7 +935,7 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -971,10 +971,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -992,7 +992,7 @@ importers:
         version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1028,10 +1028,10 @@ importers:
         version: 19.2.7(react@19.2.7)
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1053,7 +1053,7 @@ importers:
         version: link:../editor
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1086,10 +1086,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1101,7 +1101,7 @@ importers:
         version: link:../editor
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1122,10 +1122,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
 
   packages/plugin-paste-link:
     devDependencies:
@@ -1134,7 +1134,7 @@ importers:
         version: link:../editor
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1167,10 +1167,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1204,7 +1204,7 @@ importers:
         version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/sdk-react':
         specifier: ^2.13.0
         version: 2.13.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(xstate@5.32.2)
@@ -1246,10 +1246,10 @@ importers:
         version: 19.2.7(react@19.2.7)
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1271,7 +1271,7 @@ importers:
         version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1301,10 +1301,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1332,7 +1332,7 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1368,10 +1368,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1390,7 +1390,7 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1426,10 +1426,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1454,13 +1454,13 @@ importers:
         version: 1.60.0
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1479,13 +1479,13 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1494,13 +1494,13 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1512,13 +1512,13 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1543,7 +1543,7 @@ importers:
         version: link:../schema
       '@sanity/pkg-utils':
         specifier: catalog:tooling
-        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
@@ -1576,10 +1576,10 @@ importers:
         version: 19.2.7
       typescript:
         specifier: catalog:tooling
-        version: 5.9.3
+        version: 6.0.3
       typescript-eslint:
         specifier: catalog:tooling
-        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       vitest:
         specifier: catalog:tooling
         version: 4.1.9(@types/node@24.12.2)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-istanbul@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@27.2.0)(vite@7.3.5(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -7969,8 +7969,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -11827,7 +11827,7 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  '@sanity/pkg-utils@10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)':
+  '@sanity/pkg-utils@10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/parser': 7.29.7
@@ -11866,13 +11866,13 @@ snapshots:
       recast: 0.23.11
       rimraf: 6.1.2
       rolldown: 1.0.0-beta.54
-      rolldown-plugin-dts: 0.18.3(oxc-resolver@11.19.1)(rolldown@1.0.0-beta.54)(typescript@5.9.3)
+      rolldown-plugin-dts: 0.18.3(oxc-resolver@11.19.1)(rolldown@1.0.0-beta.54)(typescript@6.0.3)
       rollup: 4.62.0
       rollup-plugin-esbuild: 6.2.1(esbuild@0.27.7)(rollup@4.62.0)
       rxjs: 7.8.2
       treeify: 1.1.0
       tsx: 4.21.0
-      typescript: 5.9.3
+      typescript: 6.0.3
       uuid: 13.0.0
       zod: 4.4.3
       zod-validation-error: 5.0.0(zod@4.4.3)
@@ -11888,7 +11888,7 @@ snapshots:
       - supports-color
       - vue-tsc
 
-  '@sanity/pkg-utils@10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@5.9.3)':
+  '@sanity/pkg-utils@10.2.1(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/parser': 7.29.7
@@ -11927,13 +11927,13 @@ snapshots:
       recast: 0.23.11
       rimraf: 6.1.2
       rolldown: 1.0.0-beta.54
-      rolldown-plugin-dts: 0.18.3(oxc-resolver@11.19.1)(rolldown@1.0.0-beta.54)(typescript@5.9.3)
+      rolldown-plugin-dts: 0.18.3(oxc-resolver@11.19.1)(rolldown@1.0.0-beta.54)(typescript@6.0.3)
       rollup: 4.62.0
       rollup-plugin-esbuild: 6.2.1(esbuild@0.27.7)(rollup@4.62.0)
       rxjs: 7.8.2
       treeify: 1.1.0
       tsx: 4.21.0
-      typescript: 5.9.3
+      typescript: 6.0.3
       uuid: 13.0.0
       zod: 4.4.3
       zod-validation-error: 5.0.0(zod@4.4.3)
@@ -12416,41 +12416,41 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@typescript-eslint/eslint-plugin@8.48.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.48.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       '@typescript-eslint/scope-manager': 8.48.0
-      '@typescript-eslint/type-utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/type-utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.48.0
       eslint: 9.39.1(jiti@2.6.1)
       graphemer: 1.4.0
       ignore: 7.0.5
       natural-compare: 1.4.0
-      ts-api-utils: 2.1.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.1.0(typescript@6.0.3)
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.48.0
       '@typescript-eslint/types': 8.48.0
-      '@typescript-eslint/typescript-estree': 8.48.0(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.48.0(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.48.0
       debug: 4.4.3
       eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.48.0(typescript@5.9.3)':
+  '@typescript-eslint/project-service@8.48.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.48.0(typescript@5.9.3)
+      '@typescript-eslint/tsconfig-utils': 8.48.0(typescript@6.0.3)
       '@typescript-eslint/types': 8.48.0
       debug: 4.4.3
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
@@ -12459,47 +12459,47 @@ snapshots:
       '@typescript-eslint/types': 8.48.0
       '@typescript-eslint/visitor-keys': 8.48.0
 
-  '@typescript-eslint/tsconfig-utils@8.48.0(typescript@5.9.3)':
+  '@typescript-eslint/tsconfig-utils@8.48.0(typescript@6.0.3)':
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
-  '@typescript-eslint/type-utils@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/type-utils@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/types': 8.48.0
-      '@typescript-eslint/typescript-estree': 8.48.0(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.48.0(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       debug: 4.4.3
       eslint: 9.39.1(jiti@2.6.1)
-      ts-api-utils: 2.1.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.1.0(typescript@6.0.3)
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/types@8.48.0': {}
 
-  '@typescript-eslint/typescript-estree@8.48.0(typescript@5.9.3)':
+  '@typescript-eslint/typescript-estree@8.48.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.48.0(typescript@5.9.3)
-      '@typescript-eslint/tsconfig-utils': 8.48.0(typescript@5.9.3)
+      '@typescript-eslint/project-service': 8.48.0(typescript@6.0.3)
+      '@typescript-eslint/tsconfig-utils': 8.48.0(typescript@6.0.3)
       '@typescript-eslint/types': 8.48.0
       '@typescript-eslint/visitor-keys': 8.48.0
       debug: 4.4.3
       minimatch: 9.0.5
       semver: 7.8.4
       tinyglobby: 0.2.17
-      ts-api-utils: 2.1.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.1.0(typescript@6.0.3)
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/utils@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.0(eslint@9.39.1(jiti@2.6.1))
       '@typescript-eslint/scope-manager': 8.48.0
       '@typescript-eslint/types': 8.48.0
-      '@typescript-eslint/typescript-estree': 8.48.0(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.48.0(typescript@6.0.3)
       eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
@@ -15881,7 +15881,7 @@ snapshots:
       glob: 13.0.0
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.18.3(oxc-resolver@11.19.1)(rolldown@1.0.0-beta.54)(typescript@5.9.3):
+  rolldown-plugin-dts@0.18.3(oxc-resolver@11.19.1)(rolldown@1.0.0-beta.54)(typescript@6.0.3):
     dependencies:
       '@babel/generator': 7.29.1
       '@babel/parser': 7.29.7
@@ -15894,7 +15894,7 @@ snapshots:
       obug: 2.1.3
       rolldown: 1.0.0-beta.54
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - oxc-resolver
 
@@ -16223,12 +16223,12 @@ snapshots:
     dependencies:
       '@astrojs/starlight': 0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  starlight-typedoc@0.21.5(@astrojs/starlight@0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)))(typedoc-plugin-markdown@4.9.0(typedoc@0.28.15(typescript@5.9.3)))(typedoc@0.28.15(typescript@5.9.3)):
+  starlight-typedoc@0.21.5(@astrojs/starlight@0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)))(typedoc-plugin-markdown@4.9.0(typedoc@0.28.15(typescript@6.0.3)))(typedoc@0.28.15(typescript@6.0.3)):
     dependencies:
       '@astrojs/starlight': 0.38.2(astro@6.4.6(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.62.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
       github-slugger: 2.0.0
-      typedoc: 0.28.15(typescript@5.9.3)
-      typedoc-plugin-markdown: 4.9.0(typedoc@0.28.15(typescript@5.9.3))
+      typedoc: 0.28.15(typescript@6.0.3)
+      typedoc-plugin-markdown: 4.9.0(typedoc@0.28.15(typescript@6.0.3))
 
   std-env@4.0.0: {}
 
@@ -16417,9 +16417,9 @@ snapshots:
 
   trough@2.2.0: {}
 
-  ts-api-utils@2.1.0(typescript@5.9.3):
+  ts-api-utils@2.1.0(typescript@6.0.3):
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   ts-brand@0.2.0: {}
 
@@ -16458,37 +16458,37 @@ snapshots:
 
   type-fest@4.41.0: {}
 
-  typedoc-plugin-markdown@4.9.0(typedoc@0.28.15(typescript@5.9.3)):
+  typedoc-plugin-markdown@4.9.0(typedoc@0.28.15(typescript@6.0.3)):
     dependencies:
-      typedoc: 0.28.15(typescript@5.9.3)
+      typedoc: 0.28.15(typescript@6.0.3)
 
-  typedoc@0.28.15(typescript@5.9.3):
+  typedoc@0.28.15(typescript@6.0.3):
     dependencies:
       '@gerrit0/mini-shiki': 3.17.1
       lunr: 2.3.9
       markdown-it: 14.1.1
       minimatch: 9.0.5
-      typescript: 5.9.3
+      typescript: 6.0.3
       yaml: 2.8.2
 
   typeid-js@0.3.0:
     dependencies:
       uuidv7: 0.4.4
 
-  typescript-eslint@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3):
+  typescript-eslint@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.48.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/typescript-estree': 8.48.0(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/eslint-plugin': 8.48.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
+      '@typescript-eslint/parser': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
+      '@typescript-eslint/typescript-estree': 8.48.0(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@6.0.3)
       eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
   typescript@5.8.2: {}
 
-  typescript@5.9.3: {}
+  typescript@6.0.3: {}
 
   uc.micro@2.1.0: {}
 

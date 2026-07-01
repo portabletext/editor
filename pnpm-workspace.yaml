@@ -34,7 +34,7 @@ catalogs:
     remeda: ^2.32.0
     tailwind-merge: ^3.3.1
     tailwindcss: ^4.1.18
-    typescript: 5.9.3
+    typescript: 6.0.3
     typescript-eslint: ^8.48.0
     vite: ^7.3.5
     vitest: ^4.1.9
