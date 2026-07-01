@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.9.1
+
+### Patch Changes
+
+- [#2884](https://github.com/portabletext/editor/pull/2884) [`0b82b78`](https://github.com/portabletext/editor/commit/0b82b78ec06c2e000892e1283cdca57fb37d424e) Thanks [@christianhg](https://github.com/christianhg)! - fix: scope `editor.dom.getSelectionRect` to the editor
+
+  `editor.dom.getSelectionRect` now returns the rect of the passed snapshot's selection. Previously, when focus sat outside the editor or another Portable Text editor was mounted on the page, it could return the rect of an unrelated element.
+
+- Updated dependencies [[`a570ace`](https://github.com/portabletext/editor/commit/a570ace6563c12356eb50aa5e5671c257463376e)]:
+  - @portabletext/markdown@1.4.3
+
 ## 7.9.0
 
 ### Minor Changes
