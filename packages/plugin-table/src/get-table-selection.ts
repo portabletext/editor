@@ -1,6 +1,6 @@
 import type {EditorSnapshot} from '@portabletext/editor'
-import {getEnclosingBlock, getParent} from '@portabletext/editor/traversal'
-import {isCell, isRow, isTable, type TableSelection} from './behaviors/types'
+import type {TableSelection} from './behaviors/types'
+import {resolveCell} from './resolve-cell'
 
 /**
  * Derives a rectangular table selection from the linear editor selection.
@@ -21,45 +21,29 @@ export function getTableSelection(
     return undefined
   }
 
-  const anchorCell = getEnclosingBlock(snapshot, selection.anchor.path, {
-    match: isCell,
-  })
-  const focusCell = getEnclosingBlock(snapshot, selection.focus.path, {
-    match: isCell,
-  })
-  if (!anchorCell || !focusCell) {
+  const anchor = resolveCell(snapshot, selection.anchor.path)
+  const focus = resolveCell(snapshot, selection.focus.path)
+  if (!anchor || !focus) {
     return undefined
   }
-  if (anchorCell.node._key === focusCell.node._key) {
+  if (anchor.cell.node._key === focus.cell.node._key) {
     return undefined
   }
-
-  const anchorRow = getParent(snapshot, anchorCell.path, {match: isRow})
-  const focusRow = getParent(snapshot, focusCell.path, {match: isRow})
-  if (!anchorRow || !focusRow) {
+  if (anchor.table.node._key !== focus.table.node._key) {
     return undefined
   }
 
-  const anchorTable = getParent(snapshot, anchorRow.path, {match: isTable})
-  const focusTable = getParent(snapshot, focusRow.path, {match: isTable})
-  if (!anchorTable || !focusTable) {
-    return undefined
-  }
-  if (anchorTable.node._key !== focusTable.node._key) {
-    return undefined
-  }
-
-  const anchorRowIndex = anchorTable.node.rows.findIndex(
-    (row) => row._key === anchorRow.node._key,
+  const anchorRowIndex = anchor.table.node.rows.findIndex(
+    (row) => row._key === anchor.row.node._key,
   )
-  const focusRowIndex = anchorTable.node.rows.findIndex(
-    (row) => row._key === focusRow.node._key,
+  const focusRowIndex = anchor.table.node.rows.findIndex(
+    (row) => row._key === focus.row.node._key,
   )
-  const anchorColIndex = anchorRow.node.cells.findIndex(
-    (cell) => cell._key === anchorCell.node._key,
+  const anchorColIndex = anchor.row.node.cells.findIndex(
+    (cell) => cell._key === anchor.cell.node._key,
   )
-  const focusColIndex = focusRow.node.cells.findIndex(
-    (cell) => cell._key === focusCell.node._key,
+  const focusColIndex = focus.row.node.cells.findIndex(
+    (cell) => cell._key === focus.cell.node._key,
   )
   if (
     anchorRowIndex === -1 ||
@@ -71,7 +55,7 @@ export function getTableSelection(
   }
 
   return {
-    tablePath: anchorTable.path,
+    tablePath: anchor.table.path,
     rowRange: [
       Math.min(anchorRowIndex, focusRowIndex),
       Math.max(anchorRowIndex, focusRowIndex),
