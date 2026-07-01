@@ -3357,6 +3357,99 @@ describe(markdownToPortableText.name, () => {
       },
     })
 
+    test('empty header row reads back as headerRows 0 with only the body rows', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '|  |  |',
+        '| --- | --- |',
+        '| Cell 1 | Cell 2 |',
+        '| Cell 3 | Cell 4 |',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _key: 'k20',
+          _type: 'table',
+          headerRows: 0,
+          rows: [
+            {
+              _key: 'k12',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k8',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k6',
+                      style: 'normal',
+                      children: [
+                        {_type: 'span', _key: 'k7', text: 'Cell 1', marks: []},
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k11',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k9',
+                      style: 'normal',
+                      children: [
+                        {_type: 'span', _key: 'k10', text: 'Cell 2', marks: []},
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k19',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k15',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k13',
+                      style: 'normal',
+                      children: [
+                        {_type: 'span', _key: 'k14', text: 'Cell 3', marks: []},
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k18',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k16',
+                      style: 'normal',
+                      children: [
+                        {_type: 'span', _key: 'k17', text: 'Cell 4', marks: []},
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
     test('simple table', () => {
       const keyGenerator = createTestKeyGenerator()
       const markdown = [

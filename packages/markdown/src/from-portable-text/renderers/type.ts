@@ -49,12 +49,15 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 }
 
 /**
- * Renders a Portable Text table block-object back to Markdown. Because
- * GFM allows exactly one header row, the first row is always emitted as
- * the header, followed by the delimiter row, followed by the remaining
- * rows as body rows. The PT `headerRows` field is informational on the
- * Portable Text side and is ignored on the way out so that the emitted
- * Markdown is always a valid GFM table.
+ * Renders a Portable Text table block-object back to Markdown.
+ *
+ * The PT `headerRows` field decides the header. `headerRows === 0` is an
+ * explicit headerless table: GFM has no headerless form, so an empty header
+ * row is emitted and every row goes in the body (that empty header reads back
+ * as `headerRows: 0` via `markdownToPortableText`). Any other value
+ * (`undefined` or `>= 1`) promotes `rows[0]` to the header. GFM allows exactly
+ * one header row, so header rows beyond the first flatten into the body,
+ * lossy, but the extra rows stay on the Portable Text side.
  *
  * Asymmetric tables (rows of varying cell counts) are widened to match
  * the row with the most cells. Narrower rows are padded with empty cells
@@ -119,16 +122,16 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     0,
   )
 
-  const renderRow = (cells: typeof headerRow.cells): string => {
-    const texts = cells.map((cell) => escapeTableCell(getCellText(cell.value)))
-    while (texts.length < columnCount) {
-      texts.push('')
+  const renderCells = (texts: Array<string>): string => {
+    const padded = [...texts]
+    while (padded.length < columnCount) {
+      padded.push('')
     }
-    return `| ${texts.join(' | ')} |`
+    return `| ${padded.join(' | ')} |`
   }
 
-  // First row is the header, padded to the table's column count
-  lines.push(renderRow(headerRow.cells))
+  const renderRow = (cells: typeof headerRow.cells): string =>
+    renderCells(cells.map((cell) => escapeTableCell(getCellText(cell.value))))
 
   // Delimiter row, sized to the column count. Each cell's colons encode the
   // column's alignment as defined by `value.alignment[columnIndex]`.
@@ -145,13 +148,26 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     }
     return ' --- '
   })
-  lines.push(`|${separators.join('|')}|`)
+  const delimiter = `|${separators.join('|')}|`
 
-  // Remaining rows are the body
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows.at(i)
-    if (row) {
+  if (value.headerRows === 0) {
+    // Explicit headerless table: emit an empty header row and keep every row
+    // in the body.
+    lines.push(renderCells([]))
+    lines.push(delimiter)
+    for (const row of rows) {
       lines.push(renderRow(row.cells))
+    }
+  } else {
+    // `rows[0]` is the header. Header rows beyond the first flatten into the
+    // body (GFM has a single header row).
+    lines.push(renderRow(headerRow.cells))
+    lines.push(delimiter)
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows.at(i)
+      if (row) {
+        lines.push(renderRow(row.cells))
+      }
     }
   }
 

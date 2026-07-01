@@ -1,6 +1,7 @@
 import {alert} from '@mdit/plugin-alert'
 import {
   isSpan,
+  isTextBlock,
   type PortableTextBlock,
   type PortableTextObject,
   type PortableTextTextBlock,
@@ -205,6 +206,28 @@ export function extractAlignmentFromStyleAttr(
 }
 
 /**
+ * A table row is empty when every cell holds only blank spans, no non-empty
+ * text, no inline objects, no non-text blocks. Used to detect a headerless
+ * GFM table: `portableTextToMarkdown` emits an empty header row for
+ * `headerRows: 0`, and an empty header must round-trip back to
+ * `headerRows: 0` rather than a phantom header row.
+ */
+function isEmptyTableRow(
+  cells: Array<{value: Array<PortableTextBlock>}>,
+  context: {schema: Schema},
+): boolean {
+  return cells.every((cell) =>
+    cell.value.every(
+      (block) =>
+        isTextBlock(context, block) &&
+        block.children.every(
+          (child) => isSpan(context, child) && (child.text ?? '').trim() === '',
+        ),
+    ),
+  )
+}
+
+/**
  * Flattens a table structure by lifting all blocks from all cells.
  */
 function flattenTable(
@@ -362,6 +385,7 @@ export function markdownToPortableText(
       }>
     }>
     headerRows: number
+    emptyHeaderDropped: boolean
     alignment: Array<'left' | 'center' | 'right' | null>
   } | null = null
   let currentTableRow: Array<{
@@ -1118,7 +1142,12 @@ export function markdownToPortableText(
       // Tables
       case 'table_open':
         flushBlock()
-        currentTable = {rows: [], headerRows: 0, alignment: []}
+        currentTable = {
+          rows: [],
+          headerRows: 0,
+          emptyHeaderDropped: false,
+          alignment: [],
+        }
         break
 
       case 'table_close': {
@@ -1139,7 +1168,9 @@ export function markdownToPortableText(
               headerRows:
                 currentTable.headerRows > 0
                   ? currentTable.headerRows
-                  : undefined,
+                  : currentTable.emptyHeaderDropped
+                    ? 0
+                    : undefined,
               alignment: hasAlignment ? currentTable.alignment : undefined,
             },
             isInline: false,
@@ -1182,13 +1213,26 @@ export function markdownToPortableText(
 
       case 'tr_close':
         if (currentTable && currentTableRow) {
-          currentTable.rows.push({
-            _key: consolidatedOptions.keyGenerator(),
-            _type: 'row',
-            cells: currentTableRow,
-          })
-          if (inTableHead) {
-            currentTable.headerRows++
+          if (
+            inTableHead &&
+            isEmptyTableRow(currentTableRow, {
+              schema: consolidatedOptions.schema,
+            })
+          ) {
+            // An all-empty header row means "no header": drop it and leave
+            // `headerRows` at 0 (recorded so `table_close` emits an explicit
+            // 0, not `undefined`), so `portableTextToMarkdown`'s headerless
+            // output round-trips back to `headerRows: 0`.
+            currentTable.emptyHeaderDropped = true
+          } else {
+            currentTable.rows.push({
+              _key: consolidatedOptions.keyGenerator(),
+              _type: 'row',
+              cells: currentTableRow,
+            })
+            if (inTableHead) {
+              currentTable.headerRows++
+            }
           }
         }
         currentTableRow = null

@@ -1530,15 +1530,16 @@ describe(portableTextToMarkdown.name, () => {
         ).toBe(markdownOut)
       })
 
-      test('headerRows 0 promotes the first row to header', () => {
+      test('headerRows 0 emits an empty header row and keeps every row in the body', () => {
         const table = portableText.at(0)
         if (!table) {
           throw new Error('expected a table block')
         }
         const withZeroHeaderRows = [{...table, headerRows: 0}]
         const markdownOut = [
-          '| Cell 1 | Cell 2 |',
+          '|  |  |',
           '| --- | --- |',
+          '| Cell 1 | Cell 2 |',
           '| Cell 3 | Cell 4 |',
         ].join('\n')
 
