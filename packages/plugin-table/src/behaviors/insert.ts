@@ -1,8 +1,9 @@
 import type {EditorSelectionPoint, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
-import {getEnclosingBlock, getParent} from '@portabletext/editor/traversal'
+import {getEnclosingBlock} from '@portabletext/editor/traversal'
+import {resolveCell} from '../resolve-cell'
 import {alignmentInsertAction} from './alignment'
-import {isCell, isRow, isTable, type Row, type Table} from './types'
+import {isRow, isTable, type Row, type Table} from './types'
 
 export const insertBehaviors = [
   defineBehavior<
@@ -61,25 +62,19 @@ export const insertBehaviors = [
   >({
     on: 'custom.insert.column',
     guard: ({snapshot, event}) => {
-      const enclosingCell = getEnclosingBlock(snapshot, event.at, {
-        match: isCell,
-      })
-      if (enclosingCell) {
-        const row = getParent(snapshot, enclosingCell.path, {match: isRow})
-        if (!row) {
-          return false
-        }
-        const columnIndex = row.node.cells.findIndex(
-          (cell) => cell._key === enclosingCell.node._key,
+      const resolved = resolveCell(snapshot, event.at)
+      if (resolved) {
+        const columnIndex = resolved.row.node.cells.findIndex(
+          (cell) => cell._key === resolved.cell.node._key,
         )
         if (columnIndex === -1) {
           return false
         }
-        const table = getParent(snapshot, row.path, {match: isTable})
-        if (!table) {
-          return false
+        return {
+          table: resolved.table.node,
+          tablePath: resolved.table.path,
+          columnIndex,
         }
-        return {table: table.node, tablePath: table.path, columnIndex}
       }
       const enclosingTable = getEnclosingBlock(snapshot, event.at, {
         match: isTable,
