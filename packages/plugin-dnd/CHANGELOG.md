@@ -1,5 +1,12 @@
 # @portabletext/plugin-dnd
 
+## 1.0.12
+
+### Patch Changes
+
+- Updated dependencies [[`0b82b78`](https://github.com/portabletext/editor/commit/0b82b78ec06c2e000892e1283cdca57fb37d424e)]:
+  - @portabletext/editor@7.9.1
+
 ## 1.0.11
 
 ### Patch Changes
