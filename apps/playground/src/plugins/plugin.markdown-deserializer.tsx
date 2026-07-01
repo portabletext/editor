@@ -57,27 +57,6 @@ export function MarkdownDeserializerPlugin() {
                   lines,
                 }
               },
-              // The default md→pt table emits cells with field name `value`,
-              // but the playground's cell schema uses `content`. Rename.
-              table: ({context, value}) => {
-                const rows = value.rows.map((row) => ({
-                  _type: 'row',
-                  _key: row._key,
-                  cells: row.cells.map((cell) => ({
-                    _type: 'cell',
-                    _key: cell._key,
-                    content: cell.value,
-                  })),
-                }))
-                return {
-                  _type: 'table',
-                  _key: context.keyGenerator(),
-                  ...(value.headerRows !== undefined
-                    ? {headerRows: value.headerRows}
-                    : {}),
-                  rows,
-                }
-              },
               // The playground has a void `break` block-object in place of a
               // dedicated horizontal-rule type - map onto it.
               horizontalRule: ({context}) => ({
