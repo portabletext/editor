@@ -32,7 +32,23 @@ export function InsertBlockObjectForm(
         const formDataValues = Object.fromEntries(formData)
         const {placement, ...formValue} = FormDataSchema.parse(formDataValues)
 
-        const value = {...(props.defaultValues ?? {}), ...formValue}
+        // `FormData` values are all strings; coerce `number` fields back to
+        // numbers so e.g. a table's `headerRows` is stored as `1`, not `"1"`.
+        const numberFields = new Set(
+          props.fields
+            .filter((field) => field.type === 'number')
+            .map((field) => field.name),
+        )
+        const value: {[key: string]: unknown} = {...(props.defaultValues ?? {})}
+        for (const [key, fieldValue] of Object.entries(formValue)) {
+          if (numberFields.has(key) && typeof fieldValue === 'string') {
+            if (fieldValue !== '') {
+              value[key] = Number(fieldValue)
+            }
+          } else {
+            value[key] = fieldValue
+          }
+        }
 
         props.onSubmit({
           value,
