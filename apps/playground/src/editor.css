@@ -201,8 +201,9 @@
 }
 
 /**
- * Table styling — matches the design prototype (pte-tables-phases branch).
- * `data-header-rows` (0/1) marks whether the first row is a header.
+ * Table layout only. Cell borders, header base, selection outline/overlay and
+ * corner radii are inline per cell (see `table-cell-style.ts`), matching the
+ * design prototype.
  */
 .playground-table-chrome {
   position: relative;
@@ -214,47 +215,13 @@
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
-  background: #fff;
-  border: 1px solid #e3e4e8;
-  border-radius: 6px;
 }
 
-.playground-table td {
-  padding: 8px 12px;
-  vertical-align: top;
-  color: #1c1f24;
-  border-bottom: 1px solid #e3e4e8;
-  border-right: 1px solid #e3e4e8;
-  word-break: break-word;
+/* While a multi-cell range is active, the blue rectangle overlay stands in for
+   the selection, so hide the native text-selection highlight. */
+.playground-table[data-cell-range] ::selection {
+  background: transparent;
 }
-
-/* Clean outer edges: last column/row drop their outer grid line. */
-.playground-table tr td:last-child {
-  border-right: none;
-}
-.playground-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Header row: darker base + semibold (IX11), no size/case change. */
-.playground-table[data-header-rows]:not([data-header-rows='0'])
-  tr:first-child
-  td {
-  background: #f6f6f8;
-  font-weight: 600;
-}
-
-:where(.dark) .playground-table {
-  background: #0f172a;
-  border-color: #334155;
-}
-:where(.dark) .playground-table td {
-  color: #e2e8f0;
-  border-color: #334155;
-}
-:where(.dark)
-  .playground-table[data-header-rows]:not([data-header-rows='0'])
-  tr:first-child
-  td {
-  background: #1e293b;
+.playground-table[data-cell-range] ::-moz-selection {
+  background: transparent;
 }
