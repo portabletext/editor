@@ -36,7 +36,7 @@ type CommandMatch = {
   icon: JSX.Element
   keywords: string[]
   action:
-    | {type: 'insert.block'; block: {_type: string}}
+    | {type: 'insert.block'; block: {_type: string; [key: string]: unknown}}
     | {type: 'style.toggle'; style: string}
     | {type: 'list item.toggle'; listItem: string}
 }
@@ -161,7 +161,24 @@ const commands: CommandMatch[] = [
     keywords: ['table', 'grid', 'rows', 'columns'],
     action: {
       type: 'insert.block',
-      block: {_type: 'table'},
+      block: {
+        _type: 'table',
+        headerRows: 1,
+        rows: Array.from({length: 3}, () => ({
+          _type: 'row',
+          cells: Array.from({length: 3}, () => ({
+            _type: 'cell',
+            value: [
+              {
+                _type: 'block',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', text: '', marks: []}],
+              },
+            ],
+          })),
+        })),
+      },
     },
   },
   {
