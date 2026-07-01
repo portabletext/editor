@@ -1,6 +1,10 @@
-import {defineContainer, defineTextBlock} from '@portabletext/editor'
+import {
+  defineContainer,
+  defineTextBlock,
+  type ContainerRenderProps,
+} from '@portabletext/editor'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
-import {tableBehaviors} from '@portabletext/plugin-table'
+import {isTable, tableBehaviors} from '@portabletext/plugin-table'
 import type {JSX} from 'react'
 import {DragHandle} from './drag-handle'
 import {ListItemBlock} from './list-item-block'
@@ -10,21 +14,7 @@ import {cellImageLeaf} from './plugin.image'
 const tableContainer = defineContainer({
   type: 'table',
   arrayField: 'rows',
-  render: ({attributes, children, node, readOnly, selected}) => (
-    <div
-      {...attributes}
-      data-header-rows={
-        typeof node.headerRows === 'number' ? node.headerRows : 0
-      }
-      data-selected={selected ? '' : undefined}
-      className="playground-table-chrome group"
-    >
-      <table className="playground-table cursor-text">
-        <tbody>{children}</tbody>
-      </table>
-      <DragHandle readOnly={readOnly} />
-    </div>
-  ),
+  render: (props) => <TableContainer {...props} />,
   of: [
     defineContainer({
       type: 'row',
@@ -73,5 +63,37 @@ export function TablePlugin(): JSX.Element {
       <NodePlugin nodes={[tableContainer]} />
       <BehaviorPlugin behaviors={tableBehaviors} />
     </>
+  )
+}
+
+function TableContainer({
+  attributes,
+  children,
+  node,
+  readOnly,
+  selected,
+}: ContainerRenderProps): JSX.Element {
+  const table = isTable(node) ? node : undefined
+  const headerRows = Number(table?.headerRows) || 0
+  const columnCount = table?.rows[0]?.cells.length ?? 0
+  return (
+    <div
+      {...attributes}
+      data-selected={selected ? '' : undefined}
+      className="playground-table-chrome group"
+    >
+      <table
+        className="playground-table cursor-text"
+        data-header-rows={headerRows}
+      >
+        <colgroup>
+          {Array.from({length: columnCount}, (_, index) => (
+            <col key={index} />
+          ))}
+        </colgroup>
+        <tbody>{children}</tbody>
+      </table>
+      <DragHandle readOnly={readOnly} />
+    </div>
   )
 }
