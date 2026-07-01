@@ -3,6 +3,7 @@ import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {deleteBehaviors} from './behaviors/delete'
 import {insertBehaviors} from './behaviors/insert'
 import {moveBehaviors} from './behaviors/move'
+import {navBehaviors} from './behaviors/nav'
 import {unsetBehaviors} from './behaviors/unset'
 
 // `table` -> `row` -> `cell` nested containers. The render is intentionally
@@ -41,7 +42,9 @@ const tableContainer = defineContainer({
  * `custom.unset.table`, `custom.move.row`, or `custom.move.column`.
  *
  * Also intercepts `delete` and `split` when the selection spans more than
- * one cell, clearing the selected rectangle instead of deleting structure.
+ * one cell, clearing the selected rectangle instead of deleting structure,
+ * and `Tab` / `Shift+Tab` / `ArrowUp` / `ArrowDown` to move the caret
+ * between cells.
  *
  * @alpha
  */
@@ -55,6 +58,7 @@ export function TablePlugin() {
           ...unsetBehaviors,
           ...moveBehaviors,
           ...deleteBehaviors,
+          ...navBehaviors,
         ]}
       />
     </>

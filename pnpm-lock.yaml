@@ -1255,6 +1255,10 @@ importers:
         version: 2.2.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9)
 
   packages/plugin-table:
+    dependencies:
+      '@portabletext/keyboard-shortcuts':
+        specifier: workspace:^
+        version: link:../keyboard-shortcuts
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
