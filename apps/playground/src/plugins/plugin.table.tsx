@@ -4,23 +4,39 @@ import {
   useEditor,
   useEditorSelector,
   type ContainerRenderProps,
+  type EditorSnapshot,
+  type Path,
 } from '@portabletext/editor'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
-import {getEnclosingBlock, getParent} from '@portabletext/editor/traversal'
-import {isEqualPaths} from '@portabletext/editor/utils'
+import {
+  getBlock,
+  getChildren,
+  getEnclosingBlock,
+  getFirstChild,
+  getParent,
+} from '@portabletext/editor/traversal'
+import {getBlockStartPoint, isEqualPaths} from '@portabletext/editor/utils'
 import {
   getTableSelection,
   isCell,
   isRow,
   isTable,
   tableBehaviors,
+  type TableSelection,
 } from '@portabletext/plugin-table'
-import {useMemo, type JSX} from 'react'
-import {DragHandle} from './drag-handle'
+import {
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type MouseEvent as ReactMouseEvent,
+} from 'react'
 import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 import {cellStyle, type CellRange} from './table-cell-style'
+import {TableChrome, type HoverCell} from './table-chrome'
+import {useTableMetrics} from './table-metrics'
 
 const tableContainer = defineContainer({
   type: 'table',
@@ -78,25 +94,105 @@ function TableContainer({
   children,
   node,
   path,
-  readOnly,
-  selected,
 }: ContainerRenderProps): JSX.Element {
   const editor = useEditor()
   const table = isTable(node) ? node : undefined
+  const rowCount = table?.rows.length ?? 0
   const columnCount = table?.rows[0]?.cells.length ?? 0
-  const hasCellRange = useEditorSelector(editor, (snapshot) => {
-    const selection = getTableSelection(snapshot)
-    return selection ? isEqualPaths(selection.tablePath, path) : false
-  })
+  const tableRef = useRef<HTMLTableElement>(null)
+  const metrics = useTableMetrics(tableRef, `${rowCount}x${columnCount}`)
+  const [active, setActive] = useState(false)
+  const [hoverCell, setHoverCell] = useState<HoverCell>(null)
+
+  const tableSelection = useEditorSelector(
+    editor,
+    (snapshot) => {
+      const selection = getTableSelection(snapshot)
+      return selection && isEqualPaths(selection.tablePath, path)
+        ? selection
+        : null
+    },
+    isEqualTableSelection,
+  )
+  const hasCellRange = tableSelection !== null
+  // A selected row/column is a range spanning exactly one row/column edge to
+  // edge; that's when its handle shows as selected.
+  const selectedRow =
+    tableSelection &&
+    tableSelection.rowRange[0] === tableSelection.rowRange[1] &&
+    tableSelection.colRange[0] === 0 &&
+    tableSelection.colRange[1] === columnCount - 1
+      ? tableSelection.rowRange[0]
+      : null
+  const selectedCol =
+    tableSelection &&
+    tableSelection.colRange[0] === tableSelection.colRange[1] &&
+    tableSelection.rowRange[0] === 0 &&
+    tableSelection.rowRange[1] === rowCount - 1
+      ? tableSelection.colRange[0]
+      : null
+
+  const selectCells = (anchorCellPath: Path, focusCellPath: Path) => {
+    const snapshot = editor.getSnapshot()
+    const anchor = cellStartPoint(snapshot, anchorCellPath)
+    const focus = cellStartPoint(snapshot, focusCellPath)
+    if (anchor && focus) {
+      editor.send({type: 'select', at: {anchor, focus}})
+    }
+  }
+  const selectRow = (index: number) => {
+    const snapshot = editor.getSnapshot()
+    const row = getChildren(snapshot, path).at(index)
+    const cells = row ? getChildren(snapshot, row.path) : []
+    const first = cells.at(0)
+    const last = cells.at(-1)
+    if (first && last) {
+      selectCells(first.path, last.path)
+    }
+  }
+  const selectCol = (index: number) => {
+    const snapshot = editor.getSnapshot()
+    const rows = getChildren(snapshot, path)
+    const firstRow = rows.at(0)
+    const lastRow = rows.at(-1)
+    const first = firstRow && getChildren(snapshot, firstRow.path).at(index)
+    const last = lastRow && getChildren(snapshot, lastRow.path).at(index)
+    if (first && last) {
+      selectCells(first.path, last.path)
+    }
+  }
+  const onMouseMove = (event: ReactMouseEvent) => {
+    const rect = tableRef.current?.getBoundingClientRect()
+    if (!rect || !metrics) {
+      return
+    }
+    const relY = event.clientY - rect.top
+    const relX = event.clientX - rect.left
+    const row = metrics.rows.findIndex(
+      (r) => relY >= r.top && relY < r.top + r.height,
+    )
+    const col = metrics.cols.findIndex(
+      (c) => relX >= c.left && relX < c.left + c.width,
+    )
+    setHoverCell(row >= 0 && col >= 0 ? {row, col} : null)
+  }
+
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: mouse events only reveal the hover chrome; all interaction lives on the chrome's buttons
     <div
       {...attributes}
-      data-selected={selected ? '' : undefined}
       className="playground-table-chrome group"
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => {
+        setActive(false)
+        setHoverCell(null)
+      }}
     >
       <table
+        ref={tableRef}
         className="playground-table cursor-text"
         data-cell-range={hasCellRange ? '' : undefined}
+        onMouseMove={onMouseMove}
       >
         <colgroup>
           {Array.from({length: columnCount}, (_, index) => (
@@ -105,8 +201,45 @@ function TableContainer({
         </colgroup>
         <tbody>{children}</tbody>
       </table>
-      <DragHandle readOnly={readOnly} />
+      <TableChrome
+        metrics={metrics}
+        active={active}
+        hoverCell={hoverCell}
+        selectedRow={selectedRow}
+        selectedCol={selectedCol}
+        onSelectRow={selectRow}
+        onSelectCol={selectCol}
+      />
     </div>
+  )
+}
+
+/** The point at the start of a cell's first block. */
+function cellStartPoint(snapshot: EditorSnapshot, cellPath: Path) {
+  const firstChild = getFirstChild(snapshot, cellPath)
+  const block = firstChild && getBlock(snapshot, firstChild.path)
+  if (!block) {
+    return null
+  }
+  return getBlockStartPoint({context: snapshot.context, block})
+}
+
+function isEqualTableSelection(
+  a: TableSelection | null,
+  b: TableSelection | null,
+): boolean {
+  if (a === b) {
+    return true
+  }
+  if (!a || !b) {
+    return false
+  }
+  return (
+    a.rowRange[0] === b.rowRange[0] &&
+    a.rowRange[1] === b.rowRange[1] &&
+    a.colRange[0] === b.colRange[0] &&
+    a.colRange[1] === b.colRange[1] &&
+    isEqualPaths(a.tablePath, b.tablePath)
   )
 }
 
