@@ -52,15 +52,22 @@ export function TablePlugin() {
   return (
     <>
       <NodePlugin nodes={[tableContainer]} />
-      <BehaviorPlugin
-        behaviors={[
-          ...insertBehaviors,
-          ...unsetBehaviors,
-          ...moveBehaviors,
-          ...deleteBehaviors,
-          ...navBehaviors,
-        ]}
-      />
+      <BehaviorPlugin behaviors={tableBehaviors} />
     </>
   )
 }
+
+/**
+ * The table behaviors, split out so a consumer that brings its own table
+ * render (its own `NodePlugin` containers) can add them with a
+ * `<BehaviorPlugin behaviors={tableBehaviors} />` instead of `TablePlugin`.
+ *
+ * @alpha
+ */
+export const tableBehaviors = [
+  ...insertBehaviors,
+  ...unsetBehaviors,
+  ...moveBehaviors,
+  ...deleteBehaviors,
+  ...navBehaviors,
+]
