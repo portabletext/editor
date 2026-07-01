@@ -426,7 +426,7 @@ export const playgroundSchemaDefinition = defineSchema({
                       name: 'cell',
                       fields: [
                         {
-                          name: 'content',
+                          name: 'value',
                           title: 'Content',
                           type: 'array',
                           of: [

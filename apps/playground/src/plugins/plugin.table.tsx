@@ -1,5 +1,6 @@
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
-import {NodePlugin} from '@portabletext/editor/plugins'
+import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {tableBehaviors} from '@portabletext/plugin-table'
 import type {JSX} from 'react'
 import {DragHandle} from './drag-handle'
 import {ListItemBlock} from './list-item-block'
@@ -36,7 +37,7 @@ const tableContainer = defineContainer({
       of: [
         defineContainer({
           type: 'cell',
-          arrayField: 'content',
+          arrayField: 'value',
           render: ({attributes, children, selected}) => (
             <td {...attributes} data-selected={selected ? '' : undefined}>
               {children}
@@ -67,5 +68,10 @@ const tableContainer = defineContainer({
 })
 
 export function TablePlugin(): JSX.Element {
-  return <NodePlugin nodes={[tableContainer]} />
+  return (
+    <>
+      <NodePlugin nodes={[tableContainer]} />
+      <BehaviorPlugin behaviors={tableBehaviors} />
+    </>
+  )
 }

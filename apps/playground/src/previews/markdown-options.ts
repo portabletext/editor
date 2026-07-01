@@ -1,13 +1,12 @@
 import {
   DefaultCalloutRenderer,
   DefaultHorizontalRuleRenderer,
+  DefaultTableRenderer,
   type PortableTextRenderers,
   type PortableTextTypeRenderer,
 } from '@portabletext/markdown'
 
 type Block = {_type: string; children?: Array<{_type: string; text?: string}>}
-type Cell = {_type: 'cell'; content: Array<Block>}
-type Row = {_type: 'row'; cells: Array<Cell>}
 
 export const markdownOptions: Partial<PortableTextRenderers> = {
   types: {
@@ -44,52 +43,7 @@ export const markdownOptions: Partial<PortableTextRenderers> = {
 
     'callout': DefaultCalloutRenderer,
 
-    // Adapter from playground's `cell.content` shape to the package's
-    // built-in table renderer (which expects `cell.value`). Collapses
-    // each cell to a single line of inline-rendered text since markdown
-    // tables do not support multi-line cells.
-    'table': (({value, renderNode}) => {
-      const tableValue = value as {headerRows?: number; rows?: Array<Row>}
-      const rows = tableValue.rows ?? []
-      if (rows.length === 0 || rows[0]?.cells.length === 0) {
-        return ''
-      }
-      const headerRows = tableValue.headerRows ?? 0
-      const renderCell = (cell: Cell): string => {
-        return cell.content
-          .map((block, index) =>
-            renderNode({
-              node: block,
-              index,
-              isInline: false,
-              renderNode,
-            }),
-          )
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-      }
-      const lines: Array<string> = []
-      for (let i = 0; i < headerRows; i++) {
-        const row = rows[i]
-        if (!row) {
-          continue
-        }
-        lines.push(`| ${row.cells.map(renderCell).join(' | ')} |`)
-      }
-      if (headerRows > 0) {
-        const sep = rows[0]!.cells.map(() => ' --- ').join('|')
-        lines.push(`|${sep}|`)
-      }
-      for (let i = headerRows; i < rows.length; i++) {
-        const row = rows[i]
-        if (!row) {
-          continue
-        }
-        lines.push(`| ${row.cells.map(renderCell).join(' | ')} |`)
-      }
-      return lines.join('\n')
-    }) satisfies PortableTextTypeRenderer,
+    'table': DefaultTableRenderer,
 
     // No native markdown for fact-box. Render inner content as a
     // collapsible `<details>` block so the preview still surfaces the
