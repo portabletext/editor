@@ -438,7 +438,9 @@ function TableContainer({
             className="playground-table cursor-text"
             data-cell-range={hasCellRange ? '' : undefined}
           >
-            <colgroup>
+            {/* Leafless subtrees derail the engine's DOM-point
+                normalization; mark them non-editable so it skips them. */}
+            <colgroup contentEditable={false}>
               {Array.from({length: columnCount}, (_, index) => (
                 <col key={index} />
               ))}
