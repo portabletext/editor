@@ -161,6 +161,40 @@ function TableContainer({
       selectCells(first.path, last.path)
     }
   }
+  // The plugin's insert behaviors resolve `at` via `getEnclosingBlock`, so a
+  // path inside the reference cell (its first block) is all they need.
+  const insertRow = (boundary: number) => {
+    const snapshot = editor.getSnapshot()
+    const rows = getChildren(snapshot, path)
+    const referenceRow = rows.at(Math.min(boundary, rows.length - 1))
+    const referenceCell =
+      referenceRow && getChildren(snapshot, referenceRow.path).at(0)
+    const insideCell =
+      referenceCell && getFirstChild(snapshot, referenceCell.path)
+    if (insideCell) {
+      editor.send({
+        type: 'custom.insert.row',
+        at: insideCell.path,
+        position: boundary < rows.length ? 'before' : 'after',
+      })
+    }
+  }
+  const insertCol = (boundary: number) => {
+    const snapshot = editor.getSnapshot()
+    const firstRow = getChildren(snapshot, path).at(0)
+    const cells = firstRow ? getChildren(snapshot, firstRow.path) : []
+    const referenceCell = cells.at(Math.min(boundary, cells.length - 1))
+    const insideCell =
+      referenceCell && getFirstChild(snapshot, referenceCell.path)
+    if (insideCell) {
+      editor.send({
+        type: 'custom.insert.column',
+        at: insideCell.path,
+        position: boundary < cells.length ? 'before' : 'after',
+      })
+    }
+  }
+
   const onMouseMove = (event: ReactMouseEvent) => {
     const rect = tableRef.current?.getBoundingClientRect()
     if (!rect || !metrics) {
@@ -209,6 +243,8 @@ function TableContainer({
         selectedCol={selectedCol}
         onSelectRow={selectRow}
         onSelectCol={selectCol}
+        onInsertRow={insertRow}
+        onInsertCol={insertCol}
       />
     </div>
   )
