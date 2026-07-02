@@ -1,7 +1,8 @@
-import {Trash2Icon} from 'lucide-react'
+import {EllipsisIcon, PanelTopIcon, TableIcon, Trash2Icon} from 'lucide-react'
 import {
   useCallback,
   useLayoutEffect,
+  useRef,
   useState,
   type JSX,
   type RefObject,
@@ -638,5 +639,265 @@ function TrashButton({
     >
       <Trash2Icon aria-hidden="true" size={14} />
     </button>
+  )
+}
+
+const MENU_BTN = 25
+const MENU_MIN_WIDTH = 200
+const MENU_Z_INDEX = 10100
+const MENU_ABOVE_GAP = 2
+
+export type TableMenuHandlers = {
+  hasHeader: boolean
+  onToggleHeader: () => void
+  onSelectTable: () => void
+  onDeleteTable: () => void
+}
+
+/**
+ * The table-level `...` menu: trigger tight to the table's top edge, top-right,
+ * fading in on table hover; dropdown portaled to document.body so it never
+ * clips or scrolls the editable.
+ */
+export function TableMenu({
+  metrics,
+  active,
+  handlers,
+}: {
+  metrics: TableMetrics
+  active: boolean
+  handlers: TableMenuHandlers
+}): JSX.Element {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const [menuPos, setMenuPos] = useState<{left: number; top: number} | null>(
+    null,
+  )
+
+  const syncMenuPos = useCallback(() => {
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (!rect) {
+      return
+    }
+    setMenuPos({left: rect.right - MENU_MIN_WIDTH, top: rect.bottom + 6})
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return
+    }
+    syncMenuPos()
+    window.addEventListener('resize', syncMenuPos)
+    window.addEventListener('scroll', syncMenuPos, true)
+    return () => {
+      window.removeEventListener('resize', syncMenuPos)
+      window.removeEventListener('scroll', syncMenuPos, true)
+    }
+  }, [open, syncMenuPos])
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return
+    }
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (
+        target instanceof Node &&
+        (menuRef.current?.contains(target) ||
+          triggerRef.current?.contains(target))
+      ) {
+        return
+      }
+      setOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  const visible = active || open
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label="Table options"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        tabIndex={visible ? 0 : -1}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onPointerDown={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          setOpen((wasOpen) => !wasOpen)
+        }}
+        style={{
+          position: 'absolute',
+          left: GUTTER_LEFT + metrics.width - MENU_BTN,
+          top: GUTTER_TOP - MENU_BTN - MENU_ABOVE_GAP,
+          width: MENU_BTN,
+          height: MENU_BTN,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: 'none',
+          borderRadius: 3,
+          padding: 0,
+          background: open ? '#f0f1f3' : hovered ? '#f6f6f8' : 'transparent',
+          color: '#1c1f24',
+          cursor: 'pointer',
+          pointerEvents: visible ? 'auto' : 'none',
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 100ms ease, background 100ms ease',
+          zIndex: 6,
+        }}
+      >
+        <EllipsisIcon aria-hidden="true" size={20} />
+      </button>
+      {open && menuPos
+        ? createPortal(
+            <div
+              ref={menuRef}
+              role="menu"
+              style={{
+                position: 'fixed',
+                left: menuPos.left,
+                top: menuPos.top,
+                width: MENU_MIN_WIDTH,
+                background: '#fff',
+                border: '1px solid #e4e6ea',
+                borderRadius: 6,
+                padding: 5,
+                zIndex: MENU_Z_INDEX,
+              }}
+            >
+              <MenuRow
+                label="Header row"
+                icon={<PanelTopIcon aria-hidden="true" size={16} />}
+                trailing={<ToggleSwitch checked={handlers.hasHeader} />}
+                onClick={handlers.onToggleHeader}
+              />
+              <MenuRow
+                label="Select table"
+                icon={<TableIcon aria-hidden="true" size={16} />}
+                onClick={() => {
+                  setOpen(false)
+                  handlers.onSelectTable()
+                }}
+              />
+              <MenuRow
+                label="Delete table"
+                icon={<Trash2Icon aria-hidden="true" size={16} />}
+                destructive
+                onClick={() => {
+                  setOpen(false)
+                  handlers.onDeleteTable()
+                }}
+              />
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
+  )
+}
+
+function MenuRow({
+  label,
+  icon,
+  trailing,
+  destructive,
+  onClick,
+}: {
+  label: string
+  icon: JSX.Element
+  trailing?: JSX.Element
+  destructive?: boolean
+  onClick: () => void
+}): JSX.Element {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      // Act on click but keep DOM focus in the editable; a focus steal here
+      // leaves the editor caret-less after the menu (or the table) unmounts.
+      onPointerDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        padding: '8px 10px',
+        border: 'none',
+        background: hovered ? '#f4f4f6' : 'transparent',
+        cursor: 'pointer',
+        borderRadius: 4,
+        textAlign: 'left',
+        fontSize: 13,
+        color: destructive ? '#c0303a' : '#1c1f24',
+      }}
+    >
+      <span
+        style={{
+          width: 21,
+          height: 21,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </span>
+      <span style={{flex: 1, whiteSpace: 'nowrap'}}>{label}</span>
+      {trailing}
+    </button>
+  )
+}
+
+function ToggleSwitch({checked}: {checked: boolean}): JSX.Element {
+  return (
+    // The row button carries the label and click; the switch is decorative.
+    <span
+      aria-hidden="true"
+      style={{
+        width: 28,
+        height: 16,
+        borderRadius: 8,
+        padding: 2,
+        background: checked ? '#1c1f24' : '#d3d4d8',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: checked ? 'flex-end' : 'flex-start',
+        flexShrink: 0,
+        transition: 'background 100ms ease',
+      }}
+    >
+      <span
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          background: '#fff',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+        }}
+      />
+    </span>
   )
 }
