@@ -160,12 +160,16 @@ const getEditableChildAndIndex = (
   let triedForward = false
   let triedBackward = false
 
-  // While the child is a comment node, or an element node with no children,
-  // keep iterating to find a sibling non-void, non-comment node.
+  // While the child is a comment node, an element node with no children, or
+  // an element whose subtree holds no editable content (a leafless subtree
+  // like a table's <colgroup> would otherwise dead-end the descent), keep
+  // iterating to find a sibling with editable content.
   while (
     isDOMComment(child) ||
     (isDOMElement(child) && child.childNodes.length === 0) ||
-    (isDOMElement(child) && child.getAttribute('contenteditable') === 'false')
+    (isDOMElement(child) &&
+      child.getAttribute('contenteditable') === 'false') ||
+    (isDOMElement(child) && !hasEditableContent(child))
   ) {
     if (triedForward && triedBackward) {
       break
@@ -205,6 +209,21 @@ const getEditableChild = (
 ): DOMNode => {
   const [child] = getEditableChildAndIndex(parent, index, direction)
   return child
+}
+
+/**
+ * Whether an element's subtree holds anything a DOM point can resolve to:
+ * text, or a rendered block/inline object.
+ */
+const hasEditableContent = (element: DOMElement): boolean => {
+  if (element.textContent !== '') {
+    return true
+  }
+  return (
+    element.querySelector(
+      '[data-pt-block="object"], [data-pt-inline="object"]',
+    ) !== null
+  )
 }
 
 /**
