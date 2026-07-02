@@ -27,6 +27,7 @@ import {
 } from '@portabletext/plugin-table'
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useRef,
@@ -165,14 +166,17 @@ function TableContainer({
       ? tableSelection.colRange[0]
       : null
 
-  const selectCells = (anchorCellPath: Path, focusCellPath: Path) => {
-    const snapshot = editor.getSnapshot()
-    const anchor = cellStartPoint(snapshot, anchorCellPath)
-    const focus = cellStartPoint(snapshot, focusCellPath)
-    if (anchor && focus) {
-      editor.send({type: 'select', at: {anchor, focus}})
-    }
-  }
+  const selectCells = useCallback(
+    (anchorCellPath: Path, focusCellPath: Path) => {
+      const snapshot = editor.getSnapshot()
+      const anchor = cellStartPoint(snapshot, anchorCellPath)
+      const focus = cellStartPoint(snapshot, focusCellPath)
+      if (anchor && focus) {
+        editor.send({type: 'select', at: {anchor, focus}})
+      }
+    },
+    [editor],
+  )
   const selectRow = (index: number) => {
     const snapshot = editor.getSnapshot()
     const row = getChildren(snapshot, path).at(index)
@@ -236,7 +240,7 @@ function TableContainer({
       props: {headerRows: hasHeader ? 0 : 1},
     })
   }
-  const selectTable = () => {
+  const selectTable = useCallback(() => {
     const snapshot = editor.getSnapshot()
     const rows = getChildren(snapshot, path)
     const firstRow = rows.at(0)
@@ -246,7 +250,7 @@ function TableContainer({
     if (first && last) {
       selectCells(first.path, last.path)
     }
-  }
+  }, [editor, path, selectCells])
   const deleteTable = () => {
     const snapshot = editor.getSnapshot()
     const firstRow = getChildren(snapshot, path).at(0)
@@ -419,6 +423,7 @@ function TableContainer({
         }}
       >
         <div
+          className="playground-table-inner"
           style={{
             position: 'relative',
             // Gutters: top for the column handles, right/bottom lanes for the
