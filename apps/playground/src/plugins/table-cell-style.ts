@@ -3,21 +3,17 @@ import type {CSSProperties} from 'react'
 // Visual tokens from the design prototype (constants.js on pte-tables-phases).
 export const BLUE = '#556bfc'
 export const BORDER = '#e3e4e8'
-export const SELECTION_BORDER = 1.5
-export const FG = '#1c1f24'
-export const HEADER_BG = '#f6f6f8'
-export const SELECTED_BG = 'rgba(85, 107, 252, 0.06)'
-export const CELL_PADDING = '8px 12px'
-export const TABLE_RADIUS = 6
+const SELECTION_BORDER = 1.5
+const FG = '#1c1f24'
+const HEADER_BG = '#f6f6f8'
+const SELECTED_BG = 'rgba(85, 107, 252, 0.06)'
+const CELL_PADDING = '8px 12px'
+const TABLE_RADIUS = 6
 
 export type CellRange = {r0: number; r1: number; c0: number; c1: number}
 
 /** Which edges of the selection rectangle this cell sits on (for the outline). */
-export function cellRangeEdges(
-  row: number,
-  col: number,
-  range: CellRange | null,
-) {
+function cellRangeEdges(row: number, col: number, range: CellRange | null) {
   if (
     !range ||
     row < range.r0 ||
@@ -43,7 +39,9 @@ function cornerRadius(
   colCount: number,
 ): CSSProperties {
   const style: CSSProperties = {}
-  if (rowIdx === 0 && colIdx === 0) style.borderTopLeftRadius = TABLE_RADIUS
+  if (rowIdx === 0 && colIdx === 0) {
+    style.borderTopLeftRadius = TABLE_RADIUS
+  }
   if (rowIdx === 0 && colIdx === colCount - 1) {
     style.borderTopRightRadius = TABLE_RADIUS
   }
@@ -126,8 +124,12 @@ export function cellStyle({
   }
 
   if (showOverlay) {
-    if (!outline.bottom) borderBottom = 'none'
-    if (!outline.right) borderRight = 'none'
+    if (!outline.bottom) {
+      borderBottom = 'none'
+    }
+    if (!outline.right) {
+      borderRight = 'none'
+    }
     if (!outline.bottom && rowIdx < rowCount - 1) {
       shadows.push(`inset 0 -1px 0 0 ${BORDER}`)
     }
