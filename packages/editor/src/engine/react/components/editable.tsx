@@ -73,7 +73,6 @@ import {useAndroidInputManager} from '../hooks/android-input-manager/use-android
 import useChildren from '../hooks/use-children'
 import {DecorateContext, useDecorateContext} from '../hooks/use-decorations'
 import {useEngine} from '../hooks/use-engine'
-import {useFlushDeferredSelectorsOnRender} from '../hooks/use-engine-selector'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {ReadOnlyContext} from '../hooks/use-read-only'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
@@ -1026,8 +1025,6 @@ export const Editable = forwardRef(
 
     const decorations = decorate([editor as any, []])
     const decorateContext = useDecorateContext(decorate)
-
-    useFlushDeferredSelectorsOnRender()
 
     return (
       <ReadOnlyContext.Provider value={readOnly}>
