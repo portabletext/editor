@@ -202,7 +202,10 @@ function ExtendBar({
       type="button"
       aria-label={label}
       tabIndex={visible ? 0 : -1}
-      onClick={onClick}
+      onPointerDown={(event) => {
+        event.preventDefault()
+        onClick()
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
