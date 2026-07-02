@@ -57,12 +57,10 @@ export function blockOffsetToSpanSelectionPoint({
     }
 
     if (offsetLeft === 0 && selectionPoint && !skippedInlineObject) {
-      if (skippedInlineObject) {
-        selectionPoint = {
-          path: [...blockPath, 'children', {_key: child._key}],
-          offset: 0,
-        }
-      }
+      // A boundary offset stays at the end of the previous span unless an
+      // inline object was skipped, in which case falling through to the
+      // `offsetLeft <= child.text.length` branch lands the point at the
+      // start of this span instead.
       break
     }
 
