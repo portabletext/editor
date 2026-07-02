@@ -1,4 +1,12 @@
-import {useState, type JSX} from 'react'
+import {Trash2Icon} from 'lucide-react'
+import {
+  useCallback,
+  useLayoutEffect,
+  useState,
+  type JSX,
+  type RefObject,
+} from 'react'
+import {createPortal} from 'react-dom'
 import {BLUE, BORDER} from './table-cell-style'
 import {snapPx, type TableMetrics} from './table-metrics'
 
@@ -30,6 +38,10 @@ const EXTEND_BAR_BG = '#fafafb'
 const EXTEND_BAR_BG_HOVER = '#f0f1f3'
 const EXTEND_ICON = '#6e7484'
 const EXTEND_ICON_HOVER = '#5c5f69'
+const TRASH_SIZE = 26
+const TRASH_GAP = 8
+/** Above the toolbar and field chrome; delete must stay clickable. */
+const TRASH_Z_INDEX = 10050
 
 type BoundaryHover = {kind: 'row' | 'column'; index: number} | null
 
@@ -478,5 +490,150 @@ function DragDots({
         />
       ))}
     </div>
+  )
+}
+
+type TrashLayout = {
+  row: {left: number; top: number} | null
+  col: {left: number; top: number} | null
+}
+
+/**
+ * Row/column delete buttons in a top-level portal so they are never clipped
+ * by the editable's scrollport. Fixed-positioned from the live table rect,
+ * re-measured on resize and any scroll.
+ */
+export function TableTrashLayer({
+  tableRef,
+  metrics,
+  selectedRow,
+  selectedCol,
+  canDeleteRow,
+  canDeleteCol,
+  onDeleteRow,
+  onDeleteCol,
+}: {
+  tableRef: RefObject<HTMLTableElement | null>
+  metrics: TableMetrics | null
+  selectedRow: number | null
+  selectedCol: number | null
+  canDeleteRow: boolean
+  canDeleteCol: boolean
+  onDeleteRow: (index: number) => void
+  onDeleteCol: (index: number) => void
+}): JSX.Element | null {
+  const [layout, setLayout] = useState<TrashLayout | null>(null)
+
+  const measure = useCallback(() => {
+    const table = tableRef.current
+    if (!table || !metrics) {
+      setLayout(null)
+      return
+    }
+    const rect = table.getBoundingClientRect()
+    const next: TrashLayout = {row: null, col: null}
+    if (selectedRow !== null && canDeleteRow && metrics.rows[selectedRow]) {
+      const row = metrics.rows[selectedRow]
+      const handleLeft = rect.left - HANDLE_BTN_ROW.w / 2
+      next.row = {
+        left: handleLeft - TRASH_GAP - TRASH_SIZE,
+        top: rect.top + row.centerY,
+      }
+    }
+    if (selectedCol !== null && canDeleteCol && metrics.cols[selectedCol]) {
+      const col = metrics.cols[selectedCol]
+      next.col = {
+        left: rect.left + col.centerX,
+        top: rect.top - HANDLE_BTN_COL.h / 2 - TRASH_GAP - TRASH_SIZE,
+      }
+    }
+    setLayout(next)
+  }, [tableRef, metrics, selectedRow, selectedCol, canDeleteRow, canDeleteCol])
+
+  useLayoutEffect(() => {
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [measure])
+
+  if (!layout || (!layout.row && !layout.col)) {
+    return null
+  }
+
+  return createPortal(
+    <>
+      {layout.row && selectedRow !== null ? (
+        <TrashButton
+          label="Delete row"
+          left={layout.row.left}
+          top={layout.row.top}
+          transform="translate(0, -50%)"
+          onClick={() => onDeleteRow(selectedRow)}
+        />
+      ) : null}
+      {layout.col && selectedCol !== null ? (
+        <TrashButton
+          label="Delete column"
+          left={layout.col.left}
+          top={layout.col.top}
+          transform="translate(-50%, 0)"
+          onClick={() => onDeleteCol(selectedCol)}
+        />
+      ) : null}
+    </>,
+    document.body,
+  )
+}
+
+function TrashButton({
+  label,
+  left,
+  top,
+  transform,
+  onClick,
+}: {
+  label: string
+  left: number
+  top: number
+  transform: string
+  onClick: () => void
+}): JSX.Element {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onPointerDown={(event) => {
+        event.preventDefault()
+        onClick()
+      }}
+      style={{
+        position: 'fixed',
+        left,
+        top,
+        transform,
+        width: TRASH_SIZE,
+        height: TRASH_SIZE,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: hovered ? '#c0303a' : '#1c1f24',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 4,
+        padding: 0,
+        cursor: 'pointer',
+        zIndex: TRASH_Z_INDEX,
+        transition: 'background 100ms ease',
+      }}
+    >
+      <Trash2Icon aria-hidden="true" size={14} />
+    </button>
   )
 }
