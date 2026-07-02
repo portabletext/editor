@@ -148,6 +148,72 @@ describe('Performance', () => {
 
       console.warn(`Removed 1000 blocks in ${duration.toFixed(2)}ms`)
     })
+
+    test('Backspacing through 20 empty blocks in a 1000-block document', async () => {
+      const {editor, locator} = await createTestEditor()
+
+      editor.send({
+        type: 'insert.blocks',
+        blocks: Array.from({length: 1000}, (_, i) => ({
+          _type: 'block',
+          _key: `b${i}`,
+          children: [{_type: 'span', _key: `s${i}`, text: `b${i}`, marks: []}],
+          markDefs: [],
+          style: 'normal',
+        })),
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1000)
+
+        expect(locator.getByText('b999')).toBeInTheDocument()
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: 'b500'}, 'children', {_key: 's500'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b500'}, 'children', {_key: 's500'}],
+            offset: 0,
+          },
+        },
+      })
+
+      // Splitting a collapsed selection repeatedly leaves a run of
+      // empty blocks. Backspacing through them merges each one back,
+      // which discards the empty span the selection sits in and
+      // exercises the `unset` selection fallback on every merge.
+      for (let breakIndex = 0; breakIndex < 20; breakIndex++) {
+        editor.send({type: 'insert.break'})
+        await new Promise((resolve) => queueMicrotask(() => resolve(null)))
+      }
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1020)
+      })
+
+      const start = performance.now()
+
+      for (let backspaceIndex = 0; backspaceIndex < 20; backspaceIndex++) {
+        editor.send({type: 'delete.backward', unit: 'character'})
+        await new Promise((resolve) => queueMicrotask(() => resolve(null)))
+      }
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1000)
+      })
+
+      const duration = performance.now() - start
+
+      console.warn(
+        `Backspaced through 20 empty blocks in ${duration.toFixed(2)}ms`,
+      )
+    })
   })
 
   describe('Containers', () => {
