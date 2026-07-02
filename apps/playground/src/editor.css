@@ -208,9 +208,26 @@
 .playground-table-chrome {
   position: relative;
   margin: 20px 0;
-  /* Top gutter holds the column handles; right/bottom lanes are reserved for
-     the add-column / add-row extend bars so the table never shifts. */
-  padding: 20px 20px 20px 0;
+}
+
+/* Horizontal scroll under a wide table: lighter thumb, gap from the table edge. */
+.table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 31, 36, 0.22) transparent;
+}
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.table-scroll::-webkit-scrollbar-track {
+  margin-top: 8px;
+  background: transparent;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(28, 31, 36, 0.22);
+  border-radius: 3px;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(28, 31, 36, 0.35);
 }
 
 .playground-table {
