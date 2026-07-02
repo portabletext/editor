@@ -68,6 +68,42 @@ const UN_EXCLUDED_SLATE_PATHS = [
   ...TIER_3_PATHS,
 ]
 
+/**
+ * Everything under `src/` except `src/engine/` is compiled. Expressed as
+ * data, not a function: pkg-utils runs babel in a parallel worker pool
+ * (`@rollup/plugin-babel`'s `parallel: true`), which requires plugin
+ * options to be structured-cloneable, so `sources` must be an array of
+ * substrings (`filename.indexOf(entry) !== -1`), not a predicate.
+ *
+ * The trailing slash on directory entries keeps `/src/engine/` from
+ * matching `/src/engine-plugins/`. Keep in sync with the actual top-level
+ * directories of `src/`: a new directory must be added here or the
+ * compiler will silently skip it.
+ */
+const COMPILED_SOURCES = [
+  '/src/behaviors/',
+  '/src/converters/',
+  '/src/dom-traversal/',
+  '/src/editor/',
+  '/src/engine-plugins/',
+  '/src/internal-utils/',
+  '/src/operations/',
+  '/src/paths/',
+  '/src/plugins/',
+  '/src/priority/',
+  '/src/renderers/',
+  '/src/schema/',
+  '/src/selectors/',
+  '/src/test/',
+  '/src/traversal/',
+  '/src/types/',
+  '/src/utils/',
+  '/src/editor.ts',
+  '/src/index.ts',
+  '/src/type-utils.ts',
+  ...UN_EXCLUDED_SLATE_PATHS,
+]
+
 export default defineConfig({
   define: {
     __DEV__: false,
@@ -94,12 +130,7 @@ export default defineConfig({
   babel: {reactCompiler: true},
   reactCompilerOptions: {
     target: '19',
-    sources: (filename: string) => {
-      if (!filename.includes('/src/engine/')) {
-        return true
-      }
-      return UN_EXCLUDED_SLATE_PATHS.some((path) => filename.endsWith(path))
-    },
+    sources: COMPILED_SOURCES,
   },
   dts: 'rolldown',
 })
