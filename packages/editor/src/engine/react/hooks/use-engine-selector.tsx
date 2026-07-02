@@ -27,7 +27,6 @@ export const EngineSelectorContext = createContext<{
     callback: Callback,
     channel?: EngineSelectorChannel,
   ) => () => void
-  flushDeferred: () => void
 }>({} as any)
 
 const refEquality = (a: any, b: any) => a === b
@@ -106,7 +105,6 @@ export function useSelectorContext() {
   const eventListeners = useRef(new Set<Callback>())
   const registrationListeners = useRef(new Set<Callback>())
   const listIndexListeners = useRef(new Set<Callback>())
-  const deferredEventListeners = useRef(new Set<Callback>())
 
   const onChange = useCallback(
     (changed: {registrations: boolean; listIndex: boolean}) => {
@@ -126,13 +124,6 @@ export function useSelectorContext() {
     },
     [],
   )
-
-  const flushDeferred = useCallback(() => {
-    deferredEventListeners.current.forEach((listener) => {
-      listener()
-    })
-    deferredEventListeners.current.clear()
-  }, [])
 
   const addEventListener = useCallback(
     (callbackProp: Callback, channel?: EngineSelectorChannel) => {
@@ -154,15 +145,9 @@ export function useSelectorContext() {
   const selectorContext = useMemo(
     () => ({
       addEventListener,
-      flushDeferred,
     }),
-    [addEventListener, flushDeferred],
+    [addEventListener],
   )
 
   return {selectorContext, onChange}
-}
-
-export function useFlushDeferredSelectorsOnRender() {
-  const {flushDeferred} = useContext(EngineSelectorContext)
-  useIsomorphicLayoutEffect(flushDeferred)
 }
