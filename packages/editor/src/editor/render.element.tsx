@@ -6,7 +6,7 @@ import {isTextBlock} from '@portabletext/schema'
 import {useCallback, useContext, useMemo, type ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
-import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
+import {useRegistrationsSelector} from '../engine/react/hooks/use-engine-selector'
 import {useEngineStatic} from '../engine/react/hooks/use-engine-static'
 import {serializePath} from '../paths/serialize-path'
 import type {
@@ -78,7 +78,7 @@ export function RenderElement(props: {
     globalInlineObjectCatchAll,
     textBlockConfig,
     textBlockCatchAll,
-  ] = useEngineSelector(
+  ] = useRegistrationsSelector(
     useCallback(
       (engine) =>
         [

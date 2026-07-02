@@ -220,6 +220,7 @@ export function subscribeUpdateValue(
     // than reason about which paths matter. The map is rebuilt lazily the
     // next time the renderer reads it.
     editor.listIndexMapDirty = true
+    editor.selectorChannelsPending.listIndex = true
 
     invalidateVerifiedGroups(editor.verifiedUniqueChildGroups, operation)
   })

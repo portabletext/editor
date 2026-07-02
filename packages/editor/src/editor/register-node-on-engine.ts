@@ -39,7 +39,7 @@ export function registerNodeOnEngine(
     engine.containers = containers
     engine.snapshot.context.containers = buildPublicContainers(containers)
     normalize(engine, {force: true})
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   if (node.kind === 'textBlock') {
@@ -49,7 +49,7 @@ export function registerNodeOnEngine(
     const textBlocks = new Map(engine.textBlocks)
     textBlocks.set(node.type, resolveTextBlockConfig(node))
     engine.textBlocks = textBlocks
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   if (node.kind === 'span') {
@@ -59,7 +59,7 @@ export function registerNodeOnEngine(
     const spans = new Map(engine.spans)
     spans.set(node.type, {span: node})
     engine.spans = spans
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   if (node.kind === 'blockObject') {
@@ -69,7 +69,7 @@ export function registerNodeOnEngine(
     const blockObjects = new Map(engine.blockObjects)
     blockObjects.set(node.type, {blockObject: node})
     engine.blockObjects = blockObjects
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   // inlineObject
@@ -79,7 +79,7 @@ export function registerNodeOnEngine(
   const inlineObjects = new Map(engine.inlineObjects)
   inlineObjects.set(node.type, {inlineObject: node})
   engine.inlineObjects = inlineObjects
-  engine.onChange()
+  notifyRegistrationsChanged(engine)
 }
 
 /**
@@ -97,33 +97,44 @@ export function unregisterNodeOnEngine(
     engine.containers = containers
     engine.snapshot.context.containers = buildPublicContainers(containers)
     normalize(engine, {force: true})
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   if (node.kind === 'textBlock') {
     const textBlocks = new Map(engine.textBlocks)
     textBlocks.delete(node.type)
     engine.textBlocks = textBlocks
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   if (node.kind === 'span') {
     const spans = new Map(engine.spans)
     spans.delete(node.type)
     engine.spans = spans
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   if (node.kind === 'blockObject') {
     const blockObjects = new Map(engine.blockObjects)
     blockObjects.delete(node.type)
     engine.blockObjects = blockObjects
-    engine.onChange()
+    notifyRegistrationsChanged(engine)
     return
   }
   // inlineObject
   const inlineObjects = new Map(engine.inlineObjects)
   inlineObjects.delete(node.type)
   engine.inlineObjects = inlineObjects
+  notifyRegistrationsChanged(engine)
+}
+
+/**
+ * The registration maps are mutated only in this module, so the React
+ * layer's 'registrations' selector channel is armed here alone. The
+ * pending flag is consumed by the `onContextChange` dispatch, so it
+ * survives notifications that fire before the React layer is wired.
+ */
+function notifyRegistrationsChanged(engine: PortableTextEditorEngine): void {
+  engine.selectorChannelsPending.registrations = true
   engine.onChange()
 }

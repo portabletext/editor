@@ -5,7 +5,7 @@ import type {
 import {useRef, type ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
-import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
+import {useListIndexSelector} from '../engine/react/hooks/use-engine-selector'
 import {getListIndexMap} from '../internal-utils/build-index-maps'
 import {serializePath} from '../paths/serialize-path'
 import type {
@@ -45,7 +45,7 @@ export function RenderTextBlock(props: {
   const selected = useIsSelectedContainer(serializedPath)
   const focused = useIsFocusedContainer(serializedPath)
   const dropPosition = useElementDropPosition(props.path)
-  const listIndex = useEngineSelector((editor) =>
+  const listIndex = useListIndexSelector((editor) =>
     getListIndexMap(editor).get(serializedPath),
   )
   const subSchema = useBlockSubSchema(props.path)
