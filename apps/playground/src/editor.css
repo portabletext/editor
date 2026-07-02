@@ -208,8 +208,9 @@
 .playground-table-chrome {
   position: relative;
   margin: 20px 0;
-  /* Top gutter holds the column handles; the table is flush on the left. */
-  padding: 20px 0 0 0;
+  /* Top gutter holds the column handles; right/bottom lanes are reserved for
+     the add-column / add-row extend bars so the table never shifts. */
+  padding: 20px 20px 20px 0;
 }
 
 .playground-table {

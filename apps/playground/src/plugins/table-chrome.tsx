@@ -24,6 +24,12 @@ const BOUNDARY_DOT = 4
 const BOUNDARY_PLUS = 17
 const GRID_LINE_HALF = 0.5
 const INSERT_GUIDE = 1.5
+const EXTEND_SIZE = 17
+const EXTEND_GAP = 3
+const EXTEND_BAR_BG = '#fafafb'
+const EXTEND_BAR_BG_HOVER = '#f0f1f3'
+const EXTEND_ICON = '#6e7484'
+const EXTEND_ICON_HOVER = '#5c5f69'
 
 type BoundaryHover = {kind: 'row' | 'column'; index: number} | null
 
@@ -78,8 +84,32 @@ export function TableChrome({
   if (!metrics) {
     return null
   }
+  const lastRow = metrics.rows.length - 1
+  const lastCol = metrics.cols.length - 1
   return (
     <>
+      <ExtendBar
+        label="Add row at end"
+        visible={active && hoverCell?.row === lastRow}
+        style={{
+          left: GUTTER_LEFT,
+          top: GUTTER_TOP + metrics.height + EXTEND_GAP,
+          width: metrics.width,
+          height: EXTEND_SIZE,
+        }}
+        onClick={() => onInsertRow(metrics.rows.length)}
+      />
+      <ExtendBar
+        label="Add column at end"
+        visible={active && hoverCell?.col === lastCol}
+        style={{
+          left: GUTTER_LEFT + metrics.width + EXTEND_GAP,
+          top: GUTTER_TOP,
+          width: EXTEND_SIZE,
+          height: metrics.height,
+        }}
+        onClick={() => onInsertCol(metrics.cols.length)}
+      />
       {metrics.cols.map((col, index) => (
         <Handle
           key={`col-${index}`}
@@ -140,6 +170,62 @@ export function TableChrome({
         <InsertGuideline metrics={metrics} hovered={boundary} />
       ) : null}
     </>
+  )
+}
+
+function ExtendBar({
+  label,
+  visible,
+  style,
+  onClick,
+}: {
+  label: string
+  visible: boolean
+  style: {left: number; top: number; width: number; height: number}
+  onClick: () => void
+}): JSX.Element {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      tabIndex={visible ? 0 : -1}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'absolute',
+        ...style,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: 'none',
+        borderRadius: 3,
+        padding: 0,
+        pointerEvents: visible ? 'auto' : 'none',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 100ms ease, background 100ms ease',
+        background: hovered ? EXTEND_BAR_BG_HOVER : EXTEND_BAR_BG,
+        color: hovered ? EXTEND_ICON_HOVER : EXTEND_ICON,
+        cursor: 'pointer',
+        zIndex: 1,
+      }}
+    >
+      <svg
+        aria-hidden="true"
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+      >
+        <path
+          d="M7 2.5v9M2.5 7h9"
+          stroke="currentColor"
+          strokeWidth="1.15"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
   )
 }
 
