@@ -42,7 +42,6 @@ Use the `guard` prop to control when the paste link behavior runs. Return `false
 
 ```tsx
 import {getActiveStyle} from '@portabletext/editor/selectors'
-
 ;<PasteLinkPlugin
   guard={({snapshot}) => {
     // Skip paste-link on h1 blocks (e.g., document titles)

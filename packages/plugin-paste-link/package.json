@@ -3,26 +3,31 @@
   "version": "4.0.26",
   "description": "Allow pasting links in the Portable Text Editor",
   "keywords": [
-    "portabletext",
-    "plugin",
-    "paste",
+    "behaviors",
     "link",
-    "url",
-    "behaviors"
+    "paste",
+    "plugin",
+    "portabletext",
+    "url"
   ],
   "homepage": "https://portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
   "repository": {
     "type": "git",
     "url": "https://github.com/portabletext/editor.git",
     "directory": "packages/plugin-paste-link"
   },
-  "license": "MIT",
-  "author": "Sanity.io <hello@sanity.io>",
-  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
@@ -30,11 +35,13 @@
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    },
+    "access": "public"
+  },
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
@@ -77,12 +84,5 @@
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
-  },
-  "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": "./dist/index.js",
-      "./package.json": "./package.json"
-    }
   }
 }

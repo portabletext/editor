@@ -1,7 +1,7 @@
-import {Button} from '@/components/ui/button'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {useHistoryButtons} from '@portabletext/toolbar'
 import {Redo2Icon, Undo2Icon} from 'lucide-react'
+import {Button} from '@/components/ui/button'
 import {ButtonTooltip} from './button-tooltip'
 
 const historyShortcuts = {

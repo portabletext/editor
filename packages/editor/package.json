@@ -3,29 +3,34 @@
   "version": "7.9.0",
   "description": "Portable Text Editor made in React",
   "keywords": [
-    "sanity",
-    "realtime",
-    "content",
-    "portable-text-editor",
-    "structure",
     "collaborative",
+    "content",
     "editor",
-    "text",
-    "portable-text"
+    "portable-text",
+    "portable-text-editor",
+    "realtime",
+    "sanity",
+    "structure",
+    "text"
   ],
   "homepage": "https://www.sanity.io/",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/portabletext/editor.git",
     "directory": "packages/editor"
   },
-  "license": "MIT",
-  "author": "Sanity.io <hello@sanity.io>",
-  "sideEffects": false,
+  "files": [
+    "lib"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
@@ -59,11 +64,19 @@
     },
     "./package.json": "./package.json"
   },
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
-  "files": [
-    "lib"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./lib/index.js",
+      "./behaviors": "./lib/behaviors/index.js",
+      "./plugins": "./lib/plugins/index.js",
+      "./selectors": "./lib/selectors/index.js",
+      "./test": "./src/test/_exports/index.ts",
+      "./test/vitest": "./src/test/vitest/_exports/index.ts",
+      "./traversal": "./lib/traversal/index.js",
+      "./utils": "./lib/utils/index.js",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
@@ -132,18 +145,5 @@
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./lib/index.js",
-      "./behaviors": "./lib/behaviors/index.js",
-      "./plugins": "./lib/plugins/index.js",
-      "./selectors": "./lib/selectors/index.js",
-      "./test": "./src/test/_exports/index.ts",
-      "./test/vitest": "./src/test/vitest/_exports/index.ts",
-      "./traversal": "./lib/traversal/index.js",
-      "./utils": "./lib/utils/index.js",
-      "./package.json": "./package.json"
-    }
   }
 }

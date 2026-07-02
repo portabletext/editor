@@ -3,23 +3,28 @@
   "version": "1.0.4",
   "description": "Testing utilities for the Portable Text Editor",
   "keywords": [
-    "portable-text",
     "editor",
+    "portable-text",
     "test"
   ],
   "homepage": "https://www.portabletext.org/",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
   "repository": {
     "type": "git",
     "url": "https://github.com/portabletext/editor.git",
     "directory": "packages/test"
   },
-  "license": "MIT",
-  "author": "Sanity.io <hello@sanity.io>",
-  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
@@ -27,11 +32,9 @@
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
@@ -44,7 +47,6 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest watch"
   },
-  "browserslist": "extends @sanity/browserslist-config",
   "devDependencies": {
     "@portabletext/schema": "workspace:^",
     "@sanity/pkg-utils": "catalog:tooling",
@@ -52,10 +54,8 @@
     "typescript": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
+  "browserslist": "extends @sanity/browserslist-config",
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

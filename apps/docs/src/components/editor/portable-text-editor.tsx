@@ -1,3 +1,4 @@
+import './editor.css'
 import {
   EditorProvider,
   PortableTextEditable,
@@ -20,7 +21,6 @@ import {
 } from '../ui/tooltip'
 import {defaultSchema} from './defaultSchema'
 import {initialValue as defaultInitialValue} from './initial-value'
-import './editor.css'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 
 type PortableTextEditorProps = {

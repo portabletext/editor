@@ -3,25 +3,30 @@
   "version": "8.0.26",
   "description": "Automatically match a pair of characters and decorate the text in between",
   "keywords": [
-    "portabletext",
-    "plugin",
-    "pair",
+    "behaviors",
     "decorator",
-    "behaviors"
+    "pair",
+    "plugin",
+    "portabletext"
   ],
   "homepage": "https://portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
   "repository": {
     "type": "git",
     "url": "https://github.com/portabletext/editor.git",
     "directory": "packages/plugin-character-pair-decorator"
   },
-  "license": "MIT",
-  "author": "Sanity.io <hello@sanity.io>",
-  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
@@ -29,11 +34,12 @@
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
@@ -81,11 +87,5 @@
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.js",
-      "./package.json": "./package.json"
-    }
   }
 }

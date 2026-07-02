@@ -1,5 +1,3 @@
-import {Separator} from '@/components/ui/separator'
-import {TooltipProvider} from '@/components/ui/tooltip'
 import {
   blockquote,
   bold,
@@ -35,6 +33,8 @@ import {
   TextQuoteIcon,
   UnderlineIcon,
 } from 'lucide-react'
+import {Separator} from '@/components/ui/separator'
+import {TooltipProvider} from '@/components/ui/tooltip'
 import {AnnotationButton} from './annotation-button'
 import {AnnotationPopover} from './annotation-popover'
 import {BlockObjectButton} from './block-object-button'

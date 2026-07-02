@@ -1,3 +1,4 @@
+import './editor.css'
 import {
   EditorProvider,
   PortableTextEditable,
@@ -46,7 +47,6 @@ import {
 import {useContext, useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
-import './editor.css'
 import {EditorSettingsPopover} from './editor-settings-popover'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {

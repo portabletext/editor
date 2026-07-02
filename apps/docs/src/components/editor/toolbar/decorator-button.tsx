@@ -1,6 +1,6 @@
-import {Button} from '@/components/ui/button'
 import {useDecoratorButton} from '@portabletext/toolbar'
 import type {ToolbarDecoratorSchemaType} from '@portabletext/toolbar'
+import {Button} from '@/components/ui/button'
 import {ButtonTooltip} from './button-tooltip'
 
 export function DecoratorButton(props: {

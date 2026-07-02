@@ -1,3 +1,4 @@
+import './editor.css'
 import {
   defineSchema,
   EditorProvider,
@@ -13,10 +14,9 @@ import {
   useEditor,
   useEditorSelector,
 } from '@portabletext/editor'
+import {EventListenerPlugin} from '@portabletext/editor/plugins'
 import * as selectors from '@portabletext/editor/selectors'
 import {useState} from 'react'
-import './editor.css'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
 
 // Define the schema for the editor
 // All options are optional

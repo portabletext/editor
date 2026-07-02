@@ -1,5 +1,5 @@
-import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 
 function KeyboardShortcutPreview(props: {shortcut: KeyboardShortcut['keys']}) {
   return (
