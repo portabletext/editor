@@ -325,3 +325,38 @@ describe('table keyboard navigation across a wrapped cell', () => {
     })
   })
 })
+
+describe('table keyboard navigation preserves the caret column', () => {
+  // Identical text in the stacked cells, so the x of a given offset in one
+  // cell is exactly the x of the same offset in the other.
+  const columnValue = [
+    {
+      _type: 'table',
+      _key: 't0',
+      rows: [
+        {_type: 'row', _key: 'r0', cells: [cell('c00', 'abcdef')]},
+        {_type: 'row', _key: 'r1', cells: [cell('c10', 'abcdef')]},
+      ],
+    },
+  ]
+
+  test('ArrowDown lands at the same column in the cell below', async () => {
+    const editor = await navFrom('c00', 3, 'ArrowDown', columnValue)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus).toEqual({
+        path: spanPath('c10'),
+        offset: 3,
+      })
+    })
+  })
+
+  test('ArrowUp lands at the same column in the cell above', async () => {
+    const editor = await navFrom('c10', 2, 'ArrowUp', columnValue)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus).toEqual({
+        path: spanPath('c00'),
+        offset: 2,
+      })
+    })
+  })
+})
