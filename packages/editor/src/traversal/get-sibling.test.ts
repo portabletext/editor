@@ -292,4 +292,57 @@ describe(getSibling.name, () => {
     expect(entry?.node).toBe(testbed.codeLine1)
     expect(entry?.path).toEqual([{_key: 'k11'}, 'code', {_key: 'k8'}])
   })
+
+  test('numeric last segment resolves as a literal index', () => {
+    const entry = getSibling(testbed.snapshot, [1], {direction: 'next'})
+    expect(entry?.node).toBe(testbed.textBlock2)
+    expect(entry?.path).toEqual([{_key: testbed.textBlock2._key}])
+  })
+
+  test('out-of-range numeric last segment returns undefined', () => {
+    expect(
+      getSibling(testbed.snapshot, [99], {direction: 'next'}),
+    ).toBeUndefined()
+  })
+
+  test('resolves the anchor when `blockIndexMap` misses', () => {
+    // An unmaintained map (e.g. a bare engine) must not hide siblings
+    // the tree plainly has; mirrors the `getNode`/`getChildren`
+    // fallback.
+    const snapshot = {
+      context: testbed.snapshot.context,
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    const entry = getSibling(snapshot, [{_key: 'k3'}], {direction: 'next'})
+    expect(entry?.node).toBe(testbed.image)
+    expect(entry?.path).toEqual([{_key: 'k4'}])
+  })
+
+  test('resolves the anchor when `blockIndexMap` disagrees with the tree', () => {
+    // A stale map (snapshots pairing a live map with a pre-apply
+    // value) previously returned the wrong sibling without
+    // verification.
+    const snapshot = {
+      context: testbed.snapshot.context,
+      blockIndexMap: new Map<string, number>([['[_key=="k3"]', 2]]),
+    }
+
+    const entry = getSibling(snapshot, [{_key: 'k3'}], {direction: 'next'})
+    expect(entry?.node).toBe(testbed.image)
+    expect(entry?.path).toEqual([{_key: 'k4'}])
+  })
+
+  test('`match` still applies under a map miss', () => {
+    const snapshot = {
+      context: testbed.snapshot.context,
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    const entry = getSibling(snapshot, [{_key: 'k3'}], {
+      direction: 'next',
+      match: (node) => node._type === 'block',
+    })
+    expect(entry?.node).toBe(testbed.textBlock2)
+  })
 })
