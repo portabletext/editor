@@ -1,4 +1,9 @@
-import type {EditorSelection, EditorSnapshot, Path} from '@portabletext/editor'
+import type {
+  EditorSelection,
+  EditorSelectionPoint,
+  EditorSnapshot,
+  Path,
+} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {isSelectionCollapsed} from '@portabletext/editor/selectors'
 import {
@@ -12,7 +17,13 @@ import {getBlockEndPoint, getBlockStartPoint} from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {resolveCell} from '../resolve-cell'
 
-type Dom = {getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null}
+type Dom = {
+  getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
+  getPointAtCoordinates: (coordinates: {
+    x: number
+    y: number
+  }) => EditorSelectionPoint | null
+}
 type Entry = {path: Path}
 
 const tab = createKeyboardShortcut({
@@ -106,7 +117,8 @@ export const navBehaviors = [
       const target =
         rowBelow &&
         sameColumnCell(snapshot, position.cell, position.row, rowBelow)
-      const at = target && cellStart(snapshot, target.path)
+      const at =
+        target && cellEntrySelection(snapshot, dom, target.path, 'first')
       return at ? {at} : false
     },
     actions: [(_, {at}) => [raise({type: 'select', at})]],
@@ -134,7 +146,8 @@ export const navBehaviors = [
       const target =
         rowAbove &&
         sameColumnCell(snapshot, position.cell, position.row, rowAbove)
-      const at = target && cellEnd(snapshot, target.path)
+      const at =
+        target && cellEntrySelection(snapshot, dom, target.path, 'last')
       return at ? {at} : false
     },
     actions: [(_, {at}) => [raise({type: 'select', at})]],
@@ -181,6 +194,44 @@ function cellEnd(
     return undefined
   }
   const point = getBlockEndPoint({context: snapshot.context, block: lastBlock})
+  return {anchor: point, focus: point}
+}
+
+/**
+ * A collapsed selection in the cell, at the caret's current x where possible:
+ * hit-tests the caret's x on the cell's first (or last) line and uses the
+ * resolved point when it lands inside the cell. Falls back to the start (or
+ * end) of the cell, e.g. when the cell is narrower than the caret's x.
+ */
+function cellEntrySelection(
+  snapshot: EditorSnapshot,
+  dom: Dom,
+  cellPath: Path,
+  edge: 'first' | 'last',
+): EditorSelection | undefined {
+  const fallback =
+    edge === 'first'
+      ? cellStart(snapshot, cellPath)
+      : cellEnd(snapshot, cellPath)
+  if (!fallback) {
+    return undefined
+  }
+  const caretRect = dom.getSelectionRect(snapshot)
+  const entryLineRect = dom.getSelectionRect({
+    ...snapshot,
+    context: {...snapshot.context, selection: fallback},
+  })
+  if (!caretRect || !entryLineRect) {
+    return fallback
+  }
+  const point = dom.getPointAtCoordinates({
+    x: caretRect.left,
+    y: entryLineRect.top + entryLineRect.height / 2,
+  })
+  const resolved = point && resolveCell(snapshot, point.path)
+  if (!resolved || getKey(resolved.cell.path) !== getKey(cellPath)) {
+    return fallback
+  }
   return {anchor: point, focus: point}
 }
 
