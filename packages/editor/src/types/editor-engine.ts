@@ -53,6 +53,16 @@ export interface PortableTextEditorEngine extends DOMEditor {
    */
   listIndexMapDirty: boolean
   /**
+   * Per-notify pending flags for the segmented selector channels
+   * (`EngineSelectorChannel`). Set where the corresponding state mutates
+   * (registration map swaps in `register-node-on-engine.ts`, list-index
+   * invalidation in the update-value subscriber) and consumed by the
+   * React layer's `onContextChange` dispatch. Separate from
+   * `listIndexMapDirty`, which any read clears via `getListIndexMap`;
+   * these are cleared only when the notification is delivered.
+   */
+  selectorChannelsPending: {registrations: boolean; listIndex: boolean}
+  /**
    * Serialized paths of sibling groups (a node's keyed child array, or the
    * root value array as `''`) whose children have been verified to carry no
    * duplicate `_key`s. Per-node duplicate-key normalization skips groups

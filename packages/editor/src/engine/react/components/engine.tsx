@@ -18,7 +18,15 @@ export const Engine = (props: {editor: Editor; children: React.ReactNode}) => {
   const {selectorContext, onChange: handleSelectorChange} = useSelectorContext()
 
   const onContextChange = useCallback(() => {
-    handleSelectorChange()
+    // Consume the channel flags armed where the corresponding state
+    // mutated, so channel-scoped selectors only run when their inputs
+    // could have changed.
+    const pending = editor.selectorChannelsPending
+    const registrations = pending.registrations
+    const listIndex = pending.listIndex
+    pending.registrations = false
+    pending.listIndex = false
+    handleSelectorChange({registrations, listIndex})
   }, [editor, handleSelectorChange])
 
   useEffect(() => {

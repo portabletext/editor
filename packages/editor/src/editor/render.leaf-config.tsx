@@ -5,7 +5,7 @@ import type {
 } from '@portabletext/schema'
 import {useCallback, useContext} from 'react'
 import type {Path} from '../engine/interfaces/path'
-import {useEngineSelector} from '../engine/react/hooks/use-engine-selector'
+import {useRegistrationsSelector} from '../engine/react/hooks/use-engine-selector'
 import type {SpanConfig} from '../renderers/renderer.types'
 import {findInlinePositionalOverride} from './find-positional-override'
 import {ParentTextBlockContext} from './parent-text-block-context'
@@ -28,7 +28,7 @@ export function useSpanConfig(
 ): SpanConfig | undefined {
   const parentTextBlock = useContext(ParentTextBlockContext)
   const positional = findInlinePositionalOverride(parentTextBlock, node._type)
-  const [globalSpan, globalSpanCatchAll] = useEngineSelector(
+  const [globalSpan, globalSpanCatchAll] = useRegistrationsSelector(
     useCallback(
       (engine) =>
         [engine.spans.get(node._type), engine.spans.get('*')] as const,
