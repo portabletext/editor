@@ -2,7 +2,7 @@ import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {afterAll, beforeAll, describe, expect, test} from 'vitest'
+import {afterAll, beforeAll, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
 import {isCell} from './types'
@@ -122,6 +122,7 @@ function focusBlockKey(snapshot: EditorSnapshot): string | undefined {
   return getEnclosingBlock(snapshot, focus)?.node._key
 }
 
+/** Places the caret at `offset` in `cellKey`, presses `key`, returns the editor. */
 async function navFrom(
   cellKey: string,
   offset: number,
@@ -137,51 +138,82 @@ async function navFrom(
   await userEvent.click(locator)
   const point = {path: spanPath(cellKey), offset}
   editor.send({type: 'select', at: {anchor: point, focus: point}})
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
+  })
   await userEvent.keyboard(`{${key}}`)
-  await new Promise((resolve) => setTimeout(resolve, 50))
-  return focusCellKey(editor.getSnapshot())
+  return editor
 }
 
 describe('table keyboard navigation', () => {
   test('Tab moves to the next cell in the row', async () => {
-    expect(await navFrom('c00', 1, 'Tab')).toEqual('c01')
+    const editor = await navFrom('c00', 1, 'Tab')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c01')
+    })
   })
 
   test('Tab wraps to the first cell of the next row', async () => {
-    expect(await navFrom('c01', 1, 'Tab')).toEqual('c10')
+    const editor = await navFrom('c01', 1, 'Tab')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c10')
+    })
   })
 
   test('Tab at the last cell does not move (passes through)', async () => {
-    expect(await navFrom('c11', 1, 'Tab')).toEqual('c11')
+    const editor = await navFrom('c11', 1, 'Tab')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c11')
+    })
   })
 
   test('Shift+Tab moves to the previous cell', async () => {
-    expect(await navFrom('c01', 1, 'Shift>}{Tab}{/Shift')).toEqual('c00')
+    const editor = await navFrom('c01', 1, 'Shift>}{Tab}{/Shift')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    })
   })
 
   test('Shift+Tab wraps to the last cell of the previous row', async () => {
-    expect(await navFrom('c10', 1, 'Shift>}{Tab}{/Shift')).toEqual('c01')
+    const editor = await navFrom('c10', 1, 'Shift>}{Tab}{/Shift')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c01')
+    })
   })
 
   test('Shift+Tab at the first cell does not move (passes through)', async () => {
-    expect(await navFrom('c00', 1, 'Shift>}{Tab}{/Shift')).toEqual('c00')
+    const editor = await navFrom('c00', 1, 'Shift>}{Tab}{/Shift')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    })
   })
 
   test('ArrowDown moves to the cell directly below (same column)', async () => {
-    expect(await navFrom('c01', 1, 'ArrowDown')).toEqual('c11')
+    const editor = await navFrom('c01', 1, 'ArrowDown')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c11')
+    })
   })
 
   test('ArrowDown in the bottom row does not move (passes through)', async () => {
-    expect(await navFrom('c10', 1, 'ArrowDown')).toEqual('c10')
+    const editor = await navFrom('c10', 1, 'ArrowDown')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c10')
+    })
   })
 
   test('ArrowUp moves to the cell directly above (same column)', async () => {
-    expect(await navFrom('c10', 0, 'ArrowUp')).toEqual('c00')
+    const editor = await navFrom('c10', 0, 'ArrowUp')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    })
   })
 
   test('ArrowUp in the top row does not move (passes through)', async () => {
-    expect(await navFrom('c00', 0, 'ArrowUp')).toEqual('c00')
+    const editor = await navFrom('c00', 0, 'ArrowUp')
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    })
   })
 
   test('ArrowUp lands in the last block of the cell above', async () => {
@@ -234,19 +266,10 @@ describe('table keyboard navigation', () => {
         ],
       },
     ]
-    const {editor, locator} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue: value,
-      children: <TablePlugin />,
+    const editor = await navFrom('c10', 0, 'ArrowUp', value)
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('c00-b1')
     })
-    await userEvent.click(locator)
-    const point = {path: spanPath('c10'), offset: 0}
-    editor.send({type: 'select', at: {anchor: point, focus: point}})
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    await userEvent.keyboard('{ArrowUp}')
-    await new Promise((resolve) => setTimeout(resolve, 50))
-    expect(focusBlockKey(editor.getSnapshot())).toEqual('c00-b1')
   })
 })
 
@@ -265,22 +288,40 @@ describe('table keyboard navigation across a wrapped cell', () => {
   })
 
   test('ArrowDown from the last visual line crosses to the cell below', async () => {
-    expect(
-      await navFrom('c00', longText.length, 'ArrowDown', wrappedValue),
-    ).toEqual('c10')
+    const editor = await navFrom(
+      'c00',
+      longText.length,
+      'ArrowDown',
+      wrappedValue,
+    )
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c10')
+    })
   })
 
   test('ArrowDown from an earlier line stays in the cell (passes through)', async () => {
-    expect(await navFrom('c00', 0, 'ArrowDown', wrappedValue)).toEqual('c00')
+    const editor = await navFrom('c00', 0, 'ArrowDown', wrappedValue)
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    })
   })
 
   test('ArrowUp from the first visual line crosses to the cell above', async () => {
-    expect(await navFrom('c10', 0, 'ArrowUp', wrappedValue)).toEqual('c00')
+    const editor = await navFrom('c10', 0, 'ArrowUp', wrappedValue)
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    })
   })
 
   test('ArrowUp from a later line stays in the cell (passes through)', async () => {
-    expect(
-      await navFrom('c10', longText.length, 'ArrowUp', wrappedValue),
-    ).toEqual('c10')
+    const editor = await navFrom(
+      'c10',
+      longText.length,
+      'ArrowUp',
+      wrappedValue,
+    )
+    await vi.waitFor(() => {
+      expect(focusCellKey(editor.getSnapshot())).toEqual('c10')
+    })
   })
 })
