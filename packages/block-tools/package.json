@@ -3,22 +3,27 @@
   "version": "5.1.9",
   "description": "Sanity-flavored HTML to Portable Text conversion (wraps @portabletext/html)",
   "keywords": [
-    "portable-text",
-    "block-tools"
+    "block-tools",
+    "portable-text"
   ],
   "homepage": "https://www.sanity.io/",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/portabletext/editor.git",
     "directory": "packages/block-tools"
   },
-  "license": "MIT",
-  "author": "Sanity.io <hello@sanity.io>",
-  "sideEffects": false,
+  "files": [
+    "lib"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
@@ -30,11 +35,13 @@
     },
     "./package.json": "./package.json"
   },
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
-  "files": [
-    "lib"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./lib/index.js",
+      "./rules": "./lib/rules/index.js",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
@@ -66,12 +73,5 @@
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./lib/index.js",
-      "./rules": "./lib/rules/index.js",
-      "./package.json": "./package.json"
-    }
   }
 }

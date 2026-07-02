@@ -1,3 +1,8 @@
+import {useAnnotationPopover} from '@portabletext/toolbar'
+import type {ToolbarAnnotationSchemaType} from '@portabletext/toolbar'
+import * as PopoverPrimitive from '@radix-ui/react-popover'
+import {ExternalLinkIcon, PencilIcon, TrashIcon} from 'lucide-react'
+import {useState} from 'react'
 import {Button} from '@/components/ui/button'
 import {
   Dialog,
@@ -10,11 +15,6 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Separator} from '@/components/ui/separator'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {useAnnotationPopover} from '@portabletext/toolbar'
-import type {ToolbarAnnotationSchemaType} from '@portabletext/toolbar'
-import * as PopoverPrimitive from '@radix-ui/react-popover'
-import {ExternalLinkIcon, PencilIcon, TrashIcon} from 'lucide-react'
-import {useState} from 'react'
 
 export function AnnotationPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>

@@ -1,3 +1,5 @@
+import type {ToolbarStyleSchemaType} from '@portabletext/toolbar'
+import {useStyleSelector} from '@portabletext/toolbar'
 import {
   Select,
   SelectContent,
@@ -6,8 +8,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import type {ToolbarStyleSchemaType} from '@portabletext/toolbar'
-import {useStyleSelector} from '@portabletext/toolbar'
 
 export function StyleButton(props: {
   schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>

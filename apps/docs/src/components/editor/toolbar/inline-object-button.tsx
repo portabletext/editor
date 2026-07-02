@@ -1,3 +1,6 @@
+import {useInlineObjectButton} from '@portabletext/toolbar'
+import type {ToolbarInlineObjectSchemaType} from '@portabletext/toolbar'
+import {useState} from 'react'
 import {Button} from '@/components/ui/button'
 import {
   Dialog,
@@ -8,9 +11,6 @@ import {
 } from '@/components/ui/dialog'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {useInlineObjectButton} from '@portabletext/toolbar'
-import type {ToolbarInlineObjectSchemaType} from '@portabletext/toolbar'
-import {useState} from 'react'
 import {ButtonTooltip} from './button-tooltip'
 
 export function InlineObjectButton(props: {
