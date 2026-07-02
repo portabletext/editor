@@ -28,7 +28,7 @@ catalogs:
     "@vitest/browser": ^4.1.9
     "@vitest/browser-playwright": ^4.1.9
     babel-plugin-react-compiler: ^1.0.0
-    eslint: ^9.39.1
+    eslint: ^9.39.4
     eslint-formatter-gha: ^1.6.0
     eslint-plugin-react-hooks: ^7.1.1
     jsdom: ^27.2.0
@@ -38,7 +38,7 @@ catalogs:
     tailwind-merge: ^3.3.1
     tailwindcss: ^4.1.18
     typescript: 6.0.3
-    typescript-eslint: ^8.48.0
+    typescript-eslint: ^8.62.0
     vite: ^7.3.5
     vitest: ^4.1.9
     vitest-browser-react: ^2.2.0
