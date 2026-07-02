@@ -8,6 +8,8 @@ import {TablePlugin} from '../plugin.table'
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
   annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+  styles: [{name: 'normal'}, {name: 'h1'}],
+  lists: [{name: 'bullet'}],
   blockObjects: [
     {
       name: 'table',
@@ -42,24 +44,36 @@ const schemaDefinition = defineSchema({
   ],
 })
 
+type TestBlock = {
+  _type: 'block'
+  _key: string
+  style: string
+  listItem?: string
+  level?: number
+  markDefs: Array<{_type: string; _key: string; href?: string}>
+  children: Array<{
+    _type: string
+    _key: string
+    text: string
+    marks: Array<string>
+  }>
+}
+
 const cell = (
   key: string,
   text: string,
   marks: Array<string> = [],
   markDefs: Array<{_type: string; _key: string; href?: string}> = [],
-) => ({
-  _type: 'cell',
-  _key: key,
-  value: [
-    {
-      _type: 'block',
-      _key: `b-${key}`,
-      style: 'normal',
-      markDefs,
-      children: [{_type: 'span', _key: `s-${key}`, text, marks}],
-    },
-  ],
-})
+) => {
+  const block: TestBlock = {
+    _type: 'block',
+    _key: `b-${key}`,
+    style: 'normal',
+    markDefs,
+    children: [{_type: 'span', _key: `s-${key}`, text, marks}],
+  }
+  return {_type: 'cell', _key: key, value: [block]}
+}
 
 const linkedCell = (key: string, text: string) =>
   cell(
@@ -120,6 +134,14 @@ function spanMarks(
 
 function cellMarkDefs(snapshot: EditorSnapshot, cellKey: string) {
   return firstBlock(snapshot, cellKey)?.markDefs ?? []
+}
+
+function blockStyle(snapshot: EditorSnapshot, cellKey: string) {
+  return firstBlock(snapshot, cellKey)?.style
+}
+
+function blockListItem(snapshot: EditorSnapshot, cellKey: string) {
+  return firstBlock(snapshot, cellKey)?.listItem
 }
 
 function firstBlock(snapshot: EditorSnapshot, cellKey: string) {
@@ -357,6 +379,67 @@ describe('rectangular selection formatting', () => {
       expect(spanMarks(snapshot, 'c10')).toHaveLength(1)
       expect(spanMarks(snapshot, 'c01')).toEqual([])
       expect(spanMarks(snapshot, 'c11')).toEqual([])
+    })
+  })
+
+  test('style.toggle on a column selection only affects the column', async () => {
+    const editor = await selectLeftColumn()
+
+    editor.send({type: 'style.toggle', style: 'h1'})
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      expect(blockStyle(snapshot, 'c00')).toBe('h1')
+      expect(blockStyle(snapshot, 'c10')).toBe('h1')
+      expect(blockStyle(snapshot, 'c01')).toBe('normal')
+      expect(blockStyle(snapshot, 'c11')).toBe('normal')
+    })
+  })
+
+  test('style.toggle styles empty member cells too', async () => {
+    const editor = await selectLeftColumn([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [cell('c00', 'A'), cell('c01', 'B')],
+          },
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [cell('c10', ''), cell('c11', 'D')],
+          },
+        ],
+      },
+    ])
+
+    editor.send({type: 'style.toggle', style: 'h1'})
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      expect(blockStyle(snapshot, 'c00')).toBe('h1')
+      // Unlike span-level formatting, block-level formatting includes empty
+      // cells: typing into c10 later should produce an h1.
+      expect(blockStyle(snapshot, 'c10')).toBe('h1')
+      expect(blockStyle(snapshot, 'c01')).toBe('normal')
+      expect(blockStyle(snapshot, 'c11')).toBe('normal')
+    })
+  })
+
+  test('list item.toggle on a column selection only affects the column', async () => {
+    const editor = await selectLeftColumn()
+
+    editor.send({type: 'list item.toggle', listItem: 'bullet'})
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      expect(blockListItem(snapshot, 'c00')).toBe('bullet')
+      expect(blockListItem(snapshot, 'c10')).toBe('bullet')
+      expect(blockListItem(snapshot, 'c01')).toBeUndefined()
+      expect(blockListItem(snapshot, 'c11')).toBeUndefined()
     })
   })
 
