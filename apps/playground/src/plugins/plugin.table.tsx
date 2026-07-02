@@ -35,7 +35,12 @@ import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 import {cellStyle, type CellRange} from './table-cell-style'
-import {TableChrome, TableTrashLayer, type HoverCell} from './table-chrome'
+import {
+  TableChrome,
+  TableMenu,
+  TableTrashLayer,
+  type HoverCell,
+} from './table-chrome'
 import {useTableMetrics} from './table-metrics'
 
 const tableContainer = defineContainer({
@@ -195,6 +200,35 @@ function TableContainer({
     }
   }
 
+  const hasHeader = (Number(table?.headerRows) || 0) >= 1
+  const toggleHeader = () => {
+    editor.send({
+      type: 'block.set',
+      at: path,
+      props: {headerRows: hasHeader ? 0 : 1},
+    })
+  }
+  const selectTable = () => {
+    const snapshot = editor.getSnapshot()
+    const rows = getChildren(snapshot, path)
+    const firstRow = rows.at(0)
+    const lastRow = rows.at(-1)
+    const first = firstRow && getChildren(snapshot, firstRow.path).at(0)
+    const last = lastRow && getChildren(snapshot, lastRow.path).at(-1)
+    if (first && last) {
+      selectCells(first.path, last.path)
+    }
+  }
+  const deleteTable = () => {
+    const snapshot = editor.getSnapshot()
+    const firstRow = getChildren(snapshot, path).at(0)
+    const cell = firstRow && getChildren(snapshot, firstRow.path).at(0)
+    const insideCell = cell && getFirstChild(snapshot, cell.path)
+    if (insideCell) {
+      editor.send({type: 'custom.unset.table', at: insideCell.path})
+    }
+  }
+
   const deleteRow = (index: number) => {
     const snapshot = editor.getSnapshot()
     const row = getChildren(snapshot, path).at(index)
@@ -265,6 +299,18 @@ function TableContainer({
         onInsertRow={insertRow}
         onInsertCol={insertCol}
       />
+      {metrics ? (
+        <TableMenu
+          metrics={metrics}
+          active={active}
+          handlers={{
+            hasHeader,
+            onToggleHeader: toggleHeader,
+            onSelectTable: selectTable,
+            onDeleteTable: deleteTable,
+          }}
+        />
+      ) : null}
       <TableTrashLayer
         tableRef={tableRef}
         metrics={metrics}
