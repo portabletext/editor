@@ -61,7 +61,7 @@
     "knip": "6.0.0",
     "lint-staged": "^15.5.2",
     "oxfmt": "catalog:tooling",
-    "prettier": "^3.7.3",
+    "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-gherkin": "^3.1.4",
     "turbo": "^2.6.3"
