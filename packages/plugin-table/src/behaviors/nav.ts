@@ -7,7 +7,6 @@ import type {
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {isSelectionCollapsed} from '@portabletext/editor/selectors'
 import {
-  getBlock,
   getChildren,
   getEnclosingBlock,
   getFirstChild,
@@ -15,6 +14,7 @@ import {
 } from '@portabletext/editor/traversal'
 import {getBlockEndPoint, getBlockStartPoint} from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveCell} from '../resolve-cell'
 
 type Dom = {
@@ -171,16 +171,8 @@ function cellStart(
   snapshot: EditorSnapshot,
   cellPath: Path,
 ): EditorSelection | undefined {
-  const firstChild = getFirstChild(snapshot, cellPath)
-  const firstBlock = firstChild && getBlock(snapshot, firstChild.path)
-  if (!firstBlock) {
-    return undefined
-  }
-  const point = getBlockStartPoint({
-    context: snapshot.context,
-    block: firstBlock,
-  })
-  return {anchor: point, focus: point}
+  const point = cellStartPoint(snapshot, cellPath)
+  return point && {anchor: point, focus: point}
 }
 
 /** A collapsed selection at the end of the cell's last block. */
@@ -188,13 +180,8 @@ function cellEnd(
   snapshot: EditorSnapshot,
   cellPath: Path,
 ): EditorSelection | undefined {
-  const lastChild = getLastChild(snapshot, cellPath)
-  const lastBlock = lastChild && getBlock(snapshot, lastChild.path)
-  if (!lastBlock) {
-    return undefined
-  }
-  const point = getBlockEndPoint({context: snapshot.context, block: lastBlock})
-  return {anchor: point, focus: point}
+  const point = cellEndPoint(snapshot, cellPath)
+  return point && {anchor: point, focus: point}
 }
 
 /**
