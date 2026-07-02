@@ -17,7 +17,7 @@
     "build:sanity-bridge": "turbo build --filter=@portabletext/sanity-bridge...",
     "build:schema": "turbo build --filter=@portabletext/schema...",
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
-    "check:format": "prettier . --check",
+    "check:format": "oxfmt --check . && prettier --check \"**/*.{astro,feature}\"",
     "check:knip": "knip",
     "check:lint": "turbo check:lint",
     "check:react-compiler": "turbo check:react-compiler",
@@ -35,8 +35,7 @@
     "dev:sanity-bridge": "turbo dev --filter=@portabletext/sanity-bridge...",
     "dev:schema": "turbo dev --filter=@portabletext/schema...",
     "dev:toolbar": "turbo dev --filter=@portabletext/toolbar...",
-    "format": "prettier --cache --write .",
-    "format:staged": "pretty-quick --staged",
+    "format": "oxfmt . && prettier --cache --write \"**/*.{astro,feature}\"",
     "postinstall": "husky",
     "lint:fix": "turbo lint:fix",
     "release": "pnpm build --filter=./packages/* && changeset publish",
@@ -48,16 +47,10 @@
     "test:unit:watch": "turbo test:unit:watch",
     "test:watch": "turbo test:watch"
   },
-  "lint-staged": {
-    "*": [
-      "pnpm format:staged"
-    ]
-  },
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
-    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
     "@playwright/test": "^1.60.0",
     "@sanity/prettier-config": "^3.0.0",
     "@types/react": "^19.2.17",
@@ -67,11 +60,15 @@
     "husky": "^9.1.7",
     "knip": "6.0.0",
     "lint-staged": "^15.5.2",
+    "oxfmt": "catalog:tooling",
     "prettier": "^3.7.3",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-gherkin": "^3.1.4",
-    "pretty-quick": "^4.2.2",
     "turbo": "^2.6.3"
+  },
+  "lint-staged": {
+    "*": "oxfmt --no-error-on-unmatched-pattern",
+    "*.{astro,feature}": "prettier --write"
   },
   "packageManager": "pnpm@10.25.0",
   "pnpm": {
