@@ -7,6 +7,7 @@ import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
   blockObjects: [
     {
       name: 'table',
@@ -41,7 +42,12 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const cell = (key: string, text: string, marks: Array<string> = []) => ({
+const cell = (
+  key: string,
+  text: string,
+  marks: Array<string> = [],
+  markDefs: Array<{_type: string; _key: string; href?: string}> = [],
+) => ({
   _type: 'cell',
   _key: key,
   value: [
@@ -49,11 +55,19 @@ const cell = (key: string, text: string, marks: Array<string> = []) => ({
       _type: 'block',
       _key: `b-${key}`,
       style: 'normal',
-      markDefs: [],
+      markDefs,
       children: [{_type: 'span', _key: `s-${key}`, text, marks}],
     },
   ],
 })
+
+const linkedCell = (key: string, text: string) =>
+  cell(
+    key,
+    text,
+    [`l-${key}`],
+    [{_type: 'link', _key: `l-${key}`, href: 'https://example.com'}],
+  )
 
 // 2x2 grid: c00 c01 / c10 c11
 const initialValue = [
@@ -101,12 +115,20 @@ function spanMarks(
   snapshot: EditorSnapshot,
   cellKey: string,
 ): Array<string> | undefined {
+  return firstBlock(snapshot, cellKey)?.children[0]?.marks
+}
+
+function cellMarkDefs(snapshot: EditorSnapshot, cellKey: string) {
+  return firstBlock(snapshot, cellKey)?.markDefs ?? []
+}
+
+function firstBlock(snapshot: EditorSnapshot, cellKey: string) {
   const value = snapshot.context.value as typeof initialValue
   const rowIndex = cellKey.startsWith('c0') ? 0 : 1
   const cellNode = value[0]?.rows[rowIndex]?.cells.find(
     (candidate) => candidate._key === cellKey,
   )
-  return cellNode?.value[0]?.children[0]?.marks
+  return cellNode?.value[0]
 }
 
 /**
@@ -244,6 +266,97 @@ describe('rectangular selection formatting', () => {
       // Outside the rectangle, the decorator stays.
       expect(spanMarks(snapshot, 'c01')).toEqual(['strong'])
       expect(spanMarks(snapshot, 'c11')).toEqual(['strong'])
+    })
+  })
+
+  test('annotation.add on a column selection only affects the column', async () => {
+    const editor = await selectLeftColumn()
+
+    editor.send({
+      type: 'annotation.add',
+      annotation: {name: 'link', value: {href: 'https://example.com'}},
+    })
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      // Each member cell gets its own markDef, referenced by its span.
+      for (const cellKey of ['c00', 'c10']) {
+        const markDefs = cellMarkDefs(snapshot, cellKey)
+        expect(markDefs.map((markDef) => markDef._type)).toEqual(['link'])
+        expect(spanMarks(snapshot, cellKey)).toEqual([markDefs[0]?._key])
+      }
+      expect(cellMarkDefs(snapshot, 'c01')).toEqual([])
+      expect(spanMarks(snapshot, 'c01')).toEqual([])
+      expect(cellMarkDefs(snapshot, 'c11')).toEqual([])
+      expect(spanMarks(snapshot, 'c11')).toEqual([])
+    })
+  })
+
+  test('annotation.remove on a column selection only affects the column', async () => {
+    const editor = await selectLeftColumn([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [linkedCell('c00', 'A'), linkedCell('c01', 'B')],
+          },
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [linkedCell('c10', 'C'), linkedCell('c11', 'D')],
+          },
+        ],
+      },
+    ])
+
+    editor.send({type: 'annotation.remove', annotation: {name: 'link'}})
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      expect(spanMarks(snapshot, 'c00')).toEqual([])
+      expect(spanMarks(snapshot, 'c10')).toEqual([])
+      // Outside the rectangle, the annotation stays.
+      expect(spanMarks(snapshot, 'c01')).toEqual(['l-c01'])
+      expect(spanMarks(snapshot, 'c11')).toEqual(['l-c11'])
+    })
+  })
+
+  test('annotation.toggle on a mixed column applies uniformly', async () => {
+    const editor = await selectLeftColumn([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [linkedCell('c00', 'A'), cell('c01', 'B')],
+          },
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [cell('c10', 'C'), cell('c11', 'D')],
+          },
+        ],
+      },
+    ])
+
+    editor.send({
+      type: 'annotation.toggle',
+      annotation: {name: 'link', value: {href: 'https://example.com'}},
+    })
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      // c00 was already linked: a per-cell toggle would checkerboard, and a
+      // blind add would stack a second annotation. It keeps its original.
+      expect(spanMarks(snapshot, 'c00')).toEqual(['l-c00'])
+      expect(spanMarks(snapshot, 'c10')).toHaveLength(1)
+      expect(spanMarks(snapshot, 'c01')).toEqual([])
+      expect(spanMarks(snapshot, 'c11')).toEqual([])
     })
   })
 
