@@ -1,5 +1,11 @@
-import type {EditorSnapshot} from '@portabletext/editor'
-import type {TableSelection} from './behaviors/types'
+import type {EditorSnapshot, Path} from '@portabletext/editor'
+import {getEnclosingBlock} from '@portabletext/editor/traversal'
+import {
+  isTable,
+  type Cell,
+  type Table,
+  type TableSelection,
+} from './behaviors/types'
 import {resolveCell} from './resolve-cell'
 
 /**
@@ -64,5 +70,65 @@ export function getTableSelection(
       Math.min(anchorColIndex, focusColIndex),
       Math.max(anchorColIndex, focusColIndex),
     ],
+  }
+}
+
+export type ResolvedTableSelection = {
+  tableSelection: TableSelection
+  table: {node: Table; path: Path}
+}
+
+/**
+ * `getTableSelection` together with the table node it targets, so behaviors
+ * acting on the rectangle don't have to re-resolve the table. Returns
+ * `undefined` for an ordinary single-cell selection.
+ */
+export function resolveTableSelection(
+  snapshot: EditorSnapshot,
+): ResolvedTableSelection | undefined {
+  const tableSelection = getTableSelection(snapshot)
+  if (!tableSelection) {
+    return undefined
+  }
+  const table = getEnclosingBlock(snapshot, tableSelection.tablePath, {
+    match: isTable,
+  })
+  if (!table) {
+    return undefined
+  }
+  return {tableSelection, table}
+}
+
+/**
+ * The cells inside the rectangle, in row-major order, each with its keyed
+ * path.
+ */
+export function* memberCells(
+  tableSelection: TableSelection,
+  table: Table,
+): Generator<{node: Cell; path: Path}> {
+  const [rowStart, rowEnd] = tableSelection.rowRange
+  const [colStart, colEnd] = tableSelection.colRange
+  for (let rowIndex = rowStart; rowIndex <= rowEnd; rowIndex++) {
+    const row = table.rows[rowIndex]
+    if (!row) {
+      continue
+    }
+    for (let colIndex = colStart; colIndex <= colEnd; colIndex++) {
+      const cell = row.cells[colIndex]
+      if (!cell) {
+        continue
+      }
+      yield {
+        node: cell,
+        path: [
+          ...tableSelection.tablePath,
+          'rows',
+          {_key: row._key},
+          'cells',
+          {_key: cell._key},
+        ],
+      }
+    }
   }
 }
