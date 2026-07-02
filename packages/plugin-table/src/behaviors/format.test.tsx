@@ -201,6 +201,52 @@ describe('rectangular selection formatting', () => {
     })
   })
 
+  test('decorator.add on a column selection only affects the column', async () => {
+    const editor = await selectLeftColumn()
+
+    editor.send({type: 'decorator.add', decorator: 'strong'})
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
+      expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
+      expect(spanMarks(snapshot, 'c01')).toEqual([])
+      expect(spanMarks(snapshot, 'c11')).toEqual([])
+    })
+  })
+
+  test('decorator.remove on a column selection only affects the column', async () => {
+    const editor = await selectLeftColumn([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [cell('c00', 'A', ['strong']), cell('c01', 'B', ['strong'])],
+          },
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [cell('c10', 'C', ['strong']), cell('c11', 'D', ['strong'])],
+          },
+        ],
+      },
+    ])
+
+    editor.send({type: 'decorator.remove', decorator: 'strong'})
+
+    await vi.waitFor(() => {
+      const snapshot = editor.getSnapshot()
+      expect(spanMarks(snapshot, 'c00')).toEqual([])
+      expect(spanMarks(snapshot, 'c10')).toEqual([])
+      // Outside the rectangle, the decorator stays.
+      expect(spanMarks(snapshot, 'c01')).toEqual(['strong'])
+      expect(spanMarks(snapshot, 'c11')).toEqual(['strong'])
+    })
+  })
+
   test('a single undo restores the whole column', async () => {
     const editor = await selectLeftColumn()
 
