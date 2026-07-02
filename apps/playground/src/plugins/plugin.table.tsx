@@ -35,7 +35,7 @@ import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 import {cellStyle, type CellRange} from './table-cell-style'
-import {TableChrome, type HoverCell} from './table-chrome'
+import {TableChrome, TableTrashLayer, type HoverCell} from './table-chrome'
 import {useTableMetrics} from './table-metrics'
 
 const tableContainer = defineContainer({
@@ -195,6 +195,25 @@ function TableContainer({
     }
   }
 
+  const deleteRow = (index: number) => {
+    const snapshot = editor.getSnapshot()
+    const row = getChildren(snapshot, path).at(index)
+    const cell = row && getChildren(snapshot, row.path).at(0)
+    const insideCell = cell && getFirstChild(snapshot, cell.path)
+    if (insideCell) {
+      editor.send({type: 'custom.unset.row', at: insideCell.path})
+    }
+  }
+  const deleteCol = (index: number) => {
+    const snapshot = editor.getSnapshot()
+    const firstRow = getChildren(snapshot, path).at(0)
+    const cell = firstRow && getChildren(snapshot, firstRow.path).at(index)
+    const insideCell = cell && getFirstChild(snapshot, cell.path)
+    if (insideCell) {
+      editor.send({type: 'custom.unset.column', at: insideCell.path})
+    }
+  }
+
   const onMouseMove = (event: ReactMouseEvent) => {
     const rect = tableRef.current?.getBoundingClientRect()
     if (!rect || !metrics) {
@@ -245,6 +264,16 @@ function TableContainer({
         onSelectCol={selectCol}
         onInsertRow={insertRow}
         onInsertCol={insertCol}
+      />
+      <TableTrashLayer
+        tableRef={tableRef}
+        metrics={metrics}
+        selectedRow={selectedRow}
+        selectedCol={selectedCol}
+        canDeleteRow={rowCount > 1}
+        canDeleteCol={columnCount > 1}
+        onDeleteRow={deleteRow}
+        onDeleteCol={deleteCol}
       />
     </div>
   )
