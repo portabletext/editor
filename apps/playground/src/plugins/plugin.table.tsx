@@ -39,6 +39,7 @@ import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 import {cellStyle, type CellRange} from './table-cell-style'
 import {
+  EXTEND_LANE,
   ReorderGhost,
   TableChrome,
   TableMenu,
@@ -365,14 +366,35 @@ function TableContainer({
     }
     const relY = event.clientY - rect.top
     const relX = event.clientX - rect.left
-    const row = metrics.rows.findIndex(
+    let row = metrics.rows.findIndex(
       (candidate) =>
         relY >= candidate.top && relY < candidate.top + candidate.height,
     )
-    const col = metrics.cols.findIndex(
+    let col = metrics.cols.findIndex(
       (candidate) =>
         relX >= candidate.left && relX < candidate.left + candidate.width,
     )
+    // The extend lanes below/right of the table count as their edge
+    // row/column, so the add bars are reachable directly (approaching from
+    // outside the table) instead of only via the last row/column's cells.
+    const lastRow = metrics.rows.at(-1)
+    if (
+      row === -1 &&
+      lastRow &&
+      relY >= lastRow.top &&
+      relY <= metrics.height + EXTEND_LANE
+    ) {
+      row = metrics.rows.length - 1
+    }
+    const lastCol = metrics.cols.at(-1)
+    if (
+      col === -1 &&
+      lastCol &&
+      relX >= lastCol.left &&
+      relX <= metrics.width + EXTEND_LANE
+    ) {
+      col = metrics.cols.length - 1
+    }
     setHoverCell(row >= 0 && col >= 0 ? {row, col} : null)
   }
 

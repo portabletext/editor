@@ -37,6 +37,8 @@ const GRID_LINE_HALF = 0.5
 const INSERT_GUIDE = 1.5
 const EXTEND_SIZE = 17
 const EXTEND_GAP = 3
+/** The reserved add-row / add-column lane: bar + gap. */
+export const EXTEND_LANE = EXTEND_SIZE + EXTEND_GAP
 const EXTEND_BAR_BG = '#fafafb'
 const EXTEND_BAR_BG_HOVER = '#f0f1f3'
 const EXTEND_ICON = '#6e7484'
