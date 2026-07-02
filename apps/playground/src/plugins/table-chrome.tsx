@@ -5,10 +5,12 @@ import {
   useRef,
   useState,
   type JSX,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react'
 import {createPortal} from 'react-dom'
 import {BLUE, BORDER} from './table-cell-style'
+import type {DragState} from './table-drag'
 import {snapPx, type TableMetrics} from './table-metrics'
 
 // Top gutter holds the column handles + table menu. No left gutter: the table
@@ -78,8 +80,8 @@ export function TableChrome({
   hoverCell,
   selectedRow,
   selectedCol,
-  onSelectRow,
-  onSelectCol,
+  onHandlePointerDown,
+  drag,
   onInsertRow,
   onInsertCol,
 }: {
@@ -88,8 +90,12 @@ export function TableChrome({
   hoverCell: HoverCell
   selectedRow: number | null
   selectedCol: number | null
-  onSelectRow: (index: number) => void
-  onSelectCol: (index: number) => void
+  onHandlePointerDown: (
+    kind: 'row' | 'column',
+    index: number,
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) => void
+  drag: DragState | null
   onInsertRow: (boundary: number) => void
   onInsertCol: (boundary: number) => void
 }): JSX.Element | null {
@@ -97,13 +103,14 @@ export function TableChrome({
   if (!metrics) {
     return null
   }
+  const dragging = Boolean(drag?.active)
   const lastRow = metrics.rows.length - 1
   const lastCol = metrics.cols.length - 1
   return (
     <>
       <ExtendBar
         label="Add row at end"
-        visible={active && hoverCell?.row === lastRow}
+        visible={active && !dragging && hoverCell?.row === lastRow}
         style={{
           left: GUTTER_LEFT,
           top: GUTTER_TOP + metrics.height + EXTEND_GAP,
@@ -114,7 +121,7 @@ export function TableChrome({
       />
       <ExtendBar
         label="Add column at end"
-        visible={active && hoverCell?.col === lastCol}
+        visible={active && !dragging && hoverCell?.col === lastCol}
         style={{
           left: GUTTER_LEFT + metrics.width + EXTEND_GAP,
           top: GUTTER_TOP,
@@ -132,7 +139,8 @@ export function TableChrome({
           active={active}
           cellHot={hoverCell?.col === index}
           selected={selectedCol === index}
-          onSelect={() => onSelectCol(index)}
+          dragging={dragging && drag?.kind === 'column'}
+          onPointerDown={(event) => onHandlePointerDown('column', index, event)}
         />
       ))}
       {metrics.rows.map((row, index) => (
@@ -144,9 +152,17 @@ export function TableChrome({
           active={active}
           cellHot={hoverCell?.row === index}
           selected={selectedRow === index}
-          onSelect={() => onSelectRow(index)}
+          dragging={dragging && drag?.kind === 'row'}
+          onPointerDown={(event) => onHandlePointerDown('row', index, event)}
         />
       ))}
+      {drag?.active ? (
+        <ReorderInsertLine
+          metrics={metrics}
+          kind={drag.kind}
+          insertIndex={drag.insertIndex}
+        />
+      ) : null}
       {/* Internal boundaries only (between columns/rows); the edges are handled
           by the extend bars, matching the default prototype variant. */}
       {Array.from({length: Math.max(metrics.cols.length - 1, 0)}, (_, k) => {
@@ -156,7 +172,7 @@ export function TableChrome({
             key={`col-boundary-${index}`}
             x={GUTTER_LEFT + colBorderX(metrics, index)}
             y={GUTTER_TOP}
-            visible={active}
+            visible={active && !dragging}
             hot={boundary?.kind === 'column' && boundary.index === index}
             onEnter={() => setBoundary({kind: 'column', index})}
             onLeave={() => setBoundary(null)}
@@ -171,7 +187,7 @@ export function TableChrome({
             key={`row-boundary-${index}`}
             x={GUTTER_LEFT}
             y={GUTTER_TOP + rowBorderY(metrics, index)}
-            visible={active}
+            visible={active && !dragging}
             hot={boundary?.kind === 'row' && boundary.index === index}
             onEnter={() => setBoundary({kind: 'row', index})}
             onLeave={() => setBoundary(null)}
@@ -384,7 +400,8 @@ function Handle({
   active,
   cellHot,
   selected,
-  onSelect,
+  dragging,
+  onPointerDown,
 }: {
   kind: 'row' | 'column'
   x: number
@@ -392,7 +409,8 @@ function Handle({
   active: boolean
   cellHot: boolean
   selected: boolean
-  onSelect: () => void
+  dragging: boolean
+  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void
 }): JSX.Element {
   const [hot, setHot] = useState(false)
   const isColumn = kind === 'column'
@@ -409,10 +427,7 @@ function Handle({
       tabIndex={lit ? 0 : -1}
       onMouseEnter={() => setHot(true)}
       onMouseLeave={() => setHot(false)}
-      onPointerDown={(event) => {
-        event.preventDefault()
-        onSelect()
-      }}
+      onPointerDown={onPointerDown}
       style={{
         position: 'absolute',
         left: x,
@@ -426,7 +441,7 @@ function Handle({
         pointerEvents: lit ? 'auto' : 'none',
         opacity: lit ? 1 : 0,
         transition: 'opacity 100ms ease',
-        cursor: showExpanded ? 'grab' : 'pointer',
+        cursor: dragging ? 'grabbing' : showExpanded ? 'grab' : 'pointer',
         zIndex: 5,
         border: 'none',
         background: 'transparent',
@@ -899,5 +914,162 @@ function ToggleSwitch({checked}: {checked: boolean}): JSX.Element {
         }}
       />
     </span>
+  )
+}
+
+/** IX15: insertion line while dragging to reorder. */
+function ReorderInsertLine({
+  metrics,
+  kind,
+  insertIndex,
+}: {
+  metrics: TableMetrics
+  kind: 'row' | 'column'
+  insertIndex: number
+}): JSX.Element {
+  if (kind === 'column') {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          left: GUTTER_LEFT + colBorderX(metrics, insertIndex),
+          top: GUTTER_TOP,
+          width: INSERT_GUIDE,
+          height: metrics.height,
+          transform: 'translateX(-50%)',
+          background: BLUE,
+          pointerEvents: 'none',
+          zIndex: 12,
+        }}
+      />
+    )
+  }
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: GUTTER_LEFT,
+        top: GUTTER_TOP + rowBorderY(metrics, insertIndex),
+        width: metrics.width,
+        height: INSERT_GUIDE,
+        transform: 'translateY(-50%)',
+        background: BLUE,
+        pointerEvents: 'none',
+        zIndex: 12,
+      }}
+    />
+  )
+}
+
+const GHOST_SHADOW =
+  '0 10px 32px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06)'
+
+/** IX15: the lifted row/column follows the pointer as a solid preview. */
+export function ReorderGhost({
+  drag,
+  metrics,
+  hasHeader,
+  cellTexts,
+}: {
+  drag: DragState | null
+  metrics: TableMetrics | null
+  hasHeader: boolean
+  cellTexts: Array<string> | null
+}): JSX.Element | null {
+  if (!drag?.active || !metrics || !cellTexts) {
+    return null
+  }
+  const left = drag.clientX - drag.grabOffsetX
+  const top = drag.clientY - drag.grabOffsetY
+
+  if (drag.kind === 'row') {
+    const rowMetrics = metrics.rows[drag.index]
+    if (!rowMetrics) {
+      return null
+    }
+    const isHeader = hasHeader && drag.index === 0
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          left,
+          top,
+          width: metrics.width,
+          height: rowMetrics.height,
+          display: 'flex',
+          pointerEvents: 'none',
+          zIndex: 10000,
+          borderRadius: 6,
+          border: `1px solid ${BORDER}`,
+          background: isHeader ? '#f6f6f8' : '#fff',
+          boxShadow: GHOST_SHADOW,
+          overflow: 'hidden',
+          fontWeight: isHeader ? 600 : 400,
+        }}
+      >
+        {metrics.cols.map((col, index) => (
+          <div
+            key={index}
+            style={{
+              width: col.width,
+              padding: '8px 12px',
+              borderRight:
+                index < metrics.cols.length - 1
+                  ? `1px solid ${BORDER}`
+                  : 'none',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {cellTexts[index]}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const colMetrics = metrics.cols[drag.index]
+  if (!colMetrics) {
+    return null
+  }
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left,
+        top,
+        width: colMetrics.width,
+        height: metrics.height,
+        display: 'flex',
+        flexDirection: 'column',
+        pointerEvents: 'none',
+        zIndex: 10000,
+        borderRadius: 6,
+        border: `1px solid ${BORDER}`,
+        background: '#fff',
+        boxShadow: GHOST_SHADOW,
+        overflow: 'hidden',
+      }}
+    >
+      {metrics.rows.map((row, index) => (
+        <div
+          key={index}
+          style={{
+            height: row.height,
+            padding: '8px 12px',
+            borderBottom:
+              index < metrics.rows.length - 1 ? `1px solid ${BORDER}` : 'none',
+            background: hasHeader && index === 0 ? '#f6f6f8' : undefined,
+            fontWeight: hasHeader && index === 0 ? 600 : 400,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {cellTexts[index]}
+        </div>
+      ))}
+    </div>
   )
 }

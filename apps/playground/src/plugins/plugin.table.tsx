@@ -14,6 +14,7 @@ import {
   getEnclosingBlock,
   getFirstChild,
   getParent,
+  getText,
 } from '@portabletext/editor/traversal'
 import {getBlockStartPoint, isEqualPaths} from '@portabletext/editor/utils'
 import {
@@ -25,6 +26,8 @@ import {
   type TableSelection,
 } from '@portabletext/plugin-table'
 import {
+  createContext,
+  useContext,
   useMemo,
   useRef,
   useState,
@@ -36,12 +39,22 @@ import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 import {cellStyle, type CellRange} from './table-cell-style'
 import {
+  ReorderGhost,
   TableChrome,
   TableMenu,
   TableTrashLayer,
   type HoverCell,
 } from './table-chrome'
+import {useTableDragReorder} from './table-drag'
 import {useTableMetrics} from './table-metrics'
+import {reorderIndex} from './table-reorder'
+
+// The source row/column dims while it's being drag-reordered; cells read this
+// to know whether they're part of the lifted row/column.
+const TableDragContext = createContext<{
+  kind: 'row' | 'column'
+  index: number
+} | null>(null)
 
 const tableContainer = defineContainer({
   type: 'table',
@@ -248,6 +261,89 @@ function TableContainer({
     }
   }
 
+  const commitRowDrag = (from: number, insertBefore: number) => {
+    const finalIndex = reorderIndex(from, insertBefore)
+    if (finalIndex === from) {
+      return
+    }
+    const snapshot = editor.getSnapshot()
+    const rows = getChildren(snapshot, path)
+    const origin = rows.at(from)
+    const destination = rows.at(finalIndex)
+    if (origin && destination) {
+      editor.send({
+        type: 'custom.move.row',
+        at: origin.path,
+        to: destination.path,
+      })
+    }
+  }
+  const commitColDrag = (from: number, insertBefore: number) => {
+    const finalIndex = reorderIndex(from, insertBefore)
+    if (finalIndex === from) {
+      return
+    }
+    const snapshot = editor.getSnapshot()
+    const firstRow = getChildren(snapshot, path).at(0)
+    const cells = firstRow ? getChildren(snapshot, firstRow.path) : []
+    const origin = cells.at(from)
+    const destination = cells.at(finalIndex)
+    if (origin && destination) {
+      editor.send({
+        type: 'custom.move.column',
+        at: origin.path,
+        to: destination.path,
+      })
+    }
+  }
+
+  const {drag, onHandlePointerDown} = useTableDragReorder({
+    tableRef,
+    metrics,
+    onCommitRow: commitRowDrag,
+    onCommitCol: commitColDrag,
+    onSelectRow: selectRow,
+    onSelectCol: selectCol,
+  })
+
+  // Primitive projections keep the memos below ref-stable across pointermoves
+  // (the drag object changes identity on every move) while matching the
+  // dependencies the React Compiler infers.
+  const activeDragKind = drag?.active ? drag.kind : null
+  const activeDragIndex = drag?.active ? drag.index : null
+  const dragKind = drag?.kind ?? null
+  const dragIndex = drag?.index ?? null
+
+  const dragContextValue = useMemo(
+    () =>
+      activeDragKind !== null && activeDragIndex !== null
+        ? {kind: activeDragKind, index: activeDragIndex}
+        : null,
+    [activeDragKind, activeDragIndex],
+  )
+
+  // The lifted row/column's cell texts, for the drag ghost.
+  const ghostCellTexts = useMemo(() => {
+    if (dragKind === null || dragIndex === null) {
+      return null
+    }
+    const snapshot = editor.getSnapshot()
+    const rows = getChildren(snapshot, path)
+    if (dragKind === 'row') {
+      const row = rows.at(dragIndex)
+      if (!row) {
+        return null
+      }
+      return getChildren(snapshot, row.path).map(
+        (cell) => getText(snapshot, cell.path) ?? '',
+      )
+    }
+    return rows.map((row) => {
+      const cell = getChildren(snapshot, row.path).at(dragIndex)
+      return cell ? (getText(snapshot, cell.path) ?? '') : ''
+    })
+  }, [dragKind, dragIndex, editor, path])
+
   const onMouseMove = (event: ReactMouseEvent) => {
     const rect = tableRef.current?.getBoundingClientRect()
     if (!rect || !metrics) {
@@ -286,7 +382,11 @@ function TableContainer({
             <col key={index} />
           ))}
         </colgroup>
-        <tbody>{children}</tbody>
+        <tbody>
+          <TableDragContext.Provider value={dragContextValue}>
+            {children}
+          </TableDragContext.Provider>
+        </tbody>
       </table>
       <TableChrome
         metrics={metrics}
@@ -294,10 +394,16 @@ function TableContainer({
         hoverCell={hoverCell}
         selectedRow={selectedRow}
         selectedCol={selectedCol}
-        onSelectRow={selectRow}
-        onSelectCol={selectCol}
+        onHandlePointerDown={onHandlePointerDown}
+        drag={drag}
         onInsertRow={insertRow}
         onInsertCol={insertCol}
+      />
+      <ReorderGhost
+        drag={drag}
+        metrics={metrics}
+        hasHeader={hasHeader}
+        cellTexts={ghostCellTexts}
       />
       {metrics ? (
         <TableMenu
@@ -408,12 +514,19 @@ function TableCell({
     },
     isEqualCellDescriptor,
   )
+  const dragContext = useContext(TableDragContext)
+  const dimmed =
+    descriptor !== null &&
+    dragContext !== null &&
+    (dragContext.kind === 'row'
+      ? descriptor.rowIdx === dragContext.index
+      : descriptor.colIdx === dragContext.index)
   const style = useMemo(
     () => (descriptor ? cellStyle(descriptor) : undefined),
     [descriptor],
   )
   return (
-    <td {...attributes} style={style}>
+    <td {...attributes} style={dimmed ? {...style, opacity: 0.35} : style}>
       {children}
     </td>
   )
