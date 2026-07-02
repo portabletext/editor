@@ -1,36 +1,39 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'examples/*'
+  - apps/*
+  - packages/*
+  - examples/*
 
 catalog:
-  '@sanity/diff-match-patch': ^3.2.0
-  '@sanity/schema': ^6.1.0
-  '@sanity/types': ^6.1.0
-  '@xstate/react': ^6.1.0
+  "@sanity/diff-match-patch": ^3.2.0
+  "@sanity/schema": ^6.1.0
+  "@sanity/types": ^6.1.0
+  "@xstate/react": ^6.1.0
   react: ^19.2.7
   react-dom: ^19.2.7
   xstate: ^5.32.2
 
+catalogMode: prefer
+
 catalogs:
   tooling:
-    '@portabletext/react': ^6.2.0
-    '@sanity/pkg-utils': ^10.2.1
-    '@sanity/tsconfig': ^2.1.0
-    '@tailwindcss/vite': ^4.1.18
-    '@types/jsdom': ^27.0.0
-    '@types/node': ^20
-    '@types/react': ^19.2.17
-    '@types/react-dom': ^19.2.3
-    '@vitejs/plugin-react': ^5.2.0
-    '@vitest/browser': ^4.1.9
-    '@vitest/browser-playwright': ^4.1.9
+    "@portabletext/react": ^6.2.0
+    "@sanity/pkg-utils": ^10.2.1
+    "@sanity/tsconfig": ^2.1.0
+    "@tailwindcss/vite": ^4.1.18
+    "@types/jsdom": ^27.0.0
+    "@types/node": ^20
+    "@types/react": ^19.2.17
+    "@types/react-dom": ^19.2.3
+    "@vitejs/plugin-react": ^5.2.0
+    "@vitest/browser": ^4.1.9
+    "@vitest/browser-playwright": ^4.1.9
     babel-plugin-react-compiler: ^1.0.0
     eslint: ^9.39.1
     eslint-formatter-gha: ^1.6.0
     eslint-plugin-react-hooks: ^7.1.1
     jsdom: ^27.2.0
     lucide-react: ^0.562.0
+    oxfmt: ^0.56.0
     remeda: ^2.32.0
     tailwind-merge: ^3.3.1
     tailwindcss: ^4.1.18
@@ -41,35 +44,32 @@ catalogs:
     vitest-browser-react: ^2.2.0
 
 minimumReleaseAge: 4320
+
 minimumReleaseAgeExclude:
-  - '@portabletext/*'
-  - '@sanity/*'
-  - '@types/*'
-  - '@typescript/*'
-  - '@vercel/stega'
+  - "@portabletext/*"
+  - "@sanity/*"
+  - "@types/*"
+  - "@typescript/*"
+  - "@vercel/stega"
   - csstype
-  - 'groq-js'
-  - 'react'
-  - 'react-dom'
-  - 'react-is'
-  # Renovate security update: markdown-it@14.1.1
+  - groq-js
+  - react
+  - react-dom
+  - react-is
   - markdown-it@14.1.1
-  # Renovate security update: astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6
   - astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6
-  # Renovate security update: vite@7.3.2 || 7.3.5
   - vite@7.3.2 || 7.3.5
-  # Renovate security update: turbo@2.9.14
   - turbo@2.9.14
 
 trustPolicy: no-downgrade
 
 trustPolicyExclude:
-  - '@octokit/endpoint@9.0.6'
-  - '@octokit/plugin-paginate-rest@9.2.2'
-  - '@reduxjs/toolkit@2.9.0 || 2.10.1 || 2.11.0'
-  - '@sanity/mutate@0.11.0-canary.4'
-  - '@sanity/sdk@2.1.2'
-  - '@swc/core@1.13.5'
+  - "@octokit/endpoint@9.0.6"
+  - "@octokit/plugin-paginate-rest@9.2.2"
+  - "@reduxjs/toolkit@2.9.0 || 2.10.1 || 2.11.0"
+  - "@sanity/mutate@0.11.0-canary.4"
+  - "@sanity/sdk@2.1.2"
+  - "@swc/core@1.13.5"
   - chokidar@4.0.3
   - groq@3.88.1-typegen-experimental.0
   - react-redux@9.2.0
@@ -79,5 +79,3 @@ trustPolicyExclude:
   - undici@5.29.0
   - undici-types@6.21.0
   - vite@5.4.21 || 6.4.1
-
-catalogMode: prefer
