@@ -52,17 +52,40 @@ export function getSibling(
 
   const lastSegment = path.at(-1)
 
-  if (!isKeyedSegment(lastSegment)) {
+  if (!isKeyedSegment(lastSegment) && typeof lastSegment !== 'number') {
     return undefined
   }
 
   const parent = parentPath(path)
   const children = getChildren(snapshot, parent)
 
-  const currentIndex = snapshot.blockIndexMap.get(serializePath(path))
+  let currentIndex: number
 
-  if (currentIndex === undefined) {
-    return undefined
+  if (typeof lastSegment === 'number') {
+    if (lastSegment < 0 || lastSegment >= children.length) {
+      return undefined
+    }
+    currentIndex = lastSegment
+  } else {
+    const mappedIndex = snapshot.blockIndexMap.get(serializePath(path))
+
+    if (
+      mappedIndex !== undefined &&
+      children[mappedIndex]?.node._key === lastSegment._key
+    ) {
+      currentIndex = mappedIndex
+    } else {
+      // The map can miss (unkeyed transient nodes, unmaintained maps) or
+      // disagree with the traversed value (snapshots that pair the live map
+      // with a pre-apply value). Fall back to a linear scan in both cases,
+      // mirroring `getNode` and `getChildren`.
+      currentIndex = children.findIndex(
+        (child) => child.node._key === lastSegment._key,
+      )
+      if (currentIndex === -1) {
+        return undefined
+      }
+    }
   }
 
   if (!match) {
