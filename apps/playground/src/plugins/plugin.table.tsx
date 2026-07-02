@@ -42,11 +42,18 @@ import {
   ReorderGhost,
   TableChrome,
   TableMenu,
+  TableScrollFade,
   TableTrashLayer,
   type HoverCell,
 } from './table-chrome'
 import {useTableDragReorder} from './table-drag'
 import {useTableMetrics} from './table-metrics'
+import {
+  MIN_COL_PX,
+  SCROLL_PADDING_BOTTOM,
+  useScrollFade,
+  useTableHorizontalLayout,
+} from './table-overflow'
 import {reorderIndex} from './table-reorder'
 
 // The source row/column dims while it's being drag-reordered; cells read this
@@ -118,7 +125,14 @@ function TableContainer({
   const rowCount = table?.rows.length ?? 0
   const columnCount = table?.rows[0]?.cells.length ?? 0
   const tableRef = useRef<HTMLTableElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const metrics = useTableMetrics(tableRef, `${rowCount}x${columnCount}`)
+  const scrollWide = useTableHorizontalLayout(
+    scrollRef,
+    columnCount,
+    `${rowCount}x${columnCount}`,
+  )
+  const fade = useScrollFade(scrollRef, `${rowCount}x${columnCount}`)
   const [active, setActive] = useState(false)
   const [hoverCell, setHoverCell] = useState<HoverCell>(null)
 
@@ -352,10 +366,12 @@ function TableContainer({
     const relY = event.clientY - rect.top
     const relX = event.clientX - rect.left
     const row = metrics.rows.findIndex(
-      (r) => relY >= r.top && relY < r.top + r.height,
+      (candidate) =>
+        relY >= candidate.top && relY < candidate.top + candidate.height,
     )
     const col = metrics.cols.findIndex(
-      (c) => relX >= c.left && relX < c.left + c.width,
+      (candidate) =>
+        relX >= candidate.left && relX < candidate.left + candidate.width,
     )
     setHoverCell(row >= 0 && col >= 0 ? {row, col} : null)
   }
@@ -370,53 +386,72 @@ function TableContainer({
         setActive(false)
         setHoverCell(null)
       }}
+      onMouseMove={onMouseMove}
     >
-      <table
-        ref={tableRef}
-        className="playground-table cursor-text"
-        data-cell-range={hasCellRange ? '' : undefined}
-        onMouseMove={onMouseMove}
+      <div
+        ref={scrollRef}
+        className="table-scroll"
+        style={{
+          overflowX: scrollWide ? 'auto' : undefined,
+          paddingBottom: scrollWide ? SCROLL_PADDING_BOTTOM : undefined,
+        }}
       >
-        <colgroup>
-          {Array.from({length: columnCount}, (_, index) => (
-            <col key={index} />
-          ))}
-        </colgroup>
-        <tbody>
-          <TableDragContext.Provider value={dragContextValue}>
-            {children}
-          </TableDragContext.Provider>
-        </tbody>
-      </table>
-      <TableChrome
-        metrics={metrics}
-        active={active}
-        hoverCell={hoverCell}
-        selectedRow={selectedRow}
-        selectedCol={selectedCol}
-        onHandlePointerDown={onHandlePointerDown}
-        drag={drag}
-        onInsertRow={insertRow}
-        onInsertCol={insertCol}
-      />
+        <div
+          style={{
+            position: 'relative',
+            // Gutters: top for the column handles, right/bottom lanes for the
+            // extend bars. The chrome is absolute in here so it scrolls with
+            // the table.
+            padding: '20px 20px 20px 0',
+            width: scrollWide ? columnCount * MIN_COL_PX + 20 : undefined,
+          }}
+        >
+          <table
+            ref={tableRef}
+            className="playground-table cursor-text"
+            data-cell-range={hasCellRange ? '' : undefined}
+          >
+            <colgroup>
+              {Array.from({length: columnCount}, (_, index) => (
+                <col key={index} />
+              ))}
+            </colgroup>
+            <tbody>
+              <TableDragContext.Provider value={dragContextValue}>
+                {children}
+              </TableDragContext.Provider>
+            </tbody>
+          </table>
+          <TableChrome
+            metrics={metrics}
+            active={active}
+            hoverCell={hoverCell}
+            selectedRow={selectedRow}
+            selectedCol={selectedCol}
+            onHandlePointerDown={onHandlePointerDown}
+            drag={drag}
+            onInsertRow={insertRow}
+            onInsertCol={insertCol}
+          />
+        </div>
+      </div>
       <ReorderGhost
         drag={drag}
         metrics={metrics}
         hasHeader={hasHeader}
         cellTexts={ghostCellTexts}
       />
-      {metrics ? (
-        <TableMenu
-          metrics={metrics}
-          active={active}
-          handlers={{
-            hasHeader,
-            onToggleHeader: toggleHeader,
-            onSelectTable: selectTable,
-            onDeleteTable: deleteTable,
-          }}
-        />
-      ) : null}
+      <TableMenu
+        right={scrollWide ? 0 : 20}
+        active={active}
+        handlers={{
+          hasHeader,
+          onToggleHeader: toggleHeader,
+          onSelectTable: selectTable,
+          onDeleteTable: deleteTable,
+        }}
+      />
+      <TableScrollFade left={fade.left} right={fade.right} />
       <TableTrashLayer
         tableRef={tableRef}
         metrics={metrics}

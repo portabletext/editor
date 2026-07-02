@@ -675,11 +675,12 @@ export type TableMenuHandlers = {
  * clips or scrolls the editable.
  */
 export function TableMenu({
-  metrics,
+  right,
   active,
   handlers,
 }: {
-  metrics: TableMetrics
+  /** Distance from the wrapper's right edge; pins the trigger to the scrollport when the table overflows. */
+  right: number
   active: boolean
   handlers: TableMenuHandlers
 }): JSX.Element {
@@ -760,7 +761,7 @@ export function TableMenu({
         }}
         style={{
           position: 'absolute',
-          left: GUTTER_LEFT + metrics.width - MENU_BTN,
+          right,
           top: GUTTER_TOP - MENU_BTN - MENU_ABOVE_GAP,
           width: MENU_BTN,
           height: MENU_BTN,
@@ -1071,5 +1072,52 @@ export function ReorderGhost({
         </div>
       ))}
     </div>
+  )
+}
+
+/** Left/right fade hints over the scrollport edges when the table overflows. */
+export function TableScrollFade({
+  left,
+  right,
+}: {
+  left: boolean
+  right: boolean
+}): JSX.Element | null {
+  if (!left && !right) {
+    return null
+  }
+  const fadeBase = {
+    position: 'absolute' as const,
+    top: GUTTER_TOP,
+    bottom: EXTEND_SIZE + EXTEND_GAP + 12,
+    width: 36,
+    pointerEvents: 'none' as const,
+    zIndex: 7,
+  }
+  return (
+    <>
+      {left ? (
+        <div
+          aria-hidden="true"
+          style={{
+            ...fadeBase,
+            left: 0,
+            background:
+              'linear-gradient(to right, #ffffff 0%, rgba(255,255,255,0) 100%)',
+          }}
+        />
+      ) : null}
+      {right ? (
+        <div
+          aria-hidden="true"
+          style={{
+            ...fadeBase,
+            right: 0,
+            background:
+              'linear-gradient(to left, #ffffff 0%, rgba(255,255,255,0) 100%)',
+          }}
+        />
+      ) : null}
+    </>
   )
 }
