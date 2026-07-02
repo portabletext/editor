@@ -109,7 +109,18 @@ export function TableChrome({
   const lastRow = metrics.rows.length - 1
   const lastCol = metrics.cols.length - 1
   return (
-    <>
+    // Chrome inside the contentEditable must be marked non-editable, or the
+    // engine's DOM-point normalization treats it as content: an element-level
+    // selection endpoint after the table then descends into a chrome button
+    // instead of resolving to the table's last leaf.
+    <div
+      contentEditable={false}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+      }}
+    >
       <ExtendBar
         label="Add row at end"
         visible={active && !dragging && hoverCell?.row === lastRow}
@@ -200,7 +211,7 @@ export function TableChrome({
       {active && boundary ? (
         <InsertGuideline metrics={metrics} hovered={boundary} />
       ) : null}
-    </>
+    </div>
   )
 }
 
@@ -750,6 +761,7 @@ export function TableMenu({
       <button
         ref={triggerRef}
         type="button"
+        contentEditable={false}
         aria-label="Table options"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -993,6 +1005,7 @@ export function ReorderGhost({
     const isHeader = hasHeader && drag.index === 0
     return (
       <div
+        contentEditable={false}
         style={{
           position: 'fixed',
           left,
@@ -1038,6 +1051,7 @@ export function ReorderGhost({
   }
   return (
     <div
+      contentEditable={false}
       style={{
         position: 'fixed',
         left,
@@ -1100,6 +1114,7 @@ export function TableScrollFade({
     <>
       {left ? (
         <div
+          contentEditable={false}
           aria-hidden="true"
           style={{
             ...fadeBase,
@@ -1111,6 +1126,7 @@ export function TableScrollFade({
       ) : null}
       {right ? (
         <div
+          contentEditable={false}
           aria-hidden="true"
           style={{
             ...fadeBase,
