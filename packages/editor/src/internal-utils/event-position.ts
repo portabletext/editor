@@ -16,6 +16,7 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
+import {getPointAtCoordinates} from './point-at-coordinates'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -303,48 +304,11 @@ function getSelectionFromEvent(
     return undefined
   }
 
-  const window = DOMEditor.getWindow(editor)
-
-  let domRange: Range | undefined
-
-  if (window.document.caretPositionFromPoint !== undefined) {
-    const position = window.document.caretPositionFromPoint(
-      event.clientX,
-      event.clientY,
-    )
-
-    if (position) {
-      try {
-        domRange = window.document.createRange()
-        domRange.setStart(position.offsetNode, position.offset)
-        domRange.setEnd(position.offsetNode, position.offset)
-      } catch {}
-    }
-  } else if (window.document.caretRangeFromPoint !== undefined) {
-    // Use WebKit-proprietary fallback method
-    domRange =
-      window.document.caretRangeFromPoint(event.clientX, event.clientY) ??
-      undefined
-  } else {
-    console.warn(
-      'Neither caretPositionFromPoint nor caretRangeFromPoint is supported',
-    )
-    return undefined
-  }
-
-  if (!domRange) {
-    return undefined
-  }
-
-  try {
-    return DOMEditor.toEditorSelection(editor, domRange, {
-      exactMatch: false,
-      // It can still throw even with this option set to true
-      suppressThrow: false,
-    })
-  } catch {
-    return undefined
-  }
+  const point = getPointAtCoordinates(editor, {
+    x: event.clientX,
+    y: event.clientY,
+  })
+  return point ? {anchor: point, focus: point} : undefined
 }
 
 function isEventContainer(
