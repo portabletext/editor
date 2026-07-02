@@ -3,26 +3,23 @@ import {
   set as setPatchHelper,
   unset as unsetPatchHelper,
 } from '@portabletext/patches'
-import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
-import {isSpan} from '@portabletext/schema'
+import type {PortableTextBlock} from '@portabletext/schema'
+import {findNearestSpans} from '../../internal-utils/find-nearest-spans'
 import {getValue} from '../../internal-utils/get-value'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {serializePath} from '../../paths/serialize-path'
 import {getNode} from '../../traversal/get-node'
-import {getNodes} from '../../traversal/get-nodes'
 import type {EditorSelection} from '../../types/editor'
 import type {KeyedSegment} from '../../types/paths'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
-import type {Node, NodeEntry} from '../interfaces/node'
+import type {Node} from '../interfaces/node'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import type {Range} from '../interfaces/range'
 import {commonPath} from '../path/common-path'
-import {comparePaths} from '../path/compare-paths'
 import {isSiblingPath} from '../path/is-sibling-path'
 import {parentPath} from '../path/parent-path'
-import {pathEquals} from '../path/path-equals'
 import {transformPoint} from '../point/transform-point'
 import {isBackwardRange} from '../range/is-backward-range'
 import {isRange} from '../range/is-range'
@@ -257,9 +254,9 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       const lastSegment = path[path.length - 1]
       if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
         // Transform the selection BEFORE removing the node from the tree.
-        // comparePaths needs the node in the tree to resolve document order
-        // for keyed segments. After removal, it falls back to string
-        // comparison of _key values which may give wrong ordering.
+        // `findNearestSpans` anchors on the removed node's position, so the
+        // node must still be in the tree (and in `blockIndexMap`) to resolve
+        // document order for keyed segments.
         if (editor.snapshot.context.selection) {
           let selection: EditorSelection = {
             ...editor.snapshot.context.selection,
@@ -271,41 +268,32 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
             if (selection != null && result != null) {
               selection[key] = result
             } else {
-              let prev: NodeEntry<PortableTextSpan> | undefined
-              let next: NodeEntry<PortableTextSpan> | undefined
-
-              for (const {node: n, path: p} of getNodes(editor.snapshot)) {
-                if (!isSpan({schema: editor.snapshot.context.schema}, n)) {
-                  continue
-                }
-                if (pathEquals(p, path)) {
-                  continue
-                }
-                if (comparePaths(p, path, editor.snapshot.context) === -1) {
-                  prev = [n, p]
-                } else {
-                  next = [n, p]
-                  break
-                }
-              }
+              // The point sat inside the removed subtree; move it to
+              // the span nearest to the removed node in document
+              // order.
+              const {previousSpan, nextSpan} = findNearestSpans(
+                editor.snapshot,
+                path,
+              )
 
               let preferNext = false
-              if (prev && next) {
-                if (isSiblingPath(prev[1], path)) {
+              if (previousSpan && nextSpan) {
+                if (isSiblingPath(previousSpan.path, path)) {
                   preferNext = false
-                } else if (pathEquals(next[1], path)) {
-                  preferNext = true
                 } else {
                   preferNext =
-                    commonPath(prev[1], path).length <
-                    commonPath(next[1], path).length
+                    commonPath(previousSpan.path, path).length <
+                    commonPath(nextSpan.path, path).length
                 }
               }
 
-              if (prev && !preferNext) {
-                selection![key] = {path: prev[1], offset: prev[0].text.length}
-              } else if (next) {
-                selection![key] = {path: next[1], offset: 0}
+              if (previousSpan && !preferNext) {
+                selection![key] = {
+                  path: previousSpan.path,
+                  offset: previousSpan.node.text.length,
+                }
+              } else if (nextSpan) {
+                selection![key] = {path: nextSpan.path, offset: 0}
               } else {
                 selection = null
               }
