@@ -2,6 +2,7 @@ import {setup} from 'xstate'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import {isEqualSelections} from '../utils/util.is-equal-selections'
 
 const validateSelectionSetup = setup({
   types: {
@@ -117,22 +118,39 @@ function validateSelection(
   if (!domSelection || domSelection.rangeCount === 0) {
     return
   }
-  const existingDOMRange = domSelection.getRangeAt(0)
   try {
+    const domEditorSelection = DOMEditor.toEditorSelection(
+      editorEngine,
+      domSelection,
+      {
+        exactMatch: false,
+        suppressThrow: true,
+      },
+    )
+
+    if (
+      domEditorSelection &&
+      isEqualSelections(
+        domEditorSelection,
+        editorEngine.snapshot.context.selection,
+      )
+    ) {
+      // The DOM selection already means what the model selection says, even
+      // when the browser represents it differently (element-level endpoints
+      // during a sweep across table cells, for example). Rewriting it would
+      // reset an in-progress native drag.
+      return
+    }
+
     const newDOMRange = DOMEditor.toDOMRange(
       editorEngine,
       editorEngine.snapshot.context.selection,
     )
-    if (
-      newDOMRange.startOffset !== existingDOMRange.startOffset ||
-      newDOMRange.endOffset !== existingDOMRange.endOffset
-    ) {
-      debug.selection('DOM range out of sync, validating selection')
-      // Remove all ranges temporary
-      domSelection?.removeAllRanges()
-      // Set the correct range
-      domSelection.addRange(newDOMRange)
-    }
+    debug.selection('DOM range out of sync, validating selection')
+    // Remove all ranges temporary
+    domSelection.removeAllRanges()
+    // Set the correct range
+    domSelection.addRange(newDOMRange)
   } catch {
     // `toDOMRange` raced ahead of React's commit. The MutationObserver
     // driving this machine will fire again once the DOM catches up, and
