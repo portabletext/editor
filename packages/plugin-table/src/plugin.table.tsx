@@ -1,6 +1,7 @@
 import {defineContainer} from '@portabletext/editor'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {deleteBehaviors} from './behaviors/delete'
+import {formatBehaviors} from './behaviors/format'
 import {insertBehaviors} from './behaviors/insert'
 import {moveBehaviors} from './behaviors/move'
 import {navBehaviors} from './behaviors/nav'
@@ -70,4 +71,5 @@ export const tableBehaviors = [
   ...moveBehaviors,
   ...deleteBehaviors,
   ...navBehaviors,
+  ...formatBehaviors,
 ]
