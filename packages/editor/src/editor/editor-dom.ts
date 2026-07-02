@@ -5,10 +5,12 @@ import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {rangeEdges} from '../engine/range/range-edges'
 import {resolveSelection} from '../internal-utils/apply-selection'
+import {getPointAtCoordinates} from '../internal-utils/point-at-coordinates'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
 import {getFragment} from '../selectors/selector.get-fragment'
 import {getNodes} from '../traversal/get-nodes'
 import type {PickFromUnion} from '../type-utils'
+import type {EditorSelectionPoint} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSnapshot} from './editor-snapshot'
 
@@ -21,6 +23,17 @@ export type EditorDom = {
    * a caret rect.
    */
   getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
+  /**
+   * Resolves viewport (client) coordinates to the editor point where a click
+   * at those coordinates would place the caret. The browser snaps to the
+   * nearest position within the element at the coordinates. Returns `null`
+   * when the coordinates don't resolve to a position inside the editor's
+   * content.
+   */
+  getPointAtCoordinates: (coordinates: {
+    x: number
+    y: number
+  }) => EditorSelectionPoint | null
   getStartBlockElement: (snapshot: EditorSnapshot) => Element | null
   getEndBlockElement: (snapshot: EditorSnapshot) => Element | null
   /**
@@ -49,6 +62,8 @@ export function createEditorDom(
     getChildNodes: (snapshot) => getChildNodes(editorEngine, snapshot),
     getEditorElement: () => getEditorElement(editorEngine),
     getSelectionRect: (snapshot) => getSelectionRect(editorEngine, snapshot),
+    getPointAtCoordinates: (coordinates) =>
+      getPointAtCoordinates(editorEngine, coordinates),
     getStartBlockElement: (snapshot) =>
       getStartBlockElement(editorEngine, snapshot),
     getEndBlockElement: (snapshot) =>
