@@ -16,7 +16,14 @@ import {
 export const deleteBehaviors = [
   defineBehavior<Record<string, never>, 'delete', ResolvedTableSelection>({
     on: 'delete',
-    guard: ({snapshot}) => resolveTableSelection(snapshot) ?? false,
+    guard: ({snapshot, event}) => {
+      if (event.at) {
+        // Addressed deletes target their own range; only selection-scoped
+        // deletes clear the rectangle.
+        return false
+      }
+      return resolveTableSelection(snapshot) ?? false
+    },
     actions: [(_, resolved) => clearCellsAndCollapse(resolved)],
   }),
   defineBehavior<Record<string, never>, 'split', ResolvedTableSelection>({
