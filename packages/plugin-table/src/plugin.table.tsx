@@ -5,6 +5,7 @@ import {formatBehaviors} from './behaviors/format'
 import {insertBehaviors} from './behaviors/insert'
 import {moveBehaviors} from './behaviors/move'
 import {navBehaviors} from './behaviors/nav'
+import {serializeBehaviors} from './behaviors/serialize'
 import {unsetBehaviors} from './behaviors/unset'
 
 // `table` -> `row` -> `cell` nested containers. The render is intentionally
@@ -72,4 +73,5 @@ export const tableBehaviors = [
   ...deleteBehaviors,
   ...navBehaviors,
   ...formatBehaviors,
+  ...serializeBehaviors,
 ]

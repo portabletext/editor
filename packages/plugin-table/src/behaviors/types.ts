@@ -14,6 +14,8 @@ export type Table = PortableTextBlock & {
   _type: 'table'
   rows: Array<Row>
   alignment?: Array<ColumnAlignment>
+  /** Number of leading rows that are header rows. */
+  headerRows?: number
 }
 
 export function isRow(node: PortableTextBlock): node is Row {

@@ -78,9 +78,10 @@ const treatments: Record<
   'select.block': 'pass',
   'select.next block': 'pass',
   'select.previous block': 'pass',
-  // Copy/cut should serialize the rectangle, not the linear fragment.
-  'serialize': 'pending',
-  'serialize.data': 'pending',
+  // The fan-out into per-MIME `serialize.data` events carries no selection;
+  // the interception happens at `serialize.data`.
+  'serialize': 'pass',
+  'serialize.data': 'remap',
   'serialization.failure': 'pass',
   'serialization.success': 'pass',
   'set': 'pass',
