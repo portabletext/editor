@@ -42,16 +42,20 @@ const treatments: Record<
   'delete.child': 'pass',
   'delete.forward': 'pass',
   'delete.text': 'pending',
-  // Paste over a rectangle.
-  'deserialize': 'pending',
-  'deserialize.data': 'pending',
+  // MIME negotiation only; the application is `insert.blocks`, classified
+  // separately. The paste gesture itself is safe: `clipboard.paste`
+  // decomposes into `delete` (remapped) plus the forwarded paste, pinned in
+  // delete.test.tsx.
+  'deserialize': 'pass',
+  'deserialize.data': 'pass',
   // Applies through `insert.blocks`, which is classified separately.
   'deserialization.failure': 'pass',
   'deserialization.success': 'pass',
   'history.redo': 'pass',
   'history.undo': 'pass',
   'insert': 'pass',
-  // Typing or inserting over a rectangle should replace the rectangle.
+  // Inserting over a rectangle should replace the rectangle; these are not
+  // yet verified to decompose through `delete`.
   'insert.block': 'pending',
   'insert.blocks': 'pending',
   'insert.break': 'pending',
