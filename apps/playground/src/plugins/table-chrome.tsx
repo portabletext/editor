@@ -121,6 +121,23 @@ export function TableChrome({
         pointerEvents: 'none',
       }}
     >
+      {/* The gutter is chrome territory, but structurally it is padding on
+          an editable-context div, so browsers hit-test carets into it with
+          divergent heuristics (some resolve to the table's document-order
+          end). Swallow its clicks like every other chrome element does. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: GUTTER_LEFT,
+          width: metrics.width,
+          height: GUTTER_TOP,
+          pointerEvents: 'auto',
+        }}
+        onPointerDown={(event) => {
+          event.preventDefault()
+        }}
+      />
       <ExtendBar
         label="Add row at end"
         visible={active && !dragging && hoverCell?.row === lastRow}
