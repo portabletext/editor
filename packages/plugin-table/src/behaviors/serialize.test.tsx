@@ -2,7 +2,6 @@ import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -95,13 +94,13 @@ function value(snapshot: EditorSnapshot) {
  * between them covers `c01`, which the rectangle excludes.
  */
 async function selectLeftColumn() {
-  const {editor, locator} = await createTestEditor({
+  const {editor} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
     schemaDefinition,
     initialValue,
     children: <TablePlugin />,
   })
-  await userEvent.click(locator)
+  editor.send({type: 'focus'})
   editor.send({type: 'select', at: leftColumnSelection})
   await vi.waitFor(() => {
     expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
@@ -132,13 +131,13 @@ describe('rectangular selection copy/cut', () => {
       anchor: {path: spanPath('c00'), offset: 0},
       focus: {path: spanPath('c11'), offset: 1},
     }
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue,
       children: <TablePlugin />,
     })
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({type: 'select', at: wholeTableSelection})
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
@@ -199,7 +198,7 @@ describe('rectangular selection copy/cut', () => {
   })
 
   test('slicing keeps header rows positional', async () => {
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue: [
@@ -223,7 +222,7 @@ describe('rectangular selection copy/cut', () => {
       ],
       children: <TablePlugin />,
     })
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
 
     // Right column (c01 -> c11): the header row is included.
     const rightColumnSelection = {
