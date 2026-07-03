@@ -51,10 +51,10 @@ function clearCellsAndCollapse({
     }
   }
   if (topLeftCellPath) {
-    // Raise select.block (not select with leaf path). select.block resolves
-    // to the cell's first leaf via the apply layer AFTER our unsets +
-    // normalization complete — so the cursor lands inside the cleared cell's
-    // freshly-minted empty block, not at whatever leaf survived transformPoint.
+    // Raise select.block (not select with a leaf path): the cleared cell's
+    // replacement block does not exist yet. The select operation repairs the
+    // emptied cell, minting its empty block, and resolves to the minted
+    // leaf, so the cursor lands inside the cleared cell.
     actions.push(
       raise({type: 'select.block', at: topLeftCellPath, select: 'start'}),
     )
