@@ -133,25 +133,35 @@ function pointInSpan(
   }
 }
 
-function pointAtCell(cellKey: string) {
-  return {
+/**
+ * The cleared cell's selection: collapsed at the start of the minted empty
+ * block's span. The `select` operation flushes pending normalization when it
+ * would otherwise land on the emptied cell, so the stored selection is a
+ * real leaf point.
+ */
+function collapsedAtClearedCell(
+  cellKey: string,
+  blockKey: string,
+  spanKey: string,
+) {
+  const point = {
     path: [
       {_key: 't0'},
       'rows',
       {_key: cellKey.startsWith('r0') ? 'r0' : 'r1'},
       'cells',
       {_key: cellKey},
+      'value',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
     ],
     offset: 0,
   }
-}
-
-function collapsed(point: ReturnType<typeof pointInSpan>) {
   return {anchor: point, focus: point, backward: false}
 }
 
-function collapsedAtCell(cellKey: string) {
-  const point = pointAtCell(cellKey)
+function collapsed(point: ReturnType<typeof pointInSpan>) {
   return {anchor: point, focus: point, backward: false}
 }
 
@@ -299,14 +309,14 @@ describe('delete behaviors within tables', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(
         tableWithCleared({
-          r0c0: {blockKey: 'k8', spanKey: 'k9'},
-          r0c1: {blockKey: 'k6', spanKey: 'k7'},
-          r1c0: {blockKey: 'k4', spanKey: 'k5'},
-          r1c1: {blockKey: 'k2', spanKey: 'k3'},
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k8', spanKey: 'k9'},
+          r1c0: {blockKey: 'k6', spanKey: 'k7'},
+          r1c1: {blockKey: 'k4', spanKey: 'k5'},
         }),
       )
       expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtCell('r0c0'),
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
       )
     })
 
@@ -333,12 +343,12 @@ describe('delete behaviors within tables', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(
         tableWithCleared({
-          r0c0: {blockKey: 'k4', spanKey: 'k5'},
-          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k4', spanKey: 'k5'},
         }),
       )
       expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtCell('r0c0'),
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
       )
     })
 
@@ -367,12 +377,12 @@ describe('delete behaviors within tables', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(
         tableWithCleared({
-          r0c1: {blockKey: 'k4', spanKey: 'k5'},
-          r1c1: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+          r1c1: {blockKey: 'k4', spanKey: 'k5'},
         }),
       )
       expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtCell('r0c1'),
+        collapsedAtClearedCell('r0c1', 'k2', 'k3'),
       )
     })
 
@@ -446,12 +456,12 @@ describe('delete behaviors within tables', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(
         tableWithCleared({
-          r0c0: {blockKey: 'k4', spanKey: 'k5'},
-          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k4', spanKey: 'k5'},
         }),
       )
       expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtCell('r0c0'),
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
       )
     })
 
@@ -478,12 +488,12 @@ describe('delete behaviors within tables', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(
         tableWithCleared({
-          r0c0: {blockKey: 'k4', spanKey: 'k5'},
-          r0c1: {blockKey: 'k2', spanKey: 'k3'},
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k4', spanKey: 'k5'},
         }),
       )
       expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtCell('r0c0'),
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
       )
     })
   })
@@ -504,14 +514,14 @@ describe('delete behaviors within tables', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(
         tableWithCleared({
-          r0c0: {blockKey: 'k8', spanKey: 'k9'},
-          r0c1: {blockKey: 'k6', spanKey: 'k7'},
-          r1c0: {blockKey: 'k4', spanKey: 'k5'},
-          r1c1: {blockKey: 'k2', spanKey: 'k3'},
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k8', spanKey: 'k9'},
+          r1c0: {blockKey: 'k6', spanKey: 'k7'},
+          r1c1: {blockKey: 'k4', spanKey: 'k5'},
         }),
       )
       expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtCell('r0c0'),
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
       )
     })
   })
