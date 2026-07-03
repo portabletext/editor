@@ -72,7 +72,10 @@ describe('click above/below lonely block object in containers', () => {
         block: 'end',
         isEditor: false,
         isContainer: true,
-        selection: imageSelection,
+        selection: {
+          anchor: {path: [{_key: calloutKey}], offset: 0},
+          focus: {path: [{_key: calloutKey}], offset: 0},
+        },
       },
     })
 
@@ -152,7 +155,10 @@ describe('click above/below lonely block object in containers', () => {
         block: 'start',
         isEditor: false,
         isContainer: true,
-        selection: imageSelection,
+        selection: {
+          anchor: {path: [{_key: calloutKey}], offset: 0},
+          focus: {path: [{_key: calloutKey}], offset: 0},
+        },
       },
     })
 

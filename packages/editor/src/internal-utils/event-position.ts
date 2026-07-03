@@ -95,12 +95,12 @@ export function getEventPosition({
     eventPositionBlock &&
     !isEditor(eventNode) &&
     isEditableContainer(editorEngine.snapshot, eventNode, eventPath) &&
-    isDragEvent(event)
+    (isDragEvent(event) || event.type === 'click')
   ) {
-    // Chrome drag: point the selection at the container so downstream
-    // selectors resolve the container, not whatever leaf
-    // `caretPositionFromPoint` would land on. Scoped to drag events
-    // because clicks don't need the override.
+    // Point the selection at the container so downstream consumers resolve
+    // the container that was interacted with, not whatever leaf
+    // `caretPositionFromPoint` would land on. The selection names what was
+    // hit: a leaf for text, the container itself for its own surface.
     return {
       block: eventPositionBlock,
       isEditor: false,

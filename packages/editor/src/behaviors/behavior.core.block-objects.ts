@@ -1,10 +1,14 @@
 import {isSpan} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {getFirstChild} from '../traversal/get-first-child'
+import {getLastChild} from '../traversal/get-last-child'
 import {getLeaf} from '../traversal/get-leaf'
+import {getNode} from '../traversal/get-node'
 import {getSibling} from '../traversal/get-sibling'
 import {isListBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -125,41 +129,59 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const positionSnapshot = {
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
-    }
-    const focusedBlockObject = getFocusBlockObject(positionSnapshot)
+    // The position's selection names what was clicked: a leaf for text,
+    // the container itself for a click on its own surface. The block the
+    // click was beyond is the root block for editor-surface clicks and the
+    // clicked container's edge child for container-surface clicks. Clicks
+    // on a block's content are neither and never insert.
+    const focusPath = event.position.selection.focus.path
+    const focusBlock = event.position.isEditor
+      ? focusPath.length >= 1
+        ? getNode(snapshot, focusPath.slice(0, 1))
+        : undefined
+      : event.position.isContainer
+        ? getFirstChild(snapshot, focusPath)
+        : undefined
 
-    if (!focusedBlockObject) {
+    if (!focusBlock || isTextBlockNode(snapshot.context, focusBlock.node)) {
       return false
     }
 
-    const previousSibling = getSibling(snapshot, focusedBlockObject.path, {
+    if (
+      event.position.isContainer &&
+      !acceptsTextBlock(snapshot, focusBlock.path)
+    ) {
+      // The placeholder would land inside the clicked container, so the
+      // container's array must accept text blocks; a table's rows array
+      // does not, and there the click inserts nothing.
+      return false
+    }
+
+    const previousSibling = getSibling(snapshot, focusBlock.path, {
       direction: 'previous',
     })
 
-    return (
+    if (
       (event.position.isEditor || event.position.isContainer) &&
       event.position.block === 'start' &&
       !previousSibling
-    )
+    ) {
+      return {blockPath: focusBlock.path}
+    }
+    return false
   },
   actions: [
-    ({snapshot, event}) => [
-      raise({
-        type: 'select',
-        at: event.position.selection,
-      }),
+    ({snapshot}, {blockPath}) => [
       raise({
         type: 'insert.block',
         block: {
           _type: snapshot.context.schema.block.name,
         },
         placement: 'before',
+        at: {
+          anchor: {path: blockPath, offset: 0},
+          focus: {path: blockPath, offset: 0},
+        },
         select: 'start',
       }),
     ],
@@ -177,46 +199,81 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const positionSnapshot = {
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
-    }
-    const focusedBlockObject = getFocusBlockObject(positionSnapshot)
+    // The position's selection names what was clicked: a leaf for text,
+    // the container itself for a click on its own surface. The block the
+    // click was beyond is the root block for editor-surface clicks and the
+    // clicked container's edge child for container-surface clicks. Clicks
+    // on a block's content are neither and never insert.
+    const focusPath = event.position.selection.focus.path
+    const focusBlock = event.position.isEditor
+      ? focusPath.length >= 1
+        ? getNode(snapshot, focusPath.slice(0, 1))
+        : undefined
+      : event.position.isContainer
+        ? getLastChild(snapshot, focusPath)
+        : undefined
 
-    if (!focusedBlockObject) {
+    if (!focusBlock || isTextBlockNode(snapshot.context, focusBlock.node)) {
       return false
     }
 
-    const nextSibling = getSibling(snapshot, focusedBlockObject.path, {
+    if (
+      event.position.isContainer &&
+      !acceptsTextBlock(snapshot, focusBlock.path)
+    ) {
+      // Same rule as clicking above: no valid place for a text block
+      // inside the clicked container means no insert.
+      return false
+    }
+
+    const nextSibling = getSibling(snapshot, focusBlock.path, {
       direction: 'next',
     })
 
-    return (
+    if (
       (event.position.isEditor || event.position.isContainer) &&
       event.position.block === 'end' &&
       !nextSibling
-    )
+    ) {
+      return {blockPath: focusBlock.path}
+    }
+    return false
   },
   actions: [
-    ({snapshot, event}) => [
-      raise({
-        type: 'select',
-        at: event.position.selection,
-      }),
+    ({snapshot}, {blockPath}) => [
       raise({
         type: 'insert.block',
         block: {
           _type: snapshot.context.schema.block.name,
         },
         placement: 'after',
+        at: {
+          anchor: {path: blockPath, offset: 0},
+          focus: {path: blockPath, offset: 0},
+        },
         select: 'start',
       }),
     ],
   ],
 })
+
+/**
+ * Whether the position at `path` accepts a text block: the enclosing
+ * container's `of` declares the schema's block type, or the path sits at
+ * the document root, which always does.
+ */
+function acceptsTextBlock(
+  snapshot: Parameters<typeof getEnclosingContainer>[0],
+  path: Parameters<typeof getEnclosingContainer>[1],
+): boolean {
+  const enclosing = getEnclosingContainer(snapshot, path)
+  return (
+    !enclosing ||
+    enclosing.of.some(
+      (member) => member.type === snapshot.context.schema.block.name,
+    )
+  )
+}
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   on: 'delete.backward',

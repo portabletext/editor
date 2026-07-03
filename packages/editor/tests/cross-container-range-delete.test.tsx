@@ -99,7 +99,7 @@ describe('cross-container range delete', () => {
     const lineKey = keyGenerator()
     const lineSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -131,7 +131,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -167,7 +167,7 @@ describe('cross-container range delete', () => {
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -199,7 +199,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -237,7 +237,7 @@ describe('cross-container range delete', () => {
     const lastTextKey = keyGenerator()
     const lastSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -278,7 +278,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -307,7 +307,7 @@ describe('cross-container range delete', () => {
     const lineKey = keyGenerator()
     const lineSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -345,7 +345,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -387,7 +387,7 @@ describe('cross-container range delete', () => {
     const secondLineKey = keyGenerator()
     const secondLineSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -429,7 +429,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -471,7 +471,7 @@ describe('cross-container range delete', () => {
     const lastTextKey = keyGenerator()
     const lastSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -498,7 +498,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -526,7 +526,7 @@ describe('cross-container range delete', () => {
     const lineKey = keyGenerator()
     const lineSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -558,7 +558,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -604,7 +604,7 @@ describe('cross-container range delete', () => {
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -654,7 +654,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -694,7 +694,7 @@ describe('cross-container range delete', () => {
     const line3Key = keyGenerator()
     const line3SpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -744,7 +744,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -783,7 +783,7 @@ describe('cross-container range delete', () => {
     const callout2LineKey = keyGenerator()
     const callout2SpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -830,7 +830,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -874,7 +874,7 @@ describe('cross-container range delete', () => {
     const barBlockKey = keyGenerator()
     const barSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -916,7 +916,7 @@ describe('cross-container range delete', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -1035,7 +1035,7 @@ describe('cross-container range delete: deep structures', () => {
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -1138,7 +1138,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -1199,7 +1199,7 @@ describe('cross-container range delete: deep structures', () => {
     const lineKey = keyGenerator()
     const lineSpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -1302,7 +1302,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -1359,7 +1359,7 @@ describe('cross-container range delete: deep structures', () => {
     const cell2BlockKey = keyGenerator()
     const cell2SpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -1439,7 +1439,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -1509,7 +1509,7 @@ describe('cross-container range delete: deep structures', () => {
     const row2BlockKey = keyGenerator()
     const row2SpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -1621,7 +1621,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -1700,7 +1700,7 @@ describe('cross-container range delete: deep structures', () => {
     const block12Key = keyGenerator()
     const span12Key = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -1816,7 +1816,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -1870,7 +1870,7 @@ describe('cross-container range delete: deep structures', () => {
     const block2Key = keyGenerator()
     const span2Key = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -1935,7 +1935,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -2010,7 +2010,7 @@ describe('cross-container range delete: deep structures', () => {
     const block12Key = keyGenerator()
     const span12Key = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -2126,7 +2126,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={tableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {
@@ -2454,7 +2454,7 @@ describe('cross-container range delete: deep structures', () => {
     const cell2BlockKey = keyGenerator()
     const cell2SpanKey = keyGenerator()
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition,
       keyGenerator,
       initialValue: [
@@ -2544,7 +2544,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     await userEvent.keyboard(
       // Not `ControlOrMeta`: `userEvent` resolves that from the host OS while
       // the shortcut guard resolves the platform from the user agent, and
@@ -2618,7 +2618,7 @@ describe('cross-container range delete: deep structures', () => {
       }),
     ]
 
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaDefinition,
       initialValue: [
@@ -2744,7 +2744,7 @@ describe('cross-container range delete: deep structures', () => {
       children: <NodePlugin nodes={positionalTableContainers} />,
     })
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {

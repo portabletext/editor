@@ -130,7 +130,12 @@ describe('Feature: Select All', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-    await userEvent.click(locator)
+    await userEvent.click(
+      // Aimed at cell text rather than the editable's surface: a click on a
+      // container's bare surface inserts an escape placeholder, which would
+      // change the document before select-all runs.
+      locator.getByText('A'),
+    )
 
     await userEvent.keyboard(selectAllChord)
 
