@@ -3,6 +3,7 @@ import type {Node} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
 import {debug} from '../internal-utils/debug'
+import {transformRootChunks} from '../internal-utils/root-chunks'
 import {safeStringify} from '../internal-utils/safe-json'
 import {
   transformBlockIndexMap,
@@ -197,6 +198,17 @@ export function subscribeUpdateValue(
     if (operation.type === 'set.selection') {
       return
     }
+
+    // Chunk maintenance must see every content operation (even a text op
+    // replaces the owning root block's reference) and must run before
+    // `transformBlockIndexMap` because it resolves the operation's root
+    // index against the pre-op map state.
+    editor.rootChunks = transformRootChunks(
+      editor.rootChunks,
+      operation,
+      editor.blockIndexMap,
+      editor.snapshot.context.value,
+    )
 
     if (operation.type === 'insert.text' || operation.type === 'remove.text') {
       // Inserting and removing text has no effect on index maps so there is

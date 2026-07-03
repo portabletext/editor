@@ -10,8 +10,10 @@ import {
   ParentContainerContext,
   useParentContainer,
 } from '../../../editor/parent-container-context'
+import type {RootChunk} from '../../../internal-utils/root-chunks'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
 import {isObject} from '../../../traversal/is-object'
+import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
@@ -28,6 +30,7 @@ import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {useDecorationsByChild} from './use-decorations-by-child'
+import {useRegistrationsSelector} from './use-engine-selector'
 import {useEngineStatic} from './use-engine-static'
 
 /**
@@ -64,6 +67,13 @@ const useChildren = (props: {
   renderElement: (props: RenderElementProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
+  /**
+   * A chunk's slice of the root children. When set, elements are built
+   * for exactly these blocks instead of the node's own children; when
+   * the node is the editor root and this is unset, rendering dispatches
+   * to memoized chunk components instead of building elements here.
+   */
+  chunkBlocks?: Array<Node>
 }): React.ReactNode => {
   const {
     decorations,
@@ -72,7 +82,9 @@ const useChildren = (props: {
     renderElement,
     renderText,
     renderLeaf,
+    chunkBlocks,
   } = props
+  const renderAsChunks = isEditor(node) && chunkBlocks === undefined
   const editor = useEngineStatic()
   editor.isNodeMapDirty = false
 
@@ -84,6 +96,7 @@ const useChildren = (props: {
     node,
     parentPath,
     decorations,
+    renderAsChunks ? EMPTY_CHILDREN : chunkBlocks,
   )
 
   let children: Array<Node> = []
@@ -94,7 +107,9 @@ const useChildren = (props: {
   // is itself a container object.
   let childContainer: ContainerConfig | undefined = parentContainer
 
-  if (isEditor(node)) {
+  if (chunkBlocks !== undefined) {
+    children = chunkBlocks
+  } else if (isEditor(node)) {
     children = node.snapshot.context.value
   } else if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
     children = node.children
@@ -287,6 +302,19 @@ const useChildren = (props: {
     return false
   }
 
+  if (renderAsChunks) {
+    return editor.rootChunks.map((chunk) => (
+      <MemoizedChunk
+        chunk={chunk}
+        decorations={decorations}
+        key={chunk.id}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        renderText={renderText}
+      />
+    ))
+  }
+
   const elements = children.map((n: Node, i: number) => {
     if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
       return wrapNewPipeline(
@@ -342,5 +370,66 @@ const useChildren = (props: {
 
   return <>{elements}</>
 }
+
+const EMPTY_CHILDREN: Array<Node> = []
+
+const registrationMapsSelector = (editor: Editor) =>
+  [
+    editor.containers,
+    editor.textBlocks,
+    editor.blockObjects,
+    editor.inlineObjects,
+    editor.spans,
+  ] as const
+
+const tupleRefEqual = <T extends readonly unknown[]>(
+  a: T | null,
+  b: T,
+): boolean =>
+  a !== null &&
+  a.length === b.length &&
+  a.every((item, index) => item === b[index])
+
+const Chunk = (props: {
+  chunk: RootChunk
+  decorations: DecoratedRange[]
+  renderElement: (props: RenderElementProps) => JSX.Element
+  renderText?: (props: RenderTextProps) => JSX.Element
+  renderLeaf?: (props: RenderLeafProps) => JSX.Element
+}) => {
+  const editor = useEngineStatic()
+  // Chunk-level render decisions (container resolution, pipeline
+  // membership) read the registration maps, and the chunk memo blocks
+  // the root re-render that used to refresh them. Re-render the chunk
+  // when any registration map is swapped; registrations are
+  // config-time, so this is off the hot path.
+  useRegistrationsSelector(registrationMapsSelector, tupleRefEqual)
+  const children = useChildren({
+    chunkBlocks: props.chunk.blocks,
+    decorations: props.decorations,
+    node: editor,
+    path: [],
+    renderElement: props.renderElement,
+    renderLeaf: props.renderLeaf,
+    renderText: props.renderText,
+  })
+  return <>{children}</>
+}
+
+/**
+ * Bails unless the chunk's own blocks changed (`transformRootChunks`
+ * replaces the chunk object exactly then) or the decorations changed by
+ * content (the root decorations array is recreated every render, so
+ * identity comparison would defeat the memo).
+ */
+const MemoizedChunk = React.memo(Chunk, (prev, next) => {
+  return (
+    prev.chunk === next.chunk &&
+    prev.renderElement === next.renderElement &&
+    prev.renderText === next.renderText &&
+    prev.renderLeaf === next.renderLeaf &&
+    isElementDecorationsEqual(prev.decorations, next.decorations)
+  )
+})
 
 export default useChildren
