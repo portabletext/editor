@@ -553,6 +553,99 @@ describe('delete behaviors within tables', () => {
     })
   })
 
+  test('pasting over a column selection replaces the column only', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 0)
+    const focus = pointInSpan('r1c0', 'r1c0b', 'r1c0s', 2)
+    editor.send({type: 'select', at: {anchor, focus}})
+
+    // `clipboard.paste` on an expanded selection decomposes into `delete`
+    // plus the forwarded paste, so the rectangle clears and the pasted
+    // content lands in the top-left cell's minted block.
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'X')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {anchor, focus},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [
+                cellWithText('r0c0', 'k2', 'k3', 'X'),
+                cellWithText('r0c1', 'r0c1b', 'r0c1s', 'BB'),
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                cellWithText('r1c0', 'k4', 'k5', ''),
+                cellWithText('r1c1', 'r1c1b', 'r1c1s', 'DD'),
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('pasting multi-line text over a rectangle lands inside the cell', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 0)
+    const focus = pointInSpan('r1c0', 'r1c0b', 'r1c0s', 2)
+    editor.send({type: 'select', at: {anchor, focus}})
+
+    const dataTransfer = new DataTransfer()
+    // A blank line separates paragraphs; a single newline is a soft break.
+    dataTransfer.setData('text/plain', 'one\n\ntwo')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {anchor, focus},
+      },
+    })
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value as typeof initialValue
+      const anchorCell = value[0]?.rows[0]?.cells[0]
+      // Both pasted blocks belong to the cell; the table is not split.
+      expect(value).toHaveLength(1)
+      expect(anchorCell?.value.map((block) => block.children[0]?.text)).toEqual(
+        ['one', 'two'],
+      )
+    })
+  })
+
   test('delete.range straddling two cells in same row: structure preserved (no cell merge)', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
