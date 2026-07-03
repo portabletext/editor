@@ -311,6 +311,33 @@ export const Editable = forwardRef(
                   // Suppress browser selection normalization that would
                   // overwrite a block object selection.
                   editor.select(range)
+
+                  if (
+                    domSelection.isCollapsed &&
+                    anchorNode &&
+                    anchorNode.nodeType === Node.ELEMENT_NODE
+                  ) {
+                    // A collapsed caret parked on an element renders in
+                    // whitespace the model cannot express (a table's gutter,
+                    // the editable's padding). When the model already holds
+                    // the position the parked point normalizes to, `select`
+                    // is a no-op and nothing corrects the DOM, so push the
+                    // canonical range back. The pushed range anchors on a
+                    // text node, so this cannot re-enter itself.
+                    try {
+                      const canonicalRange = DOMEditor.toDOMRange(editor, range)
+                      domSelection.setBaseAndExtent(
+                        canonicalRange.startContainer,
+                        canonicalRange.startOffset,
+                        canonicalRange.startContainer,
+                        canonicalRange.startOffset,
+                      )
+                    } catch {
+                      // The canonical range may not be representable in the
+                      // DOM yet (a render is pending); the next sync gets
+                      // another chance.
+                    }
+                  }
                 } else {
                   androidInputManager?.handleUserSelect(range)
                 }
