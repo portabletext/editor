@@ -2,7 +2,6 @@ import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -108,13 +107,13 @@ function pasteFragment(
 }
 
 async function createEditor(value = initialValue) {
-  const {editor, locator} = await createTestEditor({
+  const {editor} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
     schemaDefinition,
     initialValue: value,
     children: <TablePlugin />,
   })
-  await userEvent.click(locator)
+  editor.send({type: 'focus'})
   return editor
 }
 

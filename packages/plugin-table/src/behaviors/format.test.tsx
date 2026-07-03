@@ -2,7 +2,6 @@ import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -158,7 +157,7 @@ function firstBlock(snapshot: EditorSnapshot, cellKey: string) {
  * between them covers `c01`, which the rectangle excludes.
  */
 async function selectLeftColumn(value = initialValue) {
-  const {editor, locator} = await createTestEditor({
+  const {editor} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
     schemaDefinition,
     initialValue: value,
@@ -166,7 +165,7 @@ async function selectLeftColumn(value = initialValue) {
   })
   const focusOffset = value[0]?.rows[1]?.cells[0]?.value[0]?.children[0]?.text
     .length as number
-  await userEvent.click(locator)
+  editor.send({type: 'focus'})
   editor.send({
     type: 'select',
     at: {

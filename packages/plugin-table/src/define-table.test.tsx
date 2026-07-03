@@ -145,9 +145,9 @@ describe('Feature: `defineTable` with renamed containers', () => {
   })
 
   test('Scenario: `Tab` navigates between renamed cells', async () => {
-    const {editor, locator} = await createRenamedTableEditor()
+    const {editor} = await createRenamedTableEditor()
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     const point = {path: spanPath('c00'), offset: 1}
     editor.send({type: 'select', at: {anchor: point, focus: point}})
     await vi.waitFor(() => {
@@ -232,9 +232,9 @@ describe('Feature: `defineTable` with renamed containers', () => {
   })
 
   test('Scenario: `getTableSelection` and the guards resolve the renamed shape', async () => {
-    const {editor, locator} = await createRenamedTableEditor()
+    const {editor} = await createRenamedTableEditor()
 
-    await userEvent.click(locator)
+    editor.send({type: 'focus'})
     editor.send({
       type: 'select',
       at: {

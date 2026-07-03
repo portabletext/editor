@@ -2,10 +2,15 @@ import type {
   EditorSelection,
   EditorSelectionPoint,
   EditorSnapshot,
+  PortableTextBlock,
   Path,
 } from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
-import {isSelectionCollapsed} from '@portabletext/editor/selectors'
+import {
+  getFocusBlockObject,
+  getFocusTextBlock,
+  isSelectionCollapsed,
+} from '@portabletext/editor/selectors'
 import {
   getChildren,
   getEnclosingBlock,
@@ -60,6 +65,10 @@ export function createNavBehaviors(config: TableConfig) {
         if (!tab.guard(event.originEvent)) {
           return false
         }
+        if (getFocusTextBlock(snapshot)?.node.listItem !== undefined) {
+          // Core owns `Tab` on list items (indent); cell navigation yields.
+          return false
+        }
         const position = resolveFocusCell(config, snapshot)
         if (!position) {
           return false
@@ -85,6 +94,10 @@ export function createNavBehaviors(config: TableConfig) {
         if (!shiftTab.guard(event.originEvent)) {
           return false
         }
+        if (getFocusTextBlock(snapshot)?.node.listItem !== undefined) {
+          // Same yield as `Tab`: core unindents list items on `Shift+Tab`.
+          return false
+        }
         const position = resolveFocusCell(config, snapshot)
         if (!position) {
           return false
@@ -106,10 +119,20 @@ export function createNavBehaviors(config: TableConfig) {
     // ArrowDown: when the caret is in the last block of a cell, move to the cell
     // directly below (same column). Otherwise fall through so the caret moves
     // within the cell.
-    defineBehavior({
+    defineBehavior<
+      Record<string, never>,
+      'keyboard.keydown',
+      {at: NonNullable<EditorSelection>} | {escapeTablePath: Path}
+    >({
       on: 'keyboard.keydown',
       guard: ({snapshot, event, dom}) => {
         if (!arrowDown.guard(event.originEvent)) {
+          return false
+        }
+        if (getFocusBlockObject(snapshot)) {
+          // The engine's lonely-block-object escape owns arrows on a
+          // focused block object: it inserts a text block beside it,
+          // inside the cell.
           return false
         }
         const position = resolveFocusCell(config, snapshot)
@@ -125,23 +148,57 @@ export function createNavBehaviors(config: TableConfig) {
         const rowBelow = getSibling(snapshot, position.row.path, {
           direction: 'next',
         })
-        const target =
-          rowBelow &&
-          sameColumnCell(snapshot, position.cell, position.row, rowBelow)
+        if (!rowBelow) {
+          const siblingBelow = getSibling(snapshot, position.table.path, {
+            direction: 'next',
+          })
+          if (siblingBelow) {
+            // Native ArrowDown at the bottom row walks forward through the
+            // cells instead of exiting, so the plugin owns the move into
+            // the sibling below.
+            const at = blockEntrySelection(snapshot, dom, siblingBelow, 'first')
+            return at ? {at} : false
+          }
+          // Nothing below the table: escape it, the way block objects do.
+          return {escapeTablePath: position.table.path}
+        }
+        const target = sameColumnCell(
+          snapshot,
+          position.cell,
+          position.row,
+          rowBelow,
+        )
         const at =
           target &&
           cellEntrySelection(config, snapshot, dom, target.path, 'first')
-        return at ? {at} : false
+        if (!at) {
+          return false
+        }
+        return {at}
       },
-      actions: [(_, {at}) => [raise({type: 'select', at})]],
+      actions: [
+        ({snapshot}, result) =>
+          'at' in result
+            ? [raise({type: 'select', at: result.at})]
+            : [escapeTableAction(snapshot, result.escapeTablePath, 'after')],
+      ],
     }),
 
     // ArrowUp: when the caret is in the first block of a cell, move to the cell
     // directly above (same column). Otherwise fall through.
-    defineBehavior({
+    defineBehavior<
+      Record<string, never>,
+      'keyboard.keydown',
+      {at: NonNullable<EditorSelection>} | {escapeTablePath: Path}
+    >({
       on: 'keyboard.keydown',
       guard: ({snapshot, event, dom}) => {
         if (!arrowUp.guard(event.originEvent)) {
+          return false
+        }
+        if (getFocusBlockObject(snapshot)) {
+          // Same split as ArrowDown: block objects escape, they don't
+          // navigate.
           return false
         }
         const position = resolveFocusCell(config, snapshot)
@@ -157,17 +214,64 @@ export function createNavBehaviors(config: TableConfig) {
         const rowAbove = getSibling(snapshot, position.row.path, {
           direction: 'previous',
         })
-        const target =
-          rowAbove &&
-          sameColumnCell(snapshot, position.cell, position.row, rowAbove)
+        if (!rowAbove) {
+          const siblingAbove = getSibling(snapshot, position.table.path, {
+            direction: 'previous',
+          })
+          if (siblingAbove) {
+            // Native ArrowUp at the top row walks backwards through the
+            // cells instead of exiting, so the plugin owns the move into
+            // the sibling above.
+            const at = blockEntrySelection(snapshot, dom, siblingAbove, 'last')
+            return at ? {at} : false
+          }
+          // Nothing above the table: escape it, the way block objects do.
+          return {escapeTablePath: position.table.path}
+        }
+        const target = sameColumnCell(
+          snapshot,
+          position.cell,
+          position.row,
+          rowAbove,
+        )
         const at =
           target &&
           cellEntrySelection(config, snapshot, dom, target.path, 'last')
-        return at ? {at} : false
+        if (!at) {
+          return false
+        }
+        return {at}
       },
-      actions: [(_, {at}) => [raise({type: 'select', at})]],
+      actions: [
+        ({snapshot}, result) =>
+          'at' in result
+            ? [raise({type: 'select', at: result.at})]
+            : [escapeTableAction(snapshot, result.escapeTablePath, 'before')],
+      ],
     }),
   ]
+}
+
+/**
+ * Insert an empty text block beyond the table and move the caret into it.
+ * Arrow navigation at a table edge with no sibling to land in would
+ * otherwise trap the caret.
+ */
+function escapeTableAction(
+  snapshot: EditorSnapshot,
+  tablePath: Path,
+  placement: 'before' | 'after',
+) {
+  return raise({
+    type: 'insert.block',
+    block: {_type: snapshot.context.schema.block.name},
+    placement,
+    at: {
+      anchor: {path: tablePath, offset: 0},
+      focus: {path: tablePath, offset: 0},
+    },
+    select: 'start',
+  })
 }
 
 /**
@@ -234,6 +338,54 @@ function cellEntrySelection(
   })
   const resolved = point && resolveCell(snapshot, point.path, config)
   if (!resolved || !isEqualPaths(resolved.cell.path, cellPath)) {
+    return fallback
+  }
+  return {anchor: point, focus: point}
+}
+
+/**
+ * A collapsed selection in a sibling block outside the table, at the
+ * caret's current x where possible, the same hit-testing idiom as
+ * `cellEntrySelection`. Falls back to the block's edge point, e.g. when
+ * the rects cannot be measured.
+ */
+function blockEntrySelection(
+  snapshot: EditorSnapshot,
+  dom: Dom,
+  sibling: {node: unknown; path: Path},
+  edge: 'first' | 'last',
+): EditorSelection | undefined {
+  const block = {
+    // A root-level sibling is a block by the data model; the traversal
+    // node union cannot prove it.
+    node: sibling.node as PortableTextBlock,
+    path: sibling.path,
+  }
+  const edgePoint =
+    edge === 'first'
+      ? getBlockStartPoint({context: snapshot.context, block})
+      : getBlockEndPoint({context: snapshot.context, block})
+  const fallback = {anchor: edgePoint, focus: edgePoint}
+  const caretRect = dom.getSelectionRect(snapshot)
+  const entryLineRect = dom.getSelectionRect({
+    ...snapshot,
+    context: {...snapshot.context, selection: fallback},
+  })
+  if (!caretRect || !entryLineRect) {
+    return fallback
+  }
+  const point = dom.getPointAtCoordinates({
+    x: caretRect.left,
+    y: entryLineRect.top + entryLineRect.height / 2,
+  })
+  const pointRootSegment = point?.path[0]
+  const blockRootSegment = block.path[0]
+  if (
+    !point ||
+    pointRootSegment === undefined ||
+    blockRootSegment === undefined ||
+    !isEqualPaths([pointRootSegment], [blockRootSegment])
+  ) {
     return fallback
   }
   return {anchor: point, focus: point}
