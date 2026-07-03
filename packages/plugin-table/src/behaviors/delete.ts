@@ -14,11 +14,39 @@ import {
  * built-in behavior is unchanged.
  */
 export const deleteBehaviors = [
+  defineBehavior<Record<string, never>, 'delete', {tablePath: Path}>({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      if (event.direction === undefined) {
+        // Bare `delete`s come from decompositions (typing, paste, cut) that
+        // replace the rectangle's content. Only explicit delete gestures
+        // (Backspace, Delete) remove the table.
+        return false
+      }
+      const resolved = resolveTableSelection(snapshot)
+      if (!resolved) {
+        return false
+      }
+      const [rowStart, rowEnd] = resolved.tableSelection.rowRange
+      const [colStart, colEnd] = resolved.tableSelection.colRange
+      const columnCount = Math.max(
+        ...resolved.table.node.rows.map((row) => row.cells.length),
+      )
+      const wholeTable =
+        rowStart === 0 &&
+        colStart === 0 &&
+        rowEnd === resolved.table.node.rows.length - 1 &&
+        colEnd === columnCount - 1
+      return wholeTable ? {tablePath: resolved.table.path} : false
+    },
+    actions: [(_, {tablePath}) => [raise({type: 'unset', at: tablePath})]],
+  }),
   defineBehavior<Record<string, never>, 'delete', ResolvedTableSelection>({
     on: 'delete',
     guard: ({snapshot, event}) => {
       if (event.at) {
-        // Addressed deletes target their own range; only selection-scoped
+        // Addressed deletes target their own range (the whole-table
+        // removal above decomposes into one); only selection-scoped
         // deletes clear the rectangle.
         return false
       }

@@ -472,7 +472,35 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('backspace over a multi-cell rectangle clears it', async () => {
+  test('backspace over a partial rectangle clears it', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    // Left column only: an explicit delete over a partial rectangle keeps
+    // clearing; only the whole table selected deletes the table.
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 0)
+    const focus = pointInSpan('r1c0', 'r1c0b', 'r1c0s', 2)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r1c0: {blockKey: 'k4', spanKey: 'k5'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
+      )
+    })
+  })
+
+  test('backspace with the whole table selected deletes the table', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -486,17 +514,21 @@ describe('delete behaviors within tables', () => {
     editor.send({type: 'delete.backward', unit: 'character'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        tableWithCleared({
-          r0c0: {blockKey: 'k2', spanKey: 'k3'},
-          r0c1: {blockKey: 'k8', spanKey: 'k9'},
-          r1c0: {blockKey: 'k6', spanKey: 'k7'},
-          r1c1: {blockKey: 'k4', spanKey: 'k5'},
-        }),
-      )
-      expect(editor.getSnapshot().context.selection).toEqual(
-        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
-      )
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
   })
 
