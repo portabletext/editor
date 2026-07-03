@@ -472,6 +472,87 @@ describe('delete behaviors within tables', () => {
     })
   })
 
+  test('backspace over a multi-cell rectangle clears it', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 0)
+    const focus = pointInSpan('r1c1', 'r1c1b', 'r1c1s', 2)
+    editor.send({type: 'select', at: {anchor, focus}})
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        tableWithCleared({
+          r0c0: {blockKey: 'k2', spanKey: 'k3'},
+          r0c1: {blockKey: 'k8', spanKey: 'k9'},
+          r1c0: {blockKey: 'k6', spanKey: 'k7'},
+          r1c1: {blockKey: 'k4', spanKey: 'k5'},
+        }),
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsedAtClearedCell('r0c0', 'k2', 'k3'),
+      )
+    })
+  })
+
+  test('typing over a multi-cell rectangle replaces it with the typed text', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+
+    const anchor = pointInSpan('r0c0', 'r0c0b', 'r0c0s', 0)
+    const focus = pointInSpan('r1c1', 'r1c1b', 'r1c1s', 2)
+    editor.send({type: 'select', at: {anchor, focus}})
+    // `insert.text` decomposes into `delete` plus the insert on expanded
+    // selections, so the rectangle clears and the text lands in the
+    // top-left cell's minted block.
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [
+                cellWithText('r0c0', 'k2', 'k3', 'x'),
+                cellWithText('r0c1', 'k8', 'k9', ''),
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                cellWithText('r1c0', 'k6', 'k7', ''),
+                cellWithText('r1c1', 'k4', 'k5', ''),
+              ],
+            },
+          ],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual(
+        collapsed(pointInSpan('r0c0', 'k2', 'k3', 1)),
+      )
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
   test('delete.range straddling two cells in same row: structure preserved (no cell merge)', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),

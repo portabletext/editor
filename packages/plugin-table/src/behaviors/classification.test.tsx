@@ -35,12 +35,12 @@ const treatments: Record<
   'decorator.remove': 'remap',
   'decorator.toggle': 'remap',
   'delete': 'remap',
-  // Expected to decompose through `delete`, which is remapped; pin with
-  // tests before flipping to `pass`.
-  'delete.backward': 'pending',
+  // Re-raises `delete` (which is remapped) for any selection; backspace
+  // over a rectangle is pinned in delete.test.tsx.
+  'delete.backward': 'pass',
   'delete.block': 'pass',
   'delete.child': 'pass',
-  'delete.forward': 'pending',
+  'delete.forward': 'pass',
   'delete.text': 'pending',
   // Paste over a rectangle.
   'deserialize': 'pending',
@@ -59,7 +59,10 @@ const treatments: Record<
   'insert.inline object': 'pending',
   'insert.soft break': 'pending',
   'insert.span': 'pending',
-  'insert.text': 'pending',
+  // Decomposes into `delete` plus the insert on expanded selections, so the
+  // rectangle clears and the text lands in the top-left cell (pinned in
+  // delete.test.tsx).
+  'insert.text': 'pass',
   'list item.add': 'remap',
   'list item.remove': 'remap',
   'list item.toggle': 'remap',
