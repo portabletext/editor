@@ -1,6 +1,5 @@
 import type {
   EditorSelection,
-  EditorSelectionPoint,
   EditorSnapshot,
   Path,
   PortableTextBlock,
@@ -8,6 +7,7 @@ import type {
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {isSelectionCollapsed} from '@portabletext/editor/selectors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
+import {getBlockEndPoint, getBlockStartPoint} from '@portabletext/editor/utils'
 import {getTableSelection} from '../get-table-selection'
 import {resolveCell} from '../resolve-cell'
 import {
@@ -299,7 +299,7 @@ function planDistribution(
     }
   }
 
-  const selection = pastedSelection(contentTargets)
+  const selection = pastedSelection(snapshot.context, contentTargets)
   if (!selection) {
     return false
   }
@@ -479,6 +479,7 @@ function rekeyBlocks(
 
 /** An expanded selection spanning the pasted cells leaf-to-leaf. */
 function pastedSelection(
+  context: EditorSnapshot['context'],
   targets: Array<{cellPath: Path; blocks: Array<PortableTextBlock>}>,
 ): NonNullable<EditorSelection> | undefined {
   const first = targets.find((target) => target.blocks.length > 0)
@@ -486,42 +487,22 @@ function pastedSelection(
   if (!first || !last) {
     return undefined
   }
-  const anchor = blockEdgePoint(
-    first.cellPath,
-    first.blocks[0] as PortableTextBlock,
-    'start',
-  )
-  const focus = blockEdgePoint(
-    last.cellPath,
-    last.blocks[last.blocks.length - 1] as PortableTextBlock,
-    'end',
-  )
-  if (!anchor || !focus) {
-    return undefined
-  }
-  return {anchor, focus}
-}
-
-function blockEdgePoint(
-  cellPath: Path,
-  block: PortableTextBlock,
-  edge: 'start' | 'end',
-): EditorSelectionPoint | undefined {
-  const blockPath = [...cellPath, 'value', {_key: block._key}]
-  if (!Array.isArray(block.children) || block.children.length === 0) {
-    return {path: blockPath, offset: 0}
-  }
-  const child =
-    edge === 'start'
-      ? block.children[0]
-      : block.children[block.children.length - 1]
-  if (!child) {
-    return undefined
-  }
-  const offset =
-    edge === 'end' && typeof child.text === 'string' ? child.text.length : 0
+  const firstBlock = first.blocks[0] as PortableTextBlock
+  const lastBlock = last.blocks[last.blocks.length - 1] as PortableTextBlock
   return {
-    path: [...blockPath, 'children', {_key: child._key}],
-    offset,
+    anchor: getBlockStartPoint({
+      context,
+      block: {
+        node: firstBlock,
+        path: [...first.cellPath, 'value', {_key: firstBlock._key}],
+      },
+    }),
+    focus: getBlockEndPoint({
+      context,
+      block: {
+        node: lastBlock,
+        path: [...last.cellPath, 'value', {_key: lastBlock._key}],
+      },
+    }),
   }
 }

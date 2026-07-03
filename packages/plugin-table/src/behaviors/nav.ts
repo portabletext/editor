@@ -11,8 +11,13 @@ import {
   getEnclosingBlock,
   getFirstChild,
   getLastChild,
+  getSibling,
 } from '@portabletext/editor/traversal'
-import {getBlockEndPoint, getBlockStartPoint} from '@portabletext/editor/utils'
+import {
+  getBlockEndPoint,
+  getBlockStartPoint,
+  isEqualPaths,
+} from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveCell} from '../resolve-cell'
@@ -58,7 +63,9 @@ export const navBehaviors = [
         return false
       }
       const cells = getChildren(snapshot, position.row.path)
-      const nextRow = adjacentRow(snapshot, position.table, position.row, 1)
+      const nextRow = getSibling(snapshot, position.row.path, {
+        direction: 'next',
+      })
       const target =
         cells[indexOf(cells, position.cell) + 1] ??
         (nextRow && getFirstChild(snapshot, nextRow.path))
@@ -82,12 +89,9 @@ export const navBehaviors = [
       }
       const cells = getChildren(snapshot, position.row.path)
       const columnIndex = indexOf(cells, position.cell)
-      const previousRow = adjacentRow(
-        snapshot,
-        position.table,
-        position.row,
-        -1,
-      )
+      const previousRow = getSibling(snapshot, position.row.path, {
+        direction: 'previous',
+      })
       const target =
         (columnIndex > 0 ? cells[columnIndex - 1] : undefined) ??
         (previousRow && getLastChild(snapshot, previousRow.path))
@@ -113,7 +117,9 @@ export const navBehaviors = [
       if (!focusOnVisualEdge(snapshot, dom, 'last')) {
         return false
       }
-      const rowBelow = adjacentRow(snapshot, position.table, position.row, 1)
+      const rowBelow = getSibling(snapshot, position.row.path, {
+        direction: 'next',
+      })
       const target =
         rowBelow &&
         sameColumnCell(snapshot, position.cell, position.row, rowBelow)
@@ -142,7 +148,9 @@ export const navBehaviors = [
       if (!focusOnVisualEdge(snapshot, dom, 'first')) {
         return false
       }
-      const rowAbove = adjacentRow(snapshot, position.table, position.row, -1)
+      const rowAbove = getSibling(snapshot, position.row.path, {
+        direction: 'previous',
+      })
       const target =
         rowAbove &&
         sameColumnCell(snapshot, position.cell, position.row, rowAbove)
@@ -216,7 +224,7 @@ function cellEntrySelection(
     y: entryLineRect.top + entryLineRect.height / 2,
   })
   const resolved = point && resolveCell(snapshot, point.path)
-  if (!resolved || getKey(resolved.cell.path) !== getKey(cellPath)) {
+  if (!resolved || !isEqualPaths(resolved.cell.path, cellPath)) {
     return fallback
   }
   return {anchor: point, focus: point}
@@ -238,9 +246,7 @@ function focusAtCellEdge(
       ? getFirstChild(snapshot, cellPath)
       : getLastChild(snapshot, cellPath)
   return (
-    !!focusBlock &&
-    !!edgeBlock &&
-    getKey(focusBlock.path) === getKey(edgeBlock.path)
+    !!focusBlock && !!edgeBlock && isEqualPaths(focusBlock.path, edgeBlock.path)
   )
 }
 
@@ -279,26 +285,15 @@ function focusOnVisualEdge(
 }
 
 /** The row `offset` positions above (-1) or below (+1) `row` in `table`. */
-function adjacentRow(
-  snapshot: EditorSnapshot,
-  table: Entry,
-  row: Entry,
-  offset: 1 | -1,
-): Entry | undefined {
-  const rows = getChildren(snapshot, table.path)
-  const index = indexOf(rows, row) + offset
-  return index >= 0 ? rows[index] : undefined
-}
-
-/** The cell in `adjacentRow` sharing `cell`'s column, clamped to the row width. */
+/** The cell in `neighborRow` sharing `cell`'s column, clamped to the row width. */
 function sameColumnCell(
   snapshot: EditorSnapshot,
   cell: Entry,
   row: Entry,
-  adjacentRow: Entry,
+  neighborRow: Entry,
 ): Entry | undefined {
   const columnIndex = indexOf(getChildren(snapshot, row.path), cell)
-  const cells = getChildren(snapshot, adjacentRow.path)
+  const cells = getChildren(snapshot, neighborRow.path)
   return cells[Math.min(columnIndex, cells.length - 1)]
 }
 
@@ -312,17 +307,9 @@ function withinBand(rect: DOMRect, compareRect: DOMRect): boolean {
   return rect.top <= middle && rect.bottom >= middle
 }
 
-/** The index of `entry` among `entries`, matched by keyed path segment. */
+/** The index of `entry` among `entries`. */
 function indexOf(entries: Array<Entry>, entry: Entry): number {
-  return entries.findIndex(
-    (candidate) => getKey(candidate.path) === getKey(entry.path),
+  return entries.findIndex((candidate) =>
+    isEqualPaths(candidate.path, entry.path),
   )
-}
-
-/** The `_key` of a path's last keyed segment. */
-function getKey(path: Path): string | undefined {
-  const segment = path.at(-1)
-  return typeof segment === 'object' && segment !== null && '_key' in segment
-    ? segment._key
-    : undefined
 }
