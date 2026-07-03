@@ -456,6 +456,16 @@ type AbstractBehaviorEvent =
         'type',
         'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
+      /**
+       * Serialize this range instead of the current selection. When a
+       * `fragment` is present, the paths address the fragment and default
+       * to its full span.
+       */
+      at?: NonNullable<EditorSelection>
+      /**
+       * Serialize this content instead of the document.
+       */
+      fragment?: Array<PortableTextBlock>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'serialize.data'>
@@ -465,6 +475,16 @@ type AbstractBehaviorEvent =
         'type',
         'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
+      /**
+       * Serialize this range instead of the current selection. When a
+       * `fragment` is present, the paths address the fragment and default
+       * to its full span.
+       */
+      at?: NonNullable<EditorSelection>
+      /**
+       * Serialize this content instead of the document.
+       */
+      fragment?: Array<PortableTextBlock>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'deserialization.success'>

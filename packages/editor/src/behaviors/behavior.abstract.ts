@@ -71,6 +71,10 @@ export const abstractBehaviors = [
         raise({
           type: 'serialize',
           originEvent: event,
+          // The drag pipeline does not update `snapshot.context.selection`
+          // on dragstart; the grabbed selection travels as the
+          // serialization range instead.
+          at: event.position.selection,
         }),
       ],
     ],
