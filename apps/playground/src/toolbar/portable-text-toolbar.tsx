@@ -329,27 +329,12 @@ export const extendBlockObject = ((blockObject) => {
   }
 
   if (blockObject.name === 'table') {
-    const emptyCell = () => ({
-      _type: 'cell',
-      content: [
-        {
-          _type: 'block',
-          style: 'normal',
-          children: [{_type: 'span', text: '', marks: []}],
-          markDefs: [],
-        },
-      ],
-    })
-    const emptyRow = () => ({
-      _type: 'row',
-      cells: [emptyCell(), emptyCell(), emptyCell()],
-    })
+    // No `defaultValues`: tables never open the field dialog, both the
+    // toolbar button and the slash command insert the shared 3x3 default
+    // directly.
     return {
       ...blockObject,
       icon: TableIcon,
-      defaultValues: {
-        rows: [emptyRow(), emptyRow()],
-      },
     }
   }
 

@@ -22,6 +22,7 @@ import {
   TextQuoteIcon,
 } from 'lucide-react'
 import {useEffect, useRef, useState, type JSX} from 'react'
+import {defaultTableValue} from './plugins/table-defaults'
 import {Button} from './primitives/button'
 import {Dialog} from './primitives/dialog'
 import type {FieldOption} from './primitives/fields'
@@ -161,24 +162,7 @@ const commands: CommandMatch[] = [
     keywords: ['table', 'grid', 'rows', 'columns'],
     action: {
       type: 'insert.block',
-      block: {
-        _type: 'table',
-        headerRows: 1,
-        rows: Array.from({length: 3}, () => ({
-          _type: 'row',
-          cells: Array.from({length: 3}, () => ({
-            _type: 'cell',
-            value: [
-              {
-                _type: 'block',
-                style: 'normal',
-                markDefs: [],
-                children: [{_type: 'span', text: '', marks: []}],
-              },
-            ],
-          })),
-        })),
-      },
+      block: {_type: 'table', ...defaultTableValue()},
     },
   },
   {
@@ -226,8 +210,16 @@ const slashCommandPicker = defineTypeaheadPicker<CommandMatch>({
         const blockObjectSchema = snapshot.context.schema.blockObjects.find(
           (blockObject) => blockObject.name === blockType,
         )
+        // A command that carries a complete block inserts it directly; the
+        // dialog is for commands that only name a type whose fields need
+        // filling.
+        const prefilled = Object.keys(event.match.action.block).length > 1
 
-        if (blockObjectSchema && blockObjectSchema.fields.length > 0) {
+        if (
+          !prefilled &&
+          blockObjectSchema &&
+          blockObjectSchema.fields.length > 0
+        ) {
           const extendedSchema = extendBlockObject(blockObjectSchema)
 
           return [
