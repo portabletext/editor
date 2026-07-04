@@ -840,7 +840,7 @@ export function TableMenu({
                 width: MENU_MIN_WIDTH,
                 background: 'var(--pt-plugin-table-menu-bg)',
                 border: '1px solid var(--pt-plugin-table-menu-border)',
-                borderRadius: 6,
+                borderRadius: 'var(--pt-plugin-table-radius)',
                 padding: 5,
                 zIndex: MENU_Z_INDEX,
               }}
@@ -1053,7 +1053,7 @@ export function ReorderGhost({
           display: 'flex',
           pointerEvents: 'none',
           zIndex: 10000,
-          borderRadius: 6,
+          borderRadius: 'var(--pt-plugin-table-radius)',
           border: `1px solid ${BORDER}`,
           background: isHeader
             ? 'var(--pt-plugin-table-header-bg)'
@@ -1103,7 +1103,7 @@ export function ReorderGhost({
         flexDirection: 'column',
         pointerEvents: 'none',
         zIndex: 10000,
-        borderRadius: 6,
+        borderRadius: 'var(--pt-plugin-table-radius)',
         border: `1px solid ${BORDER}`,
         background: 'var(--pt-plugin-table-bg)',
         boxShadow: GHOST_SHADOW,
