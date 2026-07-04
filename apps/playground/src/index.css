@@ -2,34 +2,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Dark counterparts for the table UI's `--pt-plugin-table-*` tokens
-   (light defaults ship with `@portabletext/plugin-table/ui/styles.css`),
-   anchored to the editor card (white / gray-800). */
+/* The table UI's `--pt-plugin-table-*` tokens ship as `light-dark()`
+   pairs; declaring the scheme is all the opt-in dark mode needs. */
+:root {
+  color-scheme: light;
+}
 .dark {
-  --pt-plugin-table-bg: #1f2937;
-  --pt-plugin-table-fg: #e5e7eb;
-  --pt-plugin-table-border: #374151;
-  --pt-plugin-table-header-bg: #283345;
-  --pt-plugin-table-selected-bg: rgba(105, 125, 255, 0.16);
-  --pt-plugin-table-lane-bg: #242e3d;
-  --pt-plugin-table-lane-bg-hover: #2b3748;
-  --pt-plugin-table-lane-icon: #9ca3af;
-  --pt-plugin-table-lane-icon-hover: #d1d5db;
-  --pt-plugin-table-handle-rest: #4b5563;
-  --pt-plugin-table-handle-bg: #374151;
-  --pt-plugin-table-handle-dots: #aab2bf;
-  --pt-plugin-table-handle-ring: rgba(0, 0, 0, 0.4);
-  --pt-plugin-table-boundary-dot: #525c6b;
-  --pt-plugin-table-trash-bg: #0d1117;
-  --pt-plugin-table-danger: #e05561;
-  --pt-plugin-table-menu-bg: #232d3d;
-  --pt-plugin-table-menu-border: #3a4557;
-  --pt-plugin-table-menu-hover: #2c384a;
-  --pt-plugin-table-toggle-track: #4b5563;
-  --pt-plugin-table-toggle-track-on: #e5e7eb;
-  --pt-plugin-table-toggle-knob: #1f2937;
-  --pt-plugin-table-scrollbar: rgba(229, 231, 235, 0.25);
-  --pt-plugin-table-scrollbar-hover: rgba(229, 231, 235, 0.4);
+  color-scheme: dark;
 }
 
 body {
