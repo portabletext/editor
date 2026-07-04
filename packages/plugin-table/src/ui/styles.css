@@ -1,0 +1,83 @@
+/**
+ * Structural rules and token defaults for the reference table UI.
+ *
+ * The `--pt-plugin-table-*` custom properties are the theming contract:
+ * override them on `:root` (or any shared ancestor) to restyle. They sit on
+ * the root rather than the chrome wrapper because the menu, trash layer, and
+ * drag ghost portal into `document.body`, outside the wrapper's scope.
+ * `:where()` zeroes the specificity so any consumer override wins regardless
+ * of stylesheet load order.
+ */
+
+:where(:root) {
+  --pt-plugin-table-accent: #556bfc;
+  --pt-plugin-table-bg: #fff;
+  --pt-plugin-table-fg: #1c1f24;
+  --pt-plugin-table-border: #e3e4e8;
+  --pt-plugin-table-header-bg: #f6f6f8;
+  --pt-plugin-table-selected-bg: rgba(85, 107, 252, 0.06);
+  --pt-plugin-table-lane-bg: #fafafb;
+  --pt-plugin-table-lane-bg-hover: #f0f1f3;
+  --pt-plugin-table-lane-icon: #6e7484;
+  --pt-plugin-table-lane-icon-hover: #5c5f69;
+  --pt-plugin-table-handle-rest: #bbbdc9;
+  --pt-plugin-table-handle-bg: #fff;
+  --pt-plugin-table-handle-dots: #8a8f99;
+  --pt-plugin-table-handle-ring: rgba(255, 255, 255, 0.9);
+  --pt-plugin-table-boundary-dot: #c1c4ca;
+  --pt-plugin-table-trash-bg: #1c1f24;
+  --pt-plugin-table-danger: #c0303a;
+  --pt-plugin-table-menu-bg: #fff;
+  --pt-plugin-table-menu-border: #e4e6ea;
+  --pt-plugin-table-menu-hover: #f4f4f6;
+  --pt-plugin-table-toggle-track: #d3d4d8;
+  --pt-plugin-table-toggle-track-on: #1c1f24;
+  --pt-plugin-table-toggle-knob: #fff;
+  --pt-plugin-table-scrollbar: rgba(28, 31, 36, 0.22);
+  --pt-plugin-table-scrollbar-hover: rgba(28, 31, 36, 0.35);
+}
+
+/* Layout only. Cell borders, header base, selection outline/overlay and
+   corner radii are inline per cell (see `table-cell-style.ts`). */
+.pt-plugin-table-chrome {
+  position: relative;
+  margin: 20px 0;
+}
+
+/* Horizontal scroll under a wide table: lighter thumb, gap from the table
+   edge. */
+.pt-plugin-table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pt-plugin-table-scrollbar) transparent;
+}
+.pt-plugin-table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.pt-plugin-table-scroll::-webkit-scrollbar-track {
+  margin-top: 8px;
+  background: transparent;
+}
+.pt-plugin-table-scroll::-webkit-scrollbar-thumb {
+  background: var(--pt-plugin-table-scrollbar);
+  border-radius: 3px;
+}
+.pt-plugin-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--pt-plugin-table-scrollbar-hover);
+}
+
+.pt-plugin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  cursor: text;
+}
+
+/* While a multi-cell range is active, the blue rectangle overlay stands in
+   for the selection, so hide the native text-selection highlight. */
+.pt-plugin-table[data-cell-range] ::selection {
+  background: transparent;
+}
+.pt-plugin-table[data-cell-range] ::-moz-selection {
+  background: transparent;
+}

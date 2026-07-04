@@ -2,63 +2,34 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Table chrome tokens: the design prototype's light palette with dark
-   counterparts anchored to the editor card (white / gray-800). Consumed as
-   `var(--color-table-*)` from the table's inline styles and stylesheet
-   rules; `@theme` also makes them available as Tailwind utilities. */
-@theme {
-  --color-table-accent: #556bfc;
-  --color-table-bg: #fff;
-  --color-table-fg: #1c1f24;
-  --color-table-border: #e3e4e8;
-  --color-table-header-bg: #f6f6f8;
-  --color-table-selected-bg: rgba(85, 107, 252, 0.06);
-  --color-table-lane-bg: #fafafb;
-  --color-table-lane-bg-hover: #f0f1f3;
-  --color-table-lane-icon: #6e7484;
-  --color-table-lane-icon-hover: #5c5f69;
-  --color-table-handle-rest: #bbbdc9;
-  --color-table-handle-bg: #fff;
-  --color-table-handle-dots: #8a8f99;
-  --color-table-handle-ring: rgba(255, 255, 255, 0.9);
-  --color-table-boundary-dot: #c1c4ca;
-  --color-table-trash-bg: #1c1f24;
-  --color-table-danger: #c0303a;
-  --color-table-menu-bg: #fff;
-  --color-table-menu-border: #e4e6ea;
-  --color-table-menu-hover: #f4f4f6;
-  --color-table-toggle-track: #d3d4d8;
-  --color-table-toggle-track-on: #1c1f24;
-  --color-table-toggle-knob: #fff;
-  --color-table-scrollbar: rgba(28, 31, 36, 0.22);
-  --color-table-scrollbar-hover: rgba(28, 31, 36, 0.35);
-}
-
+/* Dark counterparts for the table UI's `--pt-plugin-table-*` tokens
+   (light defaults ship with `@portabletext/plugin-table/ui/styles.css`),
+   anchored to the editor card (white / gray-800). */
 .dark {
-  --color-table-bg: #1f2937;
-  --color-table-fg: #e5e7eb;
-  --color-table-border: #374151;
-  --color-table-header-bg: #283345;
-  --color-table-selected-bg: rgba(105, 125, 255, 0.16);
-  --color-table-lane-bg: #242e3d;
-  --color-table-lane-bg-hover: #2b3748;
-  --color-table-lane-icon: #9ca3af;
-  --color-table-lane-icon-hover: #d1d5db;
-  --color-table-handle-rest: #4b5563;
-  --color-table-handle-bg: #374151;
-  --color-table-handle-dots: #aab2bf;
-  --color-table-handle-ring: rgba(0, 0, 0, 0.4);
-  --color-table-boundary-dot: #525c6b;
-  --color-table-trash-bg: #0d1117;
-  --color-table-danger: #e05561;
-  --color-table-menu-bg: #232d3d;
-  --color-table-menu-border: #3a4557;
-  --color-table-menu-hover: #2c384a;
-  --color-table-toggle-track: #4b5563;
-  --color-table-toggle-track-on: #e5e7eb;
-  --color-table-toggle-knob: #1f2937;
-  --color-table-scrollbar: rgba(229, 231, 235, 0.25);
-  --color-table-scrollbar-hover: rgba(229, 231, 235, 0.4);
+  --pt-plugin-table-bg: #1f2937;
+  --pt-plugin-table-fg: #e5e7eb;
+  --pt-plugin-table-border: #374151;
+  --pt-plugin-table-header-bg: #283345;
+  --pt-plugin-table-selected-bg: rgba(105, 125, 255, 0.16);
+  --pt-plugin-table-lane-bg: #242e3d;
+  --pt-plugin-table-lane-bg-hover: #2b3748;
+  --pt-plugin-table-lane-icon: #9ca3af;
+  --pt-plugin-table-lane-icon-hover: #d1d5db;
+  --pt-plugin-table-handle-rest: #4b5563;
+  --pt-plugin-table-handle-bg: #374151;
+  --pt-plugin-table-handle-dots: #aab2bf;
+  --pt-plugin-table-handle-ring: rgba(0, 0, 0, 0.4);
+  --pt-plugin-table-boundary-dot: #525c6b;
+  --pt-plugin-table-trash-bg: #0d1117;
+  --pt-plugin-table-danger: #e05561;
+  --pt-plugin-table-menu-bg: #232d3d;
+  --pt-plugin-table-menu-border: #3a4557;
+  --pt-plugin-table-menu-hover: #2c384a;
+  --pt-plugin-table-toggle-track: #4b5563;
+  --pt-plugin-table-toggle-track-on: #e5e7eb;
+  --pt-plugin-table-toggle-knob: #1f2937;
+  --pt-plugin-table-scrollbar: rgba(229, 231, 235, 0.25);
+  --pt-plugin-table-scrollbar-hover: rgba(229, 231, 235, 0.4);
 }
 
 body {

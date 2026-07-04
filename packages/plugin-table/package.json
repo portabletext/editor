@@ -20,7 +20,8 @@
     "directory": "packages/plugin-table"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/ui/styles.css"
   ],
   "type": "module",
   "sideEffects": false,
@@ -31,11 +32,18 @@
       "source": "./src/index.ts",
       "default": "./dist/index.js"
     },
+    "./ui": {
+      "source": "./src/ui/index.ts",
+      "default": "./dist/ui/index.js"
+    },
+    "./ui/styles.css": "./src/ui/styles.css",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
       ".": "./dist/index.js",
+      "./ui": "./dist/ui/index.js",
+      "./ui/styles.css": "./src/ui/styles.css",
       "./package.json": "./package.json"
     }
   },
@@ -66,13 +74,15 @@
     "eslint": "catalog:tooling",
     "eslint-plugin-react-hooks": "catalog:tooling",
     "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:tooling",
     "typescript-eslint": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
-    "react": "^19.2"
+    "react": "^19.2",
+    "react-dom": "^19.2"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
