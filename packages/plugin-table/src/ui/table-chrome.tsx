@@ -350,7 +350,8 @@ function BoundaryControl({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 1px 4px rgba(85,107,252,0.4)',
+            boxShadow:
+              '0 1px 4px color-mix(in srgb, var(--pt-plugin-table-accent) 40%, transparent)',
           }}
         >
           <svg
@@ -362,7 +363,7 @@ function BoundaryControl({
           >
             <path
               d="M5 1v8M1 5h8"
-              stroke="#fff"
+              stroke="var(--pt-plugin-table-accent-fg)"
               strokeWidth="1.5"
               strokeLinecap="round"
             />
@@ -541,7 +542,7 @@ function DragDots({
             height: HANDLE_DOT,
             borderRadius: '50%',
             background: selected
-              ? '#fff'
+              ? 'var(--pt-plugin-table-accent-fg)'
               : 'var(--pt-plugin-table-handle-dots)',
           }}
         />
@@ -683,7 +684,7 @@ function TrashButton({
         background: hovered
           ? 'var(--pt-plugin-table-danger)'
           : 'var(--pt-plugin-table-trash-bg)',
-        color: '#fff',
+        color: 'var(--pt-plugin-table-trash-fg)',
         border: 'none',
         borderRadius: 4,
         padding: 0,
