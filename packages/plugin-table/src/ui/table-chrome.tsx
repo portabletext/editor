@@ -1,4 +1,3 @@
-import {EllipsisIcon, PanelTopIcon, TableIcon, Trash2Icon} from 'lucide-react'
 import {
   useCallback,
   useLayoutEffect,
@@ -9,6 +8,7 @@ import {
   type RefObject,
 } from 'react'
 import {createPortal} from 'react-dom'
+import {EllipsisIcon, PanelTopIcon, TableIcon, Trash2Icon} from './icons'
 import {BLUE, BORDER} from './table-cell-style'
 import type {DragState} from './table-drag'
 import {snapPx, type TableMetrics} from './table-metrics'
@@ -23,14 +23,14 @@ const HANDLE_REST_COL = {w: 16, h: 3}
 const HANDLE_BTN_ROW = {w: 12, h: 16}
 const HANDLE_BTN_COL = {w: 16, h: 12}
 const HANDLE_BTN_PAD = 3
-const HANDLE_REST_BG = 'var(--color-table-handle-rest)'
+const HANDLE_REST_BG = 'var(--pt-plugin-table-handle-rest)'
 const HANDLE_HIT = 24
-const HANDLE_EXPANDED_SHADOW = `inset 0 0 0 0.5px var(--color-table-handle-ring), 0 0 0 1px ${BORDER}`
+const HANDLE_EXPANDED_SHADOW = `inset 0 0 0 0.5px var(--pt-plugin-table-handle-ring), 0 0 0 1px ${BORDER}`
 const HANDLE_EXPANDED_SHADOW_SELECTED =
-  'inset 0 0 0 0.5px var(--color-table-handle-ring), 0 0 0 1px var(--color-table-handle-bg)'
+  'inset 0 0 0 0.5px var(--pt-plugin-table-handle-ring), 0 0 0 1px var(--pt-plugin-table-handle-bg)'
 const HANDLE_DOT = 2
 const HANDLE_DOT_GAP = 2
-const HANDLE_GREY = 'var(--color-table-boundary-dot)'
+const HANDLE_GREY = 'var(--pt-plugin-table-boundary-dot)'
 const BOUNDARY_DOT = 4
 const BOUNDARY_PLUS = 17
 const GRID_LINE_HALF = 0.5
@@ -39,10 +39,10 @@ const EXTEND_SIZE = 17
 const EXTEND_GAP = 3
 /** The reserved add-row / add-column lane: bar + gap. */
 export const EXTEND_LANE = EXTEND_SIZE + EXTEND_GAP
-const EXTEND_BAR_BG = 'var(--color-table-lane-bg)'
-const EXTEND_BAR_BG_HOVER = 'var(--color-table-lane-bg-hover)'
-const EXTEND_ICON = 'var(--color-table-lane-icon)'
-const EXTEND_ICON_HOVER = 'var(--color-table-lane-icon-hover)'
+const EXTEND_BAR_BG = 'var(--pt-plugin-table-lane-bg)'
+const EXTEND_BAR_BG_HOVER = 'var(--pt-plugin-table-lane-bg-hover)'
+const EXTEND_ICON = 'var(--pt-plugin-table-lane-icon)'
+const EXTEND_ICON_HOVER = 'var(--pt-plugin-table-lane-icon-hover)'
 const TRASH_SIZE = 26
 const TRASH_GAP = 8
 /** Above the toolbar and field chrome; delete must stay clickable. */
@@ -162,6 +162,7 @@ export function TableChrome({
       />
       {metrics.cols.map((col, index) => (
         <Handle
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={`col-${index}`}
           kind="column"
           x={GUTTER_LEFT + col.centerX}
@@ -175,6 +176,7 @@ export function TableChrome({
       ))}
       {metrics.rows.map((row, index) => (
         <Handle
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={`row-${index}`}
           kind="row"
           x={GUTTER_LEFT}
@@ -490,7 +492,9 @@ function Handle({
           padding: showExpanded ? HANDLE_BTN_PAD : 0,
           ...(showExpanded
             ? {
-                background: selected ? BLUE : 'var(--color-table-handle-bg)',
+                background: selected
+                  ? BLUE
+                  : 'var(--pt-plugin-table-handle-bg)',
                 boxShadow: selected
                   ? HANDLE_EXPANDED_SHADOW_SELECTED
                   : HANDLE_EXPANDED_SHADOW,
@@ -498,7 +502,8 @@ function Handle({
             : showRest
               ? {
                   background: HANDLE_REST_BG,
-                  boxShadow: 'inset 0 0 0 0.5px var(--color-table-handle-ring)',
+                  boxShadow:
+                    'inset 0 0 0 0.5px var(--pt-plugin-table-handle-ring)',
                 }
               : {background: 'transparent'}),
         }}
@@ -529,12 +534,15 @@ function DragDots({
     >
       {Array.from({length: 6}, (_, index) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={index}
           style={{
             width: HANDLE_DOT,
             height: HANDLE_DOT,
             borderRadius: '50%',
-            background: selected ? '#fff' : 'var(--color-table-handle-dots)',
+            background: selected
+              ? '#fff'
+              : 'var(--pt-plugin-table-handle-dots)',
           }}
         />
       ))}
@@ -673,8 +681,8 @@ function TrashButton({
         alignItems: 'center',
         justifyContent: 'center',
         background: hovered
-          ? 'var(--color-table-danger)'
-          : 'var(--color-table-trash-bg)',
+          ? 'var(--pt-plugin-table-danger)'
+          : 'var(--pt-plugin-table-trash-bg)',
         color: '#fff',
         border: 'none',
         borderRadius: 4,
@@ -684,7 +692,7 @@ function TrashButton({
         transition: 'background 100ms ease',
       }}
     >
-      <Trash2Icon aria-hidden="true" size={14} />
+      <Trash2Icon size={14} />
     </button>
   )
 }
@@ -805,11 +813,11 @@ export function TableMenu({
           borderRadius: 3,
           padding: 0,
           background: open
-            ? 'var(--color-table-lane-bg-hover)'
+            ? 'var(--pt-plugin-table-lane-bg-hover)'
             : hovered
-              ? 'var(--color-table-header-bg)'
+              ? 'var(--pt-plugin-table-header-bg)'
               : 'transparent',
-          color: 'var(--color-table-fg)',
+          color: 'var(--pt-plugin-table-fg)',
           cursor: 'pointer',
           pointerEvents: visible ? 'auto' : 'none',
           opacity: visible ? 1 : 0,
@@ -817,7 +825,7 @@ export function TableMenu({
           zIndex: 6,
         }}
       >
-        <EllipsisIcon aria-hidden="true" size={20} />
+        <EllipsisIcon size={20} />
       </button>
       {open && menuPos
         ? createPortal(
@@ -829,8 +837,8 @@ export function TableMenu({
                 left: menuPos.left,
                 top: menuPos.top,
                 width: MENU_MIN_WIDTH,
-                background: 'var(--color-table-menu-bg)',
-                border: '1px solid var(--color-table-menu-border)',
+                background: 'var(--pt-plugin-table-menu-bg)',
+                border: '1px solid var(--pt-plugin-table-menu-border)',
                 borderRadius: 6,
                 padding: 5,
                 zIndex: MENU_Z_INDEX,
@@ -838,13 +846,13 @@ export function TableMenu({
             >
               <MenuRow
                 label="Header row"
-                icon={<PanelTopIcon aria-hidden="true" size={16} />}
+                icon={<PanelTopIcon size={16} />}
                 trailing={<ToggleSwitch checked={handlers.hasHeader} />}
                 onClick={handlers.onToggleHeader}
               />
               <MenuRow
                 label="Select table"
-                icon={<TableIcon aria-hidden="true" size={16} />}
+                icon={<TableIcon size={16} />}
                 onClick={() => {
                   setOpen(false)
                   handlers.onSelectTable()
@@ -852,7 +860,7 @@ export function TableMenu({
               />
               <MenuRow
                 label="Delete table"
-                icon={<Trash2Icon aria-hidden="true" size={16} />}
+                icon={<Trash2Icon size={16} />}
                 destructive
                 onClick={() => {
                   setOpen(false)
@@ -898,14 +906,16 @@ function MenuRow({
         width: '100%',
         padding: '8px 10px',
         border: 'none',
-        background: hovered ? 'var(--color-table-menu-hover)' : 'transparent',
+        background: hovered
+          ? 'var(--pt-plugin-table-menu-hover)'
+          : 'transparent',
         cursor: 'pointer',
         borderRadius: 4,
         textAlign: 'left',
         fontSize: 13,
         color: destructive
-          ? 'var(--color-table-danger)'
-          : 'var(--color-table-fg)',
+          ? 'var(--pt-plugin-table-danger)'
+          : 'var(--pt-plugin-table-fg)',
       }}
     >
       <span
@@ -937,8 +947,8 @@ function ToggleSwitch({checked}: {checked: boolean}): JSX.Element {
         borderRadius: 8,
         padding: 2,
         background: checked
-          ? 'var(--color-table-toggle-track-on)'
-          : 'var(--color-table-toggle-track)',
+          ? 'var(--pt-plugin-table-toggle-track-on)'
+          : 'var(--pt-plugin-table-toggle-track)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: checked ? 'flex-end' : 'flex-start',
@@ -951,7 +961,7 @@ function ToggleSwitch({checked}: {checked: boolean}): JSX.Element {
           width: 12,
           height: 12,
           borderRadius: '50%',
-          background: 'var(--color-table-toggle-knob)',
+          background: 'var(--pt-plugin-table-toggle-knob)',
           boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
         }}
       />
@@ -1045,8 +1055,8 @@ export function ReorderGhost({
           borderRadius: 6,
           border: `1px solid ${BORDER}`,
           background: isHeader
-            ? 'var(--color-table-header-bg)'
-            : 'var(--color-table-bg)',
+            ? 'var(--pt-plugin-table-header-bg)'
+            : 'var(--pt-plugin-table-bg)',
           boxShadow: GHOST_SHADOW,
           overflow: 'hidden',
           fontWeight: isHeader ? 600 : 400,
@@ -1054,6 +1064,7 @@ export function ReorderGhost({
       >
         {metrics.cols.map((col, index) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
             key={index}
             style={{
               width: col.width,
@@ -1093,13 +1104,14 @@ export function ReorderGhost({
         zIndex: 10000,
         borderRadius: 6,
         border: `1px solid ${BORDER}`,
-        background: 'var(--color-table-bg)',
+        background: 'var(--pt-plugin-table-bg)',
         boxShadow: GHOST_SHADOW,
         overflow: 'hidden',
       }}
     >
       {metrics.rows.map((row, index) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={index}
           style={{
             height: row.height,
@@ -1108,7 +1120,7 @@ export function ReorderGhost({
               index < metrics.rows.length - 1 ? `1px solid ${BORDER}` : 'none',
             background:
               hasHeader && index === 0
-                ? 'var(--color-table-header-bg)'
+                ? 'var(--pt-plugin-table-header-bg)'
                 : undefined,
             fontWeight: hasHeader && index === 0 ? 600 : 400,
             overflow: 'hidden',
@@ -1152,7 +1164,7 @@ export function TableScrollFade({
             ...fadeBase,
             left: 0,
             background:
-              'linear-gradient(to right, var(--color-table-bg) 0%, transparent 100%)',
+              'linear-gradient(to right, var(--pt-plugin-table-bg) 0%, transparent 100%)',
           }}
         />
       ) : null}
@@ -1164,7 +1176,7 @@ export function TableScrollFade({
             ...fadeBase,
             right: 0,
             background:
-              'linear-gradient(to left, var(--color-table-bg) 0%, transparent 100%)',
+              'linear-gradient(to left, var(--pt-plugin-table-bg) 0%, transparent 100%)',
           }}
         />
       ) : null}

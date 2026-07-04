@@ -1,3 +1,4 @@
+import '@portabletext/plugin-table/ui/styles.css'
 import './editor.css'
 import {
   EditorProvider,

@@ -1,12 +1,12 @@
 import type {CSSProperties} from 'react'
 
 // Visual tokens from the design prototype (constants.js on pte-tables-phases).
-export const BLUE = 'var(--color-table-accent)'
-export const BORDER = 'var(--color-table-border)'
+export const BLUE = 'var(--pt-plugin-table-accent)'
+export const BORDER = 'var(--pt-plugin-table-border)'
 const SELECTION_BORDER = 1.5
-const FG = 'var(--color-table-fg)'
-const HEADER_BG = 'var(--color-table-header-bg)'
-const SELECTED_BG = 'var(--color-table-selected-bg)'
+const FG = 'var(--pt-plugin-table-fg)'
+const HEADER_BG = 'var(--pt-plugin-table-header-bg)'
+const SELECTED_BG = 'var(--pt-plugin-table-selected-bg)'
 const CELL_PADDING = '8px 12px'
 const TABLE_RADIUS = 6
 
@@ -138,7 +138,7 @@ export function cellStyle({
     }
   }
 
-  let background = isHeader ? HEADER_BG : 'var(--color-table-bg)'
+  let background = isHeader ? HEADER_BG : 'var(--pt-plugin-table-bg)'
   if (showOverlay) {
     background = isHeader
       ? `linear-gradient(${SELECTED_BG}, ${SELECTED_BG}), ${HEADER_BG}`
