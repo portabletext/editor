@@ -623,7 +623,7 @@ export function TableTrashLayer({
   }
 
   return createPortal(
-    <>
+    <div className="pt-plugin-table-portal">
       {layout.row && selectedRow !== null ? (
         <TrashButton
           label="Delete row"
@@ -642,7 +642,7 @@ export function TableTrashLayer({
           onClick={() => onDeleteCol(selectedCol)}
         />
       ) : null}
-    </>,
+    </div>,
     document.body,
   )
 }
@@ -833,6 +833,7 @@ export function TableMenu({
             <div
               ref={menuRef}
               role="menu"
+              className="pt-plugin-table-portal"
               style={{
                 position: 'fixed',
                 left: menuPos.left,
