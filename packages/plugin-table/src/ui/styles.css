@@ -21,6 +21,9 @@
      set it to the host design language's card radius. Control radii on the
      small affordances stay fixed. */
   --pt-plugin-table-radius: 6px;
+  /* Cell density. Layout is measured from the DOM, so padding is safe to
+     theme; the hit-testing adapts. */
+  --pt-plugin-table-cell-padding: 8px 12px;
   /* Contrast partner rendered on top of accent-colored surfaces. */
   --pt-plugin-table-accent-fg: #fff;
   --pt-plugin-table-bg: light-dark(#fff, #1f2937);
@@ -97,6 +100,14 @@
   border-spacing: 0;
   table-layout: fixed;
   cursor: text;
+}
+
+/* Keyboard focus on the chrome's buttons (handles, lanes, trash, menu).
+   The ring reuses the accent: one identity color, no separate knob. */
+.pt-plugin-table-chrome button:focus-visible,
+.pt-plugin-table-portal button:focus-visible {
+  outline: 2px solid var(--pt-plugin-table-accent);
+  outline-offset: 1px;
 }
 
 /* While a multi-cell range is active, the blue rectangle overlay stands in
