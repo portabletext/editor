@@ -17,6 +17,10 @@
 
 :where(:root) {
   --pt-plugin-table-accent: #556bfc;
+  /* Radius of the visible surfaces (table corners, drag ghost, menu panel);
+     set it to the host design language's card radius. Control radii on the
+     small affordances stay fixed. */
+  --pt-plugin-table-radius: 6px;
   /* Contrast partner rendered on top of accent-colored surfaces. */
   --pt-plugin-table-accent-fg: #fff;
   --pt-plugin-table-bg: light-dark(#fff, #1f2937);

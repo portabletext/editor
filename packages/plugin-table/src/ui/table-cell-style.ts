@@ -8,7 +8,7 @@ const FG = 'var(--pt-plugin-table-fg)'
 const HEADER_BG = 'var(--pt-plugin-table-header-bg)'
 const SELECTED_BG = 'var(--pt-plugin-table-selected-bg)'
 const CELL_PADDING = '8px 12px'
-const TABLE_RADIUS = 6
+const TABLE_RADIUS = 'var(--pt-plugin-table-radius)'
 
 export type CellRange = {r0: number; r1: number; c0: number; c1: number}
 
