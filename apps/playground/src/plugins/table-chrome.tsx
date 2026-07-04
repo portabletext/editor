@@ -23,14 +23,14 @@ const HANDLE_REST_COL = {w: 16, h: 3}
 const HANDLE_BTN_ROW = {w: 12, h: 16}
 const HANDLE_BTN_COL = {w: 16, h: 12}
 const HANDLE_BTN_PAD = 3
-const HANDLE_REST_BG = '#bbbdc9'
+const HANDLE_REST_BG = 'var(--color-table-handle-rest)'
 const HANDLE_HIT = 24
-const HANDLE_EXPANDED_SHADOW = `inset 0 0 0 0.5px rgba(255,255,255,0.9), 0 0 0 1px ${BORDER}`
+const HANDLE_EXPANDED_SHADOW = `inset 0 0 0 0.5px var(--color-table-handle-ring), 0 0 0 1px ${BORDER}`
 const HANDLE_EXPANDED_SHADOW_SELECTED =
-  'inset 0 0 0 0.5px rgba(255,255,255,0.9), 0 0 0 1px #fff'
+  'inset 0 0 0 0.5px var(--color-table-handle-ring), 0 0 0 1px var(--color-table-handle-bg)'
 const HANDLE_DOT = 2
 const HANDLE_DOT_GAP = 2
-const HANDLE_GREY = '#c1c4ca'
+const HANDLE_GREY = 'var(--color-table-boundary-dot)'
 const BOUNDARY_DOT = 4
 const BOUNDARY_PLUS = 17
 const GRID_LINE_HALF = 0.5
@@ -39,10 +39,10 @@ const EXTEND_SIZE = 17
 const EXTEND_GAP = 3
 /** The reserved add-row / add-column lane: bar + gap. */
 export const EXTEND_LANE = EXTEND_SIZE + EXTEND_GAP
-const EXTEND_BAR_BG = '#fafafb'
-const EXTEND_BAR_BG_HOVER = '#f0f1f3'
-const EXTEND_ICON = '#6e7484'
-const EXTEND_ICON_HOVER = '#5c5f69'
+const EXTEND_BAR_BG = 'var(--color-table-lane-bg)'
+const EXTEND_BAR_BG_HOVER = 'var(--color-table-lane-bg-hover)'
+const EXTEND_ICON = 'var(--color-table-lane-icon)'
+const EXTEND_ICON_HOVER = 'var(--color-table-lane-icon-hover)'
 const TRASH_SIZE = 26
 const TRASH_GAP = 8
 /** Above the toolbar and field chrome; delete must stay clickable. */
@@ -490,7 +490,7 @@ function Handle({
           padding: showExpanded ? HANDLE_BTN_PAD : 0,
           ...(showExpanded
             ? {
-                background: selected ? BLUE : '#fff',
+                background: selected ? BLUE : 'var(--color-table-handle-bg)',
                 boxShadow: selected
                   ? HANDLE_EXPANDED_SHADOW_SELECTED
                   : HANDLE_EXPANDED_SHADOW,
@@ -498,7 +498,7 @@ function Handle({
             : showRest
               ? {
                   background: HANDLE_REST_BG,
-                  boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.7)',
+                  boxShadow: 'inset 0 0 0 0.5px var(--color-table-handle-ring)',
                 }
               : {background: 'transparent'}),
         }}
@@ -534,7 +534,7 @@ function DragDots({
             width: HANDLE_DOT,
             height: HANDLE_DOT,
             borderRadius: '50%',
-            background: selected ? '#fff' : '#8a8f99',
+            background: selected ? '#fff' : 'var(--color-table-handle-dots)',
           }}
         />
       ))}
@@ -672,7 +672,9 @@ function TrashButton({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: hovered ? '#c0303a' : '#1c1f24',
+        background: hovered
+          ? 'var(--color-table-danger)'
+          : 'var(--color-table-trash-bg)',
         color: '#fff',
         border: 'none',
         borderRadius: 4,
@@ -802,8 +804,12 @@ export function TableMenu({
           border: 'none',
           borderRadius: 3,
           padding: 0,
-          background: open ? '#f0f1f3' : hovered ? '#f6f6f8' : 'transparent',
-          color: '#1c1f24',
+          background: open
+            ? 'var(--color-table-lane-bg-hover)'
+            : hovered
+              ? 'var(--color-table-header-bg)'
+              : 'transparent',
+          color: 'var(--color-table-fg)',
           cursor: 'pointer',
           pointerEvents: visible ? 'auto' : 'none',
           opacity: visible ? 1 : 0,
@@ -823,8 +829,8 @@ export function TableMenu({
                 left: menuPos.left,
                 top: menuPos.top,
                 width: MENU_MIN_WIDTH,
-                background: '#fff',
-                border: '1px solid #e4e6ea',
+                background: 'var(--color-table-menu-bg)',
+                border: '1px solid var(--color-table-menu-border)',
                 borderRadius: 6,
                 padding: 5,
                 zIndex: MENU_Z_INDEX,
@@ -892,12 +898,14 @@ function MenuRow({
         width: '100%',
         padding: '8px 10px',
         border: 'none',
-        background: hovered ? '#f4f4f6' : 'transparent',
+        background: hovered ? 'var(--color-table-menu-hover)' : 'transparent',
         cursor: 'pointer',
         borderRadius: 4,
         textAlign: 'left',
         fontSize: 13,
-        color: destructive ? '#c0303a' : '#1c1f24',
+        color: destructive
+          ? 'var(--color-table-danger)'
+          : 'var(--color-table-fg)',
       }}
     >
       <span
@@ -928,7 +936,9 @@ function ToggleSwitch({checked}: {checked: boolean}): JSX.Element {
         height: 16,
         borderRadius: 8,
         padding: 2,
-        background: checked ? '#1c1f24' : '#d3d4d8',
+        background: checked
+          ? 'var(--color-table-toggle-track-on)'
+          : 'var(--color-table-toggle-track)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: checked ? 'flex-end' : 'flex-start',
@@ -941,7 +951,7 @@ function ToggleSwitch({checked}: {checked: boolean}): JSX.Element {
           width: 12,
           height: 12,
           borderRadius: '50%',
-          background: '#fff',
+          background: 'var(--color-table-toggle-knob)',
           boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
         }}
       />
@@ -1034,7 +1044,9 @@ export function ReorderGhost({
           zIndex: 10000,
           borderRadius: 6,
           border: `1px solid ${BORDER}`,
-          background: isHeader ? '#f6f6f8' : '#fff',
+          background: isHeader
+            ? 'var(--color-table-header-bg)'
+            : 'var(--color-table-bg)',
           boxShadow: GHOST_SHADOW,
           overflow: 'hidden',
           fontWeight: isHeader ? 600 : 400,
@@ -1081,7 +1093,7 @@ export function ReorderGhost({
         zIndex: 10000,
         borderRadius: 6,
         border: `1px solid ${BORDER}`,
-        background: '#fff',
+        background: 'var(--color-table-bg)',
         boxShadow: GHOST_SHADOW,
         overflow: 'hidden',
       }}
@@ -1094,7 +1106,10 @@ export function ReorderGhost({
             padding: '8px 12px',
             borderBottom:
               index < metrics.rows.length - 1 ? `1px solid ${BORDER}` : 'none',
-            background: hasHeader && index === 0 ? '#f6f6f8' : undefined,
+            background:
+              hasHeader && index === 0
+                ? 'var(--color-table-header-bg)'
+                : undefined,
             fontWeight: hasHeader && index === 0 ? 600 : 400,
             overflow: 'hidden',
             whiteSpace: 'nowrap',
@@ -1137,7 +1152,7 @@ export function TableScrollFade({
             ...fadeBase,
             left: 0,
             background:
-              'linear-gradient(to right, #ffffff 0%, rgba(255,255,255,0) 100%)',
+              'linear-gradient(to right, var(--color-table-bg) 0%, transparent 100%)',
           }}
         />
       ) : null}
@@ -1149,7 +1164,7 @@ export function TableScrollFade({
             ...fadeBase,
             right: 0,
             background:
-              'linear-gradient(to left, #ffffff 0%, rgba(255,255,255,0) 100%)',
+              'linear-gradient(to left, var(--color-table-bg) 0%, transparent 100%)',
           }}
         />
       ) : null}
