@@ -2,6 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -2544,7 +2545,12 @@ describe('cross-container range delete: deep structures', () => {
     })
 
     await userEvent.click(locator)
-    await userEvent.keyboard('{ControlOrMeta>}{A}{/ControlOrMeta}')
+    await userEvent.keyboard(
+      // Not `ControlOrMeta`: `userEvent` resolves that from the host OS while
+      // the shortcut guard resolves the platform from the user agent, and
+      // playwright's webkit reports a Mac user agent on Linux.
+      IS_MAC ? '{Meta>}a{/Meta}' : '{Control>}a{/Control}',
+    )
     await userEvent.keyboard('{Delete}')
 
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
