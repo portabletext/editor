@@ -121,6 +121,26 @@ export const defaultKeyboardShortcuts = {
     undo,
     redo,
   },
+  selectAll: createKeyboardShortcut({
+    default: [
+      {
+        key: 'A',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
+      },
+    ],
+    apple: [
+      {
+        key: 'A',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
+      },
+    ],
+  }),
   tab: createKeyboardShortcut({
     default: [
       {
