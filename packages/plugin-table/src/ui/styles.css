@@ -11,6 +11,8 @@
 
 :where(:root) {
   --pt-plugin-table-accent: #556bfc;
+  /* Contrast partner rendered on top of accent-colored surfaces. */
+  --pt-plugin-table-accent-fg: #fff;
   --pt-plugin-table-bg: #fff;
   --pt-plugin-table-fg: #1c1f24;
   --pt-plugin-table-border: #e3e4e8;
@@ -26,6 +28,8 @@
   --pt-plugin-table-handle-ring: rgba(255, 255, 255, 0.9);
   --pt-plugin-table-boundary-dot: #c1c4ca;
   --pt-plugin-table-trash-bg: #1c1f24;
+  /* Contrast partner rendered on top of the trash/danger surfaces. */
+  --pt-plugin-table-trash-fg: #fff;
   --pt-plugin-table-danger: #c0303a;
   --pt-plugin-table-menu-bg: #fff;
   --pt-plugin-table-menu-border: #e4e6ea;
