@@ -4,9 +4,12 @@ import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-objec
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {getLeaf} from '../traversal/get-leaf'
 import {getSibling} from '../traversal/get-sibling'
 import {getBlock} from '../traversal/is-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -121,6 +124,51 @@ export const abstractKeyboardBehaviors = [
     guard: ({event}) =>
       defaultKeyboardShortcuts.history.redo.guard(event.originEvent),
     actions: [() => [raise({type: 'history.redo'})]],
+  }),
+
+  /**
+   * Manual handling of select-all. The native gesture cannot be trusted to
+   * build the range: chromium produces an already-collapsed range whenever a
+   * non-editable element sits at either content edge of the editing host,
+   * which any document starting or ending with a void block or a
+   * chrome-bearing container render does. "Everything" is a model-level
+   * statement, so the range is computed from the model instead of
+   * round-tripping through the DOM selection.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) => {
+      if (!defaultKeyboardShortcuts.selectAll.guard(event.originEvent)) {
+        return false
+      }
+
+      const startLeaf = getLeaf(snapshot, [], {edge: 'start'})
+      const endLeaf = getLeaf(snapshot, [], {edge: 'end'})
+      const startBlock = startLeaf
+        ? getEnclosingBlock(snapshot, startLeaf.path)
+        : undefined
+      const endBlock = endLeaf
+        ? getEnclosingBlock(snapshot, endLeaf.path)
+        : undefined
+
+      if (!startBlock || !endBlock) {
+        return false
+      }
+
+      return {
+        anchor: getBlockStartPoint({
+          context: snapshot.context,
+          block: startBlock,
+        }),
+        focus: getBlockEndPoint({
+          context: snapshot.context,
+          block: endBlock,
+        }),
+      }
+    },
+    actions: [
+      (_, {anchor, focus}) => [raise({type: 'select', at: {anchor, focus}})],
+    ],
   }),
 
   /**
