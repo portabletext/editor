@@ -7,38 +7,56 @@
  * drag ghost portal into `document.body`, outside the wrapper's scope.
  * `:where()` zeroes the specificity so any consumer override wins regardless
  * of stylesheet load order.
+ *
+ * Every mode-dependent default is a `light-dark()` pair, resolved by the
+ * consumer's `color-scheme`. Opting in is the consumer's move (for example
+ * `.dark { color-scheme: dark }` on the ancestor that carries the theme);
+ * without it the defaults resolve light. Consumers that manage their own
+ * schemes can ignore `color-scheme` and override the tokens directly.
  */
 
 :where(:root) {
   --pt-plugin-table-accent: #556bfc;
   /* Contrast partner rendered on top of accent-colored surfaces. */
   --pt-plugin-table-accent-fg: #fff;
-  --pt-plugin-table-bg: #fff;
-  --pt-plugin-table-fg: #1c1f24;
-  --pt-plugin-table-border: #e3e4e8;
-  --pt-plugin-table-header-bg: #f6f6f8;
-  --pt-plugin-table-selected-bg: rgba(85, 107, 252, 0.06);
-  --pt-plugin-table-lane-bg: #fafafb;
-  --pt-plugin-table-lane-bg-hover: #f0f1f3;
-  --pt-plugin-table-lane-icon: #6e7484;
-  --pt-plugin-table-lane-icon-hover: #5c5f69;
-  --pt-plugin-table-handle-rest: #bbbdc9;
-  --pt-plugin-table-handle-bg: #fff;
-  --pt-plugin-table-handle-dots: #8a8f99;
-  --pt-plugin-table-handle-ring: rgba(255, 255, 255, 0.9);
-  --pt-plugin-table-boundary-dot: #c1c4ca;
-  --pt-plugin-table-trash-bg: #1c1f24;
+  --pt-plugin-table-bg: light-dark(#fff, #1f2937);
+  --pt-plugin-table-fg: light-dark(#1c1f24, #e5e7eb);
+  --pt-plugin-table-border: light-dark(#e3e4e8, #374151);
+  --pt-plugin-table-header-bg: light-dark(#f6f6f8, #283345);
+  --pt-plugin-table-selected-bg: light-dark(
+    rgba(85, 107, 252, 0.06),
+    rgba(105, 125, 255, 0.16)
+  );
+  --pt-plugin-table-lane-bg: light-dark(#fafafb, #242e3d);
+  --pt-plugin-table-lane-bg-hover: light-dark(#f0f1f3, #2b3748);
+  --pt-plugin-table-lane-icon: light-dark(#6e7484, #9ca3af);
+  --pt-plugin-table-lane-icon-hover: light-dark(#5c5f69, #d1d5db);
+  --pt-plugin-table-handle-rest: light-dark(#bbbdc9, #4b5563);
+  --pt-plugin-table-handle-bg: light-dark(#fff, #374151);
+  --pt-plugin-table-handle-dots: light-dark(#8a8f99, #aab2bf);
+  --pt-plugin-table-handle-ring: light-dark(
+    rgba(255, 255, 255, 0.9),
+    rgba(0, 0, 0, 0.4)
+  );
+  --pt-plugin-table-boundary-dot: light-dark(#c1c4ca, #525c6b);
+  --pt-plugin-table-trash-bg: light-dark(#1c1f24, #0d1117);
   /* Contrast partner rendered on top of the trash/danger surfaces. */
   --pt-plugin-table-trash-fg: #fff;
-  --pt-plugin-table-danger: #c0303a;
-  --pt-plugin-table-menu-bg: #fff;
-  --pt-plugin-table-menu-border: #e4e6ea;
-  --pt-plugin-table-menu-hover: #f4f4f6;
-  --pt-plugin-table-toggle-track: #d3d4d8;
-  --pt-plugin-table-toggle-track-on: #1c1f24;
-  --pt-plugin-table-toggle-knob: #fff;
-  --pt-plugin-table-scrollbar: rgba(28, 31, 36, 0.22);
-  --pt-plugin-table-scrollbar-hover: rgba(28, 31, 36, 0.35);
+  --pt-plugin-table-danger: light-dark(#c0303a, #e05561);
+  --pt-plugin-table-menu-bg: light-dark(#fff, #232d3d);
+  --pt-plugin-table-menu-border: light-dark(#e4e6ea, #3a4557);
+  --pt-plugin-table-menu-hover: light-dark(#f4f4f6, #2c384a);
+  --pt-plugin-table-toggle-track: light-dark(#d3d4d8, #4b5563);
+  --pt-plugin-table-toggle-track-on: light-dark(#1c1f24, #e5e7eb);
+  --pt-plugin-table-toggle-knob: light-dark(#fff, #1f2937);
+  --pt-plugin-table-scrollbar: light-dark(
+    rgba(28, 31, 36, 0.22),
+    rgba(229, 231, 235, 0.25)
+  );
+  --pt-plugin-table-scrollbar-hover: light-dark(
+    rgba(28, 31, 36, 0.35),
+    rgba(229, 231, 235, 0.4)
+  );
 }
 
 /* Layout only. Cell borders, header base, selection outline/overlay and
