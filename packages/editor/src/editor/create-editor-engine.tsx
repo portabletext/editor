@@ -5,6 +5,7 @@ import {BlockIndexMap} from '../internal-utils/block-index-map'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
+import {buildRootChunks} from '../internal-utils/root-chunks'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {setupRemotePatches} from './remote-patches'
@@ -103,6 +104,8 @@ export function createEditorEngine(
     subscriptions: config.subscriptions,
     editor: editorEngine,
   })
+
+  editor.rootChunks = buildRootChunks(editor.snapshot.context.value)
 
   buildIndexMaps(
     {

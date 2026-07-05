@@ -116,12 +116,19 @@ export const splitDecorationsByChild = (
   node: Editor | Node,
   path: Path,
   decorations: DecoratedRange[],
+  childrenOverride?: readonly Node[],
 ): DecoratedRange[][] => {
-  const children: readonly unknown[] = isEditor(node)
-    ? editor.snapshot.context.value
-    : isTextBlock({schema: editor.snapshot.context.schema}, node)
-      ? node.children
-      : []
+  // A chunk passes its own slice of the root children; decorations
+  // addressing blocks outside the slice resolve to no child index and
+  // are skipped, so passing the full root decorations to every chunk
+  // is correct.
+  const children: readonly unknown[] =
+    childrenOverride ??
+    (isEditor(node)
+      ? editor.snapshot.context.value
+      : isTextBlock({schema: editor.snapshot.context.schema}, node)
+        ? node.children
+        : [])
   const decorationsByChild = Array.from(children, (): DecoratedRange[] => [])
 
   if (decorations.length === 0) {
