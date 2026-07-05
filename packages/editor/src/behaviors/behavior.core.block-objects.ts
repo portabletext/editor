@@ -1,6 +1,8 @@
 import {isSpan} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {isEditableContainer} from '../schema/is-editable-container'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
@@ -323,12 +325,105 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   ],
 })
 
+/**
+ * A container selected as a block-object: a collapsed selection whose focus
+ * resolves to the container itself (held at the container path by
+ * `resolveSelectionPoint`), not to a leaf inside it. `getFocusBlock` returns
+ * the container only in that case; a caret inside resolves to the inner block.
+ */
+function getSelectedContainer(snapshot: Parameters<typeof getFocusBlock>[0]) {
+  if (!isSelectionCollapsed(snapshot)) {
+    return undefined
+  }
+
+  const focusBlock = getFocusBlock(snapshot)
+
+  if (
+    !focusBlock ||
+    !isEditableContainer(snapshot, focusBlock.node, focusBlock.path)
+  ) {
+    return undefined
+  }
+
+  return focusBlock
+}
+
+const deletingSelectedContainerBackward = defineBehavior({
+  on: 'delete.backward',
+  guard: ({snapshot}) => {
+    const container = getSelectedContainer(snapshot)
+    return container ? {container} : false
+  },
+  actions: [(_, {container}) => [raise({type: 'unset', at: container.path})]],
+})
+
+const deletingSelectedContainerForward = defineBehavior({
+  on: 'delete.forward',
+  guard: ({snapshot}) => {
+    const container = getSelectedContainer(snapshot)
+    return container ? {container} : false
+  },
+  actions: [(_, {container}) => [raise({type: 'unset', at: container.path})]],
+})
+
+const arrowDownOnSelectedContainer = defineBehavior({
+  on: 'keyboard.keydown',
+  guard: ({snapshot, event}) => {
+    if (!defaultKeyboardShortcuts.arrowDown.guard(event.originEvent)) {
+      return false
+    }
+
+    const container = getSelectedContainer(snapshot)
+
+    if (!container) {
+      return false
+    }
+
+    const nextBlock = getSibling(snapshot, container.path, {direction: 'next'})
+
+    return nextBlock ? {nextBlock} : false
+  },
+  actions: [
+    (_, {nextBlock}) => [raise({type: 'select.block', at: nextBlock.path})],
+  ],
+})
+
+const arrowUpOnSelectedContainer = defineBehavior({
+  on: 'keyboard.keydown',
+  guard: ({snapshot, event}) => {
+    if (!defaultKeyboardShortcuts.arrowUp.guard(event.originEvent)) {
+      return false
+    }
+
+    const container = getSelectedContainer(snapshot)
+
+    if (!container) {
+      return false
+    }
+
+    const previousBlock = getSibling(snapshot, container.path, {
+      direction: 'previous',
+    })
+
+    return previousBlock ? {previousBlock} : false
+  },
+  actions: [
+    (_, {previousBlock}) => [
+      raise({type: 'select.block', at: previousBlock.path, select: 'end'}),
+    ],
+  ],
+})
+
 export const coreBlockObjectBehaviors = {
   arrowDownOnLonelyBlockObject,
   arrowUpOnLonelyBlockObject,
+  arrowDownOnSelectedContainer,
+  arrowUpOnSelectedContainer,
   breakingBlockObject,
   clickingAboveLonelyBlockObject,
   clickingBelowLonelyBlockObject,
   deletingEmptyTextBlockAfterBlockObject,
   deletingEmptyTextBlockBeforeBlockObject,
+  deletingSelectedContainerBackward,
+  deletingSelectedContainerForward,
 }

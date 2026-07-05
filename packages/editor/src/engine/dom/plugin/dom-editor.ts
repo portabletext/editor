@@ -1,6 +1,7 @@
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import {safeStringify} from '../../../internal-utils/safe-json'
+import {isEditableContainer} from '../../../schema/is-editable-container'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
 import {hasNode} from '../../../traversal/has-node'
@@ -387,6 +388,26 @@ export const DOMEditor: DOMEditorInterface = {
       return [el, 0]
     }
 
+    // A container selected as a block-object renders onto its own spacer.
+    // Of the spacers under `el` (the container's own, plus any from void
+    // children or nested containers in its body), pick the one whose
+    // nearest block is this container.
+    if (
+      nodeEntry &&
+      isEditableContainer(editor.snapshot, nodeEntry.node, point.path)
+    ) {
+      const spacers = el.querySelectorAll('[data-pt-spacer]')
+      for (const spacer of Array.from(spacers)) {
+        if (spacer.closest('[data-pt-path]') === el) {
+          const domText = spacer.querySelector('[data-pt-zero-width]')
+            ?.childNodes[0]
+          if (domText) {
+            return [domText, 0]
+          }
+        }
+      }
+    }
+
     // If we're inside an object node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
     const pointPath = editorPath(editor, point)
@@ -494,6 +515,23 @@ export const DOMEditor: DOMEditorInterface = {
 
       if (!editorEl) {
         throw new Error('Cannot resolve a DOM node: editor is not mounted')
+      }
+
+      // A selection in a spacer whose nearest block is a container selects
+      // that container as a block-object: resolve to the container's path.
+      // Void spacers (nearest block `object`) fall through to the void
+      // handling below.
+      const spacer = parentNode.closest('[data-pt-spacer]')
+      if (
+        spacer &&
+        containsShadowAware(editorEl, spacer) &&
+        spacer.closest('[data-pt-block]')?.getAttribute('data-pt-block') ===
+          'container'
+      ) {
+        const containerPath = getDomNodePath(spacer)
+        if (containerPath) {
+          return {path: containerPath, offset: 0}
+        }
       }
 
       const potentialVoidNode = parentNode.closest(

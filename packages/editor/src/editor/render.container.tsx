@@ -33,6 +33,29 @@ export function RenderContainer(props: {
   // would require threading the `_type` literal through dispatch.
   const renderProps: ContainerRenderProps = {
     attributes: props.attributes,
+    spacer: (
+      <span
+        // The void selection-spacer markers; the engine tells it apart
+        // from voids' and the body's spacers by its nearest `data-pt-block`
+        // being a container. Unlike a void's anchor-only spacer, a
+        // container has an editable body that competes for clicks, so this
+        // one fills the region it is placed in (`inset: 0`); the consumer
+        // layers the editable content above it.
+        data-pt-spacer=""
+        style={{
+          position: 'absolute',
+          inset: 0,
+          color: 'transparent',
+          outline: 'none',
+        }}
+      >
+        <span>
+          <span data-pt-marks="">
+            <span data-pt-zero-width="">{'\uFEFF'}</span>
+          </span>
+        </span>
+      </span>
+    ),
     children: props.children,
     focused,
     node: props.element as PortableTextObject,
