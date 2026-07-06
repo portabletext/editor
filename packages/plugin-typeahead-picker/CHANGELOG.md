@@ -1,5 +1,13 @@
 # @portabletext/plugin-typeahead-picker
 
+## 6.0.27
+
+### Patch Changes
+
+- Updated dependencies [[`067d3e8`](https://github.com/portabletext/editor/commit/067d3e805b7f0b0c01c1e5dbf0c08e800363cf83), [`cbdf301`](https://github.com/portabletext/editor/commit/cbdf3017be649430a7deb0159c1af3a8c83b8704), [`0b82b78`](https://github.com/portabletext/editor/commit/0b82b78ec06c2e000892e1283cdca57fb37d424e), [`f42372f`](https://github.com/portabletext/editor/commit/f42372f1fb8fdacb0b4f250d16a9adaeb9b42574), [`ebff16b`](https://github.com/portabletext/editor/commit/ebff16b56ca7659f806da8b49f75f890e651ff93), [`ebb41dc`](https://github.com/portabletext/editor/commit/ebb41dc0536390f3d1aa2a53bee7ba606306900f), [`2f2d6e9`](https://github.com/portabletext/editor/commit/2f2d6e9ff47c2bc8dad14679939599e26610afaf), [`98f8340`](https://github.com/portabletext/editor/commit/98f83404ec6813b294c09f3ea879a8e7a8792952), [`2831cd9`](https://github.com/portabletext/editor/commit/2831cd9aaa84124bcdb1bd3012bd70a56108f899), [`5dc3030`](https://github.com/portabletext/editor/commit/5dc3030a570710650e838cfcc375e3f0da392b0e), [`f242007`](https://github.com/portabletext/editor/commit/f2420072a74004239502da2413b45d200c1a8022), [`70c90d1`](https://github.com/portabletext/editor/commit/70c90d1db79f3272692012ea99a8e104b736a7f0)]:
+  - @portabletext/editor@7.10.0
+  - @portabletext/plugin-input-rule@5.0.27
+
 ## 6.0.26
 
 ### Patch Changes
