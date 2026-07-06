@@ -2,20 +2,19 @@
 
 > Tables as real Portable Text, edited with spreadsheet-grade selection
 
-A table is a single block whose cells hold ordinary Portable Text: every
-style, decorator, annotation, and object your schema declares works inside
-a cell, same toolbar, same shortcuts. Selection behaves like a
-spreadsheet's, not a text run's: extending across cells selects the
-rectangle they span, and typing, deleting, formatting, copy, and paste all
-operate on the rectangle. The package has two layers:
+Table cells hold ordinary Portable Text. Whatever styles, decorators,
+annotations, and objects your schema declares work inside a cell, with the
+same toolbar and shortcuts as the rest of the document. Select across
+cells and you get the rectangle they span, like in a spreadsheet, and
+editing operations understand that rectangle.
 
-- **`@portabletext/plugin-table`**, the headless core: `defineTable`,
-  behaviors, and selection derivation. It knows how tables edit, not how
-  they look.
-- **`@portabletext/plugin-table/ui`**, the reference UI: the table
-  components and their chrome (row/column handles, drag reorder, insert
-  affordances, table menu), themable through CSS custom properties and
-  replaceable where it counts.
+The package has two entry points. The root export is headless and holds
+`defineTable`, the behaviors, and selection derivation. The reference UI
+lives in `@portabletext/plugin-table/ui`: table components and their
+chrome (row/column handles, drag reorder, insert affordances, a table
+menu), themable with CSS custom properties.
+
+## Installation
 
 ```sh
 npm install @portabletext/plugin-table
@@ -24,7 +23,7 @@ npm install @portabletext/plugin-table
 Peer dependencies: `@portabletext/editor` (`^7.10.0` or later), `react`
 (`^19.2`), and `react-dom` (`^19.2`).
 
-## Getting a table
+## Quick start
 
 Define the table in a module of its own:
 
@@ -55,9 +54,9 @@ function App() {
 }
 ```
 
-One thing remains: the schema. The schema always comes from the owning
-editor, the plugin defines none, and it must contain the table shape under
-the configured names. With the default configuration:
+The schema comes from the owning editor. The plugin doesn't define one,
+so your schema needs to declare the table shape under the configured
+names. With the default configuration:
 
 ```ts
 // schema.ts
@@ -100,14 +99,13 @@ export const schemaDefinition = defineSchema({
 })
 ```
 
-Keeping the schema and the table definition in agreement is your
-responsibility; the editor warns and skips the registration when a
-registered container type or its array field is missing from the schema.
-The `headerRows` field is optional: it drives the reference UI's header
-styling and its menu toggle, so omit it if you don't need headers.
+It's your job to keep the schema and the table definition in agreement.
+If a registered container type or its array field is missing from the
+schema, the editor warns and skips the registration. `headerRows` is
+optional. It drives the reference UI's header styling and menu toggle, so
+leave it out if you don't need headers.
 
-That's the whole setup. What remains is a way to insert one, for example
-a toolbar button:
+Finally, you need a way to insert a table. For example a toolbar button:
 
 ```tsx
 import {useEditor} from '@portabletext/editor'
@@ -134,55 +132,55 @@ function InsertTableButton() {
 ```
 
 `table.createBlock({rows, columns, headerRows})` builds the nested value
-with the definition's own type names and array fields: `rows` by `columns`
-cells (default 3×3), each holding one empty text block. It emits no
-`_key`s; the editor generates them on insert. Pass `headerRows` only when
-your schema declares it.
+using the definition's type names and array fields. The default is a 3×3
+grid with one empty text block per cell. It emits no `_key`s; the editor
+generates them on insert. Only pass `headerRows` if your schema declares
+it.
 
-## What you get
+## Features
 
-- **Cells are Portable Text.** Whatever styles, decorators, annotations,
-  and objects your schema declares for the cell's content array work inside
-  cells, toolbars and markdown shortcuts included.
-- **Navigation.** `Tab`/`Shift+Tab` move between cells. Arrow keys move
-  through cell content and across cell boundaries; at the table's document
-  edges they escape into (or create) an adjacent text block.
-- **Rectangular selection.** Extending the selection across cells selects
-  the _rectangle_ spanned by the corner cells, not the linear fragment
-  between them. Every selection-scoped edit gains rectangle semantics:
+- Cells are Portable Text. Styles, decorators, annotations, and objects
+  declared for the cell's content array all work inside cells, including
+  toolbars and markdown shortcuts.
+- `Tab` and `Shift+Tab` move between cells. Arrow keys move through cell
+  content and across cell boundaries. At the table's document edges they
+  escape into (or create) an adjacent text block.
+- Extending the selection across cells selects the _rectangle_ spanned by
+  the corner cells, not the linear fragment between them. Editing
+  operations understand the rectangle:
   - Typing or pasting over a rectangle clears it and lands in the top-left
     cell.
-  - `Backspace`/`Delete` clear the rectangle's cell contents. When the
-    rectangle covers the whole table, backspace deletes the table itself.
-  - Decorator, annotation, style, and list toggles fan out per member cell,
-    aggregate-first: if any member is missing the mark, the toggle adds it
-    everywhere it is missing; only when all members have it does it remove.
-  - Copy and cut serialize the rectangle, sliced out of the table. Four
-    clipboard representations are written: `application/x-portable-text`
-    and `application/json` (the sliced fragment), `text/markdown`, and
-    `text/plain` as tab-separated values, which pastes directly into
-    spreadsheet applications.
-- **Paste distribution.** Pasting a copied table fragment into a table
-  distributes cell-per-cell from the anchor cell, growing rows and columns
-  when the source overflows the target. Pasting non-table content stays in
-  the anchor cell.
-- **Chrome.** Hover-revealed row/column handles (click to select, drag to
-  reorder), boundary dots that become insert buttons, extend lanes for
+  - `Backspace` and `Delete` clear the cell contents. If the rectangle
+    covers the whole table, backspace deletes the table itself.
+  - Decorator, annotation, style, and list toggles apply per member cell.
+    If any member is missing the mark, the toggle adds it everywhere it's
+    missing. Only when all members have it does it remove.
+  - Copy and cut serialize the rectangle, sliced out of the table, in four
+    clipboard formats: `application/x-portable-text` and
+    `application/json` (the sliced fragment), `text/markdown`, and
+    `text/plain` as tab-separated values. The last one pastes directly
+    into spreadsheet applications.
+- Pasting a copied table fragment into a table distributes it cell by cell
+  from the anchor cell, growing rows and columns if the source overflows
+  the target. Non-table content is pasted into the anchor cell.
+- The chrome has hover-revealed row/column handles (click to select, drag
+  to reorder), boundary dots that turn into insert buttons, lanes for
   appending rows and columns, a trash chip for the selected row or column,
   a table menu (header row toggle, select table, delete table), and
-  horizontal scrolling for wide tables. All of it keyboard-reachable.
-- **Read-only.** In read-only editors the editing chrome disappears while
-  the table, its selection visuals, and copying keep working.
+  horizontal scrolling for wide tables. Everything is reachable with the
+  keyboard.
+- Read-only editors hide the editing chrome. The table itself, selection
+  visuals, and copying keep working.
 
-## Restyling it
+## Theming
 
-The stylesheet ships the structural rules plus the theming contract: the
+The stylesheet ships the structural rules plus a set of
 `--pt-plugin-table-*` custom properties. Override them on `:root` or any
-shared ancestor; the defaults are declared at zero specificity, so any
-consumer declaration wins.
+shared ancestor. The defaults are declared at zero specificity, so any
+declaration of yours wins.
 
-Every color token defaults to a `light-dark()` pair, so declaring the color
-scheme is the whole dark-mode opt-in:
+Color tokens default to `light-dark()` pairs, so dark mode is a matter of
+declaring the color scheme:
 
 ```css
 .dark {
@@ -190,8 +188,8 @@ scheme is the whole dark-mode opt-in:
 }
 ```
 
-Hosts that resolve their own themes can ignore `color-scheme` entirely and
-set resolved values per token instead.
+If your app resolves its own themes, ignore `color-scheme` and set
+resolved values per token instead.
 
 | Token                                      | Purpose                                                                      |
 | ------------------------------------------ | ---------------------------------------------------------------------------- |
@@ -212,20 +210,19 @@ set resolved values per token instead.
 | `--pt-plugin-table-toggle-*`               | The built-in menu's header-row switch.                                       |
 | `--pt-plugin-table-scrollbar` / `-hover`   | The horizontal scrollbar under wide tables.                                  |
 
-Deliberately not themable: the chrome's geometry (gutter sizes, handle and
-lane dimensions, hit areas). Those values feed the hit-testing and
-positioning math, so they stay uniform; the table can look like anything,
-but its ergonomics are fixed.
+The chrome's geometry (gutter sizes, handle and lane dimensions, hit
+areas) is deliberately not themable. Those values feed the hit-testing
+and positioning math.
 
-## Owning the definitions
+## Bringing your own containers
 
-Everything so far used `referenceContainers`, the pre-wired definitions.
-A _container_ is the editor's concept for a block object whose array field
-holds nested, editable Portable Text, declared with `defineContainer` from
-`@portabletext/editor`; a table is three containers deep (table → row →
-cell). `defineTable` accepts your own definitions, role-keyed, and this is
-where the names, the renders, and the cell content come under your
-control:
+So far we've used `referenceContainers`, the pre-wired definitions.
+`defineTable` also accepts your own, one per role. Each role is a
+`defineContainer` definition (a _container_ is the editor's concept for a
+block object whose array field holds nested, editable Portable Text; a
+table is three of them, table → row → cell). Bringing your own
+definitions is how you rename types and fields, plug in your own renders,
+and decide what's allowed inside cells:
 
 ```tsx
 import {defineContainer} from '@portabletext/editor'
@@ -250,42 +247,40 @@ export const table = defineTable({
 })
 ```
 
-The reference components are `Table`, `TableRow`, and `TableCell`; they
-resolve their table definition from the node they render, so they work
-under renamed types without extra wiring. Mixing is fine, your own render
-for the table, the reference `TableCell` for cells.
+Who owns what:
 
-The division of ownership:
+- You own each definition: the type name, the array field, the render,
+  and, on the cell, its `of` (node definitions that only apply inside
+  cells, like a compact image render).
+- The plugin owns the nesting. It grafts `table.of → row.of → cell`
+  itself, since the three-level shape is load-bearing for every behavior
+  and for the clipboard format. An `of` on the table or row definition
+  logs a warning and is ignored.
+- Everything is optional. Omit a `render` and you get the bare built-in
+  render for that role, omit a definition and you get the canonical one,
+  call `defineTable()` with no argument and you get all defaults.
 
-- **You own each definition**: the type name, the array field, the render,
-  and, on the cell, its `of`, cell-scoped node definitions such as a
-  compact image render that applies inside cells only.
-- **The plugin owns the nesting**: it grafts `table.of → row.of → cell`
-  itself, because the three-level shape is load-bearing for every behavior
-  and the clipboard format. An `of` on the table or row definition draws
-  a warning instead of being honored.
+The reference components `Table`, `TableRow`, and `TableCell` work under
+renamed types without extra wiring; they figure out their table definition
+from the node they render. Mixing is fine too, for example your own render
+for the table and the reference `TableCell` for cells.
 
-Everything is optional, and every omission falls back one level: an omitted
-`render` uses the built-in bare render for that role, an omitted definition
-uses the canonical one, and no argument at all yields the defaults.
+Renaming types is how you adopt a table shape that already exists in your
+dataset, for example when migrating from another table plugin. Only the
+type and field names are configurable; the nesting shape and the
+`headerRows` field name are fixed. If your cells aren't arrays of Portable
+Text blocks, you need a data migration no matter what. And the schema
+follows the configuration: rename types in `defineTable` and the schema
+must declare the same names.
 
-Renaming the types is how you adopt a table shape that already exists in
-your datasets, for example when migrating from a table plugin that used
-different names. Names and field names are configurable; the nesting shape
-and the `headerRows` field are not. Data whose cells are not
-arrays of Portable Text blocks needs a data migration regardless of
-configuration. Remember that the schema follows the configuration: rename
-the types in `defineTable` and your schema must declare the same names.
+## Host integration
 
-## Integrating it into a host app
-
-Some integrations go beyond what CSS can restyle: mounting the chrome's
-popovers in your app's portal and layering system, rendering your design
-system's menu, using your icon set. For those, `Table` accepts three
-props, passed where a container definition renders it, the `render`
-callbacks from the previous section. Starting from `referenceContainers`,
-override just the table role, restating its canonical values (`type:
-'table'`, `arrayField: 'rows'`):
+Some things CSS can't do: mounting the chrome's popovers in your app's
+portal and layering system, rendering your design system's menu, or using
+your icon set. For those, `Table` takes three props. They're passed where
+a container definition renders it, so start from `referenceContainers` and
+override the table role, restating its canonical values (`type: 'table'`,
+`arrayField: 'rows'`):
 
 ```tsx
 import {defineContainer} from '@portabletext/editor'
@@ -304,16 +299,14 @@ export const table = defineTable({
 })
 ```
 
-**`portalElement`.** The menu and the trash chip portal into
-`document.body` by default. Hosts with their own portal and layering system
-pass theirs, as above, so the chrome joins the host's stacking context and
-inherits its styling scope.
+`portalElement` decides where the menu and the trash chip portal to
+(`document.body` by default). Pass your app's portal element, as above,
+and the chrome joins your stacking context and inherits its styling scope.
 
-**`renderMenu`.** The table menu is widget-shaped chrome, so it is
-replaceable wholesale rather than themable: hosts with a design system
-render their own menu through the slot, and the plugin keeps what only it
-knows, the anchor position above the table's top-right corner, the hover
-reveal, and editor-focus preservation.
+`renderMenu` replaces the built-in table menu wholesale, so a design
+system's menu can take its place. The plugin keeps what only it knows: the
+anchor position above the table's top-right corner, the hover reveal, and
+editor-focus preservation.
 
 ```tsx
 render: (props) => (
@@ -340,12 +333,13 @@ render: (props) => (
 )
 ```
 
-Report the widget's open state through `onOpenChange` so the anchor stays
-visible while the menu is open. Without the prop, a built-in menu renders.
+Report the widget's open state through `onOpenChange`, otherwise the
+anchor hides while your menu is open. Without the prop, the built-in menu
+renders.
 
-**`icons`.** The drawn chrome's icons accept host replacements (the menu's
-icons travel with `renderMenu` instead). Icons render at the built-in scale
-when sized in `em`s:
+`icons` replaces the drawn chrome's icons (currently the trash chip; the
+menu's icons travel with `renderMenu`). Icons sized in `em`s render at the
+built-in scale:
 
 ```tsx
 render: (props) => <Table {...props} icons={{trash: <MyTrashIcon />}} />
@@ -353,11 +347,11 @@ render: (props) => <Table {...props} icons={{trash: <MyTrashIcon />}} />
 
 ## Driving it from your own UI
 
-Structural edits are custom behavior events, dispatched with
-`editor.send(...)`. This is what the reference UI's handles and menu send;
-your own toolbar can send them too. Every event addresses the table through
-a path _inside a reference cell_ (any path inside the cell's content works;
-the behaviors resolve the enclosing cell, row, and table from it):
+Structural edits are custom behavior events dispatched with
+`editor.send(...)`. The reference UI's handles and menu send these, and
+your own toolbar can too. Every event addresses the table with a path
+_inside a reference cell_. Any path inside the cell's content works; the
+behaviors resolve the enclosing cell, row, and table from it.
 
 | Event                  | Payload                                     | Effect                                                         |
 | ---------------------- | ------------------------------------------- | -------------------------------------------------------------- |
@@ -369,7 +363,7 @@ the behaviors resolve the enclosing cell, row, and table from it):
 | `custom.move.row`      | `{at: Path, to: Path}`                      | Move the row containing `at` to the row containing `to`.       |
 | `custom.move.column`   | `{at: Path, to: Path}`                      | Move the column containing `at` to the column containing `to`. |
 
-The caret's own path is the usual source for `at` (`Path` is exported
+The usual source for `at` is the caret's own path (`Path` is exported
 from `@portabletext/editor`). A toolbar button that inserts a row below
 the current one:
 
@@ -384,11 +378,11 @@ if (selection) {
 }
 ```
 
-Header state is plain block data: toggle it with the editor's own
-`block.set` event (`{at: tablePath, props: {headerRows: 1}}`), where
-`tablePath` is the table block's keyed path (`[{_key: ...}]`), carried by
-`getTableSelection` below or taken from the first segment of any path
-inside the table.
+Header state is plain block data. Toggle it with the editor's `block.set`
+event (`{at: tablePath, props: {headerRows: 1}}`), where `tablePath` is
+the table block's keyed path (`[{_key: ...}]`). You get it from
+`getTableSelection` below, or from the first segment of any path inside
+the table.
 
 To read the current rectangle, the table definition carries a selector:
 
@@ -402,27 +396,26 @@ const tableSelection = table.getTableSelection(editor.getSnapshot())
 // }
 ```
 
-It returns `undefined` unless the selection spans more than one cell of
-one table. The reference UI paints its selection overlay from this selector
-(through `useEditorSelector`); anything else that needs rectangle awareness
-reads the same source. It also carries the node guards `table.isTable`,
-`table.isRow`, and `table.isCell`, which narrow to the `TableNode`,
-`RowNode`, and `CellNode` types.
+It returns `undefined` unless the selection spans more than one cell of a
+single table. The reference UI paints its selection overlay from this
+selector (through `useEditorSelector`). The definition also carries the
+node guards `table.isTable`, `table.isRow`, and `table.isCell`, which
+narrow to the `TableNode`, `RowNode`, and `CellNode` types.
 
-## Going fully headless
+## Headless usage
 
 `defineTable()` with no configuration registers bare, unstyled
-`<table>`/`<tr>`/`<td>` renders, useful for tests and prototypes, or as the
-base for your own renders via the `render` callbacks, with no `/ui` import
-and no stylesheet.
+`<table>`/`<tr>`/`<td>` renders. Useful for tests and prototypes, or as
+the base for your own renders, with no `/ui` import and no stylesheet.
 
-Consumers who need to own container registration outright can skip
-`table.Plugin` entirely: mount `table.behaviors` in a `BehaviorPlugin`
-beside your own `NodePlugin` registration. Keeping that registration's
-nesting faithful to the shape is then on you.
+If you need to own container registration outright, skip `table.Plugin`
+and mount `table.behaviors` in a `BehaviorPlugin` next to your own
+`NodePlugin` registration. Keeping that registration faithful to the
+nesting shape is then on you.
 
-Multiple table definitions coexist in one editor: the behaviors only act
-when the addressed cell belongs to a table matching their own definition.
+Multiple table definitions can coexist in one editor. The behaviors only
+act when the addressed cell belongs to a table matching their own
+definition.
 
 ## License
 
