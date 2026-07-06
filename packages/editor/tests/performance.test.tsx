@@ -36,6 +36,60 @@ describe('Performance', () => {
       console.warn(`Inserted 1000 blocks in ${duration.toFixed(2)}ms`)
     })
 
+    test('Toggling a decorator at the end of a 1000-block document', async () => {
+      const {editor, locator} = await createTestEditor({
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      })
+
+      editor.send({
+        type: 'insert.blocks',
+        blocks: Array.from({length: 1000}, (_, i) => ({
+          _type: 'block',
+          _key: `b${i}`,
+          children: [
+            {_type: 'span', _key: `s${i}`, text: `block ${i}`, marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        })),
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1000)
+
+        expect(locator.getByText('block 999')).toBeInTheDocument()
+      })
+
+      editor.send({type: 'focus'})
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: 'b999'}, 'children', {_key: 's999'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b999'}, 'children', {_key: 's999'}],
+            offset: 5,
+          },
+        },
+      })
+
+      const start = performance.now()
+
+      for (let toggleIndex = 0; toggleIndex < 10; toggleIndex++) {
+        editor.send({type: 'decorator.toggle', decorator: 'strong'})
+        await new Promise((resolve) => queueMicrotask(() => resolve(null)))
+      }
+
+      const duration = performance.now() - start
+
+      console.warn(
+        `Toggled a decorator 10 times at the end of a 1000-block document in ${duration.toFixed(2)}ms`,
+      )
+    })
+
     test('Inserting 1000 blocks before an existing block', async () => {
       const {editor, locator} = await createTestEditor()
 
