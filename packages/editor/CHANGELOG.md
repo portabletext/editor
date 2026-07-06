@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.10.1
+
+### Patch Changes
+
+- [#2921](https://github.com/portabletext/editor/pull/2921) [`4ecfa0c`](https://github.com/portabletext/editor/commit/4ecfa0cfa97539657b61cf40b3f6d41593f0e7b7) Thanks [@christianhg](https://github.com/christianhg)! - fix: name the actual mismatch in container registration warnings
+
+  Registering a container that doesn't match the schema still warns and skips the registration, but the warning now names what is actually wrong. A type that isn't in the schema is reported as an unknown type instead of a missing field, a field that exists but isn't an array is reported as such, and a primitive-only array field produces a single warning instead of two contradictory ones. Code that matches on the exact warning strings will see the new texts.
+
 ## 7.10.0
 
 ### Minor Changes
