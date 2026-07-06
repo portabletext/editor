@@ -20,6 +20,7 @@ import type {Range} from '../interfaces/range'
 import {commonPath} from '../path/common-path'
 import {isSiblingPath} from '../path/is-sibling-path'
 import {parentPath} from '../path/parent-path'
+import {splitNodePath} from '../path/split-node-path'
 import {transformPoint} from '../point/transform-point'
 import {isBackwardRange} from '../range/is-backward-range'
 import {isRange} from '../range/is-range'
@@ -164,7 +165,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       // Split path into node path (up to last keyed/numeric segment)
       // and property path (trailing string segments)
       const {nodePath: setNodePath, propertyPath: setPropertyPath} =
-        splitNodeAndPropertyPath(path)
+        splitNodePath(path)
 
       if (setNodePath.length === 0) {
         break
@@ -355,7 +356,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
 
       // Property removal: split path into node path and property path
       const {nodePath: unsetNodePath, propertyPath: unsetPropertyPath} =
-        splitNodeAndPropertyPath(path)
+        splitNodePath(path)
 
       if (unsetPropertyPath.length === 0 || unsetNodePath.length === 0) {
         break
@@ -549,41 +550,6 @@ function resolveBlockIndex(editor: Editor, segment: KeyedSegment): number {
     return index
   }
   return value.findIndex((block) => block._key === segment._key)
-}
-
-/**
- * Split a path into the node path (up to and including the last
- * keyed/numeric segment) and the property path (trailing string segments).
- */
-function splitNodeAndPropertyPath(path: Path): {
-  nodePath: Path
-  propertyPath: string[]
-} {
-  let lastKeyedOrNumericIndex = -1
-
-  for (let i = path.length - 1; i >= 0; i--) {
-    const segment = path[i]
-    if (isKeyedSegment(segment) || typeof segment === 'number') {
-      lastKeyedOrNumericIndex = i
-      break
-    }
-  }
-
-  if (lastKeyedOrNumericIndex === -1) {
-    return {
-      nodePath: [],
-      propertyPath: path.filter(
-        (segment): segment is string => typeof segment === 'string',
-      ),
-    }
-  }
-
-  const nodePath = path.slice(0, lastKeyedOrNumericIndex + 1)
-  const propertyPath = path
-    .slice(lastKeyedOrNumericIndex + 1)
-    .filter((segment): segment is string => typeof segment === 'string')
-
-  return {nodePath, propertyPath}
 }
 
 /**
