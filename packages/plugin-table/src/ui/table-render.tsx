@@ -74,7 +74,15 @@ export function TableContainer({
   children,
   node,
   path,
-}: ContainerRenderProps): JSX.Element {
+  portalElement,
+}: ContainerRenderProps & {
+  /**
+   * Where the menu and trash layer portal (default `document.body`). Hosts
+   * with their own portal/layer system pass their element so the chrome
+   * joins the host's stacking context and inherits its styling scope.
+   */
+  portalElement?: HTMLElement | null
+}): JSX.Element {
   const editor = useEditor()
   const table = isTable(node) ? node : undefined
   const rowCount = table?.rows.length ?? 0
@@ -427,6 +435,7 @@ export function TableContainer({
       <TableMenu
         right={scrollWide ? 0 : 20}
         active={active}
+        portalElement={portalElement}
         handlers={{
           hasHeader,
           onToggleHeader: toggleHeader,
@@ -438,6 +447,7 @@ export function TableContainer({
       <TableTrashLayer
         tableRef={tableRef}
         metrics={metrics}
+        portalElement={portalElement}
         selectedRow={selectedRow}
         selectedCol={selectedCol}
         canDeleteRow={rowCount > 1}

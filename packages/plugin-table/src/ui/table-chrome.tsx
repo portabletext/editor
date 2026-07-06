@@ -570,6 +570,7 @@ export function TableTrashLayer({
   canDeleteCol,
   onDeleteRow,
   onDeleteCol,
+  portalElement,
 }: {
   tableRef: RefObject<HTMLTableElement | null>
   metrics: TableMetrics | null
@@ -579,6 +580,12 @@ export function TableTrashLayer({
   canDeleteCol: boolean
   onDeleteRow: (index: number) => void
   onDeleteCol: (index: number) => void
+  /**
+   * Where the layer portals. Hosts with their own portal/layer system (for
+   * example Sanity Studio's document-panel portal) pass their element so the
+   * chrome joins the host's stacking context and inherits its styling scope.
+   */
+  portalElement?: HTMLElement | null
 }): JSX.Element | null {
   const [layout, setLayout] = useState<TrashLayout | null>(null)
 
@@ -643,7 +650,7 @@ export function TableTrashLayer({
         />
       ) : null}
     </div>,
-    document.body,
+    portalElement ?? document.body,
   )
 }
 
@@ -719,11 +726,14 @@ export function TableMenu({
   right,
   active,
   handlers,
+  portalElement,
 }: {
   /** Distance from the wrapper's right edge; pins the trigger to the scrollport when the table overflows. */
   right: number
   active: boolean
   handlers: TableMenuHandlers
+  /** See {@link TableTrashLayer}'s `portalElement`. */
+  portalElement?: HTMLElement | null
 }): JSX.Element {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -870,7 +880,7 @@ export function TableMenu({
                 }}
               />
             </div>,
-            document.body,
+            portalElement ?? document.body,
           )
         : null}
     </>
