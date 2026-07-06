@@ -1,10 +1,13 @@
 # `@portabletext/plugin-table`
 
-> First-class tables for the Portable Text Editor
+> Tables as real Portable Text, edited with spreadsheet-grade selection
 
-Tables as real Portable Text: a table block whose cells contain ordinary
-Portable Text content, edited in place with spreadsheet-grade selection
-semantics. The package has two layers:
+A table is a single block whose cells hold ordinary Portable Text: every
+style, decorator, annotation, and object your schema declares works inside
+a cell, same toolbar, same shortcuts. Selection behaves like a
+spreadsheet's, not a text run's: extending across cells selects the
+rectangle they span, and typing, deleting, formatting, copy, and paste all
+operate on the rectangle. The package has two layers:
 
 - **`@portabletext/plugin-table`**, the headless core: `defineTable`,
   behaviors, and selection derivation. It knows how tables edit, not how
