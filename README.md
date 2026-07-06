@@ -39,6 +39,7 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restrict the Portable Text Editor to a single line                        |
 | [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allow pasting links in the Portable Text Editor                           |
 | [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connect a Portable Text Editor with a Sanity document using the SDK       |
+| [`@portabletext/plugin-table`](./packages/plugin-table/)                                       | Tables as real Portable Text, edited with spreadsheet-grade selection     |
 | [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Build typeahead pickers (emoji, mentions, slash commands)                 |
 | [`@portabletext/plugin-typography`](./packages/plugin-typography/)                             | Automatically transform text to typographic variants                      |
 
