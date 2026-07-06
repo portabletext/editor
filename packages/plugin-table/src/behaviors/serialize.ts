@@ -2,6 +2,13 @@ import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveTableSelection} from '../get-table-selection'
+import {
+  cellValue,
+  defaultTableConfig,
+  rowCells,
+  tableRows,
+  type TableConfig,
+} from '../table-config'
 import type {CellNode, RowNode, TableNode, TableSelection} from './types'
 
 type SerializeDataResult = ReturnType<
@@ -18,105 +25,123 @@ type SerializeDataResult = ReturnType<
  * behavior uses for drag origins. The rectangle clear on cut comes from the
  * `delete` that `clipboard.cut` raises after `serialize`.
  */
-export const serializeBehaviors = [
-  defineBehavior<Record<string, never>, 'serialize.data', SerializeDataResult>({
-    on: 'serialize.data',
-    guard: ({snapshot, event}) => {
-      if (
-        event.originEvent.type !== 'clipboard.copy' &&
-        event.originEvent.type !== 'clipboard.cut'
-      ) {
-        // Drag origins carry a grabbed selection that differs from the
-        // editor selection the rectangle is derived from.
-        return false
-      }
-      const resolved = resolveTableSelection(snapshot)
-      if (!resolved) {
-        return false
-      }
-      const converter = snapshot.context.converters.find(
-        (candidate) => candidate.mimeType === event.mimeType,
-      )
-      if (!converter) {
-        return false
-      }
-
-      const rectangle = sliceTable(resolved.table.node, resolved.tableSelection)
-
-      if (event.mimeType === 'text/plain') {
-        // The plain-text converter flattens the linear fragment and comes up
-        // empty for a doctored table snapshot, and a rectangle has a better
-        // plain-text form anyway: the spreadsheet convention, cells joined by
-        // tabs and rows by newlines, which pastes straight into Sheets and
-        // Excel.
-        return {
-          type: 'serialization.success' as const,
-          data: tableToTsv(rectangle),
-          mimeType: 'text/plain' as const,
-          originEvent: event.originEvent.type,
+export function createSerializeBehaviors(config: TableConfig) {
+  return [
+    defineBehavior<
+      Record<string, never>,
+      'serialize.data',
+      SerializeDataResult
+    >({
+      on: 'serialize.data',
+      guard: ({snapshot, event}) => {
+        if (
+          event.originEvent.type !== 'clipboard.copy' &&
+          event.originEvent.type !== 'clipboard.cut'
+        ) {
+          // Drag origins carry a grabbed selection that differs from the
+          // editor selection the rectangle is derived from.
+          return false
         }
-      }
+        const resolved = resolveTableSelection(snapshot, config)
+        if (!resolved) {
+          return false
+        }
+        const converter = snapshot.context.converters.find(
+          (candidate) => candidate.mimeType === event.mimeType,
+        )
+        if (!converter) {
+          return false
+        }
 
-      const firstRow = rectangle.rows[0]
-      const lastRow = rectangle.rows[rectangle.rows.length - 1]
-      const firstCell = firstRow?.cells[0]
-      const lastCell = lastRow?.cells[lastRow.cells.length - 1]
-      if (!firstRow || !lastRow || !firstCell || !lastCell) {
-        return false
-      }
+        const rectangle = sliceTable(
+          config,
+          resolved.table.node,
+          resolved.tableSelection,
+        )
 
-      const doctoredSnapshot = {
-        ...snapshot,
-        context: {...snapshot.context, value: [rectangle]},
-      }
-      const anchor = cellStartPoint(
-        doctoredSnapshot,
-        cellPath(rectangle, firstRow, firstCell),
-      )
-      const focus = cellEndPoint(
-        doctoredSnapshot,
-        cellPath(rectangle, lastRow, lastCell),
-      )
-      if (!anchor || !focus) {
-        return false
-      }
+        if (event.mimeType === 'text/plain') {
+          // The plain-text converter flattens the linear fragment and comes up
+          // empty for a doctored table snapshot, and a rectangle has a better
+          // plain-text form anyway: the spreadsheet convention, cells joined by
+          // tabs and rows by newlines, which pastes straight into Sheets and
+          // Excel.
+          return {
+            type: 'serialization.success' as const,
+            data: tableToTsv(config, rectangle),
+            mimeType: 'text/plain' as const,
+            originEvent: event.originEvent.type,
+          }
+        }
 
-      return converter.serialize({
-        snapshot: {
-          ...doctoredSnapshot,
-          context: {
-            ...doctoredSnapshot.context,
-            selection: {anchor, focus},
+        const rectangleRows = tableRows(config, rectangle)
+        const firstRow = rectangleRows[0]
+        const lastRow = rectangleRows[rectangleRows.length - 1]
+        const firstCell = firstRow ? rowCells(config, firstRow)[0] : undefined
+        const lastCells = lastRow ? rowCells(config, lastRow) : []
+        const lastCell = lastCells[lastCells.length - 1]
+        if (!firstRow || !lastRow || !firstCell || !lastCell) {
+          return false
+        }
+
+        const doctoredSnapshot = {
+          ...snapshot,
+          context: {...snapshot.context, value: [rectangle]},
+        }
+        const anchor = cellStartPoint(
+          doctoredSnapshot,
+          cellPath(config, rectangle, firstRow, firstCell),
+        )
+        const focus = cellEndPoint(
+          doctoredSnapshot,
+          cellPath(config, rectangle, lastRow, lastCell),
+        )
+        if (!anchor || !focus) {
+          return false
+        }
+
+        return converter.serialize({
+          snapshot: {
+            ...doctoredSnapshot,
+            context: {
+              ...doctoredSnapshot.context,
+              selection: {anchor, focus},
+            },
           },
-        },
-        event: {type: 'serialize', originEvent: event.originEvent.type},
-      })
-    },
-    actions: [
-      ({event}, serialization) => [
-        raise({...serialization, originEvent: event.originEvent}),
+          event: {type: 'serialize', originEvent: event.originEvent.type},
+        })
+      },
+      actions: [
+        ({event}, serialization) => [
+          raise({...serialization, originEvent: event.originEvent}),
+        ],
       ],
-    ],
-  }),
-]
+    }),
+  ]
+}
+
+export const serializeBehaviors = createSerializeBehaviors(defaultTableConfig)
 
 function sliceTable(
+  config: TableConfig,
   table: TableNode,
   tableSelection: TableSelection,
 ): TableNode {
   const [rowStart, rowEnd] = tableSelection.rowRange
   const [colStart, colEnd] = tableSelection.colRange
+  const slicedRows = tableRows(config, table)
+    .slice(rowStart, rowEnd + 1)
+    .map((row) => ({
+      ...row,
+      [config.cellsField]: rowCells(config, row).slice(colStart, colEnd + 1),
+    }))
   const sliced: TableNode = {
     ...table,
-    rows: table.rows.slice(rowStart, rowEnd + 1).map((row) => ({
-      ...row,
-      cells: row.cells.slice(colStart, colEnd + 1),
-    })),
+    [config.rowsField]: slicedRows,
   }
   if (typeof table.headerRows === 'number') {
     // Header rows only survive when the rectangle includes them.
     sliced.headerRows =
-      rowStart === 0 ? Math.min(table.headerRows, sliced.rows.length) : 0
+      rowStart === 0 ? Math.min(table.headerRows, slicedRows.length) : 0
   }
   if (table.alignment) {
     // Alignment is positional per column.
@@ -125,15 +150,19 @@ function sliceTable(
   return sliced
 }
 
-function tableToTsv(table: TableNode): string {
-  return table.rows
-    .map((row) => row.cells.map((cell) => cellText(cell)).join('\t'))
+function tableToTsv(config: TableConfig, table: TableNode): string {
+  return tableRows(config, table)
+    .map((row) =>
+      rowCells(config, row)
+        .map((cell) => cellText(config, cell))
+        .join('\t'),
+    )
     .join('\n')
 }
 
-function cellText(cell: CellNode): string {
+function cellText(config: TableConfig, cell: CellNode): string {
   return (
-    cell.value
+    cellValue(config, cell)
       .map((block) =>
         'children' in block && Array.isArray(block.children)
           ? block.children
@@ -151,12 +180,17 @@ function cellText(cell: CellNode): string {
   )
 }
 
-function cellPath(table: TableNode, row: RowNode, cell: CellNode): Path {
+function cellPath(
+  config: TableConfig,
+  table: TableNode,
+  row: RowNode,
+  cell: CellNode,
+): Path {
   return [
     {_key: table._key},
-    'rows',
+    config.rowsField,
     {_key: row._key},
-    'cells',
+    config.cellsField,
     {_key: cell._key},
   ]
 }

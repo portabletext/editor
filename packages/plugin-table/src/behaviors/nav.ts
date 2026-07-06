@@ -21,6 +21,7 @@ import {
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveCell} from '../resolve-cell'
+import {defaultTableConfig, type TableConfig} from '../table-config'
 
 type Dom = {
   getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
@@ -48,130 +49,139 @@ const arrowUp = createKeyboardShortcut({
   ],
 })
 
-export const navBehaviors = [
-  // Tab: move to the start of the next cell, wrapping to the first cell of the
-  // next row. At the last cell the guard fails, so Tab falls through to the
-  // editor default and is not overwritten.
-  defineBehavior({
-    on: 'keyboard.keydown',
-    guard: ({snapshot, event}) => {
-      if (!tab.guard(event.originEvent)) {
-        return false
-      }
-      const position = resolveFocusCell(snapshot)
-      if (!position) {
-        return false
-      }
-      const cells = getChildren(snapshot, position.row.path)
-      const nextRow = getSibling(snapshot, position.row.path, {
-        direction: 'next',
-      })
-      const target =
-        cells[indexOf(cells, position.cell) + 1] ??
-        (nextRow && getFirstChild(snapshot, nextRow.path))
-      const at = target && cellStart(snapshot, target.path)
-      return at ? {at} : false
-    },
-    actions: [(_, {at}) => [raise({type: 'select', at})]],
-  }),
+export function createNavBehaviors(config: TableConfig) {
+  return [
+    // Tab: move to the start of the next cell, wrapping to the first cell of the
+    // next row. At the last cell the guard fails, so Tab falls through to the
+    // editor default and is not overwritten.
+    defineBehavior({
+      on: 'keyboard.keydown',
+      guard: ({snapshot, event}) => {
+        if (!tab.guard(event.originEvent)) {
+          return false
+        }
+        const position = resolveFocusCell(config, snapshot)
+        if (!position) {
+          return false
+        }
+        const cells = getChildren(snapshot, position.row.path)
+        const nextRow = getSibling(snapshot, position.row.path, {
+          direction: 'next',
+        })
+        const target =
+          cells[indexOf(cells, position.cell) + 1] ??
+          (nextRow && getFirstChild(snapshot, nextRow.path))
+        const at = target && cellStart(snapshot, target.path)
+        return at ? {at} : false
+      },
+      actions: [(_, {at}) => [raise({type: 'select', at})]],
+    }),
 
-  // Shift+Tab: move to the start of the previous cell, wrapping to the last
-  // cell of the previous row. At the first cell it falls through.
-  defineBehavior({
-    on: 'keyboard.keydown',
-    guard: ({snapshot, event}) => {
-      if (!shiftTab.guard(event.originEvent)) {
-        return false
-      }
-      const position = resolveFocusCell(snapshot)
-      if (!position) {
-        return false
-      }
-      const cells = getChildren(snapshot, position.row.path)
-      const columnIndex = indexOf(cells, position.cell)
-      const previousRow = getSibling(snapshot, position.row.path, {
-        direction: 'previous',
-      })
-      const target =
-        (columnIndex > 0 ? cells[columnIndex - 1] : undefined) ??
-        (previousRow && getLastChild(snapshot, previousRow.path))
-      const at = target && cellStart(snapshot, target.path)
-      return at ? {at} : false
-    },
-    actions: [(_, {at}) => [raise({type: 'select', at})]],
-  }),
+    // Shift+Tab: move to the start of the previous cell, wrapping to the last
+    // cell of the previous row. At the first cell it falls through.
+    defineBehavior({
+      on: 'keyboard.keydown',
+      guard: ({snapshot, event}) => {
+        if (!shiftTab.guard(event.originEvent)) {
+          return false
+        }
+        const position = resolveFocusCell(config, snapshot)
+        if (!position) {
+          return false
+        }
+        const cells = getChildren(snapshot, position.row.path)
+        const columnIndex = indexOf(cells, position.cell)
+        const previousRow = getSibling(snapshot, position.row.path, {
+          direction: 'previous',
+        })
+        const target =
+          (columnIndex > 0 ? cells[columnIndex - 1] : undefined) ??
+          (previousRow && getLastChild(snapshot, previousRow.path))
+        const at = target && cellStart(snapshot, target.path)
+        return at ? {at} : false
+      },
+      actions: [(_, {at}) => [raise({type: 'select', at})]],
+    }),
 
-  // ArrowDown: when the caret is in the last block of a cell, move to the cell
-  // directly below (same column). Otherwise fall through so the caret moves
-  // within the cell.
-  defineBehavior({
-    on: 'keyboard.keydown',
-    guard: ({snapshot, event, dom}) => {
-      if (!arrowDown.guard(event.originEvent)) {
-        return false
-      }
-      const position = resolveFocusCell(snapshot)
-      if (!position || !focusAtCellEdge(snapshot, position.cell.path, 'last')) {
-        return false
-      }
-      if (!focusOnVisualEdge(snapshot, dom, 'last')) {
-        return false
-      }
-      const rowBelow = getSibling(snapshot, position.row.path, {
-        direction: 'next',
-      })
-      const target =
-        rowBelow &&
-        sameColumnCell(snapshot, position.cell, position.row, rowBelow)
-      const at =
-        target && cellEntrySelection(snapshot, dom, target.path, 'first')
-      return at ? {at} : false
-    },
-    actions: [(_, {at}) => [raise({type: 'select', at})]],
-  }),
+    // ArrowDown: when the caret is in the last block of a cell, move to the cell
+    // directly below (same column). Otherwise fall through so the caret moves
+    // within the cell.
+    defineBehavior({
+      on: 'keyboard.keydown',
+      guard: ({snapshot, event, dom}) => {
+        if (!arrowDown.guard(event.originEvent)) {
+          return false
+        }
+        const position = resolveFocusCell(config, snapshot)
+        if (
+          !position ||
+          !focusAtCellEdge(snapshot, position.cell.path, 'last')
+        ) {
+          return false
+        }
+        if (!focusOnVisualEdge(snapshot, dom, 'last')) {
+          return false
+        }
+        const rowBelow = getSibling(snapshot, position.row.path, {
+          direction: 'next',
+        })
+        const target =
+          rowBelow &&
+          sameColumnCell(snapshot, position.cell, position.row, rowBelow)
+        const at =
+          target &&
+          cellEntrySelection(config, snapshot, dom, target.path, 'first')
+        return at ? {at} : false
+      },
+      actions: [(_, {at}) => [raise({type: 'select', at})]],
+    }),
 
-  // ArrowUp: when the caret is in the first block of a cell, move to the cell
-  // directly above (same column). Otherwise fall through.
-  defineBehavior({
-    on: 'keyboard.keydown',
-    guard: ({snapshot, event, dom}) => {
-      if (!arrowUp.guard(event.originEvent)) {
-        return false
-      }
-      const position = resolveFocusCell(snapshot)
-      if (
-        !position ||
-        !focusAtCellEdge(snapshot, position.cell.path, 'first')
-      ) {
-        return false
-      }
-      if (!focusOnVisualEdge(snapshot, dom, 'first')) {
-        return false
-      }
-      const rowAbove = getSibling(snapshot, position.row.path, {
-        direction: 'previous',
-      })
-      const target =
-        rowAbove &&
-        sameColumnCell(snapshot, position.cell, position.row, rowAbove)
-      const at =
-        target && cellEntrySelection(snapshot, dom, target.path, 'last')
-      return at ? {at} : false
-    },
-    actions: [(_, {at}) => [raise({type: 'select', at})]],
-  }),
-]
+    // ArrowUp: when the caret is in the first block of a cell, move to the cell
+    // directly above (same column). Otherwise fall through.
+    defineBehavior({
+      on: 'keyboard.keydown',
+      guard: ({snapshot, event, dom}) => {
+        if (!arrowUp.guard(event.originEvent)) {
+          return false
+        }
+        const position = resolveFocusCell(config, snapshot)
+        if (
+          !position ||
+          !focusAtCellEdge(snapshot, position.cell.path, 'first')
+        ) {
+          return false
+        }
+        if (!focusOnVisualEdge(snapshot, dom, 'first')) {
+          return false
+        }
+        const rowAbove = getSibling(snapshot, position.row.path, {
+          direction: 'previous',
+        })
+        const target =
+          rowAbove &&
+          sameColumnCell(snapshot, position.cell, position.row, rowAbove)
+        const at =
+          target &&
+          cellEntrySelection(config, snapshot, dom, target.path, 'last')
+        return at ? {at} : false
+      },
+      actions: [(_, {at}) => [raise({type: 'select', at})]],
+    }),
+  ]
+}
+
+export const navBehaviors = createNavBehaviors(defaultTableConfig)
 
 /**
  * The table cell the collapsed selection focus sits in, with its enclosing row
  * and table. Returns `undefined` when the focus isn't inside a cell.
  */
-function resolveFocusCell(snapshot: EditorSnapshot) {
+function resolveFocusCell(config: TableConfig, snapshot: EditorSnapshot) {
   const selection = snapshot.context.selection
   if (!selection || !isSelectionCollapsed(snapshot)) {
     return undefined
   }
-  return resolveCell(snapshot, selection.focus.path)
+  return resolveCell(snapshot, selection.focus.path, config)
 }
 
 /** A collapsed selection at the start of the cell's first block. */
@@ -199,6 +209,7 @@ function cellEnd(
  * end) of the cell, e.g. when the cell is narrower than the caret's x.
  */
 function cellEntrySelection(
+  config: TableConfig,
   snapshot: EditorSnapshot,
   dom: Dom,
   cellPath: Path,
@@ -223,7 +234,7 @@ function cellEntrySelection(
     x: caretRect.left,
     y: entryLineRect.top + entryLineRect.height / 2,
   })
-  const resolved = point && resolveCell(snapshot, point.path)
+  const resolved = point && resolveCell(snapshot, point.path, config)
   if (!resolved || !isEqualPaths(resolved.cell.path, cellPath)) {
     return fallback
   }

@@ -25,7 +25,13 @@ import {
   type JSX,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
-import {isCell, isRow, isTable, type TableSelection} from '../behaviors/types'
+import type {TableSelection} from '../behaviors/types'
+import {
+  createTableGuards,
+  defaultTableConfig,
+  rowCells as configRowCells,
+  tableRows as configTableRows,
+} from '../table-config'
 
 /**
  * What the `renderMenu` slot receives: the menu's state and actions. The
@@ -113,9 +119,12 @@ export function TableContainer({
   icons?: {trash?: ReactNode}
 }): JSX.Element {
   const editor = useEditor()
+  const config = defaultTableConfig
+  const {isTable} = createTableGuards(config)
   const table = isTable(node) ? node : undefined
-  const rowCount = table?.rows.length ?? 0
-  const columnCount = table?.rows[0]?.cells.length ?? 0
+  const rows = table ? configTableRows(config, table) : []
+  const rowCount = rows.length
+  const columnCount = rows[0] ? configRowCells(config, rows[0]).length : 0
   const tableRef = useRef<HTMLTableElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const metrics = useTableMetrics(tableRef, `${rowCount}x${columnCount}`)
@@ -560,22 +569,25 @@ export function TableCell({
   path,
 }: ContainerRenderProps): JSX.Element {
   const editor = useEditor()
+  const config = defaultTableConfig
   const descriptor = useEditorSelector(
     editor,
     (snapshot): CellDescriptor | null => {
+      const {isCell, isRow, isTable} = createTableGuards(config)
       const cell = getEnclosingBlock(snapshot, path, {match: isCell})
       const row = cell && getParent(snapshot, cell.path, {match: isRow})
       const table = row && getParent(snapshot, row.path, {match: isTable})
       if (!cell || !row || !table) {
         return null
       }
-      const rowIdx = table.node.rows.findIndex(
+      const tableRowsList = configTableRows(config, table.node)
+      const rowIdx = tableRowsList.findIndex(
         (candidate) => candidate._key === row.node._key,
       )
-      const colIdx = row.node.cells.findIndex(
+      const colIdx = configRowCells(config, row.node).findIndex(
         (candidate) => candidate._key === cell.node._key,
       )
-      const selection = getTableSelection(snapshot)
+      const selection = getTableSelection(snapshot, config)
       const range =
         selection && isEqualPaths(selection.tablePath, table.path)
           ? {
@@ -585,11 +597,12 @@ export function TableCell({
               c1: selection.colRange[1],
             }
           : null
+      const firstRow = tableRowsList[0]
       return {
         rowIdx,
         colIdx,
-        rowCount: table.node.rows.length,
-        colCount: table.node.rows[0]?.cells.length ?? 0,
+        rowCount: tableRowsList.length,
+        colCount: firstRow ? configRowCells(config, firstRow).length : 0,
         isHeader: (Number(table.node.headerRows) || 0) >= 1 && rowIdx === 0,
         range,
       }
