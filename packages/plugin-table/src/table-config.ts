@@ -5,7 +5,7 @@ import type {CellNode, RowNode, TableNode} from './behaviors/types'
  * The resolved table configuration: which type names and array fields the
  * behaviors, guards, and selection derivation operate on. Derived from the
  * container definitions passed to `defineTable`; the shape itself (three
- * nested levels plus `headerRows`/`alignment` on the table) is fixed.
+ * nested levels plus `headerRows` on the table) is fixed.
  */
 export type TableConfig = {
   tableType: string

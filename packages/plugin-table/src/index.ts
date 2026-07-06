@@ -5,7 +5,6 @@ export {
 } from './define-table'
 export type {
   CellNode,
-  ColumnAlignment,
   RowNode,
   TableNode,
   TableSelection,

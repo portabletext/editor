@@ -198,7 +198,7 @@ describe('rectangular selection copy/cut', () => {
     })
   })
 
-  test('slicing keeps header rows and alignment positional', async () => {
+  test('slicing keeps header rows positional', async () => {
     const {editor, locator} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -207,7 +207,6 @@ describe('rectangular selection copy/cut', () => {
           _type: 'table',
           _key: 't0',
           headerRows: 1,
-          alignment: ['left', 'right'],
           rows: [
             {
               _type: 'row',
@@ -226,8 +225,7 @@ describe('rectangular selection copy/cut', () => {
     })
     await userEvent.click(locator)
 
-    // Right column (c01 -> c11): the header row is included, the left
-    // column's alignment entry is not.
+    // Right column (c01 -> c11): the header row is included.
     const rightColumnSelection = {
       anchor: {path: spanPath('c01'), offset: 0},
       focus: {path: spanPath('c11'), offset: 1},
@@ -252,7 +250,6 @@ describe('rectangular selection copy/cut', () => {
           _type: 'table',
           _key: 't0',
           headerRows: 1,
-          alignment: ['right'],
           rows: [
             {_type: 'row', _key: 'r0', cells: [cell('c01', 'B')]},
             {_type: 'row', _key: 'r1', cells: [cell('c11', 'D')]},
@@ -289,7 +286,6 @@ describe('rectangular selection copy/cut', () => {
           _type: 'table',
           _key: 't0',
           headerRows: 0,
-          alignment: ['left', 'right'],
           rows: [
             {
               _type: 'row',

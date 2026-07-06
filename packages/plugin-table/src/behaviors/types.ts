@@ -17,22 +17,13 @@ export type CellNode = PortableTextBlock & {_key: string}
 export type RowNode = PortableTextBlock & {_key: string}
 
 /**
- * Per-column alignment, positional (array index = column index). `null` is an
- * explicitly unaligned column.
- *
- * @public
- */
-export type ColumnAlignment = 'left' | 'center' | 'right' | null
-
-/**
- * A table node in the value. `headerRows` and `alignment` are fixed field
- * names regardless of configuration.
+ * A table node in the value. `headerRows` is a fixed field name regardless
+ * of configuration.
  *
  * @public
  */
 export type TableNode = PortableTextBlock & {
   _key: string
-  alignment?: Array<ColumnAlignment>
   /** Number of leading rows that are header rows. */
   headerRows?: number
 }

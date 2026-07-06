@@ -8,7 +8,6 @@ import {
   tableRows,
   type TableConfig,
 } from '../table-config'
-import {alignmentInsertAction} from './alignment'
 import type {RowNode, TableNode} from './types'
 
 export function createInsertBehaviors(config: TableConfig) {
@@ -135,16 +134,7 @@ export function createInsertBehaviors(config: TableConfig) {
               }),
             ]
           })
-          const newColumnIndex =
-            event.position === 'before' ? columnIndex : columnIndex + 1
-          const alignmentAction = alignmentInsertAction(
-            table,
-            tablePath,
-            newColumnIndex,
-          )
-          return alignmentAction
-            ? [...insertActions, alignmentAction]
-            : insertActions
+          return insertActions
         },
       ],
     }),
