@@ -66,7 +66,6 @@ export const schemaDefinition = defineSchema({
       name: 'table',
       fields: [
         {name: 'headerRows', type: 'number'},
-        {name: 'alignment', type: 'array', of: [{type: 'string'}]},
         {
           name: 'rows',
           type: 'array',
@@ -101,12 +100,8 @@ export const schemaDefinition = defineSchema({
 Keeping the schema and the table definition in agreement is your
 responsibility; the editor warns and skips the registration when a
 registered container type or its array field is missing from the schema.
-The `headerRows` and `alignment` fields are optional. `headerRows` drives
-the reference UI's header styling and its menu toggle; omit it if you
-don't need headers. `alignment` ships no UI at all: the plugin only keeps
-the positional array in lockstep when columns are inserted, removed, or
-moved; reading it in your cell renders and building UI that sets it are
-yours, so declare it only when you build that.
+The `headerRows` field is optional: it drives the reference UI's header
+styling and its menu toggle, so omit it if you don't need headers.
 
 That's the whole setup. What remains is a way to insert one, for example
 a toolbar button:
@@ -274,7 +269,7 @@ uses the canonical one, and no argument at all yields the defaults.
 Renaming the types is how you adopt a table shape that already exists in
 your datasets, for example when migrating from a table plugin that used
 different names. Names and field names are configurable; the nesting shape
-and the `headerRows`/`alignment` fields are not. Data whose cells are not
+and the `headerRows` field are not. Data whose cells are not
 arrays of Portable Text blocks needs a data migration regardless of
 configuration. Remember that the schema follows the configuration: rename
 the types in `defineTable` and your schema must declare the same names.
