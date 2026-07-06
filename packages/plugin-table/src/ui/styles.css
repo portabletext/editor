@@ -113,6 +113,14 @@
   font-family: var(--pt-plugin-table-font-family);
 }
 
+/* Buttons do not inherit `font-family` (UA default applies unless reset);
+   hosts without a global button reset would get the browser font on the
+   menu items and chrome buttons. */
+.pt-plugin-table-chrome button,
+.pt-plugin-table-portal button {
+  font-family: inherit;
+}
+
 /* Keyboard focus on the chrome's buttons (handles, lanes, trash, menu).
    The ring reuses the accent: one identity color, no separate knob. */
 .pt-plugin-table-chrome button:focus-visible,
