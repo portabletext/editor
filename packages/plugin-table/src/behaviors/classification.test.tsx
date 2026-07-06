@@ -78,6 +78,9 @@ const treatments: Record<
   'move.block down': 'pending',
   'move.block up': 'pending',
   'remove.text': 'pass',
+  // Not rectangle semantics, but intercepted all the same: the chrome-band
+  // clamp in `select.ts` re-addresses drags whose focus resolves to a
+  // container-level point inside the anchor's table.
   'select': 'pass',
   'select.block': 'pass',
   'select.next block': 'pass',
