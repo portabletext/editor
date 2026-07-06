@@ -90,6 +90,7 @@ export function TableContainer({
   path,
   portalElement,
   renderMenu,
+  icons,
 }: ContainerRenderProps & {
   /**
    * Where the menu and trash layer portal (default `document.body`). Hosts
@@ -104,6 +105,12 @@ export function TableContainer({
    * through `onOpenChange` so the anchor stays visible while open.
    */
   renderMenu?: (props: TableMenuProps) => ReactNode
+  /**
+   * Replaces the built-in drawn icons with the host design system's
+   * (currently the row/column trash chip; the menu's icons travel with
+   * `renderMenu`).
+   */
+  icons?: {trash?: ReactNode}
 }): JSX.Element {
   const editor = useEditor()
   const table = isTable(node) ? node : undefined
@@ -486,6 +493,7 @@ export function TableContainer({
         tableRef={tableRef}
         metrics={metrics}
         portalElement={portalElement}
+        trashIcon={icons?.trash}
         selectedRow={selectedRow}
         selectedCol={selectedCol}
         canDeleteRow={rowCount > 1}
