@@ -111,10 +111,13 @@
 }
 
 /* While a multi-cell range is active, the blue rectangle overlay stands in
-   for the selection, so hide the native text-selection highlight. */
-.pt-plugin-table[data-cell-range] ::selection {
-  background: transparent;
+   for the selection, so hide the native text-selection highlight. This is
+   structural and must beat host apps' own `::selection` styling (Studio
+   scopes one under its text blocks at equal specificity, and whoever injects
+   last would win the tie), hence the `!important`. */
+table.pt-plugin-table[data-cell-range] ::selection {
+  background-color: transparent !important;
 }
-.pt-plugin-table[data-cell-range] ::-moz-selection {
-  background: transparent;
+table.pt-plugin-table[data-cell-range] ::-moz-selection {
+  background-color: transparent !important;
 }
