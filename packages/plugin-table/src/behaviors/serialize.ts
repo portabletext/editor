@@ -135,10 +135,6 @@ function sliceTable(
     sliced.headerRows =
       rowStart === 0 ? Math.min(table.headerRows, slicedRows.length) : 0
   }
-  if (table.alignment) {
-    // Alignment is positional per column.
-    sliced.alignment = table.alignment.slice(colStart, colEnd + 1)
-  }
   return sliced
 }
 

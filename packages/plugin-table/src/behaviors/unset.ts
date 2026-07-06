@@ -17,8 +17,6 @@ import {
   tableRows,
   type TableConfig,
 } from '../table-config'
-import {alignmentRemoveAction} from './alignment'
-import type {TableNode} from './types'
 
 function selectionTouches(
   selection: EditorSelection,
@@ -120,9 +118,6 @@ export function createUnsetBehaviors(config: TableConfig) {
       {
         cellPaths: Array<Path>
         neighborCellPath: Path
-        table: TableNode
-        tablePath: Path
-        columnIndex: number
       }
     >({
       on: 'custom.unset.column',
@@ -182,30 +177,13 @@ export function createUnsetBehaviors(config: TableConfig) {
             ] satisfies Path,
           ]
         })
-        return {
-          cellPaths,
-          neighborCellPath,
-          table: table.node,
-          tablePath: table.path,
-          columnIndex,
-        }
+        return {cellPaths, neighborCellPath}
       },
       actions: [
-        (
-          {snapshot},
-          {cellPaths, neighborCellPath, table, tablePath, columnIndex},
-        ) => {
+        ({snapshot}, {cellPaths, neighborCellPath}) => {
           const actions = cellPaths.map((cellPath) =>
             raise({type: 'unset', at: cellPath}),
           )
-          const alignmentAction = alignmentRemoveAction(
-            table,
-            tablePath,
-            columnIndex,
-          )
-          if (alignmentAction) {
-            actions.push(alignmentAction)
-          }
           if (selectionTouches(snapshot.context.selection, cellPaths)) {
             const leaf = getLeaf(snapshot, neighborCellPath, {edge: 'start'})
             if (leaf) {

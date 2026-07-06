@@ -17,7 +17,7 @@ import {
   tableRows,
   type TableConfig,
 } from '../table-config'
-import type {CellNode, ColumnAlignment, RowNode, TableNode} from './types'
+import type {CellNode, RowNode, TableNode} from './types'
 
 type CellReplacement = {
   cellPath: Path
@@ -39,8 +39,6 @@ type Distribution = {
   replacements: Array<CellReplacement>
   cellAppends: Array<CellAppend>
   rowAppends: Array<RowAppend>
-  grownAlignment: Array<ColumnAlignment> | undefined
-  tablePath: Path
   selection: NonNullable<EditorSelection>
 }
 
@@ -74,17 +72,7 @@ export function createPasteBehaviors(config: TableConfig) {
         return planDistribution(config, snapshot, fragment, anchor)
       },
       actions: [
-        (
-          _,
-          {
-            replacements,
-            cellAppends,
-            rowAppends,
-            grownAlignment,
-            tablePath,
-            selection,
-          },
-        ) => [
+        (_, {replacements, cellAppends, rowAppends, selection}) => [
           ...cellAppends.map((append) =>
             raise({
               type: 'insert' as const,
@@ -139,15 +127,6 @@ export function createPasteBehaviors(config: TableConfig) {
               ),
             ]
           }),
-          ...(grownAlignment
-            ? [
-                raise({
-                  type: 'block.set' as const,
-                  at: tablePath,
-                  props: {alignment: grownAlignment},
-                }),
-              ]
-            : []),
           raise({type: 'select', at: selection}),
         ],
       ],
@@ -343,22 +322,7 @@ function planDistribution(
     return false
   }
 
-  const grownAlignment =
-    grownColCount > tableColCount && anchor.table.alignment
-      ? [
-          ...anchor.table.alignment,
-          ...Array<ColumnAlignment>(grownColCount - tableColCount).fill(null),
-        ]
-      : undefined
-
-  return {
-    replacements,
-    cellAppends,
-    rowAppends,
-    grownAlignment,
-    tablePath: anchor.tablePath,
-    selection,
-  }
+  return {replacements, cellAppends, rowAppends, selection}
 }
 
 function cellPathFor(

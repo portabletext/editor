@@ -7,7 +7,6 @@ import {
   tableRows,
   type TableConfig,
 } from '../table-config'
-import {alignmentMoveAction} from './alignment'
 import type {TableNode} from './types'
 
 export function createMoveBehaviors(config: TableConfig) {
@@ -167,15 +166,6 @@ export function createMoveBehaviors(config: TableConfig) {
               }),
             ]
           })
-          const alignmentAction = alignmentMoveAction(
-            table,
-            tablePath,
-            originIndex,
-            destinationIndex,
-          )
-          if (alignmentAction) {
-            actions.push(alignmentAction)
-          }
           if (savedSelection) {
             actions.push(raise({type: 'select', at: savedSelection}))
           }
