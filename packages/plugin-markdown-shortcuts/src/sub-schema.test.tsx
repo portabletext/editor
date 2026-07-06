@@ -6,6 +6,83 @@ import {userEvent} from 'vitest/browser'
 import {MarkdownShortcutsPlugin} from './plugin.markdown-shortcuts'
 
 describe('Markdown shortcuts respect the sub-schema at the focus', () => {
+  test('`defaultStyle` is only queried when backspace can clear a style', async () => {
+    const schemaDefinition = defineSchema({
+      styles: [{name: 'normal'}, {name: 'h1'}],
+    })
+    const defaultStyle = vi.fn(
+      ({
+        context,
+      }: {
+        context: {schema: {styles: ReadonlyArray<{name: string}>}}
+      }) => context.schema.styles[0]?.name,
+    )
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'heading', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ],
+      children: <MarkdownShortcutsPlugin defaultStyle={defaultStyle} />,
+    })
+    await userEvent.click(locator)
+
+    // Mid-block: the style cannot clear here, so the consumer callback
+    // is never consulted.
+    const midPoint = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 7,
+    }
+    editor.send({type: 'select', at: {anchor: midPoint, focus: midPoint}})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(7)
+    })
+    // The semantic event the behavior listens on, dispatched directly:
+    // physical keystrokes after programmatic selection moves are flaky on
+    // webkit, and input plumbing is not what this pin is about.
+    editor.send({type: 'delete.backward', unit: 'character'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'headin', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+    })
+    expect(defaultStyle).not.toHaveBeenCalled()
+
+    // At the block's start it is consulted, and the style clears.
+    const startPoint = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 0,
+    }
+    editor.send({type: 'select', at: {anchor: startPoint, focus: startPoint}})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(0)
+    })
+    editor.send({type: 'delete.backward', unit: 'character'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'headin', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(defaultStyle).toHaveBeenCalled()
+  })
+
   test('typing `# ` inside a code-block-line does not consume the keystroke', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}, {name: 'em'}],

@@ -107,17 +107,21 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         focusTextBlock.node.children[0]._key === focusSpan.node._key &&
         snapshot.context.selection?.focus.offset === 0
 
+      if (!atTheBeginningOfBLock) {
+        // A style can only clear at the start of the block; resolving the
+        // sub-schema and calling the consumer's `defaultStyle` callback on
+        // every other backspace is wasted work with a consumer-visible
+        // call frequency.
+        return false
+      }
+
       const subSchema = getPathSubSchema(snapshot, focusTextBlock.path)
       const defaultStyle = config.defaultStyle?.({
         context: {schema: subSchema},
         schema: subSchema,
       })
 
-      if (
-        atTheBeginningOfBLock &&
-        defaultStyle &&
-        focusTextBlock.node.style !== defaultStyle
-      ) {
+      if (defaultStyle && focusTextBlock.node.style !== defaultStyle) {
         return {defaultStyle, focusTextBlock}
       }
 
