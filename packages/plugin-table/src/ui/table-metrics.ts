@@ -9,6 +9,20 @@ export function snapPx(px: number): number {
   return Math.round(px * dpr) / dpr
 }
 
+/**
+ * Snap to the nearest device-pixel *center*. A 1px grid line rasterizes
+ * centered on a device pixel, so chrome that must sit on the line (boundary
+ * dots, insert guides) snaps to the same lattice; snapping to pixel edges
+ * instead leaves it visibly off by up to half a device pixel.
+ */
+export function snapPxCenter(px: number): number {
+  if (typeof window === 'undefined') {
+    return px
+  }
+  const dpr = window.devicePixelRatio || 1
+  return (Math.round(px * dpr - 0.5) + 0.5) / dpr
+}
+
 export type TableMetrics = {
   width: number
   height: number
