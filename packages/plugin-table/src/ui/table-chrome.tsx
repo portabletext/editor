@@ -1,4 +1,5 @@
 import {
+  type ReactNode,
   useCallback,
   useLayoutEffect,
   useRef,
@@ -709,6 +710,46 @@ const MENU_BTN = 25
 const MENU_MIN_WIDTH = 200
 const MENU_Z_INDEX = 10100
 const MENU_ABOVE_GAP = 2
+
+/**
+ * Plugin-owned positioning for a consumer-rendered table menu (the
+ * `renderMenu` slot): anchored top-right like the built-in menu, bottom edge
+ * sitting just above the table's top edge regardless of the widget's height,
+ * revealed on table hover or while the consumer reports the menu open.
+ */
+export function TableMenuAnchor({
+  right,
+  visible,
+  children,
+}: {
+  right: number
+  visible: boolean
+  children: ReactNode
+}): JSX.Element {
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: preventing default on pointerdown keeps the editor focused; interaction lives on the consumer's widget
+    <div
+      contentEditable={false}
+      onPointerDown={(event) => {
+        // Keep DOM focus in the editable; a focus steal here would blur the
+        // editor and hide the chrome mid-interaction.
+        event.preventDefault()
+      }}
+      style={{
+        position: 'absolute',
+        right,
+        top: GUTTER_TOP - MENU_ABOVE_GAP,
+        transform: 'translateY(-100%)',
+        pointerEvents: visible ? 'auto' : 'none',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 100ms ease',
+        zIndex: 6,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
 
 export type TableMenuHandlers = {
   hasHeader: boolean

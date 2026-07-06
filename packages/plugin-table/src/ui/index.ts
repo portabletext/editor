@@ -1,1 +1,6 @@
-export {TableCell, TableContainer, TableRow} from './table-render'
+export {
+  TableCell,
+  TableContainer,
+  TableRow,
+  type TableMenuProps,
+} from './table-render'

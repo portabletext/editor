@@ -16,6 +16,7 @@ import {
 import {getBlockStartPoint, isEqualPaths} from '@portabletext/editor/utils'
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useMemo,
@@ -25,6 +26,17 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import {isCell, isRow, isTable, type TableSelection} from '../behaviors/types'
+
+/**
+ * What the `renderMenu` slot receives: the menu's state and actions. The
+ * widget itself (trigger, popover, items) is entirely consumer-rendered.
+ *
+ * @alpha
+ */
+export type TableMenuProps = TableMenuHandlers & {
+  /** Report the widget's open state so the anchor stays visible while open. */
+  onOpenChange: (open: boolean) => void
+}
 import {getTableSelection} from '../get-table-selection'
 import {cellStyle, type CellRange} from './table-cell-style'
 import {
@@ -32,9 +44,11 @@ import {
   ReorderGhost,
   TableChrome,
   TableMenu,
+  TableMenuAnchor,
   TableScrollFade,
   TableTrashLayer,
   type HoverCell,
+  type TableMenuHandlers,
 } from './table-chrome'
 import {useTableDragReorder} from './table-drag'
 import {useTableMetrics} from './table-metrics'
@@ -75,6 +89,7 @@ export function TableContainer({
   node,
   path,
   portalElement,
+  renderMenu,
 }: ContainerRenderProps & {
   /**
    * Where the menu and trash layer portal (default `document.body`). Hosts
@@ -82,6 +97,13 @@ export function TableContainer({
    * joins the host's stacking context and inherits its styling scope.
    */
   portalElement?: HTMLElement | null
+  /**
+   * Replaces the built-in table menu with a consumer-rendered widget (for
+   * example a host design system's menu button). The plugin keeps ownership
+   * of the anchor position and hover reveal; report the widget's open state
+   * through `onOpenChange` so the anchor stays visible while open.
+   */
+  renderMenu?: (props: TableMenuProps) => ReactNode
 }): JSX.Element {
   const editor = useEditor()
   const table = isTable(node) ? node : undefined
@@ -98,6 +120,7 @@ export function TableContainer({
   const fade = useScrollFade(scrollRef, `${rowCount}x${columnCount}`)
   const [active, setActive] = useState(false)
   const [hoverCell, setHoverCell] = useState<HoverCell>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const tableSelection = useEditorSelector(
     editor,
@@ -432,17 +455,32 @@ export function TableContainer({
         hasHeader={hasHeader}
         cellTexts={ghostCellTexts}
       />
-      <TableMenu
-        right={scrollWide ? 0 : 20}
-        active={active}
-        portalElement={portalElement}
-        handlers={{
-          hasHeader,
-          onToggleHeader: toggleHeader,
-          onSelectTable: selectTable,
-          onDeleteTable: deleteTable,
-        }}
-      />
+      {renderMenu ? (
+        <TableMenuAnchor
+          right={scrollWide ? 0 : 20}
+          visible={active || menuOpen}
+        >
+          {renderMenu({
+            hasHeader,
+            onToggleHeader: toggleHeader,
+            onSelectTable: selectTable,
+            onDeleteTable: deleteTable,
+            onOpenChange: setMenuOpen,
+          })}
+        </TableMenuAnchor>
+      ) : (
+        <TableMenu
+          right={scrollWide ? 0 : 20}
+          active={active}
+          portalElement={portalElement}
+          handlers={{
+            hasHeader,
+            onToggleHeader: toggleHeader,
+            onSelectTable: selectTable,
+            onDeleteTable: deleteTable,
+          }}
+        />
+      )}
       <TableScrollFade left={fade.left} right={fade.right} />
       <TableTrashLayer
         tableRef={tableRef}
