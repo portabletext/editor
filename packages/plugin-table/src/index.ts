@@ -3,6 +3,10 @@ export {
   type TableContainers,
   type TableDefinition,
 } from './define-table'
-export {tableBehaviors} from './plugin.table'
-export * from './behaviors/types'
-export {getTableSelection} from './get-table-selection'
+export type {
+  CellNode,
+  ColumnAlignment,
+  RowNode,
+  TableNode,
+  TableSelection,
+} from './behaviors/types'

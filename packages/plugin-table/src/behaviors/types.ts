@@ -1,5 +1,4 @@
 import type {Path, PortableTextBlock} from '@portabletext/editor'
-import {createTableGuards, defaultTableConfig} from '../table-config'
 
 /**
  * A cell node in the table's value. The content array's field name is
@@ -37,26 +36,6 @@ export type TableNode = PortableTextBlock & {
   /** Number of leading rows that are header rows. */
   headerRows?: number
 }
-
-const defaultGuards = createTableGuards(defaultTableConfig)
-
-/**
- * @public
- */
-export const isTable: (node: PortableTextBlock) => node is TableNode =
-  defaultGuards.isTable
-
-/**
- * @public
- */
-export const isRow: (node: PortableTextBlock) => node is RowNode =
-  defaultGuards.isRow
-
-/**
- * @public
- */
-export const isCell: (node: PortableTextBlock) => node is CellNode =
-  defaultGuards.isCell
 
 /**
  * @public

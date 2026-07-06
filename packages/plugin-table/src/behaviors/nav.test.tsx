@@ -5,7 +5,9 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {afterAll, beforeAll, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
-import {isCell} from './types'
+import {createTableGuards, defaultTableConfig} from '../table-config'
+
+const {isCell} = createTableGuards(defaultTableConfig)
 
 const schemaDefinition = defineSchema({
   blockObjects: [
