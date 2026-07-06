@@ -42,7 +42,7 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
       [hrefField.name]: props.href,
     }
   },
-  defaultStyle: ({context}) => context.schema.styles[0].value,
+  defaultStyle: ({context}) => context.schema.styles[0]?.name,
   headingStyle: ({context, props}) =>
     context.schema.styles.find((style) => style.name === `h${props.level}`)
       ?.name,
