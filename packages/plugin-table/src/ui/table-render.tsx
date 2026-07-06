@@ -128,6 +128,10 @@ export function TableContainer({
   const [active, setActive] = useState(false)
   const [hoverCell, setHoverCell] = useState<HoverCell>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const readOnly = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
 
   const tableSelection = useEditorSelector(
     editor,
@@ -447,26 +451,30 @@ export function TableContainer({
                 </TableDragContext.Provider>
               </tbody>
             </table>
-            <TableChrome
-              metrics={metrics}
-              active={active}
-              hoverCell={hoverCell}
-              selectedRow={selectedRow}
-              selectedCol={selectedCol}
-              onHandlePointerDown={onHandlePointerDown}
-              drag={drag}
-              onInsertRow={insertRow}
-              onInsertCol={insertCol}
-            />
+            {readOnly ? null : (
+              <TableChrome
+                metrics={metrics}
+                active={active}
+                hoverCell={hoverCell}
+                selectedRow={selectedRow}
+                selectedCol={selectedCol}
+                onHandlePointerDown={onHandlePointerDown}
+                drag={drag}
+                onInsertRow={insertRow}
+                onInsertCol={insertCol}
+              />
+            )}
           </div>
         </div>
-        <ReorderGhost
-          drag={drag}
-          metrics={metrics}
-          hasHeader={hasHeader}
-          cellTexts={ghostCellTexts}
-        />
-        {renderMenu ? (
+        {readOnly ? null : (
+          <ReorderGhost
+            drag={drag}
+            metrics={metrics}
+            hasHeader={hasHeader}
+            cellTexts={ghostCellTexts}
+          />
+        )}
+        {readOnly ? null : renderMenu ? (
           <TableMenuAnchor
             right={scrollWide ? 0 : 20}
             visible={active || menuOpen}
@@ -493,18 +501,20 @@ export function TableContainer({
           />
         )}
         <TableScrollFade left={fade.left} right={fade.right} />
-        <TableTrashLayer
-          tableRef={tableRef}
-          metrics={metrics}
-          portalElement={portalElement}
-          trashIcon={icons?.trash}
-          selectedRow={selectedRow}
-          selectedCol={selectedCol}
-          canDeleteRow={rowCount > 1}
-          canDeleteCol={columnCount > 1}
-          onDeleteRow={deleteRow}
-          onDeleteCol={deleteCol}
-        />
+        {readOnly ? null : (
+          <TableTrashLayer
+            tableRef={tableRef}
+            metrics={metrics}
+            portalElement={portalElement}
+            trashIcon={icons?.trash}
+            selectedRow={selectedRow}
+            selectedCol={selectedCol}
+            canDeleteRow={rowCount > 1}
+            canDeleteCol={columnCount > 1}
+            onDeleteRow={deleteRow}
+            onDeleteCol={deleteCol}
+          />
+        )}
       </div>
     </div>
   )

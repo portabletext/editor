@@ -22,7 +22,7 @@ const GUTTER_TOP = 20
 const GUTTER_LEFT = 12
 // The wrapper reserves its former top margin as padding for the same reason:
 // the menu rides above the gutter and must stay inside the clipable box.
-export const WRAPPER_PAD_TOP = 20
+const WRAPPER_PAD_TOP = 20
 
 const HANDLE_REST_ROW = {w: 3, h: 16}
 const HANDLE_REST_COL = {w: 16, h: 3}
