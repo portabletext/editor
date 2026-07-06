@@ -9,17 +9,17 @@ semantics. The package has two layers:
 - **`@portabletext/plugin-table`**, the headless core: `defineTable`,
   behaviors, and selection derivation. It knows how tables edit, not how
   they look.
-- **`@portabletext/plugin-table/ui`**, the reference UI: the table renders
-  and their chrome (row/column handles, drag reorder, insert affordances,
-  table menu), themable through CSS custom properties and replaceable where
-  it counts.
+- **`@portabletext/plugin-table/ui`**, the reference UI: the table
+  components and their chrome (row/column handles, drag reorder, insert
+  affordances, table menu), themable through CSS custom properties and
+  replaceable where it counts.
 
 ```sh
 npm install @portabletext/plugin-table
 ```
 
-Peer dependencies: `@portabletext/editor` (`^7.10.0` or later), `react`, and
-`react-dom`.
+Peer dependencies: `@portabletext/editor` (`^7.10.0` or later), `react`
+(`^19.2`), and `react-dom` (`^19.2`).
 
 ## Getting a table
 
@@ -39,6 +39,7 @@ Mount its plugin inside the editor and import the stylesheet:
 // app.tsx
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import '@portabletext/plugin-table/ui/styles.css'
+import {schemaDefinition} from './schema'
 import {table} from './table'
 
 function App() {
@@ -56,9 +57,10 @@ editor, the plugin defines none, and it must contain the table shape under
 the configured names. With the default configuration:
 
 ```ts
+// schema.ts
 import {defineSchema} from '@portabletext/editor'
 
-const schemaDefinition = defineSchema({
+export const schemaDefinition = defineSchema({
   blockObjects: [
     {
       name: 'table',
@@ -99,11 +101,45 @@ const schemaDefinition = defineSchema({
 Keeping the schema and the table definition in agreement is your
 responsibility; the editor warns and skips the registration when a
 registered container type or its array field is missing from the schema.
-The `headerRows` and `alignment` fields are optional: a schema that omits
-them simply has no header styling or column alignment, so leave them out
-along with the UI that drives them if you don't need the features.
+The `headerRows` and `alignment` fields are optional. `headerRows` drives
+the reference UI's header styling and its menu toggle; omit it if you
+don't need headers. `alignment` ships no UI at all: the plugin only keeps
+the positional array in lockstep when columns are inserted, removed, or
+moved; reading it in your cell renders and building UI that sets it are
+yours, so declare it only when you build that.
 
-That's the whole setup. Insert a `table` block and you have tables.
+That's the whole setup. What remains is a way to insert one, for example
+a toolbar button:
+
+```tsx
+import {useEditor} from '@portabletext/editor'
+import {table} from './table'
+
+function InsertTableButton() {
+  const editor = useEditor()
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        editor.send({
+          type: 'insert.block',
+          block: table.createBlock({headerRows: 1}),
+          placement: 'auto',
+        })
+        editor.send({type: 'focus'})
+      }}
+    >
+      Table
+    </button>
+  )
+}
+```
+
+`table.createBlock({rows, columns, headerRows})` builds the nested value
+with the definition's own type names and array fields: `rows` by `columns`
+cells (default 3×3), each holding one empty text block. It emits no
+`_key`s; the editor generates them on insert. Pass `headerRows` only when
+your schema declares it.
 
 ## What you get
 
@@ -183,20 +219,95 @@ lane dimensions, hit areas). Those values feed the hit-testing and
 positioning math, so they stay uniform; the table can look like anything,
 but its ergonomics are fixed.
 
+## Owning the definitions
+
+Everything so far used `referenceContainers`, the pre-wired definitions.
+A _container_ is the editor's concept for a block object whose array field
+holds nested, editable Portable Text, declared with `defineContainer` from
+`@portabletext/editor`; a table is three containers deep (table → row →
+cell). `defineTable` accepts your own definitions, role-keyed, and this is
+where the names, the renders, and the cell content come under your
+control:
+
+```tsx
+import {defineContainer} from '@portabletext/editor'
+import {defineTable} from '@portabletext/plugin-table'
+import {Table, TableCell} from '@portabletext/plugin-table/ui'
+
+export const table = defineTable({
+  containers: {
+    table: defineContainer({
+      type: 'richTable',
+      arrayField: 'rows',
+      render: (props) => <Table {...props} />,
+    }),
+    row: defineContainer({type: 'tableRow', arrayField: 'cells'}),
+    cell: defineContainer({
+      type: 'tableCell',
+      arrayField: 'content',
+      render: (props) => <TableCell {...props} />,
+      of: [compactImage, callout],
+    }),
+  },
+})
+```
+
+The reference components are `Table`, `TableRow`, and `TableCell`; they
+resolve their table definition from the node they render, so they work
+under renamed types without extra wiring. Mixing is fine, your own render
+for the table, the reference `TableCell` for cells.
+
+The division of ownership:
+
+- **You own each definition**: the type name, the array field, the render,
+  and, on the cell, its `of`, cell-scoped node definitions such as a
+  compact image render that applies inside cells only.
+- **The plugin owns the nesting**: it grafts `table.of → row.of → cell`
+  itself, because the three-level shape is load-bearing for every behavior
+  and the clipboard format. An `of` on the table or row definition draws
+  a warning instead of being honored.
+
+Everything is optional, and every omission falls back one level: an omitted
+`render` uses the built-in bare render for that role, an omitted definition
+uses the canonical one, and no argument at all yields the defaults.
+
+Renaming the types is how you adopt a table shape that already exists in
+your datasets, for example when migrating from a table plugin that used
+different names. Names and field names are configurable; the nesting shape
+and the `headerRows`/`alignment` fields are not. Data whose cells are not
+arrays of Portable Text blocks needs a data migration regardless of
+configuration. Remember that the schema follows the configuration: rename
+the types in `defineTable` and your schema must declare the same names.
+
 ## Integrating it into a host app
 
 When tokens are not enough, the chrome has three integration points, passed
-as props where a container definition renders `Table` (see the next section
-for where these calls live):
+as props where a container definition renders `Table`, the `render`
+callbacks from the previous section. Starting from `referenceContainers`,
+override just the table role, restating its canonical values (`type:
+'table'`, `arrayField: 'rows'`):
+
+```tsx
+import {defineContainer} from '@portabletext/editor'
+import {defineTable} from '@portabletext/plugin-table'
+import {referenceContainers, Table} from '@portabletext/plugin-table/ui'
+
+export const table = defineTable({
+  containers: {
+    ...referenceContainers,
+    table: defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: (props) => <Table {...props} portalElement={myPortalElement} />,
+    }),
+  },
+})
+```
 
 **`portalElement`.** The menu and the trash chip portal into
 `document.body` by default. Hosts with their own portal and layering system
-pass theirs, so the chrome joins the host's stacking context and inherits
-its styling scope:
-
-```tsx
-render: (props) => <Table {...props} portalElement={myPortalElement} />
-```
+pass theirs, as above, so the chrome joins the host's stacking context and
+inherits its styling scope.
 
 **`renderMenu`.** The table menu is widget-shaped chrome, so it is
 replaceable wholesale rather than themable: hosts with a design system
@@ -258,8 +369,26 @@ the behaviors resolve the enclosing cell, row, and table from it):
 | `custom.move.row`      | `{at: Path, to: Path}`                      | Move the row containing `at` to the row containing `to`.       |
 | `custom.move.column`   | `{at: Path, to: Path}`                      | Move the column containing `at` to the column containing `to`. |
 
+The caret's own path is the usual source for `at` (`Path` is exported
+from `@portabletext/editor`). A toolbar button that inserts a row below
+the current one:
+
+```tsx
+const selection = editor.getSnapshot().context.selection
+if (selection) {
+  editor.send({
+    type: 'custom.insert.row',
+    at: selection.focus.path,
+    position: 'after',
+  })
+}
+```
+
 Header state is plain block data: toggle it with the editor's own
-`block.set` event (`{at: tablePath, props: {headerRows: 1}}`).
+`block.set` event (`{at: tablePath, props: {headerRows: 1}}`), where
+`tablePath` is the table block's keyed path (`[{_key: ...}]`), carried by
+`getTableSelection` below or taken from the first segment of any path
+inside the table.
 
 To read the current rectangle, the table definition carries a selector:
 
@@ -279,62 +408,6 @@ one table. The reference UI paints its selection overlay from this selector
 reads the same source. It also carries the node guards `table.isTable`,
 `table.isRow`, and `table.isCell`, which narrow to the `TableNode`,
 `RowNode`, and `CellNode` types.
-
-## Owning the definitions
-
-Everything so far used `referenceContainers`, the pre-wired definitions.
-`defineTable` accepts your own, role-keyed, and this is where the names,
-the renders, and the cell content come under your control:
-
-```tsx
-import {defineContainer} from '@portabletext/editor'
-import {defineTable} from '@portabletext/plugin-table'
-import {Table, TableCell} from '@portabletext/plugin-table/ui'
-
-export const table = defineTable({
-  containers: {
-    table: defineContainer({
-      type: 'richTable',
-      arrayField: 'rows',
-      render: (props) => <Table {...props} />,
-    }),
-    row: defineContainer({type: 'tableRow', arrayField: 'cells'}),
-    cell: defineContainer({
-      type: 'tableCell',
-      arrayField: 'content',
-      render: (props) => <TableCell {...props} />,
-      of: [compactImage, callout],
-    }),
-  },
-})
-```
-
-The reference components are `Table`, `TableRow`, and `TableCell`; they
-resolve their table definition from the node they render, so they work
-under renamed types without extra wiring. Mixing is fine, your own render for the table,
-the reference `TableCell` for cells.
-
-The division of ownership:
-
-- **You own each definition**: the type name, the array field, the render,
-  and, on the cell, its `of`, cell-scoped node definitions such as a
-  compact image render that applies inside cells only.
-- **The plugin owns the nesting**: it grafts `table.of → row.of → cell`
-  itself, because the three-level shape is load-bearing for every behavior
-  and the clipboard format. An `of` on the table or row definition draws a
-  development warning instead of being honored.
-
-Everything is optional, and every omission falls back one level: an omitted
-`render` uses the built-in bare render for that role, an omitted definition
-uses the canonical one, and no argument at all yields the defaults.
-
-Renaming the types is how you adopt a table shape that already exists in
-your datasets, for example when migrating from a table plugin that used
-different names. Names and field names are configurable; the nesting shape
-and the `headerRows`/`alignment` fields are not. Data whose cells are not
-arrays of Portable Text blocks needs a data migration regardless of
-configuration. Remember that the schema follows the configuration: rename
-the types in `defineTable` and your schema must declare the same names.
 
 ## Going fully headless
 
