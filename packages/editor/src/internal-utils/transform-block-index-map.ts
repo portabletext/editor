@@ -169,7 +169,9 @@ export function transformBlockIndexMap(
  * the map), so it is an O(1) lookup instead of the linear scan in
  * `resolveChildIndexInValue`. A numeric path segment can't form the map's keyed
  * id, and a map miss falls back to the scan; the oracle/fuzz tests pin
- * equivalence.
+ * equivalence. Raw-value sibling of `resolveChildEntryIndex`
+ * (`traversal/`): the fallback here walks the pre-op value tree, not a
+ * resolved entries array.
  */
 function childIndexFromMap(
   map: ReadonlyMap<string, number>,
