@@ -509,6 +509,11 @@ function replaceLastSegment(path: Path, segment: Path[number]): Path {
  * (e.g. unkeyed transient nodes, or paths outside registered container
  * fields such as `markDefs`).
  */
+/**
+ * Raw-array sibling of `resolveChildEntryIndex` (`traversal/`): this
+ * and `resolveBlockIndex` run mid-`modifyChildren` against plain node
+ * arrays, where no `{node, path}` entries exist to share the helper.
+ */
 function resolveChildIndex(
   blockIndexMap: ReadonlyMap<string, number>,
   parentSegments: Path,

@@ -1,11 +1,10 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import {serializePath} from '../paths/serialize-path'
 import {getChildren} from '../traversal/get-children'
 import {getNodes} from '../traversal/get-nodes'
+import {resolveChildEntryIndex} from '../traversal/resolve-child-entry-index'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 export type SpanEntry = {
   node: PortableTextSpan
@@ -38,6 +37,13 @@ export function findNearestSpans(
   }
 }
 
+/**
+ * Not built on `getSibling` (`traversal/get-sibling.ts`) deliberately:
+ * its `match` tests the sibling node itself, while this walk needs
+ * "is a span or contains one" and would still have to re-descend the
+ * matched sibling to extract the span entry. Applies to
+ * `findPreviousSpan` too.
+ */
 function findNextSpan(
   snapshot: TraversalSnapshot,
   path: Path,
@@ -54,7 +60,11 @@ function findNextSpan(
   while (currentPath.length > 0) {
     const parentPath = nodeParentPath(currentPath)
     const siblings = getChildren(snapshot, parentPath)
-    const index = childIndex(snapshot, siblings, currentPath)
+    const index = resolveChildEntryIndex(
+      snapshot.blockIndexMap,
+      siblings,
+      currentPath,
+    )
 
     if (index !== -1) {
       for (
@@ -90,7 +100,11 @@ function findPreviousSpan(
   while (currentPath.length > 0) {
     const parentPath = nodeParentPath(currentPath)
     const siblings = getChildren(snapshot, parentPath)
-    const index = childIndex(snapshot, siblings, currentPath)
+    const index = resolveChildEntryIndex(
+      snapshot.blockIndexMap,
+      siblings,
+      currentPath,
+    )
 
     if (index !== -1) {
       for (let siblingIndex = index - 1; siblingIndex >= 0; siblingIndex--) {
@@ -163,56 +177,4 @@ function nodeParentPath(path: Path): Path {
     end--
   }
   return path.slice(0, end)
-}
-
-/**
- * The index of `childPath`'s node within `siblings`. Resolves keyed
- * segments through `blockIndexMap` (O(1), verified against the sibling
- * array) with a linear fallback for misses and paths the map can't key
- * (numeric segments).
- *
- * Not built on `getSibling` (`traversal/get-sibling.ts`) deliberately:
- * its `match` tests the sibling node itself, while this walk needs
- * "is a span or contains one" and would still have to re-descend the
- * matched sibling to extract the span entry.
- */
-function childIndex(
-  snapshot: TraversalSnapshot,
-  siblings: Array<{node: {_key?: string}; path: Path}>,
-  childPath: Path,
-): number {
-  const lastSegment = childPath[childPath.length - 1]
-
-  if (typeof lastSegment === 'number') {
-    return lastSegment < siblings.length ? lastSegment : -1
-  }
-
-  if (!isKeyedSegment(lastSegment)) {
-    return -1
-  }
-
-  let fullyKeyed = true
-  for (
-    let segmentIndex = 0;
-    segmentIndex < childPath.length - 1;
-    segmentIndex++
-  ) {
-    const segment = childPath[segmentIndex]
-    if (typeof segment !== 'string' && !isKeyedSegment(segment)) {
-      fullyKeyed = false
-      break
-    }
-  }
-
-  if (fullyKeyed) {
-    const mapIndex = snapshot.blockIndexMap.get(serializePath(childPath))
-    if (
-      mapIndex !== undefined &&
-      siblings[mapIndex]?.node._key === lastSegment._key
-    ) {
-      return mapIndex
-    }
-  }
-
-  return siblings.findIndex((sibling) => sibling.node._key === lastSegment._key)
 }

@@ -7,8 +7,8 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren, getNodeChildren} from './get-children'
+import {resolveChildEntryIndex} from './resolve-child-entry-index'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -262,42 +262,12 @@ function boundaryChildIndex(
     return undefined
   }
 
-  const childSegment = boundary[childPathLength - 1]
-
-  if (isKeyedSegment(childSegment)) {
-    const mappedIndex = snapshot.blockIndexMap.get(
-      serializePath(boundary.slice(0, childPathLength)),
-    )
-    const mappedSegment =
-      mappedIndex !== undefined
-        ? children[mappedIndex]?.path[childPathLength - 1]
-        : undefined
-    if (
-      mappedSegment !== undefined &&
-      isKeyedSegment(mappedSegment) &&
-      mappedSegment._key === childSegment._key
-    ) {
-      return mappedIndex
-    }
-    // The map can miss or disagree with the tree (unmaintained or stale
-    // maps); fall back to a linear scan, mirroring `getNode` and
-    // `getChildren`.
-    const scannedIndex = children.findIndex((child) => {
-      const lastSegment = child.path[child.path.length - 1]
-      return (
-        isKeyedSegment(lastSegment) && lastSegment._key === childSegment._key
-      )
-    })
-    return scannedIndex === -1 ? undefined : scannedIndex
-  }
-
-  if (typeof childSegment === 'number') {
-    return childSegment >= 0 && childSegment < children.length
-      ? childSegment
-      : undefined
-  }
-
-  return undefined
+  const resolvedIndex = resolveChildEntryIndex(
+    snapshot.blockIndexMap,
+    children,
+    boundary.slice(0, childPathLength),
+  )
+  return resolvedIndex === -1 ? undefined : resolvedIndex
 }
 
 /**
