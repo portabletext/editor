@@ -281,7 +281,14 @@ export const Editable = forwardRef(
               editor.focused = true
             } else {
               editor.focused = false
-              return
+              if (!readOnly) {
+                return
+              }
+              // A read-only editable is never the active element (no
+              // `contenteditable`, no tab stop), yet users legitimately
+              // select its text for copying. Keep syncing the selection so
+              // the model tracks it; the checks below still confine the
+              // sync to selections inside the editor.
             }
 
             if (!domSelection) {
