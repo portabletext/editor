@@ -1513,7 +1513,7 @@ describe('container normalization', () => {
     })
 
     expect(warnSpy).toHaveBeenCalledWith(
-      "Field 'tags' on 'card' doesn't contain block or container types and will be excluded",
+      'registerNode: field "tags" on type "card" contains only primitive types and cannot hold block content. Registration skipped.',
     )
 
     warnSpy.mockRestore()

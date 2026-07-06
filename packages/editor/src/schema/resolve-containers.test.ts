@@ -271,6 +271,131 @@ describe(resolveNestedContainer.name, () => {
   })
 })
 
+describe('registration warnings', () => {
+  const warningSchema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'table',
+          fields: [
+            {name: 'rows', type: 'array', of: [{type: 'block'}]},
+            {name: 'title', type: 'string'},
+            {name: 'tags', type: 'array', of: [{type: 'string'}]},
+          ],
+        },
+      ],
+    }),
+  )
+
+  test('unknown type names the type, not the field', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const config = resolveNestedContainer(
+        warningSchema,
+        defineContainer({
+          type: 'tabel',
+          arrayField: 'rows',
+          render: containerRender,
+        }),
+      )
+      expect(config).toBeUndefined()
+      expect(warnSpy.mock.calls).toEqual([
+        [
+          'registerNode: type "tabel" not found in the schema. Registration skipped.',
+        ],
+      ])
+    } finally {
+      warnSpy.mockRestore()
+    }
+  })
+
+  test('missing field names the field on the (existing) type', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const config = resolveNestedContainer(
+        warningSchema,
+        defineContainer({
+          type: 'table',
+          arrayField: 'cols',
+          render: containerRender,
+        }),
+      )
+      expect(config).toBeUndefined()
+      expect(warnSpy.mock.calls).toEqual([
+        [
+          'registerNode: field "cols" not found on type "table". Registration skipped.',
+        ],
+      ])
+    } finally {
+      warnSpy.mockRestore()
+    }
+  })
+
+  test('non-array field is reported as such', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const config = resolveNestedContainer(
+        warningSchema,
+        defineContainer({
+          type: 'table',
+          arrayField: 'title',
+          render: containerRender,
+        }),
+      )
+      expect(config).toBeUndefined()
+      expect(warnSpy.mock.calls).toEqual([
+        [
+          'registerNode: field "title" on type "table" is not an array. Registration skipped.',
+        ],
+      ])
+    } finally {
+      warnSpy.mockRestore()
+    }
+  })
+
+  test('primitive-only array warns exactly once', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const config = resolveNestedContainer(
+        warningSchema,
+        defineContainer({
+          type: 'table',
+          arrayField: 'tags',
+          render: containerRender,
+        }),
+      )
+      expect(config).toBeUndefined()
+      // Full-calls assertion: pins both the message and that the failure
+      // does not double-warn (it used to emit a second, wrong "not
+      // found" message).
+      expect(warnSpy.mock.calls).toEqual([
+        [
+          'registerNode: field "tags" on type "table" contains only primitive types and cannot hold block content. Registration skipped.',
+        ],
+      ])
+    } finally {
+      warnSpy.mockRestore()
+    }
+  })
+
+  test("'throw' mode throws the same message", () => {
+    expect(() =>
+      resolveNestedContainer(
+        warningSchema,
+        defineContainer({
+          type: 'tabel',
+          arrayField: 'rows',
+          render: containerRender,
+        }),
+        [],
+        'throw',
+      ),
+    ).toThrow(
+      'registerNode: type "tabel" not found in the schema. Registration skipped.',
+    )
+  })
+})
+
 describe(resolveContainerByPath.name, () => {
   const calloutSchema = compileSchema(
     defineSchema({
