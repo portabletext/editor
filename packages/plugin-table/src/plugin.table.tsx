@@ -6,6 +6,7 @@ import {insertBehaviors} from './behaviors/insert'
 import {moveBehaviors} from './behaviors/move'
 import {navBehaviors} from './behaviors/nav'
 import {pasteBehaviors} from './behaviors/paste'
+import {selectBehaviors} from './behaviors/select'
 import {serializeBehaviors} from './behaviors/serialize'
 import {unsetBehaviors} from './behaviors/unset'
 
@@ -73,6 +74,7 @@ export const tableBehaviors = [
   ...moveBehaviors,
   ...deleteBehaviors,
   ...navBehaviors,
+  ...selectBehaviors,
   ...formatBehaviors,
   ...serializeBehaviors,
   ...pasteBehaviors,
