@@ -1,5 +1,108 @@
 # Changelog
 
+## 7.10.0
+
+### Minor Changes
+
+- [#2897](https://github.com/portabletext/editor/pull/2897) [`cbdf301`](https://github.com/portabletext/editor/commit/cbdf3017be649430a7deb0159c1af3a8c83b8704) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `editor.dom.getPointAtCoordinates`
+
+  Pass viewport coordinates (for example a pointer event's `clientX`/`clientY`) and get back where a click at those coordinates would place the caret, as an editor selection point, or `null` when the coordinates don't hit the editor's content:
+
+  ```ts
+  const point = editor.dom.getPointAtCoordinates({
+    x: event.clientX,
+    y: event.clientY,
+  })
+  // {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3}
+  ```
+
+  It's the counterpart of `editor.dom.getSelectionRect`: that one turns a selection into pixels, this one turns pixels back into a point. Behavior guards and actions get it on their `dom` argument.
+
+- [#2902](https://github.com/portabletext/editor/pull/2902) [`ebff16b`](https://github.com/portabletext/editor/commit/ebff16b56ca7659f806da8b49f75f890e651ff93) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `getContainer` traversal util
+
+### Patch Changes
+
+- [#2907](https://github.com/portabletext/editor/pull/2907) [`067d3e8`](https://github.com/portabletext/editor/commit/067d3e805b7f0b0c01c1e5dbf0c08e800363cf83) Thanks [@christianhg](https://github.com/christianhg)! - fix: push the canonical caret back when the browser parks it on an element
+
+  Clicking the whitespace around a container (a table's gutter, the editable's padding) could leave the blinking caret rendered in that whitespace, a position the document model cannot express, even though the editor's selection pointed at real content. The selection sync now pushes the canonical DOM range back whenever the browser parks a collapsed caret on an element, so the visible caret always sits where the selection actually is.
+
+- [#2884](https://github.com/portabletext/editor/pull/2884) [`0b82b78`](https://github.com/portabletext/editor/commit/0b82b78ec06c2e000892e1283cdca57fb37d424e) Thanks [@christianhg](https://github.com/christianhg)! - fix: scope `editor.dom.getSelectionRect` to the editor
+
+  `editor.dom.getSelectionRect` now returns the rect of the passed snapshot's selection. Previously, when focus sat outside the editor or another Portable Text editor was mounted on the page, it could return the rect of an unrelated element.
+
+- [#2912](https://github.com/portabletext/editor/pull/2912) [`f42372f`](https://github.com/portabletext/editor/commit/f42372f1fb8fdacb0b4f250d16a9adaeb9b42574) Thanks [@christianhg](https://github.com/christianhg)! - fix: implement editor-owned select-all
+
+  Cmd+A/Ctrl+A previously relied on the browser's native select-all, which
+  chromium silently collapses whenever a non-editable element sits at either
+  content edge of the editor. Any document starting or ending with a block
+  object, and any table-shaped container render with selection chrome, made
+  select-all a no-op. The editor now handles the shortcut itself and selects
+  the full document range, deterministically across browsers and custom
+  renders. The behavior is registered alongside the other default keyboard
+  shortcuts and can be overridden like any other.
+
+- [#2894](https://github.com/portabletext/editor/pull/2894) [`ebb41dc`](https://github.com/portabletext/editor/commit/ebb41dc0536390f3d1aa2a53bee7ba606306900f) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve `getSibling` when `blockIndexMap` misses or disagrees with the tree
+
+  `getSibling` previously returned `undefined` for siblings the tree
+  plainly has when the anchor's path was absent from the block-index
+  map, and could return the wrong sibling when the map was stale. It now
+  verifies the mapped position against the tree and falls back to a
+  linear scan, matching `getNode` and `getChildren`. Paths addressing
+  the anchor by numeric index now resolve instead of returning
+  `undefined`.
+
+- [#2918](https://github.com/portabletext/editor/pull/2918) [`2f2d6e9`](https://github.com/portabletext/editor/commit/2f2d6e9ff47c2bc8dad14679939599e26610afaf) Thanks [@christianhg](https://github.com/christianhg)! - fix: sync the selection in read-only editors
+
+  Selections made in a read-only editor never reached the editor's model:
+  the selection sync bailed unless the editable was the document's active
+  element, which a read-only editable never is. Consumers saw a frozen
+  selection (stale selection-derived UI stuck on screen after switching to
+  read-only) and copying selected content put nothing on the clipboard
+  since `serialize` read an outdated selection. The model now tracks the
+  selection in read-only editors, so selection-derived rendering and copy
+  work; editing remains blocked as before.
+
+- [#2914](https://github.com/portabletext/editor/pull/2914) [`98f8340`](https://github.com/portabletext/editor/commit/98f83404ec6813b294c09f3ea879a8e7a8792952) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): seek to the range's boundaries in range-bounded traversal
+
+  Toggling a decorator or annotation no longer slows down with the
+  selection's position in the document. Range-bounded node traversal
+  previously walked from the document's first block to the selection;
+  it now jumps directly to the blocks the range touches. Toggling bold
+  on one word at the end of an 8,000-block document drops from ~10ms to
+  ~3ms.
+
+- [#2900](https://github.com/portabletext/editor/pull/2900) [`2831cd9`](https://github.com/portabletext/editor/commit/2831cd9aaa84124bcdb1bd3012bd70a56108f899) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): notify render selectors only when their inputs can have changed
+
+  Typing and moving the caret in large documents no longer pay a cost
+  proportional to the block count. Previously every editor change
+  re-ran an internal selector for every rendered block and span; in a
+  document with thousands of blocks this made each keystroke and caret
+  move noticeably sluggish. Rendered output is unchanged.
+
+- [#2902](https://github.com/portabletext/editor/pull/2902) [`5dc3030`](https://github.com/portabletext/editor/commit/5dc3030a570710650e838cfcc375e3f0da392b0e) Thanks [@christianhg](https://github.com/christianhg)! - fix: repair an empty container when `select` resolves onto it
+
+  A behavior that removes every block inside an editable container child (like the table plugin's rectangle clear on a cell) and then selects it used to leave the selection parked on the container itself, since the replacement empty block only gets minted when normalization runs later. Typing in that state silently dropped the first character. The `select` operation now repairs the container the way normalization would and resolves again, so the caret lands inside the repaired container and typing works immediately.
+
+- [#2898](https://github.com/portabletext/editor/pull/2898) [`f242007`](https://github.com/portabletext/editor/commit/f2420072a74004239502da2413b45d200c1a8022) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep equivalent DOM selections intact during selection validation
+
+  Sweeping a text selection across table cells could log "DOM range out of sync, validating selection" and collapse the selection mid-drag. The validator now recognizes when the browser's selection is an equivalent representation of the editor's selection and leaves it alone instead of rewriting it.
+
+- [#2893](https://github.com/portabletext/editor/pull/2893) [`70c90d1`](https://github.com/portabletext/editor/commit/70c90d1db79f3272692012ea99a8e104b736a7f0) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): resolve the `unset` selection fallback's nearest spans without a document scan
+
+  Backspacing through empty blocks, and any other edit that removes the
+  node the selection sits in, no longer slows down with document size.
+  Previously each such removal scanned the document from the start to
+  find the nearest span; in large documents this made deleting empty
+  lines feel sluggish (~267ms per backspace at 8,000 blocks, now ~20ms).
+
+  One narrow behavioral fix rides along: when the removed node was
+  addressed by a numeric path, the fallback previously moved the
+  selection to the document's first span; it now moves it to the actual
+  nearest span.
+
+- Updated dependencies [[`a570ace`](https://github.com/portabletext/editor/commit/a570ace6563c12356eb50aa5e5671c257463376e)]:
+  - @portabletext/markdown@1.4.3
+
 ## 7.9.0
 
 ### Minor Changes
