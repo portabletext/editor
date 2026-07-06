@@ -7,6 +7,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren, getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -198,7 +199,21 @@ function* getNodesInRange(
   const {from, to, match, reverse = false} = options
 
   const children = getChildren(snapshot, path)
-  const entries = reverse ? [...children].reverse() : children
+
+  // Seek instead of scan: only the children between the boundaries'
+  // branches at this level can intersect [from, to], so resolve those
+  // positions (O(1) through `blockIndexMap`) and iterate the window
+  // between them. The per-entry checks below stay the semantic source
+  // of truth; an unresolvable boundary just leaves its side of the
+  // window open, degrading to the previous full scan.
+  const startIndex =
+    from === undefined ? 0 : (boundaryChildIndex(snapshot, children, from) ?? 0)
+  const endIndex =
+    to === undefined
+      ? children.length - 1
+      : (boundaryChildIndex(snapshot, children, to) ?? children.length - 1)
+  const window = children.slice(startIndex, endIndex + 1)
+  const entries = reverse ? window.reverse() : window
 
   for (const entry of entries) {
     if (canStopTraversal(snapshot, entry.path, from, to, reverse)) {
@@ -217,6 +232,72 @@ function* getNodesInRange(
 
     yield* getNodesInRange(snapshot, entry.path, options)
   }
+}
+
+/**
+ * The index of the child whose subtree `boundary` passes through, at
+ * the level `children` was resolved for. `undefined` when the boundary
+ * does not pass through this level or cannot be resolved, in which
+ * case the caller must not narrow the window on that side.
+ */
+function boundaryChildIndex(
+  snapshot: TraversalSnapshot,
+  children: Array<{node: Node; path: Path}>,
+  boundary: Path,
+): number | undefined {
+  const firstChild = children[0]
+  if (!firstChild) {
+    return undefined
+  }
+  const childPathLength = firstChild.path.length
+  if (boundary.length < childPathLength) {
+    return undefined
+  }
+
+  // The children share every path segment but the last; the boundary
+  // passes through this level only when that shared prefix is an
+  // ancestor of it.
+  const sharedPrefix = firstChild.path.slice(0, -1)
+  if (sharedPrefix.length > 0 && !isAncestorPath(sharedPrefix, boundary)) {
+    return undefined
+  }
+
+  const childSegment = boundary[childPathLength - 1]
+
+  if (isKeyedSegment(childSegment)) {
+    const mappedIndex = snapshot.blockIndexMap.get(
+      serializePath(boundary.slice(0, childPathLength)),
+    )
+    const mappedSegment =
+      mappedIndex !== undefined
+        ? children[mappedIndex]?.path[childPathLength - 1]
+        : undefined
+    if (
+      mappedSegment !== undefined &&
+      isKeyedSegment(mappedSegment) &&
+      mappedSegment._key === childSegment._key
+    ) {
+      return mappedIndex
+    }
+    // The map can miss or disagree with the tree (unmaintained or stale
+    // maps); fall back to a linear scan, mirroring `getNode` and
+    // `getChildren`.
+    const scannedIndex = children.findIndex((child) => {
+      const lastSegment = child.path[child.path.length - 1]
+      return (
+        isKeyedSegment(lastSegment) && lastSegment._key === childSegment._key
+      )
+    })
+    return scannedIndex === -1 ? undefined : scannedIndex
+  }
+
+  if (typeof childSegment === 'number') {
+    return childSegment >= 0 && childSegment < children.length
+      ? childSegment
+      : undefined
+  }
+
+  return undefined
 }
 
 /**
