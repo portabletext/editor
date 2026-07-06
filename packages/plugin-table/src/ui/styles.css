@@ -76,7 +76,10 @@
    corner radii are inline per cell (see `table-cell-style.ts`). */
 .pt-plugin-table-chrome {
   position: relative;
-  margin: 20px 0;
+  /* The former top margin is padding so the menu's headroom is part of the
+     component's own box and cannot be clipped by a host's overflow. */
+  padding-top: 20px;
+  margin: 0 0 20px;
 }
 
 /* Horizontal scroll under a wide table: lighter thumb, gap from the table

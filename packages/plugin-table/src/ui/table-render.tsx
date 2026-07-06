@@ -420,8 +420,8 @@ export function TableContainer({
             // Gutters: top for the column handles, right/bottom lanes for the
             // extend bars. The chrome is absolute in here so it scrolls with
             // the table.
-            padding: '20px 20px 20px 0',
-            width: scrollWide ? columnCount * MIN_COL_PX + 20 : undefined,
+            padding: '20px 20px 20px 12px',
+            width: scrollWide ? columnCount * MIN_COL_PX + 32 : undefined,
           }}
         >
           <table

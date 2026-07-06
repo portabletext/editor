@@ -14,10 +14,15 @@ import {BLUE, BORDER} from './table-cell-style'
 import type {DragState} from './table-drag'
 import {snapPx, type TableMetrics} from './table-metrics'
 
-// Top gutter holds the column handles + table menu. No left gutter: the table
-// is flush and the row handles overhang into the editable's own padding.
+// Top gutter holds the column handles + table menu.
 const GUTTER_TOP = 20
-const GUTTER_LEFT = 0
+// Reserved inside the component's own box so the row handles and boundary
+// dots never overhang into space the host may clip (tight editable padding,
+// or the scroll container in overflow mode).
+const GUTTER_LEFT = 12
+// The wrapper reserves its former top margin as padding for the same reason:
+// the menu rides above the gutter and must stay inside the clipable box.
+export const WRAPPER_PAD_TOP = 20
 
 const HANDLE_REST_ROW = {w: 3, h: 16}
 const HANDLE_REST_COL = {w: 16, h: 3}
@@ -33,7 +38,7 @@ const HANDLE_DOT = 2
 const HANDLE_DOT_GAP = 2
 const HANDLE_GREY = 'var(--pt-plugin-table-boundary-dot)'
 const BOUNDARY_DOT = 4
-const BOUNDARY_PLUS = 17
+const BOUNDARY_PLUS = 18
 const GRID_LINE_HALF = 0.5
 const INSERT_GUIDE = 1.5
 const EXTEND_SIZE = 17
@@ -746,7 +751,7 @@ export function TableMenuAnchor({
       style={{
         position: 'absolute',
         right,
-        top: GUTTER_TOP - MENU_ABOVE_GAP,
+        top: WRAPPER_PAD_TOP + GUTTER_TOP - MENU_ABOVE_GAP,
         transform: 'translateY(-100%)',
         pointerEvents: visible ? 'auto' : 'none',
         opacity: visible ? 1 : 0,
@@ -863,7 +868,7 @@ export function TableMenu({
         style={{
           position: 'absolute',
           right,
-          top: GUTTER_TOP - MENU_BTN - MENU_ABOVE_GAP,
+          top: WRAPPER_PAD_TOP + GUTTER_TOP - MENU_BTN - MENU_ABOVE_GAP,
           width: MENU_BTN,
           height: MENU_BTN,
           display: 'flex',
@@ -1209,7 +1214,7 @@ export function TableScrollFade({
   }
   const fadeBase = {
     position: 'absolute' as const,
-    top: GUTTER_TOP,
+    top: WRAPPER_PAD_TOP + GUTTER_TOP,
     bottom: EXTEND_SIZE + EXTEND_GAP + 12,
     width: 36,
     pointerEvents: 'none' as const,
