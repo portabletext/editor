@@ -14,7 +14,13 @@ export function createMarkdownLinkRule(config: {
   }) => ObjectWithOptionalKey | undefined
 }) {
   return defineInputRule({
-    on: /\[([^[\]]+)]\((.+)\)/,
+    on: /\[(?<text>[^[\]]+)]\((?<href>.+)\)/,
+    // The rule annotates the text and deletes only the markers and the href
+    // region, so an inline object inside the link TEXT is harmless and the
+    // link must fire. The unlisted `href` group stays protected: deleting
+    // `](href)` across an inline object would destroy it, and the captured
+    // href text would silently omit it.
+    inlineObjects: {allow: ['text']},
     actions: [
       ({snapshot, event}) => {
         const newText = event.textBefore + event.textInserted
@@ -22,8 +28,8 @@ export function createMarkdownLinkRule(config: {
         const actions: Array<BehaviorAction> = []
 
         for (const match of event.matches.reverse()) {
-          const textMatch = match.groupMatches.at(0)
-          const hrefMatch = match.groupMatches.at(1)
+          const textMatch = match.groups['text']
+          const hrefMatch = match.groups['href']
 
           if (textMatch === undefined || hrefMatch === undefined) {
             continue
