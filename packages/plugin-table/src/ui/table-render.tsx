@@ -394,113 +394,118 @@ export function TableContainer({
   }
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: mouse events only reveal the hover chrome; all interaction lives on the chrome's buttons
-    <div
-      {...attributes}
-      className="pt-plugin-table-chrome"
-      onMouseEnter={() => setActive(true)}
-      onMouseLeave={() => {
-        setActive(false)
-        setHoverCell(null)
-      }}
-      onMouseMove={onMouseMove}
-    >
+    // The render-props `attributes` land on their own element: hosts style
+    // their block wrappers (Studio pads its PT blocks), and the chrome's
+    // geometry (relative positioning, gutter padding) must not share an
+    // element with styles it cannot control.
+    <div {...attributes}>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: mouse events only reveal the hover chrome; all interaction lives on the chrome's buttons */}
       <div
-        ref={scrollRef}
-        className="pt-plugin-table-scroll"
-        style={{
-          overflowX: scrollWide ? 'auto' : undefined,
-          paddingBottom: scrollWide ? SCROLL_PADDING_BOTTOM : undefined,
+        className="pt-plugin-table-chrome"
+        onMouseEnter={() => setActive(true)}
+        onMouseLeave={() => {
+          setActive(false)
+          setHoverCell(null)
         }}
+        onMouseMove={onMouseMove}
       >
         <div
-          className="pt-plugin-table-inner"
+          ref={scrollRef}
+          className="pt-plugin-table-scroll"
           style={{
-            position: 'relative',
-            // Gutters: top for the column handles, right/bottom lanes for the
-            // extend bars. The chrome is absolute in here so it scrolls with
-            // the table.
-            padding: '20px 20px 20px 12px',
-            width: scrollWide ? columnCount * MIN_COL_PX + 32 : undefined,
+            overflowX: scrollWide ? 'auto' : undefined,
+            paddingBottom: scrollWide ? SCROLL_PADDING_BOTTOM : undefined,
           }}
         >
-          <table
-            ref={tableRef}
-            className="pt-plugin-table"
-            data-cell-range={hasCellRange ? '' : undefined}
+          <div
+            className="pt-plugin-table-inner"
+            style={{
+              position: 'relative',
+              // Gutters: top for the column handles, right/bottom lanes for the
+              // extend bars. The chrome is absolute in here so it scrolls with
+              // the table.
+              padding: '20px 20px 20px 12px',
+              width: scrollWide ? columnCount * MIN_COL_PX + 32 : undefined,
+            }}
           >
-            {/* Leafless subtrees derail the engine's DOM-point
+            <table
+              ref={tableRef}
+              className="pt-plugin-table"
+              data-cell-range={hasCellRange ? '' : undefined}
+            >
+              {/* Leafless subtrees derail the engine's DOM-point
                 normalization; mark them non-editable so it skips them. */}
-            <colgroup contentEditable={false}>
-              {Array.from({length: columnCount}, (_, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
-                <col key={index} />
-              ))}
-            </colgroup>
-            <tbody>
-              <TableDragContext.Provider value={dragContextValue}>
-                {children}
-              </TableDragContext.Provider>
-            </tbody>
-          </table>
-          <TableChrome
-            metrics={metrics}
-            active={active}
-            hoverCell={hoverCell}
-            selectedRow={selectedRow}
-            selectedCol={selectedCol}
-            onHandlePointerDown={onHandlePointerDown}
-            drag={drag}
-            onInsertRow={insertRow}
-            onInsertCol={insertCol}
-          />
+              <colgroup contentEditable={false}>
+                {Array.from({length: columnCount}, (_, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
+                  <col key={index} />
+                ))}
+              </colgroup>
+              <tbody>
+                <TableDragContext.Provider value={dragContextValue}>
+                  {children}
+                </TableDragContext.Provider>
+              </tbody>
+            </table>
+            <TableChrome
+              metrics={metrics}
+              active={active}
+              hoverCell={hoverCell}
+              selectedRow={selectedRow}
+              selectedCol={selectedCol}
+              onHandlePointerDown={onHandlePointerDown}
+              drag={drag}
+              onInsertRow={insertRow}
+              onInsertCol={insertCol}
+            />
+          </div>
         </div>
-      </div>
-      <ReorderGhost
-        drag={drag}
-        metrics={metrics}
-        hasHeader={hasHeader}
-        cellTexts={ghostCellTexts}
-      />
-      {renderMenu ? (
-        <TableMenuAnchor
-          right={scrollWide ? 0 : 20}
-          visible={active || menuOpen}
-        >
-          {renderMenu({
-            hasHeader,
-            onToggleHeader: toggleHeader,
-            onSelectTable: selectTable,
-            onDeleteTable: deleteTable,
-            onOpenChange: setMenuOpen,
-          })}
-        </TableMenuAnchor>
-      ) : (
-        <TableMenu
-          right={scrollWide ? 0 : 20}
-          active={active}
-          portalElement={portalElement}
-          handlers={{
-            hasHeader,
-            onToggleHeader: toggleHeader,
-            onSelectTable: selectTable,
-            onDeleteTable: deleteTable,
-          }}
+        <ReorderGhost
+          drag={drag}
+          metrics={metrics}
+          hasHeader={hasHeader}
+          cellTexts={ghostCellTexts}
         />
-      )}
-      <TableScrollFade left={fade.left} right={fade.right} />
-      <TableTrashLayer
-        tableRef={tableRef}
-        metrics={metrics}
-        portalElement={portalElement}
-        trashIcon={icons?.trash}
-        selectedRow={selectedRow}
-        selectedCol={selectedCol}
-        canDeleteRow={rowCount > 1}
-        canDeleteCol={columnCount > 1}
-        onDeleteRow={deleteRow}
-        onDeleteCol={deleteCol}
-      />
+        {renderMenu ? (
+          <TableMenuAnchor
+            right={scrollWide ? 0 : 20}
+            visible={active || menuOpen}
+          >
+            {renderMenu({
+              hasHeader,
+              onToggleHeader: toggleHeader,
+              onSelectTable: selectTable,
+              onDeleteTable: deleteTable,
+              onOpenChange: setMenuOpen,
+            })}
+          </TableMenuAnchor>
+        ) : (
+          <TableMenu
+            right={scrollWide ? 0 : 20}
+            active={active}
+            portalElement={portalElement}
+            handlers={{
+              hasHeader,
+              onToggleHeader: toggleHeader,
+              onSelectTable: selectTable,
+              onDeleteTable: deleteTable,
+            }}
+          />
+        )}
+        <TableScrollFade left={fade.left} right={fade.right} />
+        <TableTrashLayer
+          tableRef={tableRef}
+          metrics={metrics}
+          portalElement={portalElement}
+          trashIcon={icons?.trash}
+          selectedRow={selectedRow}
+          selectedCol={selectedCol}
+          canDeleteRow={rowCount > 1}
+          canDeleteCol={columnCount > 1}
+          onDeleteRow={deleteRow}
+          onDeleteCol={deleteCol}
+        />
+      </div>
     </div>
   )
 }
