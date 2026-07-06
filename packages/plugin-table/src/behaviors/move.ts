@@ -2,7 +2,7 @@ import type {EditorSelection, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {getEnclosingBlock, getParent} from '@portabletext/editor/traversal'
 import {alignmentMoveAction} from './alignment'
-import {isCell, isRow, isTable, type Table} from './types'
+import {isCell, isRow, isTable, type TableNode} from './types'
 
 export const moveBehaviors = [
   defineBehavior<
@@ -66,7 +66,7 @@ export const moveBehaviors = [
     {at: Path; to: Path},
     'custom.move.column',
     {
-      table: Table
+      table: TableNode
       tablePath: Path
       originIndex: number
       destinationIndex: number

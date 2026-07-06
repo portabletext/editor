@@ -1,6 +1,6 @@
 import type {Path} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
-import type {Table} from './types'
+import type {TableNode} from './types'
 
 /**
  * `alignment` is positional, so a column insert/remove must shift the array
@@ -8,12 +8,12 @@ import type {Table} from './types'
  * `undefined`: there is nothing to keep in sync.
  */
 
-function setAlignment(tablePath: Path, alignment: Table['alignment']) {
+function setAlignment(tablePath: Path, alignment: TableNode['alignment']) {
   return raise({type: 'block.set', at: tablePath, props: {alignment}})
 }
 
 export function alignmentInsertAction(
-  table: Table,
+  table: TableNode,
   tablePath: Path,
   columnIndex: number,
 ) {
@@ -29,7 +29,7 @@ export function alignmentInsertAction(
 }
 
 export function alignmentRemoveAction(
-  table: Table,
+  table: TableNode,
   tablePath: Path,
   columnIndex: number,
 ) {
@@ -44,7 +44,7 @@ export function alignmentRemoveAction(
 }
 
 export function alignmentMoveAction(
-  table: Table,
+  table: TableNode,
   tablePath: Path,
   fromIndex: number,
   toIndex: number,

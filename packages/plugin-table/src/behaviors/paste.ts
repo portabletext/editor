@@ -12,10 +12,10 @@ import {getTableSelection} from '../get-table-selection'
 import {resolveCell} from '../resolve-cell'
 import {
   isTable,
-  type Cell,
+  type CellNode,
   type ColumnAlignment,
-  type Row,
-  type Table,
+  type RowNode,
+  type TableNode,
 } from './types'
 
 type CellReplacement = {
@@ -26,12 +26,12 @@ type CellReplacement = {
 
 type CellAppend = {
   afterCellPath: Path
-  cell: Cell
+  cell: CellNode
 }
 
 type RowAppend = {
   afterRowPath: Path
-  row: Row
+  row: RowNode
 }
 
 type Distribution = {
@@ -146,8 +146,13 @@ export const pasteBehaviors = [
 
 function planDistribution(
   snapshot: EditorSnapshot,
-  fragment: Table,
-  anchor: {table: Table; tablePath: Path; rowIndex: number; colIndex: number},
+  fragment: TableNode,
+  anchor: {
+    table: TableNode
+    tablePath: Path
+    rowIndex: number
+    colIndex: number
+  },
 ): Distribution | false {
   const keyGenerator = snapshot.context.keyGenerator
   const fragmentColCount = Math.max(
@@ -205,7 +210,7 @@ function planDistribution(
     blocks: Array<PortableTextBlock>
   }> = []
 
-  const buildCell = (fragmentCell: Cell | undefined): Cell => ({
+  const buildCell = (fragmentCell: CellNode | undefined): CellNode => ({
     _type: 'cell',
     _key: keyGenerator(),
     value: fragmentCell
@@ -222,7 +227,7 @@ function planDistribution(
     const existingRow = anchor.table.rows[rowIndex]
 
     if (!existingRow) {
-      const row: Row = {
+      const row: RowNode = {
         _type: 'row',
         _key: keyGenerator(),
         cells: [],
@@ -346,7 +351,7 @@ function emptyBlock(keyGenerator: () => string): PortableTextBlock {
 function tableFragment(
   snapshot: EditorSnapshot,
   dataTransfer: DataTransfer,
-): Table | undefined {
+): TableNode | undefined {
   const data = dataTransfer.getData('application/x-portable-text')
   if (!data) {
     return undefined
@@ -389,7 +394,7 @@ function tableFragment(
  */
 function resolveAnchorCell(snapshot: EditorSnapshot):
   | {
-      table: Table
+      table: TableNode
       tablePath: Path
       rowIndex: number
       colIndex: number

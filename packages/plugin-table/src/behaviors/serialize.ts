@@ -2,7 +2,7 @@ import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveTableSelection} from '../get-table-selection'
-import type {Cell, Row, Table, TableSelection} from './types'
+import type {CellNode, RowNode, TableNode, TableSelection} from './types'
 
 type SerializeDataResult = ReturnType<
   EditorSnapshot['context']['converters'][number]['serialize']
@@ -100,10 +100,13 @@ export const serializeBehaviors = [
   }),
 ]
 
-function sliceTable(table: Table, tableSelection: TableSelection): Table {
+function sliceTable(
+  table: TableNode,
+  tableSelection: TableSelection,
+): TableNode {
   const [rowStart, rowEnd] = tableSelection.rowRange
   const [colStart, colEnd] = tableSelection.colRange
-  const sliced: Table = {
+  const sliced: TableNode = {
     ...table,
     rows: table.rows.slice(rowStart, rowEnd + 1).map((row) => ({
       ...row,
@@ -122,13 +125,13 @@ function sliceTable(table: Table, tableSelection: TableSelection): Table {
   return sliced
 }
 
-function tableToTsv(table: Table): string {
+function tableToTsv(table: TableNode): string {
   return table.rows
     .map((row) => row.cells.map((cell) => cellText(cell)).join('\t'))
     .join('\n')
 }
 
-function cellText(cell: Cell): string {
+function cellText(cell: CellNode): string {
   return (
     cell.value
       .map((block) =>
@@ -148,7 +151,7 @@ function cellText(cell: Cell): string {
   )
 }
 
-function cellPath(table: Table, row: Row, cell: Cell): Path {
+function cellPath(table: TableNode, row: RowNode, cell: CellNode): Path {
   return [
     {_key: table._key},
     'rows',
