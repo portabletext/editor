@@ -1,6 +1,7 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
+import {splitNodePath} from '../engine/path/split-node-path'
 import {getChildren} from '../traversal/get-children'
 import {getNodes} from '../traversal/get-nodes'
 import {resolveChildEntryIndex} from '../traversal/resolve-child-entry-index'
@@ -172,9 +173,7 @@ function lastSpanIn(
  * `[block]`).
  */
 function nodeParentPath(path: Path): Path {
-  let end = path.length - 1
-  while (end > 0 && typeof path[end - 1] === 'string') {
-    end--
-  }
-  return path.slice(0, end)
+  // Drop the node's own segment, then its field-name trail: the owning
+  // node of what remains is the parent.
+  return splitNodePath(path.slice(0, -1)).nodePath
 }

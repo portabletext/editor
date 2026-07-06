@@ -4,12 +4,14 @@ import type {Node} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
 import {parentPath as getParentPath} from '../engine/path/parent-path'
+import {splitNodePath} from '../engine/path/split-node-path'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/container-types'
 import {getNodeChildren} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {BlockIndexMap} from './block-index-map'
 import {buildIndexMaps, collectDescendantIndexes} from './build-index-maps'
+import {getValue} from './get-value'
 
 /**
  * Context needed by the pure `transformBlockIndexMap` function. Pure
@@ -79,7 +81,7 @@ export function transformBlockIndexMap(
       }
       const lastSegment = op.path[op.path.length - 1]
       if (typeof lastSegment === 'string') {
-        if (hasKeyedEntries(resolveValueAtPath(beforeValue, op.path))) {
+        if (hasKeyedEntries(getValue(beforeValue, op.path))) {
           // The removed property held keyed nodes (a container field), so
           // their entries must be pruned.
           reconcileOwnerSubtree(map, context, beforeValue, afterValue, op.path)
@@ -135,7 +137,7 @@ export function transformBlockIndexMap(
         // replaced by a primitive).
         if (
           (op.value !== null && typeof op.value === 'object') ||
-          hasKeyedEntries(resolveValueAtPath(beforeValue, op.path))
+          hasKeyedEntries(getValue(beforeValue, op.path))
         ) {
           reconcileOwnerSubtree(map, context, beforeValue, afterValue, op.path)
         }
@@ -479,41 +481,12 @@ function reconcileOwnerSubtree(
   afterValue: ReadonlyArray<Node>,
   propertyPath: Path,
 ): void {
-  let ownerPathEnd = propertyPath.length
-  while (
-    ownerPathEnd > 0 &&
-    typeof propertyPath[ownerPathEnd - 1] === 'string'
-  ) {
-    ownerPathEnd--
-  }
-  if (ownerPathEnd === 0) {
+  const ownerPath = splitNodePath(propertyPath).nodePath
+  if (ownerPath.length === 0) {
     return
   }
-  const ownerPath = propertyPath.slice(0, ownerPathEnd)
   pruneSubtreeAtPath(map, beforeValue, ownerPath, /*keepSelf*/ true)
   addSubtree(map, context, afterValue, ownerPath)
-}
-
-/**
- * Resolve the raw value at `path`, following keyed/numeric node
- * segments and a trailing run of property-name segments.
- */
-function resolveValueAtPath(value: ReadonlyArray<Node>, path: Path): unknown {
-  let nodePathEnd = path.length
-  while (nodePathEnd > 0 && typeof path[nodePathEnd - 1] === 'string') {
-    nodePathEnd--
-  }
-  if (nodePathEnd === 0) {
-    return undefined
-  }
-  let current: unknown = resolveNodeAtPath(value, path.slice(0, nodePathEnd))
-  for (let i = nodePathEnd; i < path.length; i++) {
-    if (current === null || typeof current !== 'object') {
-      return undefined
-    }
-    current = (current as Record<string, unknown>)[path[i] as string]
-  }
-  return current
 }
 
 function hasKeyedEntries(value: unknown): boolean {
