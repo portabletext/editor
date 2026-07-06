@@ -572,6 +572,7 @@ export function TableTrashLayer({
   onDeleteRow,
   onDeleteCol,
   portalElement,
+  trashIcon,
 }: {
   tableRef: RefObject<HTMLTableElement | null>
   metrics: TableMetrics | null
@@ -587,6 +588,8 @@ export function TableTrashLayer({
    * chrome joins the host's stacking context and inherits its styling scope.
    */
   portalElement?: HTMLElement | null
+  /** Replaces the built-in trash icon (host design systems pass their own). */
+  trashIcon?: ReactNode
 }): JSX.Element | null {
   const [layout, setLayout] = useState<TrashLayout | null>(null)
 
@@ -634,6 +637,7 @@ export function TableTrashLayer({
     <div className="pt-plugin-table-portal">
       {layout.row && selectedRow !== null ? (
         <TrashButton
+          icon={trashIcon}
           label="Delete row"
           left={layout.row.left}
           top={layout.row.top}
@@ -643,6 +647,7 @@ export function TableTrashLayer({
       ) : null}
       {layout.col && selectedCol !== null ? (
         <TrashButton
+          icon={trashIcon}
           label="Delete column"
           left={layout.col.left}
           top={layout.col.top}
@@ -656,12 +661,14 @@ export function TableTrashLayer({
 }
 
 function TrashButton({
+  icon,
   label,
   left,
   top,
   transform,
   onClick,
 }: {
+  icon?: ReactNode
   label: string
   left: number
   top: number
@@ -680,6 +687,7 @@ function TrashButton({
         onClick()
       }}
       style={{
+        fontSize: 15,
         position: 'fixed',
         left,
         top,
@@ -701,7 +709,7 @@ function TrashButton({
         transition: 'background 100ms ease',
       }}
     >
-      <Trash2Icon size={14} />
+      {icon ?? <Trash2Icon size={14} />}
     </button>
   )
 }
