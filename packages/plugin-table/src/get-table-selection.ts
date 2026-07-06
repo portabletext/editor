@@ -19,7 +19,7 @@ import {
  * - either endpoint is outside any cell
  * - endpoints resolve to cells in different tables
  *
- * @alpha
+ * @public
  */
 export function getTableSelection(
   snapshot: EditorSnapshot,

@@ -37,7 +37,7 @@ import {
  * What the `renderMenu` slot receives: the menu's state and actions. The
  * widget itself (trigger, popover, items) is entirely consumer-rendered.
  *
- * @alpha
+ * @public
  */
 export type TableMenuProps = TableMenuHandlers & {
   /** Report the widget's open state so the anchor stays visible while open. */
@@ -90,7 +90,7 @@ const TableDragContext = createContext<{
  * from the node it renders, so it works under renamed types without extra
  * wiring.
  *
- * @alpha
+ * @public
  */
 export function Table({
   attributes,
@@ -535,7 +535,7 @@ export function Table({
 /**
  * The reference render for the `row` container.
  *
- * @alpha
+ * @public
  */
 export function TableRow({
   attributes,
@@ -564,7 +564,7 @@ type CellDescriptor = {
  * outline + overlay per cell. Position and header state come from resolving
  * the cell -> row -> table by path.
  *
- * @alpha
+ * @public
  */
 export function TableCell({
   attributes,

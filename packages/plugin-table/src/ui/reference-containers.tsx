@@ -14,7 +14,7 @@ import {Table, TableCell, TableRow} from './table-render'
  * export const table = defineTable({containers: referenceContainers})
  * ```
  *
- * @alpha
+ * @public
  */
 export const referenceContainers: TableContainers = {
   table: defineContainer({

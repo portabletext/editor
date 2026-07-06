@@ -8,7 +8,7 @@ const defaultTable = defineTable()
  * -> `cell` containers with bare renders and mounts the table behaviors.
  * Equivalent to `defineTable().Plugin`.
  *
- * @alpha
+ * @public
  */
 export function TablePlugin(): JSX.Element {
   return <defaultTable.Plugin />
@@ -20,6 +20,6 @@ export function TablePlugin(): JSX.Element {
  * `NodePlugin` containers) can add them with a
  * `<BehaviorPlugin behaviors={tableBehaviors} />` instead of `TablePlugin`.
  *
- * @alpha
+ * @public
  */
 export const tableBehaviors = defaultTable.behaviors
