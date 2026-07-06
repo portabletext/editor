@@ -9,6 +9,21 @@ import type {ChildArrayField} from './container-types'
  */
 const PRIMITIVE_TYPES = new Set(['string', 'number', 'boolean'])
 
+/**
+ * Why a container registration failed to resolve against the schema.
+ * Carried out of {@link resolveContainerFieldResolution} so the caller
+ * can warn (or throw) with a message that names the actual problem.
+ */
+export type ContainerFieldFailure =
+  | 'unknown-type'
+  | 'field-missing'
+  | 'field-not-array'
+  | 'field-primitive-only'
+
+export type ContainerFieldResolution =
+  | {field: ChildArrayField}
+  | {failure: ContainerFieldFailure}
+
 function isChildArrayField(field: FieldDefinition): field is ChildArrayField {
   return field.type === 'array' && 'of' in field && Array.isArray(field.of)
 }
@@ -27,20 +42,19 @@ function synthesizeBlockChildrenField(schema: EditorSchema): ChildArrayField {
 
 function resolveFieldOn(
   fields: ReadonlyArray<FieldDefinition>,
-  type: string,
   fieldName: string,
-): ChildArrayField | undefined {
+): ContainerFieldResolution {
   const field = fields.find((candidate) => candidate.name === fieldName)
-  if (!field || !isChildArrayField(field)) {
-    return undefined
+  if (!field) {
+    return {failure: 'field-missing'}
+  }
+  if (!isChildArrayField(field)) {
+    return {failure: 'field-not-array'}
   }
   if (containsOnlyPrimitiveTypes(field)) {
-    console.warn(
-      `Field '${field.name}' on '${type}' doesn't contain block or container types and will be excluded`,
-    )
-    return undefined
+    return {failure: 'field-primitive-only'}
   }
-  return field
+  return {field}
 }
 
 function findInlineDeclarationIn(
@@ -112,9 +126,8 @@ function findInlineFields(
 
 /**
  * Resolve the {@link ChildArrayField} on a schema for a container
- * registration. Returns `undefined` when the registration is invalid:
- * unknown type, missing field, non-array field, or primitive-only array
- * field.
+ * registration, or report why the registration is invalid: unknown
+ * type, missing field, non-array field, or primitive-only array field.
  *
  * Resolves the type by looking at:
  *   1. The synthesized `block` container (text blocks; field is
@@ -127,23 +140,25 @@ function findInlineFields(
  * Among inline declarations of the same name at multiple depths, prefers
  * the shape with the matching field (rejecting empty-fields placeholders).
  */
-export function resolveContainerField(
+export function resolveContainerFieldResolution(
   schema: EditorSchema,
   type: string,
   fieldName: string,
   parentOf?: ReadonlyArray<OfDefinition>,
-): ChildArrayField | undefined {
+): ContainerFieldResolution {
   if (type === 'block') {
     if (fieldName !== 'children') {
-      return undefined
+      // Text blocks have exactly one child array. Any other field name is
+      // a field mistake, not a type mistake.
+      return {failure: 'field-missing'}
     }
-    return synthesizeBlockChildrenField(schema)
+    return {field: synthesizeBlockChildrenField(schema)}
   }
 
   if (parentOf) {
     const inlineMatch = findInlineDeclarationIn(parentOf, type)
     if (inlineMatch) {
-      return resolveFieldOn(inlineMatch, type, fieldName)
+      return resolveFieldOn(inlineMatch, fieldName)
     }
   }
 
@@ -162,8 +177,32 @@ export function resolveContainerField(
 
   const fields = rootFields ?? inlineFields
   if (!fields) {
-    return undefined
+    if (rootMatch) {
+      // The type exists in the schema but declares no fields, so the
+      // problem to report is the field, not the type.
+      return {failure: 'field-missing'}
+    }
+    return {failure: 'unknown-type'}
   }
 
-  return resolveFieldOn(fields, type, fieldName)
+  return resolveFieldOn(fields, fieldName)
+}
+
+/**
+ * Convenience wrapper over {@link resolveContainerFieldResolution} for
+ * callers that only need the field and not the failure reason.
+ */
+export function resolveContainerField(
+  schema: EditorSchema,
+  type: string,
+  fieldName: string,
+  parentOf?: ReadonlyArray<OfDefinition>,
+): ChildArrayField | undefined {
+  const resolution = resolveContainerFieldResolution(
+    schema,
+    type,
+    fieldName,
+    parentOf,
+  )
+  return 'field' in resolution ? resolution.field : undefined
 }

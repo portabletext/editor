@@ -11,7 +11,10 @@ import type {
 } from '../renderers/renderer.types'
 import {buildPublicContainers} from './build-public-containers'
 import type {Containers, ResolvedContainers} from './container-types'
-import {resolveContainerField} from './resolve-container-field'
+import {
+  resolveContainerFieldResolution,
+  type ContainerFieldFailure,
+} from './resolve-container-field'
 
 /**
  * Test helper: resolve a list of top-level container registrations into
@@ -73,24 +76,25 @@ export function resolveNestedContainer(
   onFailure: 'warn' | 'throw' = 'warn',
   parentOf?: ReadonlyArray<OfDefinition>,
 ): ContainerConfig | undefined {
-  const field = resolveContainerField(
+  const resolution = resolveContainerFieldResolution(
     schema,
     container.type,
     container.arrayField,
     parentOf,
   )
-  if (!field) {
+  if ('failure' in resolution) {
     const location =
       chain.length > 0
         ? ` (nested inside ${chain.map((type) => `"${type}"`).join(' inside ')})`
         : ''
-    const message = `registerNode: field "${container.arrayField}" not found on type "${container.type}"${location}. Registration skipped.`
+    const message = `registerNode: ${describeContainerFailure(resolution.failure, container)}${location}. Registration skipped.`
     if (onFailure === 'throw') {
       throw new Error(message)
     }
     console.warn(message)
     return undefined
   }
+  const field = resolution.field
   const nextChain = [...chain, container.type]
   const resolvedOf = container.of
     ? container.of.flatMap<
@@ -113,6 +117,22 @@ export function resolveNestedContainer(
       })
     : undefined
   return {container, field, ...(resolvedOf ? {of: resolvedOf} : {})}
+}
+
+function describeContainerFailure(
+  failure: ContainerFieldFailure,
+  container: PublicContainer,
+): string {
+  switch (failure) {
+    case 'unknown-type':
+      return `type "${container.type}" not found in the schema`
+    case 'field-missing':
+      return `field "${container.arrayField}" not found on type "${container.type}"`
+    case 'field-not-array':
+      return `field "${container.arrayField}" on type "${container.type}" is not an array`
+    case 'field-primitive-only':
+      return `field "${container.arrayField}" on type "${container.type}" contains only primitive types and cannot hold block content`
+  }
 }
 
 /**
