@@ -26,6 +26,27 @@ export const defaultTableConfig: TableConfig = {
 }
 
 /**
+ * Every `defineTable` call registers its derived config here so the
+ * reference UI components can resolve the configuration governing the node
+ * they render from its `_type` alone. React context cannot carry it: the
+ * plugin mounts as a sibling of `PortableTextEditable`, outside the render
+ * tree the container renders live in. Type names are the identity, so a
+ * later definition reusing a type name replaces the earlier entry.
+ */
+const registeredConfigs: Array<TableConfig> = []
+
+export function registerTableConfig(config: TableConfig): void {
+  const existingIndex = registeredConfigs.findIndex(
+    (candidate) => candidate.tableType === config.tableType,
+  )
+  if (existingIndex === -1) {
+    registeredConfigs.push(config)
+  } else {
+    registeredConfigs[existingIndex] = config
+  }
+}
+
+/**
  * Node guards bound to a configuration.
  */
 export function createTableGuards(config: TableConfig): {

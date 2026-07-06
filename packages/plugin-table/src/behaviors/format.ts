@@ -11,7 +11,7 @@ import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {isEqualSelectionPoints} from '@portabletext/editor/utils'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {memberCells, resolveTableSelection} from '../get-table-selection'
-import {defaultTableConfig, type TableConfig} from '../table-config'
+import type {TableConfig} from '../table-config'
 
 type Ranges = Array<NonNullable<EditorSelection>>
 
@@ -237,8 +237,6 @@ export function createFormatBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const formatBehaviors = createFormatBehaviors(defaultTableConfig)
 
 /**
  * Re-raise the event once per member cell. No aggregate is involved: add

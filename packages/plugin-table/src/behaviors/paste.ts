@@ -13,7 +13,6 @@ import {resolveCell} from '../resolve-cell'
 import {
   cellValue,
   createTableGuards,
-  defaultTableConfig,
   rowCells,
   tableRows,
   type TableConfig,
@@ -155,8 +154,6 @@ export function createPasteBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const pasteBehaviors = createPasteBehaviors(defaultTableConfig)
 
 function planDistribution(
   config: TableConfig,

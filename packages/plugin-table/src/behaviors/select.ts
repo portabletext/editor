@@ -2,11 +2,7 @@ import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {comparePoints, getEnclosingBlock} from '@portabletext/editor/traversal'
 import {isEqualPaths} from '@portabletext/editor/utils'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
-import {
-  createTableGuards,
-  defaultTableConfig,
-  type TableConfig,
-} from '../table-config'
+import {createTableGuards, type TableConfig} from '../table-config'
 
 /**
  * Clamps selections that stray into the table's chrome band. During a drag
@@ -93,5 +89,3 @@ export function createSelectBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const selectBehaviors = createSelectBehaviors(defaultTableConfig)

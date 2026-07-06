@@ -13,7 +13,6 @@ import {
 } from '@portabletext/editor/traversal'
 import {
   createTableGuards,
-  defaultTableConfig,
   rowCells,
   tableRows,
   type TableConfig,
@@ -265,5 +264,3 @@ export function createUnsetBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const unsetBehaviors = createUnsetBehaviors(defaultTableConfig)

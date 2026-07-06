@@ -97,11 +97,11 @@ const schemaDefinition = defineSchema({
 ```
 
 Keeping the schema and the table definition in agreement is your
-responsibility. In development the editor warns when a registered container
-type or its array field is missing from the schema, and the plugin warns
-when the table type lacks the `headerRows` or `alignment` fields, so
-disagreement surfaces as a named warning instead of silently no-oping
-edits.
+responsibility; the editor warns and skips the registration when a
+registered container type or its array field is missing from the schema.
+The `headerRows` and `alignment` fields are optional: a schema that omits
+them simply has no header styling or column alignment, so leave them out
+along with the UI that drives them if you don't need the features.
 
 That's the whole setup. Insert a `table` block and you have tables.
 
@@ -265,7 +265,7 @@ To read the current rectangle, the table definition carries a selector:
 
 ```ts
 const tableSelection = table.getTableSelection(editor.getSnapshot())
-// null, or:
+// undefined, or:
 // {
 //   tablePath: Path
 //   rowRange: [number, number]
@@ -273,8 +273,8 @@ const tableSelection = table.getTableSelection(editor.getSnapshot())
 // }
 ```
 
-It returns `null` unless the selection spans more than one cell of one
-table. The reference UI paints its selection overlay from this selector
+It returns `undefined` unless the selection spans more than one cell of
+one table. The reference UI paints its selection overlay from this selector
 (through `useEditorSelector`); anything else that needs rectangle awareness
 reads the same source. It also carries the node guards `table.isTable`,
 `table.isRow`, and `table.isCell`, which narrow to the `TableNode`,
