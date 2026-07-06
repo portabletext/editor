@@ -1,7 +1,7 @@
 import {useLayoutEffect, useState, type RefObject} from 'react'
 
 /** Round to device pixels so 1px borders and small dots stay crisp. */
-export function snapPx(px: number): number {
+function snapPx(px: number): number {
   if (typeof window === 'undefined') {
     return px
   }
