@@ -42,6 +42,21 @@ export const serializeBehaviors = [
       }
 
       const rectangle = sliceTable(resolved.table.node, resolved.tableSelection)
+
+      if (event.mimeType === 'text/plain') {
+        // The plain-text converter flattens the linear fragment and comes up
+        // empty for a doctored table snapshot, and a rectangle has a better
+        // plain-text form anyway: the spreadsheet convention, cells joined by
+        // tabs and rows by newlines, which pastes straight into Sheets and
+        // Excel.
+        return {
+          type: 'serialization.success' as const,
+          data: tableToTsv(rectangle),
+          mimeType: 'text/plain' as const,
+          originEvent: event.originEvent.type,
+        }
+      }
+
       const firstRow = rectangle.rows[0]
       const lastRow = rectangle.rows[rectangle.rows.length - 1]
       const firstCell = firstRow?.cells[0]
@@ -105,6 +120,32 @@ function sliceTable(table: Table, tableSelection: TableSelection): Table {
     sliced.alignment = table.alignment.slice(colStart, colEnd + 1)
   }
   return sliced
+}
+
+function tableToTsv(table: Table): string {
+  return table.rows
+    .map((row) => row.cells.map((cell) => cellText(cell)).join('\t'))
+    .join('\n')
+}
+
+function cellText(cell: Cell): string {
+  return (
+    cell.value
+      .map((block) =>
+        'children' in block && Array.isArray(block.children)
+          ? block.children
+              .map((child) =>
+                typeof child.text === 'string' ? child.text : '',
+              )
+              .join('')
+          : '',
+      )
+      .join(' ')
+      // Tabs and newlines inside cell text would corrupt the TSV shape;
+      // flatten them to spaces. Quote-escaping can come if spreadsheet
+      // round-trips demand it.
+      .replace(/[\t\n]/g, ' ')
+  )
 }
 
 function cellPath(table: Table, row: Row, cell: Cell): Path {

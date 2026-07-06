@@ -110,6 +110,52 @@ async function selectLeftColumn() {
 }
 
 describe('rectangular selection copy/cut', () => {
+  test('copying a column selection writes tab-separated text to `text/plain`', async () => {
+    const editor = await selectLeftColumn()
+    const dataTransfer = new DataTransfer()
+
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {selection: leftColumnSelection},
+    })
+
+    await vi.waitFor(() => {
+      // One column: rows joined by newlines, no tabs. A wider rectangle
+      // joins the cells of each row with tabs (the spreadsheet convention).
+      expect(dataTransfer.getData('text/plain')).toBe('A\nC')
+    })
+  })
+
+  test('copying the whole table writes rows of tab-joined cells to `text/plain`', async () => {
+    const wholeTableSelection = {
+      anchor: {path: spanPath('c00'), offset: 0},
+      focus: {path: spanPath('c11'), offset: 1},
+    }
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <TablePlugin />,
+    })
+    await userEvent.click(locator)
+    editor.send({type: 'select', at: wholeTableSelection})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
+    })
+    const dataTransfer = new DataTransfer()
+
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {selection: wholeTableSelection},
+    })
+
+    await vi.waitFor(() => {
+      expect(dataTransfer.getData('text/plain')).toBe('A\tB\nC\tD')
+    })
+  })
+
   test('copying a column selection serializes only the column', async () => {
     const editor = await selectLeftColumn()
     const dataTransfer = new DataTransfer()
