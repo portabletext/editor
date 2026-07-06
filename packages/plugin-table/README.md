@@ -276,8 +276,10 @@ the types in `defineTable` and your schema must declare the same names.
 
 ## Integrating it into a host app
 
-When tokens are not enough, the chrome has three integration points, passed
-as props where a container definition renders `Table`, the `render`
+Some integrations go beyond what CSS can restyle: mounting the chrome's
+popovers in your app's portal and layering system, rendering your design
+system's menu, using your icon set. For those, `Table` accepts three
+props, passed where a container definition renders it, the `render`
 callbacks from the previous section. Starting from `referenceContainers`,
 override just the table role, restating its canonical values (`type:
 'table'`, `arrayField: 'rows'`):
