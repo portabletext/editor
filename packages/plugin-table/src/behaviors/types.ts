@@ -1,18 +1,21 @@
 import type {Path, PortableTextBlock} from '@portabletext/editor'
+import {createTableGuards, defaultTableConfig} from '../table-config'
 
 /**
+ * A cell node in the table's value. The content array's field name is
+ * configurable (see `defineTable`), so structural reads go through the
+ * config-bound accessors rather than properties.
+ *
  * @alpha
  */
-export type CellNode = {
-  _type: 'cell'
-  _key: string
-  value: Array<PortableTextBlock>
-}
+export type CellNode = PortableTextBlock & {_key: string}
 
 /**
+ * A row node in the table's value.
+ *
  * @alpha
  */
-export type RowNode = PortableTextBlock & {_type: 'row'; cells: Array<CellNode>}
+export type RowNode = PortableTextBlock & {_key: string}
 
 /**
  * Per-column alignment, positional (array index = column index). `null` is an
@@ -23,38 +26,37 @@ export type RowNode = PortableTextBlock & {_type: 'row'; cells: Array<CellNode>}
 export type ColumnAlignment = 'left' | 'center' | 'right' | null
 
 /**
+ * A table node in the value. `headerRows` and `alignment` are fixed field
+ * names regardless of configuration.
+ *
  * @alpha
  */
 export type TableNode = PortableTextBlock & {
-  _type: 'table'
-  rows: Array<RowNode>
+  _key: string
   alignment?: Array<ColumnAlignment>
   /** Number of leading rows that are header rows. */
   headerRows?: number
 }
 
-/**
- * @alpha
- */
-export function isRow(node: PortableTextBlock): node is RowNode {
-  // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
-  return node._type === 'row' && 'cells' in node && Array.isArray(node['cells'])
-}
+const defaultGuards = createTableGuards(defaultTableConfig)
 
 /**
  * @alpha
  */
-export function isCell(node: PortableTextBlock): node is CellNode {
-  return node._type === 'cell'
-}
+export const isTable: (node: PortableTextBlock) => node is TableNode =
+  defaultGuards.isTable
 
 /**
  * @alpha
  */
-export function isTable(node: PortableTextBlock): node is TableNode {
-  // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
-  return node._type === 'table' && 'rows' in node && Array.isArray(node['rows'])
-}
+export const isRow: (node: PortableTextBlock) => node is RowNode =
+  defaultGuards.isRow
+
+/**
+ * @alpha
+ */
+export const isCell: (node: PortableTextBlock) => node is CellNode =
+  defaultGuards.isCell
 
 /**
  * @alpha

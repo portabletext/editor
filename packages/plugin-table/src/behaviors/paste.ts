@@ -11,12 +11,14 @@ import {getBlockEndPoint, getBlockStartPoint} from '@portabletext/editor/utils'
 import {getTableSelection} from '../get-table-selection'
 import {resolveCell} from '../resolve-cell'
 import {
-  isTable,
-  type CellNode,
-  type ColumnAlignment,
-  type RowNode,
-  type TableNode,
-} from './types'
+  cellValue,
+  createTableGuards,
+  defaultTableConfig,
+  rowCells,
+  tableRows,
+  type TableConfig,
+} from '../table-config'
+import type {CellNode, ColumnAlignment, RowNode, TableNode} from './types'
 
 type CellReplacement = {
   cellPath: Path
@@ -53,98 +55,111 @@ type Distribution = {
  * to the editor's paste handling, which replaces the rectangle through the
  * `delete` decomposition.
  */
-export const pasteBehaviors = [
-  defineBehavior<Record<string, never>, 'clipboard.paste', Distribution>({
-    on: 'clipboard.paste',
-    guard: ({snapshot, event}) => {
-      const fragment = tableFragment(snapshot, event.originEvent.dataTransfer)
-      if (!fragment) {
-        return false
-      }
-      const anchor = resolveAnchorCell(snapshot)
-      if (!anchor) {
-        return false
-      }
-      return planDistribution(snapshot, fragment, anchor)
-    },
-    actions: [
-      (
-        _,
-        {
-          replacements,
-          cellAppends,
-          rowAppends,
-          grownAlignment,
-          tablePath,
-          selection,
-        },
-      ) => [
-        ...cellAppends.map((append) =>
-          raise({
-            type: 'insert' as const,
-            at: append.afterCellPath,
-            value: append.cell,
-            position: 'after' as const,
-          }),
-        ),
-        ...rowAppends.map((append) =>
-          raise({
-            type: 'insert' as const,
-            at: append.afterRowPath,
-            value: append.row,
-            position: 'after' as const,
-          }),
-        ),
-        ...replacements.flatMap((replacement) => {
-          const lastOriginalKey =
-            replacement.originalBlockKeys[
-              replacement.originalBlockKeys.length - 1
+export function createPasteBehaviors(config: TableConfig) {
+  return [
+    defineBehavior<Record<string, never>, 'clipboard.paste', Distribution>({
+      on: 'clipboard.paste',
+      guard: ({snapshot, event}) => {
+        const fragment = tableFragment(
+          config,
+          snapshot,
+          event.originEvent.dataTransfer,
+        )
+        if (!fragment) {
+          return false
+        }
+        const anchor = resolveAnchorCell(config, snapshot)
+        if (!anchor) {
+          return false
+        }
+        return planDistribution(config, snapshot, fragment, anchor)
+      },
+      actions: [
+        (
+          _,
+          {
+            replacements,
+            cellAppends,
+            rowAppends,
+            grownAlignment,
+            tablePath,
+            selection,
+          },
+        ) => [
+          ...cellAppends.map((append) =>
+            raise({
+              type: 'insert' as const,
+              at: append.afterCellPath,
+              value: append.cell,
+              position: 'after' as const,
+            }),
+          ),
+          ...rowAppends.map((append) =>
+            raise({
+              type: 'insert' as const,
+              at: append.afterRowPath,
+              value: append.row,
+              position: 'after' as const,
+            }),
+          ),
+          ...replacements.flatMap((replacement) => {
+            const lastOriginalKey =
+              replacement.originalBlockKeys[
+                replacement.originalBlockKeys.length - 1
+              ]
+            if (lastOriginalKey === undefined) {
+              return []
+            }
+            return [
+              ...replacement.blocks.map((block, index) =>
+                raise({
+                  type: 'insert' as const,
+                  at: [
+                    ...replacement.cellPath,
+                    config.valueField,
+                    {
+                      _key:
+                        index === 0
+                          ? lastOriginalKey
+                          : (replacement.blocks[index - 1]?._key as string),
+                    },
+                  ],
+                  value: block,
+                  position: 'after' as const,
+                }),
+              ),
+              ...replacement.originalBlockKeys.map((blockKey) =>
+                raise({
+                  type: 'unset' as const,
+                  at: [
+                    ...replacement.cellPath,
+                    config.valueField,
+                    {_key: blockKey},
+                  ],
+                }),
+              ),
             ]
-          if (lastOriginalKey === undefined) {
-            return []
-          }
-          return [
-            ...replacement.blocks.map((block, index) =>
-              raise({
-                type: 'insert' as const,
-                at: [
-                  ...replacement.cellPath,
-                  'value',
-                  {
-                    _key:
-                      index === 0
-                        ? lastOriginalKey
-                        : (replacement.blocks[index - 1]?._key as string),
-                  },
-                ],
-                value: block,
-                position: 'after' as const,
-              }),
-            ),
-            ...replacement.originalBlockKeys.map((blockKey) =>
-              raise({
-                type: 'unset' as const,
-                at: [...replacement.cellPath, 'value', {_key: blockKey}],
-              }),
-            ),
-          ]
-        }),
-        ...(grownAlignment
-          ? [
-              raise({
-                type: 'block.set' as const,
-                at: tablePath,
-                props: {alignment: grownAlignment},
-              }),
-            ]
-          : []),
-        raise({type: 'select', at: selection}),
+          }),
+          ...(grownAlignment
+            ? [
+                raise({
+                  type: 'block.set' as const,
+                  at: tablePath,
+                  props: {alignment: grownAlignment},
+                }),
+              ]
+            : []),
+          raise({type: 'select', at: selection}),
+        ],
       ],
-    ],
-  }),
-]
+    }),
+  ]
+}
+
+export const pasteBehaviors = createPasteBehaviors(defaultTableConfig)
 
 function planDistribution(
+  config: TableConfig,
   snapshot: EditorSnapshot,
   fragment: TableNode,
   anchor: {
@@ -155,33 +170,35 @@ function planDistribution(
   },
 ): Distribution | false {
   const keyGenerator = snapshot.context.keyGenerator
+  const fragmentRows = tableRows(config, fragment)
+  const anchorRows = tableRows(config, anchor.table)
   const fragmentColCount = Math.max(
-    ...fragment.rows.map((row) => row.cells.length),
+    ...fragmentRows.map((row) => rowCells(config, row).length),
   )
   const tableColCount = Math.max(
-    ...anchor.table.rows.map((row) => row.cells.length),
+    ...anchorRows.map((row) => rowCells(config, row).length),
   )
   const grownColCount = Math.max(
     tableColCount,
     anchor.colIndex + fragmentColCount,
   )
   const grownRowCount = Math.max(
-    anchor.table.rows.length,
-    anchor.rowIndex + fragment.rows.length,
+    anchorRows.length,
+    anchor.rowIndex + fragmentRows.length,
   )
 
   // The deserializing converter is deliberately lenient (`validateFields:
   // false`), and the distribution applies content through raw `insert`
   // primitives, so the plugin is the last line of defense: only block types
   // the cell's sub-schema declares may land in a cell.
-  const firstRow = anchor.table.rows[0]
-  const firstCell = firstRow?.cells[0]
+  const firstRow = anchorRows[0]
+  const firstCell = firstRow ? rowCells(config, firstRow)[0] : undefined
   if (!firstRow || !firstCell) {
     return false
   }
   const cellSchema = getPathSubSchema(
     snapshot,
-    cellPathFor(anchor.tablePath, firstRow._key, firstCell._key),
+    cellPathFor(config, anchor.tablePath, firstRow._key, firstCell._key),
   )
   const allowedTypes = new Set([
     cellSchema.block.name,
@@ -189,17 +206,19 @@ function planDistribution(
   ])
 
   const contentAt = (rowIndex: number, colIndex: number) => {
-    const fragmentCell =
-      fragment.rows[rowIndex - anchor.rowIndex]?.cells[
-        colIndex - anchor.colIndex
-      ]
+    const fragmentRow = fragmentRows[rowIndex - anchor.rowIndex]
+    const fragmentCell = fragmentRow
+      ? rowCells(config, fragmentRow)[colIndex - anchor.colIndex]
+      : undefined
     if (!fragmentCell) {
       return undefined
     }
-    const blocks = fragmentCell.value.filter((block) =>
+    const blocks = cellValue(config, fragmentCell).filter((block) =>
       allowedTypes.has(block._type),
     )
-    return blocks.length > 0 ? {...fragmentCell, value: blocks} : undefined
+    return blocks.length > 0
+      ? ({...fragmentCell, [config.valueField]: blocks} as CellNode)
+      : undefined
   }
 
   const replacements: Array<CellReplacement> = []
@@ -211,62 +230,79 @@ function planDistribution(
   }> = []
 
   const buildCell = (fragmentCell: CellNode | undefined): CellNode => ({
-    _type: 'cell',
+    _type: config.cellType,
     _key: keyGenerator(),
-    value: fragmentCell
-      ? rekeyBlocks(keyGenerator, fragmentCell.value)
+    [config.valueField]: fragmentCell
+      ? rekeyBlocks(keyGenerator, cellValue(config, fragmentCell))
       : [emptyBlock(keyGenerator)],
   })
 
-  let previousRowKey = anchor.table.rows[anchor.table.rows.length - 1]?._key
+  let previousRowKey = anchorRows[anchorRows.length - 1]?._key
   if (previousRowKey === undefined) {
     return false
   }
 
   for (let rowIndex = 0; rowIndex < grownRowCount; rowIndex++) {
-    const existingRow = anchor.table.rows[rowIndex]
+    const existingRow = anchorRows[rowIndex]
 
     if (!existingRow) {
+      const newCells: Array<CellNode> = []
       const row: RowNode = {
-        _type: 'row',
+        _type: config.rowType,
         _key: keyGenerator(),
-        cells: [],
+        [config.cellsField]: newCells,
       }
       for (let colIndex = 0; colIndex < grownColCount; colIndex++) {
         const fragmentCell = contentAt(rowIndex, colIndex)
         const cellNode = buildCell(fragmentCell)
-        row.cells.push(cellNode)
+        newCells.push(cellNode)
         if (fragmentCell) {
           contentTargets.push({
-            cellPath: cellPathFor(anchor.tablePath, row._key, cellNode._key),
-            blocks: cellNode.value as Array<PortableTextBlock>,
+            cellPath: cellPathFor(
+              config,
+              anchor.tablePath,
+              row._key,
+              cellNode._key,
+            ),
+            blocks: cellValue(config, cellNode),
           })
         }
       }
       rowAppends.push({
-        afterRowPath: [...anchor.tablePath, 'rows', {_key: previousRowKey}],
+        afterRowPath: [
+          ...anchor.tablePath,
+          config.rowsField,
+          {_key: previousRowKey},
+        ],
         row,
       })
       previousRowKey = row._key
       continue
     }
 
-    let previousCellKey = existingRow.cells[existingRow.cells.length - 1]?._key
+    const existingCells = rowCells(config, existingRow)
+    let previousCellKey = existingCells[existingCells.length - 1]?._key
     for (let colIndex = 0; colIndex < grownColCount; colIndex++) {
       const fragmentCell = contentAt(rowIndex, colIndex)
-      const existingCell = existingRow.cells[colIndex]
+      const existingCell = existingCells[colIndex]
 
       if (existingCell) {
         if (fragmentCell) {
-          const blocks = rekeyBlocks(keyGenerator, fragmentCell.value)
+          const blocks = rekeyBlocks(
+            keyGenerator,
+            cellValue(config, fragmentCell),
+          )
           const cellPath = cellPathFor(
+            config,
             anchor.tablePath,
             existingRow._key,
             existingCell._key,
           )
           replacements.push({
             cellPath,
-            originalBlockKeys: existingCell.value.map((block) => block._key),
+            originalBlockKeys: cellValue(config, existingCell).map(
+              (block) => block._key,
+            ),
             blocks,
           })
           contentTargets.push({cellPath, blocks})
@@ -283,9 +319,9 @@ function planDistribution(
       cellAppends.push({
         afterCellPath: [
           ...anchor.tablePath,
-          'rows',
+          config.rowsField,
           {_key: existingRow._key},
-          'cells',
+          config.cellsField,
           {_key: previousCellKey},
         ],
         cell: cellNode,
@@ -294,17 +330,18 @@ function planDistribution(
       if (fragmentCell) {
         contentTargets.push({
           cellPath: cellPathFor(
+            config,
             anchor.tablePath,
             existingRow._key,
             cellNode._key,
           ),
-          blocks: cellNode.value as Array<PortableTextBlock>,
+          blocks: cellValue(config, cellNode),
         })
       }
     }
   }
 
-  const selection = pastedSelection(snapshot.context, contentTargets)
+  const selection = pastedSelection(config, snapshot.context, contentTargets)
   if (!selection) {
     return false
   }
@@ -327,8 +364,19 @@ function planDistribution(
   }
 }
 
-function cellPathFor(tablePath: Path, rowKey: string, cellKey: string): Path {
-  return [...tablePath, 'rows', {_key: rowKey}, 'cells', {_key: cellKey}]
+function cellPathFor(
+  config: TableConfig,
+  tablePath: Path,
+  rowKey: string,
+  cellKey: string,
+): Path {
+  return [
+    ...tablePath,
+    config.rowsField,
+    {_key: rowKey},
+    config.cellsField,
+    {_key: cellKey},
+  ]
 }
 
 function emptyBlock(keyGenerator: () => string): PortableTextBlock {
@@ -349,6 +397,7 @@ function emptyBlock(keyGenerator: () => string): PortableTextBlock {
  * The parser preserves existing keys, so re-keying stays a separate step.
  */
 function tableFragment(
+  config: TableConfig,
   snapshot: EditorSnapshot,
   dataTransfer: DataTransfer,
 ): TableNode | undefined {
@@ -374,17 +423,20 @@ function tableFragment(
     return undefined
   }
   const block = blocks[0]
+  const {isTable} = createTableGuards(config)
   if (!isTable(block)) {
     return undefined
   }
+  const blockRows = tableRows(config, block)
   const wellFormed =
-    block.rows.length > 0 &&
-    block.rows.every(
-      (row) =>
-        Array.isArray(row.cells) &&
-        row.cells.length > 0 &&
-        row.cells.every((cellNode) => Array.isArray(cellNode.value)),
-    )
+    blockRows.length > 0 &&
+    blockRows.every((row) => {
+      const cells = rowCells(config, row)
+      return (
+        cells.length > 0 &&
+        cells.every((cellNode) => Array.isArray(cellValue(config, cellNode)))
+      )
+    })
   return wellFormed ? block : undefined
 }
 
@@ -392,7 +444,10 @@ function tableFragment(
  * The cell the distribution starts from: the target rectangle's top-left,
  * or the caret's cell.
  */
-function resolveAnchorCell(snapshot: EditorSnapshot):
+function resolveAnchorCell(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+):
   | {
       table: TableNode
       tablePath: Path
@@ -400,11 +455,12 @@ function resolveAnchorCell(snapshot: EditorSnapshot):
       colIndex: number
     }
   | undefined {
-  const tableSelection = getTableSelection(snapshot)
+  const tableSelection = getTableSelection(snapshot, config)
   if (tableSelection) {
     const anchorCell = resolveCell(
       snapshot,
       snapshot.context.selection?.anchor.path ?? [],
+      config,
     )
     if (!anchorCell) {
       return undefined
@@ -423,14 +479,15 @@ function resolveAnchorCell(snapshot: EditorSnapshot):
   const caretCell = resolveCell(
     snapshot,
     snapshot.context.selection?.focus.path ?? [],
+    config,
   )
   if (!caretCell) {
     return undefined
   }
-  const rowIndex = caretCell.table.node.rows.findIndex(
+  const rowIndex = tableRows(config, caretCell.table.node).findIndex(
     (row) => row._key === caretCell.row.node._key,
   )
-  const colIndex = caretCell.row.node.cells.findIndex(
+  const colIndex = rowCells(config, caretCell.row.node).findIndex(
     (cellNode) => cellNode._key === caretCell.cell.node._key,
   )
   if (rowIndex === -1 || colIndex === -1) {
@@ -484,6 +541,7 @@ function rekeyBlocks(
 
 /** An expanded selection spanning the pasted cells leaf-to-leaf. */
 function pastedSelection(
+  config: TableConfig,
   context: EditorSnapshot['context'],
   targets: Array<{cellPath: Path; blocks: Array<PortableTextBlock>}>,
 ): NonNullable<EditorSelection> | undefined {
@@ -499,14 +557,14 @@ function pastedSelection(
       context,
       block: {
         node: firstBlock,
-        path: [...first.cellPath, 'value', {_key: firstBlock._key}],
+        path: [...first.cellPath, config.valueField, {_key: firstBlock._key}],
       },
     }),
     focus: getBlockEndPoint({
       context,
       block: {
         node: lastBlock,
-        path: [...last.cellPath, 'value', {_key: lastBlock._key}],
+        path: [...last.cellPath, config.valueField, {_key: lastBlock._key}],
       },
     }),
   }

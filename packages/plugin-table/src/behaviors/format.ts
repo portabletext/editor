@@ -11,6 +11,7 @@ import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {isEqualSelectionPoints} from '@portabletext/editor/utils'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {memberCells, resolveTableSelection} from '../get-table-selection'
+import {defaultTableConfig, type TableConfig} from '../table-config'
 
 type Ranges = Array<NonNullable<EditorSelection>>
 
@@ -41,180 +42,188 @@ type SelectedTextBlocks = ReturnType<typeof getSelectedTextBlocks>
  * decomposition terminates in path-addressed `block.set`/`block.unset`
  * primitives instead.
  */
-export const formatBehaviors = [
-  defineBehavior<
-    Record<string, never>,
-    'decorator.toggle',
-    RectangleFormatting
-  >({
-    on: 'decorator.toggle',
-    guard: ({snapshot, event}) => {
-      if (event.at) {
-        return false
-      }
-      const ranges = spanRanges(snapshot)
-      return ranges
-        ? resolveMembers(snapshot, ranges, isActiveDecorator(event.decorator))
-        : false
-    },
-    actions: [
-      ({event}, {members, active}) =>
-        // Toggling each member cell separately would checkerboard a mixed
-        // rectangle. Aggregate first: if any member cell misses the
-        // decorator, add it where missing, otherwise remove it everywhere.
-        members
-          .filter((member) => (active ? true : !member.active))
-          .map((member) =>
+export function createFormatBehaviors(config: TableConfig) {
+  return [
+    defineBehavior<
+      Record<string, never>,
+      'decorator.toggle',
+      RectangleFormatting
+    >({
+      on: 'decorator.toggle',
+      guard: ({snapshot, event}) => {
+        if (event.at) {
+          return false
+        }
+        const ranges = spanRanges(config, snapshot)
+        return ranges
+          ? resolveMembers(snapshot, ranges, isActiveDecorator(event.decorator))
+          : false
+      },
+      actions: [
+        ({event}, {members, active}) =>
+          // Toggling each member cell separately would checkerboard a mixed
+          // rectangle. Aggregate first: if any member cell misses the
+          // decorator, add it where missing, otherwise remove it everywhere.
+          members
+            .filter((member) => (active ? true : !member.active))
+            .map((member) =>
+              raise({
+                type: active ? 'decorator.remove' : 'decorator.add',
+                decorator: event.decorator,
+                at: member.range,
+              }),
+            ),
+      ],
+    }),
+    defineBehavior<
+      Record<string, never>,
+      'annotation.toggle',
+      RectangleFormatting
+    >({
+      on: 'annotation.toggle',
+      guard: ({snapshot, event}) => {
+        if (event.at) {
+          return false
+        }
+        const ranges = spanRanges(config, snapshot)
+        return ranges
+          ? resolveMembers(
+              snapshot,
+              ranges,
+              isActiveAnnotation(event.annotation.name),
+            )
+          : false
+      },
+      actions: [
+        ({event}, {members, active}) =>
+          // Unlike decorator marks, annotations are not set-semantic: every
+          // `annotation.add` mints a new markDef. The add branch must skip
+          // members that are already active, or a mixed rectangle would
+          // stack a second annotation onto them.
+          members
+            .filter((member) => (active ? true : !member.active))
+            .map((member) =>
+              active
+                ? raise({
+                    type: 'annotation.remove',
+                    annotation: {name: event.annotation.name},
+                    at: member.range,
+                  })
+                : raise({
+                    type: 'annotation.add',
+                    annotation: event.annotation,
+                    at: member.range,
+                  }),
+            ),
+      ],
+    }),
+    fanOutOverRectangle(config, 'decorator.add'),
+    fanOutOverRectangle(config, 'decorator.remove'),
+    fanOutOverRectangle(config, 'annotation.add'),
+    fanOutOverRectangle(config, 'annotation.remove'),
+    defineBehavior<Record<string, never>, 'style.toggle', {active: boolean}>({
+      on: 'style.toggle',
+      guard: ({snapshot, event}) => {
+        const ranges = rectangleRanges(config, snapshot)
+        return ranges
+          ? resolveMembers(snapshot, ranges, isActiveStyle(event.style))
+          : false
+      },
+      actions: [
+        ({event}, {active}) => [
+          // The re-raise is address-less and re-enters the interceptors
+          // below, which decompose it per member cell.
+          raise({
+            type: active ? 'style.remove' : 'style.add',
+            style: event.style,
+          }),
+        ],
+      ],
+    }),
+    defineBehavior<
+      Record<string, never>,
+      'list item.toggle',
+      {active: boolean}
+    >({
+      on: 'list item.toggle',
+      guard: ({snapshot, event}) => {
+        const ranges = rectangleRanges(config, snapshot)
+        return ranges
+          ? resolveMembers(snapshot, ranges, isActiveListItem(event.listItem))
+          : false
+      },
+      actions: [
+        ({event}, {active}) => [
+          raise({
+            type: active ? 'list item.remove' : 'list item.add',
+            listItem: event.listItem,
+          }),
+        ],
+      ],
+    }),
+    // Keep in sync with core's `behavior.abstract.style.ts`, which decomposes
+    // the selection-scoped style events into `block.set`/`block.unset` per
+    // selected text block. Here they decompose over the member cells' ranges
+    // instead of the linear selection.
+    defineBehavior<Record<string, never>, 'style.add', SelectedTextBlocks>({
+      on: 'style.add',
+      guard: ({snapshot}) => rectangleTextBlocks(config, snapshot),
+      actions: [
+        ({event}, blocks) =>
+          blocks.map((block) =>
             raise({
-              type: active ? 'decorator.remove' : 'decorator.add',
-              decorator: event.decorator,
-              at: member.range,
+              type: 'block.set',
+              at: block.path,
+              props: {style: event.style},
             }),
           ),
-    ],
-  }),
-  defineBehavior<
-    Record<string, never>,
-    'annotation.toggle',
-    RectangleFormatting
-  >({
-    on: 'annotation.toggle',
-    guard: ({snapshot, event}) => {
-      if (event.at) {
-        return false
-      }
-      const ranges = spanRanges(snapshot)
-      return ranges
-        ? resolveMembers(
-            snapshot,
-            ranges,
-            isActiveAnnotation(event.annotation.name),
-          )
-        : false
-    },
-    actions: [
-      ({event}, {members, active}) =>
-        // Unlike decorator marks, annotations are not set-semantic: every
-        // `annotation.add` mints a new markDef. The add branch must skip
-        // members that are already active, or a mixed rectangle would
-        // stack a second annotation onto them.
-        members
-          .filter((member) => (active ? true : !member.active))
-          .map((member) =>
-            active
-              ? raise({
-                  type: 'annotation.remove',
-                  annotation: {name: event.annotation.name},
-                  at: member.range,
-                })
-              : raise({
-                  type: 'annotation.add',
-                  annotation: event.annotation,
-                  at: member.range,
-                }),
+      ],
+    }),
+    defineBehavior<Record<string, never>, 'style.remove', SelectedTextBlocks>({
+      on: 'style.remove',
+      guard: ({snapshot}) => rectangleTextBlocks(config, snapshot),
+      actions: [
+        (_, blocks) =>
+          blocks.map((block) =>
+            raise({type: 'block.unset', at: block.path, props: ['style']}),
           ),
-    ],
-  }),
-  fanOutOverRectangle('decorator.add'),
-  fanOutOverRectangle('decorator.remove'),
-  fanOutOverRectangle('annotation.add'),
-  fanOutOverRectangle('annotation.remove'),
-  defineBehavior<Record<string, never>, 'style.toggle', {active: boolean}>({
-    on: 'style.toggle',
-    guard: ({snapshot, event}) => {
-      const ranges = rectangleRanges(snapshot)
-      return ranges
-        ? resolveMembers(snapshot, ranges, isActiveStyle(event.style))
-        : false
-    },
-    actions: [
-      ({event}, {active}) => [
-        // The re-raise is address-less and re-enters the interceptors
-        // below, which decompose it per member cell.
-        raise({
-          type: active ? 'style.remove' : 'style.add',
-          style: event.style,
-        }),
       ],
-    ],
-  }),
-  defineBehavior<Record<string, never>, 'list item.toggle', {active: boolean}>({
-    on: 'list item.toggle',
-    guard: ({snapshot, event}) => {
-      const ranges = rectangleRanges(snapshot)
-      return ranges
-        ? resolveMembers(snapshot, ranges, isActiveListItem(event.listItem))
-        : false
-    },
-    actions: [
-      ({event}, {active}) => [
-        raise({
-          type: active ? 'list item.remove' : 'list item.add',
-          listItem: event.listItem,
-        }),
+    }),
+    // Keep in sync with core's `behavior.abstract.list-item.ts`: adding only
+    // touches blocks whose sub-schema declares the list, removing unsets both
+    // `level` and `listItem`.
+    defineBehavior<Record<string, never>, 'list item.add', SelectedTextBlocks>({
+      on: 'list item.add',
+      guard: ({snapshot, event}) => {
+        const blocks = rectangleTextBlocks(config, snapshot)
+        if (!blocks) {
+          return false
+        }
+        const listBlocks = blocks.filter((block) =>
+          getPathSubSchema(snapshot, block.path).lists.some(
+            (list) => list.name === event.listItem,
+          ),
+        )
+        return listBlocks.length > 0 ? listBlocks : false
+      },
+      actions: [
+        ({event}, blocks) =>
+          blocks.map((block) =>
+            raise({
+              type: 'block.set',
+              at: block.path,
+              props: {level: block.node.level ?? 1, listItem: event.listItem},
+            }),
+          ),
       ],
-    ],
-  }),
-  // Keep in sync with core's `behavior.abstract.style.ts`, which decomposes
-  // the selection-scoped style events into `block.set`/`block.unset` per
-  // selected text block. Here they decompose over the member cells' ranges
-  // instead of the linear selection.
-  defineBehavior<Record<string, never>, 'style.add', SelectedTextBlocks>({
-    on: 'style.add',
-    guard: ({snapshot}) => rectangleTextBlocks(snapshot),
-    actions: [
-      ({event}, blocks) =>
-        blocks.map((block) =>
-          raise({
-            type: 'block.set',
-            at: block.path,
-            props: {style: event.style},
-          }),
-        ),
-    ],
-  }),
-  defineBehavior<Record<string, never>, 'style.remove', SelectedTextBlocks>({
-    on: 'style.remove',
-    guard: ({snapshot}) => rectangleTextBlocks(snapshot),
-    actions: [
-      (_, blocks) =>
-        blocks.map((block) =>
-          raise({type: 'block.unset', at: block.path, props: ['style']}),
-        ),
-    ],
-  }),
-  // Keep in sync with core's `behavior.abstract.list-item.ts`: adding only
-  // touches blocks whose sub-schema declares the list, removing unsets both
-  // `level` and `listItem`.
-  defineBehavior<Record<string, never>, 'list item.add', SelectedTextBlocks>({
-    on: 'list item.add',
-    guard: ({snapshot, event}) => {
-      const blocks = rectangleTextBlocks(snapshot)
-      if (!blocks) {
-        return false
-      }
-      const listBlocks = blocks.filter((block) =>
-        getPathSubSchema(snapshot, block.path).lists.some(
-          (list) => list.name === event.listItem,
-        ),
-      )
-      return listBlocks.length > 0 ? listBlocks : false
-    },
-    actions: [
-      ({event}, blocks) =>
-        blocks.map((block) =>
-          raise({
-            type: 'block.set',
-            at: block.path,
-            props: {level: block.node.level ?? 1, listItem: event.listItem},
-          }),
-        ),
-    ],
-  }),
-  defineBehavior<Record<string, never>, 'list item.remove', SelectedTextBlocks>(
-    {
+    }),
+    defineBehavior<
+      Record<string, never>,
+      'list item.remove',
+      SelectedTextBlocks
+    >({
       on: 'list item.remove',
-      guard: ({snapshot}) => rectangleTextBlocks(snapshot),
+      guard: ({snapshot}) => rectangleTextBlocks(config, snapshot),
       actions: [
         (_, blocks) =>
           blocks.map((block) =>
@@ -225,9 +234,11 @@ export const formatBehaviors = [
             }),
           ),
       ],
-    },
-  ),
-]
+    }),
+  ]
+}
+
+export const formatBehaviors = createFormatBehaviors(defaultTableConfig)
 
 /**
  * Re-raise the event once per member cell. No aggregate is involved: add
@@ -239,10 +250,11 @@ function fanOutOverRectangle<
     | 'decorator.remove'
     | 'annotation.add'
     | 'annotation.remove',
->(on: TEventType) {
+>(config: TableConfig, on: TEventType) {
   return defineBehavior<Record<string, never>, TEventType, Ranges>({
     on,
-    guard: ({snapshot, event}) => (event.at ? false : spanRanges(snapshot)),
+    guard: ({snapshot, event}) =>
+      event.at ? false : spanRanges(config, snapshot),
     actions: [
       ({event}, ranges) => ranges.map((range) => raise({...event, at: range})),
     ],
@@ -276,9 +288,10 @@ function resolveMembers(
  * formatting includes empty cells: their blocks are legitimately styleable.
  */
 function rectangleTextBlocks(
+  config: TableConfig,
   snapshot: EditorSnapshot,
 ): SelectedTextBlocks | false {
-  const ranges = rectangleRanges(snapshot)
+  const ranges = rectangleRanges(config, snapshot)
   if (!ranges) {
     return false
   }
@@ -296,8 +309,11 @@ function rectangleTextBlocks(
  * span-level to format in them, and span-level active selectors would read
  * the caret's mark state instead of the cell's content.
  */
-function spanRanges(snapshot: EditorSnapshot): Ranges | false {
-  const ranges = rectangleRanges(snapshot)
+function spanRanges(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+): Ranges | false {
+  const ranges = rectangleRanges(config, snapshot)
   if (!ranges) {
     return false
   }
@@ -311,8 +327,11 @@ function spanRanges(snapshot: EditorSnapshot): Ranges | false {
  * The content range of every member cell in the rectangle, or `false` when
  * the selection isn't a rectangle.
  */
-function rectangleRanges(snapshot: EditorSnapshot): Ranges | false {
-  const resolved = resolveTableSelection(snapshot)
+function rectangleRanges(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+): Ranges | false {
+  const resolved = resolveTableSelection(snapshot, config)
   if (!resolved) {
     return false
   }
@@ -321,6 +340,7 @@ function rectangleRanges(snapshot: EditorSnapshot): Ranges | false {
   for (const cell of memberCells(
     resolved.tableSelection,
     resolved.table.node,
+    config,
   )) {
     const anchor = cellStartPoint(snapshot, cell.path)
     const focus = cellEndPoint(snapshot, cell.path)

@@ -1,12 +1,14 @@
 import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {getEnclosingBlock} from '@portabletext/editor/traversal'
-import {
-  isTable,
-  type CellNode,
-  type TableNode,
-  type TableSelection,
-} from './behaviors/types'
+import type {CellNode, TableNode, TableSelection} from './behaviors/types'
 import {resolveCell} from './resolve-cell'
+import {
+  createTableGuards,
+  defaultTableConfig,
+  rowCells,
+  tableRows,
+  type TableConfig,
+} from './table-config'
 
 /**
  * Derives a rectangular table selection from the linear editor selection.
@@ -21,14 +23,15 @@ import {resolveCell} from './resolve-cell'
  */
 export function getTableSelection(
   snapshot: EditorSnapshot,
+  config: TableConfig = defaultTableConfig,
 ): TableSelection | undefined {
   const selection = snapshot.context.selection
   if (!selection) {
     return undefined
   }
 
-  const anchor = resolveCell(snapshot, selection.anchor.path)
-  const focus = resolveCell(snapshot, selection.focus.path)
+  const anchor = resolveCell(snapshot, selection.anchor.path, config)
+  const focus = resolveCell(snapshot, selection.focus.path, config)
   if (!anchor || !focus) {
     return undefined
   }
@@ -39,16 +42,17 @@ export function getTableSelection(
     return undefined
   }
 
-  const anchorRowIndex = anchor.table.node.rows.findIndex(
+  const rows = tableRows(config, anchor.table.node)
+  const anchorRowIndex = rows.findIndex(
     (row) => row._key === anchor.row.node._key,
   )
-  const focusRowIndex = anchor.table.node.rows.findIndex(
+  const focusRowIndex = rows.findIndex(
     (row) => row._key === focus.row.node._key,
   )
-  const anchorColIndex = anchor.row.node.cells.findIndex(
+  const anchorColIndex = rowCells(config, anchor.row.node).findIndex(
     (cell) => cell._key === anchor.cell.node._key,
   )
-  const focusColIndex = focus.row.node.cells.findIndex(
+  const focusColIndex = rowCells(config, focus.row.node).findIndex(
     (cell) => cell._key === focus.cell.node._key,
   )
   if (
@@ -85,13 +89,14 @@ export type ResolvedTableSelection = {
  */
 export function resolveTableSelection(
   snapshot: EditorSnapshot,
+  config: TableConfig = defaultTableConfig,
 ): ResolvedTableSelection | undefined {
-  const tableSelection = getTableSelection(snapshot)
+  const tableSelection = getTableSelection(snapshot, config)
   if (!tableSelection) {
     return undefined
   }
   const table = getEnclosingBlock(snapshot, tableSelection.tablePath, {
-    match: isTable,
+    match: createTableGuards(config).isTable,
   })
   if (!table) {
     return undefined
@@ -106,16 +111,17 @@ export function resolveTableSelection(
 export function* memberCells(
   tableSelection: TableSelection,
   table: TableNode,
+  config: TableConfig = defaultTableConfig,
 ): Generator<{node: CellNode; path: Path}> {
   const [rowStart, rowEnd] = tableSelection.rowRange
   const [colStart, colEnd] = tableSelection.colRange
   for (let rowIndex = rowStart; rowIndex <= rowEnd; rowIndex++) {
-    const row = table.rows[rowIndex]
+    const row = tableRows(config, table)[rowIndex]
     if (!row) {
       continue
     }
     for (let colIndex = colStart; colIndex <= colEnd; colIndex++) {
-      const cell = row.cells[colIndex]
+      const cell = rowCells(config, row)[colIndex]
       if (!cell) {
         continue
       }
@@ -123,9 +129,9 @@ export function* memberCells(
         node: cell,
         path: [
           ...tableSelection.tablePath,
-          'rows',
+          config.rowsField,
           {_key: row._key},
-          'cells',
+          config.cellsField,
           {_key: cell._key},
         ],
       }
