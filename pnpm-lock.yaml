@@ -744,12 +744,9 @@ importers:
 
   packages/plugin-character-pair-decorator:
     dependencies:
-      '@xstate/react':
-        specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.4)
-      xstate:
-        specifier: 'catalog:'
-        version: 5.32.4
+      '@portabletext/plugin-input-rule':
+        specifier: workspace:^
+        version: link:../plugin-input-rule
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -757,6 +754,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../schema
+      '@portabletext/test':
+        specifier: workspace:*
+        version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 10.8.2(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
@@ -1054,6 +1054,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@portabletext/test':
+        specifier: workspace:*
+        version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 10.8.2(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)

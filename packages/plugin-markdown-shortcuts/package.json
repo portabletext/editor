@@ -63,6 +63,7 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
+    "@portabletext/test": "workspace:*",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
