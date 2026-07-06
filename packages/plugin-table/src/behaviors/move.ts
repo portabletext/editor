@@ -3,7 +3,6 @@ import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {getEnclosingBlock, getParent} from '@portabletext/editor/traversal'
 import {
   createTableGuards,
-  defaultTableConfig,
   rowCells,
   tableRows,
   type TableConfig,
@@ -186,5 +185,3 @@ export function createMoveBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const moveBehaviors = createMoveBehaviors(defaultTableConfig)

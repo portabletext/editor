@@ -1,81 +1,25 @@
-import {defineContainer} from '@portabletext/editor'
-import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
-import {deleteBehaviors} from './behaviors/delete'
-import {formatBehaviors} from './behaviors/format'
-import {insertBehaviors} from './behaviors/insert'
-import {moveBehaviors} from './behaviors/move'
-import {navBehaviors} from './behaviors/nav'
-import {pasteBehaviors} from './behaviors/paste'
-import {selectBehaviors} from './behaviors/select'
-import {serializeBehaviors} from './behaviors/serialize'
-import {unsetBehaviors} from './behaviors/unset'
+import type {JSX} from 'react'
+import {defineTable} from './define-table'
 
-// `table` -> `row` -> `cell` nested containers. The render is intentionally
-// trivial: the behaviors only need the container structure registered to
-// operate on the nested arrays.
-const tableContainer = defineContainer({
-  type: 'table',
-  arrayField: 'rows',
-  render: ({attributes, children}) => (
-    <table {...attributes}>
-      <tbody>{children}</tbody>
-    </table>
-  ),
-  of: [
-    defineContainer({
-      type: 'row',
-      arrayField: 'cells',
-      render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
-      of: [
-        defineContainer({
-          type: 'cell',
-          arrayField: 'value',
-          render: ({attributes, children}) => (
-            <td {...attributes}>{children}</td>
-          ),
-        }),
-      ],
-    }),
-  ],
-})
+const defaultTable = defineTable()
 
 /**
- * Registers the table containers and the row/column insert, unset, and
- * move behaviors. Drive them by dispatching `custom.insert.row`,
- * `custom.insert.column`, `custom.unset.row`, `custom.unset.column`,
- * `custom.unset.table`, `custom.move.row`, or `custom.move.column`.
- *
- * Also intercepts `delete` and `split` when the selection spans more than
- * one cell, clearing the selected rectangle instead of deleting structure,
- * and `Tab` / `Shift+Tab` / `ArrowUp` / `ArrowDown` to move the caret
- * between cells.
+ * The canonical table definition's plugin: registers the `table` -> `row`
+ * -> `cell` containers with bare renders and mounts the table behaviors.
+ * Equivalent to `defineTable().Plugin`.
  *
  * @alpha
  */
-export function TablePlugin() {
-  return (
-    <>
-      <NodePlugin nodes={[tableContainer]} />
-      <BehaviorPlugin behaviors={tableBehaviors} />
-    </>
-  )
+export function TablePlugin(): JSX.Element {
+  return <defaultTable.Plugin />
 }
 
 /**
- * The table behaviors, split out so a consumer that brings its own table
- * render (its own `NodePlugin` containers) can add them with a
+ * The table behaviors bound to the canonical type names and array fields,
+ * split out so a consumer that brings its own table render (its own
+ * `NodePlugin` containers) can add them with a
  * `<BehaviorPlugin behaviors={tableBehaviors} />` instead of `TablePlugin`.
  *
  * @alpha
  */
-export const tableBehaviors = [
-  ...insertBehaviors,
-  ...unsetBehaviors,
-  ...moveBehaviors,
-  ...deleteBehaviors,
-  ...navBehaviors,
-  ...selectBehaviors,
-  ...formatBehaviors,
-  ...serializeBehaviors,
-  ...pasteBehaviors,
-]
+export const tableBehaviors = defaultTable.behaviors

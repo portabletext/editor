@@ -21,7 +21,7 @@ import {
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveCell} from '../resolve-cell'
-import {defaultTableConfig, type TableConfig} from '../table-config'
+import type {TableConfig} from '../table-config'
 
 type Dom = {
   getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
@@ -169,8 +169,6 @@ export function createNavBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const navBehaviors = createNavBehaviors(defaultTableConfig)
 
 /**
  * The table cell the collapsed selection focus sits in, with its enclosing row

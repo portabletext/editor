@@ -2,13 +2,7 @@ import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveTableSelection} from '../get-table-selection'
-import {
-  cellValue,
-  defaultTableConfig,
-  rowCells,
-  tableRows,
-  type TableConfig,
-} from '../table-config'
+import {cellValue, rowCells, tableRows, type TableConfig} from '../table-config'
 import type {CellNode, RowNode, TableNode, TableSelection} from './types'
 
 type SerializeDataResult = ReturnType<
@@ -118,8 +112,6 @@ export function createSerializeBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const serializeBehaviors = createSerializeBehaviors(defaultTableConfig)
 
 function sliceTable(
   config: TableConfig,

@@ -5,13 +5,7 @@ import {
   resolveTableSelection,
   type ResolvedTableSelection,
 } from '../get-table-selection'
-import {
-  cellValue,
-  defaultTableConfig,
-  rowCells,
-  tableRows,
-  type TableConfig,
-} from '../table-config'
+import {cellValue, rowCells, tableRows, type TableConfig} from '../table-config'
 
 /**
  * Intercepts `delete` and `split` when the editor selection spans more
@@ -70,8 +64,6 @@ export function createDeleteBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const deleteBehaviors = createDeleteBehaviors(defaultTableConfig)
 
 function clearCellsAndCollapse(
   config: TableConfig,

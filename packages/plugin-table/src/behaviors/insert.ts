@@ -4,7 +4,6 @@ import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {resolveCell} from '../resolve-cell'
 import {
   createTableGuards,
-  defaultTableConfig,
   rowCells,
   tableRows,
   type TableConfig,
@@ -151,5 +150,3 @@ export function createInsertBehaviors(config: TableConfig) {
     }),
   ]
 }
-
-export const insertBehaviors = createInsertBehaviors(defaultTableConfig)
