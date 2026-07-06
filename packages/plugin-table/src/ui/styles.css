@@ -24,6 +24,12 @@
   /* Cell density. Layout is measured from the DOM, so padding is safe to
      theme; the hit-testing adapts. */
   --pt-plugin-table-cell-padding: 8px 12px;
+  /* Text in the portaled layers (menu, trash). Portals land on
+     `document.body`, outside any app font scope (Studio sets its font on
+     `#sanity`, not `body`), so inheritance cannot deliver the host font
+     there; the token can. The default approximates modern app fonts. */
+  --pt-plugin-table-font-family:
+    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Contrast partner rendered on top of accent-colored surfaces. */
   --pt-plugin-table-accent-fg: #fff;
   --pt-plugin-table-bg: light-dark(#fff, #1f2937);
@@ -100,6 +106,11 @@
   border-spacing: 0;
   table-layout: fixed;
   cursor: text;
+}
+
+/* The portaled layers cannot inherit the host's font (see the font token). */
+.pt-plugin-table-portal {
+  font-family: var(--pt-plugin-table-font-family);
 }
 
 /* Keyboard focus on the chrome's buttons (handles, lanes, trash, menu).
