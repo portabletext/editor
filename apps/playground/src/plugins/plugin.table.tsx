@@ -8,7 +8,7 @@ import {cellImageLeaf} from './plugin.image'
 // The table/row renders come straight from the plugin's reference UI; the
 // cell definition is playground-owned so its `of` can carry the cell
 // *content* renders (list items, images, callouts).
-const table = defineTable({
+export const table = defineTable({
   containers: {
     ...referenceContainers,
     cell: defineContainer({

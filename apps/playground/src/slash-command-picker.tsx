@@ -22,7 +22,7 @@ import {
   TextQuoteIcon,
 } from 'lucide-react'
 import {useEffect, useRef, useState, type JSX} from 'react'
-import {defaultTableValue} from './plugins/table-defaults'
+import {table} from './plugins/plugin.table'
 import {Button} from './primitives/button'
 import {Dialog} from './primitives/dialog'
 import type {FieldOption} from './primitives/fields'
@@ -162,7 +162,7 @@ const commands: CommandMatch[] = [
     keywords: ['table', 'grid', 'rows', 'columns'],
     action: {
       type: 'insert.block',
-      block: {_type: 'table', ...defaultTableValue()},
+      block: table.createBlock({headerRows: 1}),
     },
   },
   {

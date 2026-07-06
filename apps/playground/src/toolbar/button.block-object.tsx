@@ -2,7 +2,7 @@ import {useEditor} from '@portabletext/editor'
 import {useApplicableSchema, useBlockObjectButton} from '@portabletext/toolbar'
 import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
-import {defaultTableValue} from '../plugins/table-defaults'
+import {table} from '../plugins/plugin.table'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import type {FieldOption} from '../primitives/fields'
@@ -33,11 +33,8 @@ export function BlockObjectButton(props: {
           }
           onPress={() => {
             editor.send({
-              type: 'insert.block object',
-              blockObject: {
-                name: props.schemaType.name,
-                value: defaultTableValue(),
-              },
+              type: 'insert.block',
+              block: table.createBlock({headerRows: 1}),
               placement: 'auto',
             })
             editor.send({type: 'focus'})

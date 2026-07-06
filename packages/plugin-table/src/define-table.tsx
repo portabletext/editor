@@ -63,6 +63,18 @@ export type TableDefinition = {
    */
   behaviors: ReturnType<typeof createTableBehaviors>
   /**
+   * A fresh table block using the definition's type names and array
+   * fields, ready for `insert.block`: `rows` by `columns` cells (default
+   * 3×3), each holding one empty text block. No `_key`s; the editor
+   * generates them on insert. `headerRows` is included only when passed,
+   * since the field is optional schema surface.
+   */
+  createBlock: (options?: {
+    rows?: number
+    columns?: number
+    headerRows?: number
+  }) => {[key: string]: unknown; _type: string}
+  /**
    * The rectangle spanned by the current selection's corner cells, or
    * `undefined` unless the selection spans more than one cell of one table
    * matching this definition.
@@ -143,6 +155,24 @@ export function defineTable(
   return {
     Plugin,
     behaviors,
+    createBlock: ({rows = 3, columns = 3, headerRows} = {}) => ({
+      _type: config.tableType,
+      ...(headerRows === undefined ? {} : {headerRows}),
+      [config.rowsField]: Array.from({length: rows}, () => ({
+        _type: config.rowType,
+        [config.cellsField]: Array.from({length: columns}, () => ({
+          _type: config.cellType,
+          [config.valueField]: [
+            {
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', text: '', marks: []}],
+            },
+          ],
+        })),
+      })),
+    }),
     getTableSelection: (snapshot) => getTableSelection(snapshot, config),
     ...createTableGuards(config),
   }

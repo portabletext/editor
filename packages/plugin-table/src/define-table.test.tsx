@@ -36,6 +36,7 @@ const schemaDefinition = defineSchema({
     {
       name: 'richTable',
       fields: [
+        {name: 'headerRows', type: 'number'},
         {
           name: 'tableRows',
           type: 'array',
@@ -257,6 +258,104 @@ describe('Feature: `defineTable` with renamed containers', () => {
     expect(richTable.isTable(tableNode)).toBe(true)
     expect(richTable.isRow(tableNode)).toBe(false)
     expect(richTable.isCell(tableNode)).toBe(false)
+  })
+
+  test('Scenario: `createBlock` mints an insertable table with renamed types and fields', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      children: <richTable.Plugin />,
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: richTable.createBlock({rows: 2, columns: 2, headerRows: 1}),
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'richTable',
+          _key: 'k16',
+          headerRows: 1,
+          tableRows: [
+            {
+              _type: 'tableRow',
+              _key: 'k8',
+              rowCells: [
+                {
+                  _type: 'tableCell',
+                  _key: 'k4',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'tableCell',
+                  _key: 'k7',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k5',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k6', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'tableRow',
+              _key: 'k15',
+              rowCells: [
+                {
+                  _type: 'tableCell',
+                  _key: 'k11',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k9',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k10', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'tableCell',
+                  _key: 'k14',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k12',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k13', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
   })
 
   test('Scenario: two definitions coexist and behaviors act only on their own tables', async () => {
