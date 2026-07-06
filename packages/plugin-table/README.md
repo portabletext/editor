@@ -310,8 +310,8 @@ export const table = defineTable({
 ```
 
 The reference components are `Table`, `TableRow`, and `TableCell`; they
-resolve their table definition from context, so they work under renamed
-types without extra wiring. Mixing is fine, your own render for the table,
+resolve their table definition from the node they render, so they work
+under renamed types without extra wiring. Mixing is fine, your own render for the table,
 the reference `TableCell` for cells.
 
 The division of ownership:

@@ -47,6 +47,22 @@ export function registerTableConfig(config: TableConfig): void {
 }
 
 /**
+ * The registered config whose table, row, or cell type matches `type`,
+ * falling back to the canonical names for consumers that never called
+ * `defineTable`.
+ */
+export function resolveTableConfig(type: string): TableConfig {
+  return (
+    registeredConfigs.find(
+      (config) =>
+        config.tableType === type ||
+        config.rowType === type ||
+        config.cellType === type,
+    ) ?? defaultTableConfig
+  )
+}
+
+/**
  * Node guards bound to a configuration.
  */
 export function createTableGuards(config: TableConfig): {
