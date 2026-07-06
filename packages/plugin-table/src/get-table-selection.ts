@@ -2,8 +2,8 @@ import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {
   isTable,
-  type Cell,
-  type Table,
+  type CellNode,
+  type TableNode,
   type TableSelection,
 } from './behaviors/types'
 import {resolveCell} from './resolve-cell'
@@ -75,7 +75,7 @@ export function getTableSelection(
 
 export type ResolvedTableSelection = {
   tableSelection: TableSelection
-  table: {node: Table; path: Path}
+  table: {node: TableNode; path: Path}
 }
 
 /**
@@ -105,8 +105,8 @@ export function resolveTableSelection(
  */
 export function* memberCells(
   tableSelection: TableSelection,
-  table: Table,
-): Generator<{node: Cell; path: Path}> {
+  table: TableNode,
+): Generator<{node: CellNode; path: Path}> {
   const [rowStart, rowEnd] = tableSelection.rowRange
   const [colStart, colEnd] = tableSelection.colRange
   for (let rowIndex = rowStart; rowIndex <= rowEnd; rowIndex++) {

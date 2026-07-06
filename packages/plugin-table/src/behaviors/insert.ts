@@ -3,13 +3,13 @@ import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {resolveCell} from '../resolve-cell'
 import {alignmentInsertAction} from './alignment'
-import {isRow, isTable, type Row, type Table} from './types'
+import {isRow, isTable, type RowNode, type TableNode} from './types'
 
 export const insertBehaviors = [
   defineBehavior<
     {at: Path; position: 'before' | 'after'},
     'custom.insert.row',
-    {row: Row; rowPath: Path}
+    {row: RowNode; rowPath: Path}
   >({
     on: 'custom.insert.row',
     guard: ({snapshot, event}) => {
@@ -58,7 +58,7 @@ export const insertBehaviors = [
   defineBehavior<
     {at: Path; position: 'before' | 'after'},
     'custom.insert.column',
-    {table: Table; tablePath: Path; columnIndex: number}
+    {table: TableNode; tablePath: Path; columnIndex: number}
   >({
     on: 'custom.insert.column',
     guard: ({snapshot, event}) => {

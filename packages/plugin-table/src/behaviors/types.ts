@@ -3,7 +3,7 @@ import type {Path, PortableTextBlock} from '@portabletext/editor'
 /**
  * @alpha
  */
-export type Cell = {
+export type CellNode = {
   _type: 'cell'
   _key: string
   value: Array<PortableTextBlock>
@@ -12,7 +12,7 @@ export type Cell = {
 /**
  * @alpha
  */
-export type Row = PortableTextBlock & {_type: 'row'; cells: Array<Cell>}
+export type RowNode = PortableTextBlock & {_type: 'row'; cells: Array<CellNode>}
 
 /**
  * Per-column alignment, positional (array index = column index). `null` is an
@@ -25,9 +25,9 @@ export type ColumnAlignment = 'left' | 'center' | 'right' | null
 /**
  * @alpha
  */
-export type Table = PortableTextBlock & {
+export type TableNode = PortableTextBlock & {
   _type: 'table'
-  rows: Array<Row>
+  rows: Array<RowNode>
   alignment?: Array<ColumnAlignment>
   /** Number of leading rows that are header rows. */
   headerRows?: number
@@ -36,7 +36,7 @@ export type Table = PortableTextBlock & {
 /**
  * @alpha
  */
-export function isRow(node: PortableTextBlock): node is Row {
+export function isRow(node: PortableTextBlock): node is RowNode {
   // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
   return node._type === 'row' && 'cells' in node && Array.isArray(node['cells'])
 }
@@ -44,14 +44,14 @@ export function isRow(node: PortableTextBlock): node is Row {
 /**
  * @alpha
  */
-export function isCell(node: PortableTextBlock): node is Cell {
+export function isCell(node: PortableTextBlock): node is CellNode {
   return node._type === 'cell'
 }
 
 /**
  * @alpha
  */
-export function isTable(node: PortableTextBlock): node is Table {
+export function isTable(node: PortableTextBlock): node is TableNode {
   // biome-ignore lint/complexity/useLiteralKeys: tsconfig has noPropertyAccessFromIndexSignature
   return node._type === 'table' && 'rows' in node && Array.isArray(node['rows'])
 }

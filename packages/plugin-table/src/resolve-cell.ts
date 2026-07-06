@@ -4,9 +4,9 @@ import {
   isCell,
   isRow,
   isTable,
-  type Cell,
-  type Row,
-  type Table,
+  type CellNode,
+  type RowNode,
+  type TableNode,
 } from './behaviors/types'
 
 /**
@@ -18,9 +18,9 @@ export function resolveCell(
   path: Path,
 ):
   | {
-      cell: {node: Cell; path: Path}
-      row: {node: Row; path: Path}
-      table: {node: Table; path: Path}
+      cell: {node: CellNode; path: Path}
+      row: {node: RowNode; path: Path}
+      table: {node: TableNode; path: Path}
     }
   | undefined {
   const cell = getEnclosingBlock(snapshot, path, {match: isCell})

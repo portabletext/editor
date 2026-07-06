@@ -12,7 +12,7 @@ import {
   pathContains,
 } from '@portabletext/editor/traversal'
 import {alignmentRemoveAction} from './alignment'
-import {isCell, isRow, isTable, type Table} from './types'
+import {isCell, isRow, isTable, type TableNode} from './types'
 
 function selectionTouches(
   selection: EditorSelection,
@@ -112,7 +112,7 @@ export const unsetBehaviors = [
     {
       cellPaths: Array<Path>
       neighborCellPath: Path
-      table: Table
+      table: TableNode
       tablePath: Path
       columnIndex: number
     }
