@@ -3,7 +3,7 @@ import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {TableCell, TableContainer, TableRow} from './table-render'
+import {TableCell, Table, TableRow} from './table-render'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -43,7 +43,7 @@ const schemaDefinition = defineSchema({
 const tableContainer = defineContainer({
   type: 'table',
   arrayField: 'rows',
-  render: (props) => <TableContainer {...props} />,
+  render: (props) => <Table {...props} />,
   of: [
     defineContainer({
       type: 'row',

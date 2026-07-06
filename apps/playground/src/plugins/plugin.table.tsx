@@ -1,11 +1,7 @@
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {tableBehaviors} from '@portabletext/plugin-table'
-import {
-  TableCell,
-  TableContainer,
-  TableRow,
-} from '@portabletext/plugin-table/ui'
+import {TableCell, Table, TableRow} from '@portabletext/plugin-table/ui'
 import type {JSX} from 'react'
 import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
@@ -16,7 +12,7 @@ import {cellImageLeaf} from './plugin.image'
 const tableContainer = defineContainer({
   type: 'table',
   arrayField: 'rows',
-  render: (props) => <TableContainer {...props} />,
+  render: (props) => <Table {...props} />,
   of: [
     defineContainer({
       type: 'row',

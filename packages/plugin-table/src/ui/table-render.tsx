@@ -28,7 +28,7 @@ import {
 import type {TableSelection} from '../behaviors/types'
 import {
   createTableGuards,
-  defaultTableConfig,
+  resolveTableConfig,
   rowCells as configRowCells,
   tableRows as configTableRows,
 } from '../table-config'
@@ -74,22 +74,25 @@ const TableDragContext = createContext<{
 } | null>(null)
 
 /**
- * The reference render for the `table` container: chrome (handles, lanes,
+ * The reference render for the table container: chrome (handles, lanes,
  * menu, trash, drag ghost), scroll handling, and selection visuals around the
- * editable `<table>`. Wire it into the container registration:
+ * editable `<table>`. Wire it into the container definition:
  *
  * ```tsx
  * defineContainer({
  *   type: 'table',
  *   arrayField: 'rows',
- *   render: (props) => <TableContainer {...props} />,
- *   of: [...],
+ *   render: (props) => <Table {...props} />,
  * })
  * ```
  *
+ * The component resolves its table definition (type names, array fields)
+ * from the node it renders, so it works under renamed types without extra
+ * wiring.
+ *
  * @alpha
  */
-export function TableContainer({
+export function Table({
   attributes,
   children,
   node,
@@ -119,7 +122,7 @@ export function TableContainer({
   icons?: {trash?: ReactNode}
 }): JSX.Element {
   const editor = useEditor()
-  const config = defaultTableConfig
+  const config = resolveTableConfig(node._type)
   const {isTable} = createTableGuards(config)
   const table = isTable(node) ? node : undefined
   const rows = table ? configTableRows(config, table) : []
@@ -145,7 +148,7 @@ export function TableContainer({
   const tableSelection = useEditorSelector(
     editor,
     (snapshot) => {
-      const selection = getTableSelection(snapshot)
+      const selection = getTableSelection(snapshot, config)
       return selection && isEqualPaths(selection.tablePath, path)
         ? selection
         : null
@@ -566,10 +569,11 @@ type CellDescriptor = {
 export function TableCell({
   attributes,
   children,
+  node,
   path,
 }: ContainerRenderProps): JSX.Element {
   const editor = useEditor()
-  const config = defaultTableConfig
+  const config = resolveTableConfig(node._type)
   const descriptor = useEditorSelector(
     editor,
     (snapshot): CellDescriptor | null => {
