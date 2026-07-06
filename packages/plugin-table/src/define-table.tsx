@@ -33,7 +33,7 @@ import {
  * `defineContainer(...)` result; an omitted role falls back to the
  * canonical definition (`table`/`row`/`cell` with the bare render).
  *
- * @alpha
+ * @public
  */
 export type TableContainers = {
   table?: Container
@@ -47,7 +47,7 @@ export type TableContainers = {
  * selector, and the node guards, all bound to the definition's type names
  * and array fields.
  *
- * @alpha
+ * @public
  */
 export type TableDefinition = {
   /**
@@ -97,7 +97,7 @@ export type TableDefinition = {
  * names, `rows`/`cells`/`value` array fields, and bare
  * `<table>`/`<tr>`/`<td>` renders.
  *
- * @alpha
+ * @public
  */
 export function defineTable(
   options: {containers?: TableContainers} = {},

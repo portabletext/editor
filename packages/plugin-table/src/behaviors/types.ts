@@ -6,14 +6,14 @@ import {createTableGuards, defaultTableConfig} from '../table-config'
  * configurable (see `defineTable`), so structural reads go through the
  * config-bound accessors rather than properties.
  *
- * @alpha
+ * @public
  */
 export type CellNode = PortableTextBlock & {_key: string}
 
 /**
  * A row node in the table's value.
  *
- * @alpha
+ * @public
  */
 export type RowNode = PortableTextBlock & {_key: string}
 
@@ -21,7 +21,7 @@ export type RowNode = PortableTextBlock & {_key: string}
  * Per-column alignment, positional (array index = column index). `null` is an
  * explicitly unaligned column.
  *
- * @alpha
+ * @public
  */
 export type ColumnAlignment = 'left' | 'center' | 'right' | null
 
@@ -29,7 +29,7 @@ export type ColumnAlignment = 'left' | 'center' | 'right' | null
  * A table node in the value. `headerRows` and `alignment` are fixed field
  * names regardless of configuration.
  *
- * @alpha
+ * @public
  */
 export type TableNode = PortableTextBlock & {
   _key: string
@@ -41,25 +41,25 @@ export type TableNode = PortableTextBlock & {
 const defaultGuards = createTableGuards(defaultTableConfig)
 
 /**
- * @alpha
+ * @public
  */
 export const isTable: (node: PortableTextBlock) => node is TableNode =
   defaultGuards.isTable
 
 /**
- * @alpha
+ * @public
  */
 export const isRow: (node: PortableTextBlock) => node is RowNode =
   defaultGuards.isRow
 
 /**
- * @alpha
+ * @public
  */
 export const isCell: (node: PortableTextBlock) => node is CellNode =
   defaultGuards.isCell
 
 /**
- * @alpha
+ * @public
  */
 export type TableSelection = {
   tablePath: Path
