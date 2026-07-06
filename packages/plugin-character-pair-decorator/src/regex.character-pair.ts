@@ -8,8 +8,8 @@ export function createCharacterPairRegex(char: string, amount: number) {
   // Negative lookahead: Ensures that the opening pair (**, *, etc.) is not followed by a space
   const postPrefix = `(?!\\s)`
 
-  // Captures the content inside the pair
-  const content = `([^${char}\\n]+?)`
+  // Captures the content inside the pair as the named group `content`
+  const content = `(?<content>[^${char}\\n]+?)`
 
   // Negative lookbehind: Ensures that the content is not followed by a space
   const preSuffix = `(?<!\\s)`

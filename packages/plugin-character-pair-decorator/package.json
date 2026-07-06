@@ -60,12 +60,12 @@
     "test:unit:watch": "vitest watch --project unit"
   },
   "dependencies": {
-    "@xstate/react": "catalog:",
-    "xstate": "catalog:"
+    "@portabletext/plugin-input-rule": "workspace:^"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:*",
+    "@portabletext/test": "workspace:*",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
