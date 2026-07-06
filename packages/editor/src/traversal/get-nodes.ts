@@ -117,10 +117,16 @@ function* getNodesSimple(
 }
 
 /**
- * Compare two keyed paths in document order. Returns -1, 0, or 1.
+ * Compare two keyed paths in DFS pre-order. Returns -1, 0, or 1.
  *
  * Walks both paths in parallel; at the first divergence, consults
  * `blockIndexMap` for the sibling indices and compares them.
+ *
+ * Deliberately not `comparePaths` (`engine/path/compare-paths.ts`):
+ * that compare treats an ancestor/descendant pair as equal (0), while
+ * range traversal needs the ancestor ordered first (-1/1), it is what
+ * excludes `to`'s descendants from a range. The two compares answer
+ * different questions and must not be merged.
  */
 function comparePathsInTree(
   snapshot: TraversalSnapshot,
