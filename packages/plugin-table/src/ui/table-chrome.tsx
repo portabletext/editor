@@ -12,7 +12,7 @@ import {createPortal} from 'react-dom'
 import {EllipsisIcon, PanelTopIcon, TableIcon, Trash2Icon} from './icons'
 import {BLUE, BORDER} from './table-cell-style'
 import type {DragState} from './table-drag'
-import {snapPx, type TableMetrics} from './table-metrics'
+import {snapPxCenter, type TableMetrics} from './table-metrics'
 
 // Top gutter holds the column handles + table menu.
 const GUTTER_TOP = 20
@@ -60,24 +60,24 @@ type BoundaryHover = {kind: 'row' | 'column'; index: number} | null
 function colBorderX(metrics: TableMetrics, index: number): number {
   const {cols, width} = metrics
   if (index <= 0) {
-    return snapPx((cols[0]?.left ?? 0) + GRID_LINE_HALF)
+    return snapPxCenter((cols[0]?.left ?? 0) + GRID_LINE_HALF)
   }
   if (index >= cols.length) {
-    return snapPx(width - GRID_LINE_HALF)
+    return snapPxCenter(width - GRID_LINE_HALF)
   }
-  return snapPx(cols[index].left - GRID_LINE_HALF)
+  return snapPxCenter(cols[index].left - GRID_LINE_HALF)
 }
 
 /** Horizontal grid line at a row insert boundary (relative to the table). */
 function rowBorderY(metrics: TableMetrics, index: number): number {
   const {rows, height} = metrics
   if (index <= 0) {
-    return snapPx(GRID_LINE_HALF)
+    return snapPxCenter(GRID_LINE_HALF)
   }
   if (index >= rows.length) {
-    return snapPx(height - GRID_LINE_HALF)
+    return snapPxCenter(height - GRID_LINE_HALF)
   }
-  return snapPx(rows[index].top - GRID_LINE_HALF)
+  return snapPxCenter(rows[index].top - GRID_LINE_HALF)
 }
 
 export type HoverCell = {row: number; col: number} | null
