@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.10.2
+
+### Patch Changes
+
+- [#2910](https://github.com/portabletext/editor/pull/2910) [`b339b25`](https://github.com/portabletext/editor/commit/b339b254444512d8de9a92eeb4773fb2777c4f96) Thanks [@christianhg](https://github.com/christianhg)! - fix: escape a container at the document edge like block objects
+
+  When a container (a table, a callout) is the document's first or last block, the caret could get trapped inside it: arrow navigation at the container's edge was suppressed, and clicking the editable's whitespace beyond the container had no block to land in. Both now behave like they already did for block objects: a bare ArrowUp/ArrowDown at the trapped edge, or a click beyond the lonely container, inserts an empty text block outside it and moves the caret there.
+
+- [#2935](https://github.com/portabletext/editor/pull/2935) [`2be9720`](https://github.com/portabletext/editor/commit/2be972078e0936bc7b52d4384edf723291faa47c) Thanks [@christianhg](https://github.com/christianhg)! - fix: scroll the selection to the nearest edge instead of centering
+
+  Selecting out-of-view content now scrolls the minimal distance to bring the focus to the nearest viewport edge, matching native caret behavior. Previously any selection whose focus was even slightly out of view, including programmatic selects like a table handle click whose rectangle ends in an off-screen column, re-centered the whole editor on the focus point.
+
 ## 7.10.1
 
 ### Patch Changes
