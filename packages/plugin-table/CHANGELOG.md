@@ -1,5 +1,26 @@
 # @portabletext/plugin-table
 
+## 1.1.0
+
+### Minor Changes
+
+- [#2910](https://github.com/portabletext/editor/pull/2910) [`53335e2`](https://github.com/portabletext/editor/commit/53335e2a60fe1b44cf88204bcb48684b9459f823) Thanks [@christianhg](https://github.com/christianhg)! - feat(plugin-table): arrow navigation escapes the table when nothing lies beyond
+
+  `ArrowDown` from any bottom-row cell and `ArrowUp` from any top-row cell now exit the table: into the neighboring block when one exists, entering at the caret's horizontal position, or by inserting an empty text block beyond the table and moving the caret into it when nothing lies there. Previously the caret could walk sideways through the edge row's cells or get stuck inside the table.
+
+### Patch Changes
+
+- [#2934](https://github.com/portabletext/editor/pull/2934) [`2ff6709`](https://github.com/portabletext/editor/commit/2ff670971c8460b566ed11a5e7921ed311391a2f) Thanks [@christianhg](https://github.com/christianhg)! - fix: hide the portaled chrome when its anchor scrolls out of view
+
+  The trash chip and the table menu tracked the table on scroll but never clipped against it, so scrolling the table out of the editor's scrollport left them floating over unrelated UI. The chrome now anchors through `@floating-ui/dom`: the trash chip hides when its handle is clipped, the built-in menu closes when its trigger scrolls out, and a menu rendered through `renderMenu` closes the same way (its anchor unmounts it).
+
+- [#2910](https://github.com/portabletext/editor/pull/2910) [`53335e2`](https://github.com/portabletext/editor/commit/53335e2a60fe1b44cf88204bcb48684b9459f823) Thanks [@christianhg](https://github.com/christianhg)! - fix: `Tab` inside a list item in a cell indents instead of navigating
+
+  Cell navigation yields `Tab`/`Shift+Tab` to the editor's list handling when the caret sits in a list item, so indenting and unindenting inside cells works; navigation keeps `Tab` everywhere else in a cell.
+
+- Updated dependencies [[`b339b25`](https://github.com/portabletext/editor/commit/b339b254444512d8de9a92eeb4773fb2777c4f96), [`2be9720`](https://github.com/portabletext/editor/commit/2be972078e0936bc7b52d4384edf723291faa47c)]:
+  - @portabletext/editor@7.10.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.0.29
+
+### Patch Changes
+
+- [#2928](https://github.com/portabletext/editor/pull/2928) [`e94e676`](https://github.com/portabletext/editor/commit/e94e676638015bf6eff339e4b77e5095a9fee894) Thanks [@christianhg](https://github.com/christianhg)! - fix: only query `defaultStyle` when backspace can clear a style
+
+  The `defaultStyle` callback (and the sub-schema resolution feeding it) ran on every backspace with a collapsed text-block selection; it now runs only when the caret sits at the start of the block, the one position where a style can clear. Consumers with throwing or expensive callbacks see them called far less often.
+
+- Updated dependencies [[`b339b25`](https://github.com/portabletext/editor/commit/b339b254444512d8de9a92eeb4773fb2777c4f96), [`2be9720`](https://github.com/portabletext/editor/commit/2be972078e0936bc7b52d4384edf723291faa47c)]:
+  - @portabletext/editor@7.10.2
+  - @portabletext/plugin-character-pair-decorator@8.0.29
+  - @portabletext/plugin-input-rule@5.0.29
+
 ## 8.0.28
 
 ### Patch Changes
