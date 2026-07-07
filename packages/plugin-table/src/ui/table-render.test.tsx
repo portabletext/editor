@@ -299,6 +299,66 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
   })
 })
 
+describe('Feature: Header Cell State Attribute', () => {
+  test('Scenario: header row cells carry `data-pt-plugin-table-header`', async () => {
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: 't0',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [cell('c00', 'A'), cell('c01', 'B')],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [cell('c10', 'C'), cell('c11', 'D')],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[tableContainer]} />,
+    })
+
+    await vi.waitFor(() => {
+      const cells = Array.from(
+        document.querySelectorAll('table.pt-plugin-table td'),
+      )
+      expect(
+        cells.map((cellElement) =>
+          cellElement.hasAttribute('data-pt-plugin-table-header'),
+        ),
+      ).toEqual([true, true, false, false])
+    })
+  })
+
+  test('Scenario: a table without header rows marks no cells', async () => {
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <NodePlugin nodes={[tableContainer]} />,
+    })
+
+    await vi.waitFor(() => {
+      const cells = Array.from(
+        document.querySelectorAll('table.pt-plugin-table td'),
+      )
+      expect(
+        cells.map((cellElement) =>
+          cellElement.hasAttribute('data-pt-plugin-table-header'),
+        ),
+      ).toEqual([false, false, false, false])
+    })
+  })
+})
+
 describe('Feature: Read-Only Table Chrome', () => {
   test('Scenario: A read-only editor renders the table without mutation affordances', async () => {
     const {editor} = await createTestEditor({

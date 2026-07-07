@@ -447,12 +447,11 @@ export function Table({
             <table
               ref={tableRef}
               className="pt-plugin-table"
-              // State attributes on plugin-rendered elements stay short
-              // (the Radix `data-state` convention); consumers select them
-              // anchored to the `pt-plugin-table` scope. Only identity
-              // attributes that get queried unanchored carry the full
-              // `data-pt-plugin-table-*` prefix.
-              data-cell-range={hasCellRange ? '' : undefined}
+              // Every attribute the plugin puts in the DOM carries the
+              // full `data-pt-plugin-table-` prefix: they are host-CSS
+              // API surface, and namespacing keeps them from colliding
+              // with design systems that style bare state attributes.
+              data-pt-plugin-table-cell-range={hasCellRange ? '' : undefined}
             >
               {/* Leafless subtrees derail the engine's DOM-point
                 normalization; mark them non-editable so it skips them. */}
@@ -548,7 +547,10 @@ export function TableRow({
   selected,
 }: ContainerRenderProps): JSX.Element {
   return (
-    <tr {...attributes} data-selected={selected ? '' : undefined}>
+    <tr
+      {...attributes}
+      data-pt-plugin-table-selected={selected ? '' : undefined}
+    >
       {children}
     </tr>
   )
@@ -630,7 +632,15 @@ export function TableCell({
     [descriptor],
   )
   return (
-    <td {...attributes} style={dimmed ? {...style, opacity: 0.35} : style}>
+    <td
+      {...attributes}
+      // Header-ness must be queryable from host CSS: the inline
+      // `fontWeight` below only reaches text that inherits, and hosts
+      // whose text components declare their own weight (Sanity UI's
+      // `Text`) need a hook to restore it.
+      data-pt-plugin-table-header={descriptor?.isHeader ? '' : undefined}
+      style={dimmed ? {...style, opacity: 0.35} : style}
+    >
       {children}
     </td>
   )

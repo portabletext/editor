@@ -6,6 +6,7 @@ export const BORDER = 'var(--pt-plugin-table-border)'
 const SELECTION_BORDER = 1.5
 const FG = 'var(--pt-plugin-table-fg)'
 const HEADER_BG = 'var(--pt-plugin-table-header-bg)'
+export const HEADER_WEIGHT = 'var(--pt-plugin-table-header-weight, 600)'
 const SELECTED_BG = 'var(--pt-plugin-table-selected-bg)'
 const CELL_PADDING = 'var(--pt-plugin-table-cell-padding)'
 const TABLE_RADIUS = 'var(--pt-plugin-table-radius)'
@@ -155,7 +156,7 @@ export function cellStyle({
     padding: CELL_PADDING,
     verticalAlign: 'top',
     background,
-    fontWeight: isHeader ? 600 : 400,
+    fontWeight: isHeader ? HEADER_WEIGHT : 400,
     color: FG,
     wordBreak: 'break-word',
     ...(showOverlay ? {position: 'relative', zIndex: 1} : {}),
