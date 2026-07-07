@@ -475,6 +475,13 @@ export function Table({
                 selectedRow={selectedRow}
                 selectedCol={selectedCol}
                 onHandlePointerDown={onHandlePointerDown}
+                onHandleKeyboardSelect={(kind, index) => {
+                  if (kind === 'row') {
+                    selectRow(index)
+                  } else {
+                    selectCol(index)
+                  }
+                }}
                 drag={drag}
                 onInsertRow={insertRow}
                 onInsertCol={insertCol}
