@@ -228,3 +228,27 @@ Feature: Edge Cases
     Then the editor state is "B: →foo"
     When "{Backspace}" is pressed
     Then the editor state is "B: →fo|"
+
+  Scenario Outline: Groups Without Replace
+    Given the editor state is <state>
+    When the editor is focused
+    And <inserted text> is inserted
+    And "new" is typed
+    Then the editor state is <new state>
+
+    Examples:
+      | state    | inserted text | new state          |
+      | "B: "    | "!hi!"        | "B: WHOLEnew\|"    |
+      | "B: foo" | "!hi!"        | "B: fooWHOLEnew\|" |
+
+  Scenario Outline: Optional Replace Group
+    Given the editor state is <state>
+    When the editor is focused
+    And <inserted text> is inserted
+    And "new" is typed
+    Then the editor state is <new state>
+
+    Examples:
+      | state | inserted text | new state         |
+      | "B: " | "judeee yeah" | "B: judeee!new\|" |
+      | "B: " | "judeee"      | "B: judeeenew\|"  |

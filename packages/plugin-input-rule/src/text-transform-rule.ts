@@ -4,15 +4,39 @@ import type {InputRule, InputRuleGuard} from './input-rule'
 import type {InputRuleMatchLocation} from './input-rule-match-location'
 
 /**
- * @alpha
+ * @public
+ */
+export type TextTransform<TGuardResponse = true> = (
+  {location}: {location: InputRuleMatchLocation},
+  guardResponse: TGuardResponse,
+) => string
+
+/**
+ * @public
  */
 export type TextTransformRule<TGuardResponse = true> = {
   on: RegExp
   guard?: InputRuleGuard<TGuardResponse>
-  transform: (
-    {location}: {location: InputRuleMatchLocation},
-    guardResponse: TGuardResponse,
-  ) => string
+  /**
+   * What to replace, and with what.
+   *
+   * A function replaces the whole match, always, regardless of any capture
+   * groups in the pattern. A record replaces only the spans of the named
+   * capture groups given as keys, each with its own transform,
+   * `/\d+\s?(?<operator>[*x])\s?\d+/` with
+   * `transform: {operator: () => '×'}` turns `2x3` into `2×3` rather than
+   * `×`. Use the record form when the pattern needs surrounding context to
+   * decide *when* to fire but only part of the match should change; the
+   * context must sit inside the match rather than in lookarounds, a rule
+   * only fires when its match involves the just-inserted text.
+   *
+   * Every key must exist as a named capture group in `on`;
+   * `defineTextTransformRule` throws otherwise. A match in which none of
+   * the keys participated has nothing to replace and is skipped.
+   */
+  transform:
+    | TextTransform<TGuardResponse>
+    | Record<string, TextTransform<TGuardResponse>>
 }
 
 /**
@@ -27,26 +51,88 @@ export type TextTransformRule<TGuardResponse = true> = {
  * })
  * ```
  *
- * @alpha
+ * @public
  */
 export function defineTextTransformRule<TGuardResponse = true>(
   config: TextTransformRule<TGuardResponse>,
 ): InputRule<TGuardResponse> {
+  const transformRecord =
+    typeof config.transform === 'function' ? undefined : config.transform
+
+  if (transformRecord) {
+    // The appended `|` adds an empty alternative that matches the empty
+    // string, so `exec('')` always produces a match whose `groups` object
+    // carries a key for every named capture group in the pattern. `g`/`y`/
+    // `d` are dropped (irrelevant for the probe, and sticky would anchor
+    // it); the remaining flags are kept because recompiling without them
+    // can be a syntax error (`\u{...}` requires `u`).
+    const probeFlags = config.on.flags.replace(/[gyd]/g, '')
+    const namedGroups = Object.keys(
+      new RegExp(`${config.on.source}|`, probeFlags).exec('')?.groups ?? {},
+    )
+
+    for (const groupName of Object.keys(transformRecord)) {
+      if (!namedGroups.includes(groupName)) {
+        throw new Error(
+          `defineTextTransformRule: \`transform\` targets the group "${groupName}", but \`on\` (${config.on}) has no such named capture group` +
+            (namedGroups.length > 0
+              ? `. Named groups: ${namedGroups
+                  .map((name) => `"${name}"`)
+                  .join(', ')}`
+              : `. The pattern has no named capture groups`),
+        )
+      }
+    }
+  }
+
   return {
     on: config.on,
     guard: config.guard ?? (() => true as TGuardResponse),
     actions: [
       ({snapshot, event}, guardResponse) => {
-        const locations = event.matches.flatMap((match) =>
-          match.groupMatches.length === 0 ? [match] : match.groupMatches,
-        )
+        const targets = event.matches
+          .flatMap(
+            (
+              match,
+            ): Array<{
+              location: InputRuleMatchLocation
+              transform: TextTransform<TGuardResponse>
+            }> => {
+              if (!transformRecord) {
+                return [
+                  {
+                    location: match,
+                    transform:
+                      config.transform as TextTransform<TGuardResponse>,
+                  },
+                ]
+              }
+
+              // Only participating keyed groups are replaced; a match in
+              // which none of them participated is skipped.
+              return Object.entries(transformRecord).flatMap(
+                ([groupName, groupTransform]) => {
+                  const location = match.groups[groupName]
+
+                  return location ? [{location, transform: groupTransform}] : []
+                },
+              )
+            },
+          )
+          // Right-to-left processing below relies on document order, which
+          // the `replace` array's order doesn't guarantee.
+          .sort(
+            (a, b) =>
+              a.location.targetOffsets.anchor.offset -
+              b.location.targetOffsets.anchor.offset,
+          )
         const newText = event.textBefore + event.textInserted
 
         let textLengthDelta = 0
         const actions: Array<BehaviorAction> = []
 
-        for (const location of locations.reverse()) {
-          const text = config.transform({location}, guardResponse)
+        for (const {location, transform} of targets.reverse()) {
+          const text = transform({location}, guardResponse)
 
           textLengthDelta =
             textLengthDelta -

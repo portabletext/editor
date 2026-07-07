@@ -71,6 +71,34 @@ export function MyMarkdownPlugin() {
 
 > **Tip:** The [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) package is already built using Input Rules and provides common markdown shortcuts out of the box.
 
+## Working with capture groups
+
+When a rule needs the location of a _part_ of its match, capture that part in a **named group** and read it back by name from `match.groups`:
+
+```tsx
+const mentionRule = defineInputRule({
+  on: /@(?<handle>\w+)!$/,
+  guard: ({event}) => {
+    const match = event.matches.at(0)
+    const handle = match?.groups['handle']
+
+    if (!handle) {
+      return false
+    }
+
+    return {handle}
+  },
+  actions: [
+    (_, {handle}) => [
+      // `handle.text` is the captured text, `handle.targetOffsets` its
+      // location — same shape as the match itself
+    ],
+  ],
+})
+```
+
+`match.groups` mirrors the platform's `RegExpMatchArray.groups`: entries exist only for named groups that participated in the match, so always handle `undefined` (an optional group may not have matched). A capture group must be named (`(?<name>...)`) for its location to be handed back — unnamed groups remain useful for regex mechanics like alternation (`/^(-|\*) /`) but get no location. In codebases with `noPropertyAccessFromIndexSignature` enabled, access entries with brackets: `match.groups['handle']`.
+
 ## Text transformation rules
 
 Text transformations are so common that the plugin provides a high-level `defineTextTransformRule` helper to configure them without any boilerplate:
@@ -93,6 +121,18 @@ export function MyTypographyPlugin() {
 
 In fact, the production-ready [`@portabletext/plugin-typography`](../plugin-typography/) is built on top of Input Rules and comes packed with common text transformations like this.
 
+A transform that should replace only _part_ of its match uses the record form of `transform`: keys name the capture groups to replace, each with its own transform:
+
+```tsx
+const multiplicationRule = defineTextTransformRule({
+  on: /\d+\s?(?<operator>[*x])\s?\d+/,
+  // Only the operator's span is replaced; the digits around it stay
+  transform: {operator: () => '×'},
+})
+```
+
+Unlike ProseMirror's and TipTap's input rules, which implicitly replace the first capture group when one exists, replacement targets are always declared: a function transform replaces the whole match, regardless of any capture groups, and a record transform replaces exactly the groups its keys name. `defineTextTransformRule` throws at definition time when a key names a group the pattern doesn't have, and a match in which none of the keys participated is skipped. The surrounding context (like the digits above) must stay _inside_ the match rather than in lookarounds, a rule only fires when its match involves the just-inserted text, so a trailing lookahead would leave the match entirely in already-typed text and the rule would never trigger.
+
 ## Advanced examples
 
 Input Rules can handle more complex transformations. Here are two advanced examples:
@@ -106,7 +146,7 @@ This example shows how to convert markdown-style link syntax `[text](url)` into 
 
 ```tsx
 const markdownLinkRule = defineInputRule({
-  on: /\[(.+)]\((.+)\)/,
+  on: /\[(?<text>.+)]\((?<href>.+)\)/,
   actions: [
     ({snapshot, event}) => {
       const newText = event.textBefore + event.textInserted
@@ -114,8 +154,8 @@ const markdownLinkRule = defineInputRule({
       const actions: Array<BehaviorAction> = []
 
       for (const match of event.matches.reverse()) {
-        const textMatch = match.groupMatches.at(0)
-        const hrefMatch = match.groupMatches.at(1)
+        const textMatch = match.groups['text']
+        const hrefMatch = match.groups['href']
 
         if (textMatch === undefined || hrefMatch === undefined) {
           continue
@@ -193,7 +233,7 @@ This example demonstrates how to convert text patterns like `{AAPL}` into custom
 
 ```tsx
 const stockTickerRule = defineInputRule({
-  on: /\{(.+)\}/,
+  on: /\{(?<symbol>.+)\}/,
   guard: ({snapshot, event}) => {
     const match = event.matches.at(0)
 
@@ -201,7 +241,7 @@ const stockTickerRule = defineInputRule({
       return false
     }
 
-    const symbolMatch = match.groupMatches.at(0)
+    const symbolMatch = match.groups['symbol']
 
     if (symbolMatch === undefined) {
       return false
@@ -252,3 +292,27 @@ const stockTickerRule = defineInputRule({
   ],
 })
 ```
+
+## Matches spanning inline objects
+
+Inline objects don't contribute to the text your RegExp matches against, so a pattern can match "across" one without knowing it. By default, such a match is dropped before your `guard` runs: for rules like the stock ticker above, whose actions `delete` the matched range and replace it, firing would destroy the inline object sitting inside the range.
+
+Rules whose actions leave part of the matched range in place can grant leniency per named capture group:
+
+```tsx
+const strongPairRule = defineInputRule({
+  on: /\*\*(?<content>[^*\n]+?)\*\*$/,
+  // The actions decorate the content and delete only the `**` markers, so
+  // an inline object inside the content is harmless and the match should
+  // fire. An inline object anywhere else in the match, between the marker
+  // characters, still drops the match.
+  inlineObjects: {allow: ['content']},
+  // ...
+})
+```
+
+The match survives when every inline object inside it sits within a listed group's matched span (inclusive of its edges). Unlisted groups and the text between groups, the rule's syntax markers, stay protected. This also expresses "this group's text becomes data": a markdown link rule can allow objects in its `text` group while leaving its `href` group protected, an inline object inside the href would make the captured text a lie.
+
+The [`@portabletext/plugin-character-pair-decorator`](../plugin-character-pair-decorator/) package is built exactly this way: `inlineObjects: {allow: ['content']}` lets `**bo`⟨inline object⟩`ld**` decorate across the object, while a match with an inline object between the marker characters stays literal.
+
+To allow inline objects anywhere in the match, capture the whole pattern in a named group and list it.

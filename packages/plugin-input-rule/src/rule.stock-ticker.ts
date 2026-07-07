@@ -10,7 +10,7 @@ export function createStockTickerRule(config: {
   }) => {name: string; value?: {[prop: string]: unknown}} | undefined
 }) {
   return defineInputRule({
-    on: /\{(.+)\}/,
+    on: /\{(?<symbol>.+)\}/,
     guard: ({snapshot, event}) => {
       const match = event.matches.at(0)
 
@@ -18,7 +18,7 @@ export function createStockTickerRule(config: {
         return false
       }
 
-      const symbolMatch = match.groupMatches.at(0)
+      const symbolMatch = match.groups['symbol']
 
       if (symbolMatch === undefined) {
         return false

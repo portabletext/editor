@@ -28,28 +28,27 @@ const nonGlobalRule = defineTextTransformRule({
 })
 
 const multipleGroupsRule = defineTextTransformRule({
-  on: /(x)[fo]+(y)/,
-  transform: () => 'z',
+  on: /(?<left>x)[fo]+(?<right>y)/,
+  transform: {left: () => 'z', right: () => 'z'},
 })
 
 const replaceAandCRule = defineTextTransformRule({
-  on: /(A).*(C)/,
-  transform: ({location}) => {
-    return location.text === 'A' ? 'C' : 'A'
-  },
+  on: /(?<first>A).*(?<second>C)/,
+  // Each target owns its transform, no identity plumbing needed
+  transform: {first: () => 'C', second: () => 'A'},
 })
 
 const h1Rule = defineTextTransformRule({
-  on: /^(# )/,
-  transform: () => '',
+  on: /^(?<marker># )/,
+  transform: {marker: () => ''},
 })
 
 const betterH2Rule = defineTextTransformRule({
-  on: /^(## )/,
+  on: /^(?<marker>## )/,
   guard: ({snapshot}) => {
     return !getPreviousInlineObject(snapshot)
   },
-  transform: () => '',
+  transform: {marker: () => ''},
 })
 
 const unmatchedGroupsRule = defineTextTransformRule({
@@ -57,9 +56,23 @@ const unmatchedGroupsRule = defineTextTransformRule({
   transform: () => '<hr />',
 })
 
+const groupsWithoutReplaceRule = defineTextTransformRule({
+  // A function transform replaces the WHOLE match, the capture group
+  // grants nothing implicitly.
+  on: /!(?<word>\w+)!/,
+  transform: () => 'WHOLE',
+})
+
+const optionalReplaceGroupRule = defineTextTransformRule({
+  // `replace` with an optional group: a match in which the group did not
+  // participate has nothing to replace and is skipped.
+  on: /judeee(?<tail> yeah)?/,
+  transform: {tail: () => '!'},
+})
+
 const multiplicationRule = defineTextTransformRule({
-  on: /\d+\s?([*x])\s?\d+/,
-  transform: () => '×',
+  on: /\d+\s?(?<operator>[*x])\s?\d+/,
+  transform: {operator: () => '×'},
 })
 
 Feature({
@@ -76,6 +89,8 @@ Feature({
             <InputRulePlugin rules={[betterH2Rule]} />
             <InputRulePlugin rules={[replaceAandCRule]} />
             <InputRulePlugin rules={[unmatchedGroupsRule]} />
+            <InputRulePlugin rules={[groupsWithoutReplaceRule]} />
+            <InputRulePlugin rules={[optionalReplaceGroupRule]} />
             <InputRulePlugin rules={[multiplicationRule]} />
           </>
         ),
