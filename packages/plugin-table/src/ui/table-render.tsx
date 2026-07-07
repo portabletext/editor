@@ -55,6 +55,8 @@ import {
   TableTrashLayer,
   type HoverCell,
   type TableMenuHandlers,
+  defaultLabels,
+  type TableLabels,
 } from './table-chrome'
 import {useTableDragReorder} from './table-drag'
 import {useTableMetrics} from './table-metrics'
@@ -100,6 +102,7 @@ export function Table({
   portalElement,
   renderMenu,
   icons,
+  labels,
 }: ContainerRenderProps & {
   /**
    * Where the menu and trash layer portal (default `document.body`). Hosts
@@ -120,7 +123,14 @@ export function Table({
    * `renderMenu`).
    */
   icons?: {trash?: ReactNode}
+  /**
+   * Overrides for the chrome's rendered strings, merged over the English
+   * defaults. Hosts with their own i18n resolve translations and pass the
+   * final strings.
+   */
+  labels?: Partial<TableLabels>
 }): JSX.Element {
+  const resolvedLabels = {...defaultLabels, ...labels}
   const editor = useEditor()
   const config = resolveTableConfig(node._type)
   const {isTable} = createTableGuards(config)
@@ -481,6 +491,7 @@ export function Table({
             </table>
             {readOnly ? null : (
               <TableChrome
+                labels={resolvedLabels}
                 metrics={metrics}
                 active={active}
                 hoverCell={hoverCell}
@@ -524,6 +535,7 @@ export function Table({
           </TableMenuAnchor>
         ) : (
           <TableMenu
+            labels={resolvedLabels}
             right={scrollWide ? 0 : 20}
             active={active}
             portalElement={portalElement}
@@ -538,6 +550,7 @@ export function Table({
         <TableScrollFade left={fade.left} right={fade.right} />
         {readOnly ? null : (
           <TableTrashLayer
+            labels={resolvedLabels}
             tableRef={tableRef}
             metrics={metrics}
             portalElement={portalElement}

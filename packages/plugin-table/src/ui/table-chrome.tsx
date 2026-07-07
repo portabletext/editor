@@ -84,6 +84,42 @@ function rowBorderY(metrics: TableMetrics, index: number): number {
 
 export type HoverCell = {row: number; col: number} | null
 
+/**
+ * The strings the chrome renders: aria-labels and tooltips for the
+ * handles, lanes, dots, trash chips, and the menu trigger, plus the
+ * built-in menu's item labels. The `menu-*` keys only render when the
+ * built-in menu does; a `renderMenu` widget carries its own strings.
+ *
+ * @public
+ */
+export type TableLabels = {
+  'add-column': string
+  'add-row': string
+  'column-handle': string
+  'delete-column': string
+  'delete-row': string
+  'insert-here': string
+  'menu-delete-table': string
+  'menu-header-row': string
+  'menu-select-table': string
+  'row-handle': string
+  'table-options': string
+}
+
+export const defaultLabels: TableLabels = {
+  'add-column': 'Add column at end',
+  'add-row': 'Add row at end',
+  'column-handle': 'Column handle',
+  'delete-column': 'Delete column',
+  'delete-row': 'Delete row',
+  'insert-here': 'Insert here',
+  'menu-delete-table': 'Delete table',
+  'menu-header-row': 'Header row',
+  'menu-select-table': 'Select table',
+  'row-handle': 'Row handle',
+  'table-options': 'Table options',
+}
+
 export function TableChrome({
   metrics,
   active,
@@ -95,6 +131,7 @@ export function TableChrome({
   drag,
   onInsertRow,
   onInsertCol,
+  labels,
 }: {
   metrics: TableMetrics | null
   active: boolean
@@ -110,6 +147,10 @@ export function TableChrome({
   drag: DragState | null
   onInsertRow: (boundary: number) => void
   onInsertCol: (boundary: number) => void
+  labels: Pick<
+    TableLabels,
+    'add-column' | 'add-row' | 'column-handle' | 'insert-here' | 'row-handle'
+  >
 }): JSX.Element | null {
   const [boundary, setBoundary] = useState<BoundaryHover>(null)
   if (!metrics) {
@@ -149,7 +190,7 @@ export function TableChrome({
         }}
       />
       <ExtendBar
-        label="Add row at end"
+        label={labels['add-row']}
         visible={active && !dragging && hoverCell?.row === lastRow}
         style={{
           left: GUTTER_LEFT,
@@ -160,7 +201,7 @@ export function TableChrome({
         onClick={() => onInsertRow(metrics.rows.length)}
       />
       <ExtendBar
-        label="Add column at end"
+        label={labels['add-column']}
         visible={active && !dragging && hoverCell?.col === lastCol}
         style={{
           left: GUTTER_LEFT + metrics.width + EXTEND_GAP,
@@ -183,6 +224,7 @@ export function TableChrome({
           selected={selectedCol === index}
           dragging={dragging && drag?.kind === 'column'}
           onPointerDown={(event) => onHandlePointerDown('column', index, event)}
+          label={labels['column-handle']}
           onKeyboardSelect={() => onHandleKeyboardSelect('column', index)}
         />
       ))}
@@ -199,6 +241,7 @@ export function TableChrome({
           selected={selectedRow === index}
           dragging={dragging && drag?.kind === 'row'}
           onPointerDown={(event) => onHandlePointerDown('row', index, event)}
+          label={labels['row-handle']}
           onKeyboardSelect={() => onHandleKeyboardSelect('row', index)}
         />
       ))}
@@ -223,6 +266,7 @@ export function TableChrome({
             onEnter={() => setBoundary({kind: 'column', index})}
             onLeave={() => setBoundary(null)}
             onInsert={() => onInsertCol(index)}
+            label={labels['insert-here']}
           />
         )
       })}
@@ -238,6 +282,7 @@ export function TableChrome({
             onEnter={() => setBoundary({kind: 'row', index})}
             onLeave={() => setBoundary(null)}
             onInsert={() => onInsertRow(index)}
+            label={labels['insert-here']}
           />
         )
       })}
@@ -317,6 +362,7 @@ function BoundaryControl({
   onEnter,
   onLeave,
   onInsert,
+  label,
 }: {
   x: number
   y: number
@@ -325,12 +371,13 @@ function BoundaryControl({
   onEnter: () => void
   onLeave: () => void
   onInsert: () => void
+  label: TableLabels['insert-here']
 }): JSX.Element {
   const hit = 20
   return (
     <button
       type="button"
-      aria-label="Insert here"
+      aria-label={label}
       tabIndex={visible ? 0 : -1}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -453,6 +500,7 @@ function Handle({
   dragging,
   onPointerDown,
   onKeyboardSelect,
+  label,
 }: {
   kind: 'row' | 'column'
   index: number
@@ -464,6 +512,7 @@ function Handle({
   dragging: boolean
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void
   onKeyboardSelect: () => void
+  label: TableLabels['row-handle'] | TableLabels['column-handle']
 }): JSX.Element {
   const [hot, setHot] = useState(false)
   const isColumn = kind === 'column'
@@ -476,7 +525,7 @@ function Handle({
   return (
     <button
       type="button"
-      aria-label={isColumn ? 'Column handle' : 'Row handle'}
+      aria-label={label}
       data-pt-plugin-table-handle={kind}
       data-pt-plugin-table-handle-index={index}
       tabIndex={lit ? 0 : -1}
@@ -590,6 +639,7 @@ export function TableTrashLayer({
   onDeleteCol,
   portalElement,
   trashIcon,
+  labels,
 }: {
   tableRef: RefObject<HTMLTableElement | null>
   metrics: TableMetrics | null
@@ -607,6 +657,7 @@ export function TableTrashLayer({
   portalElement?: HTMLElement | null
   /** Replaces the built-in trash icon (host design systems pass their own). */
   trashIcon?: ReactNode
+  labels: Pick<TableLabels, 'delete-row' | 'delete-column'>
 }): JSX.Element | null {
   const rowIndex = selectedRow !== null && canDeleteRow ? selectedRow : null
   const colIndex = selectedCol !== null && canDeleteCol ? selectedCol : null
@@ -619,7 +670,7 @@ export function TableTrashLayer({
       {rowIndex !== null ? (
         <TrashButton
           icon={trashIcon}
-          label="Delete row"
+          label={labels['delete-row']}
           placement="left"
           handleKind="row"
           handleIndex={rowIndex}
@@ -630,7 +681,7 @@ export function TableTrashLayer({
       {colIndex !== null ? (
         <TrashButton
           icon={trashIcon}
-          label="Delete column"
+          label={labels['delete-column']}
           placement="top"
           handleKind="column"
           handleIndex={colIndex}
@@ -821,6 +872,7 @@ export function TableMenu({
   active,
   handlers,
   portalElement,
+  labels,
 }: {
   /** Distance from the wrapper's right edge; pins the trigger to the scrollport when the table overflows. */
   right: number
@@ -828,6 +880,13 @@ export function TableMenu({
   handlers: TableMenuHandlers
   /** See {@link TableTrashLayer}'s `portalElement`. */
   portalElement?: HTMLElement | null
+  labels: Pick<
+    TableLabels,
+    | 'menu-delete-table'
+    | 'menu-header-row'
+    | 'menu-select-table'
+    | 'table-options'
+  >
 }): JSX.Element {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -906,7 +965,7 @@ export function TableMenu({
         ref={triggerRef}
         type="button"
         contentEditable={false}
-        aria-label="Table options"
+        aria-label={labels['table-options']}
         aria-haspopup="menu"
         aria-expanded={open}
         tabIndex={visible ? 0 : -1}
@@ -970,13 +1029,13 @@ export function TableMenu({
               }}
             >
               <MenuRow
-                label="Header row"
+                label={labels['menu-header-row']}
                 icon={<PanelTopIcon size={16} />}
                 trailing={<ToggleSwitch checked={handlers.hasHeader} />}
                 onClick={handlers.onToggleHeader}
               />
               <MenuRow
-                label="Select table"
+                label={labels['menu-select-table']}
                 icon={<TableIcon size={16} />}
                 onClick={() => {
                   closeMenu()
@@ -984,7 +1043,7 @@ export function TableMenu({
                 }}
               />
               <MenuRow
-                label="Delete table"
+                label={labels['menu-delete-table']}
                 icon={<Trash2Icon size={16} />}
                 destructive
                 onClick={() => {

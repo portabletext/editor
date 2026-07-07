@@ -297,6 +297,87 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
   })
 })
 
+describe('Feature: Chrome Label Overrides', () => {
+  test('Scenario: `labels` overrides merge over the English defaults', async () => {
+    const labeledContainer = defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: (props) => (
+        <Table
+          {...props}
+          labels={{
+            'table-options': 'Tabellenoptionen',
+            'insert-here': 'Hier einf\u00fcgen',
+            'row-handle': 'Zeilengriff',
+            'menu-delete-table': 'Tabelle l\u00f6schen',
+          }}
+        />
+      ),
+      of: [
+        defineContainer({
+          type: 'row',
+          arrayField: 'cells',
+          render: (props) => <TableRow {...props} />,
+          of: [
+            defineContainer({
+              type: 'cell',
+              arrayField: 'value',
+              render: (props) => <TableCell {...props} />,
+            }),
+          ],
+        }),
+      ],
+    })
+
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <NodePlugin nodes={[labeledContainer]} />,
+    })
+
+    await vi.waitFor(() => {
+      // Overridden strings reach the DOM.
+      expect(
+        document.querySelectorAll('button[aria-label="Tabellenoptionen"]')
+          .length,
+      ).toBe(1)
+      expect(
+        document.querySelectorAll('button[aria-label="Hier einf\u00fcgen"]')
+          .length,
+      ).toBeGreaterThan(0)
+      expect(
+        document.querySelectorAll('button[aria-label="Zeilengriff"]').length,
+      ).toBe(2)
+      // Keys that were not overridden keep their defaults.
+      expect(
+        document.querySelectorAll('button[aria-label="Add row at end"]').length,
+      ).toBe(1)
+      expect(
+        document.querySelectorAll('button[aria-label="Column handle"]').length,
+      ).toBe(2)
+    })
+
+    // The built-in menu's items render the `menu-*` keys once opened.
+    const trigger = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Tabellenoptionen"]',
+    )
+    trigger?.focus()
+    await userEvent.keyboard(' ')
+
+    await vi.waitFor(() => {
+      const items = Array.from(
+        document.querySelectorAll('[role="menuitem"]'),
+      ).map((item) => item.textContent)
+      expect(items).toEqual([
+        'Header row',
+        'Select table',
+        'Tabelle l\u00f6schen',
+      ])
+    })
+  })
+})
+
 describe('Feature: Keyboard Activation of Chrome', () => {
   test('Scenario: `Space` on the extend lane appends a row', async () => {
     await createTestEditor({

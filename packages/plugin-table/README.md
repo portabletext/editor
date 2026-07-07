@@ -364,6 +364,34 @@ built-in scale:
 render: (props) => <Table {...props} icons={{trash: <MyTrashIcon />}} />
 ```
 
+`labels` overrides the strings the chrome renders (aria-labels and
+tooltips for the handles, lanes, insert dots, trash chips, and the menu
+trigger, plus the built-in menu's items), merged over the English
+defaults. Hosts with their own i18n resolve translations and pass the
+final strings. The `menu-*` keys only render when the built-in menu does;
+a `renderMenu` widget carries its own strings:
+
+```tsx
+render: (props) => (
+  <Table
+    {...props}
+    labels={{
+      'insert-here': t('table.insert-here'),
+      'row-handle': t('table.row-handle'),
+      'column-handle': t('table.column-handle'),
+      'add-row': t('table.add-row'),
+      'add-column': t('table.add-column'),
+      'delete-row': t('table.delete-row'),
+      'delete-column': t('table.delete-column'),
+      'table-options': t('table.table-options'),
+      'menu-header-row': t('table.menu-header-row'),
+      'menu-select-table': t('table.menu-select-table'),
+      'menu-delete-table': t('table.menu-delete-table'),
+    }}
+  />
+)
+```
+
 ## Driving it from your own UI
 
 Structural edits are custom behavior events dispatched with
