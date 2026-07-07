@@ -408,6 +408,109 @@ describe('Feature: Keyboard Activation of Chrome', () => {
   })
 })
 
+describe('Feature: Chrome Geometry After Reorder', () => {
+  test('Scenario: moving rows of unequal heights re-measures the chrome', async () => {
+    const tallCell = (key: string) => ({
+      _type: 'cell',
+      _key: key,
+      value: [
+        {
+          _type: 'block',
+          _key: `b1-${key}`,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: `s1-${key}`, text: 'one', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: `b2-${key}`,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: `s2-${key}`, text: 'two', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: `b3-${key}`,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: `s3-${key}`, text: 'three', marks: []},
+          ],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [tallCell('c00'), tallCell('c01')],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [cell('c10', 'C'), cell('c11', 'D')],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={[tableContainer]} />
+          <BehaviorPlugin behaviors={tableBehaviors} />
+        </>
+      ),
+    })
+
+    const handlesTrackRows = () => {
+      const rowElements = Array.from(
+        document.querySelectorAll('table.pt-plugin-table tbody tr'),
+      )
+      for (const [index, rowElement] of rowElements.entries()) {
+        const handle = document.querySelector(
+          `[data-pt-plugin-table-handle="row"][data-pt-plugin-table-handle-index="${index}"]`,
+        )
+        expect(handle).not.toBeNull()
+        const handleRect = handle!.getBoundingClientRect()
+        const rowRect = rowElement.getBoundingClientRect()
+        const handleCenter = handleRect.top + handleRect.height / 2
+        const rowCenter = rowRect.top + rowRect.height / 2
+        // Sub-pixel rounding tolerance.
+        expect(Math.abs(handleCenter - rowCenter)).toBeLessThanOrEqual(2)
+      }
+    }
+
+    await vi.waitFor(handlesTrackRows)
+
+    editor.send({
+      type: 'custom.move.row',
+      at: [{_key: 't0'}, 'rows', {_key: 'r0'}],
+      to: [{_key: 't0'}, 'rows', {_key: 'r1'}],
+    })
+
+    // The tall row is now second; the handles must sit on the new centers.
+    await vi.waitFor(() => {
+      const firstRow = document.querySelector('table.pt-plugin-table tbody tr')
+      expect(
+        firstRow?.querySelector('[data-pt-plugin-table-cell] p, td')
+          ?.textContent ?? firstRow?.textContent,
+      ).toContain('C')
+    })
+    await vi.waitFor(handlesTrackRows)
+  })
+})
+
 describe('Feature: Header Cell State Attribute', () => {
   test('Scenario: header row cells carry `data-pt-plugin-table-header`', async () => {
     await createTestEditor({
