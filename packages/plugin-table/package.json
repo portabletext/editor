@@ -58,6 +58,7 @@
     "prepublishOnly": "turbo run build"
   },
   "dependencies": {
+    "@floating-ui/dom": "catalog:",
     "@portabletext/keyboard-shortcuts": "workspace:^"
   },
   "devDependencies": {

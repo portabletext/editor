@@ -447,6 +447,11 @@ export function Table({
             <table
               ref={tableRef}
               className="pt-plugin-table"
+              // State attributes on plugin-rendered elements stay short
+              // (the Radix `data-state` convention); consumers select them
+              // anchored to the `pt-plugin-table` scope. Only identity
+              // attributes that get queried unanchored carry the full
+              // `data-pt-plugin-table-*` prefix.
               data-cell-range={hasCellRange ? '' : undefined}
             >
               {/* Leafless subtrees derail the engine's DOM-point
