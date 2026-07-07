@@ -1,5 +1,19 @@
 # @portabletext/plugin-table
 
+## 1.3.0
+
+### Minor Changes
+
+- [#2951](https://github.com/portabletext/editor/pull/2951) [`ede35c4`](https://github.com/portabletext/editor/commit/ede35c464b2bb25b58fe56b34d50fbf28ce1e722) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `tokens` to the reference `Table` for per-instance theming
+
+  Themes that only exist as runtime objects could not reach the plugin's
+  custom properties without writing them to a shared DOM scope themselves,
+  which breaks down when multiple tables need different values and when the
+  chrome portals outside the host's wrapper. `Table` now takes an optional
+  `tokens` record keyed by the documented `--pt-plugin-table-*` names and
+  applies the values inline to its own roots, including the portal layers.
+  The `TableTokens` type is exported from `@portabletext/plugin-table/ui`.
+
 ## 1.2.0
 
 ### Minor Changes
