@@ -554,4 +554,133 @@ describe('Feature: Selection adjustment after remote patches', () => {
       expect(editor.getSnapshot().context.selection).toEqual(afterBarSelection)
     })
   })
+
+  test('Scenario: Remote mark toggle with re-keyed spans preserves the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [{_type: 'span', _key: s1, text: 'foobarbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'foobarbaz')
+
+    const newSpanFoo = keyGenerator()
+    const newSpanBar = keyGenerator()
+    const newSpanBaz = keyGenerator()
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: b1,
+          children: [
+            {_type: 'span', _key: newSpanFoo, text: 'foo', marks: []},
+            {_type: 'span', _key: newSpanBar, text: 'bar', marks: ['strong']},
+            {_type: 'span', _key: newSpanBaz, text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value[0]).toEqual({
+        _type: 'block',
+        _key: b1,
+        children: [
+          {_type: 'span', _key: newSpanFoo, text: 'foo', marks: []},
+          {_type: 'span', _key: newSpanBar, text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: newSpanBaz, text: 'baz', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      })
+    })
+
+    await vi.waitFor(() => {
+      const expectedSelection = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'baz',
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
+    })
+  })
+
+  test('Scenario: Remote children replacement with different text keeps the current fallback', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: b1,
+          children: [{_type: 'span', _key: s1, text: 'foobarbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'foobarbaz')
+
+    const newSpan = keyGenerator()
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: b1,
+          children: [{_type: 'span', _key: newSpan, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      const children = (
+        editor.getSnapshot().context.value[0] as {
+          children: Array<{text?: string}>
+        }
+      ).children
+      expect(children[0]?.text).toBe('hello')
+    })
+
+    // Text changed, so offset mapping would be guesswork; the selection
+    // keeps the pre-existing fallback (start of the replaced children).
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      expect(selection?.focus.path).toEqual([
+        {_key: b1},
+        'children',
+        {_key: newSpan},
+      ])
+      expect(selection?.focus.offset).toBe(0)
+    })
+  })
 })
