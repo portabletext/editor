@@ -1937,6 +1937,13 @@ const defaultScrollSelectionIntoView = (
       domFocusPoint.getBoundingClientRect.bind(domFocusPoint)
     scrollIntoView(leafEl, {
       scrollMode: 'if-needed',
+      // Native-caret semantics: the minimal delta to the nearest edge. The
+      // library's default `block: 'center'` re-centered the viewport on
+      // every sync whose focus was even slightly clipped, yanking the
+      // editor around on programmatic selects (a table handle click whose
+      // rectangle ends in an off-screen column, for example).
+      block: 'nearest',
+      inline: 'nearest',
     })
 
     // @ts-expect-error an unorthodox delete D:
