@@ -1,5 +1,16 @@
 # @portabletext/plugin-table
 
+## 1.1.4
+
+### Patch Changes
+
+- [#2947](https://github.com/portabletext/editor/pull/2947) [`e1e8254`](https://github.com/portabletext/editor/commit/e1e82548951df714808275682f02324f56712a50) Thanks [@christianhg](https://github.com/christianhg)! - fix: ship the `styles.css` Node stub in the published package
+
+  1.1.3 pointed the `node`/`default` conditions of the `./ui/styles.css`
+  export at a file excluded from the tarball, so resolving the stylesheet
+  outside a browser bundler failed with a module-not-found error instead of
+  the intended no-op.
+
 ## 1.1.3
 
 ### Patch Changes
