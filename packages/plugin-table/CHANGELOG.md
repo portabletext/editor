@@ -1,5 +1,20 @@
 # @portabletext/plugin-table
 
+## 1.2.0
+
+### Minor Changes
+
+- [#2949](https://github.com/portabletext/editor/pull/2949) [`ef8699c`](https://github.com/portabletext/editor/commit/ef8699cc6753ceb1b4189a5ea9ef6af5c96ca625) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `labels` to the reference `Table` for chrome string overrides
+
+  The chrome's rendered strings (aria-labels and tooltips) were hardcoded
+  English. `Table` now takes an optional `labels` record, merged over the
+  defaults, with keys `add-column`, `add-row`, `column-handle`,
+  `delete-column`, `delete-row`, `insert-here`, `menu-delete-table`,
+  `menu-header-row`, `menu-select-table`, `row-handle`, and
+  `table-options`. The `TableLabels` type is exported from
+  `@portabletext/plugin-table/ui`. The `menu-*` keys only render when the
+  built-in menu does; a `renderMenu` widget carries its own strings.
+
 ## 1.1.4
 
 ### Patch Changes
