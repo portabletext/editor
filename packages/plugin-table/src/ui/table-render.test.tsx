@@ -297,6 +297,74 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
   })
 })
 
+describe('Feature: Per-Instance Theming Tokens', () => {
+  test('Scenario: `tokens` reach the chrome root and the portal layers', async () => {
+    const tokenedContainer = defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: (props) => (
+        <Table
+          {...props}
+          tokens={{
+            '--pt-plugin-table-bg': 'rgb(1, 2, 3)',
+            '--pt-plugin-table-trash-bg': 'rgb(4, 5, 6)',
+          }}
+        />
+      ),
+      of: [
+        defineContainer({
+          type: 'row',
+          arrayField: 'cells',
+          render: (props) => <TableRow {...props} />,
+          of: [
+            defineContainer({
+              type: 'cell',
+              arrayField: 'value',
+              render: (props) => <TableCell {...props} />,
+            }),
+          ],
+        }),
+      ],
+    })
+
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={[tokenedContainer]} />
+          <BehaviorPlugin behaviors={tableBehaviors} />
+        </>
+      ),
+    })
+
+    // The in-tree chrome root carries the values; the cells (which paint
+    // `--pt-plugin-table-bg`) resolve them by inheritance.
+    await vi.waitFor(() => {
+      const cell = document.querySelector('table.pt-plugin-table td')
+      expect(cell).not.toBeNull()
+      expect(getComputedStyle(cell!).backgroundColor).toBe('rgb(1, 2, 3)')
+    })
+
+    // Selecting a row summons the trash chip, which portals outside the
+    // editor subtree and must carry its own copy of the values.
+    const handle = document.querySelector<HTMLButtonElement>(
+      '[data-pt-plugin-table-handle="row"][data-pt-plugin-table-handle-index="0"]',
+    )
+    handle?.focus()
+    await userEvent.keyboard(' ')
+
+    await vi.waitFor(() => {
+      const trash = document.querySelector<HTMLButtonElement>(
+        'button[aria-label="Delete row"]',
+      )
+      expect(trash).not.toBeNull()
+      expect(getComputedStyle(trash!).backgroundColor).toBe('rgb(4, 5, 6)')
+    })
+  })
+})
+
 describe('Feature: Chrome Label Overrides', () => {
   test('Scenario: `labels` overrides merge over the English defaults', async () => {
     const labeledContainer = defineContainer({
