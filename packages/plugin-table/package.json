@@ -20,7 +20,8 @@
   },
   "files": [
     "dist",
-    "src/ui/styles.css"
+    "src/ui/styles.css",
+    "src/ui/styles.css.node-stub.js"
   ],
   "type": "module",
   "sideEffects": false,
