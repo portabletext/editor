@@ -1,6 +1,7 @@
+import {autoUpdate, computePosition, hide, offset} from '@floating-ui/dom'
 import {
-  type ReactNode,
   useCallback,
+  type ReactNode,
   useLayoutEffect,
   useRef,
   useState,
@@ -171,6 +172,7 @@ export function TableChrome({
           // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={`col-${index}`}
           kind="column"
+          index={index}
           x={GUTTER_LEFT + col.centerX}
           y={GUTTER_TOP}
           active={active}
@@ -185,6 +187,7 @@ export function TableChrome({
           // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={`row-${index}`}
           kind="row"
+          index={index}
           x={GUTTER_LEFT}
           y={GUTTER_TOP + row.centerY}
           active={active}
@@ -434,6 +437,7 @@ function InsertGuideline({
 
 function Handle({
   kind,
+  index,
   x,
   y,
   active,
@@ -443,6 +447,7 @@ function Handle({
   onPointerDown,
 }: {
   kind: 'row' | 'column'
+  index: number
   x: number
   y: number
   active: boolean
@@ -463,6 +468,8 @@ function Handle({
     <button
       type="button"
       aria-label={isColumn ? 'Column handle' : 'Row handle'}
+      data-pt-plugin-table-handle={kind}
+      data-pt-plugin-table-handle-index={index}
       tabIndex={lit ? 0 : -1}
       onMouseEnter={() => setHot(true)}
       onMouseLeave={() => setHot(false)}
@@ -557,11 +564,6 @@ function DragDots({
   )
 }
 
-type TrashLayout = {
-  row: {left: number; top: number} | null
-  col: {left: number; top: number} | null
-}
-
 /**
  * Row/column delete buttons in a top-level portal so they are never clipped
  * by the editable's scrollport. Fixed-positioned from the live table rect,
@@ -596,68 +598,34 @@ export function TableTrashLayer({
   /** Replaces the built-in trash icon (host design systems pass their own). */
   trashIcon?: ReactNode
 }): JSX.Element | null {
-  const [layout, setLayout] = useState<TrashLayout | null>(null)
-
-  const measure = useCallback(() => {
-    const table = tableRef.current
-    if (!table || !metrics) {
-      setLayout(null)
-      return
-    }
-    const rect = table.getBoundingClientRect()
-    const next: TrashLayout = {row: null, col: null}
-    if (selectedRow !== null && canDeleteRow && metrics.rows[selectedRow]) {
-      const row = metrics.rows[selectedRow]
-      const handleLeft = rect.left - HANDLE_BTN_ROW.w / 2
-      next.row = {
-        left: handleLeft - TRASH_GAP - TRASH_SIZE,
-        top: rect.top + row.centerY,
-      }
-    }
-    if (selectedCol !== null && canDeleteCol && metrics.cols[selectedCol]) {
-      const col = metrics.cols[selectedCol]
-      next.col = {
-        left: rect.left + col.centerX,
-        top: rect.top - HANDLE_BTN_COL.h / 2 - TRASH_GAP - TRASH_SIZE,
-      }
-    }
-    setLayout(next)
-  }, [tableRef, metrics, selectedRow, selectedCol, canDeleteRow, canDeleteCol])
-
-  useLayoutEffect(() => {
-    measure()
-    window.addEventListener('resize', measure)
-    window.addEventListener('scroll', measure, true)
-    return () => {
-      window.removeEventListener('resize', measure)
-      window.removeEventListener('scroll', measure, true)
-    }
-  }, [measure])
-
-  if (!layout || (!layout.row && !layout.col)) {
+  const rowIndex = selectedRow !== null && canDeleteRow ? selectedRow : null
+  const colIndex = selectedCol !== null && canDeleteCol ? selectedCol : null
+  if (!metrics || (rowIndex === null && colIndex === null)) {
     return null
   }
 
   return createPortal(
     <div className="pt-plugin-table-portal">
-      {layout.row && selectedRow !== null ? (
+      {rowIndex !== null ? (
         <TrashButton
           icon={trashIcon}
           label="Delete row"
-          left={layout.row.left}
-          top={layout.row.top}
-          transform="translate(0, -50%)"
-          onClick={() => onDeleteRow(selectedRow)}
+          placement="left"
+          handleKind="row"
+          handleIndex={rowIndex}
+          tableRef={tableRef}
+          onClick={() => onDeleteRow(rowIndex)}
         />
       ) : null}
-      {layout.col && selectedCol !== null ? (
+      {colIndex !== null ? (
         <TrashButton
           icon={trashIcon}
           label="Delete column"
-          left={layout.col.left}
-          top={layout.col.top}
-          transform="translate(-50%, 0)"
-          onClick={() => onDeleteCol(selectedCol)}
+          placement="top"
+          handleKind="column"
+          handleIndex={colIndex}
+          tableRef={tableRef}
+          onClick={() => onDeleteCol(colIndex)}
         />
       ) : null}
     </div>,
@@ -668,21 +636,62 @@ export function TableTrashLayer({
 function TrashButton({
   icon,
   label,
-  left,
-  top,
-  transform,
+  placement,
+  handleKind,
+  handleIndex,
+  tableRef,
   onClick,
 }: {
   icon?: ReactNode
   label: string
-  left: number
-  top: number
-  transform: string
+  placement: 'left' | 'top'
+  handleKind: 'row' | 'column'
+  handleIndex: number
+  tableRef: RefObject<HTMLTableElement | null>
   onClick: () => void
 }): JSX.Element {
   const [hovered, setHovered] = useState(false)
+  const floatingRef = useRef<HTMLButtonElement>(null)
+  const [position, setPosition] = useState<{
+    left: number
+    top: number
+    hidden: boolean
+  } | null>(null)
+
+  // The chip anchors to the selected row/column's handle element, the same
+  // pattern the toolbar hooks use (a real element handed to the anchoring
+  // machinery). `autoUpdate` observes real references for layout shifts, so
+  // structural edits that move the handle move the chip, and the `hide`
+  // middleware retires it when the handle is clipped out of the scrollport.
+  useLayoutEffect(() => {
+    const floating = floatingRef.current
+    const reference = tableRef.current?.parentElement?.querySelector(
+      `[data-pt-plugin-table-handle="${handleKind}"][data-pt-plugin-table-handle-index="${handleIndex}"]`,
+    )
+    if (!floating || !reference) {
+      return undefined
+    }
+    const update = () => {
+      computePosition(reference, floating, {
+        strategy: 'fixed',
+        placement,
+        middleware: [offset(TRASH_GAP), hide()],
+      }).then(({x, y, middlewareData}) => {
+        setPosition({
+          left: x,
+          top: y,
+          hidden: middlewareData.hide?.referenceHidden ?? false,
+        })
+      })
+    }
+    return autoUpdate(reference, floating, update)
+  }, [placement, handleKind, handleIndex, tableRef])
+
+  const hidden = !position || position.hidden
+
   return (
     <button
+      ref={floatingRef}
       type="button"
       aria-label={label}
       onMouseEnter={() => setHovered(true)}
@@ -694,9 +703,10 @@ function TrashButton({
       style={{
         fontSize: 15,
         position: 'fixed',
-        left,
-        top,
-        transform,
+        left: position?.left ?? 0,
+        top: position?.top ?? 0,
+        visibility: hidden ? 'hidden' : 'visible',
+        pointerEvents: hidden ? 'none' : 'auto',
         width: TRASH_SIZE,
         height: TRASH_SIZE,
         display: 'flex',
@@ -739,9 +749,29 @@ export function TableMenuAnchor({
   visible: boolean
   children: ReactNode
 }): JSX.Element {
+  const anchorRef = useRef<HTMLDivElement>(null)
+  const [clipped, setClipped] = useState(false)
+
+  // The anchor itself scrolls with the table and clips visually, but the
+  // consumer's widget may float a portaled popover from inside it. When the
+  // anchor leaves the scrollport, unmount the widget so that popover closes
+  // instead of floating over unrelated UI.
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current
+    if (!anchor) {
+      return undefined
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      setClipped(!(entry?.isIntersecting ?? true))
+    })
+    observer.observe(anchor)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: preventing default on pointerdown keeps the editor focused; interaction lives on the consumer's widget
     <div
+      ref={anchorRef}
       contentEditable={false}
       onPointerDown={(event) => {
         // Keep DOM focus in the editable; a focus steal here would blur the
@@ -753,13 +783,13 @@ export function TableMenuAnchor({
         right,
         top: WRAPPER_PAD_TOP + GUTTER_TOP - MENU_ABOVE_GAP,
         transform: 'translateY(-100%)',
-        pointerEvents: visible ? 'auto' : 'none',
-        opacity: visible ? 1 : 0,
+        pointerEvents: visible && !clipped ? 'auto' : 'none',
+        opacity: visible && !clipped ? 1 : 0,
         transition: 'opacity 100ms ease',
         zIndex: 6,
       }}
     >
-      {children}
+      {clipped ? null : children}
     </div>
   )
 }
@@ -797,26 +827,38 @@ export function TableMenu({
     null,
   )
 
-  const syncMenuPos = useCallback(() => {
-    const rect = triggerRef.current?.getBoundingClientRect()
-    if (!rect) {
-      return
-    }
-    setMenuPos({left: rect.right - MENU_MIN_WIDTH, top: rect.bottom + 6})
+  const closeMenu = useCallback(() => {
+    setOpen(false)
+    setMenuPos(null)
   }, [])
 
+  // The dropdown anchors to its trigger through `autoUpdate`; the `hide`
+  // middleware closes it when the trigger scrolls out of the scrollport,
+  // where a floating dropdown would read as detached chrome.
   useLayoutEffect(() => {
     if (!open) {
-      return
+      return undefined
     }
-    syncMenuPos()
-    window.addEventListener('resize', syncMenuPos)
-    window.addEventListener('scroll', syncMenuPos, true)
-    return () => {
-      window.removeEventListener('resize', syncMenuPos)
-      window.removeEventListener('scroll', syncMenuPos, true)
+    const trigger = triggerRef.current
+    const menu = menuRef.current
+    if (!trigger || !menu) {
+      return undefined
     }
-  }, [open, syncMenuPos])
+    const update = () => {
+      computePosition(trigger, menu, {
+        strategy: 'fixed',
+        placement: 'bottom-end',
+        middleware: [offset(6), hide()],
+      }).then(({x, y, middlewareData}) => {
+        if (middlewareData.hide?.referenceHidden) {
+          closeMenu()
+          return
+        }
+        setMenuPos({left: x, top: y})
+      })
+    }
+    return autoUpdate(trigger, menu, update)
+  }, [open, closeMenu])
 
   useLayoutEffect(() => {
     if (!open) {
@@ -831,11 +873,11 @@ export function TableMenu({
       ) {
         return
       }
-      setOpen(false)
+      closeMenu()
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false)
+        closeMenu()
       }
     }
     document.addEventListener('pointerdown', onPointerDown)
@@ -844,7 +886,7 @@ export function TableMenu({
       document.removeEventListener('pointerdown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [open])
+  }, [open, closeMenu])
 
   const visible = active || open
 
@@ -863,7 +905,11 @@ export function TableMenu({
         onPointerDown={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          setOpen((wasOpen) => !wasOpen)
+          if (open) {
+            closeMenu()
+          } else {
+            setOpen(true)
+          }
         }}
         style={{
           position: 'absolute',
@@ -892,7 +938,7 @@ export function TableMenu({
       >
         <EllipsisIcon size={20} />
       </button>
-      {open && menuPos
+      {open
         ? createPortal(
             <div
               ref={menuRef}
@@ -900,8 +946,9 @@ export function TableMenu({
               className="pt-plugin-table-portal"
               style={{
                 position: 'fixed',
-                left: menuPos.left,
-                top: menuPos.top,
+                left: menuPos?.left ?? 0,
+                top: menuPos?.top ?? 0,
+                visibility: menuPos ? 'visible' : 'hidden',
                 width: MENU_MIN_WIDTH,
                 background: 'var(--pt-plugin-table-menu-bg)',
                 border: '1px solid var(--pt-plugin-table-menu-border)',
@@ -920,7 +967,7 @@ export function TableMenu({
                 label="Select table"
                 icon={<TableIcon size={16} />}
                 onClick={() => {
-                  setOpen(false)
+                  closeMenu()
                   handlers.onSelectTable()
                 }}
               />
@@ -929,7 +976,7 @@ export function TableMenu({
                 icon={<Trash2Icon size={16} />}
                 destructive
                 onClick={() => {
-                  setOpen(false)
+                  closeMenu()
                   handlers.onDeleteTable()
                 }}
               />
