@@ -14,6 +14,11 @@ lives in `@portabletext/plugin-table/ui`: table components and their
 chrome (row/column handles, drag reorder, insert affordances, a table
 menu), themable with CSS custom properties.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/table-dark.png">
+  <img alt="A table in the Portable Text Editor: a plan-comparison table with bold text, links, and bulleted lists inside cells. One column is selected through its handle, showing the rectangle selection and the delete button." src="./assets/table-light.png">
+</picture>
+
 ## Installation
 
 ```sh
