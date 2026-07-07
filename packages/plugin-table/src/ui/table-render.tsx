@@ -130,13 +130,25 @@ export function Table({
   const columnCount = rows[0] ? configRowCells(config, rows[0]).length : 0
   const tableRef = useRef<HTMLTableElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const metrics = useTableMetrics(tableRef, `${rowCount}x${columnCount}`)
+  // The revision must capture identity *order*, not just counts: reordering
+  // rows (or columns) of unequal sizes swaps offsets without resizing any
+  // element, so no ResizeObserver fires, and only a revision change
+  // re-measures the boundaries the chrome sits on.
+  const structureRevision = rows
+    .map(
+      (row) =>
+        `${row._key}:${configRowCells(config, row)
+          .map((rowCell) => rowCell._key)
+          .join(',')}`,
+    )
+    .join('|')
+  const metrics = useTableMetrics(tableRef, structureRevision)
   const scrollWide = useTableHorizontalLayout(
     scrollRef,
     columnCount,
-    `${rowCount}x${columnCount}`,
+    structureRevision,
   )
-  const fade = useScrollFade(scrollRef, `${rowCount}x${columnCount}`)
+  const fade = useScrollFade(scrollRef, structureRevision)
   const [active, setActive] = useState(false)
   const [hoverCell, setHoverCell] = useState<HoverCell>(null)
   const [menuOpen, setMenuOpen] = useState(false)
