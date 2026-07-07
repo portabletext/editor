@@ -179,6 +179,19 @@ The stylesheet ships the structural rules plus a set of
 shared ancestor. The defaults are declared at zero specificity, so any
 declaration of yours wins.
 
+If your build has no CSS pipeline and cannot import the stylesheet file,
+`stylesText` is the same content as a string, generated from the
+stylesheet so the two cannot diverge. Inject it through whatever styling
+system you already have, and skip the stylesheet import from the quick
+start:
+
+```tsx
+import {stylesText} from '@portabletext/plugin-table/ui'
+import {createGlobalStyle} from 'styled-components'
+
+const TableStyles = createGlobalStyle`${stylesText}`
+```
+
 Color tokens default to `light-dark()` pairs, so dark mode is a matter of
 declaring the color scheme:
 
