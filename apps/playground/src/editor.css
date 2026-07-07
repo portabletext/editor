@@ -1,5 +1,4 @@
 [role='textbox'] {
-  --list-padding: 1em;
   /**
    * First, we initialize a counter for each block level.
    */
@@ -7,42 +6,39 @@
     level-9 level-10;
 }
 
+/**
+ * Markers render through the platform's own list machinery
+ * (`display: list-item` + `::marker`) instead of a grid-and-`::before`
+ * emulation: the browser then owns marker geometry, which is what keeps
+ * the marker aligned with the first line at any font size and any wrap.
+ */
 [data-list-item] {
-  display: grid;
-  grid-template-columns: 1.5rem 1fr;
-  gap: 0.5rem;
+  --list-gutter: 2rem;
+  display: list-item;
+  list-style-position: outside;
+  margin-inline-start: var(--list-gutter);
 }
-[data-list-item]::before {
-  text-align: right;
-  grid-column: 1;
+[data-list-item]::marker {
   color: var(--tw-prose-bullets, currentColor);
 }
 
-:where(.dark) [data-list-item]::before {
+:where(.dark) [data-list-item]::marker {
   color: #9ca3af;
 }
 
 [data-list-item='number'] {
-  align-items: baseline;
+  /* Fallback for engines without `content` support on `::marker`
+     (native numbering, not level-aware). */
+  list-style-type: decimal;
 }
-[data-list-item='number']::before {
+[data-list-item='number']::marker {
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
 
-[data-list-item='bullet'] {
-  align-items: center;
-}
-[data-list-item='bullet']::before {
-  font-size: 0.4rem;
-}
-
 [data-list-item='task'] {
   display: block;
-  grid-template-columns: none;
-}
-[data-list-item='task']::before {
-  content: none;
+  list-style: none;
 }
 
 /**
@@ -118,84 +114,86 @@
 /**
  * Finally, the calculated count is displayed in the list item.
  */
-[data-list-item='number'][data-level='1']::before {
-  content: counter(level-1, decimal) '.';
+[data-list-item='number'][data-level='1']::marker {
+  content: counter(level-1, decimal) '. ';
 }
-[data-list-item='number'][data-level='2']::before {
-  content: counter(level-2, lower-alpha) '.';
+[data-list-item='number'][data-level='2']::marker {
+  content: counter(level-2, lower-alpha) '. ';
 }
-[data-list-item='number'][data-level='3']::before {
-  content: counter(level-3, lower-roman) '.';
+[data-list-item='number'][data-level='3']::marker {
+  content: counter(level-3, lower-roman) '. ';
 }
-[data-list-item='number'][data-level='4']::before {
-  content: counter(level-4, decimal) '.';
+[data-list-item='number'][data-level='4']::marker {
+  content: counter(level-4, decimal) '. ';
 }
-[data-list-item='number'][data-level='5']::before {
-  content: counter(level-5, lower-alpha) '.';
+[data-list-item='number'][data-level='5']::marker {
+  content: counter(level-5, lower-alpha) '. ';
 }
-[data-list-item='number'][data-level='6']::before {
-  content: counter(level-6, lower-roman) '.';
+[data-list-item='number'][data-level='6']::marker {
+  content: counter(level-6, lower-roman) '. ';
 }
-[data-list-item='number'][data-level='7']::before {
-  content: counter(level-7, decimal) '.';
+[data-list-item='number'][data-level='7']::marker {
+  content: counter(level-7, decimal) '. ';
 }
-[data-list-item='number'][data-level='8']::before {
-  content: counter(level-8, lower-alpha) '.';
+[data-list-item='number'][data-level='8']::marker {
+  content: counter(level-8, lower-alpha) '. ';
 }
-[data-list-item='number'][data-level='9']::before {
-  content: counter(level-9, lower-roman) '.';
+[data-list-item='number'][data-level='9']::marker {
+  content: counter(level-9, lower-roman) '. ';
 }
-[data-list-item='number'][data-level='10']::before {
-  content: counter(level-10, decimal) '.';
+[data-list-item='number'][data-level='10']::marker {
+  content: counter(level-10, decimal) '. ';
 }
 
 /**
  * Visual display of bulleted list items
  */
-[data-list-item='bullet'][data-level='1']::before,
-[data-list-item='bullet'][data-level='4']::before,
-[data-list-item='bullet'][data-level='7']::before,
-[data-list-item='bullet'][data-level='10']::before {
-  content: '●';
+[data-list-item='bullet'][data-level='1'],
+[data-list-item='bullet'][data-level='4'],
+[data-list-item='bullet'][data-level='7'],
+[data-list-item='bullet'][data-level='10'] {
+  list-style-type: disc;
 }
-[data-list-item='bullet'][data-level='2']::before,
-[data-list-item='bullet'][data-level='5']::before,
-[data-list-item='bullet'][data-level='8']::before {
-  content: '○';
+[data-list-item='bullet'][data-level='2'],
+[data-list-item='bullet'][data-level='5'],
+[data-list-item='bullet'][data-level='8'] {
+  list-style-type: circle;
 }
-[data-list-item='bullet'][data-level='3']::before,
-[data-list-item='bullet'][data-level='6']::before,
-[data-list-item='bullet'][data-level='9']::before {
-  content: '■';
+[data-list-item='bullet'][data-level='3'],
+[data-list-item='bullet'][data-level='6'],
+[data-list-item='bullet'][data-level='9'] {
+  list-style-type: square;
 }
 
 /**
- * Padding for each level of list item
+ * Indentation per list level: margin, not padding, so the outside marker
+ * moves with the item's box. Each level steps by the same amount as the
+ * first (`--list-gutter`), so nesting reads linearly.
  */
 [data-level='2'] {
-  padding-left: calc(var(--list-padding));
+  margin-inline-start: calc(var(--list-gutter) * 2);
 }
 [data-level='3'] {
-  padding-left: calc(var(--list-padding) * 2);
+  margin-inline-start: calc(var(--list-gutter) * 3);
 }
 [data-level='4'] {
-  padding-left: calc(var(--list-padding) * 3);
+  margin-inline-start: calc(var(--list-gutter) * 4);
 }
 [data-level='5'] {
-  padding-left: calc(var(--list-padding) * 4);
+  margin-inline-start: calc(var(--list-gutter) * 5);
 }
 [data-level='6'] {
-  padding-left: calc(var(--list-padding) * 5);
+  margin-inline-start: calc(var(--list-gutter) * 6);
 }
 [data-level='7'] {
-  padding-left: calc(var(--list-padding) * 6);
+  margin-inline-start: calc(var(--list-gutter) * 7);
 }
 [data-level='8'] {
-  padding-left: calc(var(--list-padding) * 7);
+  margin-inline-start: calc(var(--list-gutter) * 8);
 }
 [data-level='9'] {
-  padding-left: calc(var(--list-padding) * 8);
+  margin-inline-start: calc(var(--list-gutter) * 9);
 }
 [data-level='10'] {
-  padding-left: calc(var(--list-padding) * 9);
+  margin-inline-start: calc(var(--list-gutter) * 10);
 }
