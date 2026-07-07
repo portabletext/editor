@@ -1,5 +1,16 @@
 # @portabletext/plugin-table
 
+## 1.1.2
+
+### Patch Changes
+
+- [#2943](https://github.com/portabletext/editor/pull/2943) [`fe5f93a`](https://github.com/portabletext/editor/commit/fe5f93a0c47d3d432771f828540ae92b030af465) Thanks [@christianhg](https://github.com/christianhg)! - fix: re-measure chrome geometry when rows or columns are reordered
+
+  Moving a row (or column) of a different size than its neighbors left the
+  gutter dots, handles, and lanes at their old positions: the reorder swaps
+  offsets without resizing any element, so nothing triggered a re-measure.
+  The chrome now re-measures whenever the table's row or cell order changes.
+
 ## 1.1.1
 
 ### Patch Changes
