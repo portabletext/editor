@@ -5,6 +5,7 @@ import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import type {ChildPath} from '../types/paths'
+import {childAtTextOffset, textOffsetOfChild} from './util.child-text-offset'
 import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
@@ -28,29 +29,32 @@ export function blockOffsetToSpanSelectionPoint({
   const block = blockEntry.node
   const blockPath = blockEntry.path
 
+  if (direction === 'forward') {
+    const placed = childAtTextOffset(
+      block.children,
+      (child) =>
+        isSpan(snapshot.context, child as (typeof block.children)[number])
+          ? (child as {text: string}).text
+          : undefined,
+      blockOffset.offset,
+    )
+    return placed
+      ? {
+          path: [
+            ...blockPath,
+            'children',
+            {_key: placed.key},
+          ] satisfies ChildPath,
+          offset: placed.offset,
+        }
+      : undefined
+  }
+
   let offsetLeft = blockOffset.offset
   let selectionPoint: {path: ChildPath; offset: number} | undefined
   let skippedInlineObject = false
 
   for (const child of block.children) {
-    if (direction === 'forward') {
-      if (!isSpan(snapshot.context, child)) {
-        continue
-      }
-
-      if (offsetLeft <= child.text.length) {
-        selectionPoint = {
-          path: [...blockPath, 'children', {_key: child._key}],
-          offset: offsetLeft,
-        }
-        break
-      }
-
-      offsetLeft -= child.text.length
-
-      continue
-    }
-
     if (!isSpan(snapshot.context, child)) {
       skippedInlineObject = true
       continue
@@ -110,22 +114,18 @@ export function spanSelectionPointToBlockOffset({
     return undefined
   }
 
-  let offset = 0
+  const offset = textOffsetOfChild(
+    textBlock.node.children,
+    (child) =>
+      isSpan(
+        snapshot.context,
+        child as (typeof textBlock.node.children)[number],
+      )
+        ? (child as {text: string}).text
+        : undefined,
+    spanSegment._key,
+    selectionPoint.offset,
+  )
 
-  for (const child of textBlock.node.children) {
-    if (!isSpan(snapshot.context, child)) {
-      continue
-    }
-
-    if (child._key === spanSegment._key) {
-      return {
-        path: textBlock.path,
-        offset: offset + selectionPoint.offset,
-      }
-    }
-
-    offset += child.text.length
-  }
-
-  return undefined
+  return offset === undefined ? undefined : {path: textBlock.path, offset}
 }
