@@ -55,7 +55,8 @@
     "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
     "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
     "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
-    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\"",
+    "test:unit": "vitest run --project unit"
   },
   "dependencies": {
     "@xstate/react": "catalog:",

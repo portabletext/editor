@@ -113,8 +113,8 @@ export const registeredTrademarkRule = defineTextTransformRule({
  * @public
  */
 export const oneHalfRule = defineTextTransformRule({
-  on: /(?:^|\s)(1\/2)\s/,
-  transform: () => '½',
+  on: /(?:^|\s)(?<fraction>1\/2)\s/,
+  transform: {fraction: () => '½'},
 })
 
 /**
@@ -153,8 +153,8 @@ export const raquoRule = defineTextTransformRule({
  * @public
  */
 export const multiplicationRule = defineTextTransformRule({
-  on: /\d+\s?([*x])\s?\d+/,
-  transform: () => '×',
+  on: /\d+\s?(?<operator>[*x])\s?\d+/,
+  transform: {operator: () => '×'},
 })
 
 /**
@@ -177,14 +177,14 @@ export const superscriptThreeRule = defineTextTransformRule({
  * @public
  */
 export const oneQuarterRule = defineTextTransformRule({
-  on: /(?:^|\s)(1\/4)\s/,
-  transform: () => '¼',
+  on: /(?:^|\s)(?<fraction>1\/4)\s/,
+  transform: {fraction: () => '¼'},
 })
 
 /**
  * @public
  */
 export const threeQuartersRule = defineTextTransformRule({
-  on: /(?:^|\s)(3\/4)\s/,
-  transform: () => '¾',
+  on: /(?:^|\s)(?<fraction>3\/4)\s/,
+  transform: {fraction: () => '¾'},
 })

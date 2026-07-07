@@ -28,11 +28,14 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import type {InputRule, InputRuleMatch} from './input-rule'
-import {getInputRuleMatchLocation} from './input-rule-match-location'
+import type {InputRule} from './input-rule'
+import {
+  getInputRuleMatchLocation,
+  type InputRuleMatchLocation,
+} from './input-rule-match-location'
 
 /**
- * @alpha
+ * @public
  */
 export function defineInputRuleBehavior(config: {
   rules: Array<InputRule<any>>
@@ -65,7 +68,7 @@ export function defineInputRuleBehavior(config: {
       const originalNewText = textBefore + event.text
       let newText = originalNewText
 
-      const foundMatches: Array<InputRuleMatch['groupMatches'][number]> = []
+      const foundMatches: Array<InputRuleMatchLocation> = []
       const foundActions: Array<BehaviorAction> = []
 
       for (const rule of config.rules) {
@@ -95,12 +98,24 @@ export function defineInputRuleBehavior(config: {
                 return []
               }
 
+              // Resolve the rule's allowed groups to their matched spans;
+              // a listed group that didn't participate in this match grants
+              // no leniency.
+              const allowedInlineObjectRanges = (
+                rule.inlineObjects?.allow ?? []
+              ).flatMap((groupName) => {
+                const span = regExpMatch.indices?.groups?.[groupName]
+
+                return span ? [{start: span[0], end: span[1]}] : []
+              })
+
               const matchLocation = getInputRuleMatchLocation({
                 match: [regExpMatch.at(0) ?? '', ...match],
                 adjustIndexBy: originalNewText.length - newText.length,
                 snapshot,
                 focusBlock,
                 originalTextBefore,
+                allowedInlineObjectRanges,
               })
 
               if (!matchLocation) {
@@ -127,33 +142,39 @@ export function defineInputRuleBehavior(config: {
                 return []
               }
 
-              const groupMatches =
-                regExpMatch.indices.length > 1
-                  ? regExpMatch.indices
-                      .slice(1)
-                      .filter((indices) => indices !== undefined)
-                  : []
+              const groups: Record<string, InputRuleMatchLocation | undefined> =
+                {}
+
+              for (const [groupName, span] of Object.entries(
+                regExpMatch.indices.groups ?? {},
+              )) {
+                if (!span) {
+                  continue
+                }
+
+                const groupLocation = getInputRuleMatchLocation({
+                  match: [
+                    regExpMatch.groups?.[groupName] ?? '',
+                    span[0],
+                    span[1],
+                  ],
+                  adjustIndexBy: originalNewText.length - newText.length,
+                  snapshot,
+                  focusBlock,
+                  originalTextBefore,
+                  allowedInlineObjectRanges,
+                })
+
+                if (groupLocation) {
+                  groups[groupName] = groupLocation
+                }
+              }
 
               const ruleMatch = {
                 text: matchLocation.text,
                 selection: matchLocation.selection,
                 targetOffsets: matchLocation.targetOffsets,
-                groupMatches: groupMatches.flatMap((match, index) => {
-                  const text = regExpMatch.at(index + 1) ?? ''
-                  const groupMatchLocation = getInputRuleMatchLocation({
-                    match: [text, ...match],
-                    adjustIndexBy: originalNewText.length - newText.length,
-                    snapshot,
-                    focusBlock,
-                    originalTextBefore,
-                  })
-
-                  if (!groupMatchLocation) {
-                    return []
-                  }
-
-                  return groupMatchLocation
-                }),
+                groups,
               }
 
               return [ruleMatch]
@@ -201,9 +222,13 @@ export function defineInputRuleBehavior(config: {
               }
             }
 
-            const matches = ruleMatches.flatMap((match) =>
-              match.groupMatches.length === 0 ? [match] : match.groupMatches,
-            )
+            const matches = ruleMatches.flatMap((match) => {
+              const groupLocations = Object.values(match.groups).filter(
+                (location) => location !== undefined,
+              )
+
+              return groupLocations.length === 0 ? [match] : groupLocations
+            })
 
             for (const match of matches) {
               // Remember each match and adjust `textBefore` and `newText` so
@@ -264,7 +289,7 @@ type InputRulePluginProps = {
  * <InputRulePlugin rules={smartQuotesRules} />
  * ```
  *
- * @alpha
+ * @public
  */
 export function InputRulePlugin(props: InputRulePluginProps) {
   const editor = useEditor()

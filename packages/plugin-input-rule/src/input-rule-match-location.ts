@@ -8,8 +8,14 @@ import {
   getNextInlineObjects,
   getPreviousInlineObjects,
 } from '@portabletext/editor/selectors'
-import {blockOffsetToSpanSelectionPoint} from '@portabletext/editor/utils'
+import {
+  blockOffsetToSpanSelectionPoint,
+  childSelectionPointToBlockOffset,
+} from '@portabletext/editor/utils'
 
+/**
+ * @public
+ */
 export type InputRuleMatchLocation = {
   /**
    * The matched text
@@ -37,6 +43,7 @@ export function getInputRuleMatchLocation({
   snapshot,
   focusBlock,
   originalTextBefore,
+  allowedInlineObjectRanges,
 }: {
   match: [string, number, number]
   adjustIndexBy: number
@@ -45,6 +52,12 @@ export function getInputRuleMatchLocation({
     path: BlockPath
   }
   originalTextBefore: string
+  /**
+   * Index ranges (in the same text space as `match`) inside which an inline
+   * object may sit without invalidating the match. Empty means any inline
+   * object inside the match invalidates it.
+   */
+  allowedInlineObjectRanges: Array<{start: number; end: number}>
 }): InputRuleMatchLocation | undefined {
   const [text, start, end] = match
   const adjustedIndex = start + adjustIndexBy
@@ -104,15 +117,33 @@ export function getInputRuleMatchLocation({
   })
   const inlineObjectsBefore = getPreviousInlineObjects(snapshot)
 
-  if (
-    inlineObjectsAfterMatch.some((inlineObjectAfter) =>
+  const inlineObjectsInMatch = inlineObjectsAfterMatch.filter(
+    (inlineObjectAfter) =>
       inlineObjectsBefore.some(
         (inlineObjectBefore) =>
           inlineObjectAfter.node._key === inlineObjectBefore.node._key,
       ),
+  )
+
+  for (const inlineObject of inlineObjectsInMatch) {
+    const inlineObjectOffset = childSelectionPointToBlockOffset({
+      snapshot,
+      selectionPoint: {path: inlineObject.path, offset: 0},
+    })
+
+    if (!inlineObjectOffset) {
+      return undefined
+    }
+
+    const allowed = allowedInlineObjectRanges.some(
+      (range) =>
+        inlineObjectOffset.offset >= range.start + adjustIndexBy &&
+        inlineObjectOffset.offset <= range.end + adjustIndexBy,
     )
-  ) {
-    return undefined
+
+    if (!allowed) {
+      return undefined
+    }
   }
 
   return {

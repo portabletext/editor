@@ -67,8 +67,8 @@ const bareRule = defineTextTransformRule({
 // the surrounding angle brackets remain. This pins that `i` flows
 // through the group-match path, not just the full-match path.
 const groupCaseInsensitiveRule = defineTextTransformRule({
-  on: /<<(yes|no)>>/i,
-  transform: () => 'GHIT',
+  on: /<<(?<answer>yes|no)>>/i,
+  transform: {answer: () => 'GHIT'},
 })
 
 // Unicode rule with a capture group. `@(\p{L}+)` captures one or more
@@ -77,8 +77,8 @@ const groupCaseInsensitiveRule = defineTextTransformRule({
 // The `@` prefix keeps this pattern from overlapping the full-match
 // unicode rule above.
 const groupUnicodeRule = defineTextTransformRule({
-  on: /@(\p{L}+)\b/u,
-  transform: () => 'UHIT',
+  on: /@(?<handle>\p{L}+)\b/u,
+  transform: {handle: () => 'UHIT'},
 })
 
 // Sticky rule with a capture group. With `y` preserved, the match anchors
@@ -87,8 +87,8 @@ const groupUnicodeRule = defineTextTransformRule({
 // capture `jam`, and replace just the capture - leaving `xxx` and
 // `session` intact.
 const groupStickyRule = defineTextTransformRule({
-  on: /(jam)session/y,
-  transform: () => 'YHIT',
+  on: /(?<band>jam)session/y,
+  transform: {band: () => 'YHIT'},
 })
 
 Feature({
