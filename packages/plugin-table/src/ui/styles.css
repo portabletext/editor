@@ -36,6 +36,7 @@
   --pt-plugin-table-fg: light-dark(#1c1f24, #e5e7eb);
   --pt-plugin-table-border: light-dark(#e3e4e8, #374151);
   --pt-plugin-table-header-bg: light-dark(#f6f6f8, #283345);
+  --pt-plugin-table-header-weight: 600;
   --pt-plugin-table-selected-bg: light-dark(
     rgba(85, 107, 252, 0.06),
     rgba(105, 125, 255, 0.16)
@@ -137,9 +138,9 @@
    structural and must beat host apps' own `::selection` styling (Studio
    scopes one under its text blocks at equal specificity, and whoever injects
    last would win the tie), hence the `!important`. */
-table.pt-plugin-table[data-cell-range] ::selection {
+table.pt-plugin-table[data-pt-plugin-table-cell-range] ::selection {
   background-color: transparent !important;
 }
-table.pt-plugin-table[data-cell-range] ::-moz-selection {
+table.pt-plugin-table[data-pt-plugin-table-cell-range] ::-moz-selection {
   background-color: transparent !important;
 }

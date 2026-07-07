@@ -11,7 +11,7 @@ import {
 } from 'react'
 import {createPortal} from 'react-dom'
 import {EllipsisIcon, PanelTopIcon, TableIcon, Trash2Icon} from './icons'
-import {BLUE, BORDER} from './table-cell-style'
+import {BLUE, BORDER, HEADER_WEIGHT} from './table-cell-style'
 import type {DragState} from './table-drag'
 import {snapPxCenter, type TableMetrics} from './table-metrics'
 
@@ -1172,7 +1172,7 @@ export function ReorderGhost({
             : 'var(--pt-plugin-table-bg)',
           boxShadow: GHOST_SHADOW,
           overflow: 'hidden',
-          fontWeight: isHeader ? 600 : 400,
+          fontWeight: isHeader ? HEADER_WEIGHT : 400,
         }}
       >
         {metrics.cols.map((col, index) => (
@@ -1235,7 +1235,7 @@ export function ReorderGhost({
               hasHeader && index === 0
                 ? 'var(--pt-plugin-table-header-bg)'
                 : undefined,
-            fontWeight: hasHeader && index === 0 ? 600 : 400,
+            fontWeight: hasHeader && index === 0 ? HEADER_WEIGHT : 400,
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',

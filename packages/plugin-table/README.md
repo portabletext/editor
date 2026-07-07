@@ -205,6 +205,7 @@ resolved values per token instead.
 | `--pt-plugin-table-font-family`            | Text in the portaled layers, which cannot inherit the host font.             |
 | `--pt-plugin-table-bg` / `-fg` / `-border` | The table's base surface, text, and grid.                                    |
 | `--pt-plugin-table-header-bg`              | Header row background.                                                       |
+| `--pt-plugin-table-header-weight`          | Header row font weight.                                                      |
 | `--pt-plugin-table-selected-bg`            | The rectangle overlay's tint.                                                |
 | `--pt-plugin-table-lane-*`                 | The extend lanes (background, hover, icon states).                           |
 | `--pt-plugin-table-handle-*`               | Row/column handles (rest bar, expanded background, dots, ring).              |
@@ -218,6 +219,19 @@ resolved values per token instead.
 The chrome's geometry (gutter sizes, handle and lane dimensions, hit
 areas) is deliberately not themable. Those values feed the hit-testing
 and positioning math.
+
+Beyond the tokens, the plugin marks DOM state with
+`data-pt-plugin-table-*` attributes for host CSS to target. The one you
+are most likely to need is `data-pt-plugin-table-header` on header row
+cells: the cell sets the header weight inline, but that only reaches
+text that inherits, so if your text components declare their own weight,
+restore it with a rule like:
+
+```css
+td[data-pt-plugin-table-header] .your-text-component {
+  font-weight: var(--pt-plugin-table-header-weight, 600);
+}
+```
 
 ## Bringing your own containers
 
