@@ -1,5 +1,17 @@
 # @portabletext/plugin-table
 
+## 1.1.3
+
+### Patch Changes
+
+- [#2945](https://github.com/portabletext/editor/pull/2945) [`5f41177`](https://github.com/portabletext/editor/commit/5f411773504cfe3bbf56d9fa7a4447d182497559) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve the `./ui/styles.css` export to a no-op module in Node
+
+  Importing the stylesheet from code that also runs outside a browser
+  bundler (server-side rendering, Node scripts importing a consuming
+  package) crashed Node's ESM loader, which cannot import CSS. The export
+  now carries resolution conditions: bundlers resolve `browser`/`style` to
+  the real stylesheet, Node and unknown resolvers get an empty JS module.
+
 ## 1.1.2
 
 ### Patch Changes
