@@ -16,6 +16,7 @@ import {
 import {getBlockStartPoint, isEqualPaths} from '@portabletext/editor/utils'
 import {
   createContext,
+  type CSSProperties,
   type ReactNode,
   useCallback,
   useContext,
@@ -76,6 +77,51 @@ const TableDragContext = createContext<{
 } | null>(null)
 
 /**
+ * Per-instance values for the theming custom properties, applied inline to
+ * the plugin's own roots: the in-tree chrome wrapper and the portal
+ * layers. The keys are the same `--pt-plugin-table-*` names the stylesheet
+ * declares defaults for; inline values win over those defaults. Hosts
+ * whose theme is a runtime object (not static CSS) resolve values and pass
+ * them here.
+ *
+ * @public
+ */
+export type TableTokens = {
+  [key in
+    | '--pt-plugin-table-accent'
+    | '--pt-plugin-table-accent-fg'
+    | '--pt-plugin-table-bg'
+    | '--pt-plugin-table-border'
+    | '--pt-plugin-table-boundary-dot'
+    | '--pt-plugin-table-cell-padding'
+    | '--pt-plugin-table-danger'
+    | '--pt-plugin-table-fg'
+    | '--pt-plugin-table-font-family'
+    | '--pt-plugin-table-handle-bg'
+    | '--pt-plugin-table-handle-dots'
+    | '--pt-plugin-table-handle-rest'
+    | '--pt-plugin-table-handle-ring'
+    | '--pt-plugin-table-header-bg'
+    | '--pt-plugin-table-header-weight'
+    | '--pt-plugin-table-lane-bg'
+    | '--pt-plugin-table-lane-bg-hover'
+    | '--pt-plugin-table-lane-icon'
+    | '--pt-plugin-table-lane-icon-hover'
+    | '--pt-plugin-table-menu-bg'
+    | '--pt-plugin-table-menu-border'
+    | '--pt-plugin-table-menu-hover'
+    | '--pt-plugin-table-radius'
+    | '--pt-plugin-table-scrollbar'
+    | '--pt-plugin-table-scrollbar-hover'
+    | '--pt-plugin-table-selected-bg'
+    | '--pt-plugin-table-toggle-knob'
+    | '--pt-plugin-table-toggle-track'
+    | '--pt-plugin-table-toggle-track-on'
+    | '--pt-plugin-table-trash-bg'
+    | '--pt-plugin-table-trash-fg']?: string
+}
+
+/**
  * The reference render for the table container: chrome (handles, lanes,
  * menu, trash, drag ghost), scroll handling, and selection visuals around the
  * editable `<table>`. Wire it into the container definition:
@@ -103,6 +149,7 @@ export function Table({
   renderMenu,
   icons,
   labels,
+  tokens,
 }: ContainerRenderProps & {
   /**
    * Where the menu and trash layer portal (default `document.body`). Hosts
@@ -129,8 +176,15 @@ export function Table({
    * final strings.
    */
   labels?: Partial<TableLabels>
+  /**
+   * Theming values applied to the plugin's roots, including the portal
+   * layers. See {@link TableTokens}.
+   */
+  tokens?: TableTokens
 }): JSX.Element {
   const resolvedLabels = {...defaultLabels, ...labels}
+  // React style objects pass custom properties through as-is.
+  const tokenStyle = tokens as CSSProperties | undefined
   const editor = useEditor()
   const config = resolveTableConfig(node._type)
   const {isTable} = createTableGuards(config)
@@ -440,6 +494,7 @@ export function Table({
       {/* biome-ignore lint/a11y/noStaticElementInteractions: mouse events only reveal the hover chrome; all interaction lives on the chrome's buttons */}
       <div
         className="pt-plugin-table-chrome"
+        style={tokenStyle}
         onMouseEnter={() => setActive(true)}
         onMouseLeave={() => {
           setActive(false)
@@ -536,6 +591,7 @@ export function Table({
         ) : (
           <TableMenu
             labels={resolvedLabels}
+            tokenStyle={tokenStyle}
             right={scrollWide ? 0 : 20}
             active={active}
             portalElement={portalElement}
@@ -551,6 +607,7 @@ export function Table({
         {readOnly ? null : (
           <TableTrashLayer
             labels={resolvedLabels}
+            tokenStyle={tokenStyle}
             tableRef={tableRef}
             metrics={metrics}
             portalElement={portalElement}

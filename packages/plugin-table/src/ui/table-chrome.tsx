@@ -1,5 +1,6 @@
 import {autoUpdate, computePosition, hide, offset} from '@floating-ui/dom'
 import {
+  type CSSProperties,
   useCallback,
   type ReactNode,
   useLayoutEffect,
@@ -640,6 +641,7 @@ export function TableTrashLayer({
   portalElement,
   trashIcon,
   labels,
+  tokenStyle,
 }: {
   tableRef: RefObject<HTMLTableElement | null>
   metrics: TableMetrics | null
@@ -658,6 +660,9 @@ export function TableTrashLayer({
   /** Replaces the built-in trash icon (host design systems pass their own). */
   trashIcon?: ReactNode
   labels: Pick<TableLabels, 'delete-row' | 'delete-column'>
+  /** The table's theming custom properties; portal layers escape the
+   * in-tree scope, so each carries its own copy. */
+  tokenStyle?: CSSProperties
 }): JSX.Element | null {
   const rowIndex = selectedRow !== null && canDeleteRow ? selectedRow : null
   const colIndex = selectedCol !== null && canDeleteCol ? selectedCol : null
@@ -666,7 +671,7 @@ export function TableTrashLayer({
   }
 
   return createPortal(
-    <div className="pt-plugin-table-portal">
+    <div className="pt-plugin-table-portal" style={tokenStyle}>
       {rowIndex !== null ? (
         <TrashButton
           icon={trashIcon}
@@ -873,6 +878,7 @@ export function TableMenu({
   handlers,
   portalElement,
   labels,
+  tokenStyle,
 }: {
   /** Distance from the wrapper's right edge; pins the trigger to the scrollport when the table overflows. */
   right: number
@@ -887,6 +893,8 @@ export function TableMenu({
     | 'menu-select-table'
     | 'table-options'
   >
+  /** See {@link TableTrashLayer}'s `tokenStyle`. */
+  tokenStyle?: CSSProperties
 }): JSX.Element {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -1016,6 +1024,7 @@ export function TableMenu({
               role="menu"
               className="pt-plugin-table-portal"
               style={{
+                ...tokenStyle,
                 position: 'fixed',
                 left: menuPos?.left ?? 0,
                 top: menuPos?.top ?? 0,

@@ -220,6 +220,25 @@ The chrome's geometry (gutter sizes, handle and lane dimensions, hit
 areas) is deliberately not themable. Those values feed the hit-testing
 and positioning math.
 
+When the theme only exists as a runtime object (a design system resolving
+colors in JavaScript), pass the same token names per instance through the
+`tokens` prop instead of a stylesheet. The plugin applies them inline to
+its own roots, including the portal layers, so they reach the chrome no
+matter where it renders:
+
+```tsx
+render: (props) => (
+  <Table
+    {...props}
+    tokens={{
+      '--pt-plugin-table-accent': theme.focusRing,
+      '--pt-plugin-table-bg': theme.bg,
+      // ...any subset; the stylesheet defaults cover the rest
+    }}
+  />
+)
+```
+
 Beyond the tokens, the plugin marks DOM state with
 `data-pt-plugin-table-*` attributes for host CSS to target. The one you
 are most likely to need is `data-pt-plugin-table-header` on header row
