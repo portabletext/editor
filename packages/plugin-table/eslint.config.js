@@ -3,7 +3,7 @@ import {globalIgnores} from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config([
-  globalIgnores(['dist', '*.test.tsx']),
+  globalIgnores(['dist', '*.test.tsx', 'src/ui/styles.css.node-stub.js']),
   reactHooks.configs.flat.recommended,
   {
     files: ['src/**/*.{cjs,mjs,js,jsx,ts,tsx}'],

@@ -35,14 +35,24 @@
       "source": "./src/ui/index.ts",
       "default": "./dist/ui/index.js"
     },
-    "./ui/styles.css": "./src/ui/styles.css",
+    "./ui/styles.css": {
+      "browser": "./src/ui/styles.css",
+      "style": "./src/ui/styles.css",
+      "node": "./src/ui/styles.css.node-stub.js",
+      "default": "./src/ui/styles.css.node-stub.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
       ".": "./dist/index.js",
       "./ui": "./dist/ui/index.js",
-      "./ui/styles.css": "./src/ui/styles.css",
+      "./ui/styles.css": {
+        "browser": "./src/ui/styles.css",
+        "style": "./src/ui/styles.css",
+        "node": "./src/ui/styles.css.node-stub.js",
+        "default": "./src/ui/styles.css.node-stub.js"
+      },
       "./package.json": "./package.json"
     }
   },
