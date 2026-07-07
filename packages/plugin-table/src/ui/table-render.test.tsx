@@ -3,6 +3,7 @@ import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {tableBehaviors} from '../plugin.table'
 import {TableCell, Table, TableRow} from './table-render'
 
@@ -278,16 +279,13 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     window.scrollTo(0, 0)
 
     // Reveal the trigger by hovering the table, then open the menu.
-    const {userEvent} = await import('vitest/browser')
     await userEvent.hover(
       locator.element().querySelector('table.pt-plugin-table')!,
     )
     const trigger = document.querySelector(
       'button[aria-label="Table options"]',
     ) as HTMLButtonElement
-    trigger.dispatchEvent(
-      new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
-    )
+    await userEvent.click(trigger)
     await vi.waitFor(() => {
       expect(document.querySelectorAll('[role="menu"]').length).toBe(1)
     })
@@ -295,6 +293,117 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     window.scrollTo(0, 4000)
     await vi.waitFor(() => {
       expect(document.querySelectorAll('[role="menu"]').length).toBe(0)
+    })
+  })
+})
+
+describe('Feature: Keyboard Activation of Chrome', () => {
+  test('Scenario: `Space` on the extend lane appends a row', async () => {
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={[tableContainer]} />
+          <BehaviorPlugin behaviors={tableBehaviors} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('table.pt-plugin-table td').length).toBe(
+        4,
+      )
+    })
+
+    const lane = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Add row at end"]',
+    )
+    expect(lane).not.toBeNull()
+    lane?.focus()
+    await userEvent.keyboard(' ')
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('table.pt-plugin-table td').length).toBe(
+        6,
+      )
+    })
+  })
+
+  test('Scenario: `Space` on a row handle selects the row and `Space` on the trash deletes it', async () => {
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={[tableContainer]} />
+          <BehaviorPlugin behaviors={tableBehaviors} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('table.pt-plugin-table td').length).toBe(
+        4,
+      )
+    })
+
+    const handle = document.querySelector<HTMLButtonElement>(
+      '[data-pt-plugin-table-handle="row"][data-pt-plugin-table-handle-index="1"]',
+    )
+    expect(handle).not.toBeNull()
+    handle?.focus()
+    await userEvent.keyboard(' ')
+
+    await vi.waitFor(() => {
+      const rows = Array.from(
+        document.querySelectorAll('table.pt-plugin-table tr'),
+      )
+      expect(
+        rows.map((row) => row.hasAttribute('data-pt-plugin-table-selected')),
+      ).toEqual([false, true])
+    })
+
+    const trash = await vi.waitFor(() => {
+      const trashButton = document.querySelector<HTMLButtonElement>(
+        'button[aria-label="Delete row"]',
+      )
+      expect(trashButton).not.toBeNull()
+      return trashButton
+    })
+    trash?.focus()
+    await userEvent.keyboard(' ')
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('table.pt-plugin-table td').length).toBe(
+        2,
+      )
+    })
+  })
+
+  test('Scenario: `Space` on the trigger opens the table menu', async () => {
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue,
+      children: <NodePlugin nodes={[tableContainer]} />,
+    })
+
+    const trigger = await vi.waitFor(() => {
+      const triggerButton = document.querySelector<HTMLButtonElement>(
+        'button[aria-label="Table options"]',
+      )
+      expect(triggerButton).not.toBeNull()
+      return triggerButton
+    })
+    trigger?.focus()
+    await userEvent.keyboard(' ')
+
+    await vi.waitFor(() => {
+      expect(trigger?.getAttribute('aria-expanded')).toBe('true')
+      expect(document.querySelectorAll('[role="menuitem"]').length).toBe(3)
     })
   })
 })

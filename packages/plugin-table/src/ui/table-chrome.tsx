@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type JSX,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react'
@@ -90,6 +91,7 @@ export function TableChrome({
   selectedRow,
   selectedCol,
   onHandlePointerDown,
+  onHandleKeyboardSelect,
   drag,
   onInsertRow,
   onInsertCol,
@@ -104,6 +106,7 @@ export function TableChrome({
     index: number,
     event: ReactPointerEvent<HTMLButtonElement>,
   ) => void
+  onHandleKeyboardSelect: (kind: 'row' | 'column', index: number) => void
   drag: DragState | null
   onInsertRow: (boundary: number) => void
   onInsertCol: (boundary: number) => void
@@ -180,6 +183,7 @@ export function TableChrome({
           selected={selectedCol === index}
           dragging={dragging && drag?.kind === 'column'}
           onPointerDown={(event) => onHandlePointerDown('column', index, event)}
+          onKeyboardSelect={() => onHandleKeyboardSelect('column', index)}
         />
       ))}
       {metrics.rows.map((row, index) => (
@@ -195,6 +199,7 @@ export function TableChrome({
           selected={selectedRow === index}
           dragging={dragging && drag?.kind === 'row'}
           onPointerDown={(event) => onHandlePointerDown('row', index, event)}
+          onKeyboardSelect={() => onHandleKeyboardSelect('row', index)}
         />
       ))}
       {drag?.active ? (
@@ -260,10 +265,12 @@ function ExtendBar({
       type="button"
       aria-label={label}
       tabIndex={visible ? 0 : -1}
+      // Act on click but keep DOM focus in the editable; a focus steal
+      // here would blur the editor and hide the chrome mid-interaction.
       onPointerDown={(event) => {
         event.preventDefault()
-        onClick()
       }}
+      onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -330,8 +337,8 @@ function BoundaryControl({
       onPointerDown={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        onInsert()
       }}
+      onClick={onInsert}
       style={{
         position: 'absolute',
         left: x - hit / 2,
@@ -445,6 +452,7 @@ function Handle({
   selected,
   dragging,
   onPointerDown,
+  onKeyboardSelect,
 }: {
   kind: 'row' | 'column'
   index: number
@@ -455,6 +463,7 @@ function Handle({
   selected: boolean
   dragging: boolean
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void
+  onKeyboardSelect: () => void
 }): JSX.Element {
   const [hot, setHot] = useState(false)
   const isColumn = kind === 'column'
@@ -474,6 +483,7 @@ function Handle({
       onMouseEnter={() => setHot(true)}
       onMouseLeave={() => setHot(false)}
       onPointerDown={onPointerDown}
+      onClick={keyboardActivation(onKeyboardSelect)}
       style={{
         position: 'absolute',
         left: x,
@@ -698,8 +708,8 @@ function TrashButton({
       onMouseLeave={() => setHovered(false)}
       onPointerDown={(event) => {
         event.preventDefault()
-        onClick()
       }}
+      onClick={onClick}
       style={{
         fontSize: 15,
         position: 'fixed',
@@ -905,6 +915,8 @@ export function TableMenu({
         onPointerDown={(event) => {
           event.preventDefault()
           event.stopPropagation()
+        }}
+        onClick={() => {
           if (open) {
             closeMenu()
           } else {
@@ -1124,6 +1136,22 @@ function ReorderInsertLine({
       }}
     />
   )
+}
+
+/**
+ * The handle must act on `pointerdown` (the press starts the drag
+ * session), so its keyboard path cannot share the chrome's act-on-click
+ * pattern: a pointer press already resolves press-without-drag to a
+ * select on `pointerup`, and an unguarded `click` would double-fire.
+ * `Space`/`Enter` synthesize a `click` with `detail === 0`;
+ * pointer-initiated clicks carry a positive count.
+ */
+function keyboardActivation(action: () => void) {
+  return (event: ReactMouseEvent<HTMLButtonElement>) => {
+    if (event.detail === 0) {
+      action()
+    }
+  }
 }
 
 const GHOST_SHADOW =
