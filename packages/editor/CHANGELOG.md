@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.10.3
+
+### Patch Changes
+
+- [#2939](https://github.com/portabletext/editor/pull/2939) [`b1bb99e`](https://github.com/portabletext/editor/commit/b1bb99e06b6af10914578e86ae325addce8a0016) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.32.4
+
 ## 7.10.2
 
 ### Patch Changes

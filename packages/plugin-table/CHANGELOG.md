@@ -1,5 +1,37 @@
 # @portabletext/plugin-table
 
+## 1.1.1
+
+### Patch Changes
+
+- [#2942](https://github.com/portabletext/editor/pull/2942) [`2ffe479`](https://github.com/portabletext/editor/commit/2ffe479e5e601a76d585e33f00ee79be8080d843) Thanks [@christianhg](https://github.com/christianhg)! - fix: chrome buttons activate with `Space` and `Enter`
+
+  The extend lanes, boundary insert dots, row and column handles, the trash
+  chip, and the built-in menu trigger could be focused with the keyboard but
+  not activated: they acted on pointer presses only. They now activate on
+  `click`, which serves pointer and keyboard alike; a handle activation
+  selects its row or column, same as a press without a drag. For pointers
+  this moves the action from press to release, matching platform buttons and
+  allowing drag-off to cancel.
+
+- [#2941](https://github.com/portabletext/editor/pull/2941) [`d227474`](https://github.com/portabletext/editor/commit/d2274749562077697804250d56471b1f266a50af) Thanks [@christianhg](https://github.com/christianhg)! - fix: mark header cells with `data-pt-plugin-table-header` for host CSS
+
+  Header cells set their weight through an inline style, which only reaches
+  text that inherits. Hosts whose text components declare their own weight
+  can now restore it with a rule against the new attribute (see the README's
+  Theming section). The weight itself becomes a theming token,
+  `--pt-plugin-table-header-weight` (default `600`), consumed by the cell and
+  the drag ghost alike.
+
+  All plugin-rendered state attributes now carry the full
+  `data-pt-plugin-table-` prefix: the previously undocumented `data-selected`
+  (selected rows) and `data-cell-range` (the table while a rectangle is
+  active) become `data-pt-plugin-table-selected` and
+  `data-pt-plugin-table-cell-range`.
+
+- Updated dependencies [[`b1bb99e`](https://github.com/portabletext/editor/commit/b1bb99e06b6af10914578e86ae325addce8a0016)]:
+  - @portabletext/editor@7.10.3
+
 ## 1.1.0
 
 ### Minor Changes
