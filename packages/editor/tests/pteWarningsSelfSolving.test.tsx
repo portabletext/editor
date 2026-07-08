@@ -202,7 +202,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     })
   })
 
-  it('removes orphaned marks', async () => {
+  it('preserves marks it cannot resolve', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
@@ -252,7 +252,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
                 _key: 'def',
                 _type: 'span',
                 text: 'Hello',
-                marks: [],
+                // 'ghi' could be a leftover annotation key or a decorator
+                // from another schema. The editor can't tell which, so it
+                // leaves the value alone.
+                marks: ['ghi'],
               },
             ],
             markDefs: [],

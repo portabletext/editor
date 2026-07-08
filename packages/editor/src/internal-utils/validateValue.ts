@@ -3,7 +3,6 @@ import {
   isSpan,
   isTextBlock,
   type PortableTextBlock,
-  type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
@@ -259,53 +258,6 @@ export function validateValue(
                 values: {
                   key: blk._key,
                   unusedMarkDefs: unusedMarkDefs.map((m) => m.toString()),
-                },
-              },
-            }
-            return true
-          }
-        }
-
-        // Test that every annotation mark used has a definition
-        const annotationMarks = allUsedMarks.filter(
-          (mark) => !types.decorators.map((dec) => dec.name).includes(mark),
-        )
-        const orphanedMarks = annotationMarks.filter(
-          (mark) =>
-            textBlock.markDefs === undefined ||
-            !textBlock.markDefs.find((def) => def._key === mark),
-        )
-        if (orphanedMarks.length > 0) {
-          const spanChildren = textBlock.children.filter(
-            (cld) =>
-              cld._type === types.span.name &&
-              Array.isArray(cld.marks) &&
-              cld.marks.some((mark) => orphanedMarks.includes(mark)),
-          ) as PortableTextSpan[]
-          if (spanChildren) {
-            const orphaned = orphanedMarks.join(', ')
-            resolution = {
-              autoResolve: true,
-              patches: spanChildren.map((child) => {
-                return set(
-                  (child.marks || []).filter(
-                    (cMrk) => !orphanedMarks.includes(cMrk),
-                  ),
-                  [{_key: blk._key}, 'children', {_key: child._key}, 'marks'],
-                )
-              }),
-              description: `Block with _key '${blk._key}' contains marks (${orphaned}) not supported by the current content model.`,
-              action: 'Remove invalid marks',
-              item: blk,
-
-              i18n: {
-                description:
-                  'inputs.portable-text.invalid-value.orphaned-marks.description',
-                action:
-                  'inputs.portable-text.invalid-value.orphaned-marks.action',
-                values: {
-                  key: blk._key,
-                  orphanedMarks: orphanedMarks.map((m) => m.toString()),
                 },
               },
             }
