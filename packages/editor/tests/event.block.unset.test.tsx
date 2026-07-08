@@ -273,7 +273,7 @@ describe('event.block.unset', () => {
     })
   })
 
-  test('Scenario: `unset`ing text block `markDefs` removes the annotation', async () => {
+  test('Scenario: `unset`ing text block `markDefs` leaves the marks in place', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
@@ -323,11 +323,20 @@ describe('event.block.unset', () => {
     })
 
     await vi.waitFor(() => {
+      // The mark stays: it now points at nothing and renders plain, the
+      // same treatment as any other mark the editor cannot resolve.
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: textBlockKey,
           _type: 'block',
-          children: [{_key: spanKey, _type: 'span', text: 'foo ', marks: []}],
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'foo ',
+              marks: [annotationKey],
+            },
+          ],
           style: 'normal',
           markDefs: [],
         },
@@ -336,7 +345,6 @@ describe('event.block.unset', () => {
       expect(patches).toEqual([
         unset([{_key: textBlockKey}, 'markDefs']),
         set([], [{_key: textBlockKey}, 'markDefs']),
-        set([], [{_key: textBlockKey}, 'children', {_key: spanKey}, 'marks']),
       ])
     })
   })

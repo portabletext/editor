@@ -1508,8 +1508,8 @@ describe('Collaborative editing', () => {
     })
   })
 
-  describe('Unknown decorator normalization', () => {
-    test('Scenario: Setting a block with unknown decorators emits a patch to strip them', async () => {
+  describe('Unknown decorator preservation', () => {
+    test('Scenario: Setting a block with unknown decorators preserves them', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -1593,8 +1593,10 @@ describe('Collaborative editing', () => {
         ],
       })
 
-      // The editor should normalize the block, strip the unknown
-      // 'underline' decorator, and emit a patch back
+      // 'underline' may be a decorator in the other client's schema. The
+      // editor keeps it and sends nothing back. It used to strip it and
+      // patch the deletion into the document, so two clients on different
+      // schema versions would delete each other's formatting.
       await vi.waitFor(() => {
         expect(editor.getSnapshot().context.value).toEqual([
           {
@@ -1605,7 +1607,7 @@ describe('Collaborative editing', () => {
                 _type: 'span',
                 _key: spanKey,
                 text: 'foo',
-                marks: ['strong'],
+                marks: ['strong', 'underline'],
               },
             ],
             markDefs: [],
@@ -1614,15 +1616,7 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      await vi.waitFor(() => {
-        expect(emittedPatches).toEqual([
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-            value: ['strong'],
-          },
-        ])
-      })
+      expect(emittedPatches).toEqual([])
     })
   })
 })

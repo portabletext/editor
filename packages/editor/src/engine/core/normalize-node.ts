@@ -322,91 +322,22 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     if (!blockEntry) {
       return
     }
-    const decorators = getPathSubSchema(editor.snapshot, path).decorators.map(
-      (decorator) => decorator.name,
+    // Only treat a mark as an annotation if it points to one of the
+    // block's `markDefs`. A mark that doesn't resolve might be a decorator
+    // from another schema (one that was removed here, or one a collaborator
+    // has that we don't), so it is left alone.
+    const annotations = node.marks?.filter((mark) =>
+      blockEntry.node.markDefs?.some((markDef) => markDef._key === mark),
     )
-    const annotations = node.marks?.filter((mark) => !decorators.includes(mark))
 
     if (node.text === '' && annotations && annotations.length > 0) {
       debug.normalization('removing annotations from empty span node')
       setNodeProperties(
         editor,
-        {marks: node.marks?.filter((mark) => decorators.includes(mark))},
+        {marks: node.marks?.filter((mark) => !annotations.includes(mark))},
         path,
       )
       return
-    }
-  }
-
-  /**
-   * Remove orphaned annotations from child spans of block nodes
-   */
-  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
-    const decorators = getPathSubSchema(editor.snapshot, path).decorators.map(
-      (decorator) => decorator.name,
-    )
-
-    for (const {node: child, path: childPath} of getChildren(
-      editor.snapshot,
-      path,
-    )) {
-      if (isSpan({schema: editor.snapshot.context.schema}, child)) {
-        const marks = child.marks ?? []
-        const orphanedAnnotations = marks.filter((mark) => {
-          return (
-            !decorators.includes(mark) &&
-            !node.markDefs?.find((def) => def._key === mark)
-          )
-        })
-
-        if (orphanedAnnotations.length > 0) {
-          debug.normalization('removing orphaned annotations from span node')
-          setNodeProperties(
-            editor,
-            {
-              marks: marks.filter(
-                (mark) => !orphanedAnnotations.includes(mark),
-              ),
-            },
-            childPath,
-          )
-          return
-        }
-      }
-    }
-  }
-
-  /**
-   * Remove orphaned annotations from span nodes
-   */
-  if (isSpan({schema: editor.snapshot.context.schema}, node)) {
-    const blockPath = parentPath(path)
-    const blockEntry2 = getTextBlock(editor.snapshot, blockPath)
-
-    if (blockEntry2) {
-      const block = blockEntry2.node
-      const decorators = getPathSubSchema(editor.snapshot, path).decorators.map(
-        (decorator) => decorator.name,
-      )
-      const marks = node.marks ?? []
-      const orphanedAnnotations = marks.filter((mark) => {
-        return (
-          !decorators.includes(mark) &&
-          !block.markDefs?.find((def) => def._key === mark)
-        )
-      })
-
-      if (orphanedAnnotations.length > 0) {
-        debug.normalization('removing orphaned annotations from span node')
-        setNodeProperties(
-          editor,
-          {
-            marks: marks.filter((mark) => !orphanedAnnotations.includes(mark)),
-          },
-          path,
-        )
-        return
-      }
     }
   }
 
