@@ -106,9 +106,26 @@ function sanitySchemaTypeToSchema(
   // the walk linear in the size of the compiled schema. Without it, the
   // per-branch ancestor sets below enumerate every simple path through
   // mutually-embedding types, which grows combinatorially.
-  const memo = new Map<SchemaType, OfDefinition>()
+  //
+  // The walk itself runs on an explicit LIFO work stack instead of the
+  // call stack: children are pushed in reverse so the drain order is
+  // exact DFS pre-order (which the memo's first-expansion-wins
+  // semantics depend on), results land in pre-indexed holes so
+  // construction order matches the recursive version, and the branch's
+  // ancestor names live in one shared set scoped by pop-markers pushed
+  // beneath each subtree (O(1) per level where copying the set per
+  // level made the walk quadratic, and heap-bounded where call-stack
+  // recursion overflowed beyond ~1.5k mutually-embedding types).
+  const conversion: Conversion = {
+    work: [],
+    ancestors: new Map<string, number>(),
+    distinctAncestorCount: 0,
+    memo: new Map<SchemaType, OfDefinition>(),
+    inFlight: new Map<unknown, Array<number>>(),
+  }
+  const pendingWork: Array<Work> = []
 
-  return {
+  const result = {
     block: {
       name: blockType.name,
     },
@@ -130,27 +147,307 @@ function sanitySchemaTypeToSchema(
       title: decorator.title,
       value: decorator.value,
     })),
-    annotations: annotations.map((annotation) => ({
-      name: annotation.name,
-      title: annotation.title,
-      fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set(), memo),
-      ),
-    })),
-    blockObjects: blockObjectTypes.map((blockObject) => ({
-      name: blockObject.name,
-      title: blockObject.title,
-      fields: blockObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([blockObject.name]), memo),
-      ),
-    })),
-    inlineObjects: inlineObjectTypes.map((inlineObject) => ({
-      name: inlineObject.name,
-      title: inlineObject.title,
-      fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
-      ),
-    })),
+    annotations: annotations.map((annotation) => {
+      const built = buildFields(
+        conversion,
+        annotation.fields,
+        undefined,
+        annotation,
+      )
+      pendingWork.push(built.work)
+      return {
+        name: annotation.name,
+        title: annotation.title,
+        fields: built.holes,
+      }
+    }),
+    blockObjects: blockObjectTypes.map((blockObject) => {
+      const built = buildFields(
+        conversion,
+        blockObject.fields,
+        blockObject.name,
+      )
+      pendingWork.push(built.work)
+      return {
+        name: blockObject.name,
+        title: blockObject.title,
+        fields: built.holes,
+      }
+    }),
+    inlineObjects: inlineObjectTypes.map((inlineObject) => {
+      const built = buildFields(
+        conversion,
+        inlineObject.fields,
+        inlineObject.name,
+        inlineObject,
+      )
+      pendingWork.push(built.work)
+      return {
+        name: inlineObject.name,
+        title: inlineObject.title,
+        fields: built.holes,
+      }
+    }),
+  }
+
+  pushInOrder(conversion, pendingWork)
+  drain(conversion)
+
+  return result
+}
+
+type Work = () => void
+
+type Conversion = {
+  work: Array<Work>
+  /**
+   * Reference-counted ancestor names: the same name can be seeded at
+   * several depths of one branch (nested inline objects sharing a
+   * name), and the recursive implementation's per-branch set copies
+   * were naturally reentrant, an inner scope's end never removed the
+   * name from the outer scope. A plain shared `Set` is not (`delete`
+   * clobbers the outer scope), so scopes increment and decrement
+   * counts instead. `distinctAncestorCount` tracks the set size the
+   * in-flight state comparison needs.
+   */
+  ancestors: Map<string, number>
+  distinctAncestorCount: number
+  memo: Map<SchemaType, OfDefinition>
+  /**
+   * Inline-object and annotation instances whose field expansion is
+   * currently in flight, each with the ancestor-set sizes at their
+   * in-flight entries. The recursive implementation re-expanded such
+   * instances unconditionally; that terminates while every re-entry
+   * grows the ancestor set (richer ancestors cut the inner expansion
+   * earlier) and recurses forever exactly when the recursion state
+   * repeats, same instance, same ancestor set. Ancestors grow
+   * monotonically along a branch, so "same instance at the same or
+   * smaller ancestor-set size" identifies the repeated state, and
+   * cutting there changes output only for schemas that previously
+   * overflowed the stack.
+   */
+  inFlight: Map<unknown, Array<number>>
+}
+
+function pushAncestor(conversion: Conversion, name: string): void {
+  const count = conversion.ancestors.get(name) ?? 0
+  if (count === 0) {
+    conversion.distinctAncestorCount++
+  }
+  conversion.ancestors.set(name, count + 1)
+}
+
+function popAncestor(conversion: Conversion, name: string): void {
+  const count = conversion.ancestors.get(name) ?? 0
+  if (count <= 1) {
+    conversion.ancestors.delete(name)
+    if (count === 1) {
+      conversion.distinctAncestorCount--
+    }
+    return
+  }
+  conversion.ancestors.set(name, count - 1)
+}
+
+function hasAncestor(conversion: Conversion, name: string): boolean {
+  return (conversion.ancestors.get(name) ?? 0) > 0
+}
+
+function drain(conversion: Conversion): void {
+  let steps = 0
+  while (conversion.work.length > 0) {
+    conversion.work.pop()!()
+    if (++steps > 100_000_000) {
+      // Circuit breaker: legal schemas stay far below this (the output
+      // of n mutually-embedding types is inherently O(n^2) entries, so
+      // a 3,200-type graph legitimately drains ~10M work items; 100M
+      // corresponds to a schema no Studio could load anyway). Failing
+      // with a diagnostic beats exhausting the heap in a Studio tab if
+      // a future schema shape finds a cycle the cuts miss.
+      throw new Error(
+        `Portable Text schema conversion exceeded ${steps} work items; ` +
+          'the schema type graph likely contains a cycle the conversion ' +
+          `cannot cut (in-flight ancestors: [${[...conversion.ancestors.keys()].join(', ')}])`,
+      )
+    }
+  }
+}
+
+/**
+ * Allocate the holes for a field list and return them together with the
+ * work that fills them, run under an ancestor scope extended with
+ * `seedName` (the eager version passed `new Set([...current, seed])`;
+ * at the top level the shared set is empty between siblings, so
+ * extending equals seeding). The scope's pop-marker sits beneath the
+ * field work on the stack, so the shared ancestor set is back to its
+ * surrounding state once the subtree drains. The caller pushes the
+ * returned works through `pushInOrder` so siblings drain in
+ * construction order, keeping the walk's DFS pre-order (and with it
+ * the memo's first-expansion positions) identical to the recursive
+ * version.
+ */
+function buildFields(
+  conversion: Conversion,
+  fields: ReadonlyArray<{name: string; type: SchemaType}>,
+  seedName: string | undefined,
+  inFlightKey?: unknown,
+): {holes: Array<FieldDefinition>; work: Work} {
+  const holes: Array<FieldDefinition> = []
+  const work = () => {
+    if (inFlightKey !== undefined) {
+      const entrySizes = conversion.inFlight.get(inFlightKey)
+      const ancestorCount = conversion.distinctAncestorCount
+      if (
+        entrySizes !== undefined &&
+        entrySizes.length > 0 &&
+        ancestorCount <= entrySizes[entrySizes.length - 1]!
+      ) {
+        // The recursion state (this instance, this ancestor set) is
+        // already in flight on the current branch: the recursive
+        // implementation looped forever here. Leave the fields empty.
+        return
+      }
+      if (entrySizes === undefined) {
+        conversion.inFlight.set(inFlightKey, [ancestorCount])
+      } else {
+        entrySizes.push(ancestorCount)
+      }
+      conversion.work.push(() => {
+        const sizes = conversion.inFlight.get(inFlightKey)
+        sizes?.pop()
+        if (sizes !== undefined && sizes.length === 0) {
+          conversion.inFlight.delete(inFlightKey)
+        }
+      })
+    }
+    if (seedName !== undefined) {
+      pushAncestor(conversion, seedName)
+      conversion.work.push(() => popAncestor(conversion, seedName))
+    }
+    holes.length = fields.length
+    for (let index = fields.length - 1; index >= 0; index--) {
+      const field = fields[index]!
+      conversion.work.push(() => scheduleField(conversion, field, holes, index))
+    }
+  }
+  return {holes, work}
+}
+
+function pushInOrder(conversion: Conversion, works: Array<Work>): void {
+  for (let index = works.length - 1; index >= 0; index--) {
+    conversion.work.push(works[index]!)
+  }
+}
+
+function scheduleField(
+  conversion: Conversion,
+  field: {name: string; type: SchemaType},
+  target: Array<FieldDefinition>,
+  index: number,
+): void {
+  if (field.type.jsonType !== 'array') {
+    target[index] = {
+      name: field.name,
+      type: field.type.jsonType,
+      ...(field.type.title ? {title: field.type.title} : {}),
+    }
+    return
+  }
+
+  const ofMembers = safeGetOf(field.type)
+  const of: Array<OfDefinition> = ofMembers ? new Array(ofMembers.length) : []
+  target[index] = {
+    name: field.name,
+    type: 'array',
+    ...(field.type.title ? {title: field.type.title} : {}),
+    of,
+  }
+  if (ofMembers) {
+    for (
+      let memberIndex = ofMembers.length - 1;
+      memberIndex >= 0;
+      memberIndex--
+    ) {
+      const member = ofMembers[memberIndex]!
+      conversion.work.push(() =>
+        scheduleOfMember(conversion, member, of, memberIndex),
+      )
+    }
+  }
+}
+
+function scheduleOfMember(
+  conversion: Conversion,
+  memberType: SchemaType,
+  target: Array<OfDefinition>,
+  index: number,
+): void {
+  // `findBlockType` walks up the `type.type` chain to the base `block`, so
+  // it only detects *whether* this member is a block. A block member's own
+  // marks/styles/lists live on `memberType`, which `scheduleBlockOfMember`
+  // reads to emit the member's own resolved sub-schema.
+  if (findBlockType(memberType)) {
+    scheduleBlockOfMember(
+      conversion,
+      memberType as BlockSchemaType,
+      target,
+      index,
+    )
+    return
+  }
+
+  // If this member has fields and isn't already in the ancestor chain,
+  // emit an INLINE declaration (`type: 'object'` + name + fields). If the
+  // type is in the ancestor chain (cycle) or has no fields, emit a bare
+  // REFERENCE (just `type: <name>`).
+  const hasFields =
+    memberType.jsonType === 'object' &&
+    'fields' in memberType &&
+    Array.isArray((memberType as ObjectSchemaType).fields)
+
+  if (!hasFields || hasAncestor(conversion, memberType.name)) {
+    // Bare reference. The editor's resolver looks up `memberType.name`
+    // in `blockObjects` / `inlineObjects`.
+    target[index] = {
+      type: memberType.name,
+      ...(memberType.title ? {title: memberType.title} : {}),
+    }
+    return
+  }
+
+  // Each distinct member instance is expanded exactly once per conversion;
+  // every later position that reaches the same instance shares the first
+  // expansion. Keyed by instance (not name) so that same-named but
+  // structurally different inline declarations keep their own shapes.
+  // The memo entry lands before the subtree drains, which is
+  // output-neutral: any path re-entering this instance mid-expansion
+  // carries its name in the ancestor set and cuts to a bare reference
+  // before the memo is consulted, and every other position runs after
+  // this subtree has fully drained (exact DFS order).
+  const memoized = conversion.memo.get(memberType)
+  if (memoized) {
+    target[index] = memoized
+    return
+  }
+
+  const fields = (memberType as ObjectSchemaType).fields
+  const holes: Array<FieldDefinition> = new Array(fields.length)
+  const definition: OfDefinition = {
+    type: 'object',
+    name: memberType.name,
+    ...(memberType.title ? {title: memberType.title} : {}),
+    fields: holes,
+  }
+  conversion.memo.set(memberType, definition)
+  target[index] = definition
+
+  pushAncestor(conversion, memberType.name)
+  conversion.work.push(() => popAncestor(conversion, memberType.name))
+  for (let fieldIndex = fields.length - 1; fieldIndex >= 0; fieldIndex--) {
+    const field = fields[fieldIndex]!
+    conversion.work.push(() =>
+      scheduleField(conversion, field, holes, fieldIndex),
+    )
   }
 }
 
@@ -169,11 +466,12 @@ function sanitySchemaTypeToSchema(
  * strips marks and styles, or declares `of: []`) from leaking the root's
  * decorators, styles, or inline objects into the container.
  */
-function resolveBlockOfMember(
+function scheduleBlockOfMember(
+  conversion: Conversion,
   blockType: BlockSchemaType,
-  ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
-): BlockOfDefinition {
+  target: Array<OfDefinition>,
+  index: number,
+): void {
   const styleList = blockType.fields?.find((field) => field.name === 'style')
     ?.type.options?.list
   const listItemList = blockType.fields?.find(
@@ -198,7 +496,9 @@ function resolveBlockOfMember(
   )?.decorators
   const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
 
-  return {
+  const pendingWork: Array<Work> = []
+
+  const definition: BlockOfDefinition = {
     type: 'block',
     styles: (Array.isArray(styleList) ? styleList : [])
       .filter((style: BlockStyleDefinition) => style.value)
@@ -222,26 +522,39 @@ function resolveBlockOfMember(
       }),
     ),
     annotations: (Array.isArray(spanAnnotations) ? spanAnnotations : []).map(
-      (annotation) => ({
-        name: annotation.name,
-        title: annotation.title,
-        fields: annotation.fields.map((field) =>
-          sanityFieldToSchemaField(field, ancestorNames, memo),
-        ),
-      }),
+      (annotation) => {
+        const built = buildFields(
+          conversion,
+          annotation.fields,
+          undefined,
+          annotation,
+        )
+        pendingWork.push(built.work)
+        return {
+          name: annotation.name,
+          title: annotation.title,
+          fields: built.holes,
+        }
+      },
     ),
-    inlineObjects: inlineObjectTypes.map((inlineObject) => ({
-      name: inlineObject.name,
-      title: inlineObject.title,
-      fields: (inlineObject.fields ?? []).map((field) =>
-        sanityFieldToSchemaField(
-          field,
-          new Set([...ancestorNames, inlineObject.name]),
-          memo,
-        ),
-      ),
-    })),
+    inlineObjects: inlineObjectTypes.map((inlineObject) => {
+      const built = buildFields(
+        conversion,
+        inlineObject.fields ?? [],
+        inlineObject.name,
+        inlineObject,
+      )
+      pendingWork.push(built.work)
+      return {
+        name: inlineObject.name,
+        title: inlineObject.title,
+        fields: built.holes,
+      }
+    }),
   }
+  target[index] = definition
+
+  pushInOrder(conversion, pendingWork)
 }
 
 function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
@@ -254,93 +567,6 @@ function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
     // Sanity schema getters can throw -- ignore
   }
   return undefined
-}
-
-function sanityFieldToSchemaField(
-  field: {
-    name: string
-    type: SchemaType
-  },
-  ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
-): FieldDefinition {
-  if (field.type.jsonType === 'array') {
-    const ofMembers = safeGetOf(field.type)
-    return {
-      name: field.name,
-      type: 'array',
-      ...(field.type.title ? {title: field.type.title} : {}),
-      of: ofMembers
-        ? ofMembers.map((member) =>
-            sanityOfMemberToOfDefinition(member, ancestorNames, memo),
-          )
-        : [],
-    }
-  }
-
-  return {
-    name: field.name,
-    type: field.type.jsonType,
-    ...(field.type.title ? {title: field.type.title} : {}),
-  }
-}
-
-function sanityOfMemberToOfDefinition(
-  memberType: SchemaType,
-  ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
-): OfDefinition {
-  // `findBlockType` walks up the `type.type` chain to the base `block`, so
-  // it only detects *whether* this member is a block. A block member's own
-  // marks/styles/lists live on `memberType`, which `resolveBlockOfMember`
-  // reads to emit the member's own resolved sub-schema.
-  if (findBlockType(memberType)) {
-    return resolveBlockOfMember(
-      memberType as BlockSchemaType,
-      ancestorNames,
-      memo,
-    )
-  }
-
-  // If this member has fields and isn't already in the ancestor chain,
-  // emit an INLINE declaration (`type: 'object'` + name + fields). If the
-  // type is in the ancestor chain (cycle) or has no fields, emit a bare
-  // REFERENCE (just `type: <name>`).
-  const hasFields =
-    memberType.jsonType === 'object' &&
-    'fields' in memberType &&
-    Array.isArray((memberType as ObjectSchemaType).fields)
-
-  if (!hasFields || ancestorNames.has(memberType.name)) {
-    // Bare reference. The editor's resolver looks up `memberType.name`
-    // in `blockObjects` / `inlineObjects`.
-    return {
-      type: memberType.name,
-      ...(memberType.title ? {title: memberType.title} : {}),
-    }
-  }
-
-  // Each distinct member instance is expanded exactly once per conversion;
-  // every later position that reaches the same instance shares the first
-  // expansion. Keyed by instance (not name) so that same-named but
-  // structurally different inline declarations keep their own shapes.
-  const memoized = memo.get(memberType)
-  if (memoized) {
-    return memoized
-  }
-
-  const nextAncestors = new Set(ancestorNames)
-  nextAncestors.add(memberType.name)
-  const definition: OfDefinition = {
-    type: 'object',
-    name: memberType.name,
-    ...(memberType.title ? {title: memberType.title} : {}),
-    fields: (memberType as ObjectSchemaType).fields.map((field) =>
-      sanityFieldToSchemaField(field, nextAncestors, memo),
-    ),
-  }
-  memo.set(memberType, definition)
-  return definition
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {

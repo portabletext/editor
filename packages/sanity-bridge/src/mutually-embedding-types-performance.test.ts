@@ -216,4 +216,50 @@ describe('mutually-embedding block objects', () => {
       expect(memberTypeNames).toEqual(allowedMemberTypes)
     }
   }, 10_000)
+
+  test('1,600 mutually-embedding types convert without overflowing the stack', () => {
+    // The recursive implementation overflowed the call stack between
+    // 1,400 and 1,600 types (the first descent chains through every
+    // type before any memo entry lands). The work-stack conversion is
+    // heap-bounded. The absolute time stays generous because the
+    // output of n mutually-embedding types is inherently O(n^2)
+    // entries: each of the n embedding positions carries its own `of`
+    // list, and those lists genuinely differ per position (a type's
+    // self-reference is ancestor-cut at its own position and
+    // memo-shared at others).
+    const objectCount = 1_600
+    const objects = Array.from({length: objectCount}, (_, index) =>
+      defineType({
+        name: `obj${index}`,
+        type: 'object',
+        fields: [
+          defineField({name: 'title', type: 'string'}),
+          defineField({name: 'content', type: 'blockContent'}),
+        ],
+      }),
+    )
+    const blockContent = defineType({
+      name: 'blockContent',
+      type: 'array',
+      of: [
+        defineArrayMember({type: 'block'}),
+        ...Array.from({length: objectCount}, (_, index) =>
+          defineArrayMember({type: `obj${index}`}),
+        ),
+      ],
+    })
+    const schema = SanitySchema.compile({
+      name: 'stack-cliff',
+      types: [blockContent, ...objects],
+    })
+
+    const startedAt = performance.now()
+    const converted = sanitySchemaToPortableTextSchema(
+      schema.get('blockContent'),
+    )
+    const durationMs = performance.now() - startedAt
+
+    expect(converted.blockObjects).toHaveLength(objectCount)
+    expect(durationMs).toBeLessThan(10_000)
+  })
 })
