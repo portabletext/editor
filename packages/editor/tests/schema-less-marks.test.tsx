@@ -33,6 +33,9 @@ const initialValue = [
 
 describe('Feature: Schema-Less Decorator Marks', () => {
   test('Scenario: marks unknown to the schema survive the round-trip', async () => {
+    const consoleWarn = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined)
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -45,6 +48,14 @@ describe('Feature: Schema-Less Decorator Marks', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
+
+    // The mark renders without effect, and the editor says so.
+    await vi.waitFor(() => {
+      expect(consoleWarn).toHaveBeenCalledWith(
+        'Mark strong is neither a decorator in the schema nor a markDef key in the block. The mark is kept in the value but does not render. If it is a decorator, add it to the schema.',
+      )
+    })
+    consoleWarn.mockRestore()
   })
 
   test('Scenario: editing one block leaves blocks with unknown marks untouched', async () => {

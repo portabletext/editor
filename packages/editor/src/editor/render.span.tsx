@@ -79,6 +79,9 @@ export function RenderSpan(props: RenderSpanProps) {
         return [markDef]
       }
 
+      console.warn(
+        `Mark ${mark} is neither a decorator in the schema nor a markDef key in the block. The mark is kept in the value but does not render. If it is a decorator, add it to the schema.`,
+      )
       return []
     },
   )
@@ -117,6 +120,11 @@ export function RenderSpan(props: RenderSpanProps) {
     const annotationSchemaType = subSchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
+    if (!annotationSchemaType) {
+      console.warn(
+        `The schema has no annotation type ${annotationMarkDef._type}. The annotation is kept in the value but does not render. Add ${annotationMarkDef._type} to the schema to render it.`,
+      )
+    }
     if (annotationSchemaType) {
       if (block && props.renderAnnotation) {
         children = (
