@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-one-line",
-  "version": "7.0.30",
+  "version": "7.0.31",
   "description": "Restrict the Portable Text Editor to a single line",
   "keywords": [
     "behaviors",
