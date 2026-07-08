@@ -1,5 +1,17 @@
 # @portabletext/plugin-input-rule
 
+## 6.0.0
+
+### Major Changes
+
+- [#2916](https://github.com/portabletext/editor/pull/2916) [`7681674`](https://github.com/portabletext/editor/commit/7681674a3961a367820446b9298a69edb4f1b8e0) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `inlineObjects` and declared transform targets to input rules
+
+  The input-rule API graduates from `@alpha` to `@public`: `defineInputRule`, `InputRulePlugin`, `defineInputRuleBehavior`, `defineTextTransformRule`, and the types `InputRule`, `InputRuleEvent`, `InputRuleGuard`, `InputRuleMatch`, `InputRuleMatchLocation` (newly exported so the type of `match.groups` entries can be named), and `TextTransformRule`.
+
+  `InputRule` accepts `inlineObjects: {allow: Array<string>}`, naming the capture groups inside which an inline object may sit without dropping the match. Inline objects contribute nothing to the text a rule's RegExp matches against, so a match can span one invisibly; by default any such match is dropped, the safe policy for rules whose actions delete the matched range, where deleting across an inline object would destroy it. Listing a group allows inline objects within that group's matched span while everything else in the match, unlisted groups and the rule's syntax markers, stays protected. To allow inline objects anywhere in the match, capture the whole pattern in a named group and list it.
+
+  `InputRuleMatch` now exposes group locations by name: `match.groups.<name>` mirrors the platform's `RegExpMatchArray.groups`, with entries for the named capture groups that participated in the match. **Breaking (hence the major):** the positional `match.groupMatches` array is removed. Its indices did not reliably identify groups, non-participating and unresolvable groups were filtered out before indexing, so `.at(1)` could refer to different groups on different inputs. Migrate by naming the groups you consume (`(?<name>...)`) and reading `match.groups['name']`; unnamed groups remain usable for regex mechanics but no longer get locations. `defineTextTransformRule` goes further, **replacement targets are declared, never inferred**: `transform` is either a function, replacing the whole match, always, regardless of capture groups (the previous behavior of implicitly replacing group spans is removed), or a record whose keys name the capture groups to replace, each with its own transform (`transform: {operator: () => '×'}`). `defineTextTransformRule` throws at definition time when a key names a group the pattern doesn't have, and a match in which none of the keys participated is skipped. The transform's end-of-match caret placement is also fixed for length-changing replacements (an inverted sign previously masked by end-positioned groups).
+
 ## 5.0.30
 
 ### Patch Changes

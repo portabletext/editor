@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.0.31
+
+### Patch Changes
+
+- [#2916](https://github.com/portabletext/editor/pull/2916) [`5edfe12`](https://github.com/portabletext/editor/commit/5edfe126b8772b8bd884819a030cdb02409a2fd8) Thanks [@christianhg](https://github.com/christianhg)! - fix: rebuild `CharacterPairDecoratorPlugin` on `plugin-input-rule`
+
+  `CharacterPairDecoratorPlugin` behaves as before, typing the closing half of a pair decorates the content, deletes the markers, and Backspace immediately after restores the literal text, but it is now implemented as an input rule on `@portabletext/plugin-input-rule` instead of carrying its own state machine. The package no longer depends on `xstate` or `@xstate/react` and instead depends on `@portabletext/plugin-input-rule`.
+
+  Net behavior is unchanged: a pair whose content spans an inline object still decorates, and a pair whose markers sit on either side of an inline object still stays literal, both now pinned by tests.
+
+- Updated dependencies [[`7681674`](https://github.com/portabletext/editor/commit/7681674a3961a367820446b9298a69edb4f1b8e0)]:
+  - @portabletext/plugin-input-rule@6.0.0
+
 ## 8.0.30
 
 ### Patch Changes

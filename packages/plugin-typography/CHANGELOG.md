@@ -1,5 +1,16 @@
 # @portabletext/plugin-typography
 
+## 8.0.31
+
+### Patch Changes
+
+- [#2916](https://github.com/portabletext/editor/pull/2916) [`7681674`](https://github.com/portabletext/editor/commit/7681674a3961a367820446b9298a69edb4f1b8e0) Thanks [@christianhg](https://github.com/christianhg)! - fix: declare the replacement targets of the fraction and multiplication transforms
+
+  The `1/2`, `1/4`, `3/4`, and multiplication (`2x3` → `2×3`) transforms now capture their replacement targets in named groups and declare them as `transform` record keys, following `@portabletext/plugin-input-rule`'s contract that replacement targets are declared rather than inferred. Behavior is unchanged; this release pairs with the input-rule major that removes positional group access and the implicit group-replacement mode.
+
+- Updated dependencies [[`7681674`](https://github.com/portabletext/editor/commit/7681674a3961a367820446b9298a69edb4f1b8e0)]:
+  - @portabletext/plugin-input-rule@6.0.0
+
 ## 8.0.30
 
 ### Patch Changes

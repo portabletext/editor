@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.0.31
+
+### Patch Changes
+
+- [#2916](https://github.com/portabletext/editor/pull/2916) [`6baa02e`](https://github.com/portabletext/editor/commit/6baa02e214fee4cee9f874c71f1b942a3e021dc1) Thanks [@christianhg](https://github.com/christianhg)! - fix: linkify markdown links whose text spans an inline object
+
+  Typing `[foo ⟨inline object⟩ bar](url)` now creates the link: the text spans are annotated and the inline object between them is left intact, where previously the markdown link shortcut silently did not trigger when the link text contained an inline object. An inline object inside the href region still keeps the text literal, the shortcut never deletes across an inline object and never captures an href that would silently omit one.
+
+- Updated dependencies [[`5edfe12`](https://github.com/portabletext/editor/commit/5edfe126b8772b8bd884819a030cdb02409a2fd8), [`7681674`](https://github.com/portabletext/editor/commit/7681674a3961a367820446b9298a69edb4f1b8e0)]:
+  - @portabletext/plugin-character-pair-decorator@8.0.31
+  - @portabletext/plugin-input-rule@6.0.0
+
 ## 8.0.30
 
 ### Patch Changes
