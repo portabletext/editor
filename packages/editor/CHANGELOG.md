@@ -1,5 +1,21 @@
 # Changelog
 
+## 7.10.4
+
+### Patch Changes
+
+- [#2954](https://github.com/portabletext/editor/pull/2954) [`e3997a4`](https://github.com/portabletext/editor/commit/e3997a4f8d86304767d0ba0eafb2845be126dd9a) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve marks the schema cannot resolve
+
+  The editor no longer removes marks it doesn't recognize: they render
+  as plain text and survive the round-trip. Previously, removing a
+  decorator from the schema deleted that formatting from existing
+  documents and could merge spans and corrupt their text.
+
+- [#2954](https://github.com/portabletext/editor/pull/2954) [`3e199ef`](https://github.com/portabletext/editor/commit/3e199ef38b969b5c993e16466872a561de0e6e0f) Thanks [@christianhg](https://github.com/christianhg)! - fix: warn when a mark or annotation cannot be resolved
+
+  The warning names the value, states that it is kept but does not
+  render, and says what to add to the schema to render it.
+
 ## 7.10.3
 
 ### Patch Changes
