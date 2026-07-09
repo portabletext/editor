@@ -60,9 +60,10 @@
       "groupName": "jsdom"
     },
     {
-      "description": "Group Vitest packages",
+      "description": "Group Vitest packages. Always `chore`: vitest is test tooling (runtime-reachable only as racejar's peer range, which would otherwise make these PRs `fix`), and the changeset workflow only generates release bumps for `fix`/`feat`",
       "matchPackageNames": ["/vitest/"],
-      "groupName": "vitest"
+      "groupName": "vitest",
+      "semanticCommitType": "chore"
     }
   ]
 }
