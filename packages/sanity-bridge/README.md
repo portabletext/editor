@@ -1,6 +1,22 @@
 # `@portabletext/sanity-bridge`
 
-A TypeScript library for converting between Sanity schemas and Portable Text schemas, enabling seamless integration between Sanity CMS and Portable Text editors.
+Converts between Sanity schemas and Portable Text schemas.
+
+The main job is `sanitySchemaToPortableTextSchema`. A compiled Sanity
+schema is lazy: types resolve through getters and class instances, and
+finding out what is allowed inside a Portable Text field means walking
+that graph. The editor wants the opposite, one plain, self-contained
+object it can read synchronously, serialize, and hand to renderers and
+plugins without knowing anything about Sanity. So the bridge walks the
+type graph once, up front, and expands it into exactly that: which
+styles, lists, decorators, annotations, block objects, and inline
+objects a field allows, with every nested block inside a container
+carrying the restrictions that apply at that exact position.
+
+Expanding up front is also why the output can be bigger than the schema
+that produced it. A type shows up in the output at every position that
+embeds it, and self-referencing types are cut off rather than expanded
+forever (see "Recursive schemas" below).
 
 ## Installation
 
@@ -135,32 +151,71 @@ whatever a container should allow on the block member itself. The resulting
 `Schema` follows the resolution rules documented in
 [`@portabletext/schema`](../schema/README.md#containers-and-sub-schemas).
 
-### Convert Portable Text schema to Sanity schema
+#### Recursive schemas
+
+Schemas are allowed to reference themselves. An accordion whose body is
+the same Portable Text array it lives in, or a footnote that carries a
+rich-text field of its own, both convert fine; the conversion doesn't
+loop forever trying to expand them.
+
+When the conversion runs into a type it is already in the middle of
+expanding, it stops and leaves a marker instead of expanding again:
+
+- A named object type becomes a bare reference, just `{type: 'accordion'}`.
+  The full declaration still exists at the top level, and that is where
+  the editor looks it up.
+- An inline object or annotation that loops back into itself gets empty
+  `fields` at the point of repetition. Everything up to that point is
+  fully declared.
+
+One thing to keep in mind: every place a type is embedded gets its own
+resolved sub-schema, so a schema where many types embed each other
+produces output that grows with the number of embedding positions, not
+just the number of types.
+
+### Keep hold of the original Sanity types
+
+The expanded Portable Text schema is what the editor runs on, but
+Studio-side code usually wants the original Sanity types back: they
+carry everything the expansion drops, validation rules, previews,
+custom components. `createPortableTextMemberSchemaTypes` buckets the
+members of a Portable Text array into their Sanity types, so render
+callbacks and inputs can join back by name and work with the real
+thing.
 
 ```ts
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
+import {createPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 
-// Convert Portable Text schema definition to Sanity types
-const sanityMemberTypes =
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes({
-    styles: [{name: 'normal'}, {name: 'h1'}],
-    decorators: [{name: 'strong'}, {name: 'em'}],
-    annotations: [{name: 'link'}],
-    blockObjects: [{name: 'image', fields: [{name: 'url', type: 'url'}]}],
-  })
+const memberTypes = createPortableTextMemberSchemaTypes(sanitySchema)
+
+memberTypes.blockObjects // the original Sanity types, not conversions
+memberTypes.inlineObjects
+memberTypes.annotations
 ```
 
-### Additional helper functions
+### Resolve the Sanity types at a position
+
+Inside containers, what a position allows depends on where it sits: a
+table cell's blocks are not the root's blocks. `getSanitySubSchema`
+answers "which Sanity types apply here?" for a path into a value,
+walking down to the nearest Portable-Text-shaped ancestor and
+bucketizing its members.
 
 ```ts
-import {
-  createPortableTextMemberSchemaTypes,
-  portableTextMemberSchemaTypesToSchema,
-} from '@portabletext/sanity-bridge'
+import {getSanitySubSchema} from '@portabletext/sanity-bridge'
 
-// Extract Portable Text member types from Sanity schema
-const memberTypes = createPortableTextMemberSchemaTypes(sanityPortableTextType)
-
-// Convert to first-class Portable Text schema
-const portableTextSchema = portableTextMemberSchemaTypesToSchema(memberTypes)
+const subSchema = getSanitySubSchema(sanitySchema, value, [
+  {_key: 'table1'},
+  'rows',
+  {_key: 'row1'},
+  'cells',
+  {_key: 'cell1'},
+  'content',
+  {_key: 'block1'},
+])
 ```
+
+This is the Sanity-side counterpart of the editor's own sub-schema
+resolution over the expanded schema. The two answer the same question
+in their respective type universes and are meant to agree position for
+position.
