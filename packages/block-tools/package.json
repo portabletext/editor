@@ -66,7 +66,7 @@
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/schema": "catalog:",
     "@types/jsdom": "catalog:tooling",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "catalog:tooling",
     "typescript": "catalog:tooling",
     "vitest": "catalog:tooling"
