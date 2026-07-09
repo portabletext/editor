@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  # Rerunning a failed release replays the reusable workflow at the commit
+  # it was first resolved to, so fixes to the shared workflow never reach a
+  # rerun. A manual dispatch starts a fresh run that resolves `@main` anew.
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
