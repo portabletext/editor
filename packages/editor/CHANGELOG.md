@@ -1,5 +1,19 @@
 # Changelog
 
+## 7.10.6
+
+### Patch Changes
+
+- [#2965](https://github.com/portabletext/editor/pull/2965) [`44fd221`](https://github.com/portabletext/editor/commit/44fd221b6e2e13d6debda5d443f9f4ec596dca50) Thanks [@christianhg](https://github.com/christianhg)! - fix: anchor replaced children on the incoming previous sibling during value sync
+
+  Updating the value of an editor whose document contains two or more
+  adjacent spans with identical marks (valid Portable Text, common after
+  CMS migrations) could crash the internal sync with `Cannot apply an
+"insert" operation ... because the sibling was not found.` The editor
+  kept rendering and accepting keystrokes, but edits no longer reached the
+  consumer's patch stream until reload. Value updates on such documents
+  now sync correctly.
+
 ## 7.10.5
 
 ### Patch Changes
