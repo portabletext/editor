@@ -83,7 +83,7 @@
   "peerDependencies": {
     "@jest/globals": "^30.3.0",
     "@playwright/test": "^1.60.0",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
