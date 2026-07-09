@@ -1452,14 +1452,14 @@ importers:
   packages/racejar:
     dependencies:
       '@cucumber/cucumber-expressions':
-        specifier: ^19.0.1
-        version: 19.0.1
+        specifier: ^20.0.0
+        version: 20.0.0
       '@cucumber/gherkin':
-        specifier: ^39.1.0
-        version: 39.1.0
+        specifier: ^41.0.0
+        version: 41.0.0
       '@cucumber/messages':
-        specifier: ^32.3.1
-        version: 32.3.1
+        specifier: ^34.0.1
+        version: 34.0.1
     devDependencies:
       '@jest/globals':
         specifier: ^30.3.0
@@ -2156,20 +2156,23 @@ packages:
     resolution: {integrity: sha512-kzyuwOAQnXJNLS9PSyrk0CWk35nWJW/zl/6KvnTBMFK65gm7U1/Z5BqjxeapjZCIhQcM/DsrEmcbRwDyXyXK4A==}
     engines: {node: '>=14'}
 
-  '@cucumber/cucumber-expressions@19.0.1':
-    resolution: {integrity: sha512-tJrTgCZ5/vgDBfAs2pQu0fu88gPJIGQ40AC/3ftg5/i/BwnhX/W1MbaFF8A+tanY1zbUWWarGFJ2QMKItPQ/QQ==}
+  '@cucumber/cucumber-expressions@20.0.0':
+    resolution: {integrity: sha512-t2FBLKuU0U1nP5FM8pHiVonYcXVm07fvXr/H9osdvrjcLXSWc5OCbOOqV/k5S56w/YndPv1Sv2/m/x1KBYvIlA==}
 
   '@cucumber/gherkin@32.2.0':
     resolution: {integrity: sha512-X8xuVhSIqlUjxSRifRJ7t0TycVWyX58fygJH3wDNmHINLg9sYEkvQT0SO2G5YlRZnYc11TIFr4YPenscvdlBIw==}
 
-  '@cucumber/gherkin@39.1.0':
-    resolution: {integrity: sha512-pqmSO2bUWxJm3TbNrKXlDaHjL6c77+ez9kWmfCd9oRPeTRPEVH3spZvpAqdXYWOZYSNYwWFCAAeZ4RGpkauNoQ==}
+  '@cucumber/gherkin@41.0.0':
+    resolution: {integrity: sha512-pKGx1EzNjtWbpw74kEevKDMj71dF3ZSaFJpLYuWVvRZKe+Cwoq5iEkuMaELIg1jxIu8jH/A2HPMpMR8UBvdG0w==}
 
   '@cucumber/messages@27.2.0':
     resolution: {integrity: sha512-f2o/HqKHgsqzFLdq6fAhfG1FNOQPdBdyMGpKwhb7hZqg0yZtx9BVqkTyuoNk83Fcvk3wjMVfouFXXHNEk4nddA==}
 
   '@cucumber/messages@32.3.1':
     resolution: {integrity: sha512-yNQq1KoXRYaEKrWMFmpUQX7TdeQuU9jeGgJAZ3dArTsC/T4NpJ6DnqaJIIgwPnz/wtQIQTNX7/h0rOuF5xY4qQ==}
+
+  '@cucumber/messages@34.0.1':
+    resolution: {integrity: sha512-Mvh8CkZD4TGykvXqM9qpnYVGy9cqMxYkImtghl2cF1hEuBtuDGU716zQk7KviLh0ssidM/phh9kdbJL/73dHpg==}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -9970,7 +9973,7 @@ snapshots:
 
   '@ctrl/tinycolor@4.2.0': {}
 
-  '@cucumber/cucumber-expressions@19.0.1':
+  '@cucumber/cucumber-expressions@20.0.0':
     dependencies:
       regexp-match-indices: 1.0.2
 
@@ -9978,7 +9981,7 @@ snapshots:
     dependencies:
       '@cucumber/messages': 27.2.0
 
-  '@cucumber/gherkin@39.1.0':
+  '@cucumber/gherkin@41.0.0':
     dependencies:
       '@cucumber/messages': 32.3.1
 
@@ -9993,6 +9996,8 @@ snapshots:
     dependencies:
       class-transformer: 0.5.1
       reflect-metadata: 0.2.2
+
+  '@cucumber/messages@34.0.1': {}
 
   '@emnapi/core@1.11.1':
     dependencies:
