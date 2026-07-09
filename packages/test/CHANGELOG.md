@@ -1,5 +1,11 @@
 # @portabletext/test
 
+## 1.0.5
+
+### Patch Changes
+
+- [#2962](https://github.com/portabletext/editor/pull/2962) [`f0eeb73`](https://github.com/portabletext/editor/commit/f0eeb73ba5f6377a7cc03f2df8c301e32bb72a90) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update vitest to ^4.1.10
+
 ## 1.0.4
 
 ### Patch Changes
