@@ -129,3 +129,94 @@ describe('Feature: Schema-Less Decorator Marks', () => {
     expect(patchesTouchingUntouchedBlock).toEqual([])
   })
 })
+
+describe('Feature: Typing Around Schema-Less Marks', () => {
+  function typingEditor(children: Array<Record<string, unknown>>) {
+    return createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          markDefs: [],
+          children,
+        },
+      ],
+    })
+  }
+
+  function typeAt(
+    editor: Awaited<ReturnType<typeof createTestEditor>>['editor'],
+    spanKey: string,
+    offset: number,
+  ) {
+    const point = {path: [{_key: 'b0'}, 'children', {_key: spanKey}], offset}
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+    editor.send({type: 'insert.text', text: 'X'})
+  }
+
+  // The baseline: a decorator the schema knows expands when typing at the
+  // trailing edge of its span.
+  test('Scenario: typing after a known decorator expands it', async () => {
+    const {editor} = await typingEditor([
+      {_type: 'span', _key: 's1', text: 'foo', marks: ['em']},
+      {_type: 'span', _key: 's2', text: ' bar', marks: []},
+    ])
+    typeAt(editor, 's1', 'foo'.length)
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value?.at(0)?.children).toEqual([
+        {_type: 'span', _key: 's1', text: 'fooX', marks: ['em']},
+        {_type: 'span', _key: 's2', text: ' bar', marks: []},
+      ])
+    })
+  })
+
+  test('Scenario: typing inside an unknown mark keeps the span whole', async () => {
+    const {editor} = await typingEditor([
+      {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
+    ])
+    typeAt(editor, 's1', 1)
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value?.at(0)?.children).toEqual([
+        {_type: 'span', _key: 's1', text: 'fXoo', marks: ['strong']},
+      ])
+    })
+  })
+
+  // The contrast: typing after an annotation escapes it. Unknown marks must
+  // not inherit this, only marks that resolve to a markDef are annotations.
+  test('Scenario: typing after an annotation escapes it', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          markDefs: [{_type: 'link', _key: 'l0', url: 'https://example.com'}],
+          children: [
+            {_type: 'span', _key: 's1', text: 'foo', marks: ['l0']},
+            {_type: 'span', _key: 's2', text: ' bar', marks: []},
+          ],
+        },
+      ],
+    })
+    const point = {path: [{_key: 'b0'}, 'children', {_key: 's1'}], offset: 3}
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+    editor.send({type: 'insert.text', text: 'X'})
+
+    await vi.waitFor(() => {
+      // The typed text lands outside the annotation; merging it with the
+      // following plain span re-keys that span.
+      expect(editor.getSnapshot().context.value?.at(0)?.children).toEqual([
+        {_type: 'span', _key: 's1', text: 'foo', marks: ['l0']},
+        {_type: 'span', _key: 'k2', text: 'X bar', marks: []},
+      ])
+    })
+  })
+})
