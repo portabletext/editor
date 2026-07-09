@@ -1798,3 +1798,117 @@ describe('event.update value', () => {
     })
   })
 })
+
+describe('event.update value: adjacent same-mark spans', () => {
+  // Regression: the engine merges adjacent same-mark spans on load, so its
+  // state diverges from the stored value. A subsequent `update value` with
+  // the stored (split) shape walked the children against a pre-loop engine
+  // snapshot: each replaced child was unset, and the next iteration then
+  // anchored its insert on that just-unset sibling, throwing
+  // `Cannot apply an "insert" operation ... because the sibling was not
+  // found.` and killing the sync actor.
+  const splitValue = [
+    {
+      _key: 'b0',
+      _type: 'block',
+      children: [
+        {_key: 's1', _type: 'span', text: 'C1', marks: ['strong']},
+        {_key: 's2', _type: 'span', text: 'C2', marks: ['strong']},
+        {_key: 's3', _type: 'span', text: 'C3', marks: ['strong']},
+        {_key: 's4', _type: 'span', text: 'D', marks: []},
+        {_key: 's5', _type: 'span', text: 'E', marks: ['em']},
+      ],
+      markDefs: [],
+      style: 'normal',
+    },
+  ]
+
+  test('Scenario: updating with the stored split shape after the engine merged on load', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: splitValue,
+    })
+
+    // The engine normalizes on load: the three adjacent `strong` spans
+    // merge into one.
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's1', _type: 'span', text: 'C1C2C3', marks: ['strong']},
+            {_key: 's4', _type: 'span', text: 'D', marks: []},
+            {_key: 's5', _type: 'span', text: 'E', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The consumer sends an update: a new block appended, while the
+    // adjacent-span block is still in its stored (split) shape. The
+    // changed value forces a sync, and the untouched block diffs against
+    // the engine's merged shape.
+    const appendedBlock = {
+      _key: 'b1',
+      _type: 'block',
+      children: [{_key: 's6', _type: 'span', text: 'new', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    editor.send({
+      type: 'update value',
+      value: [...splitValue, appendedBlock],
+    })
+
+    // The sync applies the split shape and the engine re-normalizes it to
+    // the merged shape; the sync actor survives.
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's1', _type: 'span', text: 'C1C2C3', marks: ['strong']},
+            {_key: 's4', _type: 'span', text: 'D', marks: []},
+            {_key: 's5', _type: 'span', text: 'E', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        appendedBlock,
+      ])
+    })
+
+    // The sync actor is still alive: a later update still lands.
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's1', _type: 'span', text: 'changed', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's1', _type: 'span', text: 'changed', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+})

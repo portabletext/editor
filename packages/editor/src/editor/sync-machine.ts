@@ -1101,9 +1101,16 @@ function updateBlock({
                 {_key: oldChild._key},
               ],
             })
+            // Anchor on the incoming block's previous child, not the
+            // pre-loop engine snapshot: earlier iterations may have unset
+            // the snapshot's sibling (e.g. when the engine merged adjacent
+            // same-mark spans on load and the incoming value still holds
+            // the split shape), while the incoming previous child is
+            // guaranteed present, the previous iteration just updated,
+            // replaced, or inserted it.
             const prevSibling =
               currentBlockChildIndex > 0
-                ? oldEngineBlock.children[currentBlockChildIndex - 1]
+                ? engineBlock.children[currentBlockChildIndex - 1]
                 : undefined
             if (prevSibling) {
               editorEngine.apply({
