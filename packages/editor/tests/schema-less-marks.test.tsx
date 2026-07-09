@@ -49,12 +49,9 @@ describe('Feature: Schema-Less Decorator Marks', () => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
 
-    // The mark renders without effect, and the editor says so.
-    await vi.waitFor(() => {
-      expect(consoleWarn).toHaveBeenCalledWith(
-        'Mark strong is neither a decorator in the schema nor a markDef key in the block. The mark is kept in the value but does not render. If it is a decorator, add it to the schema.',
-      )
-    })
+    // The mark renders without effect, silently: reporting is the host's
+    // job, so the console stays clean.
+    expect(consoleWarn).not.toHaveBeenCalled()
     consoleWarn.mockRestore()
   })
 
