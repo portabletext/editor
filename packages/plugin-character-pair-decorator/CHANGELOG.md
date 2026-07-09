@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.34
+
+### Patch Changes
+
+- Updated dependencies [[`44fd221`](https://github.com/portabletext/editor/commit/44fd221b6e2e13d6debda5d443f9f4ec596dca50)]:
+  - @portabletext/editor@7.10.6
+  - @portabletext/plugin-input-rule@6.0.3
+
 ## 8.0.33
 
 ### Patch Changes
