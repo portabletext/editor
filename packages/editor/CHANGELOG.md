@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.10.5
+
+### Patch Changes
+
+- [#2959](https://github.com/portabletext/editor/pull/2959) [`c94a206`](https://github.com/portabletext/editor/commit/c94a206be68bf35ec3db9b9b260ff82ee50ef3d9) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop logging unresolvable marks and annotations
+
+  The two render warnings introduced in 7.10.4 are removed. Reporting
+  belongs to the host: the editor renders such values without effect and
+  stays silent.
+
 ## 7.10.4
 
 ### Patch Changes
