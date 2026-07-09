@@ -152,6 +152,13 @@ describe(getMarkState.name, () => {
           {
             _type: 'block',
             _key: blockKey,
+            markDefs: [
+              {
+                _type: 'link',
+                _key: linkKey,
+                href: 'https://portabletext.org',
+              },
+            ],
             children: [
               {
                 _type: 'span',
@@ -214,6 +221,13 @@ describe(getMarkState.name, () => {
           {
             _type: 'block',
             _key: blockKey,
+            markDefs: [
+              {
+                _type: 'link',
+                _key: linkKey,
+                href: 'https://portabletext.org',
+              },
+            ],
             children: [
               {
                 _type: 'span',

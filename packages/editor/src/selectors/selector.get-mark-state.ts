@@ -152,13 +152,19 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
   }
 
-  const focusSubSchema = getPathSubSchema(snapshot, focusSpan.path)
-  const decorators = focusSubSchema.decorators.map(
-    (decorator) => decorator.name,
+  // A mark is an annotation only when it resolves to one of the block's
+  // `markDefs`. Marks the schema cannot resolve might be decorators from
+  // another schema, so they get decorator semantics (they expand when
+  // typing at the edges of the span) instead of the annotation escape.
+  const focusBlock = getParent(snapshot, focusSpan.path, {
+    match: (node) => isTextBlock({schema: snapshot.context.schema}, node),
+  })
+  const markDefKeys = (focusBlock?.node.markDefs ?? []).map(
+    (markDef) => markDef._key,
   )
   const marks = focusSpan.node.marks ?? []
-  const marksWithoutAnnotations = marks.filter((mark) =>
-    decorators.includes(mark),
+  const marksWithoutAnnotations = marks.filter(
+    (mark) => !markDefKeys.includes(mark),
   )
 
   const spanHasAnnotations = marks.length > marksWithoutAnnotations.length
@@ -184,20 +190,20 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     },
   })
   const nextSpanAnnotations =
-    nextSpan?.node?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
-  const spanAnnotations = marks.filter((mark) => !decorators.includes(mark))
+    nextSpan?.node?.marks?.filter((mark) => markDefKeys.includes(mark)) ?? []
+  const spanAnnotations = marks.filter((mark) => markDefKeys.includes(mark))
 
   const previousSpanHasAnnotations = previousSpan
-    ? previousSpan.node.marks?.some((mark) => !decorators.includes(mark))
+    ? previousSpan.node.marks?.some((mark) => markDefKeys.includes(mark))
     : false
   const previousSpanHasSameAnnotations = previousSpan
     ? previousSpan.node.marks
-        ?.filter((mark) => !decorators.includes(mark))
+        ?.filter((mark) => markDefKeys.includes(mark))
         .every((mark) => marks.includes(mark))
     : false
   const previousSpanHasSameAnnotation = previousSpan
     ? previousSpan.node.marks?.some(
-        (mark) => !decorators.includes(mark) && marks.includes(mark),
+        (mark) => markDefKeys.includes(mark) && marks.includes(mark),
       )
     : false
 
@@ -278,8 +284,8 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       return {
         state: 'changed',
         previousMarks: marks,
-        marks: (previousSpan?.node.marks ?? []).filter((mark) =>
-          decorators.includes(mark),
+        marks: (previousSpan?.node.marks ?? []).filter(
+          (mark) => !markDefKeys.includes(mark),
         ),
       }
     }

@@ -174,6 +174,23 @@ describe('Feature: Typing Around Schema-Less Marks', () => {
     })
   })
 
+  // The desired contract: a mark the schema cannot resolve might be a
+  // decorator from another schema, so typing treats it like one.
+  test('Scenario: typing after an unknown mark expands it like a decorator', async () => {
+    const {editor} = await typingEditor([
+      {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
+      {_type: 'span', _key: 's2', text: ' bar', marks: []},
+    ])
+    typeAt(editor, 's1', 'foo'.length)
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value?.at(0)?.children).toEqual([
+        {_type: 'span', _key: 's1', text: 'fooX', marks: ['strong']},
+        {_type: 'span', _key: 's2', text: ' bar', marks: []},
+      ])
+    })
+  })
+
   test('Scenario: typing inside an unknown mark keeps the span whole', async () => {
     const {editor} = await typingEditor([
       {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
