@@ -39,6 +39,12 @@
       "schedule": ["every weekday"]
     },
     {
+      "description": "TypeScript majors are a toolchain migration (typecheck, declaration emit, every TS-peer'd build tool), not a dep bump; gate them behind dashboard approval while minors/patches stay fast-tracked",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Group Tailwind packages",
       "matchPackageNames": ["/tailwind/"],
       "groupName": "tailwind"
