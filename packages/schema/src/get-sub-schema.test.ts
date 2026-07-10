@@ -74,4 +74,118 @@ describe(getSubSchema.name, () => {
     const withoutName = getSubSchema(schema, [{type: 'block'}])
     expect(withoutName.block.name).toBe('myBlock')
   })
+
+  test('a bare reference resolves to the block object declared on the schema', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'list',
+            fields: [
+              {name: 'kind', type: 'string'},
+              {
+                name: 'items',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'list-item',
+                    fields: [
+                      {
+                        name: 'content',
+                        type: 'array',
+                        of: [{type: 'block'}, {type: 'list'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const result = getSubSchema(schema, [{type: 'block'}, {type: 'list'}])
+
+    const list = result.blockObjects.find(
+      (blockObject) => blockObject.name === 'list',
+    )
+    expect(list).toBe(
+      schema.blockObjects.find((blockObject) => blockObject.name === 'list'),
+    )
+    expect(list?.fields.map((field) => field.name)).toEqual(['kind', 'items'])
+  })
+
+  test('inline fields win over a same-named schema declaration', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {name: 'note', fields: [{name: 'body', type: 'string'}]},
+        ],
+      }),
+    )
+
+    const result = getSubSchema(schema, [
+      {type: 'object', name: 'note', fields: []},
+    ])
+
+    expect(
+      result.blockObjects.find((blockObject) => blockObject.name === 'note')
+        ?.fields,
+    ).toEqual([])
+  })
+
+  test("a fieldless inline block object declaration does not take a same-named root type's fields", () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {name: 'note', fields: [{name: 'body', type: 'string'}]},
+        ],
+      }),
+    )
+
+    const result = getSubSchema(schema, [{type: 'object', name: 'note'}])
+
+    expect(
+      result.blockObjects.find((blockObject) => blockObject.name === 'note')
+        ?.fields,
+    ).toEqual([])
+  })
+
+  test('a reference to a type declared only inline resolves to no fields', () => {
+    // Pins the boundary of reference resolution: only root-declared block
+    // objects resolve. `callout` is declared inline inside `wrapper` and
+    // referenced bare in the queried `of`; the sub-schema keeps it
+    // fieldless rather than walking the `of` tree for the declaration.
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'wrapper',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'callout',
+                    fields: [{name: 'tone', type: 'string'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const result = getSubSchema(schema, [{type: 'callout'}])
+
+    expect(
+      result.blockObjects.find((blockObject) => blockObject.name === 'callout')
+        ?.fields,
+    ).toEqual([])
+  })
 })
