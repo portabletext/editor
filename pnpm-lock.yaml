@@ -936,6 +936,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../schema
+      '@portabletext/test':
+        specifier: workspace:^
+        version: link:../test
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 10.8.2(@types/babel__core@7.20.5)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(typescript@6.0.3)
