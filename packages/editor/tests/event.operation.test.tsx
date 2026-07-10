@@ -105,17 +105,13 @@ describe('event.operation', () => {
     expect(patches).toEqual([])
   })
 
-  test('Scenario: Normalization fix operations are delivered adjacent to their trigger', async () => {
+  test('Scenario: Auto-resolved blocks arrive repaired in their own insert operation', async () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)
 
-    // A text block with no children triggers a normalization fix that
-    // inserts a placeholder span. Value sync applies in a batch, so the fix
-    // runs at the batch close and is delivered after its trigger
-    // (application order). The opposite, nested order for unbatched applies
-    // is pinned at the unit level in `operation-channel.test.ts`; the
-    // public contract is only adjacency, which is why the docs steer
-    // consumers toward snapshot-seeded recompute.
+    // A text block with no children is auto-resolved by `validateValue` at
+    // sync ingress: the placeholder span is part of the inserted node
+    // itself, not a separate normalization fix operation.
     editor.send({type: 'update value', value: [emptyBlock('b1')]})
 
     await vi.waitFor(() => {
@@ -128,16 +124,61 @@ describe('event.operation', () => {
           type: 'insert',
           path: [0],
           position: 'before',
-          node: emptyBlock('b1'),
+          node: {
+            ...emptyBlock('b1'),
+            children: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Normalization fix operations are delivered adjacent to their trigger', async () => {
+    const {editor} = await createTestEditor()
+    const operations = collectOperations(editor)
+
+    // Duplicate child keys pass value validation (no dup-key check at
+    // ingress) and are repaired by engine normalization, which renames the
+    // second occurrence. Value sync applies in a batch, so the fix runs at
+    // the batch close and is delivered after its trigger (application
+    // order). The opposite, nested order for unbatched applies is pinned
+    // at the unit level in `operation-channel.test.ts`; the public
+    // contract is only adjacency, which is why the docs steer consumers
+    // toward snapshot-seeded recompute.
+    // The differing marks keep the two spans from also triggering the
+    // adjacent same-mark merge, so the rename is the only fix.
+    const dupBlock: PortableTextBlock = {
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: 'dup', text: 'one', marks: []},
+        {_type: 'span', _key: 'dup', text: 'two', marks: ['strong']},
+      ],
+    }
+    editor.send({type: 'update value', value: [dupBlock]})
+
+    await vi.waitFor(() => {
+      expect(operations).toEqual([
+        {
+          type: 'unset',
+          path: [{_key: 'k0'}],
         },
         {
           type: 'insert',
-          path: [{_key: 'b1'}, 'children', 0],
+          path: [0],
           position: 'before',
-          node: {_type: 'span', _key: 'k3', text: '', marks: []},
+          node: dupBlock,
+        },
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', 1, '_key'],
+          value: 'k2',
           inverse: {
-            type: 'unset',
-            path: [{_key: 'b1'}, 'children', {_key: 'k3'}],
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', 1, '_key'],
+            value: 'dup',
           },
         },
       ])
