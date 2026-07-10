@@ -30,11 +30,12 @@ export type InputRuleEvent = {
    */
   matches: Array<InputRuleMatch>
   /**
-   * The text before the insertion
+   * The focus block's text from its start to the caret, as it was before
+   * the insertion
    */
   textBefore: string
   /**
-   * The text is destined to be inserted
+   * The text carried by the triggering `insert.text` event
    */
   textInserted: string
   /**
