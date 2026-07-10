@@ -54,7 +54,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'block',
             children: [
               {
-                _key: 'k3',
+                _key: 'k2',
                 _type: 'span',
                 text: 'Hello with a new key',
                 marks: [],
@@ -174,7 +174,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'block',
             children: [
               {
-                _key: 'k3',
+                _key: 'k2',
                 _type: 'span',
                 text: '',
                 marks: [],
@@ -188,7 +188,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'block',
             children: [
               {
-                _key: 'k5',
+                _key: 'k3',
                 _type: 'span',
                 text: '',
                 marks: [],

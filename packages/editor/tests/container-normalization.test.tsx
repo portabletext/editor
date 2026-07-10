@@ -398,7 +398,7 @@ describe('container normalization', () => {
           children: [
             {
               _type: 'span',
-              _key: 'k4',
+              _key: 'k3',
               text: '',
               marks: [],
             },

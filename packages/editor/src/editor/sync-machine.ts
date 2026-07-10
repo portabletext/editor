@@ -1,4 +1,4 @@
-import type {Patch} from '@portabletext/patches'
+import {applyAll, type Patch} from '@portabletext/patches'
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
@@ -703,7 +703,8 @@ function syncBlock({
     )
 
     if (validation.valid || validation.resolution?.autoResolve) {
-      const engineBlock = toEngineBlock(block, {
+      const repairedBlock = applyAutoResolution(validation, [block], block)
+      const engineBlock = toEngineBlock(repairedBlock, {
         schemaTypes: context.schema,
       })
 
@@ -785,8 +786,14 @@ function syncBlock({
   }
 
   if (validation.valid || validation.resolution?.autoResolve) {
+    const repairedBlock = applyAutoResolution(
+      validation,
+      validationValue,
+      block,
+    )
+
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
-      debug.syncValue('Updating block', oldBlock, block)
+      debug.syncValue('Updating block', oldBlock, repairedBlock)
 
       withoutNormalizing(editorEngine, () => {
         withRemoteChanges(editorEngine, () => {
@@ -795,14 +802,14 @@ function syncBlock({
               context,
               editorEngine,
               oldEngineBlock,
-              block,
+              block: repairedBlock,
               index,
             })
           })
         })
       })
     } else {
-      debug.syncValue('Replacing block', oldBlock, block)
+      debug.syncValue('Replacing block', oldBlock, repairedBlock)
 
       withoutNormalizing(editorEngine, () => {
         withRemoteChanges(editorEngine, () => {
@@ -810,7 +817,7 @@ function syncBlock({
             replaceBlock({
               context,
               editorEngine,
-              block,
+              block: repairedBlock,
               index,
             })
           })
@@ -834,6 +841,26 @@ function syncBlock({
       blockValid: false,
     }
   }
+}
+
+/**
+ * `validateValue` auto-resolutions must reach the engine as state, not
+ * only the document as patches. Applying them only outbound forks the
+ * repair: the document receives the resolution (e.g. a minted child
+ * `_key`) while the engine holds the un-repaired shape its addressing
+ * model cannot represent, and normalization then mints a different key
+ * for the same node. The resolution patches were built from
+ * `validationValue` itself, so they always apply; the fallback only
+ * covers the impossible empty result.
+ */
+function applyAutoResolution(
+  validation: ReturnType<typeof validateValue>,
+  validationValue: Array<PortableTextBlock>,
+  block: PortableTextBlock,
+): PortableTextBlock {
+  return !validation.valid && validation.resolution?.autoResolve
+    ? (applyAll(validationValue, validation.resolution.patches).at(0) ?? block)
+    : block
 }
 
 function replaceBlock({

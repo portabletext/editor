@@ -1,6 +1,12 @@
 import {createTestKeyGenerator} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema, type EditorEmittedEvent} from '../src'
+import {
+  defineSchema,
+  type EditorEmittedEvent,
+  type MutationEvent,
+  type Patch,
+} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -1908,6 +1914,277 @@ describe('event.update value: adjacent same-mark spans', () => {
           markDefs: [],
           style: 'normal',
         },
+      ])
+    })
+  })
+})
+
+describe('event.update value: auto-resolved invalid blocks', () => {
+  // Regression: `validateValue` auto-resolutions (e.g. minting a missing
+  // child `_key`) were emitted as outbound patches while the *raw* block
+  // proceeded into the engine. The engine ended up holding the un-repaired
+  // shape (a keyless child), diverging from the document that received the
+  // minted key, and the next sync against that invalid engine state killed
+  // the sync silently.
+  const keylessChildBlock = {
+    _key: 'b0',
+    _type: 'block',
+    children: [{_type: 'span', text: 'hello changed', marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+
+  test('Scenario: a mid-session update with a keyless child is repaired once and the sync survives', async () => {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    // A changed block arrives whose span lost its `_key`.
+    editor.send({type: 'update value', value: [keylessChildBlock]})
+
+    // The auto-resolution is emitted as a patch AND applied to the block
+    // the engine receives: one key, minted once, on both sides.
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'children', 0],
+          value: {
+            _type: 'span',
+            _key: 'k2',
+            text: 'hello changed',
+            marks: [],
+          },
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 'k2', _type: 'span', text: 'hello changed', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The sync is still alive: a later update still lands.
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's9', _type: 'span', text: 'recovered', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's9', _type: 'span', text: 'recovered', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      // The sync machine parks in `busy` while its own emitted mutation
+      // flushes and re-checks on a 1s timer, so the recovery value can
+      // take a beat over a second to land.
+      {timeout: 5000},
+    )
+  })
+
+  test('Scenario: a mid-session update with an unused markDef is repaired on both sides', async () => {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    // A changed block arrives carrying a markDef no span references.
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello changed', marks: []},
+          ],
+          markDefs: [{_key: 'm1', _type: 'link', href: 'https://example.com'}],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const unsetPatch = {
+      type: 'unset',
+      path: [{_key: 'b0'}, 'markDefs', {_key: 'm1'}],
+    }
+
+    // The auto-resolution is emitted as a patch AND applied to the block
+    // the engine receives: the def is gone on both sides.
+    await vi.waitFor(() => {
+      expect(patches).toEqual([unsetPatch])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello changed', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Causal sentinel: one local edit, then assert the full emission
+    // history. Before the fix the engine received the block with the def
+    // still present, its own normalizer pruned it and parked a whole-array
+    // `set` on the pristine editor, and that parked patch flushed here,
+    // ahead of the sentinel's.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 13},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 13},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        unsetPatch,
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+          value: stringifyPatches(
+            makePatches(makeDiff('hello changed', 'hello changed!')),
+          ),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a startup value with a keyless child is repaired in the engine without emitting patches', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // No mutation leaves a pristine editor on open. "Nothing was emitted"
+    // can't be awaited directly, so prove it with a causal sentinel: make
+    // one local edit and assert its patches are the only ones ever
+    // collected. Event ordering guarantees a would-be repair emission had
+    // flushed before the sentinel's.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 5},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 5},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch = {
+      type: 'diffMatchPatch',
+      path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('hello', 'hello!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [sentinelPatch],
       ])
     })
   })
