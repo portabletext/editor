@@ -71,6 +71,50 @@ export function MyMarkdownPlugin() {
 
 > **Tip:** The [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) package is already built using Input Rules and provides common markdown shortcuts out of the box.
 
+## How rules execute
+
+A rule looks like a Behavior, but three contracts matter as soon as its actions read state:
+
+1. **The pattern matches the text up to the caret, plus the insertion.** `textBefore` is the focus block's text from its start to the caret, and the pattern runs against `textBefore + textInserted`. `^` anchors to the start of the block's text; `$` anchors to the end of the insertion, not the end of the block, and text after the caret is invisible to the pattern. A match that sits entirely in already-typed text is ignored; only matches involving the insertion fire.
+
+2. **Action callbacks see the document as it was before the insertion.** The `guard` and every entry in `actions` receive the same pre-insertion snapshot, and a later entry does not observe an earlier entry's effects. The events they raise apply to the document with the insertion in place, but anything computed inside a callback, a block value, a selection, reflects the state before it landed. Embedding a block read this way into an `insert.block` resurrects the very text your `delete` removes.
+
+3. **Target the match with `match.targetOffsets`.** They address the text your raised events apply to, the document with the insertion in place, so they are the right target for `select` and `delete`. `match.selection` stops at the caret and falls one character short of a match that includes the insertion.
+
+When an action needs the document as it looks after earlier raised events have applied, raise a custom event and let a companion Behavior do the reading; a Behavior handling a raised event sees the document with all previously raised events applied:
+
+```tsx
+const bulletListRule = defineInputRule({
+  on: /^[-*] $/,
+  actions: [
+    ({event}) => {
+      const match = event.matches.at(0)
+
+      if (!match) {
+        return []
+      }
+
+      return [
+        raise({type: 'delete', at: match.targetOffsets}),
+        raise({type: 'custom.convert to list'}),
+      ]
+    },
+  ],
+})
+
+const convertToList = defineBehavior({
+  on: 'custom.convert to list',
+  guard: ({snapshot}) => {
+    // Runs after the raised `delete` has applied, so the focus block
+    // reads back without the matched marker and can be moved or embedded
+    // safely.
+    const focusBlock = getFocusTextBlock(snapshot)
+    return focusBlock ? {focusBlock} : false
+  },
+  // ...
+})
+```
+
 ## Working with capture groups
 
 When a rule needs the location of a _part_ of its match, capture that part in a **named group** and read it back by name from `match.groups`:
