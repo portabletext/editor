@@ -1,7 +1,11 @@
 import {defineContainer} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {BehaviorPlugin, NodePlugin} from '@portabletext/editor/plugins'
-import {getFocusTextBlock} from '@portabletext/editor/selectors'
+import {
+  getFocusTextBlock,
+  getNextBlock,
+  getPreviousBlock,
+} from '@portabletext/editor/selectors'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
@@ -31,7 +35,7 @@ const schemaDefinition = defineSchema({
                 {
                   name: 'content',
                   type: 'array',
-                  of: [{type: 'block'}],
+                  of: [{type: 'block'}, {type: 'list'}],
                 },
               ],
             },
@@ -87,15 +91,33 @@ function listInputRule(kind: 'bullet' | 'number', on: RegExp) {
 const convertToList = defineBehavior<
   {kind: 'bullet' | 'number'},
   'custom.convert to list',
-  {focusBlock: NonNullable<ReturnType<typeof getFocusTextBlock>>}
+  {
+    focusBlock: NonNullable<ReturnType<typeof getFocusTextBlock>>
+    placement: 'before' | 'after' | 'auto'
+    at: ReturnType<typeof getPreviousBlock>
+  }
 >({
   on: 'custom.convert to list',
   guard: ({snapshot}) => {
     const focusBlock = getFocusTextBlock(snapshot)
-    return focusBlock ? {focusBlock} : false
+    if (!focusBlock) {
+      return false
+    }
+    // After the `delete.block` below, the selection no longer describes
+    // the deleted block's position, so `placement: 'auto'` cannot be
+    // trusted to keep the list where the block was. Anchor the insert to
+    // a live sibling instead; `auto` remains only for a block that is
+    // alone in its array.
+    const previousBlock = getPreviousBlock(snapshot)
+    const nextBlock = getNextBlock(snapshot)
+    return {
+      focusBlock,
+      placement: previousBlock ? 'after' : nextBlock ? 'before' : 'auto',
+      at: previousBlock ?? nextBlock,
+    }
   },
   actions: [
-    ({event}, {focusBlock}) => [
+    ({event}, {focusBlock, placement, at}) => [
       raise({type: 'delete.block', at: focusBlock.path}),
       raise({
         type: 'insert.block',
@@ -104,7 +126,13 @@ const convertToList = defineBehavior<
           kind: event.kind,
           items: [{_type: 'list-item', content: [focusBlock.node]}],
         },
-        placement: 'auto',
+        placement,
+        at: at
+          ? {
+              anchor: {path: at.path, offset: 0},
+              focus: {path: at.path, offset: 0},
+            }
+          : undefined,
         select: 'start',
       }),
     ],
@@ -387,6 +415,204 @@ test('Scenario: a bold marker with bold toggled off before the trigger space sti
                   // mark.
                   {_key: 's0', _type: 'span', marks: ['strong'], text: ''},
                 ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: converting a block below prior content in a list item nests the list below it', async () => {
+  const {editor} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition,
+    initialValue: [
+      {
+        _type: 'list',
+        _key: 'l0',
+        kind: 'bullet',
+        items: [
+          {
+            _type: 'list-item',
+            _key: 'i0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'first', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: '', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    children: (
+      <>
+        <NodePlugin nodes={containers} />
+        <InputRulePlugin rules={rules} />
+        <BehaviorPlugin behaviors={[convertToList]} />
+      </>
+    ),
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {
+        path: [
+          {_key: 'l0'},
+          'items',
+          {_key: 'i0'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'l0'},
+          'items',
+          {_key: 'i0'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 0,
+      },
+    },
+  })
+  editor.send({type: 'insert.text', text: '-'})
+  editor.send({type: 'insert.text', text: ' '})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'l0',
+        _type: 'list',
+        kind: 'bullet',
+        items: [
+          {
+            _key: 'i0',
+            _type: 'list-item',
+            content: [
+              {
+                _key: 'b0',
+                _type: 'block',
+                children: [
+                  {_key: 's0', _type: 'span', marks: [], text: 'first'},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _key: 'k3',
+                _type: 'list',
+                kind: 'bullet',
+                items: [
+                  {
+                    _key: 'k2',
+                    _type: 'list-item',
+                    content: [
+                      {
+                        _key: 'b1',
+                        _type: 'block',
+                        children: [
+                          {_key: 's1', _type: 'span', marks: [], text: ''},
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: converting a block below prior content at the root keeps the list below it', async () => {
+  const {editor} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition,
+    initialValue: [
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'first', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ],
+    children: (
+      <>
+        <NodePlugin nodes={containers} />
+        <InputRulePlugin rules={rules} />
+        <BehaviorPlugin behaviors={[convertToList]} />
+      </>
+    ),
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: '-'})
+  editor.send({type: 'insert.text', text: ' '})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [{_key: 's0', _type: 'span', marks: [], text: 'first'}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: 'k3',
+        _type: 'list',
+        kind: 'bullet',
+        items: [
+          {
+            _key: 'k2',
+            _type: 'list-item',
+            content: [
+              {
+                _key: 'b1',
+                _type: 'block',
+                children: [{_key: 's1', _type: 'span', marks: [], text: ''}],
                 markDefs: [],
                 style: 'normal',
               },
