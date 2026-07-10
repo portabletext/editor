@@ -87,8 +87,26 @@ export function getSubSchema(
         title?: string
         fields?: ReadonlyArray<unknown>
       }
+      const name = objectMember.name ?? objectMember.type
+      if (objectMember.fields === undefined && objectMember.type !== 'object') {
+        // A bare `{type: <name>}` entry is a `ReferenceOfDefinition`: a
+        // reference to a type declared elsewhere, and the only
+        // representation a recursive type can have, since its fields
+        // cannot be materialized inline without unrolling the cycle.
+        // Only root-declared block objects are resolved here; a reference
+        // to a type declared inline in another `of` tree stays
+        // unresolved with no fields. The `type !== 'object'` check keeps
+        // fieldless inline declarations (`{type: 'object', name}`) from
+        // taking a same-named root type's fields.
+        const declared = schema.blockObjects.find(
+          (blockObject) => blockObject.name === name,
+        )
+        if (declared) {
+          return declared
+        }
+      }
       return {
-        name: objectMember.name ?? objectMember.type,
+        name,
         title: objectMember.title,
         fields: (objectMember.fields ?? []) as BlockObjectSchemaType['fields'],
       }

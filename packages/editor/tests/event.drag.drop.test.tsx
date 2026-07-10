@@ -922,6 +922,7 @@ describe('event.drag.drop', () => {
                     {
                       _key: imageKey,
                       _type: 'image',
+                      src: 'https://example.com/image.jpg',
                     },
                   ],
                 },
