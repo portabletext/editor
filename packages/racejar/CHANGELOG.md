@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.10
+
+### Patch Changes
+
+- [#2966](https://github.com/portabletext/editor/pull/2966) [`e0eefed`](https://github.com/portabletext/editor/commit/e0eefed01b27094f7670eae0d923087921c9a913) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update cucumber
+
 ## 2.0.9
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.3
+
+### Patch Changes
+
+- [#2971](https://github.com/portabletext/editor/pull/2971) [`dd6b40c`](https://github.com/portabletext/editor/commit/dd6b40c3a34df1added8637e4163f4cd970ac310) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve bare `of` references against the schema's block objects in `getSubSchema`
+
+  A container field's `of` can reference a type declared on the schema by bare name (`{type: 'list'}`), the shape recursive schemas require. `getSubSchema` previously resolved such a reference to a block object with no fields, so inserting or dropping one of these blocks inside a container stripped it to its `_type` and `_key`: a `list` nested inside a `list-item` lost its `kind` and `items`, an `image` dropped into a table cell lost its `src`. Referenced types now resolve to their declaration and keep their fields.
+
 ## 2.2.2
 
 ### Patch Changes
