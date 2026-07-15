@@ -47,6 +47,7 @@ type MockStore = ReturnType<typeof createMockValueStore>
 async function createSyncedEditor(options: {
   initialValue?: PortableTextBlock[]
   store: MockStore
+  schemaDefinition?: ReturnType<typeof defineSchema>
 }) {
   const editorRef = createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
@@ -55,7 +56,7 @@ async function createSyncedEditor(options: {
     <EditorProvider
       initialConfig={{
         keyGenerator,
-        schemaDefinition: defineSchema({}),
+        schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
       }}
     >
@@ -161,6 +162,105 @@ describe('ValueSyncPlugin', () => {
 
       await vi.waitFor(() => {
         expect(getEditorText(editor)).toEqual('B: Hello from remote')
+      })
+    })
+
+    test('remote decorator toggle syncs `marks` inserts and unsets', async () => {
+      const makeValue = (marks: string[]): PortableTextBlock[] => [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello', marks}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      const store = createMockValueStore(makeValue([]))
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      })
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      // A collaborator toggles bold on. `applySync` diffs this into an
+      // `insert` after `marks[-1]`.
+      store.setRemoteValue(makeValue(['strong']))
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(
+          makeValue(['strong']),
+        )
+      })
+
+      // The collaborator toggles bold back off. `applySync` diffs this
+      // into an `unset` of `marks[0]`.
+      store.setRemoteValue(makeValue([]))
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(makeValue([]))
+      })
+    })
+
+    test('remote annotation toggle syncs span splits, `marks` and `markDefs`', async () => {
+      const plainValue: PortableTextBlock[] = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [
+            {_type: 'span', _key: 's1', text: 'hello world', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      const annotatedValue: PortableTextBlock[] = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [
+            {_type: 'span', _key: 's1', text: 'hello ', marks: []},
+            {_type: 'span', _key: 's2', text: 'wor', marks: ['m1']},
+            {_type: 'span', _key: 's3', text: 'ld', marks: []},
+          ],
+          markDefs: [{_key: 'm1', _type: 'link', href: 'https://sanity.io'}],
+          style: 'normal',
+        },
+      ]
+
+      const store = createMockValueStore(plainValue)
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        schemaDefinition: defineSchema({
+          annotations: [
+            {name: 'link', fields: [{name: 'href', type: 'string'}]},
+          ],
+        }),
+      })
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: hello world')
+      })
+
+      // A collaborator applies a link to "wor": the span splits in three,
+      // the middle one referencing a new markDef.
+      store.setRemoteValue(annotatedValue)
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(annotatedValue)
+      })
+
+      // The collaborator removes the link again: spans merge back and the
+      // markDef is removed.
+      store.setRemoteValue(plainValue)
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(plainValue)
       })
     })
   })

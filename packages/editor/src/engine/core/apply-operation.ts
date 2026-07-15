@@ -2,11 +2,14 @@ import {
   applyAll,
   set as setPatchHelper,
   unset as unsetPatchHelper,
+  type JSONValue,
+  type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {findNearestSpans} from '../../internal-utils/find-nearest-spans'
 import {getValue} from '../../internal-utils/get-value'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getChildFieldName} from '../../paths/get-child-field-name'
 import {serializePath} from '../../paths/serialize-path'
 import {getNode} from '../../traversal/get-node'
 import type {EditorSelection} from '../../types/editor'
@@ -40,6 +43,26 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
     case 'insert': {
       const {path} = op
       let {node} = op
+
+      if (!targetsStructuralChildren(editor, path)) {
+        // The path addresses an element of a sidecar array (e.g.
+        // `span.marks` or `block.markDefs`) rather than a structural
+        // child. Apply the insert as a plain data patch on the root
+        // block so the result matches what the datastore computed.
+        // These operations only arrive from remote patches, so no
+        // inverse is needed.
+        applyOnRootBlock(editor, path, {
+          type: 'insert',
+          path: path.slice(1),
+          position: op.position,
+          // Sidecar array members aren't necessarily objects (e.g. `marks`
+          // holds strings), so the node is plain JSON data here.
+          items: [node as unknown as JSONValue],
+        })
+
+        transformSelection = true
+        break
+      }
 
       modifyChildren(editor, parentPath(path), (children) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
@@ -172,6 +195,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       }
 
       if (setPropertyPath.length === 0) {
+        if (!targetsStructuralChildren(editor, setNodePath)) {
+          // The path addresses an element of a sidecar array (e.g.
+          // `span.marks[0]`). Apply the set as a plain data patch on the
+          // root block; `modifyDescendant` can't reach these elements.
+          applyOnRootBlock(editor, path, setPatchHelper(value, path.slice(1)))
+
+          transformSelection = true
+          break
+        }
+
         // Full node replacement: replace the node at setNodePath with value
         if (
           value !== null &&
@@ -253,6 +286,33 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       // array member. Check this BEFORE splitting into node/property paths
       // since node removal doesn't need that split.
       const lastSegment = path[path.length - 1]
+      if (
+        (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') &&
+        !targetsStructuralChildren(editor, path)
+      ) {
+        // The path addresses an element of a sidecar array (e.g.
+        // `span.marks[0]` or `block.markDefs[_key==...]`) rather than a
+        // structural child. Removing it never affects the selection, so
+        // apply it as a plain data patch on the root block.
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          const arrayValue = getValue(
+            editor.snapshot.context.value,
+            path.slice(0, -1),
+          )
+          if (Array.isArray(arrayValue)) {
+            op.inverse = {
+              type: 'set',
+              path: path.slice(0, -1),
+              value: arrayValue,
+            }
+          }
+        }
+
+        applyOnRootBlock(editor, path, unsetPatchHelper(path.slice(1)))
+
+        transformSelection = true
+        break
+      }
       if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
         // Transform the selection BEFORE removing the node from the tree.
         // `findNearestSpans` anchors on the removed node's position, so the
@@ -490,6 +550,70 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       }
     }
   }
+}
+
+/**
+ * Whether the last (keyed or numeric) segment of `path` addresses a member
+ * of its owning node's structural child array.
+ *
+ * Remote patches can address elements of sidecar arrays — `span.marks`
+ * (array of strings) and `block.markDefs` — whose paths also end in a keyed
+ * or numeric segment. Those must not be routed through structural child
+ * insertion/removal: the owning node's child field is a different array (or
+ * doesn't exist at all), so the operation would corrupt the tree or throw.
+ */
+function targetsStructuralChildren(editor: Editor, path: Path): boolean {
+  if (path.length < 2) {
+    return true
+  }
+
+  const fieldSegment = path[path.length - 2]
+  if (typeof fieldSegment !== 'string') {
+    // Compact paths ([{_key}, {_key}] or numeric) always descend
+    // structurally.
+    return true
+  }
+
+  const structuralFieldName = getChildFieldName(
+    {
+      schema: editor.snapshot.context.schema,
+      containers: editor.snapshot.context.containers,
+      value: editor.snapshot.context.value,
+    },
+    path.slice(0, -2),
+  )
+
+  return structuralFieldName === fieldSegment
+}
+
+/**
+ * Apply a patch on the root block of `path` as plain data (no structural
+ * traversal), mirroring how the datastore applies it. Used for operations
+ * addressing sidecar arrays that `modifyChildren`/`modifyDescendant` can't
+ * reach. The patch's own `path` must be relative to the block (the leading
+ * block segment stripped).
+ */
+function applyOnRootBlock(editor: Editor, path: Path, patch: Patch): void {
+  const blockSegment = findBlockSegment(path)
+  if (!blockSegment) {
+    return
+  }
+
+  const blockIndex = resolveBlockIndex(editor, blockSegment)
+  if (blockIndex === -1) {
+    return
+  }
+
+  const block = editor.snapshot.context.value[blockIndex]
+  if (!block) {
+    return
+  }
+
+  const updatedBlock = applyAll(block, [patch])
+
+  const newValue = editor.snapshot.context.value.slice()
+  newValue[blockIndex] = updatedBlock
+  editor.snapshot.context.value = newValue
 }
 
 /**
