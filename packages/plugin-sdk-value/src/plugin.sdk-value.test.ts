@@ -25,8 +25,17 @@ describe(arrayifyPath.name, () => {
     ])
   })
 
-  test('throws on empty path', () => {
-    expect(() => arrayifyPath('')).toThrow()
+  test('returns null instead of throwing on an empty path', () => {
+    expect(() => arrayifyPath('')).not.toThrow()
+    expect(arrayifyPath('')).toBeNull()
+  })
+
+  test('returns null instead of throwing on an array slice path', () => {
+    // `diffValue` emits a slice like this when several non-keyed items (e.g.
+    // span `marks`) are removed at once. It used to throw and crash `applySync`.
+    const slicePath = '[_key=="b1"].children[_key=="s1"].marks[1:]'
+    expect(() => arrayifyPath(slicePath)).not.toThrow()
+    expect(arrayifyPath(slicePath)).toBeNull()
   })
 })
 
@@ -36,24 +45,30 @@ describe(convertPatches.name, () => {
       convertPatches([
         {set: {'[_key=="k0"].children[_key=="k1"].text': 'Hello'}},
       ]),
-    ).toEqual([
-      {
-        type: 'set',
-        origin: 'remote',
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-        value: 'Hello',
-      },
-    ])
+    ).toEqual({
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: 'Hello',
+        },
+      ],
+      incomplete: false,
+    })
   })
 
   test('unset patches', () => {
-    expect(convertPatches([{unset: ['[_key=="k0"]']}])).toEqual([
-      {
-        type: 'unset',
-        origin: 'remote',
-        path: [{_key: 'k0'}],
-      },
-    ])
+    expect(convertPatches([{unset: ['[_key=="k0"]']}])).toEqual({
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: 'k0'}],
+        },
+      ],
+      incomplete: false,
+    })
   })
 
   test('insert patches', () => {
@@ -66,15 +81,18 @@ describe(convertPatches.name, () => {
           },
         },
       ]),
-    ).toEqual([
-      {
-        type: 'insert',
-        origin: 'remote',
-        position: 'after',
-        path: [{_key: 'k0'}],
-        items: [{_type: 'block', _key: 'k1', children: []}],
-      },
-    ])
+    ).toEqual({
+      patches: [
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'k0'}],
+          items: [{_type: 'block', _key: 'k1', children: []}],
+        },
+      ],
+      incomplete: false,
+    })
   })
 
   test('diffMatchPatch patches', () => {
@@ -87,12 +105,36 @@ describe(convertPatches.name, () => {
           },
         },
       ]),
-    ).toEqual([
+    ).toEqual({
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+      ],
+      incomplete: false,
+    })
+  })
+
+  test('drops unconvertible patches and flags the batch as incomplete', () => {
+    const result = convertPatches([
       {
-        type: 'diffMatchPatch',
+        unset: [
+          '[_key=="b1"].markDefs[_key=="l1"]',
+          // Array slice that `arrayifyPath` can't convert.
+          '[_key=="b1"].children[_key=="s1"].marks[1:]',
+        ],
+      },
+    ])
+
+    expect(result.incomplete).toBe(true)
+    expect(result.patches).toEqual([
+      {
+        type: 'unset',
         origin: 'remote',
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-        value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'l1'}],
       },
     ])
   })
