@@ -1,7 +1,8 @@
-import type {Editor} from '@portabletext/editor'
+import type {Editor, Patch as PtePatch} from '@portabletext/editor'
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {EditorRefPlugin} from '@portabletext/editor/plugins'
 import {toTextspec} from '@portabletext/editor/test'
+import {applyAll, type JSONValue} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef} from 'react'
@@ -42,14 +43,63 @@ function createMockValueStore(initialValue: PortableTextBlock[] = []) {
 
 type MockStore = ReturnType<typeof createMockValueStore>
 
+/**
+ * A mock store with a patch channel, mirroring an SDK that emits
+ * `remote-patches` document events and accepts preserved patch operations.
+ */
+function createMockPatchStore(initialValue: PortableTextBlock[] = []) {
+  let value = initialValue
+  let valueSubscriber: (() => void) | null = null
+  let patchSubscriber: ((patches: PtePatch[]) => void) | null = null
+
+  const pushValue = vi.fn((newValue: PortableTextBlock[]) => {
+    value = newValue
+    valueSubscriber?.()
+  })
+
+  const pushPatches = vi.fn((patches: PtePatch[]) => {
+    value = applyAll(value, patches)
+    valueSubscriber?.()
+  })
+
+  return {
+    getRemoteValue: () => value,
+    pushValue,
+    pushPatches,
+    onRemoteValueChange: (callback: () => void) => {
+      valueSubscriber = callback
+      return () => {
+        valueSubscriber = null
+      }
+    },
+    onRemotePatches: (callback: (patches: PtePatch[]) => void) => {
+      patchSubscriber = callback
+      return () => {
+        patchSubscriber = null
+      }
+    },
+    getValue: () => value,
+    // Simulate patches arriving from another client: apply them to the store
+    // value and emit through both channels, patches first, like the real SDK
+    receiveRemotePatches: (patches: PtePatch[]) => {
+      value = applyAll(value, patches)
+      patchSubscriber?.(patches)
+      valueSubscriber?.()
+    },
+  }
+}
+
+type MockPatchStore = ReturnType<typeof createMockPatchStore>
+
 // ---- Test editor helper ----
 
 async function createSyncedEditor(options: {
   initialValue?: PortableTextBlock[]
-  store: MockStore
+  store: MockStore | MockPatchStore
 }) {
   const editorRef = createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
+  const {store} = options
 
   const result = await render(
     <EditorProvider
@@ -62,9 +112,13 @@ async function createSyncedEditor(options: {
       <EditorRefPlugin ref={editorRef} />
       <PortableTextEditable />
       <ValueSyncPlugin
-        getRemoteValue={options.store.getRemoteValue}
-        pushValue={options.store.pushValue}
-        onRemoteValueChange={options.store.onRemoteValueChange}
+        getRemoteValue={store.getRemoteValue}
+        pushValue={store.pushValue}
+        onRemoteValueChange={store.onRemoteValueChange}
+        onRemotePatches={
+          'onRemotePatches' in store ? store.onRemotePatches : undefined
+        }
+        pushPatches={'pushPatches' in store ? store.pushPatches : undefined}
       />
     </EditorProvider>,
   )
@@ -315,6 +369,159 @@ describe('ValueSyncPlugin', () => {
       await vi.waitFor(() => {
         expect(getEditorText(editor)).toEqual('B: Hello from remote')
       })
+    })
+  })
+
+  describe('patch channel', () => {
+    test('remote patches apply to the editor', async () => {
+      const store = createMockPatchStore([makeBlock('b1', 'Hello')])
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      store.receiveRemotePatches([
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}],
+          items: [makeBlock('b2', 'From remote')] as unknown as JSONValue[],
+        },
+      ])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(
+          ['B: Hello', 'B: From remote'].join('\n'),
+        )
+      })
+      // the patch was applied operationally; no whole-value push happened
+      expect(store.pushValue).not.toHaveBeenCalled()
+    })
+
+    test('remote text set applies to a specific span', async () => {
+      const store = createMockPatchStore([
+        makeBlock('b1', 'First'),
+        makeBlock('b2', 'Second'),
+      ])
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(
+          ['B: First', 'B: Second'].join('\n'),
+        )
+      })
+
+      store.receiveRemotePatches([
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'b2'}, 'children', {_key: 'b2-span'}, 'text'],
+          value: 'Second, edited remotely',
+        },
+      ])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(
+          ['B: First', 'B: Second, edited remotely'].join('\n'),
+        )
+      })
+    })
+
+    test('remote patches apply during local typing without losing local changes', async () => {
+      const store = createMockPatchStore([makeBlock('b1', 'Hello')])
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      await locator.click()
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+            offset: 5,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+            offset: 5,
+          },
+        },
+      })
+      editor.send({type: 'insert.text', text: ' world'})
+
+      // remote patches arrive while the local write is still unflushed
+      store.receiveRemotePatches([
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}],
+          items: [makeBlock('b2', 'From remote')] as unknown as JSONValue[],
+        },
+      ])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(
+          ['B: Hello world|', 'B: From remote'].join('\n'),
+        )
+      })
+    })
+
+    test('local edits push operational patches instead of whole values', async () => {
+      const store = createMockPatchStore()
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await locator.click()
+      editor.send({type: 'insert.text', text: 'Hello'})
+
+      await vi.waitFor(() => {
+        expect(store.pushPatches).toHaveBeenCalled()
+      })
+
+      // the store converged on the editor value purely through patches
+      await vi.waitFor(() => {
+        expect(
+          toTextspec({
+            value: store.getValue(),
+            schema: editor.getSnapshot().context.schema,
+            selection: null,
+          }),
+        ).toEqual('B: Hello')
+      })
+      expect(store.pushValue).not.toHaveBeenCalled()
+    })
+
+    test('falls back to whole-value push when pushPatches throws', async () => {
+      const store = createMockPatchStore()
+      store.pushPatches.mockImplementation(() => {
+        throw new Error('cannot convert')
+      })
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await locator.click()
+      editor.send({type: 'insert.text', text: 'Hello'})
+
+      await vi.waitFor(() => {
+        expect(store.pushValue).toHaveBeenCalled()
+      })
+
+      const pushedValue = store.pushValue.mock.lastCall?.[0] ?? []
+      expect(
+        toTextspec({
+          value: pushedValue,
+          schema: editor.getSnapshot().context.schema,
+          selection: null,
+        }),
+      ).toEqual('B: Hello')
     })
   })
 })

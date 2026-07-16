@@ -1,5 +1,11 @@
 import {describe, expect, test} from 'vitest'
-import {arrayifyPath, convertPatches} from './plugin.sdk-value'
+import {
+  arrayifyPath,
+  convertPatches,
+  convertPatchesToSanity,
+  scopeRemotePatches,
+  stringifyPatchPath,
+} from './plugin.sdk-value'
 
 describe(arrayifyPath.name, () => {
   test('property paths', () => {
@@ -93,6 +99,198 @@ describe(convertPatches.name, () => {
         origin: 'remote',
         path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
         value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+      },
+    ])
+  })
+})
+
+describe(stringifyPatchPath.name, () => {
+  test('property paths', () => {
+    expect(stringifyPatchPath(['foo'])).toEqual('foo')
+    expect(stringifyPatchPath(['foo', 'bar'])).toEqual('foo.bar')
+  })
+
+  test('array index paths', () => {
+    expect(stringifyPatchPath(['items', 0])).toEqual('items[0]')
+    expect(stringifyPatchPath(['items', 0, 'text'])).toEqual('items[0].text')
+  })
+
+  test('key-based paths', () => {
+    expect(
+      stringifyPatchPath([{_key: 'abc'}, 'children', {_key: 'def'}, 'text']),
+    ).toEqual('[_key=="abc"].children[_key=="def"].text')
+  })
+
+  test('empty path', () => {
+    expect(stringifyPatchPath([])).toEqual('')
+  })
+
+  test('round-trips through arrayifyPath', () => {
+    const path = [{_key: 'abc'}, 'children', {_key: 'def'}, 'marks', 0]
+    expect(arrayifyPath(stringifyPatchPath(path))).toEqual(path)
+  })
+})
+
+describe(convertPatchesToSanity.name, () => {
+  test('set patches', () => {
+    expect(
+      convertPatchesToSanity(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'Hello',
+          },
+        ],
+        {prefix: 'blocks'},
+      ),
+    ).toEqual([
+      {set: {'blocks[_key=="k0"].children[_key=="k1"].text': 'Hello'}},
+    ])
+  })
+
+  test('unset patches', () => {
+    expect(
+      convertPatchesToSanity([{type: 'unset', path: [{_key: 'k0'}]}], {
+        prefix: 'blocks',
+      }),
+    ).toEqual([{unset: ['blocks[_key=="k0"]']}])
+  })
+
+  test('insert patches', () => {
+    expect(
+      convertPatchesToSanity(
+        [
+          {
+            type: 'insert',
+            position: 'after',
+            path: [{_key: 'k0'}],
+            items: [{_type: 'block', _key: 'k1', children: []}],
+          },
+        ],
+        {prefix: 'blocks'},
+      ),
+    ).toEqual([
+      {
+        insert: {
+          after: 'blocks[_key=="k0"]',
+          items: [{_type: 'block', _key: 'k1', children: []}],
+        },
+      },
+    ])
+  })
+
+  test('diffMatchPatch patches', () => {
+    expect(
+      convertPatchesToSanity(
+        [
+          {
+            type: 'diffMatchPatch',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+          },
+        ],
+        {prefix: 'blocks'},
+      ),
+    ).toEqual([
+      {
+        diffMatchPatch: {
+          'blocks[_key=="k0"].children[_key=="k1"].text':
+            '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+      },
+    ])
+  })
+
+  test('empty path targets the field itself', () => {
+    expect(
+      convertPatchesToSanity([{type: 'set', path: [], value: []}], {
+        prefix: 'blocks',
+      }),
+    ).toEqual([{set: {blocks: []}}])
+  })
+
+  test('nested field prefix', () => {
+    expect(
+      convertPatchesToSanity([{type: 'unset', path: [{_key: 'k0'}]}], {
+        prefix: 'content.body',
+      }),
+    ).toEqual([{unset: ['content.body[_key=="k0"]']}])
+  })
+})
+
+describe(scopeRemotePatches.name, () => {
+  test('re-roots patches under the field path', () => {
+    expect(
+      scopeRemotePatches(
+        [
+          {set: {'blocks[_key=="k0"].children[_key=="k1"].text': 'Hello'}},
+          {unset: ['blocks[_key=="k0"].markDefs[_key=="m0"]']},
+        ],
+        'blocks',
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: 'Hello',
+      },
+      {
+        type: 'unset',
+        origin: 'remote',
+        path: [{_key: 'k0'}, 'markDefs', {_key: 'm0'}],
+      },
+    ])
+  })
+
+  test('drops patches outside the field', () => {
+    expect(
+      scopeRemotePatches(
+        [{set: {'title': 'New title', 'blocks[_key=="k0"].style': 'h1'}}],
+        'blocks',
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'k0'}, 'style'],
+        value: 'h1',
+      },
+    ])
+  })
+
+  test('returns null when the whole field is replaced', () => {
+    expect(scopeRemotePatches([{set: {blocks: []}}], 'blocks')).toBeNull()
+    expect(scopeRemotePatches([{unset: ['blocks']}], 'blocks')).toBeNull()
+  })
+
+  test('returns null when an ancestor of the field is replaced', () => {
+    expect(
+      scopeRemotePatches([{set: {content: {}}}], 'content.body'),
+    ).toBeNull()
+  })
+
+  test('handles insert patches anchored inside the field', () => {
+    expect(
+      scopeRemotePatches(
+        [
+          {
+            insert: {
+              after: 'blocks[_key=="k0"]',
+              items: [{_type: 'block', _key: 'k1', children: []}],
+            },
+          },
+        ],
+        'blocks',
+      ),
+    ).toEqual([
+      {
+        type: 'insert',
+        origin: 'remote',
+        position: 'after',
+        path: [{_key: 'k0'}],
+        items: [{_type: 'block', _key: 'k1', children: []}],
       },
     ])
   })
