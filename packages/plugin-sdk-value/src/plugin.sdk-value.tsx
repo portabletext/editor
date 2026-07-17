@@ -7,6 +7,7 @@ import {
 import type {
   JSONValue,
   Path,
+  PathSegment,
   InsertPatch as PteInsertPatch,
 } from '@portabletext/patches'
 import {diffValue, type SanityPatchOperations} from '@sanity/diff-patch'
@@ -18,15 +19,23 @@ import {
   type ThisNode,
 } from '@sanity/json-match'
 import {
+  editDocument,
   getDocumentState,
+  subscribeDocumentEvents,
+  useApplyDocumentActions,
   useEditDocument,
   useSanityInstance,
   type DocumentHandle,
+  type EditDocumentAction,
 } from '@sanity/sdk-react'
 import {useActorRef} from '@xstate/react'
+import {useCallback} from 'react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
 
 type InsertPatch = Required<Pick<SanityPatchOperations, 'insert'>>
+
+const ARRAYIFY_ERROR_MESSAGE =
+  'Unexpected path format from diffValue output. Please report this issue.'
 
 function* getSegments(
   node: PathNode,
@@ -55,89 +64,52 @@ function isKeyPath(node: ExprNode): node is PathNode {
   return node.segment.name === '_key'
 }
 
-/**
- * Converts a `diffValue` path expression (e.g. `[_key=="a"].children[0]`) into
- * a keyed Portable Text Editor path.
- *
- * Returns `null` – rather than throwing – for any expression that can't be
- * represented as a keyed PTE path. `diffValue` can emit such expressions in
- * practice: removing several non-keyed array items at once (e.g. clearing
- * multiple span `marks`) produces an array slice like `...marks[1:]`. Throwing
- * here would escape the synchronous `applySync` and break syncing entirely, so
- * we signal failure via `null` and let the caller skip the offending patch and
- * recover.
- */
-export function arrayifyPath(pathExpr: string): Path | null {
-  let node: ExprNode | undefined
-  try {
-    node = parsePath(pathExpr)
-  } catch {
-    // `parsePath` throws on malformed input such as an empty expression.
-    return null
-  }
+export function arrayifyPath(pathExpr: string): Path {
+  const node = parsePath(pathExpr)
   if (!node) {
-    return null
+    return []
   }
   if (node.type !== 'Path') {
-    return null
+    throw new Error(ARRAYIFY_ERROR_MESSAGE)
   }
 
-  const path: Path = []
-  for (const segment of getSegments(node)) {
+  return Array.from(getSegments(node)).map((segment): PathSegment => {
     if (segment.type === 'Identifier') {
-      path.push(segment.name)
-      continue
+      return segment.name
     }
     if (segment.type !== 'Subscript') {
-      return null
+      throw new Error(ARRAYIFY_ERROR_MESSAGE)
     }
     if (segment.elements.length !== 1) {
-      return null
+      throw new Error(ARRAYIFY_ERROR_MESSAGE)
     }
 
     const [element] = segment.elements
     if (element.type === 'Number') {
-      path.push(element.value)
-      continue
+      return element.value
     }
+
     if (element.type !== 'Comparison') {
-      // e.g. an array slice (`Slice`) that `diffValue` emits when removing
-      // multiple non-keyed items at once.
-      return null
+      throw new Error(ARRAYIFY_ERROR_MESSAGE)
     }
     if (element.operator !== '==') {
-      return null
+      throw new Error(ARRAYIFY_ERROR_MESSAGE)
     }
     const keyPathNode = [element.left, element.right].find(isKeyPath)
     if (!keyPathNode) {
-      return null
+      throw new Error(ARRAYIFY_ERROR_MESSAGE)
     }
     const other = element.left === keyPathNode ? element.right : element.left
     if (other.type !== 'String') {
-      return null
+      throw new Error(ARRAYIFY_ERROR_MESSAGE)
     }
-    path.push({_key: other.value})
-  }
-
-  return path
+    return {_key: other.value}
+  })
 }
 
-/**
- * Converts a batch of `diffValue` patch operations into PTE patches.
- *
- * `incomplete` is `true` when one or more operations had to be dropped because
- * their path couldn't be converted (see `arrayifyPath`). The caller uses this
- * to fall back to an authoritative full value update instead of persisting a
- * partial diff.
- */
-export function convertPatches(patches: SanityPatchOperations[]): {
-  patches: PtePatch[]
-  incomplete: boolean
-} {
-  let incomplete = false
-
-  const converted = patches.flatMap((operation) => {
-    return Object.entries(operation).flatMap(([type, values]): PtePatch[] => {
+export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
+  return patches.flatMap((p) => {
+    return Object.entries(p).flatMap(([type, values]): PtePatch[] => {
       const origin = 'remote'
 
       switch (type) {
@@ -146,27 +118,16 @@ export function convertPatches(patches: SanityPatchOperations[]): {
         case 'diffMatchPatch':
         case 'inc':
         case 'dec': {
-          return Object.entries(values).flatMap(([pathExpr, value]) => {
-            const path = arrayifyPath(pathExpr)
-            if (!path) {
-              incomplete = true
-              return []
-            }
-            return [{type, value, origin, path} as PtePatch]
-          })
+          return Object.entries(values).map(
+            ([pathExpr, value]) =>
+              ({type, value, origin, path: arrayifyPath(pathExpr)}) as PtePatch,
+          )
         }
         case 'unset': {
           if (!Array.isArray(values)) {
             return []
           }
-          return values.flatMap((pathExpr) => {
-            const path = arrayifyPath(pathExpr)
-            if (!path) {
-              incomplete = true
-              return []
-            }
-            return [{type, origin, path} as PtePatch]
-          })
+          return values.map(arrayifyPath).map((path) => ({type, origin, path}))
         }
         case 'insert': {
           const {items, ...rest} = values as InsertPatch['insert']
@@ -177,16 +138,11 @@ export function convertPatches(patches: SanityPatchOperations[]): {
             return []
           }
           const pathExpr = (rest as {[K in InsertPosition]: string})[position]
-          const path = arrayifyPath(pathExpr)
-          if (!path) {
-            incomplete = true
-            return []
-          }
           const insertPatch: PteInsertPatch = {
             type,
             origin,
             position,
-            path,
+            path: arrayifyPath(pathExpr),
             items: items as JSONValue[],
           }
 
@@ -199,8 +155,262 @@ export function convertPatches(patches: SanityPatchOperations[]): {
       }
     })
   })
+}
 
-  return {patches: converted, incomplete}
+const STRINGIFY_ERROR_MESSAGE =
+  'Unable to convert an editor patch path to a Sanity path expression.'
+
+/**
+ * Converts a Portable Text Editor patch path (an array of segments) into a
+ * Sanity json-match path expression. The inverse of `arrayifyPath`.
+ *
+ * @internal
+ */
+export function stringifyPatchPath(path: Path): string {
+  let result = ''
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      result = result === '' ? segment : `${result}.${segment}`
+    } else if (typeof segment === 'number') {
+      result = `${result}[${segment}]`
+    } else if (
+      typeof segment === 'object' &&
+      segment !== null &&
+      '_key' in segment
+    ) {
+      result = `${result}[_key=="${segment._key}"]`
+    } else {
+      throw new Error(STRINGIFY_ERROR_MESSAGE)
+    }
+  }
+  return result
+}
+
+function prefixPathExpression(prefix: string, expression: string): string {
+  if (expression === '') {
+    return prefix
+  }
+  return expression.startsWith('[')
+    ? `${prefix}${expression}`
+    : `${prefix}.${expression}`
+}
+
+/**
+ * `SanityPatchOperations` from `@sanity/diff-patch` only covers the
+ * operations `diffValue` emits; the editor can additionally produce these.
+ */
+type SanityPatchOperationsWithExtras = SanityPatchOperations & {
+  setIfMissing?: {[path: string]: unknown}
+  inc?: {[path: string]: number}
+  dec?: {[path: string]: number}
+}
+
+/**
+ * Converts Portable Text Editor patches into Sanity patch operations rooted
+ * at the given document field path. Throws if a patch cannot be converted;
+ * callers should fall back to pushing the whole value.
+ *
+ * @internal
+ */
+export function convertPatchesToSanity(
+  patches: PtePatch[],
+  options: {prefix: string},
+): SanityPatchOperationsWithExtras[] {
+  return patches.map((patch): SanityPatchOperationsWithExtras => {
+    const pathExpression = prefixPathExpression(
+      options.prefix,
+      stringifyPatchPath(patch.path),
+    )
+
+    switch (patch.type) {
+      case 'set':
+        return {set: {[pathExpression]: patch.value}}
+      case 'setIfMissing':
+        return {setIfMissing: {[pathExpression]: patch.value}}
+      case 'diffMatchPatch':
+        return {diffMatchPatch: {[pathExpression]: patch.value}}
+      case 'inc':
+        return {inc: {[pathExpression]: patch.value as number}}
+      case 'dec':
+        return {dec: {[pathExpression]: patch.value as number}}
+      case 'unset':
+        return {unset: [pathExpression]}
+      case 'insert':
+        return {
+          insert: {
+            [patch.position]: pathExpression,
+            items: patch.items,
+          } as SanityPatchOperations['insert'],
+        }
+      default:
+        throw new Error(STRINGIFY_ERROR_MESSAGE)
+    }
+  })
+}
+
+function segmentsEqual(a: PathSegment, b: PathSegment): boolean {
+  if (typeof a === 'string' || typeof a === 'number') {
+    return a === b
+  }
+  if (typeof b === 'string' || typeof b === 'number') {
+    return false
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return false
+  }
+  return a._key === b._key
+}
+
+function pathsEqual(a: Path, b: Path): boolean {
+  return (
+    a.length === b.length &&
+    a.every((segment, index) => segmentsEqual(segment, b[index]))
+  )
+}
+
+/**
+ * The editor engine can only resolve keyed/indexed segments against the
+ * root block array and (possibly nested) `children` arrays. Operations
+ * that address items of any other array, e.g. a block's `markDefs` or a
+ * span's `marks`, misapply. When a patch path enters such a sidecar
+ * array, this returns the path of the array itself so callers can fall
+ * back to replacing the whole property; returns `null` for paths the
+ * engine can apply.
+ *
+ * @internal
+ */
+export function findSidecarArrayPath(path: Path): Path | null {
+  // a keyed/numeric segment is only resolvable first (root block array)
+  // or directly after a `children` property
+  let expectNode = true
+  for (let index = 0; index < path.length; index++) {
+    const segment = path[index]
+    if (typeof segment === 'string') {
+      expectNode = segment === 'children'
+    } else {
+      if (!expectNode) {
+        return path.slice(0, index)
+      }
+      expectNode = false
+    }
+  }
+  return null
+}
+
+function getValueAtPath(value: JSONValue, path: Path): JSONValue | undefined {
+  let current: JSONValue | undefined = value
+  for (const segment of path) {
+    if (current === null || current === undefined) {
+      return undefined
+    }
+    if (typeof segment === 'number') {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current[segment]
+    } else if (typeof segment === 'string') {
+      if (typeof current !== 'object' || Array.isArray(current)) {
+        return undefined
+      }
+      current = (current as {[key: string]: JSONValue})[segment]
+    } else if (Array.isArray(segment)) {
+      // index tuples address ranges, not single values
+      return undefined
+    } else {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current.find(
+        (item) =>
+          typeof item === 'object' &&
+          item !== null &&
+          !Array.isArray(item) &&
+          (item as {_key?: unknown})._key === segment._key,
+      )
+    }
+  }
+  return current
+}
+
+/**
+ * Converts a target-value diff into patches the editor engine can apply.
+ * Patches addressing items inside sidecar arrays are coalesced into whole
+ * `set`s (or `unset`s) of the owning property, taken from the target
+ * value.
+ *
+ * @internal
+ */
+export function toEngineSafePatches(
+  patches: PtePatch[],
+  targetValue: PortableTextBlock[],
+): PtePatch[] {
+  const safe: PtePatch[] = []
+  const sidecarPaths: Path[] = []
+
+  for (const patch of patches) {
+    const sidecarPath = findSidecarArrayPath(patch.path)
+    if (!sidecarPath) {
+      safe.push(patch)
+      continue
+    }
+    if (!sidecarPaths.some((existing) => pathsEqual(existing, sidecarPath))) {
+      sidecarPaths.push(sidecarPath)
+    }
+  }
+
+  for (const sidecarPath of sidecarPaths) {
+    const value = getValueAtPath(
+      targetValue as unknown as JSONValue,
+      sidecarPath,
+    )
+    safe.push(
+      value === undefined
+        ? {type: 'unset', path: sidecarPath, origin: 'remote'}
+        : {type: 'set', path: sidecarPath, value, origin: 'remote'},
+    )
+  }
+
+  return safe
+}
+
+/**
+ * Scopes document-rooted Sanity patches to the given field path, returning
+ * field-relative Portable Text Editor patches. Patches outside the field are
+ * dropped. Returns `null` when the field (or an ancestor of it) is replaced
+ * wholesale, in which case the caller should fall back to a full value sync.
+ * Throws when a path expression cannot be converted.
+ *
+ * @internal
+ */
+export function scopeRemotePatches(
+  patches: SanityPatchOperations[],
+  fieldPath: string,
+): PtePatch[] | null {
+  const prefix = arrayifyPath(fieldPath)
+  const converted = convertPatches(patches)
+  const scoped: PtePatch[] = []
+
+  for (const patch of converted) {
+    const overlap = Math.min(patch.path.length, prefix.length)
+    let touchesField = true
+    for (let index = 0; index < overlap; index++) {
+      if (!segmentsEqual(patch.path[index], prefix[index])) {
+        touchesField = false
+        break
+      }
+    }
+    if (!touchesField) {
+      continue
+    }
+    if (patch.path.length <= prefix.length) {
+      // the patch targets the field itself or an ancestor of it, which
+      // cannot be expressed as a field-relative operation
+      return null
+    }
+    scoped.push({...patch, path: patch.path.slice(prefix.length)})
+  }
+
+  return scoped
 }
 
 function applySync({
@@ -217,31 +427,25 @@ function applySync({
   }
 
   const snapshot = editor.getSnapshot().context.value
-  const {patches, incomplete} = convertPatches(diffValue(snapshot, remoteValue))
-
-  // Recover with an authoritative full value update when the diff can't be
-  // applied faithfully. Either a patch was dropped – replaying the rest would
-  // leave the editor in a partial/garbled state – or the editor moved on from
-  // `snapshot` while we were diffing, so the patches were computed against a
-  // value the editor no longer holds and can't be reconciled safely.
-  if (incomplete || editor.getSnapshot().context.value !== snapshot) {
-    updateValueFromRemote({editor, getRemoteValue})
-    return
-  }
+  const patches = toEngineSafePatches(
+    convertPatches(diffValue(snapshot, remoteValue)),
+    remoteValue,
+  )
 
   if (patches.length) {
     editor.send({type: 'patches', patches, snapshot})
-  }
-}
 
-function updateValueFromRemote({
-  editor,
-  getRemoteValue,
-}: {
-  editor: Editor
-  getRemoteValue: () => PortableTextBlock[] | null | undefined
-}) {
-  editor.send({type: 'update value', value: getRemoteValue() ?? []})
+    // Patch application is best-effort: the editor skips operations it
+    // cannot resolve against its current tree, and concurrent edits to the
+    // same range produce keyed operations whose targets no longer exist
+    // locally. When the editor is still diverged after the diff-based
+    // repair, escalate to the full value sync machinery, which reconciles
+    // arbitrary divergence block by block.
+    const valueAfterPatches = editor.getSnapshot().context.value
+    if (diffValue(valueAfterPatches, remoteValue).length > 0) {
+      editor.send({type: 'update value', value: remoteValue})
+    }
+  }
 }
 
 const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
@@ -251,7 +455,11 @@ const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
     })
 
     const mutationSubscription = input.editor.on('mutation', (event) => {
-      sendBack({type: 'mutation flushed', value: event.value})
+      sendBack({
+        type: 'mutation flushed',
+        value: event.value,
+        patches: event.patches,
+      })
     })
 
     return () => {
@@ -270,28 +478,44 @@ const listenToRemote = fromCallback<
   })
 })
 
+const listenToRemotePatches = fromCallback<
+  AnyEventObject,
+  {onRemotePatches: ValueSyncConfig['onRemotePatches']}
+>(({sendBack, input}) => {
+  return input.onRemotePatches?.((patches) => {
+    sendBack({type: 'remote patches received', patches})
+  })
+})
+
 const valueSyncMachine = setup({
   types: {
     context: {} as {
       editor: Editor
       getRemoteValue: ValueSyncConfig['getRemoteValue']
       onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
+      onRemotePatches: ValueSyncConfig['onRemotePatches']
     },
     input: {} as {
       editor: Editor
       getRemoteValue: ValueSyncConfig['getRemoteValue']
       onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
+      onRemotePatches: ValueSyncConfig['onRemotePatches']
     },
     events: {} as
       | {type: 'patch emitted'}
-      | {type: 'mutation flushed'; value: PortableTextBlock[] | undefined}
-      | {type: 'remote value changed'},
+      | {
+          type: 'mutation flushed'
+          value: PortableTextBlock[] | undefined
+          patches: PtePatch[]
+        }
+      | {type: 'remote value changed'}
+      | {type: 'remote patches received'; patches: PtePatch[]},
   },
   actions: {
     'send initial value': ({context}) => {
-      updateValueFromRemote({
-        editor: context.editor,
-        getRemoteValue: context.getRemoteValue,
+      context.editor.send({
+        type: 'update value',
+        value: context.getRemoteValue() ?? [],
       })
     },
     'push to remote': () => {
@@ -311,10 +535,24 @@ const valueSyncMachine = setup({
         })
       })
     },
+    'apply remote patches': ({context, event}) => {
+      if (event.type !== 'remote patches received') {
+        return
+      }
+      if (event.patches.length === 0) {
+        return
+      }
+      context.editor.send({
+        type: 'patches',
+        patches: event.patches,
+        snapshot: context.editor.getSnapshot().context.value,
+      })
+    },
   },
   actors: {
     'listen to editor': listenToEditor,
     'listen to remote': listenToRemote,
+    'listen to remote patches': listenToRemotePatches,
   },
 }).createMachine({
   id: 'value sync',
@@ -322,6 +560,7 @@ const valueSyncMachine = setup({
     editor: input.editor,
     getRemoteValue: input.getRemoteValue,
     onRemoteValueChange: input.onRemoteValueChange,
+    onRemotePatches: input.onRemotePatches,
   }),
   entry: ['send initial value'],
   invoke: [
@@ -335,7 +574,18 @@ const valueSyncMachine = setup({
         onRemoteValueChange: context.onRemoteValueChange,
       }),
     },
+    {
+      src: 'listen to remote patches',
+      input: ({context}) => ({
+        onRemotePatches: context.onRemotePatches,
+      }),
+    },
   ],
+  // Operational patches from other clients apply immediately in every
+  // state; the editor merges them with any in-flight local changes.
+  // Application is best-effort, so each state also arranges a follow-up
+  // whole-value repair: immediately (deferred a microtask) when no local
+  // edits are in flight, or after the next mutation flush when they are.
   initial: 'idle',
   states: {
     'idle': {
@@ -345,6 +595,9 @@ const valueSyncMachine = setup({
         },
         'remote value changed': {
           actions: ['apply sync'],
+        },
+        'remote patches received': {
+          actions: ['apply remote patches', 'defer then apply sync'],
         },
       },
     },
@@ -358,6 +611,10 @@ const valueSyncMachine = setup({
         'remote value changed': {
           target: 'pending sync',
         },
+        'remote patches received': {
+          target: 'pending sync',
+          actions: ['apply remote patches'],
+        },
       },
     },
     'pushing to remote': {
@@ -367,6 +624,9 @@ const valueSyncMachine = setup({
         },
         'remote value changed': {
           target: 'idle',
+        },
+        'remote patches received': {
+          actions: ['apply remote patches', 'defer then apply sync'],
         },
       },
     },
@@ -378,6 +638,9 @@ const valueSyncMachine = setup({
           actions: ['push to remote', 'defer then apply sync'],
         },
         'remote value changed': {},
+        'remote patches received': {
+          actions: ['apply remote patches'],
+        },
       },
     },
   },
@@ -388,12 +651,44 @@ interface SDKValuePluginProps extends DocumentHandle {
 }
 
 /**
+ * The shape of the `remote-patches` document event emitted by
+ * `@sanity/sdk` >= 2.17. Declared structurally so the plugin stays
+ * compatible with older SDK typings until its dependency is bumped.
+ */
+type RemotePatchesDocumentEvent = {
+  type: 'remote-patches'
+  documentId: string
+  transactionId: string
+  timestamp: string
+  previousRev?: string
+  patches: SanityPatchOperations[]
+  origin: 'local' | 'remote'
+}
+
+function isRemotePatchesEvent(event: {
+  type: string
+}): event is RemotePatchesDocumentEvent {
+  return event.type === 'remote-patches'
+}
+
+function getPublishedDocumentId(id: string): string {
+  if (id.startsWith('drafts.')) {
+    return id.slice('drafts.'.length)
+  }
+  if (id.startsWith('versions.')) {
+    return id.split('.').slice(2).join('.')
+  }
+  return id
+}
+
+/**
  * @public
  */
 export function SDKValuePlugin(props: SDKValuePluginProps) {
   const {documentId, documentType, path} = props
   const setSdkValue = useEditDocument(props)
   const instance = useSanityInstance(props)
+  const applyActions = useApplyDocumentActions()
 
   const handle = {documentId, documentType, path}
   const {getCurrent, subscribe} = getDocumentState<PortableTextBlock[]>(
@@ -401,11 +696,68 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
     handle,
   )
 
+  const onRemotePatches = useCallback(
+    (callback: (patches: PtePatch[]) => void) => {
+      return subscribeDocumentEvents(instance, {
+        eventHandler: (event) => {
+          // widen before narrowing: `remote-patches` is not part of the
+          // `DocumentEvent` union in older SDK typings
+          const candidate: {type: string} = event
+          if (!isRemotePatchesEvent(candidate)) {
+            return
+          }
+          // our own transactions are already reflected in the editor
+          if (candidate.origin !== 'remote') {
+            return
+          }
+          if (
+            getPublishedDocumentId(candidate.documentId) !==
+            getPublishedDocumentId(documentId)
+          ) {
+            return
+          }
+
+          let patches: PtePatch[] | null
+          try {
+            patches = scopeRemotePatches(candidate.patches, path)
+          } catch {
+            // unconvertible patch shapes fall back to the whole-value sync
+            // driven by `onRemoteValueChange`
+            return
+          }
+          if (patches && patches.length > 0) {
+            callback(patches)
+          }
+        },
+      })
+    },
+    [instance, documentId, path],
+  )
+
+  const pushPatches = useCallback(
+    (patches: PtePatch[]) => {
+      const sanityPatches = convertPatchesToSanity(patches, {prefix: path})
+      // `preserveOperations` ships in @sanity/sdk >= 2.17; the intersection
+      // type keeps the plugin compatible with older SDK typings
+      const action: EditDocumentAction & {preserveOperations?: boolean} = {
+        ...editDocument(
+          {documentId, documentType},
+          sanityPatches as Parameters<typeof editDocument>[1],
+        ),
+        preserveOperations: true,
+      }
+      applyActions(action)
+    },
+    [applyActions, documentId, documentType, path],
+  )
+
   return (
     <ValueSyncPlugin
       getRemoteValue={getCurrent}
       pushValue={setSdkValue}
       onRemoteValueChange={subscribe}
+      onRemotePatches={onRemotePatches}
+      pushPatches={pushPatches}
     />
   )
 }
@@ -417,6 +769,22 @@ type ValueSyncConfig = {
   getRemoteValue: () => PortableTextBlock[] | null | undefined
   pushValue: (value: PortableTextBlock[]) => void
   onRemoteValueChange: (callback: () => void) => () => void
+  /**
+   * Optional patch channel. When provided, operational patches from other
+   * clients are applied directly to the editor (in every state) instead of
+   * waiting for a whole-value diff, and local editor patches are pushed
+   * through `pushPatches`. The whole-value sync remains as a fallback for
+   * anything the patch channel cannot express.
+   */
+  onRemotePatches?: (
+    callback: (patches: PtePatch[]) => void,
+  ) => (() => void) | undefined
+  /**
+   * Pushes the editor's own operational patches to the remote store. May
+   * throw when a patch cannot be converted, in which case the plugin falls
+   * back to pushing the whole value.
+   */
+  pushPatches?: (patches: PtePatch[]) => void
 }
 
 /**
@@ -430,7 +798,13 @@ type ValueSyncConfig = {
  * @internal
  */
 export function ValueSyncPlugin(props: ValueSyncConfig) {
-  const {getRemoteValue, pushValue, onRemoteValueChange} = props
+  const {
+    getRemoteValue,
+    pushValue,
+    onRemoteValueChange,
+    onRemotePatches,
+    pushPatches,
+  } = props
   const editor = useEditor()
 
   useActorRef(
@@ -439,6 +813,15 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
         'push to remote': ({context, event}) => {
           if (event.type !== 'mutation flushed') {
             return
+          }
+
+          if (pushPatches && event.patches.length > 0) {
+            try {
+              pushPatches(event.patches)
+              return
+            } catch {
+              // fall back to pushing the whole value below
+            }
           }
 
           pushValue(event.value ?? context.editor.getSnapshot().context.value)
@@ -450,6 +833,7 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
         editor,
         getRemoteValue,
         onRemoteValueChange,
+        onRemotePatches,
       },
     },
   )
