@@ -2,13 +2,17 @@ import type {PortableTextBlock} from '@portabletext/editor'
 import {describe, expect, test} from 'vitest'
 import {
   arrayifyPath,
+  canApplyToValue,
   convertPatches,
   convertPatchesToSanity,
   findSidecarArrayPath,
   scopeRemotePatches,
   stringifyPatchPath,
   toEngineSafePatches,
+  toMergeableMarkDefsPatches,
 } from './plugin.sdk-value'
+
+type PtePatchList = Parameters<typeof toMergeableMarkDefsPatches>[0]
 
 describe(arrayifyPath.name, () => {
   test('property paths', () => {
@@ -213,6 +217,12 @@ describe(convertPatchesToSanity.name, () => {
     ).toEqual([{set: {blocks: []}}])
   })
 
+  test('root unset (emptied editor) writes an empty array instead', () => {
+    expect(
+      convertPatchesToSanity([{type: 'unset', path: []}], {prefix: 'blocks'}),
+    ).toEqual([{set: {blocks: []}}])
+  })
+
   test('nested field prefix', () => {
     expect(
       convertPatchesToSanity([{type: 'unset', path: [{_key: 'k0'}]}], {
@@ -296,6 +306,223 @@ describe(scopeRemotePatches.name, () => {
         items: [{_type: 'block', _key: 'k1', children: []}],
       },
     ])
+  })
+})
+
+describe(toMergeableMarkDefsPatches.name, () => {
+  const storeValue = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      children: [
+        {_type: 'span', _key: 's1', text: 'Hello', marks: ['m1']},
+        {_type: 'span', _key: 's2', text: ' world', marks: []},
+      ],
+      markDefs: [
+        {_type: 'link', _key: 'm1', href: 'https://example.com'},
+        {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+      ],
+      style: 'normal',
+    },
+  ] as unknown as PortableTextBlock[]
+
+  test('new definitions become inserts', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [
+              {_type: 'link', _key: 'm1', href: 'https://example.com'},
+              {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+              {_type: 'link', _key: 'new', href: 'https://new.example'},
+            ],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'insert',
+        origin: undefined,
+        position: 'after',
+        path: [{_key: 'b1'}, 'markDefs', -1],
+        items: [{_type: 'link', _key: 'new', href: 'https://new.example'}],
+      },
+    ])
+  })
+
+  test('changed definitions become keyed sets', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [
+              {_type: 'link', _key: 'm1', href: 'https://updated.example'},
+              {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+            ],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
+        value: {_type: 'link', _key: 'm1', href: 'https://updated.example'},
+      },
+    ])
+  })
+
+  test('unreferenced removals become keyed unsets', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'unset',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm2'}],
+      },
+    ])
+  })
+
+  test('never removes definitions the store spans still reference', () => {
+    // a diverged client prunes m1 spuriously (it cannot see the spans that
+    // reference it); m2 is unreferenced so its removal goes through
+    expect(
+      toMergeableMarkDefsPatches(
+        [{type: 'set', path: [{_key: 'b1'}, 'markDefs'], value: []}],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'unset',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm2'}],
+      },
+    ])
+  })
+
+  test('identical arrays produce no operations', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [
+              {_type: 'link', _key: 'm1', href: 'https://example.com'},
+              {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+            ],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([])
+  })
+
+  test('leaves non-markDefs patches untouched', () => {
+    const patches = [
+      {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+        value: ['strong'],
+      },
+    ] as PtePatchList
+    expect(toMergeableMarkDefsPatches(patches, () => storeValue)).toEqual(
+      patches,
+    )
+  })
+})
+
+describe(canApplyToValue.name, () => {
+  const value = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 's1', text: 'Hello', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    },
+  ] as unknown as PortableTextBlock[]
+
+  test('resolvable operations pass', () => {
+    expect(canApplyToValue({type: 'unset', path: [{_key: 'b1'}]}, value)).toBe(
+      true,
+    )
+    expect(
+      canApplyToValue(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@',
+        },
+        value,
+      ),
+    ).toBe(true)
+    expect(
+      canApplyToValue(
+        {type: 'insert', position: 'after', path: [{_key: 'b1'}], items: []},
+        value,
+      ),
+    ).toBe(true)
+  })
+
+  test('operations addressing missing nodes are rejected', () => {
+    expect(
+      canApplyToValue(
+        {type: 'unset', path: [{_key: 'b1'}, 'children', {_key: 'gone'}]},
+        value,
+      ),
+    ).toBe(false)
+    expect(
+      canApplyToValue(
+        {type: 'insert', position: 'after', path: [{_key: 'gone'}], items: []},
+        value,
+      ),
+    ).toBe(false)
+  })
+
+  test('set only requires the parent to resolve', () => {
+    expect(
+      canApplyToValue(
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'newProp'],
+          value: 1,
+        },
+        value,
+      ),
+    ).toBe(true)
+    expect(
+      canApplyToValue(
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 'gone'}, 'text'],
+          value: '',
+        },
+        value,
+      ),
+    ).toBe(false)
+  })
+
+  test('passes everything through when the value is unknown', () => {
+    expect(
+      canApplyToValue({type: 'unset', path: [{_key: 'gone'}]}, undefined),
+    ).toBe(true)
   })
 })
 

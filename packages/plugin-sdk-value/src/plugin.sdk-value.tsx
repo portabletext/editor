@@ -227,14 +227,20 @@ export function convertPatchesToSanity(
         return {set: {[pathExpression]: patch.value}}
       case 'setIfMissing':
         return {setIfMissing: {[pathExpression]: patch.value}}
+      case 'unset':
+        // The editor unsets the whole field when it becomes empty. Write an
+        // empty array instead: unsetting the field would leave other clients
+        // unable to reconcile against it (their remote value disappears).
+        if (patch.path.length === 0) {
+          return {set: {[pathExpression]: []}}
+        }
+        return {unset: [pathExpression]}
       case 'diffMatchPatch':
         return {diffMatchPatch: {[pathExpression]: patch.value}}
       case 'inc':
         return {inc: {[pathExpression]: patch.value as number}}
       case 'dec':
         return {dec: {[pathExpression]: patch.value as number}}
-      case 'unset':
-        return {unset: [pathExpression]}
       case 'insert':
         return {
           insert: {
@@ -307,7 +313,7 @@ function getValueAtPath(value: JSONValue, path: Path): JSONValue | undefined {
       if (!Array.isArray(current)) {
         return undefined
       }
-      current = current[segment]
+      current = current[segment < 0 ? current.length + segment : segment]
     } else if (typeof segment === 'string') {
       if (typeof current !== 'object' || Array.isArray(current)) {
         return undefined
@@ -374,6 +380,142 @@ export function toEngineSafePatches(
 }
 
 /**
+ * The editor writes `markDefs` as whole-array `set`s. Two clients
+ * formatting the same block concurrently then overwrite each other's
+ * arrays at the server (last writer wins) while both clients' span
+ * `marks` references survive, stranding marks without definitions.
+ * Outgoing `markDefs` sets are therefore decomposed into item-level
+ * operations against the store (server truth): new definitions insert,
+ * changed definitions set by key, and removed definitions unset by key,
+ * except definitions the store's own spans still reference (a diverged
+ * client's normalizer prunes those spuriously; a later, converged flush
+ * removes them for real). Item-keyed operations merge at the server
+ * instead of overwriting.
+ *
+ * @internal
+ */
+export function toMergeableMarkDefsPatches(
+  patches: PtePatch[],
+  getCurrentValue: () => PortableTextBlock[] | null | undefined,
+): PtePatch[] {
+  return patches.flatMap((patch): PtePatch[] => {
+    if (
+      patch.type !== 'set' ||
+      patch.path.at(-1) !== 'markDefs' ||
+      !Array.isArray(patch.value)
+    ) {
+      return [patch]
+    }
+    const currentValue = getCurrentValue()
+    if (!currentValue) {
+      return [patch]
+    }
+    const root = currentValue as unknown as JSONValue
+    const storeMarkDefs = getValueAtPath(root, patch.path)
+    const storeBlock = getValueAtPath(root, patch.path.slice(0, -1))
+    if (
+      !Array.isArray(storeMarkDefs) ||
+      typeof storeBlock !== 'object' ||
+      storeBlock === null
+    ) {
+      return [patch]
+    }
+
+    const local = patch.value as Array<{_key?: string}>
+    const store = storeMarkDefs as Array<{_key?: string}>
+    if (local.some((item) => item._key === undefined)) {
+      return [patch]
+    }
+
+    const referencedKeys = new Set(
+      (
+        (storeBlock as {children?: Array<{marks?: string[]}>}).children ?? []
+      ).flatMap((child) => child.marks ?? []),
+    )
+    const storeByKey = new Map(store.map((item) => [item._key, item]))
+    const localKeys = new Set(local.map((item) => item._key))
+    const origin = patch.origin
+
+    const ops: PtePatch[] = []
+
+    const inserted = local.filter((item) => !storeByKey.has(item._key))
+    if (inserted.length > 0) {
+      ops.push({
+        type: 'insert',
+        origin,
+        position: 'after',
+        path: [...patch.path, -1],
+        items: inserted as JSONValue[],
+      })
+    }
+
+    for (const item of local) {
+      const existing = storeByKey.get(item._key)
+      if (existing && JSON.stringify(existing) !== JSON.stringify(item)) {
+        ops.push({
+          type: 'set',
+          origin,
+          path: [...patch.path, {_key: item._key as string}],
+          value: item as JSONValue,
+        })
+      }
+    }
+
+    for (const item of store) {
+      if (
+        item._key !== undefined &&
+        !localKeys.has(item._key) &&
+        !referencedKeys.has(item._key)
+      ) {
+        ops.push({
+          type: 'unset',
+          origin,
+          path: [...patch.path, {_key: item._key}],
+        })
+      }
+    }
+
+    return ops
+  })
+}
+
+/**
+ * Whether a remote patch can resolve against the given editor value.
+ * Concurrent edits routinely produce operations addressing nodes another
+ * client has already removed or not yet created; sending those into the
+ * engine fails loudly (console errors) before being skipped. Callers drop
+ * unresolvable patches up front and rely on the follow-up repair sync to
+ * converge instead.
+ *
+ * @internal
+ */
+export function canApplyToValue(
+  patch: PtePatch,
+  value: PortableTextBlock[] | undefined,
+): boolean {
+  if (!value) {
+    return true
+  }
+  const root = value as unknown as JSONValue
+  switch (patch.type) {
+    // unset needs the node itself; insert needs the sibling at `path`;
+    // diffMatchPatch needs the existing string
+    case 'unset':
+    case 'insert':
+    case 'diffMatchPatch':
+      return getValueAtPath(root, patch.path) !== undefined
+    // set creates its target property, so only the parent must resolve
+    case 'set':
+      return (
+        patch.path.length === 0 ||
+        getValueAtPath(root, patch.path.slice(0, -1)) !== undefined
+      )
+    default:
+      return true
+  }
+}
+
+/**
  * Scopes document-rooted Sanity patches to the given field path, returning
  * field-relative Portable Text Editor patches. Patches outside the field are
  * dropped. Returns `null` when the field (or an ancestor of it) is replaced
@@ -427,10 +569,21 @@ function applySync({
   }
 
   const snapshot = editor.getSnapshot().context.value
-  const patches = toEngineSafePatches(
-    convertPatches(diffValue(snapshot, remoteValue)),
-    remoteValue,
-  )
+
+  let patches: PtePatch[]
+  try {
+    patches = toEngineSafePatches(
+      convertPatches(diffValue(snapshot, remoteValue)),
+      remoteValue,
+    )
+  } catch {
+    // diffValue can emit path shapes the converter does not understand
+    // (e.g. array slices when multiple items are dropped). Fall back to
+    // the full value sync machinery rather than leaving the editor
+    // diverged.
+    editor.send({type: 'update value', value: remoteValue})
+    return
+  }
 
   if (patches.length) {
     editor.send({type: 'patches', patches, snapshot})
@@ -539,14 +692,21 @@ const valueSyncMachine = setup({
       if (event.type !== 'remote patches received') {
         return
       }
-      if (event.patches.length === 0) {
+      const snapshot = context.editor.getSnapshot().context.value
+      // The store already reflects this transaction, so it can serve as
+      // the target for coalescing sidecar-array item operations (which
+      // the engine misroutes) into whole-property sets.
+      const remoteValue = context.getRemoteValue()
+      const coalesced = remoteValue
+        ? toEngineSafePatches(event.patches, remoteValue)
+        : event.patches
+      const patches = coalesced.filter((patch) =>
+        canApplyToValue(patch, snapshot),
+      )
+      if (patches.length === 0) {
         return
       }
-      context.editor.send({
-        type: 'patches',
-        patches: event.patches,
-        snapshot: context.editor.getSnapshot().context.value,
-      })
+      context.editor.send({type: 'patches', patches, snapshot})
     },
   },
   actors: {
@@ -817,7 +977,12 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
 
           if (pushPatches && event.patches.length > 0) {
             try {
-              pushPatches(event.patches)
+              pushPatches(
+                toMergeableMarkDefsPatches(
+                  event.patches,
+                  context.getRemoteValue,
+                ),
+              )
               return
             } catch {
               // fall back to pushing the whole value below
