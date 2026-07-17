@@ -1,10 +1,13 @@
+import type {PortableTextBlock} from '@portabletext/editor'
 import {describe, expect, test} from 'vitest'
 import {
   arrayifyPath,
   convertPatches,
   convertPatchesToSanity,
+  findSidecarArrayPath,
   scopeRemotePatches,
   stringifyPatchPath,
+  toEngineSafePatches,
 } from './plugin.sdk-value'
 
 describe(arrayifyPath.name, () => {
@@ -291,6 +294,104 @@ describe(scopeRemotePatches.name, () => {
         position: 'after',
         path: [{_key: 'k0'}],
         items: [{_type: 'block', _key: 'k1', children: []}],
+      },
+    ])
+  })
+})
+
+describe(findSidecarArrayPath.name, () => {
+  test('passes through paths the engine can resolve', () => {
+    expect(findSidecarArrayPath([{_key: 'b1'}])).toBeNull()
+    expect(findSidecarArrayPath([{_key: 'b1'}, 'style'])).toBeNull()
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'children', {_key: 's1'}, 'text']),
+    ).toBeNull()
+    expect(findSidecarArrayPath([{_key: 'b1'}, 'markDefs'])).toBeNull()
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'children', {_key: 's1'}, 'marks']),
+    ).toBeNull()
+  })
+
+  test('detects items addressed inside sidecar arrays', () => {
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'markDefs', {_key: 'm1'}]),
+    ).toEqual([{_key: 'b1'}, 'markDefs'])
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'markDefs', {_key: 'm1'}, 'href']),
+    ).toEqual([{_key: 'b1'}, 'markDefs'])
+    expect(
+      findSidecarArrayPath([
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+        'marks',
+        2,
+      ]),
+    ).toEqual([{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'])
+  })
+})
+
+describe(toEngineSafePatches.name, () => {
+  const targetValue = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 's1', text: 'Hello', marks: ['m1']}],
+      markDefs: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+      style: 'normal',
+    },
+  ] as unknown as PortableTextBlock[]
+
+  test('passes resolvable patches through unchanged', () => {
+    const patches = convertPatches([
+      {set: {'[_key=="b1"].children[_key=="s1"].text': 'Hello'}},
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual(patches)
+  })
+
+  test('coalesces sidecar item patches into whole-property sets', () => {
+    const patches = convertPatches([
+      {
+        unset: ['[_key=="b1"].markDefs[_key=="m0"]'],
+        insert: {
+          after: '[_key=="b1"].markDefs[_key=="m0"]',
+          items: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+        },
+      },
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'b1'}, 'markDefs'],
+        value: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+      },
+    ])
+  })
+
+  test('unsets the property when absent from the target value', () => {
+    const patches = convertPatches([
+      {unset: ['[_key=="b2"].markDefs[_key=="m0"]']},
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual([
+      {
+        type: 'unset',
+        origin: 'remote',
+        path: [{_key: 'b2'}, 'markDefs'],
+      },
+    ])
+  })
+
+  test('coalesces indexed marks patches into a whole-array set', () => {
+    const patches = convertPatches([
+      {unset: ['[_key=="b1"].children[_key=="s1"].marks[2]']},
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+        value: ['m1'],
       },
     ])
   })

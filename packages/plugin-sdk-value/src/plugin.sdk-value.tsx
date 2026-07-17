@@ -261,6 +261,118 @@ function segmentsEqual(a: PathSegment, b: PathSegment): boolean {
   return a._key === b._key
 }
 
+function pathsEqual(a: Path, b: Path): boolean {
+  return (
+    a.length === b.length &&
+    a.every((segment, index) => segmentsEqual(segment, b[index]))
+  )
+}
+
+/**
+ * The editor engine can only resolve keyed/indexed segments against the
+ * root block array and (possibly nested) `children` arrays. Operations
+ * that address items of any other array, e.g. a block's `markDefs` or a
+ * span's `marks`, misapply. When a patch path enters such a sidecar
+ * array, this returns the path of the array itself so callers can fall
+ * back to replacing the whole property; returns `null` for paths the
+ * engine can apply.
+ *
+ * @internal
+ */
+export function findSidecarArrayPath(path: Path): Path | null {
+  // a keyed/numeric segment is only resolvable first (root block array)
+  // or directly after a `children` property
+  let expectNode = true
+  for (let index = 0; index < path.length; index++) {
+    const segment = path[index]
+    if (typeof segment === 'string') {
+      expectNode = segment === 'children'
+    } else {
+      if (!expectNode) {
+        return path.slice(0, index)
+      }
+      expectNode = false
+    }
+  }
+  return null
+}
+
+function getValueAtPath(value: JSONValue, path: Path): JSONValue | undefined {
+  let current: JSONValue | undefined = value
+  for (const segment of path) {
+    if (current === null || current === undefined) {
+      return undefined
+    }
+    if (typeof segment === 'number') {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current[segment]
+    } else if (typeof segment === 'string') {
+      if (typeof current !== 'object' || Array.isArray(current)) {
+        return undefined
+      }
+      current = (current as {[key: string]: JSONValue})[segment]
+    } else if (Array.isArray(segment)) {
+      // index tuples address ranges, not single values
+      return undefined
+    } else {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current.find(
+        (item) =>
+          typeof item === 'object' &&
+          item !== null &&
+          !Array.isArray(item) &&
+          (item as {_key?: unknown})._key === segment._key,
+      )
+    }
+  }
+  return current
+}
+
+/**
+ * Converts a target-value diff into patches the editor engine can apply.
+ * Patches addressing items inside sidecar arrays are coalesced into whole
+ * `set`s (or `unset`s) of the owning property, taken from the target
+ * value.
+ *
+ * @internal
+ */
+export function toEngineSafePatches(
+  patches: PtePatch[],
+  targetValue: PortableTextBlock[],
+): PtePatch[] {
+  const safe: PtePatch[] = []
+  const sidecarPaths: Path[] = []
+
+  for (const patch of patches) {
+    const sidecarPath = findSidecarArrayPath(patch.path)
+    if (!sidecarPath) {
+      safe.push(patch)
+      continue
+    }
+    if (!sidecarPaths.some((existing) => pathsEqual(existing, sidecarPath))) {
+      sidecarPaths.push(sidecarPath)
+    }
+  }
+
+  for (const sidecarPath of sidecarPaths) {
+    const value = getValueAtPath(
+      targetValue as unknown as JSONValue,
+      sidecarPath,
+    )
+    safe.push(
+      value === undefined
+        ? {type: 'unset', path: sidecarPath, origin: 'remote'}
+        : {type: 'set', path: sidecarPath, value, origin: 'remote'},
+    )
+  }
+
+  return safe
+}
+
 /**
  * Scopes document-rooted Sanity patches to the given field path, returning
  * field-relative Portable Text Editor patches. Patches outside the field are
@@ -315,10 +427,24 @@ function applySync({
   }
 
   const snapshot = editor.getSnapshot().context.value
-  const patches = convertPatches(diffValue(snapshot, remoteValue))
+  const patches = toEngineSafePatches(
+    convertPatches(diffValue(snapshot, remoteValue)),
+    remoteValue,
+  )
 
   if (patches.length) {
     editor.send({type: 'patches', patches, snapshot})
+
+    // Patch application is best-effort: the editor skips operations it
+    // cannot resolve against its current tree, and concurrent edits to the
+    // same range produce keyed operations whose targets no longer exist
+    // locally. When the editor is still diverged after the diff-based
+    // repair, escalate to the full value sync machinery, which reconciles
+    // arbitrary divergence block by block.
+    const valueAfterPatches = editor.getSnapshot().context.value
+    if (diffValue(valueAfterPatches, remoteValue).length > 0) {
+      editor.send({type: 'update value', value: remoteValue})
+    }
   }
 }
 
@@ -455,13 +581,11 @@ const valueSyncMachine = setup({
       }),
     },
   ],
-  // operational patches from other clients apply immediately in every state;
-  // the editor merges them with any in-flight local changes
-  on: {
-    'remote patches received': {
-      actions: ['apply remote patches'],
-    },
-  },
+  // Operational patches from other clients apply immediately in every
+  // state; the editor merges them with any in-flight local changes.
+  // Application is best-effort, so each state also arranges a follow-up
+  // whole-value repair: immediately (deferred a microtask) when no local
+  // edits are in flight, or after the next mutation flush when they are.
   initial: 'idle',
   states: {
     'idle': {
@@ -471,6 +595,9 @@ const valueSyncMachine = setup({
         },
         'remote value changed': {
           actions: ['apply sync'],
+        },
+        'remote patches received': {
+          actions: ['apply remote patches', 'defer then apply sync'],
         },
       },
     },
@@ -484,6 +611,10 @@ const valueSyncMachine = setup({
         'remote value changed': {
           target: 'pending sync',
         },
+        'remote patches received': {
+          target: 'pending sync',
+          actions: ['apply remote patches'],
+        },
       },
     },
     'pushing to remote': {
@@ -493,6 +624,9 @@ const valueSyncMachine = setup({
         },
         'remote value changed': {
           target: 'idle',
+        },
+        'remote patches received': {
+          actions: ['apply remote patches', 'defer then apply sync'],
         },
       },
     },
@@ -504,6 +638,9 @@ const valueSyncMachine = setup({
           actions: ['push to remote', 'defer then apply sync'],
         },
         'remote value changed': {},
+        'remote patches received': {
+          actions: ['apply remote patches'],
+        },
       },
     },
   },
