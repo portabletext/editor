@@ -222,6 +222,46 @@ function unsetDeep(input: unknown, path: SingleValuePath): unknown {
   )
 }
 
+/**
+ * Whether every array-addressing segment (keyed or numeric) in the path
+ * resolves to an existing array item. Content Lake auto-creates missing
+ * object properties when setting, but never creates array items: a `set`
+ * through an unresolvable keyed or indexed segment is a silent no-op
+ * server-side (gradient's jsonpath matcher only auto-creates map
+ * properties).
+ */
+function resolvesArraySegments(input: unknown, path: SingleValuePath): boolean {
+  let current: unknown = input
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      current =
+        typeof current === 'object' &&
+        current !== null &&
+        !Array.isArray(current)
+          ? (current as {[key: string]: unknown})[segment]
+          : undefined
+      continue
+    }
+    if (!Array.isArray(current)) {
+      return false
+    }
+    if (isKeySegment(segment)) {
+      const index = getIndexForKey(current, segment._key)
+      if (index === undefined) {
+        return false
+      }
+      current = current[index]
+    } else {
+      const index = segment < 0 ? current.length + segment : segment
+      if (!(index in current)) {
+        return false
+      }
+      current = current[index]
+    }
+  }
+  return true
+}
+
 function set(input: unknown, pathExpressionValues: {[path: string]: unknown}) {
   const result = Object.entries(pathExpressionValues)
     .flatMap(([pathExpression, replacementValue]) =>
@@ -230,6 +270,7 @@ function set(input: unknown, pathExpressionValues: {[path: string]: unknown}) {
         replacementValue,
       })),
     )
+    .filter(({path}) => resolvesArraySegments(input, path))
     .reduce(
       (acc, {path, replacementValue}) => setDeep(acc, path, replacementValue),
       input,
@@ -253,6 +294,7 @@ function setIfMissing(
       (matchEntry) =>
         matchEntry.value === null || matchEntry.value === undefined,
     )
+    .filter(({path}) => resolvesArraySegments(input, path))
     .reduce(
       (acc, {path, replacementValue}) => setDeep(acc, path, replacementValue),
       input,

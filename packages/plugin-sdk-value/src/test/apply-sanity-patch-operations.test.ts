@@ -19,17 +19,37 @@ describe('applyPatchOperations', () => {
     })
   })
 
-  test('set with an unmatched key constraint creates the item', () => {
+  // Content Lake never creates array items when setting: an unmatched keyed
+  // or indexed segment is a silent no-op (verified against gradient's
+  // jsonpath matcher, which only auto-creates missing object properties).
+  // This applier used to mirror an @sanity/sdk bug that fabricated a
+  // degenerate item instead; both are fixed to match the server.
+  test('set with an unmatched key constraint is a no-op', () => {
     const doc = {content: [{_key: 'b1', text: 'hello'}]}
     const result = applyPatchOperations(doc, {
       set: {'content[_key=="b2"]': {_key: 'b2', text: 'bye'}},
     })
-    expect(result).toEqual({
+    expect(result).toEqual({content: [{_key: 'b1', text: 'hello'}]})
+  })
+
+  test('set on a property under an unmatched key constraint is a no-op', () => {
+    const doc = {
       content: [
-        {_key: 'b1', text: 'hello'},
-        {_key: 'b2', text: 'bye'},
+        {_key: 'b1', children: [{_key: 's1', text: 'hello', marks: []}]},
       ],
+    }
+    const result = applyPatchOperations(doc, {
+      set: {'content[_key=="b1"].children[_key=="missing"].marks': ['m1']},
     })
+    expect(result).toEqual(doc)
+  })
+
+  test('set still creates a missing property on an existing keyed item', () => {
+    const doc = {content: [{_key: 'b1'}]}
+    const result = applyPatchOperations(doc, {
+      set: {'content[_key=="b1"].text': 'hello'},
+    })
+    expect(result).toEqual({content: [{_key: 'b1', text: 'hello'}]})
   })
 
   test('unset with an unresolvable path is a no-op', () => {
