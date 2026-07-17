@@ -35,6 +35,24 @@ export function setupRemotePatches({
     const patches = bufferedPatches
     bufferedPatches = []
     let changed = false
+    let failed = false
+
+    // Remote patch batches are applied atomically. Operational patches from a
+    // concurrent editor can reference a node this client has already changed —
+    // e.g. a keyed `unset` for a span the sibling tab already removed throws
+    // `node not found`. Dropping just that op and applying the rest of the
+    // batch (the previous behaviour) leaves the tree inconsistent: the editors
+    // diverge and broken Portable Text (an orphaned mark, a stale span) can be
+    // persisted. So if any patch throws we discard the WHOLE batch and restore
+    // the pre-batch value; the whole-value sync channel then reconciles to the
+    // authoritative value — last-writer-wins for that edit, but never a crash
+    // or a half-applied batch.
+    //
+    // Only thrown patches trigger a rollback. A patch that applies cleanly but
+    // yields a value this client's schema doesn't recognise (an unknown
+    // decorator or object `_type` from another client / a newer schema) is
+    // valid remote data and is intentionally kept.
+    const valueBefore = editor.snapshot.context.value
 
     withRemoteChanges(editor, () => {
       withoutNormalizing(editor, () => {
@@ -42,24 +60,32 @@ export function setupRemotePatches({
           pluginWithoutHistory(editor, () => {
             for (const patch of patches) {
               try {
-                changed = applyPatch(editor, patch)
+                if (applyPatch(editor, patch)) {
+                  changed = true
+                }
 
                 if (debug.syncPatch.enabled) {
-                  if (changed) {
-                    debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
-                  } else {
-                    debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
-                  }
+                  debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
                 }
               } catch (error) {
-                console.error(
-                  `Applying patch ${safeStringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
+                failed = true
+                debug.syncPatch(
+                  `(failed — rolling back batch) ${safeStringify(patch)}: ${
+                    error instanceof Error ? error.message : error
+                  }`,
                 )
+                break
               }
             }
           })
         })
       })
+
+      if (failed) {
+        editor.snapshot.context.value = valueBefore
+        return
+      }
+
       if (changed) {
         normalize(editor)
         editor.onChange()

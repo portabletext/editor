@@ -35,26 +35,28 @@ export function createApplyPatch(
   return (editor: PortableTextEditorEngine, patch: Patch): boolean => {
     let changed = false
 
-    try {
-      switch (patch.type) {
-        case 'insert':
-          changed = insertPatch(context, editor, patch)
-          break
-        case 'unset':
-          changed = unsetPatch(editor, patch)
-          break
-        case 'set':
-          changed = setPatch(editor, patch)
-          break
-        case 'setIfMissing':
-          changed = setPatch(editor, patch)
-          break
-        case 'diffMatchPatch':
-          changed = diffMatchPatch(editor, patch)
-          break
-      }
-    } catch (err) {
-      console.error(err)
+    // Errors are intentionally not swallowed here. The caller applies remote
+    // patches as an atomic batch: it needs a failing patch to throw so it can
+    // roll the whole batch back and resync from the authoritative value,
+    // rather than silently dropping one operation mid-batch and leaving the
+    // tree inconsistent (which diverges the editors and can persist invalid
+    // Portable Text).
+    switch (patch.type) {
+      case 'insert':
+        changed = insertPatch(context, editor, patch)
+        break
+      case 'unset':
+        changed = unsetPatch(editor, patch)
+        break
+      case 'set':
+        changed = setPatch(editor, patch)
+        break
+      case 'setIfMissing':
+        changed = setPatch(editor, patch)
+        break
+      case 'diffMatchPatch':
+        changed = diffMatchPatch(editor, patch)
+        break
     }
 
     return changed
