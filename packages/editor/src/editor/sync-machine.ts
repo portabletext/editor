@@ -443,21 +443,65 @@ async function updateValue({
 
   const hadSelection = !!editorEngine.snapshot.context.selection
 
-  if (!value || value.length === 0) {
-    clearEditor({
-      editorEngine,
-      doneSyncing,
-    })
+  try {
+    if (!value || value.length === 0) {
+      clearEditor({
+        editorEngine,
+        doneSyncing,
+      })
 
-    isChanged = true
-  }
+      isChanged = true
+    }
 
-  // Remove, replace or add nodes according to what is changed.
-  if (value && value.length > 0) {
-    if (streamBlocks) {
-      await new Promise<void>((resolve) => {
+    // Remove, replace or add nodes according to what is changed.
+    if (value && value.length > 0) {
+      if (streamBlocks) {
+        await new Promise<void>((resolve, reject) => {
+          if (doneSyncing) {
+            resolve()
+            return
+          }
+
+          isChanged = removeExtraBlocks({
+            editorEngine,
+            value,
+          })
+
+          const processBlocks = async () => {
+            try {
+              for await (const [
+                currentBlock,
+                currentBlockIndex,
+              ] of getStreamedBlocks({
+                value,
+              })) {
+                const {blockChanged, blockValid} = syncBlock({
+                  context,
+                  sendBack,
+                  block: currentBlock,
+                  index: currentBlockIndex,
+                  editorEngine,
+                  value,
+                })
+
+                isChanged = blockChanged || isChanged
+                isValid = isValid && blockValid
+
+                if (!isValid) {
+                  break
+                }
+              }
+
+              resolve()
+            } catch (error) {
+              reject(error)
+            }
+          }
+
+          processBlocks()
+        })
+      } else {
         if (doneSyncing) {
-          resolve()
           return
         }
 
@@ -466,67 +510,50 @@ async function updateValue({
           value,
         })
 
-        const processBlocks = async () => {
-          for await (const [
-            currentBlock,
-            currentBlockIndex,
-          ] of getStreamedBlocks({
+        let index = 0
+
+        for (const block of value) {
+          const {blockChanged, blockValid} = syncBlock({
+            context,
+            sendBack,
+            block,
+            index,
+            editorEngine,
             value,
-          })) {
-            const {blockChanged, blockValid} = syncBlock({
-              context,
-              sendBack,
-              block: currentBlock,
-              index: currentBlockIndex,
-              editorEngine,
-              value,
-            })
+          })
 
-            isChanged = blockChanged || isChanged
-            isValid = isValid && blockValid
+          isChanged = blockChanged || isChanged
+          isValid = isValid && blockValid
 
-            if (!isValid) {
-              break
-            }
+          if (!blockValid) {
+            break
           }
 
-          resolve()
+          index++
         }
-
-        processBlocks()
-      })
-    } else {
-      if (doneSyncing) {
-        return
-      }
-
-      isChanged = removeExtraBlocks({
-        editorEngine,
-        value,
-      })
-
-      let index = 0
-
-      for (const block of value) {
-        const {blockChanged, blockValid} = syncBlock({
-          context,
-          sendBack,
-          block,
-          index,
-          editorEngine,
-          value,
-        })
-
-        isChanged = blockChanged || isChanged
-        isValid = isValid && blockValid
-
-        if (!blockValid) {
-          break
-        }
-
-        index++
       }
     }
+  } catch (err) {
+    // syncBlock/updateBlock apply keyed operations against a pre-loop snapshot
+    // of the engine tree. If the live tree has diverged (e.g. a concurrent
+    // collaborator re-keyed spans while toggling a mark), a keyed operation can
+    // target a node that is no longer present and throw. Degrade gracefully to
+    // the invalid-value / resync path instead of letting the error escape and
+    // kill the sync actor — which would keep the editor accepting keystrokes
+    // while silently dropping every further remote/value update until reload.
+    console.error(err)
+
+    sendBack({
+      type: 'invalid value',
+      resolution: null,
+      value,
+    })
+
+    doneSyncing = true
+
+    sendBack({type: 'done syncing', value})
+
+    return
   }
 
   if (!isValid) {
@@ -994,6 +1021,24 @@ function updateBlock({
           if (!childNode) {
             return
           }
+          // Guard against a stale keyed unset. `oldEngineBlock` is a pre-loop
+          // snapshot; the live tree can diverge from it (e.g. a concurrent
+          // collaborator re-keyed spans), and unsetting a `_key` that is no
+          // longer present throws in `apply-operation` and would kill the
+          // sync actor. Mirrors the sibling-insert guard from #2965.
+          if (
+            !liveBlockHasChildKey(
+              editorEngine,
+              oldEngineBlock._key,
+              childNode._key,
+            )
+          ) {
+            debug.syncValue(
+              'Skipping superfluous-child unset; _key not present in live children',
+              childNode._key,
+            )
+            return
+          }
           editorEngine.apply({
             type: 'unset',
             path: [
@@ -1093,14 +1138,31 @@ function updateBlock({
             if (!oldChild) {
               return
             }
-            editorEngine.apply({
-              type: 'unset',
-              path: [
-                {_key: oldEngineBlock._key},
-                'children',
-                {_key: oldChild._key},
-              ],
-            })
+            // Guard against a stale keyed unset (see note in the superfluous
+            // child removal above). If the live tree no longer holds this
+            // `_key`, skip the removal but still insert the replacement child
+            // below so the block converges to the incoming value.
+            if (
+              liveBlockHasChildKey(
+                editorEngine,
+                oldEngineBlock._key,
+                oldChild._key,
+              )
+            ) {
+              editorEngine.apply({
+                type: 'unset',
+                path: [
+                  {_key: oldEngineBlock._key},
+                  'children',
+                  {_key: oldChild._key},
+                ],
+              })
+            } else {
+              debug.syncValue(
+                'Skipping replace-child unset; _key not present in live children',
+                oldChild._key,
+              )
+            }
             // Anchor on the incoming block's previous child, not the
             // pre-loop engine snapshot: earlier iterations may have unset
             // the snapshot's sibling (e.g. when the engine merged adjacent
@@ -1167,4 +1229,35 @@ function updateBlock({
       },
     )
   }
+}
+
+/**
+ * Check whether a child `_key` is present in the *current* (live) engine block
+ * children.
+ *
+ * `updateBlock` reads its keyed removal targets from a pre-loop `oldEngineBlock`
+ * snapshot. The live tree can diverge from that snapshot mid-sync (for example
+ * when a concurrent collaborator re-keys spans while toggling a mark), so a
+ * keyed `unset` may target a `_key` that no longer exists. Applying such an
+ * unset throws in `apply-operation`, which — because the block loop runs
+ * outside the sync's try/catch — used to escape and kill the sync actor.
+ * Callers use this to skip stale unsets instead.
+ */
+function liveBlockHasChildKey(
+  editorEngine: PortableTextEditorEngine,
+  blockKey: string,
+  childKey: string,
+): boolean {
+  const liveBlock = editorEngine.snapshot.context.value.find(
+    (node) => node._key === blockKey,
+  )
+
+  if (
+    !liveBlock ||
+    !isTextBlock({schema: editorEngine.snapshot.context.schema}, liveBlock)
+  ) {
+    return false
+  }
+
+  return liveBlock.children.some((child) => child._key === childKey)
 }

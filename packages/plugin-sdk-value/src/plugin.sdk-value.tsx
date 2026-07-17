@@ -7,7 +7,6 @@ import {
 import type {
   JSONValue,
   Path,
-  PathSegment,
   InsertPatch as PteInsertPatch,
 } from '@portabletext/patches'
 import {diffValue, type SanityPatchOperations} from '@sanity/diff-patch'
@@ -28,9 +27,6 @@ import {useActorRef} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
 
 type InsertPatch = Required<Pick<SanityPatchOperations, 'insert'>>
-
-const ARRAYIFY_ERROR_MESSAGE =
-  'Unexpected path format from diffValue output. Please report this issue.'
 
 function* getSegments(
   node: PathNode,
@@ -59,52 +55,89 @@ function isKeyPath(node: ExprNode): node is PathNode {
   return node.segment.name === '_key'
 }
 
-export function arrayifyPath(pathExpr: string): Path {
-  const node = parsePath(pathExpr)
+/**
+ * Converts a `diffValue` path expression (e.g. `[_key=="a"].children[0]`) into
+ * a keyed Portable Text Editor path.
+ *
+ * Returns `null` – rather than throwing – for any expression that can't be
+ * represented as a keyed PTE path. `diffValue` can emit such expressions in
+ * practice: removing several non-keyed array items at once (e.g. clearing
+ * multiple span `marks`) produces an array slice like `...marks[1:]`. Throwing
+ * here would escape the synchronous `applySync` and break syncing entirely, so
+ * we signal failure via `null` and let the caller skip the offending patch and
+ * recover.
+ */
+export function arrayifyPath(pathExpr: string): Path | null {
+  let node: ExprNode | undefined
+  try {
+    node = parsePath(pathExpr)
+  } catch {
+    // `parsePath` throws on malformed input such as an empty expression.
+    return null
+  }
   if (!node) {
-    return []
+    return null
   }
   if (node.type !== 'Path') {
-    throw new Error(ARRAYIFY_ERROR_MESSAGE)
+    return null
   }
 
-  return Array.from(getSegments(node)).map((segment): PathSegment => {
+  const path: Path = []
+  for (const segment of getSegments(node)) {
     if (segment.type === 'Identifier') {
-      return segment.name
+      path.push(segment.name)
+      continue
     }
     if (segment.type !== 'Subscript') {
-      throw new Error(ARRAYIFY_ERROR_MESSAGE)
+      return null
     }
     if (segment.elements.length !== 1) {
-      throw new Error(ARRAYIFY_ERROR_MESSAGE)
+      return null
     }
 
     const [element] = segment.elements
     if (element.type === 'Number') {
-      return element.value
+      path.push(element.value)
+      continue
     }
-
     if (element.type !== 'Comparison') {
-      throw new Error(ARRAYIFY_ERROR_MESSAGE)
+      // e.g. an array slice (`Slice`) that `diffValue` emits when removing
+      // multiple non-keyed items at once.
+      return null
     }
     if (element.operator !== '==') {
-      throw new Error(ARRAYIFY_ERROR_MESSAGE)
+      return null
     }
     const keyPathNode = [element.left, element.right].find(isKeyPath)
     if (!keyPathNode) {
-      throw new Error(ARRAYIFY_ERROR_MESSAGE)
+      return null
     }
     const other = element.left === keyPathNode ? element.right : element.left
     if (other.type !== 'String') {
-      throw new Error(ARRAYIFY_ERROR_MESSAGE)
+      return null
     }
-    return {_key: other.value}
-  })
+    path.push({_key: other.value})
+  }
+
+  return path
 }
 
-export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
-  return patches.flatMap((p) => {
-    return Object.entries(p).flatMap(([type, values]): PtePatch[] => {
+/**
+ * Converts a batch of `diffValue` patch operations into PTE patches.
+ *
+ * `incomplete` is `true` when one or more operations had to be dropped because
+ * their path couldn't be converted (see `arrayifyPath`). The caller uses this
+ * to fall back to an authoritative full value update instead of persisting a
+ * partial diff.
+ */
+export function convertPatches(patches: SanityPatchOperations[]): {
+  patches: PtePatch[]
+  incomplete: boolean
+} {
+  let incomplete = false
+
+  const converted = patches.flatMap((operation) => {
+    return Object.entries(operation).flatMap(([type, values]): PtePatch[] => {
       const origin = 'remote'
 
       switch (type) {
@@ -113,16 +146,27 @@ export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
         case 'diffMatchPatch':
         case 'inc':
         case 'dec': {
-          return Object.entries(values).map(
-            ([pathExpr, value]) =>
-              ({type, value, origin, path: arrayifyPath(pathExpr)}) as PtePatch,
-          )
+          return Object.entries(values).flatMap(([pathExpr, value]) => {
+            const path = arrayifyPath(pathExpr)
+            if (!path) {
+              incomplete = true
+              return []
+            }
+            return [{type, value, origin, path} as PtePatch]
+          })
         }
         case 'unset': {
           if (!Array.isArray(values)) {
             return []
           }
-          return values.map(arrayifyPath).map((path) => ({type, origin, path}))
+          return values.flatMap((pathExpr) => {
+            const path = arrayifyPath(pathExpr)
+            if (!path) {
+              incomplete = true
+              return []
+            }
+            return [{type, origin, path} as PtePatch]
+          })
         }
         case 'insert': {
           const {items, ...rest} = values as InsertPatch['insert']
@@ -133,11 +177,16 @@ export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
             return []
           }
           const pathExpr = (rest as {[K in InsertPosition]: string})[position]
+          const path = arrayifyPath(pathExpr)
+          if (!path) {
+            incomplete = true
+            return []
+          }
           const insertPatch: PteInsertPatch = {
             type,
             origin,
             position,
-            path: arrayifyPath(pathExpr),
+            path,
             items: items as JSONValue[],
           }
 
@@ -150,6 +199,8 @@ export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
       }
     })
   })
+
+  return {patches: converted, incomplete}
 }
 
 function applySync({
@@ -166,11 +217,31 @@ function applySync({
   }
 
   const snapshot = editor.getSnapshot().context.value
-  const patches = convertPatches(diffValue(snapshot, remoteValue))
+  const {patches, incomplete} = convertPatches(diffValue(snapshot, remoteValue))
+
+  // Recover with an authoritative full value update when the diff can't be
+  // applied faithfully. Either a patch was dropped – replaying the rest would
+  // leave the editor in a partial/garbled state – or the editor moved on from
+  // `snapshot` while we were diffing, so the patches were computed against a
+  // value the editor no longer holds and can't be reconciled safely.
+  if (incomplete || editor.getSnapshot().context.value !== snapshot) {
+    updateValueFromRemote({editor, getRemoteValue})
+    return
+  }
 
   if (patches.length) {
     editor.send({type: 'patches', patches, snapshot})
   }
+}
+
+function updateValueFromRemote({
+  editor,
+  getRemoteValue,
+}: {
+  editor: Editor
+  getRemoteValue: () => PortableTextBlock[] | null | undefined
+}) {
+  editor.send({type: 'update value', value: getRemoteValue() ?? []})
 }
 
 const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
@@ -218,9 +289,9 @@ const valueSyncMachine = setup({
   },
   actions: {
     'send initial value': ({context}) => {
-      context.editor.send({
-        type: 'update value',
-        value: context.getRemoteValue() ?? [],
+      updateValueFromRemote({
+        editor: context.editor,
+        getRemoteValue: context.getRemoteValue,
       })
     },
     'push to remote': () => {
