@@ -70,7 +70,27 @@ function diffMatchPatch(
 ): boolean {
   const lastSegment = patch.path.at(-1)
   if (lastSegment !== 'text') {
-    return false
+    // Diffing tools also emit `diffMatchPatch` for strings outside span
+    // text, e.g. `span.marks[0]` when a decorator is swapped. Resolve the
+    // current string, apply the diff, and set the result.
+    const currentValue = getValue(editor.snapshot.context.value, patch.path)
+    if (typeof currentValue !== 'string') {
+      return false
+    }
+
+    const [newValue] = diffMatchPatchApplyPatches(
+      parsePatch(patch.value),
+      currentValue,
+      {allowExceedingIndices: true},
+    )
+
+    editor.apply({
+      type: 'set',
+      path: patch.path,
+      value: newValue,
+    })
+
+    return true
   }
 
   const spanPath = patch.path.slice(0, -1)
