@@ -400,6 +400,51 @@ export function toMergeableMarkDefsPatches(
 ): PtePatch[] {
   return patches.flatMap((patch): PtePatch[] => {
     if (
+      patch.type === 'unset' &&
+      patch.path.length >= 2 &&
+      patch.path.at(-2) === 'markDefs'
+    ) {
+      // The editor emits item-keyed `markDefs` unsets (normalization
+      // pruning definitions its spans no longer reference). The same
+      // referenced-keys guard as below applies: a diverged client prunes
+      // definitions the store's spans still reference, which would
+      // orphan the other client's marks. Dropping the unset leaves an
+      // unused definition behind at worst; normalization on a later
+      // converged session prunes it for real.
+      const keySegment = patch.path.at(-1)
+      const definitionKey =
+        typeof keySegment === 'object' &&
+        keySegment !== null &&
+        '_key' in keySegment
+          ? keySegment._key
+          : undefined
+
+      if (definitionKey !== undefined) {
+        const currentValue = getCurrentValue()
+        const storeBlock = currentValue
+          ? getValueAtPath(
+              currentValue as unknown as JSONValue,
+              patch.path.slice(0, -2),
+            )
+          : undefined
+
+        if (typeof storeBlock === 'object' && storeBlock !== null) {
+          const referencedKeys = new Set(
+            (
+              (storeBlock as {children?: Array<{marks?: string[]}>}).children ??
+              []
+            ).flatMap((child) => child.marks ?? []),
+          )
+          if (referencedKeys.has(definitionKey)) {
+            return []
+          }
+        }
+      }
+
+      return [patch]
+    }
+
+    if (
       patch.type !== 'set' ||
       patch.path.at(-1) !== 'markDefs' ||
       !Array.isArray(patch.value)
