@@ -1,5 +1,18 @@
+import type {PortableTextBlock} from '@portabletext/editor'
 import {describe, expect, test} from 'vitest'
-import {arrayifyPath, convertPatches} from './plugin.sdk-value'
+import {
+  arrayifyPath,
+  canApplyToValue,
+  convertPatches,
+  convertPatchesToSanity,
+  findSidecarArrayPath,
+  scopeRemotePatches,
+  stringifyPatchPath,
+  toEngineSafePatches,
+  toMergeableMarkDefsPatches,
+} from './plugin.sdk-value'
+
+type PtePatchList = Parameters<typeof toMergeableMarkDefsPatches>[0]
 
 describe(arrayifyPath.name, () => {
   test('property paths', () => {
@@ -93,6 +106,519 @@ describe(convertPatches.name, () => {
         origin: 'remote',
         path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
         value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+      },
+    ])
+  })
+})
+
+describe(stringifyPatchPath.name, () => {
+  test('property paths', () => {
+    expect(stringifyPatchPath(['foo'])).toEqual('foo')
+    expect(stringifyPatchPath(['foo', 'bar'])).toEqual('foo.bar')
+  })
+
+  test('array index paths', () => {
+    expect(stringifyPatchPath(['items', 0])).toEqual('items[0]')
+    expect(stringifyPatchPath(['items', 0, 'text'])).toEqual('items[0].text')
+  })
+
+  test('key-based paths', () => {
+    expect(
+      stringifyPatchPath([{_key: 'abc'}, 'children', {_key: 'def'}, 'text']),
+    ).toEqual('[_key=="abc"].children[_key=="def"].text')
+  })
+
+  test('empty path', () => {
+    expect(stringifyPatchPath([])).toEqual('')
+  })
+
+  test('round-trips through arrayifyPath', () => {
+    const path = [{_key: 'abc'}, 'children', {_key: 'def'}, 'marks', 0]
+    expect(arrayifyPath(stringifyPatchPath(path))).toEqual(path)
+  })
+})
+
+describe(convertPatchesToSanity.name, () => {
+  test('set patches', () => {
+    expect(
+      convertPatchesToSanity(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'Hello',
+          },
+        ],
+        {prefix: 'blocks'},
+      ),
+    ).toEqual([
+      {set: {'blocks[_key=="k0"].children[_key=="k1"].text': 'Hello'}},
+    ])
+  })
+
+  test('unset patches', () => {
+    expect(
+      convertPatchesToSanity([{type: 'unset', path: [{_key: 'k0'}]}], {
+        prefix: 'blocks',
+      }),
+    ).toEqual([{unset: ['blocks[_key=="k0"]']}])
+  })
+
+  test('insert patches', () => {
+    expect(
+      convertPatchesToSanity(
+        [
+          {
+            type: 'insert',
+            position: 'after',
+            path: [{_key: 'k0'}],
+            items: [{_type: 'block', _key: 'k1', children: []}],
+          },
+        ],
+        {prefix: 'blocks'},
+      ),
+    ).toEqual([
+      {
+        insert: {
+          after: 'blocks[_key=="k0"]',
+          items: [{_type: 'block', _key: 'k1', children: []}],
+        },
+      },
+    ])
+  })
+
+  test('diffMatchPatch patches', () => {
+    expect(
+      convertPatchesToSanity(
+        [
+          {
+            type: 'diffMatchPatch',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+          },
+        ],
+        {prefix: 'blocks'},
+      ),
+    ).toEqual([
+      {
+        diffMatchPatch: {
+          'blocks[_key=="k0"].children[_key=="k1"].text':
+            '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+      },
+    ])
+  })
+
+  test('empty path targets the field itself', () => {
+    expect(
+      convertPatchesToSanity([{type: 'set', path: [], value: []}], {
+        prefix: 'blocks',
+      }),
+    ).toEqual([{set: {blocks: []}}])
+  })
+
+  test('root unset (emptied editor) writes an empty array instead', () => {
+    expect(
+      convertPatchesToSanity([{type: 'unset', path: []}], {prefix: 'blocks'}),
+    ).toEqual([{set: {blocks: []}}])
+  })
+
+  test('nested field prefix', () => {
+    expect(
+      convertPatchesToSanity([{type: 'unset', path: [{_key: 'k0'}]}], {
+        prefix: 'content.body',
+      }),
+    ).toEqual([{unset: ['content.body[_key=="k0"]']}])
+  })
+})
+
+describe(scopeRemotePatches.name, () => {
+  test('re-roots patches under the field path', () => {
+    expect(
+      scopeRemotePatches(
+        [
+          {set: {'blocks[_key=="k0"].children[_key=="k1"].text': 'Hello'}},
+          {unset: ['blocks[_key=="k0"].markDefs[_key=="m0"]']},
+        ],
+        'blocks',
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: 'Hello',
+      },
+      {
+        type: 'unset',
+        origin: 'remote',
+        path: [{_key: 'k0'}, 'markDefs', {_key: 'm0'}],
+      },
+    ])
+  })
+
+  test('drops patches outside the field', () => {
+    expect(
+      scopeRemotePatches(
+        [{set: {'title': 'New title', 'blocks[_key=="k0"].style': 'h1'}}],
+        'blocks',
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'k0'}, 'style'],
+        value: 'h1',
+      },
+    ])
+  })
+
+  test('returns null when the whole field is replaced', () => {
+    expect(scopeRemotePatches([{set: {blocks: []}}], 'blocks')).toBeNull()
+    expect(scopeRemotePatches([{unset: ['blocks']}], 'blocks')).toBeNull()
+  })
+
+  test('returns null when an ancestor of the field is replaced', () => {
+    expect(
+      scopeRemotePatches([{set: {content: {}}}], 'content.body'),
+    ).toBeNull()
+  })
+
+  test('handles insert patches anchored inside the field', () => {
+    expect(
+      scopeRemotePatches(
+        [
+          {
+            insert: {
+              after: 'blocks[_key=="k0"]',
+              items: [{_type: 'block', _key: 'k1', children: []}],
+            },
+          },
+        ],
+        'blocks',
+      ),
+    ).toEqual([
+      {
+        type: 'insert',
+        origin: 'remote',
+        position: 'after',
+        path: [{_key: 'k0'}],
+        items: [{_type: 'block', _key: 'k1', children: []}],
+      },
+    ])
+  })
+})
+
+describe(toMergeableMarkDefsPatches.name, () => {
+  const storeValue = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      children: [
+        {_type: 'span', _key: 's1', text: 'Hello', marks: ['m1']},
+        {_type: 'span', _key: 's2', text: ' world', marks: []},
+      ],
+      markDefs: [
+        {_type: 'link', _key: 'm1', href: 'https://example.com'},
+        {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+      ],
+      style: 'normal',
+    },
+  ] as unknown as PortableTextBlock[]
+
+  test('new definitions become inserts', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [
+              {_type: 'link', _key: 'm1', href: 'https://example.com'},
+              {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+              {_type: 'link', _key: 'new', href: 'https://new.example'},
+            ],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'insert',
+        origin: undefined,
+        position: 'after',
+        path: [{_key: 'b1'}, 'markDefs', -1],
+        items: [{_type: 'link', _key: 'new', href: 'https://new.example'}],
+      },
+    ])
+  })
+
+  test('changed definitions become keyed sets', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [
+              {_type: 'link', _key: 'm1', href: 'https://updated.example'},
+              {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+            ],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
+        value: {_type: 'link', _key: 'm1', href: 'https://updated.example'},
+      },
+    ])
+  })
+
+  test('unreferenced removals become keyed unsets', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'unset',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm2'}],
+      },
+    ])
+  })
+
+  test('never removes definitions the store spans still reference', () => {
+    // a diverged client prunes m1 spuriously (it cannot see the spans that
+    // reference it); m2 is unreferenced so its removal goes through
+    expect(
+      toMergeableMarkDefsPatches(
+        [{type: 'set', path: [{_key: 'b1'}, 'markDefs'], value: []}],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'unset',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm2'}],
+      },
+    ])
+  })
+
+  test('identical arrays produce no operations', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [
+              {_type: 'link', _key: 'm1', href: 'https://example.com'},
+              {_type: 'link', _key: 'm2', href: 'https://unreferenced.example'},
+            ],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([])
+  })
+
+  test('leaves non-markDefs patches untouched', () => {
+    const patches = [
+      {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+        value: ['strong'],
+      },
+    ] as PtePatchList
+    expect(toMergeableMarkDefsPatches(patches, () => storeValue)).toEqual(
+      patches,
+    )
+  })
+})
+
+describe(canApplyToValue.name, () => {
+  const value = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 's1', text: 'Hello', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    },
+  ] as unknown as PortableTextBlock[]
+
+  test('resolvable operations pass', () => {
+    expect(canApplyToValue({type: 'unset', path: [{_key: 'b1'}]}, value)).toBe(
+      true,
+    )
+    expect(
+      canApplyToValue(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@',
+        },
+        value,
+      ),
+    ).toBe(true)
+    expect(
+      canApplyToValue(
+        {type: 'insert', position: 'after', path: [{_key: 'b1'}], items: []},
+        value,
+      ),
+    ).toBe(true)
+  })
+
+  test('operations addressing missing nodes are rejected', () => {
+    expect(
+      canApplyToValue(
+        {type: 'unset', path: [{_key: 'b1'}, 'children', {_key: 'gone'}]},
+        value,
+      ),
+    ).toBe(false)
+    expect(
+      canApplyToValue(
+        {type: 'insert', position: 'after', path: [{_key: 'gone'}], items: []},
+        value,
+      ),
+    ).toBe(false)
+  })
+
+  test('set only requires the parent to resolve', () => {
+    expect(
+      canApplyToValue(
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'newProp'],
+          value: 1,
+        },
+        value,
+      ),
+    ).toBe(true)
+    expect(
+      canApplyToValue(
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 'gone'}, 'text'],
+          value: '',
+        },
+        value,
+      ),
+    ).toBe(false)
+  })
+
+  test('passes everything through when the value is unknown', () => {
+    expect(
+      canApplyToValue({type: 'unset', path: [{_key: 'gone'}]}, undefined),
+    ).toBe(true)
+  })
+})
+
+describe(findSidecarArrayPath.name, () => {
+  test('passes through paths the engine can resolve', () => {
+    expect(findSidecarArrayPath([{_key: 'b1'}])).toBeNull()
+    expect(findSidecarArrayPath([{_key: 'b1'}, 'style'])).toBeNull()
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'children', {_key: 's1'}, 'text']),
+    ).toBeNull()
+    expect(findSidecarArrayPath([{_key: 'b1'}, 'markDefs'])).toBeNull()
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'children', {_key: 's1'}, 'marks']),
+    ).toBeNull()
+  })
+
+  test('detects items addressed inside sidecar arrays', () => {
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'markDefs', {_key: 'm1'}]),
+    ).toEqual([{_key: 'b1'}, 'markDefs'])
+    expect(
+      findSidecarArrayPath([{_key: 'b1'}, 'markDefs', {_key: 'm1'}, 'href']),
+    ).toEqual([{_key: 'b1'}, 'markDefs'])
+    expect(
+      findSidecarArrayPath([
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+        'marks',
+        2,
+      ]),
+    ).toEqual([{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'])
+  })
+})
+
+describe(toEngineSafePatches.name, () => {
+  const targetValue = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      children: [{_type: 'span', _key: 's1', text: 'Hello', marks: ['m1']}],
+      markDefs: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+      style: 'normal',
+    },
+  ] as unknown as PortableTextBlock[]
+
+  test('passes resolvable patches through unchanged', () => {
+    const patches = convertPatches([
+      {set: {'[_key=="b1"].children[_key=="s1"].text': 'Hello'}},
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual(patches)
+  })
+
+  test('coalesces sidecar item patches into whole-property sets', () => {
+    const patches = convertPatches([
+      {
+        unset: ['[_key=="b1"].markDefs[_key=="m0"]'],
+        insert: {
+          after: '[_key=="b1"].markDefs[_key=="m0"]',
+          items: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+        },
+      },
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'b1'}, 'markDefs'],
+        value: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+      },
+    ])
+  })
+
+  test('unsets the property when absent from the target value', () => {
+    const patches = convertPatches([
+      {unset: ['[_key=="b2"].markDefs[_key=="m0"]']},
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual([
+      {
+        type: 'unset',
+        origin: 'remote',
+        path: [{_key: 'b2'}, 'markDefs'],
+      },
+    ])
+  })
+
+  test('coalesces indexed marks patches into a whole-array set', () => {
+    const patches = convertPatches([
+      {unset: ['[_key=="b1"].children[_key=="s1"].marks[2]']},
+    ])
+    expect(toEngineSafePatches(patches, targetValue)).toEqual([
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+        value: ['m1'],
       },
     ])
   })
