@@ -74,6 +74,7 @@ export function createEditorEngine(
   editor.verifiedUniqueChildGroups = new Set<string>()
   editor.remotePatches = []
   editor.undoStepId = undefined
+  editor.undoStepSelection = null
 
   editor.isDeferringMutations = false
   editor.lastSyncedValue = undefined
