@@ -8,7 +8,6 @@ import {applyInsertNodeAtPath} from '../../internal-utils/apply-insert-node'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
-import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {setNodeProperties} from '../../internal-utils/set-node-properties'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {serializePath} from '../../paths/serialize-path'
@@ -367,8 +366,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Remove markDefs not in use
    */
   if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
-    const newMarkDefs = (node.markDefs || []).filter((def) => {
-      return node.children.find((child) => {
+    const unusedMarkDefs = (node.markDefs || []).filter((def) => {
+      return !node.children.find((child) => {
         return (
           isSpan({schema: editor.snapshot.context.schema}, child) &&
           Array.isArray(child.marks) &&
@@ -377,9 +376,17 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       })
     })
 
-    if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
+    if (unusedMarkDefs.length > 0) {
       debug.normalization('removing markDef not in use')
-      setNodeProperties(editor, {markDefs: newMarkDefs}, path)
+      for (const unusedMarkDef of unusedMarkDefs) {
+        // Keyed removal instead of setting the whole array: the emitted
+        // patch then only touches this definition, so it merges with
+        // definitions another client writes concurrently.
+        editor.apply({
+          type: 'unset',
+          path: [...path, 'markDefs', {_key: unusedMarkDef._key}],
+        })
+      }
       return
     }
   }

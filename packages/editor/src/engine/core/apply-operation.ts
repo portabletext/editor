@@ -49,8 +49,19 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         // `span.marks` or `block.markDefs`) rather than a structural
         // child. Apply the insert as a plain data patch on the root
         // block so the result matches what the datastore computed.
-        // These operations only arrive from remote patches, so no
-        // inverse is needed.
+        if (
+          !op.inverse &&
+          !editor.isProcessingRemoteChanges &&
+          typeof node._key === 'string'
+        ) {
+          // Unkeyed sidecar members can't be addressed for removal, so
+          // they carry no inverse; no local operation site inserts them.
+          op.inverse = {
+            type: 'unset',
+            path: [...path.slice(0, -1), {_key: node._key}],
+          }
+        }
+
         applyOnRootBlock(editor, path, {
           type: 'insert',
           path: path.slice(1),
@@ -295,15 +306,29 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         // structural child. Removing it never affects the selection, so
         // apply it as a plain data patch on the root block.
         if (!op.inverse && !editor.isProcessingRemoteChanges) {
-          const arrayValue = getValue(
-            editor.snapshot.context.value,
-            path.slice(0, -1),
-          )
-          if (Array.isArray(arrayValue)) {
+          const removedMember = getValue(editor.snapshot.context.value, path)
+
+          if (isKeyedSegment(lastSegment) && removedMember !== undefined) {
+            // A keyed inverse keeps undo emitting item-level patches;
+            // restoring via a whole-array `set` would overwrite members
+            // another client wrote meanwhile.
             op.inverse = {
-              type: 'set',
-              path: path.slice(0, -1),
-              value: arrayValue,
+              type: 'insert',
+              path: [...path.slice(0, -1), 0],
+              position: 'before',
+              node: removedMember as Node,
+            }
+          } else {
+            const arrayValue = getValue(
+              editor.snapshot.context.value,
+              path.slice(0, -1),
+            )
+            if (Array.isArray(arrayValue)) {
+              op.inverse = {
+                type: 'set',
+                path: path.slice(0, -1),
+                value: arrayValue,
+              }
             }
           }
         }

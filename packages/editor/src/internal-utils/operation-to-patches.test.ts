@@ -12,7 +12,7 @@ import {createEditor} from '../engine/create-editor'
 import type {Node} from '../engine/interfaces/node'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'
-import {insertNodePatch, textPatch} from './operation-to-patches'
+import {insertNodePatch, setNodePatch, textPatch} from './operation-to-patches'
 
 function buildBlockIndexMap(
   schema: any,
@@ -411,5 +411,118 @@ describe('defensive setIfMissing patches', () => {
         },
       ])
     })
+  })
+})
+
+describe(setNodePatch.name, () => {
+  const markDefsPath = [{_key: 'b0'}, 'markDefs']
+
+  function blockWithMarkDefs(markDefs: Array<object> | undefined) {
+    return [
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        style: 'normal',
+        ...(markDefs === undefined ? {} : {markDefs}),
+      },
+    ] as Array<PortableTextBlock>
+  }
+
+  test('Scenario: Creating an absent `markDefs` property emits a `setIfMissing`', () => {
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: markDefsPath,
+          value: [],
+        },
+        blockWithMarkDefs(undefined),
+      ),
+    ).toEqual([
+      {
+        type: 'setIfMissing',
+        path: markDefsPath,
+        value: [],
+      },
+    ])
+  })
+
+  test('Scenario: Setting an existing `markDefs` property passes through as a plain set', () => {
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: markDefsPath,
+          value: [],
+        },
+        blockWithMarkDefs([
+          {_key: 'l0', _type: 'link', href: 'https://example.com'},
+        ]),
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: markDefsPath,
+        value: [],
+      },
+    ])
+  })
+
+  test('Scenario: Setting a non-empty array on an absent property passes through as a plain set', () => {
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: markDefsPath,
+          value: [{_key: 'l0', _type: 'link', href: 'https://example.com'}],
+        },
+        blockWithMarkDefs(undefined),
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: markDefsPath,
+        value: [{_key: 'l0', _type: 'link', href: 'https://example.com'}],
+      },
+    ])
+  })
+
+  test('Scenario: Block missing from the pre-apply value passes through as a plain set', () => {
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: 'other-block'}, 'markDefs'],
+          value: [],
+        },
+        blockWithMarkDefs(undefined),
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'other-block'}, 'markDefs'],
+        value: [],
+      },
+    ])
+  })
+
+  test('Scenario: Paths not ending in `markDefs` pass through as plain sets', () => {
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'style'],
+          value: 'h1',
+        },
+        blockWithMarkDefs([]),
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'b0'}, 'style'],
+        value: 'h1',
+      },
+    ])
   })
 })

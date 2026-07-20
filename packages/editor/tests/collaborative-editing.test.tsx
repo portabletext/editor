@@ -286,7 +286,7 @@ describe('Collaborative editing', () => {
 
       expect(emittedPatches).toEqual([
         {
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },
@@ -1073,7 +1073,7 @@ describe('Collaborative editing', () => {
       // plus the typing patch
       expect(emittedPatches).toEqual([
         {
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },
@@ -1203,7 +1203,7 @@ describe('Collaborative editing', () => {
           value: [],
         },
         {
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },

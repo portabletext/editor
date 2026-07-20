@@ -4,6 +4,7 @@ import {isEnd} from '../engine/editor/is-end'
 import {isStart} from '../engine/editor/is-start'
 import {rangeRef} from '../engine/editor/range-ref'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Node} from '../engine/interfaces/node'
 import {isBackwardRange} from '../engine/range/is-backward-range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {isRange} from '../engine/range/is-range'
@@ -109,19 +110,15 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       )
 
       if (existingMarkDef === undefined) {
-        setNodeProperties(
-          editor,
-          {
-            markDefs: [
-              ...markDefs,
-              {
-                ...parsedAnnotation,
-                _key: annotationKey,
-              },
-            ],
-          },
-          blockPath,
-        )
+        editor.apply({
+          type: 'insert',
+          path: [...blockPath, 'markDefs', 0],
+          position: 'before',
+          node: {
+            ...parsedAnnotation,
+            _key: annotationKey,
+          } as unknown as Node,
+        })
       }
 
       // Split text nodes at range boundaries

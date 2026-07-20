@@ -321,8 +321,8 @@ describe('unique sibling `_key`s', () => {
             {_type: 'span', _key: 'k7', text: 'bar', marks: ['k6']},
           ],
           markDefs: [
-            {_key: linkKey, _type: 'link', href: 'https://sanity.io'},
             {_key: 'k6', _type: 'link', href: 'https://sanity.io'},
+            {_key: linkKey, _type: 'link', href: 'https://sanity.io'},
           ],
           style: 'normal',
         },

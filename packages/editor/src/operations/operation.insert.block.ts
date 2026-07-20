@@ -21,7 +21,6 @@ import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {deleteRange} from '../internal-utils/delete-range'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toEngineBlock} from '../internal-utils/values'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getParent} from '../traversal/get-parent'
@@ -480,13 +479,17 @@ function mergeTextBlockFragment(args: {
     endBlock,
   })
 
-  setNodeProperties(
-    editor,
-    {
-      markDefs: [...(endBlock.markDefs ?? []), ...(adjustedMarkDefs ?? [])],
-    },
-    endBlockPath,
-  )
+  for (const adjustedMarkDef of adjustedMarkDefs ?? []) {
+    // Keyed inserts instead of setting the unioned array: the emitted
+    // patches then only add the incoming definitions, so they merge with
+    // definitions another client writes concurrently.
+    editor.apply({
+      type: 'insert',
+      path: [...endBlockPath, 'markDefs', 0],
+      position: 'before',
+      node: adjustedMarkDef as unknown as Node,
+    })
+  }
 
   const atPathRef = pathRef(editor, at.path)
 

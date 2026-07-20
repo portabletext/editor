@@ -1,13 +1,8 @@
-import {
-  insert,
-  set,
-  setIfMissing,
-  unset,
-  type Patch,
-} from '@portabletext/patches'
+import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {
   insertNodePatch,
+  setNodePatch,
   textPatch,
 } from '../internal-utils/operation-to-patches'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
@@ -77,7 +72,7 @@ export function subscribePatchGeneration({
         patches = [...patches, ...insertNodePatch(operation)]
         break
       case 'set':
-        patches = [...patches, set(operation.value, operation.path)]
+        patches = [...patches, ...setNodePatch(operation, previousValue)]
         break
       case 'unset':
         patches = [...patches, unset(operation.path)]

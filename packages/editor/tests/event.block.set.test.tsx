@@ -503,7 +503,7 @@ describe('event.block.set', () => {
         unset([{_key: 'k0'}]),
         unset([]),
         setIfMissing([], []),
-        set([], [{_key: textBlockKey}, 'markDefs']),
+        setIfMissing([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
 
