@@ -100,7 +100,11 @@ export function subscribeHistory({
         operation.text.length === 0)
 
     if (isNoOp) {
-      previousUndoStepId = currentUndoStepId
+      // Deliberately not advancing `previousUndoStepId`: it tracks the
+      // last operation that affected history. Advancing it here would
+      // let a no-op leading a new undo step consume the step boundary,
+      // and the following real operations would merge into the previous
+      // step (undoing more than the last step's worth of changes).
       return
     }
 
@@ -118,7 +122,16 @@ export function subscribeHistory({
       previousUndoStepId,
       operationsInProgress: event.operationsInProgress,
       isNormalizingNode: event.isNormalizingNode,
-      selectionBeforeApply: event.beforeSelection,
+      // When this operation opens a new undo step, the step's pre-state
+      // selection is the one snapshotted when the undo step ID was
+      // minted: operation implementations may park the selection on
+      // transient nodes (removed again within the same step) before the
+      // first history-affecting operation applies.
+      selectionBeforeApply:
+        currentUndoStepId !== undefined &&
+        currentUndoStepId !== previousUndoStepId
+          ? editor.undoStepSelection
+          : event.beforeSelection,
     })
 
     // Make sure we don't exceed the maximum number of undo steps we want

@@ -11,6 +11,7 @@ import type {
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import type {ResolvedContainers} from '../schema/resolve-containers'
+import type {EditorSelection} from './editor'
 
 type HistoryItem = {
   operations: EngineOperation[]
@@ -77,6 +78,13 @@ export interface PortableTextEditorEngine extends DOMEditor {
   verifiedUniqueChildGroups: Set<string>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
+  /**
+   * Engine selection snapshotted when `undoStepId` is minted. The step's
+   * pre-state selection for undo: by the time the first history-affecting
+   * operation applies, operation implementations may have parked the
+   * selection on transient nodes their own step removes again.
+   */
+  undoStepSelection: EditorSelection
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

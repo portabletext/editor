@@ -98,6 +98,7 @@ function performEventInternal({
 }: PerformEventArgs) {
   if (mode === 'send' && !isNativeBehaviorEvent(event)) {
     editor.undoStepId = defaultKeyGenerator()
+    editor.undoStepSelection = editor.snapshot.context.selection
   }
 
   if (debug.behaviors.enabled) {
@@ -269,6 +270,7 @@ function performEventInternal({
       if (actionSetIndex > 0) {
         // Since there are multiple action sets
         editor.undoStepId = defaultKeyGenerator()
+        editor.undoStepSelection = editor.snapshot.context.selection
 
         undoStepCreated = true
       }
@@ -282,6 +284,7 @@ function performEventInternal({
         // All actions performed recursively from now will be squashed into this
         // undo step
         editor.undoStepId = defaultKeyGenerator()
+        editor.undoStepSelection = editor.snapshot.context.selection
 
         undoStepCreated = true
       }
