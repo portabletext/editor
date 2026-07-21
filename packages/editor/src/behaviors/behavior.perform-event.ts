@@ -31,19 +31,39 @@ function eventCategory(event: BehaviorEvent) {
         : 'synthetic'
 }
 
-export function performEvent({
-  mode,
-  behaviors,
-  remainingEventBehaviors,
-  event,
-  editor,
-  converters,
-  keyGenerator,
-  readOnly,
-  schema,
-  nativeEvent,
-  sendBack,
-}: {
+/**
+ * Behaviors can `raise`/`forward`/`execute` events recursively. A Behavior
+ * whose guard never flips false can therefore recurse until the call stack
+ * overflows, which leaves the editor in a broken state. Legitimate event
+ * chains stay far below this depth, so exceeding it means a cycle: drop the
+ * event loudly instead of overflowing.
+ */
+const maxEventDepth = 100
+
+const eventDepths = new WeakMap<PortableTextEditorEngine, number>()
+
+export function performEvent(args: PerformEventArgs) {
+  const depth = (eventDepths.get(args.editor) ?? 0) + 1
+
+  if (depth > maxEventDepth) {
+    console.error(
+      new Error(
+        `Performing "${args.event.type}" was aborted because the event chain exceeded a depth of ${maxEventDepth}. This usually means Behaviors keep raising events in a cycle.`,
+      ),
+    )
+    return
+  }
+
+  eventDepths.set(args.editor, depth)
+
+  try {
+    performEventInternal(args)
+  } finally {
+    eventDepths.set(args.editor, depth - 1)
+  }
+}
+
+type PerformEventArgs = {
   mode: 'send' | 'raise' | 'execute' | 'forward'
   behaviors: Array<Behavior>
   remainingEventBehaviors: Array<Behavior>
@@ -61,7 +81,21 @@ export function performEvent({
   sendBack: (
     event: {type: 'set drag ghost'; ghost: HTMLElement} | ExternalBehaviorEvent,
   ) => void
-}) {
+}
+
+function performEventInternal({
+  mode,
+  behaviors,
+  remainingEventBehaviors,
+  event,
+  editor,
+  converters,
+  keyGenerator,
+  readOnly,
+  schema,
+  nativeEvent,
+  sendBack,
+}: PerformEventArgs) {
   if (mode === 'send' && !isNativeBehaviorEvent(event)) {
     editor.undoStepId = defaultKeyGenerator()
   }
