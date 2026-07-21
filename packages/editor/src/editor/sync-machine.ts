@@ -600,10 +600,10 @@ function clearEditor({
   editorEngine: PortableTextEditorEngine
   doneSyncing: boolean
 }) {
-  withoutNormalizing(editorEngine, () => {
-    pluginWithoutHistory(editorEngine, () => {
-      withRemoteChanges(editorEngine, () => {
-        withoutPatching(editorEngine, () => {
+  withoutPatching(editorEngine, () => {
+    withoutNormalizing(editorEngine, () => {
+      pluginWithoutHistory(editorEngine, () => {
+        withRemoteChanges(editorEngine, () => {
           if (doneSyncing) {
             return
           }
@@ -640,9 +640,9 @@ function removeExtraBlocks({
 }) {
   let isChanged = false
 
-  withoutNormalizing(editorEngine, () => {
-    withRemoteChanges(editorEngine, () => {
-      withoutPatching(editorEngine, () => {
+  withoutPatching(editorEngine, () => {
+    withoutNormalizing(editorEngine, () => {
+      withRemoteChanges(editorEngine, () => {
         const childrenLength = editorEngine.snapshot.context.value.length
 
         if (value.length < childrenLength) {
@@ -707,9 +707,9 @@ function syncBlock({
         schemaTypes: context.schema,
       })
 
-      withoutNormalizing(editorEngine, () => {
-        withRemoteChanges(editorEngine, () => {
-          withoutPatching(editorEngine, () => {
+      withoutPatching(editorEngine, () => {
+        withoutNormalizing(editorEngine, () => {
+          withRemoteChanges(editorEngine, () => {
             editorEngine.apply({
               type: 'insert',
               path: [editorEngine.snapshot.context.value.length],
@@ -788,9 +788,9 @@ function syncBlock({
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
       debug.syncValue('Updating block', oldBlock, block)
 
-      withoutNormalizing(editorEngine, () => {
-        withRemoteChanges(editorEngine, () => {
-          withoutPatching(editorEngine, () => {
+      withoutPatching(editorEngine, () => {
+        withoutNormalizing(editorEngine, () => {
+          withRemoteChanges(editorEngine, () => {
             updateBlock({
               context,
               editorEngine,
@@ -804,9 +804,9 @@ function syncBlock({
     } else {
       debug.syncValue('Replacing block', oldBlock, block)
 
-      withoutNormalizing(editorEngine, () => {
-        withRemoteChanges(editorEngine, () => {
-          withoutPatching(editorEngine, () => {
+      withoutPatching(editorEngine, () => {
+        withoutNormalizing(editorEngine, () => {
+          withRemoteChanges(editorEngine, () => {
             replaceBlock({
               context,
               editorEngine,

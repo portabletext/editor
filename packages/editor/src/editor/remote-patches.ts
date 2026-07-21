@@ -37,8 +37,25 @@ export function setupRemotePatches({
     let changed = false
 
     withRemoteChanges(editor, () => {
-      withoutNormalizing(editor, () => {
-        withoutPatching(editor, () => {
+      // `withoutPatching` must wrap `withoutNormalizing`, not the other way
+      // around: `withoutNormalizing` runs a final normalize pass on exit,
+      // and with the previous nesting that pass ran after patching was
+      // restored. Normalization fallout of remote application (e.g. merging
+      // adjacent same-mark spans a collaborator's formatting toggle left
+      // behind) was then emitted as local patches and pushed back to the
+      // server. Every receiving client pushed its own competing "cleanup"
+      // of the same structure, and the interleaved merges corrupted the
+      // shared document (fragments deleted after their text had moved,
+      // text applied twice). Normalization fallout of remote changes must
+      // stay local; the originating client runs the same normalization as
+      // a genuine local edit and pushes it, so the server still converges
+      // to the normalized form.
+      //
+      // NOTE (draft): blanket suppression conflicts with the self-solving
+      // documents contract; see the PR description for the enumeration and
+      // the proposed hold-and-discard alternative.
+      withoutPatching(editor, () => {
+        withoutNormalizing(editor, () => {
           pluginWithoutHistory(editor, () => {
             for (const patch of patches) {
               try {
@@ -59,9 +76,11 @@ export function setupRemotePatches({
             }
           })
         })
+        if (changed) {
+          normalize(editor)
+        }
       })
       if (changed) {
-        normalize(editor)
         editor.onChange()
       }
     })
