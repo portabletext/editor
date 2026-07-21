@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.1.1
+
+### Patch Changes
+
+- [#2986](https://github.com/portabletext/editor/pull/2986) [`5f116f6`](https://github.com/portabletext/editor/commit/5f116f6c94c5f3ae837af825adfab1d5b7e787f1) Thanks [@ryanbonial](https://github.com/ryanbonial)! - fix: stop dropping mutation flushes and stomping in-flight typing during sync
+
+  A single user typing (especially deleting and retyping) could see text
+  reordered, duplicated, or resurrected. Two sync-machine bugs compounded:
+  mutation flush events arriving in bursts were silently dropped by states
+  without a handler, permanently diverging the store from the editor, and the
+  whole-value repair ran while local edits were still in flight, diffing the
+  editor against the lagging store and injecting stale text back into it.
+
+  Every state now pushes mutation flushes, and the whole-value repair only
+  runs when the editor is quiescent (on a store change while idle, plus a
+  one-shot repair after a short idle delay).
+
+- Updated dependencies [[`fae7074`](https://github.com/portabletext/editor/commit/fae7074fb1617a7da35bb22a1a18e473ce1cc0b9), [`1676271`](https://github.com/portabletext/editor/commit/16762713632e5fe66e6a58f9214cc9ccd89e6f31), [`6592c0d`](https://github.com/portabletext/editor/commit/6592c0d82742c28bd2f4f27f78997456653bd8c8)]:
+  - @portabletext/editor@7.10.9
+
 ## 7.1.0
 
 ### Minor Changes
