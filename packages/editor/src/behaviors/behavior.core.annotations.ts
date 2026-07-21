@@ -1,4 +1,7 @@
 import {isSpan} from '@portabletext/schema'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {isBackwardRange} from '../engine/range/is-backward-range'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getCaretWordSelection} from '../selectors/selector.get-caret-word-selection'
 import {getNextSpan} from '../selectors/selector.get-next-span'
@@ -11,6 +14,7 @@ import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import type {EditorSelection} from '../types/editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -68,9 +72,14 @@ const addAnnotationOnCollapsedSelection = defineBehavior({
 const preventOverlappingAnnotations = defineBehavior({
   // Given an `annotation.add` event
   on: 'annotation.add',
-  // When the annotation is active in the selection
+  // When the raised `annotation.remove` would strip the annotation from at
+  // least one span
   guard: ({snapshot, event}) => {
-    const at = event.at ?? snapshot.context.selection
+    // Resolve `event.at` the same way the `annotation.remove` operation
+    // will. If the guard and the operation disagree on the effective
+    // selection, the remove can no-op while the guard keeps answering
+    // "active", and the remove-then-re-add cycle below never terminates.
+    const at = resolveEffectiveSelection(snapshot, event.at)
 
     if (!at) {
       return false
@@ -204,3 +213,28 @@ export const coreAnnotationBehaviors = [
   preventOverlappingAnnotations,
   stripAnnotationsOnFullSpanDeletion,
 ]
+
+function resolveEffectiveSelection(
+  snapshot: EditorSnapshot,
+  at: EditorSelection | undefined,
+): EditorSelection {
+  if (!at) {
+    return snapshot.context.selection
+  }
+
+  const resolvedAt = resolveSelection({snapshot}, at)
+
+  if (!resolvedAt) {
+    // Mirrors `annotation.remove` falling back to the editor selection when
+    // `at` cannot be resolved
+    return snapshot.context.selection
+  }
+
+  return {
+    anchor: resolvedAt.anchor,
+    focus: resolvedAt.focus,
+    // Resolving can move either point, so `at.backward` may no longer
+    // match; derive the direction from the resolved points instead.
+    backward: isBackwardRange(resolvedAt, snapshot.context),
+  }
+}

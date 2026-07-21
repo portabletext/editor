@@ -809,3 +809,152 @@ describe('collision matrix', () => {
     }
   }
 })
+
+/**
+ * Regression rig for the `annotation.remove` stack overflow: repeated rounds
+ * of overlapping links with remote patches delivered between rounds, without
+ * waiting for the editors to converge. Before the guard fix in
+ * `preventOverlappingAnnotations`, this class of interleaving could drive an
+ * editor into an unbounded remove-then-re-add raise loop that overflowed the
+ * call stack and left the editor blank.
+ */
+describe('multi-round link overlap', () => {
+  let cleanup: (() => void) | undefined
+  let consoleErrors: Array<string> = []
+  let consoleError: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    consoleErrors = []
+    consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation((...args: Array<unknown>) => {
+        consoleErrors.push(
+          args
+            .map((arg) => (arg instanceof Error ? arg.message : String(arg)))
+            .join(' '),
+        )
+      })
+  })
+
+  afterEach(() => {
+    cleanup?.()
+    cleanup = undefined
+    consoleError.mockRestore()
+  })
+
+  const orderings: Array<{label: string; first: 0 | 1}> = [
+    {label: 'A delivered first', first: 0},
+    {label: 'B delivered first', first: 1},
+  ]
+
+  function pushCount(store: Store) {
+    return (
+      store.pushPatches.mock.calls.length + store.pushValue.mock.calls.length
+    )
+  }
+
+  function withoutDuplicateMarkDefs(
+    blocks: PortableTextBlock[],
+  ): PortableTextBlock[] {
+    return blocks.map((block) => {
+      const markDefs = (block as {markDefs?: Array<{_key: string}>}).markDefs
+
+      if (!Array.isArray(markDefs)) {
+        return block
+      }
+
+      const seenKeys = new Set<string>()
+
+      return {
+        ...block,
+        markDefs: markDefs.filter((markDef) => {
+          if (seenKeys.has(markDef._key)) {
+            return false
+          }
+          seenKeys.add(markDef._key)
+          return true
+        }),
+      }
+    })
+  }
+
+  async function waitForNewPush(store: Store, baseline: number) {
+    await vi.waitFor(
+      () => {
+        expect(pushCount(store)).toBeGreaterThan(baseline)
+      },
+      {timeout: 5000, interval: 25},
+    )
+  }
+
+  for (const ordering of orderings) {
+    test(`three rounds of overlapping links without convergence waits (${ordering.label})`, async () => {
+      const server = createContentLakeServer(seedSingle())
+      const {editorA, editorB, locatorA, locatorB, unmount} =
+        await renderTwoClients(server)
+      cleanup = unmount
+
+      const linkRound = (editor: Editor, role: Role) => {
+        const at =
+          role === 'A'
+            ? rangeInBlock(editor, 0, 0, 15)
+            : rangeInBlock(editor, 0, 8, 25)
+        if (!at) {
+          return
+        }
+        editor.send({type: 'select', at})
+        editor.send({
+          type: 'annotation.toggle',
+          annotation: {
+            name: 'link',
+            value: {href: `https://${role.toLowerCase()}.example/`},
+          },
+          at,
+        })
+      }
+
+      for (let round = 0; round < 3; round++) {
+        const baselineA = pushCount(server.storeA)
+        const baselineB = pushCount(server.storeB)
+
+        await locatorA.click()
+        linkRound(editorA, 'A')
+        await locatorB.click()
+        linkRound(editorB, 'B')
+
+        await waitForNewPush(server.storeA, baselineA)
+        await waitForNewPush(server.storeB, baselineB)
+
+        // Deliver both clients' queued transactions so remote patches reach
+        // the other editor mid-flight, then start the next round without
+        // waiting for convergence
+        server.deliverClient(ordering.first)
+        server.deliverClient(ordering.first === 0 ? 1 : 0)
+      }
+
+      await vi.waitFor(
+        () => {
+          server.deliverAll()
+          expect(server.hasPendingDeliveries()).toBe(false)
+
+          // Known limitation, not a regression gate: repeated concurrent
+          // link toggles can leave duplicate markDef entries (same `_key`,
+          // same fields) in the server document. Editors normalize the
+          // duplicates away locally and the repair sync never rewrites
+          // them, so the comparison dedupes the server value.
+          const serverValue = withoutDuplicateMarkDefs(server.getServerValue())
+          expect(editorA.getSnapshot().context.value).toEqual(serverValue)
+          expect(editorB.getSnapshot().context.value).toEqual(serverValue)
+        },
+        {timeout: 10000, interval: 100},
+      )
+
+      expect(
+        consoleErrors.filter((message) =>
+          message.includes('Maximum call stack'),
+        ),
+      ).toEqual([])
+      expect(validatePortableText(server.getServerValue())).toEqual([])
+    })
+  }
+})
