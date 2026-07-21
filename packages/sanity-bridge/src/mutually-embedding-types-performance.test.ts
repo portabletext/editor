@@ -67,6 +67,17 @@ describe('mutually-embedding block objects', () => {
     // Generous bound - the conversion takes ~1ms when linear, while the
     // unmemoized walk does not finish in any practical amount of time.
     expect(durationMs).toBeLessThan(2_000)
+
+    // The emitted definition must be small AS A TREE, not merely cheap to
+    // build. The memoized walk builds shared `OfDefinition` objects (a
+    // DAG) in linear time, but before root block objects referenced by
+    // name at every position, each type's single expansion inlined the
+    // expansions of every type not on its first-visit ancestor path:
+    // 57 MB serialized for these 12 types, out-of-memory in real studios
+    // with ~25. Every consumer walks the tree (`compileSchema`, React,
+    // serialization), so tree size is the contract, and conversion time
+    // alone cannot pin it.
+    expect(JSON.stringify(schema).length).toBeLessThan(100_000)
   }, 10_000)
 
   test('a marketing-site schema converts to a PTE schema that container resolution can walk at every depth', () => {
