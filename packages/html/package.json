@@ -68,6 +68,7 @@
     "@types/node": "catalog:tooling",
     "jsdom": "catalog:tooling",
     "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
   "engines": {

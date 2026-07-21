@@ -78,6 +78,7 @@
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
   "peerDependencies": {
