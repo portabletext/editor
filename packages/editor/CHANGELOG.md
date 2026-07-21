@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.10.10
+
+### Patch Changes
+
+- [#2933](https://github.com/portabletext/editor/pull/2933) [`1aea458`](https://github.com/portabletext/editor/commit/1aea458849ecbb2ee5c88e97bfba1fc0ab6adbc7) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve selections through remote children replacements that keep the text
+
+  When a remote change replaces a block's children with re-keyed spans
+  (a collaborator toggling a mark that splits spans), the local cursor
+  and any other tracked selection no longer jump to the start of the
+  block. As long as the block's text is unchanged, selections keep
+  their exact textual position; replacements that change the text keep
+  the previous behavior.
+
 ## 7.10.9
 
 ### Patch Changes

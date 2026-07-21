@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-dnd",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Track the drop position during drag and drop for custom drop indicators",
   "keywords": [
     "dnd",
