@@ -64,6 +64,7 @@
     "@sanity/tsconfig": "catalog:tooling",
     "@types/markdown-it": "^14.1.2",
     "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
   "engines": {

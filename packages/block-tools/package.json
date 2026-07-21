@@ -69,6 +69,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "catalog:tooling",
     "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
   "engines": {

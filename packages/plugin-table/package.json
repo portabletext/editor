@@ -88,6 +88,7 @@
     "react-dom": "catalog:",
     "typescript": "catalog:tooling",
     "typescript-eslint": "catalog:tooling",
+    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
   "peerDependencies": {
