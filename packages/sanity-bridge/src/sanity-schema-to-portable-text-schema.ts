@@ -122,6 +122,7 @@ function sanitySchemaTypeToSchema(
     distinctAncestorCount: 0,
     memo: new Map<SchemaType, OfDefinition>(),
     inFlight: new Map<unknown, Array<number>>(),
+    rootBlockObjects: new Set<SchemaType>(blockObjectTypes),
   }
   const pendingWork: Array<Work> = []
 
@@ -227,6 +228,21 @@ type Conversion = {
    * overflowed the stack.
    */
   inFlight: Map<unknown, Array<number>>
+  /**
+   * The canonical instances of the root-level block object types. Members
+   * reaching one of these at any `of` position emit a bare
+   * `{type: name}` reference instead of an inline expansion: the root
+   * `blockObjects` entry materializes the fields exactly once, and
+   * `getSubSchema` resolves bare references against that collection.
+   * Without this, each type's single memoized expansion inlines the
+   * expansions of every type not on its first-visit ancestor path, and
+   * the emitted definition, while cheap to build as a shared DAG, is
+   * factorially large as a tree, which is what every consumer
+   * (`compileSchema`, React, serialization) walks. Keyed by instance so
+   * a same-named but structurally different inline declaration keeps its
+   * own inline shape.
+   */
+  rootBlockObjects: Set<SchemaType>
 }
 
 function pushAncestor(conversion: Conversion, name: string): void {
@@ -405,9 +421,15 @@ function scheduleOfMember(
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
 
-  if (!hasFields || hasAncestor(conversion, memberType.name)) {
+  if (
+    !hasFields ||
+    hasAncestor(conversion, memberType.name) ||
+    conversion.rootBlockObjects.has(memberType)
+  ) {
     // Bare reference. The editor's resolver looks up `memberType.name`
-    // in `blockObjects` / `inlineObjects`.
+    // in the root `blockObjects`. Root block objects take this branch at
+    // every nested position, not just on cycles; see
+    // `Conversion.rootBlockObjects`.
     target[index] = {
       type: memberType.name,
       ...(memberType.title ? {title: memberType.title} : {}),

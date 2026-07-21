@@ -199,6 +199,8 @@ describe('conversion oracle', () => {
  *   </EditorProvider>
  * ```
  */
+let referenceRootBlockObjects = new Set<SchemaType>()
+
 function referenceSanitySchemaToPortableTextSchema(
   sanitySchema: ArraySchemaType<unknown> | ArrayDefinition,
 ): Schema {
@@ -264,6 +266,8 @@ function sanitySchemaTypeToSchema(
   // per-branch ancestor sets below enumerate every simple path through
   // mutually-embedding types, which grows combinatorially.
   const memo = new Map<SchemaType, OfDefinition>()
+
+  referenceRootBlockObjects = new Set<SchemaType>(blockObjectTypes)
 
   return {
     block: {
@@ -468,9 +472,13 @@ function sanityOfMemberToOfDefinition(
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
 
-  if (!hasFields || ancestorNames.has(memberType.name)) {
-    // Bare reference. The editor's resolver looks up `memberType.name`
-    // in `blockObjects` / `inlineObjects`.
+  if (
+    !hasFields ||
+    ancestorNames.has(memberType.name) ||
+    referenceRootBlockObjects.has(memberType)
+  ) {
+    // Bare reference, mirroring the production emission rule: root block
+    // objects reference by name at every nested position.
     return {
       type: memberType.name,
       ...(memberType.title ? {title: memberType.title} : {}),
