@@ -1,5 +1,27 @@
 # Changelog
 
+## 7.10.9
+
+### Patch Changes
+
+- [#2985](https://github.com/portabletext/editor/pull/2985) [`fae7074`](https://github.com/portabletext/editor/commit/fae7074fb1617a7da35bb22a1a18e473ce1cc0b9) Thanks [@ryanbonial](https://github.com/ryanbonial)! - fix: prevent unbounded `annotation.add` raise recursion under concurrent editing
+
+  The `preventOverlappingAnnotations` Core Behavior raises `annotation.remove` followed by the original `annotation.add` whenever its guard considers the annotation active. The guard and the `annotation.remove` operation could disagree on the effective selection: the guard read the raw `at` while the operation resolved stale points to a fallback position. When they disagreed, the remove stripped nothing, the guard kept answering "active", and the raise chain recursed until the call stack overflowed, leaving the editor blank. Concurrent remote patches routinely produce such selections by splitting or consuming the spans an in-flight `at` points to.
+
+  The guard now resolves `at` through the same machinery as the operation before asking whether the annotation is active, so the two can no longer disagree and the chain terminates.
+
+- [#2985](https://github.com/portabletext/editor/pull/2985) [`1676271`](https://github.com/portabletext/editor/commit/16762713632e5fe66e6a58f9214cc9ccd89e6f31) Thanks [@ryanbonial](https://github.com/ryanbonial)! - fix: depth-limit Behavior event chains so cycles fail loudly instead of overflowing the call stack
+
+  Behaviors can `raise`/`forward`/`execute` events recursively, and a Behavior whose guard never flips false recursed until the call stack overflowed, leaving the editor blank until reload. The event chain is now depth-limited: exceeding the limit drops the event with a single console error naming the event type, and the editor stays at its last consistent state. Legitimate event chains stay far below the limit, which measures nesting, not sequential fan-out.
+
+- [#2988](https://github.com/portabletext/editor/pull/2988) [`6592c0d`](https://github.com/portabletext/editor/commit/6592c0d82742c28bd2f4f27f78997456653bd8c8) Thanks [@christianhg](https://github.com/christianhg)! - fix: require covered text for `isActiveAnnotation`'s `'partial'` mode on expanded selections
+
+  `isActiveAnnotation(name, {mode: 'partial'})` reported the annotation active when an expanded selection merely touched it at a zero-width boundary, selecting none of its text. It now answers true only when the selection covers at least one character of an annotated span, matching the documented "partially selected" contract.
+
+  For collapsed selections the two modes now share the editor's canonical caret answer: active with the caret inside an annotated span, not active at its edges, matching typing semantics (annotations don't expand at their edges). Previously `'partial'` also counted a caret sitting exactly on an annotation's boundary.
+
+  Behaviors built on the selector inherit the correction: adding an annotation with a selection that only borders an existing one no longer triggers the overlap-prevention removal cycle for that annotation.
+
 ## 7.10.8
 
 ### Patch Changes
