@@ -571,6 +571,66 @@ function debugTextOf(value: unknown): string {
     .join('\n')
 }
 
+/**
+ * How long an editor-versus-store divergence must persist, unchanged,
+ * before the whole-value repair acts on it. When a remote transaction
+ * arrives interleaved with the listener echoes of this client's own recent
+ * edits, the store value is transiently wrong until the echo returns and
+ * the rebase corrects it. A repair fired inside that window copies the
+ * garbage into the editor and a follow-up repair restores the text at a
+ * drifted offset, scrambling words the user typed in the meantime. The
+ * window therefore has to outlast a slow listener echo round trip; real
+ * divergence is stable and loses nothing by being repaired a beat later.
+ *
+ * Tests use a short window: their mock stores are synchronous, so echo
+ * transients cannot occur, and waiting the production interval would only
+ * slow every repair assertion down.
+ */
+const REPAIR_CONFIRM_DELAY =
+  // @ts-expect-error - dot notation required for Vite to replace at build time
+  process.env.NODE_ENV === 'test' ? 150 : 1000
+
+type PendingRepair = {signature: string; timer: ReturnType<typeof setTimeout>}
+const pendingRepairs = new WeakMap<Editor, PendingRepair>()
+
+/**
+ * Local edits the editor has emitted but not yet flushed into a mutation.
+ * While any exist, the store necessarily lags the editor and a repair diff
+ * would "repair away" the user's unflushed keystrokes, so repairs must wait.
+ */
+const unflushedEdits = new WeakMap<Editor, boolean>()
+
+function computeRepair(
+  editor: Editor,
+  remoteValue: PortableTextBlock[],
+): {patches: PtePatch[]; convertible: boolean; signature: string} {
+  const snapshot = editor.getSnapshot().context.value
+  // The signature covers the full (editor, store) state, not just the diff:
+  // with repetitive text, two different transients can produce an identical
+  // diff, and a repair must only act when the world actually stood still.
+  const stateSignature = JSON.stringify([snapshot, remoteValue])
+  try {
+    const patches = toEngineSafePatches(
+      convertPatches(diffValue(snapshot, remoteValue)),
+      remoteValue,
+    )
+    return {patches, convertible: true, signature: stateSignature}
+  } catch {
+    // diffValue can emit path shapes the converter does not understand
+    // (e.g. array slices when multiple items are dropped). The repair then
+    // has to fall back to a whole-value update.
+    return {patches: [], convertible: false, signature: `!${stateSignature}`}
+  }
+}
+
+function cancelPendingRepair(editor: Editor) {
+  const pending = pendingRepairs.get(editor)
+  if (pending) {
+    clearTimeout(pending.timer)
+    pendingRepairs.delete(editor)
+  }
+}
+
 function applySync({
   editor,
   getRemoteValue,
@@ -584,33 +644,67 @@ function applySync({
     return
   }
 
-  const snapshot = editor.getSnapshot().context.value
-  if (debug.repair.enabled) {
-    const editorText = debugTextOf(snapshot)
-    const remoteText = debugTextOf(remoteValue)
-    if (editorText !== remoteText) {
-      debug.repair('editor and store texts differ %o', {editorText, remoteText})
-    }
-  }
-
-  let patches: PtePatch[]
-  try {
-    patches = toEngineSafePatches(
-      convertPatches(diffValue(snapshot, remoteValue)),
-      remoteValue,
-    )
-  } catch {
-    // diffValue can emit path shapes the converter does not understand
-    // (e.g. array slices when multiple items are dropped). Fall back to
-    // the full value sync machinery rather than leaving the editor
-    // diverged.
-    editor.send({type: 'update value', value: remoteValue})
+  const first = computeRepair(editor, remoteValue)
+  if (first.convertible && first.patches.length === 0) {
+    cancelPendingRepair(editor)
     return
   }
 
-  if (patches.length) {
-    debug.repair('applying repair patches %o', patches)
-    editor.send({type: 'patches', patches, snapshot})
+  if (debug.repair.enabled) {
+    debug.repair('editor and store texts diverged %o', {
+      editorText: debugTextOf(editor.getSnapshot().context.value),
+      remoteText: debugTextOf(remoteValue),
+    })
+  }
+
+  // Same divergence already awaiting confirmation: let that timer decide.
+  const pending = pendingRepairs.get(editor)
+  if (pending && pending.signature === first.signature) {
+    return
+  }
+  cancelPendingRepair(editor)
+
+  const timer = setTimeout(() => {
+    pendingRepairs.delete(editor)
+
+    // Unflushed local keystrokes mean the store lags the editor by design;
+    // a repair now would delete them. Re-arm and wait for the flush (the
+    // divergence either disappears once the push round-trips, or persists
+    // and gets repaired then).
+    if (unflushedEdits.get(editor)) {
+      applySync({editor, getRemoteValue})
+      return
+    }
+
+    // Recompute from scratch: the store may have corrected itself (the
+    // transient case) or the user may have typed (their edits will push
+    // and reconverge through the normal flow); only a divergence that is
+    // still byte-for-byte identical is real and safe to repair.
+    const latestRemote = getRemoteValue()
+    if (!latestRemote) {
+      return
+    }
+    const second = computeRepair(editor, latestRemote)
+    if (second.convertible && second.patches.length === 0) {
+      return
+    }
+    if (second.signature !== first.signature) {
+      // Still diverged but differently: re-arm so a stable state eventually
+      // confirms. Transients converge to the empty diff; genuine divergence
+      // stabilizes to a fixed signature within one flush cycle.
+      applySync({editor, getRemoteValue})
+      return
+    }
+
+    if (!second.convertible) {
+      debug.repair('escalating to whole-value sync (unconvertible diff)')
+      editor.send({type: 'update value', value: latestRemote})
+      return
+    }
+
+    const snapshot = editor.getSnapshot().context.value
+    debug.repair('applying confirmed repair patches %o', second.patches)
+    editor.send({type: 'patches', patches: second.patches, snapshot})
 
     // Patch application is best-effort: the editor skips operations it
     // cannot resolve against its current tree, and concurrent edits to the
@@ -619,25 +713,32 @@ function applySync({
     // repair, escalate to the full value sync machinery, which reconciles
     // arbitrary divergence block by block.
     const valueAfterPatches = editor.getSnapshot().context.value
-    if (diffValue(valueAfterPatches, remoteValue).length > 0) {
+    if (diffValue(valueAfterPatches, latestRemote).length > 0) {
       if (debug.repair.enabled) {
         debug.repair('escalating to whole-value sync %o', {
           editorText: debugTextOf(valueAfterPatches),
-          remoteText: debugTextOf(remoteValue),
+          remoteText: debugTextOf(latestRemote),
         })
       }
-      editor.send({type: 'update value', value: remoteValue})
+      editor.send({type: 'update value', value: latestRemote})
     }
-  }
+  }, REPAIR_CONFIRM_DELAY)
+
+  pendingRepairs.set(editor, {signature: first.signature, timer})
 }
 
 const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
   ({sendBack, input}) => {
     const patchSubscription = input.editor.on('patch', () => {
+      // Every 'patch' event is a local edit (remote application suppresses
+      // patch generation), so the store now lags the editor until the next
+      // mutation flush.
+      unflushedEdits.set(input.editor, true)
       sendBack({type: 'patch emitted'})
     })
 
     const mutationSubscription = input.editor.on('mutation', (event) => {
+      unflushedEdits.set(input.editor, false)
       if (debug.mutation.enabled) {
         debug.mutation('flushed %o', {
           flushText: debugTextOf(event.value),
