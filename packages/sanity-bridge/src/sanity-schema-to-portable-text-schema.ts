@@ -102,6 +102,17 @@ function sanitySchemaTypeToSchema(
   // per-branch ancestor sets below enumerate every simple path through
   // mutually-embedding types, which grows combinatorially.
   const memo = new Map<SchemaType, OfDefinition>()
+  // The canonical instances of the root-level block object types. Members
+  // reaching one of these at any `of` position emit a bare `{type: name}`
+  // reference instead of an inline expansion: the root `blockObjects`
+  // entry materializes the fields exactly once. Without this, each type's
+  // single memoized expansion inlines the expansions of every type not on
+  // its first-visit ancestor path, and the emitted definition, while
+  // cheap to build as a shared DAG, is factorially large as a tree, which
+  // is what every consumer (schema compilation, React, serialization)
+  // walks. Keyed by instance so a same-named but structurally different
+  // inline declaration keeps its own inline shape.
+  const rootBlockObjects = new Set<SchemaType>(blockObjectTypes)
 
   return {
     block: {
@@ -129,21 +140,31 @@ function sanitySchemaTypeToSchema(
       name: annotation.name,
       title: annotation.title,
       fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set(), memo),
+        sanityFieldToSchemaField(field, new Set(), memo, rootBlockObjects),
       ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
       fields: blockObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([blockObject.name]), memo),
+        sanityFieldToSchemaField(
+          field,
+          new Set([blockObject.name]),
+          memo,
+          rootBlockObjects,
+        ),
       ),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
       fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
+        sanityFieldToSchemaField(
+          field,
+          new Set([inlineObject.name]),
+          memo,
+          rootBlockObjects,
+        ),
       ),
     })),
   }
@@ -168,6 +189,7 @@ function sanityFieldToSchemaField(
   },
   ancestorNames: ReadonlySet<string>,
   memo: Map<SchemaType, OfDefinition>,
+  rootBlockObjects: ReadonlySet<SchemaType>,
 ): FieldDefinition {
   if (field.type.jsonType === 'array') {
     const ofMembers = safeGetOf(field.type)
@@ -177,7 +199,12 @@ function sanityFieldToSchemaField(
       ...(field.type.title ? {title: field.type.title} : {}),
       of: ofMembers
         ? ofMembers.map((member) =>
-            sanityOfMemberToOfDefinition(member, ancestorNames, memo),
+            sanityOfMemberToOfDefinition(
+              member,
+              ancestorNames,
+              memo,
+              rootBlockObjects,
+            ),
           )
         : [],
     }
@@ -194,6 +221,7 @@ function sanityOfMemberToOfDefinition(
   memberType: SchemaType,
   ancestorNames: ReadonlySet<string>,
   memo: Map<SchemaType, OfDefinition>,
+  rootBlockObjects: ReadonlySet<SchemaType>,
 ): OfDefinition {
   if (findBlockType(memberType)) {
     return {type: 'block'}
@@ -208,9 +236,14 @@ function sanityOfMemberToOfDefinition(
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
 
-  if (!hasFields || ancestorNames.has(memberType.name)) {
+  if (
+    !hasFields ||
+    ancestorNames.has(memberType.name) ||
+    rootBlockObjects.has(memberType)
+  ) {
     // Bare reference. The editor's resolver looks up `memberType.name`
-    // in `blockObjects` / `inlineObjects`.
+    // in the root `blockObjects`. Root block objects take this branch at
+    // every nested position, not just on cycles; see `rootBlockObjects`.
     return {
       type: memberType.name,
       ...(memberType.title ? {title: memberType.title} : {}),
@@ -233,7 +266,7 @@ function sanityOfMemberToOfDefinition(
     name: memberType.name,
     ...(memberType.title ? {title: memberType.title} : {}),
     fields: (memberType as ObjectSchemaType).fields.map((field) =>
-      sanityFieldToSchemaField(field, nextAncestors, memo),
+      sanityFieldToSchemaField(field, nextAncestors, memo, rootBlockObjects),
     ),
   }
   memo.set(memberType, definition)
