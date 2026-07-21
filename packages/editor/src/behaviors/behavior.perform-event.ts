@@ -34,37 +34,30 @@ function eventCategory(event: BehaviorEvent) {
 /**
  * Behaviors can `raise`/`forward`/`execute` events recursively. A Behavior
  * whose guard never flips false can therefore recurse until the call stack
- * overflows, which leaves the editor in a broken state. Legitimate event
- * chains stay far below this depth, so exceeding it means a cycle: drop the
- * event loudly instead of overflowing.
+ * overflows, which leaves the editor in a broken state. Exceeding this
+ * depth means a cycle: drop the event loudly instead of overflowing.
+ *
+ * The value is bounded from two sides. It must exceed any legitimate
+ * raise-within-raise nesting (the limit measures nesting, not sequential
+ * fan-out; real Behavior stacks nest maybe 10-15 deep at the pathological
+ * end). And it must stay far below genuine stack exhaustion, since every
+ * nesting level costs dozens of real stack frames and browser stack
+ * limits vary. That puts the workable window at roughly 50-500. The
+ * failure modes are asymmetric: too low silently drops legitimate
+ * events, too high only delays cycle detection by milliseconds, so when
+ * in doubt, raise it.
  */
 const maxEventDepth = 100
 
-const eventDepths = new WeakMap<PortableTextEditorEngine, number>()
-
-export function performEvent(args: PerformEventArgs) {
-  const depth = (eventDepths.get(args.editor) ?? 0) + 1
-
-  if (depth > maxEventDepth) {
-    console.error(
-      new Error(
-        `Performing "${args.event.type}" was aborted because the event chain exceeded a depth of ${maxEventDepth}. This usually means Behaviors keep raising events in a cycle.`,
-      ),
-    )
-    return
-  }
-
-  eventDepths.set(args.editor, depth)
-
-  try {
-    performEventInternal(args)
-  } finally {
-    eventDepths.set(args.editor, depth - 1)
-  }
-}
-
 type PerformEventArgs = {
   mode: 'send' | 'raise' | 'execute' | 'forward'
+  /**
+   * Nesting depth of the Behavior event chain. External entry points pass
+   * `0`; recursive `raise`/`forward`/`execute` sites pass `depth + 1`.
+   * Required so a new recursive call site cannot silently reset the
+   * chain and disable the cycle backstop.
+   */
+  depth: number
   behaviors: Array<Behavior>
   remainingEventBehaviors: Array<Behavior>
   event: BehaviorEvent
@@ -83,7 +76,7 @@ type PerformEventArgs = {
   ) => void
 }
 
-function performEventInternal({
+export function performEvent({
   mode,
   behaviors,
   remainingEventBehaviors,
@@ -95,7 +88,17 @@ function performEventInternal({
   schema,
   nativeEvent,
   sendBack,
+  depth,
 }: PerformEventArgs) {
+  if (depth > maxEventDepth) {
+    console.error(
+      new Error(
+        `Performing "${event.type}" was aborted because the event chain exceeded a depth of ${maxEventDepth}. This usually means Behaviors keep raising events in a cycle.`,
+      ),
+    )
+    return
+  }
+
   if (mode === 'send' && !isNativeBehaviorEvent(event)) {
     editor.undoStepId = defaultKeyGenerator()
   }
@@ -339,6 +342,7 @@ function performEventInternal({
                 schema,
                 nativeEvent,
                 sendBack,
+                depth: depth + 1,
               })
 
               continue
@@ -358,6 +362,7 @@ function performEventInternal({
                 schema,
                 nativeEvent,
                 sendBack,
+                depth: depth + 1,
               })
 
               continue
@@ -375,6 +380,7 @@ function performEventInternal({
               schema,
               nativeEvent: undefined,
               sendBack,
+              depth: depth + 1,
             })
           }
         },

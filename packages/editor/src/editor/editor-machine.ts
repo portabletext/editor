@@ -404,6 +404,7 @@ export const editorMachine = setup({
 
         performEvent({
           mode: 'send',
+          depth: 0,
           behaviors,
           remainingEventBehaviors: behaviors,
           event: event.behaviorEvent,
