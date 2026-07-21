@@ -555,6 +555,35 @@ export function scopeRemotePatches(
   return scoped
 }
 
+// Sync diagnostics, disabled unless `globalThis.__PTE_SYNC_DEBUG = true`
+// is set before load. Callers pass a thunk so detail computation is free
+// when the flag is off.
+function syncDebugEnabled(): boolean {
+  return (globalThis as {__PTE_SYNC_DEBUG?: boolean}).__PTE_SYNC_DEBUG === true
+}
+
+function syncDebug(kind: string, detail: () => Record<string, unknown>) {
+  if (syncDebugEnabled()) {
+    // biome-ignore lint/suspicious/noConsole: opt-in diagnostics channel
+    console.debug(`[pte-sync] ${kind} ${JSON.stringify(detail())}`)
+  }
+}
+
+function debugTextOf(value: unknown): string {
+  if (!Array.isArray(value)) {
+    return ''
+  }
+  return value
+    .map((block) =>
+      Array.isArray((block as {children?: unknown}).children)
+        ? ((block as {children: Array<{text?: string}>}).children ?? [])
+            .map((child) => child.text ?? '')
+            .join('')
+        : '',
+    )
+    .join('\n')
+}
+
 function applySync({
   editor,
   getRemoteValue,
@@ -569,6 +598,13 @@ function applySync({
   }
 
   const snapshot = editor.getSnapshot().context.value
+  if (syncDebugEnabled()) {
+    const editorText = debugTextOf(snapshot)
+    const remoteText = debugTextOf(remoteValue)
+    if (editorText !== remoteText) {
+      syncDebug('applySync:texts-differ', () => ({editorText, remoteText}))
+    }
+  }
 
   let patches: PtePatch[]
   try {
@@ -586,6 +622,7 @@ function applySync({
   }
 
   if (patches.length) {
+    syncDebug('applySync:repair-patches', () => ({patches}))
     editor.send({type: 'patches', patches, snapshot})
 
     // Patch application is best-effort: the editor skips operations it
@@ -596,6 +633,10 @@ function applySync({
     // arbitrary divergence block by block.
     const valueAfterPatches = editor.getSnapshot().context.value
     if (diffValue(valueAfterPatches, remoteValue).length > 0) {
+      syncDebug('applySync:escalate-update-value', () => ({
+        editorText: debugTextOf(valueAfterPatches),
+        remoteText: debugTextOf(remoteValue),
+      }))
       editor.send({type: 'update value', value: remoteValue})
     }
   }
@@ -608,6 +649,10 @@ const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
     })
 
     const mutationSubscription = input.editor.on('mutation', (event) => {
+      syncDebug('event:mutation-flushed', () => ({
+        flushText: debugTextOf(event.value),
+        snapshotText: debugTextOf(input.editor.getSnapshot().context.value),
+      }))
       sendBack({
         type: 'mutation flushed',
         value: event.value,
@@ -639,6 +684,14 @@ const listenToRemotePatches = fromCallback<
     sendBack({type: 'remote patches received', patches})
   })
 })
+
+/**
+ * How long the machine must sit in 'idle' (no local keystrokes, no store
+ * events) before the one-shot whole-value repair runs. Long enough for the
+ * editor's external value snapshot to catch up after the last flush; short
+ * enough that residual divergence from concurrent editing heals promptly.
+ */
+const QUIESCENT_REPAIR_DELAY = 500
 
 const valueSyncMachine = setup({
   types: {
@@ -680,18 +733,11 @@ const valueSyncMachine = setup({
         getRemoteValue: context.getRemoteValue,
       })
     },
-    'defer then apply sync': ({context}) => {
-      queueMicrotask(() => {
-        applySync({
-          editor: context.editor,
-          getRemoteValue: context.getRemoteValue,
-        })
-      })
-    },
     'apply remote patches': ({context, event}) => {
       if (event.type !== 'remote patches received') {
         return
       }
+      syncDebug('apply-remote-patches', () => ({patches: event.patches}))
       const snapshot = context.editor.getSnapshot().context.value
       // The store already reflects this transaction, so it can serve as
       // the target for coalescing sidecar-array item operations (which
@@ -741,23 +787,50 @@ const valueSyncMachine = setup({
       }),
     },
   ],
-  // Operational patches from other clients apply immediately in every
-  // state; the editor merges them with any in-flight local changes.
-  // Application is best-effort, so each state also arranges a follow-up
-  // whole-value repair: immediately (deferred a microtask) when no local
-  // edits are in flight, or after the next mutation flush when they are.
+  // Two invariants, learned the hard way:
+  //
+  // 1. EVERY 'mutation flushed' event must be pushed, in every state. The
+  //    editor emits mutation events in bursts (one per input batch, e.g.
+  //    each backspace of a quick delete), and any state without a handler
+  //    silently drops the flush. A dropped flush permanently diverges the
+  //    store from the editor, and the whole-value repair then "heals" the
+  //    editor backwards, resurrecting deleted text.
+  // 2. The whole-value repair must only run when no local edits can be in
+  //    flight (quiescent 'idle'). Running it mid-typing diffs the editor
+  //    against a store that lags the user's keystrokes and stomps them.
+  //
+  // Operational patches from other clients still apply immediately in
+  // every state; the editor merges them with in-flight local changes.
   initial: 'idle',
   states: {
     'idle': {
+      // One-shot repair after a quiet period. Covers divergence left by
+      // best-effort patch application while local edits were in flight
+      // (those states never repair; see below) when no further store
+      // event arrives to trigger the on-change repair.
+      after: {
+        [QUIESCENT_REPAIR_DELAY]: {
+          actions: ['apply sync'],
+        },
+      },
       on: {
         'patch emitted': {
           target: 'local write',
         },
+        // Mutation events arrive in bursts (one per input batch), so a
+        // flush can land after a sibling flush already advanced the state.
+        'mutation flushed': {
+          target: 'pushing to remote',
+          actions: ['push to remote'],
+        },
         'remote value changed': {
           actions: ['apply sync'],
         },
+        // No immediate repair here: every remote patch batch also updates
+        // the store value, so the accompanying 'remote value changed'
+        // event runs the whole-value repair right after.
         'remote patches received': {
-          actions: ['apply remote patches', 'defer then apply sync'],
+          actions: ['apply remote patches'],
         },
       },
     },
@@ -782,11 +855,19 @@ const valueSyncMachine = setup({
         'patch emitted': {
           target: 'local write',
         },
+        'mutation flushed': {
+          actions: ['push to remote'],
+        },
+        // No repair on the push acknowledgment: the editor snapshot can
+        // lag the live document while the user keeps typing, so a diff
+        // against the store here resurrects deleted text and duplicates
+        // in-flight keystrokes. Once truly idle, the store change or the
+        // quiescent delay runs the repair with a caught-up snapshot.
         'remote value changed': {
           target: 'idle',
         },
         'remote patches received': {
-          actions: ['apply remote patches', 'defer then apply sync'],
+          actions: ['apply remote patches'],
         },
       },
     },
@@ -795,7 +876,7 @@ const valueSyncMachine = setup({
         'patch emitted': {},
         'mutation flushed': {
           target: 'pushing to remote',
-          actions: ['push to remote', 'defer then apply sync'],
+          actions: ['push to remote'],
         },
         'remote value changed': {},
         'remote patches received': {
@@ -977,18 +1058,23 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
 
           if (pushPatches && event.patches.length > 0) {
             try {
-              pushPatches(
-                toMergeableMarkDefsPatches(
-                  event.patches,
-                  context.getRemoteValue,
-                ),
+              const mergeable = toMergeableMarkDefsPatches(
+                event.patches,
+                context.getRemoteValue,
               )
+              syncDebug('push-patches', () => ({patches: mergeable}))
+              pushPatches(mergeable)
               return
             } catch {
               // fall back to pushing the whole value below
             }
           }
 
+          syncDebug('push-whole-value', () => ({
+            text: debugTextOf(
+              event.value ?? context.editor.getSnapshot().context.value,
+            ),
+          }))
           pushValue(event.value ?? context.editor.getSnapshot().context.value)
         },
       },

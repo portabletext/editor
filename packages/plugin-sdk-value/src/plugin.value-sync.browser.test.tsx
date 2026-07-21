@@ -8,7 +8,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef} from 'react'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {page} from 'vitest/browser'
+import {page, userEvent} from 'vitest/browser'
 import {ValueSyncPlugin} from './plugin.sdk-value'
 
 // ---- Mock value store ----
@@ -223,6 +223,76 @@ describe('ValueSyncPlugin', () => {
           selection: null,
         }),
       ).toEqual('B: Hello')
+    })
+  })
+
+  describe('solo typing fidelity', () => {
+    // Field regression: a single user typing with delete-and-retype bursts
+    // saw text reordered and duplicated. Two machine bugs compounded:
+    // 'mutation flushed' events arriving in bursts were dropped by states
+    // without a handler (their patches never pushed, so the store diverged),
+    // and the whole-value repair ran while local edits were in flight,
+    // diffing the editor against the diverged store and resurrecting
+    // deleted text. This test types in bursts that straddle flush timing
+    // and requires the editor, the store, and the expected text to agree.
+    test('delete-and-retype bursts converge to exactly what was typed', async () => {
+      const store = createMockPatchStore([])
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: |')
+      })
+      // Real key events matter here: each keystroke is its own operation,
+      // so a flush emits one mutation event per pending operation — the
+      // burst that used to hit states without a 'mutation flushed' handler.
+      // `editor.send` events coalesce into a single bulk and cannot
+      // reproduce the burst.
+      await userEvent.click(locator)
+
+      const settle = (ms: number) => new Promise((r) => setTimeout(r, ms))
+      const backspace = async (count: number) => {
+        for (let i = 0; i < count; i++) {
+          await userEvent.keyboard('{Backspace}')
+        }
+      }
+
+      // Interleave typing, deletes, and retypes across flush windows (the
+      // test-mode flush interval is 500ms, the typing debounce 250ms)
+      // without waiting for convergence in between.
+      await userEvent.type(locator, 'publish editors ')
+      await settle(300)
+      await userEvent.type(locator, 'deadline ')
+      await backspace(5)
+      await settle(120)
+      await userEvent.type(locator, 'line ')
+      await settle(300)
+      await userEvent.type(locator, 'sources ')
+      await backspace(8)
+      await settle(550)
+      await userEvent.type(locator, 'sources ')
+      await userEvent.type(locator, 'context')
+      await settle(120)
+      await backspace(3)
+      await settle(300)
+      await userEvent.type(locator, 'ext')
+
+      const expectedEditor = 'B: publish editors deadline sources context|'
+      const expectedStore = 'B: publish editors deadline sources context'
+
+      await vi.waitFor(
+        () => {
+          expect(getEditorText(editor)).toEqual(expectedEditor)
+          expect(
+            toTextspec({
+              value: store.getValue(),
+              schema: editor.getSnapshot().context.schema,
+              selection: null,
+            }),
+          ).toEqual(expectedStore)
+        },
+        {timeout: 5000},
+      )
     })
   })
 
