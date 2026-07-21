@@ -147,6 +147,8 @@ const extendAnnotation: ExtendAnnotationSchemaType = (annotation) => {
       defaultValues: {
         text: 'Consider rewriting this',
       },
+      // Deliberately empty: comments are exclusive with nothing, not
+      // even themselves, so they may overlap.
       mutuallyExclusive: [],
     }
   }
