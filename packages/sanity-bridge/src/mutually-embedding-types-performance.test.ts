@@ -272,5 +272,10 @@ describe('mutually-embedding block objects', () => {
 
     expect(converted.blockObjects).toHaveLength(objectCount)
     expect(durationMs).toBeLessThan(10_000)
-  })
+    // The explicit test timeout exceeds the duration bound because
+    // `SanitySchema.compile` on 1,600 types runs before the measured
+    // window and dominates on slow CI runners; the test guards against
+    // stack overflow, not compile speed, and vitest's 5s default has
+    // flaked on CI where the whole test body takes ~7-8s.
+  }, 30_000)
 })
