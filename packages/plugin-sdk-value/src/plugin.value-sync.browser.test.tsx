@@ -309,6 +309,72 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
+    // Field regression: when a collaborator's transaction arrives
+    // interleaved with the listener echoes of this client's own recent
+    // edits, the store value is transiently wrong until the rebase
+    // corrects it. A repair fired inside that window used to copy the
+    // transient into the editor and a follow-up repair restored the text
+    // at a drifted offset, scrambling words typed in the meantime. The
+    // repair must wait out the blink and only act on divergence that
+    // persists.
+    test('a transiently wrong store value is never copied into the editor', async () => {
+      const store = createMockValueStore([makeBlock('b1', 'stable text here')])
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: stable text here')
+      })
+
+      // A whipsaw self-heals by the end (the second repair restores the
+      // text), so final-state assertions cannot catch it; in production the
+      // user types between the two repairs and the restore lands at a
+      // drifted offset. The direct observable is the repair traffic itself:
+      // a transient must produce ZERO sync writes into the editor.
+      const syncWrites: Array<string> = []
+      const originalSend = editor.send.bind(editor)
+      editor.send = ((event: Parameters<Editor['send']>[0]) => {
+        if (event.type === 'patches' || event.type === 'update value') {
+          syncWrites.push(event.type)
+        }
+        originalSend(event)
+      }) as Editor['send']
+
+      try {
+        // The store blinks: a wrong value (own edits double-applied) that
+        // self-corrects shortly after, well inside the confirmation window.
+        store.setRemoteValue([makeBlock('b1', 'stable tex')])
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        store.setRemoteValue([makeBlock('b1', 'stable text here')])
+
+        // Wait past the confirmation window.
+        await new Promise((resolve) => setTimeout(resolve, 400))
+      } finally {
+        editor.send = originalSend
+      }
+
+      expect(getEditorText(editor)).toEqual('B: stable text here')
+      expect(syncWrites).toEqual([])
+    })
+
+    test('persistent divergence still gets repaired', async () => {
+      const store = createMockValueStore([makeBlock('b1', 'before')])
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: before')
+      })
+
+      // A real remote change: it persists, so after the confirmation
+      // window the repair applies it.
+      store.setRemoteValue([makeBlock('b1', 'after, and it stays')])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: after, and it stays')
+      })
+    })
+
     test('remote decorator toggle syncs `marks` inserts and unsets', async () => {
       const makeValue = (marks: string[]): PortableTextBlock[] => [
         {
