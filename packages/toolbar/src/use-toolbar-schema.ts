@@ -134,6 +134,18 @@ export type ToolbarAnnotationSchemaType = AnnotationSchemaType & {
   icon?: React.ComponentType
   defaultValues?: Record<string, unknown>
   shortcut?: KeyboardShortcut
+  /**
+   * The annotations this annotation cannot coexist with. The list
+   * replaces the default rule that an annotation is mutually exclusive
+   * with itself:
+   *
+   * - Absent: the default applies (adding the annotation removes
+   *   existing annotations of the same type in the selection).
+   * - `[]`: exclusive with nothing, not even itself, so same-type
+   *   annotations may overlap.
+   * - `['other']`: exclusive with exactly the listed annotations.
+   *   Include the annotation's own name to keep self-exclusivity.
+   */
   mutuallyExclusive?: ReadonlyArray<AnnotationDefinition['name']>
 }
 
