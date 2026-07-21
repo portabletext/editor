@@ -31,6 +31,7 @@ import {
 import {useActorRef} from '@xstate/react'
 import {useCallback} from 'react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
+import {debug} from './debug'
 
 type InsertPatch = Required<Pick<SanityPatchOperations, 'insert'>>
 
@@ -555,20 +556,6 @@ export function scopeRemotePatches(
   return scoped
 }
 
-// Sync diagnostics, disabled unless `globalThis.__PTE_SYNC_DEBUG = true`
-// is set before load. Callers pass a thunk so detail computation is free
-// when the flag is off.
-function syncDebugEnabled(): boolean {
-  return (globalThis as {__PTE_SYNC_DEBUG?: boolean}).__PTE_SYNC_DEBUG === true
-}
-
-function syncDebug(kind: string, detail: () => Record<string, unknown>) {
-  if (syncDebugEnabled()) {
-    // biome-ignore lint/suspicious/noConsole: opt-in diagnostics channel
-    console.debug(`[pte-sync] ${kind} ${JSON.stringify(detail())}`)
-  }
-}
-
 function debugTextOf(value: unknown): string {
   if (!Array.isArray(value)) {
     return ''
@@ -598,11 +585,11 @@ function applySync({
   }
 
   const snapshot = editor.getSnapshot().context.value
-  if (syncDebugEnabled()) {
+  if (debug.repair.enabled) {
     const editorText = debugTextOf(snapshot)
     const remoteText = debugTextOf(remoteValue)
     if (editorText !== remoteText) {
-      syncDebug('applySync:texts-differ', () => ({editorText, remoteText}))
+      debug.repair('editor and store texts differ %o', {editorText, remoteText})
     }
   }
 
@@ -622,7 +609,7 @@ function applySync({
   }
 
   if (patches.length) {
-    syncDebug('applySync:repair-patches', () => ({patches}))
+    debug.repair('applying repair patches %o', patches)
     editor.send({type: 'patches', patches, snapshot})
 
     // Patch application is best-effort: the editor skips operations it
@@ -633,10 +620,12 @@ function applySync({
     // arbitrary divergence block by block.
     const valueAfterPatches = editor.getSnapshot().context.value
     if (diffValue(valueAfterPatches, remoteValue).length > 0) {
-      syncDebug('applySync:escalate-update-value', () => ({
-        editorText: debugTextOf(valueAfterPatches),
-        remoteText: debugTextOf(remoteValue),
-      }))
+      if (debug.repair.enabled) {
+        debug.repair('escalating to whole-value sync %o', {
+          editorText: debugTextOf(valueAfterPatches),
+          remoteText: debugTextOf(remoteValue),
+        })
+      }
       editor.send({type: 'update value', value: remoteValue})
     }
   }
@@ -649,10 +638,12 @@ const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
     })
 
     const mutationSubscription = input.editor.on('mutation', (event) => {
-      syncDebug('event:mutation-flushed', () => ({
-        flushText: debugTextOf(event.value),
-        snapshotText: debugTextOf(input.editor.getSnapshot().context.value),
-      }))
+      if (debug.mutation.enabled) {
+        debug.mutation('flushed %o', {
+          flushText: debugTextOf(event.value),
+          snapshotText: debugTextOf(input.editor.getSnapshot().context.value),
+        })
+      }
       sendBack({
         type: 'mutation flushed',
         value: event.value,
@@ -737,7 +728,7 @@ const valueSyncMachine = setup({
       if (event.type !== 'remote patches received') {
         return
       }
-      syncDebug('apply-remote-patches', () => ({patches: event.patches}))
+      debug.remote('applying remote patches %o', event.patches)
       const snapshot = context.editor.getSnapshot().context.value
       // The store already reflects this transaction, so it can serve as
       // the target for coalescing sidecar-array item operations (which
@@ -1062,7 +1053,7 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
                 event.patches,
                 context.getRemoteValue,
               )
-              syncDebug('push-patches', () => ({patches: mergeable}))
+              debug.push('pushing patches %o', mergeable)
               pushPatches(mergeable)
               return
             } catch {
@@ -1070,11 +1061,14 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
             }
           }
 
-          syncDebug('push-whole-value', () => ({
-            text: debugTextOf(
-              event.value ?? context.editor.getSnapshot().context.value,
-            ),
-          }))
+          if (debug.push.enabled) {
+            debug.push(
+              'pushing whole value %s',
+              debugTextOf(
+                event.value ?? context.editor.getSnapshot().context.value,
+              ),
+            )
+          }
           pushValue(event.value ?? context.editor.getSnapshot().context.value)
         },
       },

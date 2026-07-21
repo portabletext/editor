@@ -1195,6 +1195,9 @@ importers:
       '@xstate/react':
         specifier: 'catalog:'
         version: 6.1.0(@types/react@19.2.17)(react@19.2.7)(xstate@5.32.4)
+      debug:
+        specifier: ^4.4.3
+        version: 4.4.3
       xstate:
         specifier: 'catalog:'
         version: 5.32.4
@@ -1223,6 +1226,9 @@ importers:
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
+      '@types/debug':
+        specifier: ^4.1.12
+        version: 4.1.12
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
