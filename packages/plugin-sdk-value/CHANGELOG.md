@@ -1,5 +1,32 @@
 # Changelog
 
+## 7.1.2
+
+### Patch Changes
+
+- [#2998](https://github.com/portabletext/editor/pull/2998) [`2a71da1`](https://github.com/portabletext/editor/commit/2a71da159f50305a4a881a7d1bd7a0f473d16e88) Thanks [@ryanbonial](https://github.com/ryanbonial)! - fix: only repair divergence that persists, never transient store states
+
+  With two users typing simultaneously (even in different blocks), a remote
+  transaction arriving interleaved with the listener echoes of this client's
+  own recent edits leaves the store value transiently wrong until the rebase
+  corrects it moments later. The whole-value repair used to fire inside that
+  window: it copied the transient into the editor (deleting real text) and a
+  follow-up repair restored the text at a drifted offset, scrambling words
+  the user typed in between.
+
+  The repair now confirms divergence before acting: it waits out the echo
+  round trip and only applies when the exact (editor, store) state pair is
+  unchanged, and never while local keystrokes are unflushed. Transients
+  self-correct and produce no editor writes; genuine divergence is stable
+  and gets repaired one beat later.
+
+- [#2992](https://github.com/portabletext/editor/pull/2992) [`96f3a0e`](https://github.com/portabletext/editor/commit/96f3a0e6ca7d59efdac5696aac2aabfe88a18a12) Thanks [@christianhg](https://github.com/christianhg)! - fix: route sync diagnostics through the `debug` library
+
+  The sync diagnostics channel is now enabled with `localStorage.debug = 'pte:plugin-sdk-value:*'` (before load) instead of the `globalThis.__PTE_SYNC_DEBUG` flag, which is removed. The log kinds become individually filterable namespaces (`pte:plugin-sdk-value:repair`, `:push`, `:remote`, `:mutation`), and enabling `pte:*` interleaves them with the editor's own debug output on one timeline. The channel stays free when disabled.
+
+- Updated dependencies [[`1aea458`](https://github.com/portabletext/editor/commit/1aea458849ecbb2ee5c88e97bfba1fc0ab6adbc7)]:
+  - @portabletext/editor@7.10.10
+
 ## 7.1.1
 
 ### Patch Changes
