@@ -154,6 +154,168 @@ describe(isActiveAnnotation.name, () => {
   })
 
   describe('expanded selection', () => {
+    describe('selection touching the start of the annotation', () => {
+      const snapshot = createTestSnapshot({
+        context: {
+          schema,
+          value,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 0,
+            },
+          },
+        },
+      })
+
+      test('mode: full', () => {
+        expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          false,
+        )
+      })
+    })
+
+    describe('selection touching the end of the annotation', () => {
+      const snapshot = createTestSnapshot({
+        context: {
+          schema,
+          value,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 3,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: bazKey}],
+              offset: 4,
+            },
+          },
+        },
+      })
+
+      test('mode: full', () => {
+        expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          false,
+        )
+      })
+    })
+
+    describe('selection covering one character of the annotation', () => {
+      const snapshot = createTestSnapshot({
+        context: {
+          schema,
+          value,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 1,
+            },
+          },
+        },
+      })
+
+      test('mode: full', () => {
+        expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          true,
+        )
+      })
+    })
+
+    describe('collapsed selection in the annotation', () => {
+      const snapshot = createTestSnapshot({
+        context: {
+          schema,
+          value,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 1,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 1,
+            },
+          },
+        },
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          true,
+        )
+      })
+    })
+
+    describe('collapsed selection at the start of the annotation', () => {
+      const snapshot = createTestSnapshot({
+        context: {
+          schema,
+          value,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 0,
+            },
+          },
+        },
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          false,
+        )
+      })
+    })
+
+    describe('collapsed selection at the end of the annotation', () => {
+      const snapshot = createTestSnapshot({
+        context: {
+          schema,
+          value,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 3,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 3,
+            },
+          },
+        },
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          false,
+        )
+      })
+    })
+
     test('selection on the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
