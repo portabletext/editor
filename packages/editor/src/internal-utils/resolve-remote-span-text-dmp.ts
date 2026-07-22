@@ -9,16 +9,16 @@ import {
 /**
  * Apply a span-text `diffMatchPatch` onto the current editor string.
  *
- * Under same-span End typing, a peer's insert-at-shared-prefix DMP is often
- * authored against a shorter base (`A: ` → `A: deadline`, sometimes with
- * trailing EQUAL context for fuzzy match) while this client has already grown
- * past that base (`A: exclusive article re`). Naive `applyPatches` inserts at
- * the shared prefix and produces mid-word fragments (`deadlineexclusive`).
- * When the naive result would glue non-space characters together, append the
- * peer insert at End instead so both concurrent inserts survive as whole words.
+ * Under same-span End typing, a peer's pure-append DMP is authored against a
+ * short base (`A: ` → `A: deadline`) while this client has already grown that
+ * base (`A: exclusive article re`). Naive `applyPatches` inserts at the shared
+ * prefix and produces mid-word fragments (`deadlineexclusive`). When that
+ * happens, append the peer insert at End instead.
  *
- * Spaced mid-prefix inserts on an unchanged base (`A: exclusive art` →
- * `A: deadline exclusive art`) still use the library apply path.
+ * Only pure end-appends are relocated (EQUAL* INSERT, no trailing EQUAL, no
+ * deletes). Inserts with trailing EQUAL context are intentional mid-document
+ * inserts (for example typing at the start while a peer has local End growth)
+ * and must keep the library apply path.
  *
  * @internal
  */
@@ -31,31 +31,48 @@ export function resolveRemoteSpanTextDmp(
     allowExceedingIndices: true,
   })
 
-  const insertAt = describePrefixInsertDmp(dmpPatch)
-  if (!insertAt) {
+  const appendIntent = describePureAppendDmp(dmpPatch)
+  if (!appendIntent) {
     return applied
   }
 
-  const {prefix, inserted} = insertAt
-  if (!currentText.startsWith(prefix)) {
+  const {from, inserted} = appendIntent
+  // Empty-prefix appends are inserts at the start of the span (for example
+  // typing "Welcome" before existing text). Never relocate those.
+  if (from.length === 0 || !currentText.startsWith(from)) {
     return applied
   }
 
-  const localSuffix = currentText.slice(prefix.length)
+  const localSuffix = currentText.slice(from.length)
   if (localSuffix.length === 0) {
     return applied
   }
-  // Naive apply kept the shared prefix, then injected the peer insert before
+  // Naive apply kept the shared base, then injected the peer insert before
   // the local suffix (`A: ` + `deadline` + `exclusive...`).
-  if (applied !== prefix + inserted + localSuffix) {
+  if (applied !== from + inserted + localSuffix) {
     return applied
   }
-  // Spaced joins are readable mid-prefix inserts; only relocate mid-word glue.
+  // Spaced joins stay readable as mid-prefix inserts; only relocate mid-word glue.
   if (!/\S$/.test(inserted) || !/^\S/.test(localSuffix)) {
     return applied
   }
 
   return joinConcurrentSuffixes(currentText, inserted)
+}
+
+/**
+ * EQUAL* + INSERT with no trailing EQUAL and no deletes.
+ *
+ * @internal
+ */
+export function describePureAppendDmp(
+  dmpPatch: string,
+): {from: string; inserted: string} | null {
+  const described = describePrefixInsertDmp(dmpPatch)
+  if (!described || described.trailingEqual.length > 0) {
+    return null
+  }
+  return {from: described.prefix, inserted: described.inserted}
 }
 
 /**
@@ -90,7 +107,6 @@ export function describePrefixInsertDmp(dmpPatch: string): {
         }
         if (op === DIFF_INSERT) {
           if (trailingEqual.length > 0) {
-            // Insert after trailing equal is not a single prefix insert.
             return null
           }
           sawInsert = true

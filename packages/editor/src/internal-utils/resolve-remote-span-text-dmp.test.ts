@@ -8,6 +8,7 @@ import {
 import {describe, expect, test} from 'vitest'
 import {
   describePrefixInsertDmp,
+  describePureAppendDmp,
   resolveRemoteSpanTextDmp,
 } from './resolve-remote-span-text-dmp'
 
@@ -34,22 +35,20 @@ describe(resolveRemoteSpanTextDmp.name, () => {
     )
   })
 
-  test('relocates inserts that carry trailing EQUAL context past local growth', () => {
-    // Live harness patches often look like insert-at-prefix with trailing
-    // context (`A: ` + deadline + `exclusiv`), not a pure end-append.
+  test('does not relocate inserts that carry trailing EQUAL context', () => {
+    // Trailing EQUAL means an intentional mid-document insert (for example
+    // typing at the start). Relocating those breaks collaboration undo.
     const current = 'A: exclusive article re'
     const peerInsert = dmp(
       'A: exclusive article re',
       'A: deadlineexclusive article re',
     )
 
-    expect(describePrefixInsertDmp(peerInsert)).toMatchObject({
-      prefix: 'A: ',
-      inserted: 'deadline',
-      trailingEqual: 'exclusiv',
-    })
+    expect(
+      describePrefixInsertDmp(peerInsert)?.trailingEqual.length,
+    ).toBeGreaterThan(0)
     expect(resolveRemoteSpanTextDmp(current, peerInsert)).toEqual(
-      'A: exclusive article re deadline',
+      'A: deadlineexclusive article re',
     )
   })
 
@@ -63,8 +62,6 @@ describe(resolveRemoteSpanTextDmp.name, () => {
   })
 
   test('keeps a spaced concurrent insert readable without relocating', () => {
-    // Trailing space on the insert means naive mid-prefix apply still keeps
-    // whole words (`deadline exclusive`), so leave the library result alone.
     const current = 'A: exclusive article re'
     const peerAppend = dmp('A: ', 'A: deadline ')
 
@@ -89,17 +86,43 @@ describe(resolveRemoteSpanTextDmp.name, () => {
 
     expect(resolveRemoteSpanTextDmp(current, peerAppend)).toEqual(naive)
   })
+
+  test('does not relocate empty-prefix inserts at the start of existing text', () => {
+    const current = 'First paragraph\n\nSecond paragraph!?'
+    const peerStart = dmp('', 'W')
+    const [naive] = applyPatches(parsePatch(peerStart), current, {
+      allowExceedingIndices: true,
+    })
+
+    expect(describePureAppendDmp(peerStart)).toEqual({
+      from: '',
+      inserted: 'W',
+    })
+    expect(resolveRemoteSpanTextDmp(current, peerStart)).toEqual(naive)
+    expect(resolveRemoteSpanTextDmp(current, peerStart)).toEqual(`W${current}`)
+  })
 })
 
-describe(describePrefixInsertDmp.name, () => {
+describe(describePureAppendDmp.name, () => {
   test('describes a pure end-append', () => {
-    expect(describePrefixInsertDmp(dmp('A: ', 'A: deadline'))).toEqual({
-      prefix: 'A: ',
+    expect(describePureAppendDmp(dmp('A: ', 'A: deadline'))).toEqual({
+      from: 'A: ',
       inserted: 'deadline',
-      trailingEqual: '',
     })
   })
 
+  test('rejects inserts with trailing EQUAL context', () => {
+    expect(
+      describePureAppendDmp(dmp('A: exclusive', 'A: deadlineexclusive')),
+    ).toBeNull()
+  })
+
+  test('rejects deletes', () => {
+    expect(describePureAppendDmp(dmp('Hello there', 'Hello'))).toBeNull()
+  })
+})
+
+describe(describePrefixInsertDmp.name, () => {
   test('describes an insert with trailing EQUAL context', () => {
     expect(
       describePrefixInsertDmp(dmp('A: exclusive', 'A: deadlineexclusive')),
@@ -108,9 +131,5 @@ describe(describePrefixInsertDmp.name, () => {
       inserted: 'deadline',
       trailingEqual: 'exclusiv',
     })
-  })
-
-  test('rejects deletes', () => {
-    expect(describePrefixInsertDmp(dmp('Hello there', 'Hello'))).toBeNull()
   })
 })
