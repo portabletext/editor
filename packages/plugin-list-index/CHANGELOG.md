@@ -1,5 +1,12 @@
 # @portabletext/plugin-list-index
 
+## 1.0.23
+
+### Patch Changes
+
+- Updated dependencies [[`86bf426`](https://github.com/portabletext/editor/commit/86bf426af85f54c3acab61bffa3e3bfa8d976d5b)]:
+  - @portabletext/editor@7.10.11
+
 ## 1.0.22
 
 ### Patch Changes
