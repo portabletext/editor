@@ -4,6 +4,7 @@ import {getFocusChild} from '../selectors/selector.get-focus-child'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {getSibling} from '../traversal/get-sibling'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
@@ -140,6 +141,10 @@ export const abstractDeleteBehaviors = [
           ...snapshot.context,
           selection: at,
         },
+      }
+
+      if (!isSelectionCollapsed(adjustedSnapshot)) {
+        return false
       }
 
       const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
