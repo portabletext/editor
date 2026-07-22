@@ -629,6 +629,195 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('patch channel', () => {
+    test('remote-triggered normalize merges are not pushed back', async () => {
+      // A collaborator's edit can leave adjacent same-mark spans. The
+      // receiving editor correctly merges them, but before this fix those
+      // merge ops were flushed as local mutations and pushed — every
+      // receiver became a competing writer on the originator's spans
+      // (format-duplication / truncation under concurrent edit).
+      const store = createMockPatchStore([makeBlock('b1', 'Hello world')])
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello world')
+      })
+
+      // Put the editor in the dirty/writing state so normalize fallout is
+      // emitted immediately (pristine defers it into pendingEvents).
+      await locator.click()
+      editor.send({type: 'insert.text', text: '!'})
+      await vi.waitFor(() => {
+        expect(store.pushPatches).toHaveBeenCalled()
+      })
+      store.pushPatches.mockClear()
+      store.pushValue.mockClear()
+
+      // Remote split of the original span into two adjacent unmarked spans.
+      // The engine merges them back; that merge must stay local.
+      store.receiveRemotePatches([
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}, 'text'],
+          value: 'Hello ',
+        },
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+          items: [
+            {_type: 'span', _key: 's2', text: 'world!', marks: []},
+          ] as unknown as JSONValue[],
+        },
+      ])
+
+      // Mutation flush interval is 500ms in test builds.
+      await new Promise((resolve) => setTimeout(resolve, 700))
+
+      expect(store.pushPatches).not.toHaveBeenCalled()
+      expect(store.pushValue).not.toHaveBeenCalled()
+
+      // Local text still includes the user's edit; merge was local-only.
+      const children = (
+        editor.getSnapshot().context.value[0] as {
+          children: Array<{_key: string; text: string}>
+        }
+      ).children
+      expect(children.some((c) => c._key === 's2')).toBe(false)
+      expect(getEditorText(editor)).toMatch(/Hello/)
+    })
+
+    test('unpushed local typing still pushes after a remote normalize', async () => {
+      // The echo gate must not drop a typing flush that was already in the
+      // editor when remote patches arrived (same post-apply snapshot value).
+      // Dropping those caused blocks-mode mid-word scramble in the harness.
+      const store = createMockPatchStore([
+        makeBlock('b1', 'Hello'),
+        makeBlock('b2', 'Other'),
+      ])
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(
+          ['B: Hello', 'B: Other'].join('\n'),
+        )
+      })
+
+      await locator.click()
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+            offset: 5,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+            offset: 5,
+          },
+        },
+      })
+      editor.send({type: 'insert.text', text: ' world'})
+
+      // Remote normalize on the *other* block before the local typing flush.
+      store.receiveRemotePatches([
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'b2'}, 'children', {_key: 'b2-span'}, 'text'],
+          value: 'Ot',
+        },
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b2'}, 'children', {_key: 'b2-span'}],
+          items: [
+            {_type: 'span', _key: 's2b', text: 'her', marks: []},
+          ] as unknown as JSONValue[],
+        },
+      ])
+
+      await vi.waitFor(() => {
+        expect(store.pushPatches).toHaveBeenCalled()
+      })
+      const pushed = store.pushPatches.mock.calls.flatMap(
+        (call) => call[0] as PtePatch[],
+      )
+      expect(
+        pushed.some(
+          (p) =>
+            p.type === 'diffMatchPatch' &&
+            JSON.stringify(p.path).includes('b1'),
+        ),
+      ).toBe(true)
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toMatch(/Hello world/)
+      })
+    })
+
+    test('local edits still push after a remote normalize', async () => {
+      const store = createMockPatchStore([makeBlock('b1', 'Hello world')])
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello world')
+      })
+
+      store.receiveRemotePatches([
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}, 'text'],
+          value: 'Hello ',
+        },
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+          items: [
+            {_type: 'span', _key: 's2', text: 'world', marks: []},
+          ] as unknown as JSONValue[],
+        },
+      ])
+
+      await locator.click()
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+            offset: 6,
+          },
+        },
+      })
+      editor.send({type: 'insert.text', text: 'beautiful '})
+
+      await vi.waitFor(() => {
+        expect(store.pushPatches).toHaveBeenCalled()
+      })
+      expect(
+        store.pushPatches.mock.calls.some((call) =>
+          (call[0] as PtePatch[]).some(
+            (p) =>
+              p.type === 'diffMatchPatch' ||
+              (p.type === 'set' &&
+                Array.isArray(p.path) &&
+                p.path.includes('text')),
+          ),
+        ),
+      ).toBe(true)
+    })
+
     test('remote patches apply to the editor', async () => {
       const store = createMockPatchStore([makeBlock('b1', 'Hello')])
       const {editor, unmount} = await createSyncedEditor({store})

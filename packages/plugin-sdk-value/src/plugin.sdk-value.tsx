@@ -600,6 +600,108 @@ const pendingRepairs = new WeakMap<Editor, PendingRepair>()
  */
 const unflushedEdits = new WeakMap<Editor, boolean>()
 
+/**
+ * After applying remote patches, the editor normalizes (e.g. merges adjacent
+ * same-mark spans) and those merge ops are later flushed as a `mutation`.
+ * Pushing that flush makes every receiver fight the originator with competing
+ * merges. We arm a short gate after each remote apply and drop a flush only
+ * when its patches look like that merge (unset a keyed child + text dmp/set).
+ *
+ * Value-equality alone is not enough: unpushed local typing is already in the
+ * post-apply editor snapshot, so dropping "value unchanged" flushes ate
+ * keystrokes (blocks-mode scramble). Studio's BufferedDocument absorbs the
+ * same fallout by rebasing; we drop it at the push boundary instead.
+ */
+type RemoteApplyEchoGate = {
+  /** Wall-clock deadline; unused gates must not suppress forever. */
+  expiresAt: number
+}
+const remoteApplyEchoGate = new WeakMap<Editor, RemoteApplyEchoGate>()
+
+const REMOTE_ECHO_GATE_MS =
+  // @ts-expect-error - dot notation required for Vite to replace at build time
+  process.env.NODE_ENV === 'test' ? 800 : 1500
+
+function armRemoteApplyEchoGate(editor: Editor) {
+  remoteApplyEchoGate.set(editor, {
+    expiresAt: Date.now() + REMOTE_ECHO_GATE_MS,
+  })
+}
+
+function pathEndsWithText(path: Path): boolean {
+  return path.length > 0 && path[path.length - 1] === 'text'
+}
+
+/**
+ * `…['children', {_key}]` — unsetting a keyed span/child, as adjacent-span
+ * merge does when it folds one sibling into another.
+ */
+function isKeyedChildrenMemberPath(path: Path): boolean {
+  if (path.length < 2) {
+    return false
+  }
+  const parent = path[path.length - 2]
+  const last = path[path.length - 1]
+  return (
+    parent === 'children' &&
+    typeof last === 'object' &&
+    last !== null &&
+    '_key' in last
+  )
+}
+
+/**
+ * Normalize merge fallout is a small, characteristic patch set: remove a
+ * keyed child and fold its text into a survivor. Ordinary typing/backspace
+ * is text-only (diffMatchPatch / set on `text`) and must never match.
+ */
+function isNormalizeMergeEcho(patches: PtePatch[]): boolean {
+  if (patches.length === 0) {
+    return false
+  }
+  let unsetsChild = false
+  let touchesText = false
+  for (const patch of patches) {
+    if (patch.type === 'unset' && isKeyedChildrenMemberPath(patch.path)) {
+      unsetsChild = true
+      continue
+    }
+    if (
+      (patch.type === 'diffMatchPatch' || patch.type === 'set') &&
+      pathEndsWithText(patch.path)
+    ) {
+      touchesText = true
+      continue
+    }
+    return false
+  }
+  return unsetsChild && touchesText
+}
+
+/**
+ * Returns whether this mutation flush is normalize fallout from a recent
+ * remote apply. Pure-echo flushes consume the gate; other flushes leave it
+ * armed so a later merge echo in the same window can still be dropped.
+ */
+function consumeRemoteNormalizeEchoMutation(
+  editor: Editor,
+  patches: PtePatch[],
+): boolean {
+  const gate = remoteApplyEchoGate.get(editor)
+  if (!gate) {
+    return false
+  }
+  if (Date.now() > gate.expiresAt) {
+    remoteApplyEchoGate.delete(editor)
+    return false
+  }
+  if (!isNormalizeMergeEcho(patches)) {
+    return false
+  }
+  remoteApplyEchoGate.delete(editor)
+  return true
+}
+
 function computeRepair(
   editor: Editor,
   remoteValue: PortableTextBlock[],
@@ -730,14 +832,27 @@ function applySync({
 const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
   ({sendBack, input}) => {
     const patchSubscription = input.editor.on('patch', () => {
-      // Every 'patch' event is a local edit (remote application suppresses
-      // patch generation), so the store now lags the editor until the next
-      // mutation flush.
+      // A local edit (or normalize fallout): the store lags until the next
+      // mutation flush. Echo flushes are dropped in the mutation handler.
       unflushedEdits.set(input.editor, true)
       sendBack({type: 'patch emitted'})
     })
 
     const mutationSubscription = input.editor.on('mutation', (event) => {
+      if (consumeRemoteNormalizeEchoMutation(input.editor, event.patches)) {
+        // Pure remote-normalize fallout: keep it local. Pushing it is what
+        // turns every receiver into a competing writer on the originator's
+        // spans (format-duplication / truncation under concurrent edit).
+        unflushedEdits.set(input.editor, false)
+        if (debug.mutation.enabled) {
+          debug.mutation('dropping remote-normalize echo flush %o', {
+            patches: event.patches.length,
+            flushText: debugTextOf(event.value),
+          })
+        }
+        return
+      }
+
       unflushedEdits.set(input.editor, false)
       if (debug.mutation.enabled) {
         debug.mutation('flushed %o', {
@@ -845,6 +960,9 @@ const valueSyncMachine = setup({
         return
       }
       context.editor.send({type: 'patches', patches, snapshot})
+      // Normalize fallout from this apply is emitted (and flushed) after
+      // send returns; arm the gate on the post-normalize editor value.
+      armRemoteApplyEchoGate(context.editor)
     },
   },
   actors: {
@@ -881,12 +999,16 @@ const valueSyncMachine = setup({
   ],
   // Two invariants, learned the hard way:
   //
-  // 1. EVERY 'mutation flushed' event must be pushed, in every state. The
-  //    editor emits mutation events in bursts (one per input batch, e.g.
-  //    each backspace of a quick delete), and any state without a handler
-  //    silently drops the flush. A dropped flush permanently diverges the
-  //    store from the editor, and the whole-value repair then "heals" the
-  //    editor backwards, resurrecting deleted text.
+  // 1. EVERY *user* 'mutation flushed' event must be pushed, in every
+  //    state. The editor emits mutation events in bursts (one per input
+  //    batch, e.g. each backspace of a quick delete), and any state
+  //    without a handler silently drops the flush. A dropped flush
+  //    permanently diverges the store from the editor, and the whole-value
+  //    repair then "heals" the editor backwards, resurrecting deleted text.
+  //    Exception: a mutation that is only normalize fallout of a remote
+  //    apply is dropped in listenToEditor (remoteApplyEchoGate) before it
+  //    reaches this machine. Pushing those made receivers compete with the
+  //    originator's own merge ops.
   // 2. The whole-value repair must only run when no local edits can be in
   //    flight (quiescent 'idle'). Running it mid-typing diffs the editor
   //    against a store that lags the user's keystrokes and stomps them.
