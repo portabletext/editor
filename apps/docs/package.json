@@ -36,7 +36,7 @@
     "lucide-react": "catalog:tooling",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.0",
     "starlight-links-validator": "^0.25.2",
     "starlight-package-managers": "^0.12.0",
     "starlight-typedoc": "^0.23.0",
