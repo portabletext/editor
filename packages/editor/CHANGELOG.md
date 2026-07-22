@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.10.12
+
+### Patch Changes
+
+- [#2968](https://github.com/portabletext/editor/pull/2968) [`5ddcc5b`](https://github.com/portabletext/editor/commit/5ddcc5b42ec2560cde1650489d9219212c5d67b1) Thanks [@christianhg](https://github.com/christianhg)! - fix: apply value-sync auto-resolutions to the block the engine receives
+
+  When an `update value` carried a block the editor could repair
+  automatically (a child missing its `_key`, an empty `children` array,
+  unused `markDefs`), the repair was emitted as patches while the raw,
+  un-repaired block proceeded into the editor. The editor then held an
+  invalid shape that diverged from the document: the emitted patch minted
+  one key, internal normalization minted another. The repair is now
+  applied to the block before it enters the editor, so the emitted patch
+  and the editor state agree, and the editor never holds the un-repaired
+  shape.
+
+- [#3008](https://github.com/portabletext/editor/pull/3008) [`c600e92`](https://github.com/portabletext/editor/commit/c600e92bb94ec52762f63983bbd48f7b64654bfb) Thanks [@christianhg](https://github.com/christianhg)! - fix: require a collapsed selection for the forward-delete empty-block hop
+
+  Selecting a range that ends in an empty block (highlighting empty lines, for example) and pressing Delete now deletes the whole range. Previously the forward-delete rule that hops a caret past an empty block also matched expanded selections, so only the block at the focus edge was affected and the covered empty lines remained. Backspace was unaffected.
+
 ## 7.10.11
 
 ### Patch Changes
