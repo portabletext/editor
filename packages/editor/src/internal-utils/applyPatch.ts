@@ -22,6 +22,7 @@ import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
 import {getValue} from './get-value'
+import {resolveRemoteSpanTextDmp} from './resolve-remote-span-text-dmp'
 import {isEqualToEmptyEditor} from './values'
 
 /**
@@ -103,10 +104,16 @@ function diffMatchPatch(
     return false
   }
 
-  const patches = parsePatch(patch.value)
-  const [newValue] = diffMatchPatchApplyPatches(patches, spanEntry.node.text, {
-    allowExceedingIndices: true,
-  })
+  // Remote pure-append DMPs authored against a short base can splice into
+  // local growth past that base. Relocate those inserts to End instead.
+  const newValue =
+    patch.origin === 'local'
+      ? diffMatchPatchApplyPatches(
+          parsePatch(patch.value),
+          spanEntry.node.text,
+          {allowExceedingIndices: true},
+        )[0]
+      : resolveRemoteSpanTextDmp(spanEntry.node.text, patch.value)
   const diff = cleanupEfficiency(makeDiff(spanEntry.node.text, newValue), 5)
 
   let offset = 0

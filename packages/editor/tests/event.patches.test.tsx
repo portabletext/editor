@@ -2170,6 +2170,48 @@ describe('event.patches', () => {
       })
     })
 
+    test('Scenario: Concurrent End append from a short peer base', async () => {
+      // Local has already typed past the shared prefix while a peer's
+      // pure-append DMP still targets that shorter base. Naive apply would
+      // splice mid-word (`deadlineexclusive`); relocate the insert to End.
+      const editorText = 'A: exclusive article re'
+      const peerBase = 'A: '
+      const peerText = 'A: deadline'
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            origin: 'remote',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+            value: stringifyPatches(makePatches(makeDiff(peerBase, peerText))),
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {
+                _key: spanKey,
+                _type: 'span',
+                text: 'A: exclusive article re deadline',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+
     test('Scenario: Removing text', async () => {
       const editorText = 'Hello there'
       const incomingText = 'Hello'
