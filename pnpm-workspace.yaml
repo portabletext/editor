@@ -11,7 +11,7 @@ catalog:
   "@types/debug": ^4.1.12
   "@xstate/react": ^6.1.0
   debug: ^4.4.3
-  react: ^19.2.7
+  react: ^19.2.8
   react-dom: ^19.2.7
   xstate: ^5.32.4
 
