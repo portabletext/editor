@@ -1834,7 +1834,9 @@ describe('event.patches', () => {
     })
 
     // Unset _type: normalization restores it to span (parent is text block).
-    // Three adjacent spans with compatible marks get merged by normalization.
+    // The three adjacent compatible spans are NOT merged: cosmetic
+    // normalization is skipped while applying remote patches; only the
+    // repairs run.
     editor.send({
       type: 'patches',
       patches: [
@@ -1852,7 +1854,11 @@ describe('event.patches', () => {
         {
           _key: blockKey,
           _type: 'block',
-          children: [{_type: 'span', _key: span1Key, text: '', marks: []}],
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'span', _key: newInlineKey, text: '', marks: []},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
           markDefs: [],
           style: 'normal',
         },
@@ -5043,7 +5049,8 @@ describe('event.patches', () => {
         snapshot: undefined,
       })
 
-      // Adjacent spans with identical marks are merged by normalization
+      // The adjacent same-mark spans are NOT merged: cosmetic normalization
+      // is skipped while applying remote patches.
       await vi.waitFor(() => {
         expect(editor.getSnapshot().context.value).toEqual([
           {
@@ -5066,7 +5073,13 @@ describe('event.patches', () => {
                   {
                     _type: 'span',
                     _key: contentSpanKey,
-                    text: 'first second',
+                    text: 'first',
+                    marks: [],
+                  },
+                  {
+                    _type: 'span',
+                    _key: 'new-span',
+                    text: ' second',
                     marks: [],
                   },
                 ],
