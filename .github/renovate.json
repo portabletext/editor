@@ -34,7 +34,12 @@
     },
     {
       "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
-      "matchPackageNames": ["@portabletext/*", "react", "typescript"],
+      "matchPackageNames": [
+        "@portabletext/*",
+        "react",
+        "react-dom",
+        "typescript"
+      ],
       "dependencyDashboardApproval": false,
       "schedule": ["every weekday"]
     },
@@ -43,6 +48,11 @@
       "matchPackageNames": ["typescript"],
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group `react` and `react-dom`: React requires exact version parity between them at runtime, so they must bump atomically",
+      "matchPackageNames": ["react", "react-dom"],
+      "groupName": "react"
     },
     {
       "description": "Group Tailwind packages",
