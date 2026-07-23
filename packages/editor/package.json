@@ -109,6 +109,8 @@
     "@portabletext/test": "workspace:^",
     "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/diff-match-patch": "catalog:",
+    "@sanity/diff-patch": "catalog:",
+    "@sanity/json-match": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@textspec/notation": "^1.0.2",
