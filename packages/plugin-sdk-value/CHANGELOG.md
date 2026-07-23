@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.1.5
+
+### Patch Changes
+
+- [#3017](https://github.com/portabletext/editor/pull/3017) [`9619f58`](https://github.com/portabletext/editor/commit/9619f58cffdba0857aff504a31349fa66cabb0b1) Thanks [@ryanbonial](https://github.com/ryanbonial)! - fix: prevent transient duplicate text after a remote paste
+
+- Updated dependencies [[`68b5d17`](https://github.com/portabletext/editor/commit/68b5d174f5be776c4e9304ba53af0ef95e60ee3b)]:
+  - @portabletext/editor@7.10.13
+
 ## 7.1.4
 
 ### Patch Changes

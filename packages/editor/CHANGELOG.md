@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.10.13
+
+### Patch Changes
+
+- [#3013](https://github.com/portabletext/editor/pull/3013) [`68b5d17`](https://github.com/portabletext/editor/commit/68b5d174f5be776c4e9304ba53af0ef95e60ee3b) Thanks [@christianhg](https://github.com/christianhg)! - fix: run cosmetic span normalization only as fallout of local edits
+
+  Loading a document (`initialValue`) or receiving an `update value` no longer merges adjacent same-mark spans or removes empty sibling spans: adopted span structure is kept as the document has it, on every path, and canonicalizes when a local edit next touches its block.
+
+  Consumers with fragmented documents (for example CMS-migrated content with split spans) will no longer see a wave of span-merge mutations ride out with the first keystroke after opening. Structural repairs (missing keys, missing required fields, empty blocks) and `markDefs` housekeeping are unaffected.
+
 ## 7.10.12
 
 ### Patch Changes
