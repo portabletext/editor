@@ -46,12 +46,17 @@ describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
       expect(editor.getSnapshot().context.value).toHaveLength(2)
     })
 
-    expect([...editor.getSnapshot().blockIndexMap]).toEqual([
-      ['[_key=="b0"]', 0],
-      ['[_key=="b0"].children[_key=="s0"]', 0],
-      ['[_key=="k2"]', 1],
-      ['[_key=="k2"].children[_key=="k3"]', 0],
-    ])
+    // Map insertion order follows normalization visits; with defaults
+    // deferred to local edits, `b0`'s child entry is re-registered by the
+    // split and iterates last. The entries and indexes are what matter.
+    expect(new Map(editor.getSnapshot().blockIndexMap)).toEqual(
+      new Map([
+        ['[_key=="b0"]', 0],
+        ['[_key=="b0"].children[_key=="s0"]', 0],
+        ['[_key=="k2"]', 1],
+        ['[_key=="k2"].children[_key=="k3"]', 0],
+      ]),
+    )
   })
 
   test('Scenario: delete.block clears the removed entry and shifts the survivor', async () => {

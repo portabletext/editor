@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
@@ -41,7 +42,7 @@ describe('Value validation', () => {
   test('Scenario: Initial value with `null` child in second block results in a validation error', async () => {
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -69,9 +70,9 @@ describe('Value validation', () => {
     await vi.waitFor(() => {
       expect(events).toEqual([
         // Value sync removes the editor's seed block (`k3`: the initial
-        // value consumed `k0`-`k2`), inserts the valid first block, and
-        // parse fix-ups set the missing `markDefs`/`style`. The second,
-        // invalid block is never inserted.
+        // value consumed `k0`-`k2`) and inserts the valid first block as-is
+        // (missing `markDefs`/`style` are filled in on the first local
+        // edit). The second, invalid block is never inserted.
         {
           type: 'operation',
           operation: {type: 'unset', path: [{_key: 'k3'}]},
@@ -87,24 +88,6 @@ describe('Value validation', () => {
               _key: 'k0',
               children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
             },
-          },
-        },
-        {
-          type: 'operation',
-          operation: {
-            type: 'set',
-            path: [{_key: 'k0'}, 'markDefs'],
-            value: [],
-            inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
-          },
-        },
-        {
-          type: 'operation',
-          operation: {
-            type: 'set',
-            path: [{_key: 'k0'}, 'style'],
-            value: 'normal',
-            inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
           },
         },
         {
@@ -135,6 +118,139 @@ describe('Value validation', () => {
         {type: 'ready'},
       ])
     })
+
+    const eventsBeforeEdit = events.length
+    // Provoke the deferred healing: a local edit touching the block
+    // fills in and emits its missing defaults as part of that edit.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    // The full stream of the healing edit: the user's insert, then the
+    // block's deferred defaults, then the patches and the mutation that
+    // carries them all.
+    await vi.waitFor(() => {
+      expect(events.slice(eventsBeforeEdit)).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+            backward: false,
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert.text',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            offset: 3,
+            text: '!',
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: 'k0'}, 'markDefs'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: 'k0'}, 'style'],
+            value: 'normal',
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            origin: 'local',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            origin: 'local',
+            path: [{_key: 'k0'}, 'markDefs'],
+            value: [],
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            origin: 'local',
+            path: [{_key: 'k0'}, 'style'],
+            value: 'normal',
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 4},
+            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 4},
+            backward: false,
+          },
+        },
+        {
+          type: 'mutation',
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k0'}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k0'}, 'style'],
+              value: 'normal',
+            },
+          ],
+          value: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: 'foo!', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    // The engine's own document agrees with the emitted patches: the
+    // healed defaults are present in the value, not just on the wire.
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: 'foo!', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 
   test('Scenario: Setting child to `null` results in a validation error', async () => {
@@ -195,24 +311,6 @@ describe('Value validation', () => {
             path: [0],
             position: 'before',
             node: syncedBlock,
-          },
-        },
-        {
-          type: 'operation',
-          operation: {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {type: 'unset', path: [{_key: blockKey}, 'markDefs']},
-          },
-        },
-        {
-          type: 'operation',
-          operation: {
-            type: 'set',
-            path: [{_key: blockKey}, 'style'],
-            value: 'normal',
-            inverse: {type: 'unset', path: [{_key: blockKey}, 'style']},
           },
         },
         {type: 'value changed', value: [syncedBlock]},
@@ -281,6 +379,163 @@ describe('Value validation', () => {
         'B: foo[strong:bar]',
       )
     })
+
+    const eventsBeforeEdit = events.length
+    // Provoke the deferred healing: a local edit touching the block fills
+    // in and emits its missing defaults as part of that edit.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    // The full stream of the healing edit: the user's insert, then the
+    // block's deferred defaults, then the patches and the mutation that
+    // carries them all.
+    await vi.waitFor(() => {
+      expect(events.slice(eventsBeforeEdit)).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 3,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert.text',
+            path: [{_key: blockKey}, 'children', {_key: fooKey}],
+            offset: 3,
+            text: '!',
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: blockKey}, 'markDefs'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: blockKey}, 'markDefs']},
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: blockKey}, 'style'],
+            value: 'normal',
+            inverse: {type: 'unset', path: [{_key: blockKey}, 'style']},
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            origin: 'local',
+            path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+            value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            origin: 'local',
+            path: [{_key: blockKey}, 'markDefs'],
+            value: [],
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            origin: 'local',
+            path: [{_key: blockKey}, 'style'],
+            value: 'normal',
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 4,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 4,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'mutation',
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: blockKey}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: blockKey}, 'style'],
+              value: 'normal',
+            },
+          ],
+          value: [
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [
+                {_key: fooKey, _type: 'span', text: 'foo!', marks: []},
+                {_key: barKey, _type: 'span', text: 'bar', marks: ['strong']},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    // The engine's own document agrees with the emitted patches: the
+    // healed defaults are present in the value, not just on the wire.
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {_key: fooKey, _type: 'span', text: 'foo!', marks: []},
+          {_key: barKey, _type: 'span', text: 'bar', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 
   test('Scenario: New block with `null` child results in a validation error', async () => {
@@ -341,24 +596,6 @@ describe('Value validation', () => {
           },
         },
         {
-          type: 'operation',
-          operation: {
-            type: 'set',
-            path: [{_key: 'k2'}, 'markDefs'],
-            value: [],
-            inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
-          },
-        },
-        {
-          type: 'operation',
-          operation: {
-            type: 'set',
-            path: [{_key: 'k2'}, 'style'],
-            value: 'normal',
-            inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
-          },
-        },
-        {
           type: 'invalid value',
           resolution: {
             action: 'Remove the item',
@@ -385,5 +622,137 @@ describe('Value validation', () => {
         },
       ])
     })
+    const eventsBeforeEdit = events.length
+    // Provoke the deferred healing: a local edit touching the block fills
+    // in and emits its missing defaults as part of that edit.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 3},
+        focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 3},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    // The full stream of the healing edit: the user's insert, then the
+    // block's deferred defaults, then the patches and the mutation that
+    // carries them all.
+    await vi.waitFor(() => {
+      expect(events.slice(eventsBeforeEdit)).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 3},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 3},
+            backward: false,
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert.text',
+            path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+            offset: 3,
+            text: '!',
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: 'k2'}, 'markDefs'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
+          },
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'set',
+            path: [{_key: 'k2'}, 'style'],
+            value: 'normal',
+            inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            origin: 'local',
+            path: [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text'],
+            value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            origin: 'local',
+            path: [{_key: 'k2'}, 'markDefs'],
+            value: [],
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            origin: 'local',
+            path: [{_key: 'k2'}, 'style'],
+            value: 'normal',
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 4},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 4},
+            backward: false,
+          },
+        },
+        {
+          type: 'mutation',
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'style'],
+              value: 'normal',
+            },
+          ],
+          value: [
+            {
+              _key: 'k2',
+              _type: 'block',
+              children: [{_key: 'k3', _type: 'span', text: 'foo!', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    // The engine's own document agrees with the emitted patches: the
+    // healed defaults are present in the value, not just on the wire.
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k2',
+        _type: 'block',
+        children: [{_key: 'k3', _type: 'span', text: 'foo!', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 })

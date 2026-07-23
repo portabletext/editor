@@ -235,9 +235,7 @@ describe('Collaborative editing', () => {
           {
             _type: 'block',
             _key: blockKey,
-            children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
-            markDefs: [],
-            style: 'normal',
+            children: [{_key: spanKey, _type: 'span', text: 'foo'}],
           },
         ])
       })
@@ -259,8 +257,7 @@ describe('Collaborative editing', () => {
           {
             _type: 'block',
             _key: blockKey,
-            children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
-            markDefs: [],
+            children: [{_key: spanKey, _type: 'span', text: 'bar'}],
             style: 'normal',
           },
         ])
@@ -284,18 +281,25 @@ describe('Collaborative editing', () => {
         ])
       })
 
+      // The typing patch first, then the block's deferred defaults riding
+      // the same edit.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-        },
         diffMatchPatch('bar', 'barb', [
           {_key: blockKey},
           'children',
           {_key: spanKey},
           'text',
         ]),
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+          value: [],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+        },
         diffMatchPatch('barb', 'barba', [
           {_key: blockKey},
           'children',
@@ -308,6 +312,18 @@ describe('Collaborative editing', () => {
           {_key: spanKey},
           'text',
         ]),
+      ])
+
+      // The engine's own document agrees with the emitted patches: the
+      // healed defaults are present in the value, not just on the wire.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_key: spanKey, _type: 'span', text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
 
@@ -394,9 +410,7 @@ describe('Collaborative editing', () => {
           {
             _type: 'block',
             _key: blockKey,
-            children: [
-              {_key: spanKey, _type: 'span', text: 'hello', marks: []},
-            ],
+            children: [{_key: spanKey, _type: 'span', text: 'hello'}],
             markDefs: [],
             style: 'normal',
           },
@@ -421,20 +435,32 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated path)
-      // plus the typing patch
+      // The typing patch first, then the span's deferred `marks` default
+      // riding the same edit.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
           'children',
           {_key: spanKey},
           'text',
         ]),
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+          value: [],
+        },
+      ])
+
+      // The engine's own document agrees with the emitted patches: the
+      // healed defaults are present in the value, not just on the wire.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_key: spanKey, _type: 'span', text: 'hello!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
 
@@ -802,7 +828,7 @@ describe('Collaborative editing', () => {
             _type: 'block',
             _key: blockKey,
             children: [
-              {_key: span1Key, _type: 'span', text: 'Price: ', marks: []},
+              {_key: span1Key, _type: 'span', text: 'Price: '},
               {_key: stockTickerKey, _type: 'stock-ticker', symbol: 'GOOG'},
               {_key: span2Key, _type: 'span', text: '', marks: []},
             ],
@@ -832,20 +858,36 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated child)
-      // plus the typing patch
+      // The typing patch first, then the span's deferred `marks` default
+      // riding the same edit.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('Price: ', 'Price: x', [
           {_key: blockKey},
           'children',
           {_key: span1Key},
           'text',
         ]),
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: span1Key}, 'marks'],
+          value: [],
+        },
+      ])
+
+      // The engine's own document agrees with the emitted patches: the
+      // healed defaults are present in the value, not just on the wire.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_key: span1Key, _type: 'span', text: 'Price: x', marks: []},
+            {_key: stockTickerKey, _type: 'stock-ticker', symbol: 'GOOG'},
+            {_key: span2Key, _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
 
@@ -1045,7 +1087,6 @@ describe('Collaborative editing', () => {
             children: [
               {_key: spanKey, _type: 'span', text: 'hello', marks: []},
             ],
-            markDefs: [],
             style: 'normal',
           },
         ])
@@ -1069,20 +1110,32 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred markDefs patch (unrelated path)
-      // plus the typing patch
+      // The typing patch first, then the block's deferred `markDefs`
+      // default riding the same edit.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-        },
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
           'children',
           {_key: spanKey},
           'text',
         ]),
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+        },
+      ])
+
+      // The engine's own document agrees with the emitted patches: the
+      // healed defaults are present in the value, not just on the wire.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_key: spanKey, _type: 'span', text: 'hello!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
 
@@ -1170,8 +1223,7 @@ describe('Collaborative editing', () => {
           {
             _type: 'block',
             _key: blockKey,
-            children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
-            markDefs: [],
+            children: [{_key: spanKey, _type: 'span', text: 'foo'}],
             style: 'h1',
           },
         ])
@@ -1194,9 +1246,17 @@ describe('Collaborative editing', () => {
       })
 
       // Should include markDefs and marks patches, but NOT the style patch
-      // Note: marks patch comes before markDefs because normalization processes
-      // spans before block-level properties
+      // The typing patch first, then the block's deferred defaults riding
+      // the same edit (marks before markDefs: normalization processes spans
+      // before block-level properties). The remote `style` change is not
+      // overwritten: the style rule sees the field present and stays quiet.
       expect(emittedPatches).toEqual([
+        diffMatchPatch('foo', 'foo!', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
         {
           type: 'set',
           path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
@@ -1207,12 +1267,18 @@ describe('Collaborative editing', () => {
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },
-        diffMatchPatch('foo', 'foo!', [
-          {_key: blockKey},
-          'children',
-          {_key: spanKey},
-          'text',
-        ]),
+      ])
+
+      // The engine's own document agrees with the emitted patches: the
+      // healed defaults are present in the value, not just on the wire.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_key: spanKey, _type: 'span', text: 'foo!', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
       ])
     })
 
@@ -1445,9 +1511,7 @@ describe('Collaborative editing', () => {
           {
             _type: 'block',
             _key: block1Key,
-            children: [
-              {_key: span1Key, _type: 'span', text: 'first', marks: []},
-            ],
+            children: [{_key: span1Key, _type: 'span', text: 'first'}],
             markDefs: [],
             style: 'normal',
           },
@@ -1490,20 +1554,43 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks patch (different block)
-      // plus the typing patch
+      // The typing patch first, then the block's deferred `marks` default
+      // riding the same edit.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: block1Key}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('first', 'first!', [
           {_key: block1Key},
           'children',
           {_key: span1Key},
           'text',
         ]),
+        {
+          type: 'set',
+          path: [{_key: block1Key}, 'children', {_key: span1Key}, 'marks'],
+          value: [],
+        },
+      ])
+
+      // The engine's own document agrees with the emitted patches: the
+      // healed defaults are present in the value, not just on the wire.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: block1Key,
+          children: [
+            {_key: span1Key, _type: 'span', text: 'first!', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [
+            {_key: span2Key, _type: 'span', text: 'updated', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
   })

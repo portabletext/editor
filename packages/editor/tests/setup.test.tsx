@@ -62,10 +62,10 @@ describe('Setup', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
     })
 
-    expect(events.slice(0, 7)).toEqual([
-      // Sync applies the valid first block (replacing the seed block `k5`,
-      // with parse fix-ups for the missing `markDefs`/`style`), then stops
-      // at the unknown block object.
+    expect(events.slice(0, 4)).toEqual([
+      // Sync applies the valid first block (replacing the seed block `k5`;
+      // the missing `markDefs`/`style` defaults are deferred until a local
+      // edit touches the block), then stops at the unknown block object.
       {
         type: 'operation',
         operation: {type: 'unset', path: [{_key: 'k5'}]},
@@ -81,36 +81,6 @@ describe('Setup', () => {
             _type: 'block',
             children: [{_type: 'span', _key: 'k1', text: 'foo'}],
           },
-        },
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'set',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
-          value: [],
-          inverse: {
-            type: 'unset',
-            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
-          },
-        },
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'set',
-          path: [{_key: 'k0'}, 'markDefs'],
-          value: [],
-          inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
-        },
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'set',
-          path: [{_key: 'k0'}, 'style'],
-          value: 'normal',
-          inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
         },
       },
       {

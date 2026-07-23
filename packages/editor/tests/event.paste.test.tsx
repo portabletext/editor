@@ -109,9 +109,7 @@ describe('event.clipboard.paste', () => {
         {
           _key: blockKey,
           _type: 'block',
-          children: [
-            {_key: spanKey, _type: 'span', text: 'foo bar baz', marks: []},
-          ],
+          children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
           markDefs: [],
           style: 'normal',
         },
@@ -143,9 +141,7 @@ describe('event.clipboard.paste', () => {
         {
           _key: blockKey,
           _type: 'block',
-          children: [
-            {_key: spanKey, _type: 'span', text: 'foo bar baz', marks: []},
-          ],
+          children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
           markDefs: [],
           style: 'normal',
         },
