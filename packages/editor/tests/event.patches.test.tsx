@@ -637,8 +637,6 @@ describe('event.patches', () => {
           children: [
             {_type: 'span', _key: aKey, text: 'abc', marks: ['strong']},
           ],
-          markDefs: [],
-          style: 'normal',
         },
       ])
     })
@@ -761,8 +759,6 @@ describe('event.patches', () => {
           _type: 'block',
           _key: 'k0',
           children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
-          markDefs: [],
-          style: 'normal',
         },
       ])
     })
@@ -800,8 +796,6 @@ describe('event.patches', () => {
               _map: {foo: 'bar'},
             },
           ],
-          markDefs: [],
-          style: 'normal',
         },
       ])
     })
@@ -833,8 +827,6 @@ describe('event.patches', () => {
               _map: {foo: 'bar'},
             },
           ],
-          markDefs: [],
-          style: 'normal',
         },
       ])
     })
@@ -1502,8 +1494,6 @@ describe('event.patches', () => {
             {_type: 'stock-ticker', _key: 'new key'},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
-          markDefs: [],
-          style: 'normal',
         },
       ])
     })
@@ -1559,8 +1549,6 @@ describe('event.patches', () => {
             {_type: 'new type', _key: stockTickerKey},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
-          markDefs: [],
-          style: 'normal',
         },
       ])
     })
@@ -1856,7 +1844,7 @@ describe('event.patches', () => {
           _type: 'block',
           children: [
             {_type: 'span', _key: span1Key, text: '', marks: []},
-            {_type: 'span', _key: newInlineKey, text: '', marks: []},
+            {_type: 'span', _key: newInlineKey, text: ''},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
           markDefs: [],

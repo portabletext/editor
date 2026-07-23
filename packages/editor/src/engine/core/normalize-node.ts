@@ -31,27 +31,6 @@ import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 
-/**
- * Normalization rules split into two classes. Repairs fix structure the
- * engine cannot represent (missing `_key`/`_type`, duplicate keys, missing
- * required fields, empty blocks, unbracketed inline objects) and always
- * run. Cosmetic rules canonicalize structure that is already valid
- * Portable Text (merging adjacent same-mark spans, dropping empty sibling
- * spans) and must not run while applying remote patches: emitted text
- * patches are `diffMatchPatch` against a keyed span's text, so the wire
- * structure is the shared base between editor and store, and canonicalizing
- * a collaborator's structure either forks that base (kept local) or makes
- * every receiver a competing writer on the originator's spans (pushed).
- * Non-canonical structure renders identically and re-canonicalizes on the
- * block's next local edit. This covers every adoption path: remote
- * `patches` and value sync (`update value`) both flush normalization
- * inside `withRemoteChanges`, so cosmetic rules run only as fallout of
- * locally authored edits.
- */
-function isCosmeticNormalizationSkipped(editor: Editor): boolean {
-  return editor.isProcessingRemoteChanges
-}
-
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
   entry,
@@ -77,7 +56,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Merge spans with same set of .marks
    */
   if (
-    !isCosmeticNormalizationSkipped(editor) &&
+    !editor.isProcessingRemoteChanges &&
     isTextBlock({schema: editor.snapshot.context.schema}, node)
   ) {
     const children = getChildren(editor.snapshot, path)
@@ -283,6 +262,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .markDefs to text block nodes
    */
   if (
+    !editor.isProcessingRemoteChanges &&
     isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     !Array.isArray(node.markDefs)
   ) {
@@ -295,6 +275,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .style to text block nodes
    */
   if (
+    !editor.isProcessingRemoteChanges &&
     isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     typeof node.style === 'undefined'
   ) {
@@ -329,6 +310,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .marks to span nodes
    */
   if (
+    !editor.isProcessingRemoteChanges &&
     isSpan({schema: editor.snapshot.context.schema}, node) &&
     !Array.isArray(node.marks)
   ) {
@@ -587,9 +569,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (
           prev != null &&
           isSpan({schema: editor.snapshot.context.schema}, prev) &&
-          // Only this merge/empty-drop arm is cosmetic; the inline-object
+          // Only this merge/empty-drop arm defers; the inline-object
           // bracketing below is a repair and keeps running.
-          !isCosmeticNormalizationSkipped(editor)
+          !editor.isProcessingRemoteChanges
         ) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {

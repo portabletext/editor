@@ -5,6 +5,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import type {MutationEvent, PatchEvent} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins'
+import {
+  getMarkState,
+  isActiveAnnotation,
+  isActiveDecorator,
+} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 
 /**
@@ -492,6 +497,179 @@ describe('remote patches skip cosmetic normalization', () => {
             {_type: 'span', _key: 'otherSpan', text: 'bar', marks: []},
           ],
           markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+})
+
+/**
+ * Adopted structure is kept as the document has it, so adjacent same-mark
+ * siblings persist until a local edit touches their block. Mark and
+ * annotation logic must compute correctly over that structure, and the
+ * first local touch canonicalizes it as fallout of the edit.
+ */
+describe('mark state over adopted same-mark siblings', () => {
+  test('caret at the boundary sees the shared decorator and typing continues it', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {_type: 'span', _key: 'a', text: 'foo', marks: ['strong']},
+            {_type: 'span', _key: 'b', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 3},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 3},
+      },
+    })
+    expect(getMarkState(editor.getSnapshot())).toEqual({
+      state: 'unchanged',
+      marks: ['strong'],
+    })
+    expect(isActiveDecorator('strong')(editor.getSnapshot())).toBe(true)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'b'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'b'}], offset: 0},
+      },
+    })
+    expect(getMarkState(editor.getSnapshot())).toEqual({
+      state: 'changed',
+      previousMarks: ['strong'],
+      marks: ['strong'],
+    })
+
+    // Typing at the boundary continues the decorator, and the edit
+    // canonicalizes the block: the siblings merge as local fallout.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 3},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 3},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'X'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {_type: 'span', _key: 'a', text: 'fooXbar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('a selection across the siblings reports the decorator and toggling strips both', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {_type: 'span', _key: 'a', text: 'foo', marks: ['strong']},
+            {_type: 'span', _key: 'b', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'b'}], offset: 3},
+      },
+    })
+    expect(getMarkState(editor.getSnapshot())).toEqual({
+      state: 'unchanged',
+      marks: ['strong'],
+    })
+
+    editor.send({type: 'decorator.toggle', decorator: 'strong'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 'a', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('siblings sharing an annotation stay one annotation and merge on touch', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {_type: 'span', _key: 'a', text: 'foo', marks: ['m1']},
+            {_type: 'span', _key: 'b', text: 'bar', marks: ['m1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 3},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'a'}], offset: 3},
+      },
+    })
+    expect(getMarkState(editor.getSnapshot())).toEqual({
+      state: 'unchanged',
+      marks: ['m1'],
+    })
+    expect(isActiveAnnotation('link')(editor.getSnapshot())).toBe(true)
+
+    editor.send({type: 'insert.text', text: 'Y'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {_type: 'span', _key: 'a', text: 'fooYbar', marks: ['m1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'm1', href: 'https://example.com'}],
           style: 'normal',
         },
       ])

@@ -37,12 +37,6 @@ describe('Feature: Self-solving', () => {
         style: 'normal',
       },
     ]
-    const spanPatch: Patch = {
-      type: 'set',
-      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-      value: [],
-      origin: 'local',
-    }
     const blockPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'markDefs'],
@@ -104,35 +98,16 @@ describe('Feature: Self-solving', () => {
     })
 
     await vi.waitFor(() => {
+      // The deferred `markDefs` default rides the same edit that dirtied
+      // the block, after the user's own patch.
       expect(patchEvents).toEqual([
-        {type: 'patch', patch: spanPatch},
-        {type: 'patch', patch: blockPatch},
         {type: 'patch', patch: strongPatch},
+        {type: 'patch', patch: blockPatch},
       ])
       expect(mutationEvents).toEqual([
         {
           type: 'mutation',
-          patches: [spanPatch, blockPatch],
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: spanKey,
-                  _type: 'span',
-                  text: 'foo',
-                  marks: [],
-                },
-              ],
-              style: 'normal',
-              markDefs: [],
-            },
-          ],
-        },
-        {
-          type: 'mutation',
-          patches: [strongPatch],
+          patches: [strongPatch, blockPatch],
           value: [
             {
               _key: blockKey,
@@ -175,7 +150,7 @@ describe('Feature: Self-solving', () => {
       },
     ]
 
-    const {locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue,
       children: (
@@ -198,41 +173,31 @@ describe('Feature: Self-solving', () => {
     await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
+      // The deferred `style` default rides the same edit that dirtied the
+      // block, after the user's typing patch.
       expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'f'))),
+        },
         {
           origin: 'local',
           type: 'set',
           path: [{_key: blockKey}, 'style'],
           value: 'normal',
         },
+      ])
+
+      // The engine's own document agrees with the emitted patches.
+      expect(editor.getSnapshot().context.value).toEqual([
         {
-          origin: 'local',
-          type: 'unset',
-          path: [],
-        },
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
-            {
-              ...initialValue[0],
-              style: 'normal',
-            },
-          ],
-        },
-        {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('', 'f'))),
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
         },
       ])
     })

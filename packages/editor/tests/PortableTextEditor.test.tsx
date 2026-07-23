@@ -43,7 +43,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     const editorRef = createRef<PortableTextEditor>()
 
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       children: (
         <>
           <EventListenerPlugin on={onChange} />
@@ -53,7 +53,8 @@ describe('initialization', () => {
       initialValue,
     })
 
-    const normalizedEditorValue = [{...initialValue[0], style: 'normal'}]
+    // Adoption keeps the value exactly as given: the missing `style` is
+    // not filled in on load.
     await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
         type: 'value changed',
@@ -61,10 +62,132 @@ describe('initialization', () => {
       })
     })
     if (editorRef.current) {
-      expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual(
-        normalizedEditorValue,
-      )
+      expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual([
+        ...initialValue,
+      ])
     }
+
+    // A local edit touching the block fills in and emits the missing
+    // `style` as part of that edit, and the editor's own document agrees.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 5},
+        focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 5},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'patch',
+        patch: {
+          type: 'set',
+          path: [{_key: '123'}, 'style'],
+          value: 'normal',
+          origin: 'local',
+        },
+      })
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual([
+          {
+            _key: '123',
+            _type: 'block',
+            markDefs: [],
+            children: [{_key: '567', _type: 'span', text: 'Hello!', marks: []}],
+            style: 'normal',
+          },
+        ])
+      }
+    })
+  })
+
+  it('keeps untouched blocks byte-identical: an edit elsewhere emits none of their default fills', async () => {
+    const completeBlock: PortableTextBlock = {
+      _key: 'aaa',
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: 'a1', _type: 'span', text: 'Alpha', marks: []}],
+    }
+    const bareBlock: PortableTextBlock = {
+      // Missing `style`, `markDefs`, and the span's `marks`: the shape an
+      // API-created document ships with.
+      _key: 'bbb',
+      _type: 'block',
+      children: [{_key: 'b1', _type: 'span', text: 'Beta'}],
+    }
+    const onChange = vi.fn()
+    const editorRef = createRef<PortableTextEditor>()
+
+    const {editor} = await createTestEditor({
+      children: (
+        <>
+          <EventListenerPlugin on={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: [completeBlock, bareBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value changed',
+        value: [completeBlock, bareBlock],
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'aaa'}, 'children', {_key: 'a1'}], offset: 5},
+        focus: {path: [{_key: 'aaa'}, 'children', {_key: 'a1'}], offset: 5},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual([
+          {
+            ...completeBlock,
+            children: [{_key: 'a1', _type: 'span', text: 'Alpha!', marks: []}],
+          },
+          bareBlock,
+        ])
+      }
+    })
+
+    // The parked-wave regression shape: before defaults were deferred to
+    // local edits, the first keystroke flushed fills for blocks the user
+    // never touched.
+    expect(onChange).not.toHaveBeenCalledWith({
+      type: 'patch',
+      patch: {
+        type: 'set',
+        path: [{_key: 'bbb'}, 'style'],
+        value: 'normal',
+        origin: 'local',
+      },
+    })
+    expect(onChange).not.toHaveBeenCalledWith({
+      type: 'patch',
+      patch: {
+        type: 'set',
+        path: [{_key: 'bbb'}, 'markDefs'],
+        value: [],
+        origin: 'local',
+      },
+    })
+    expect(onChange).not.toHaveBeenCalledWith({
+      type: 'patch',
+      patch: {
+        type: 'set',
+        path: [{_key: 'bbb'}, 'children', {_key: 'b1'}, 'marks'],
+        value: [],
+        origin: 'local',
+      },
+    })
   })
 
   it('takes initial selection from props', async () => {

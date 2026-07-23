@@ -629,9 +629,7 @@ describe('event.drag.drop', () => {
         {
           _key: blockKey,
           _type: 'block',
-          children: [
-            {_key: spanKey, _type: 'span', text: 'foo bar baz', marks: []},
-          ],
+          children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
           markDefs: [],
           style: 'normal',
         },
