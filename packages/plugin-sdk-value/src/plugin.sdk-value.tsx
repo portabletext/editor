@@ -381,6 +381,48 @@ export function toEngineSafePatches(
 }
 
 /**
+ * A text paste can stage a temporary span and remove it in the same local
+ * flush. The SDK may emit the insert before that cleanup even though its
+ * current value already reflects the completed transaction.
+ */
+function filterInsertsMissingFromRemoteValue(
+  patches: PtePatch[],
+  remoteValue: PortableTextBlock[],
+): PtePatch[] {
+  return patches.flatMap((patch): PtePatch[] => {
+    if (patch.type !== 'insert') {
+      return [patch]
+    }
+
+    const parentValue = getValueAtPath(
+      remoteValue as unknown as JSONValue,
+      patch.path.slice(0, -1),
+    )
+    if (!Array.isArray(parentValue)) {
+      return [patch]
+    }
+
+    const items = patch.items.filter((item) => {
+      const itemKey = getKey(item)
+      if (!itemKey) {
+        return true
+      }
+      return parentValue.some((candidate) => getKey(candidate) === itemKey)
+    })
+
+    return items.length > 0 ? [{...patch, items}] : []
+  })
+}
+
+function getKey(value: JSONValue): string | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return undefined
+  }
+  const key = (value as {_key?: unknown})._key
+  return typeof key === 'string' ? key : undefined
+}
+
+/**
  * The editor writes `markDefs` as whole-array `set`s. Two clients
  * formatting the same block concurrently then overwrite each other's
  * arrays at the server (last writer wins) while both clients' span
@@ -838,9 +880,11 @@ const valueSyncMachine = setup({
       const coalesced = remoteValue
         ? toEngineSafePatches(event.patches, remoteValue)
         : event.patches
-      const patches = coalesced.filter((patch) =>
-        canApplyToValue(patch, snapshot),
-      )
+      const patches = (
+        remoteValue
+          ? filterInsertsMissingFromRemoteValue(coalesced, remoteValue)
+          : coalesced
+      ).filter((patch) => canApplyToValue(patch, snapshot))
       if (patches.length === 0) {
         return
       }

@@ -657,6 +657,43 @@ describe('ValueSyncPlugin', () => {
       expect(store.pushValue).not.toHaveBeenCalled()
     })
 
+    test('does not render a staging span absent from the remote value', async () => {
+      const initialValue = [makeBlock('b1', 'A: ')]
+      const finalValue = [makeBlock('b1', 'A: ALPHA')]
+      const store = createMockPatchStore(initialValue)
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: A: ')
+      })
+
+      store.receiveRemoteTransaction(finalValue, [
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+          items: [
+            {
+              _type: 'span',
+              _key: 'staging-span',
+              text: 'ALPHA',
+              marks: [],
+            },
+          ] as unknown as JSONValue[],
+        },
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}, 'text'],
+          value: '@@ -1,3 +1,8 @@\n A: \n+ALPHA\n',
+        },
+      ])
+
+      expect(getEditorText(editor)).toEqual('B: A: ALPHA')
+    })
+
     test('remote text set applies to a specific span', async () => {
       const store = createMockPatchStore([
         makeBlock('b1', 'First'),
