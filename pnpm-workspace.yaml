@@ -6,6 +6,8 @@ packages:
 catalog:
   "@floating-ui/dom": ^1.7.6
   "@sanity/diff-match-patch": ^3.2.0
+  "@sanity/diff-patch": ^6.0.0
+  "@sanity/json-match": ^1.0.5
   "@sanity/schema": ^6.1.0
   "@sanity/types": ^6.1.0
   "@types/debug": ^4.1.12
@@ -60,7 +62,6 @@ minimumReleaseAgeExclude:
   - react-dom
   - react-is
   - markdown-it@14.1.1
-  # Renovate security update: astro@7.1.0
   - astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6 || 7.1.0
   - vite@7.3.2 || 7.3.5
   - turbo@2.9.14
