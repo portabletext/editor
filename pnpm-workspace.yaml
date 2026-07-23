@@ -12,7 +12,7 @@ catalog:
   "@xstate/react": ^6.1.0
   debug: ^4.4.3
   react: ^19.2.8
-  react-dom: ^19.2.7
+  react-dom: ^19.2.8
   xstate: ^5.32.4
 
 catalogMode: prefer
