@@ -281,13 +281,21 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   /**
    * Add missing .markDefs to text block nodes
+   *
+   * Materialized in-engine only, never emitted: a missing `markDefs` is
+   * valid Portable Text with a universal read-side default, no emitted
+   * patch ever uses the field as a base (item inserts carry their own
+   * `setIfMissing`), so writing the default onto an adopted document is
+   * canonicalization. Same reasoning for `style` and `marks` below.
    */
   if (
     isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     !Array.isArray(node.markDefs)
   ) {
     debug.normalization('adding .markDefs to block node')
-    setNodeProperties(editor, {markDefs: []}, path)
+    withoutPatching(editor, () => {
+      setNodeProperties(editor, {markDefs: []}, path)
+    })
     return
   }
 
@@ -303,7 +311,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     )?.name
     if (defaultStyle) {
       debug.normalization('adding .style to block node')
-      setNodeProperties(editor, {style: defaultStyle}, path)
+      withoutPatching(editor, () => {
+        setNodeProperties(editor, {style: defaultStyle}, path)
+      })
       return
     }
   }
@@ -333,7 +343,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     !Array.isArray(node.marks)
   ) {
     debug.normalization('Adding .marks to span node')
-    setNodeProperties(editor, {marks: []}, path)
+    withoutPatching(editor, () => {
+      setNodeProperties(editor, {marks: []}, path)
+    })
     return
   }
 

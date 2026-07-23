@@ -502,8 +502,6 @@ describe('event.block.set', () => {
         ),
         unset([{_key: 'k0'}]),
         unset([]),
-        setIfMissing([], []),
-        set([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
 
@@ -526,7 +524,7 @@ describe('event.block.set', () => {
         },
       ])
 
-      expect(patches.slice(7)).toEqual([
+      expect(patches.slice(5)).toEqual([
         setIfMissing([], []),
         insert(
           [

@@ -342,14 +342,11 @@ describe('event.block.unset', () => {
         },
       ])
 
-      expect(patches).toEqual([
-        unset([{_key: textBlockKey}, 'markDefs']),
-        set([], [{_key: textBlockKey}, 'markDefs']),
-      ])
+      expect(patches).toEqual([unset([{_key: textBlockKey}, 'markDefs'])])
     })
   })
 
-  test('Scenario: `unset`ing text block `style` `set`s the default style', async () => {
+  test('Scenario: `unset`ing text block `style` materializes the default without emitting', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
@@ -426,7 +423,6 @@ describe('event.block.unset', () => {
           [{_key: 'k0'}],
         ),
         unset([{_key: 'k0'}]),
-        set([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
 
@@ -448,10 +444,7 @@ describe('event.block.unset', () => {
           style: 'normal',
         },
       ])
-      expect(patches.slice(5)).toEqual([
-        unset([{_key: textBlockKey}, 'style']),
-        set('normal', [{_key: textBlockKey}, 'style']),
-      ])
+      expect(patches.slice(4)).toEqual([unset([{_key: textBlockKey}, 'style'])])
     })
   })
 
@@ -630,10 +623,7 @@ describe('event.block.unset', () => {
           style: 'normal',
         },
       ])
-      expect(patches.slice(4)).toEqual([
-        unset([{_key: textBlockKey}, 'style']),
-        set('normal', [{_key: textBlockKey}, 'style']),
-      ])
+      expect(patches.slice(4)).toEqual([unset([{_key: textBlockKey}, 'style'])])
     })
   })
 
@@ -714,7 +704,6 @@ describe('event.block.unset', () => {
       expect(patches.slice(4)).toEqual([
         unset([{_key: textBlockKey}, 'children']),
         unset([{_key: textBlockKey}, 'style']),
-        set('normal', [{_key: textBlockKey}, 'style']),
         set([], [{_key: textBlockKey}, 'children']),
         setIfMissing([], [{_key: textBlockKey}, 'children']),
         insert([{_key: 'k4', _type: 'span', text: '', marks: []}], 'before', [

@@ -36,6 +36,12 @@ async function whenTheCaretIsPutAfter(
 }
 
 describe('Collaborative editing', () => {
+  // Most scenarios here were written when default materializations
+  // (`marks`/`markDefs`/`style`) were the parked patches; those defaults are
+  // now materialized without emitting, so the scenarios pin weaker
+  // contracts than their names suggest. The parking machinery's remaining
+  // tenants are `text` and `_key` repairs; re-basing this suite on them
+  // belongs to the pending-events queue rework.
   describe('Deferred normalization patches', () => {
     test('Scenario: Remote patches conflict with local held-back patches', async () => {
       /**
@@ -285,11 +291,6 @@ describe('Collaborative editing', () => {
       })
 
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-        },
         diffMatchPatch('bar', 'barb', [
           {_key: blockKey},
           'children',
@@ -421,14 +422,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated path)
-      // plus the typing patch
+      // Defaults are materialized without emitting, so only the typing
+      // patch flushes.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
           'children',
@@ -832,14 +828,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated child)
-      // plus the typing patch
+      // Defaults are materialized without emitting, so only the typing
+      // patch flushes.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('Price: ', 'Price: x', [
           {_key: blockKey},
           'children',
@@ -1069,14 +1060,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred markDefs patch (unrelated path)
-      // plus the typing patch
+      // Defaults are materialized without emitting, so only the typing
+      // patch flushes.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-        },
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
           'children',
@@ -1193,20 +1179,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include markDefs and marks patches, but NOT the style patch
-      // Note: marks patch comes before markDefs because normalization processes
-      // spans before block-level properties
+      // Defaults are materialized without emitting, so only the typing
+      // patch flushes.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-          value: [],
-        },
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-        },
         diffMatchPatch('foo', 'foo!', [
           {_key: blockKey},
           'children',
@@ -1490,14 +1465,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks patch (different block)
-      // plus the typing patch
+      // Defaults are materialized without emitting, so only the typing
+      // patch flushes.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: block1Key}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('first', 'first!', [
           {_key: block1Key},
           'children',

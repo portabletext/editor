@@ -496,12 +496,6 @@ describe('event.insert.block', () => {
           type: 'unset',
           path: [{_key: 'k0'}],
         },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'k2'}, 'markDefs'],
-          value: [],
-        },
       ])
     })
   })
@@ -594,12 +588,6 @@ describe('event.insert.block', () => {
           origin: 'local',
           type: 'unset',
           path: [{_key: 'k0'}],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'k2'}, 'markDefs'],
-          value: [],
         },
       ])
     })

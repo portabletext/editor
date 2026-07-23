@@ -18,7 +18,7 @@ import {
 import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Self-solving', () => {
-  test('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
+  test('Scenario: Missing .markDefs and .marks are materialized without emitting', async () => {
     const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -37,18 +37,6 @@ describe('Feature: Self-solving', () => {
         style: 'normal',
       },
     ]
-    const spanPatch: Patch = {
-      type: 'set',
-      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-      value: [],
-      origin: 'local',
-    }
-    const blockPatch: Patch = {
-      type: 'set',
-      path: [{_key: blockKey}, 'markDefs'],
-      value: [],
-      origin: 'local',
-    }
     const strongPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
@@ -103,33 +91,12 @@ describe('Feature: Self-solving', () => {
       decorator: 'strong',
     })
 
+    // The missing `.marks`/`.markDefs` defaults are materialized in-engine
+    // without emitting: only the user's own decorator toggle produces
+    // patches.
     await vi.waitFor(() => {
-      expect(patchEvents).toEqual([
-        {type: 'patch', patch: spanPatch},
-        {type: 'patch', patch: blockPatch},
-        {type: 'patch', patch: strongPatch},
-      ])
+      expect(patchEvents).toEqual([{type: 'patch', patch: strongPatch}])
       expect(mutationEvents).toEqual([
-        {
-          type: 'mutation',
-          patches: [spanPatch, blockPatch],
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: spanKey,
-                  _type: 'span',
-                  text: 'foo',
-                  marks: [],
-                },
-              ],
-              style: 'normal',
-              markDefs: [],
-            },
-          ],
-        },
         {
           type: 'mutation',
           patches: [strongPatch],
@@ -197,19 +164,10 @@ describe('Feature: Self-solving', () => {
 
     await userEvent.type(locator, 'f')
 
+    // No standalone `set style` is emitted; the materialized default rides
+    // inside the whole-block insert of the first flush.
     await vi.waitFor(() => {
       expect(patches).toEqual([
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: blockKey}, 'style'],
-          value: 'normal',
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [],
-        },
         {
           origin: 'local',
           type: 'setIfMissing',
@@ -368,12 +326,6 @@ describe('Feature: Self-solving', () => {
               markDefs: [],
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: blockKey}, 'style'],
-          value: 'normal',
         },
       ])
     })
@@ -790,12 +742,6 @@ describe('Feature: Self-solving', () => {
               style: 'normal',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'k5'}, 'markDefs'],
-          value: [],
         },
       ])
     })
