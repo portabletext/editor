@@ -6,7 +6,7 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('normalization', () => {
-  test('Scenario: spans with the same marks are merged', async () => {
+  test('Scenario: adjacent same-mark spans merge as fallout of a local edit', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanFooKey = keyGenerator()
@@ -31,6 +31,27 @@ describe('normalization', () => {
       }),
     })
 
+    // Adopted structure is kept as-is; cosmetic canonicalization only runs
+    // as fallout of locally authored edits.
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([block])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
     await vi.waitFor(() => {
       return expect(editor.getSnapshot().context.value).toEqual([
         {
@@ -40,7 +61,7 @@ describe('normalization', () => {
               ...block.children[0],
               text: 'foobar',
             },
-            block.children[2],
+            {...block.children[2], text: 'baz!'},
           ],
         },
       ])
@@ -72,6 +93,21 @@ describe('normalization', () => {
       }),
     })
 
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
     await vi.waitFor(() => {
       return expect(editor.getSnapshot().context.value).toEqual([
         {
@@ -81,7 +117,7 @@ describe('normalization', () => {
               ...block.children[0],
               text: 'foobar',
             },
-            block.children[2],
+            {...block.children[2], text: 'baz!'},
           ],
         },
       ])
@@ -614,7 +650,7 @@ describe('normalization', () => {
     })
   })
 
-  test('Scenario: selection is preserved when spans merge during normalization', async () => {
+  test('Scenario: selection is preserved when a remote marks change creates same-mark adjacency', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanFooKey = keyGenerator()
@@ -683,18 +719,16 @@ describe('normalization', () => {
       ],
     })
 
+    // Adopted structure is kept as-is (no merge on adoption), so the
+    // caret's span survives untouched: no selection remapping needed.
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,
           children: [
-            {
-              _type: 'span',
-              _key: spanFooKey,
-              text: 'foobar',
-              marks: ['strong'],
-            },
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
+            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
           ],
           markDefs: [],
           style: 'normal',
@@ -703,12 +737,12 @@ describe('normalization', () => {
 
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanFooKey}],
-          offset: 4,
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+          offset: 1,
         },
         focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanFooKey}],
-          offset: 4,
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+          offset: 1,
         },
         backward: false,
       })

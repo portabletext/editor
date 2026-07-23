@@ -450,7 +450,7 @@ describe('remote patches skip cosmetic normalization', () => {
     expect(documentAfterEcho).toEqual(documentValue)
   })
 
-  test('`update value` still canonicalizes adjacent same-mark spans', async () => {
+  test('`update value` keeps adjacent same-mark spans as-is', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -478,12 +478,19 @@ describe('remote patches skip cosmetic normalization', () => {
       ],
     })
 
+    // Adopted structure is kept byte-for-byte: cosmetic canonicalization
+    // runs only as fallout of locally authored edits, on every adoption
+    // path. The engine's value must track the document exactly for
+    // diffed-value patches to target live keys.
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'otherSpan', text: 'bar', marks: []},
+          ],
           markDefs: [],
           style: 'normal',
         },

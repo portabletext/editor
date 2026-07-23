@@ -43,10 +43,10 @@ import type {WithEditorFirstArg} from '../utils/types'
  * a collaborator's structure either forks that base (kept local) or makes
  * every receiver a competing writer on the originator's spans (pushed).
  * Non-canonical structure renders identically and re-canonicalizes on the
- * block's next local edit. Value sync (`update value`) still canonicalizes
- * (self-solving), but only because its normalize flush runs outside
- * `withRemoteChanges`; a wrapper-nesting change in the sync machine would
- * silently revoke that.
+ * block's next local edit. This covers every adoption path: remote
+ * `patches` and value sync (`update value`) both flush normalization
+ * inside `withRemoteChanges`, so cosmetic rules run only as fallout of
+ * locally authored edits.
  */
 function isCosmeticNormalizationSkipped(editor: Editor): boolean {
   return editor.isProcessingRemoteChanges

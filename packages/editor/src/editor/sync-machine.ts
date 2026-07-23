@@ -600,9 +600,9 @@ function clearEditor({
   editorEngine: PortableTextEditorEngine
   doneSyncing: boolean
 }) {
-  withoutNormalizing(editorEngine, () => {
-    pluginWithoutHistory(editorEngine, () => {
-      withRemoteChanges(editorEngine, () => {
+  withRemoteChanges(editorEngine, () => {
+    withoutNormalizing(editorEngine, () => {
+      pluginWithoutHistory(editorEngine, () => {
         withoutPatching(editorEngine, () => {
           if (doneSyncing) {
             return
@@ -640,8 +640,8 @@ function removeExtraBlocks({
 }) {
   let isChanged = false
 
-  withoutNormalizing(editorEngine, () => {
-    withRemoteChanges(editorEngine, () => {
+  withRemoteChanges(editorEngine, () => {
+    withoutNormalizing(editorEngine, () => {
       withoutPatching(editorEngine, () => {
         const childrenLength = editorEngine.snapshot.context.value.length
 
@@ -708,8 +708,8 @@ function syncBlock({
         schemaTypes: context.schema,
       })
 
-      withoutNormalizing(editorEngine, () => {
-        withRemoteChanges(editorEngine, () => {
+      withRemoteChanges(editorEngine, () => {
+        withoutNormalizing(editorEngine, () => {
           withoutPatching(editorEngine, () => {
             editorEngine.apply({
               type: 'insert',
@@ -795,8 +795,8 @@ function syncBlock({
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
       debug.syncValue('Updating block', oldBlock, repairedBlock)
 
-      withoutNormalizing(editorEngine, () => {
-        withRemoteChanges(editorEngine, () => {
+      withRemoteChanges(editorEngine, () => {
+        withoutNormalizing(editorEngine, () => {
           withoutPatching(editorEngine, () => {
             updateBlock({
               context,
@@ -811,8 +811,8 @@ function syncBlock({
     } else {
       debug.syncValue('Replacing block', oldBlock, repairedBlock)
 
-      withoutNormalizing(editorEngine, () => {
-        withRemoteChanges(editorEngine, () => {
+      withRemoteChanges(editorEngine, () => {
+        withoutNormalizing(editorEngine, () => {
           withoutPatching(editorEngine, () => {
             replaceBlock({
               context,
