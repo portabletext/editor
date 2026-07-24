@@ -79,11 +79,15 @@ function createMockPatchStore(initialValue: PortableTextBlock[] = []) {
       }
     },
     getValue: () => value,
-    // Simulate patches arriving from another client: apply them to the store
-    // value and emit through both channels, patches first, like the real SDK.
-    // Application is best-effort per patch, mirroring the server's json-match
-    // semantics where patches whose paths don't resolve are no-ops.
+    // Simulate a transaction arriving from another client. Mirrors the real
+    // SDK's ordering: the `remote-patches` event fires while the SDK is still
+    // computing the state update for that transaction, so subscribers observe
+    // the pre-transaction value during the event; the value commit and its
+    // notification follow. Application is best-effort per patch, mirroring
+    // the server's json-match semantics where patches whose paths don't
+    // resolve are no-ops.
     receiveRemotePatches: (patches: PtePatch[]) => {
+      patchSubscriber?.(patches)
       for (const patch of patches) {
         try {
           value = applyAll(value, [patch])
@@ -91,7 +95,6 @@ function createMockPatchStore(initialValue: PortableTextBlock[] = []) {
           // the server would no-op this patch
         }
       }
-      patchSubscriber?.(patches)
       valueSubscriber?.()
     },
     // Simulate a remote transaction whose patches don't resolve against this
@@ -691,7 +694,119 @@ describe('ValueSyncPlugin', () => {
         },
       ])
 
+      // patch application waits one microtask for the store commit
+      await Promise.resolve()
+
       expect(getEditorText(editor)).toEqual('B: A: ALPHA')
+    })
+
+    test('a remote mid-span decorator toggle applies without a transient flash', async () => {
+      // Field regression: editor A bolds the word "before" in the middle of
+      // a span; on editor B the word vanished ("…quarterly report dawn.")
+      // for a beat before the whole-value repair restored it. The patches
+      // below are the bold transaction as a real editor emits it: two text
+      // shrinks on the original span, two inserts of the split-off spans,
+      // then a `marks` set on the new middle span. The SDK emits the
+      // `remote-patches` event while it is still computing the state update
+      // for the transaction, so the store value does not reflect it during
+      // the event; filtering the inserts against that stale value dropped
+      // the new spans while the text shrinks still applied.
+      const text =
+        'ALPHA The newsroom shipped its quarterly report before dawn.'
+      const store = createMockPatchStore([makeBlock('b1', text)])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      })
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(`B: ${text}`)
+      })
+
+      store.receiveRemotePatches([
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}, 'text'],
+          value: '@@ -51,10 +51,4 @@\n fore\n- dawn.\n',
+        },
+        {
+          type: 'setIfMissing',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+          items: [
+            {_type: 'span', _key: 's-dawn', marks: [], text: ' dawn.'},
+          ] as unknown as JSONValue[],
+        },
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}, 'text'],
+          value: '@@ -45,10 +45,4 @@\n ort \n-before\n',
+        },
+        {
+          type: 'setIfMissing',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          origin: 'remote',
+          position: 'after',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
+          items: [
+            {_type: 'span', _key: 's-before', marks: [], text: 'before'},
+          ] as unknown as JSONValue[],
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'b1'}, 'children', {_key: 's-before'}, 'marks'],
+          value: ['strong'],
+        },
+      ])
+
+      // One microtask for the store commit to land; the transaction must
+      // then have applied in full. Sampling any later would miss the flash,
+      // because the whole-value repair heals it within a few hundred
+      // milliseconds.
+      await Promise.resolve()
+
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: 'b1-span',
+              text: 'ALPHA The newsroom shipped its quarterly report ',
+              marks: [],
+            },
+            {
+              _type: 'span',
+              _key: 's-before',
+              text: 'before',
+              marks: ['strong'],
+            },
+            {_type: 'span', _key: 's-dawn', text: ' dawn.', marks: []},
+          ],
+        },
+      ])
+      // the transaction arrived over the patch channel; nothing pushed back
+      expect(store.pushPatches).not.toHaveBeenCalled()
+      expect(store.pushValue).not.toHaveBeenCalled()
     })
 
     test('remote text set applies to a specific span', async () => {
