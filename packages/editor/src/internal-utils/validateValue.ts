@@ -1,6 +1,5 @@
 import {insert, set, setIfMissing, unset} from '@portabletext/patches'
 import {
-  isSpan,
   isTextBlock,
   type PortableTextBlock,
   type PortableTextTextBlock,
@@ -222,48 +221,13 @@ export function validateValue(
           return true
         }
 
-        const allUsedMarks = [
-          ...new Set(
-            textBlock.children
-              .filter((child) => isSpan({schema: types}, child))
-              .flatMap((cld) => cld.marks || []),
-          ),
-        ]
-
-        // Test that all markDefs are in use (remove orphaned markDefs)
-        if (Array.isArray(blk.markDefs) && blk.markDefs.length > 0) {
-          const unusedMarkDefs: string[] = [
-            ...new Set(
-              blk.markDefs
-                .map((def) => def._key)
-                .filter((key) => !allUsedMarks.includes(key)),
-            ),
-          ]
-          if (unusedMarkDefs.length > 0) {
-            resolution = {
-              autoResolve: true,
-              patches: unusedMarkDefs.map((markDefKey) =>
-                unset([{_key: blk._key}, 'markDefs', {_key: markDefKey}]),
-              ),
-              description: `Block contains orphaned data (unused mark definitions): ${unusedMarkDefs.join(
-                ', ',
-              )}.`,
-              action: 'Remove unused mark definition item',
-              item: blk,
-              i18n: {
-                description:
-                  'inputs.portable-text.invalid-value.orphaned-mark-defs.description',
-                action:
-                  'inputs.portable-text.invalid-value.orphaned-mark-defs.action',
-                values: {
-                  key: blk._key,
-                  unusedMarkDefs: unusedMarkDefs.map((m) => m.toString()),
-                },
-              },
-            }
-            return true
-          }
-        }
+        // Unused `markDefs` are valid Portable Text and deliberately NOT
+        // flagged here: this validation runs on value adoption, and a
+        // definition that looks unused in an adopted snapshot may be
+        // referenced by a collaborator's in-flight edits. Auto-resolving
+        // it here pushed an unset that orphaned those marks at the
+        // document. Cosmetic markDef housekeeping instead runs as fallout
+        // of local edits (see `normalize-node.ts`).
 
         // Test every child
         if (

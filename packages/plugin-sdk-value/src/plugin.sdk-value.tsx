@@ -429,19 +429,42 @@ function getKey(value: JSONValue): string | undefined {
  * `marks` references survive, stranding marks without definitions.
  * Outgoing `markDefs` sets are therefore decomposed into item-level
  * operations against the store (server truth): new definitions insert,
- * changed definitions set by key, and removed definitions unset by key,
- * except definitions the store's own spans still reference (a diverged
- * client's normalizer prunes those spuriously; a later, converged flush
- * removes them for real). Item-keyed operations merge at the server
- * instead of overwriting.
+ * changed definitions set by key, and removed definitions unset by key.
+ * Item-keyed operations merge at the server instead of overwriting.
+ *
+ * A definition is never unset while something observable still
+ * references it: the store's own spans (a diverged client's normalizer
+ * prunes those spuriously), the editor's current spans, or any other
+ * patch in the same flush (a toggle's intermediate states can prune a
+ * definition that a later operation in the same flush re-references).
+ * Pushing such an unset persists invalid Portable Text (a mark with no
+ * definition); an unused definition left behind is valid and a later,
+ * converged flush removes it for real.
+ *
+ * The mirror hazard is guarded too: a flush that writes span marks
+ * referencing a definition the store no longer has (another client
+ * removed it while this client's reference was in flight) re-inserts
+ * that definition from the editor's block, so the transaction leaves
+ * the document self-consistent.
  *
  * @internal
  */
 export function toMergeableMarkDefsPatches(
   patches: PtePatch[],
   getCurrentValue: () => PortableTextBlock[] | null | undefined,
+  getEditorValue?: () => PortableTextBlock[] | null | undefined,
 ): PtePatch[] {
-  return patches.flatMap((patch): PtePatch[] => {
+  // Marks referenced anywhere else in this flush. String matching over
+  // the serialized patches over-collects, which is safe: a kept
+  // definition is valid Portable Text, a stranded mark is not.
+  const flushJson = JSON.stringify(
+    patches.filter(
+      (patch) => !(patch.type === 'set' && patch.path.at(-1) === 'markDefs'),
+    ),
+  )
+  const editorValue = getEditorValue?.()
+
+  const decomposed = patches.flatMap((patch): PtePatch[] => {
     if (
       patch.type !== 'set' ||
       patch.path.at(-1) !== 'markDefs' ||
@@ -470,11 +493,20 @@ export function toMergeableMarkDefsPatches(
       return [patch]
     }
 
-    const referencedKeys = new Set(
-      (
+    const editorBlock = editorValue
+      ? getValueAtPath(
+          editorValue as unknown as JSONValue,
+          patch.path.slice(0, -1),
+        )
+      : undefined
+    const referencedKeys = new Set([
+      ...(
         (storeBlock as {children?: Array<{marks?: string[]}>}).children ?? []
       ).flatMap((child) => child.marks ?? []),
-    )
+      ...(
+        (editorBlock as {children?: Array<{marks?: string[]}>})?.children ?? []
+      ).flatMap((child) => child.marks ?? []),
+    ])
     const storeByKey = new Map(store.map((item) => [item._key, item]))
     const localKeys = new Set(local.map((item) => item._key))
     const origin = patch.origin
@@ -508,7 +540,8 @@ export function toMergeableMarkDefsPatches(
       if (
         item._key !== undefined &&
         !localKeys.has(item._key) &&
-        !referencedKeys.has(item._key)
+        !referencedKeys.has(item._key) &&
+        !flushJson.includes(`"${item._key}"`)
       ) {
         ops.push({
           type: 'unset',
@@ -520,6 +553,163 @@ export function toMergeableMarkDefsPatches(
 
     return ops
   })
+
+  return [
+    ...missingDefinitionInserts(
+      patches,
+      decomposed,
+      getCurrentValue(),
+      editorValue,
+    ),
+    ...decomposed,
+  ]
+}
+
+/**
+ * Definitions to re-insert for marks this flush writes but the store no
+ * longer defines. See `toMergeableMarkDefsPatches`.
+ */
+function missingDefinitionInserts(
+  patches: PtePatch[],
+  decomposed: PtePatch[],
+  currentValue: PortableTextBlock[] | null | undefined,
+  editorValue: PortableTextBlock[] | null | undefined,
+): PtePatch[] {
+  if (!currentValue || !editorValue) {
+    return []
+  }
+
+  const referencedByBlock = collectWrittenMarkReferences(patches)
+  if (referencedByBlock.size === 0) {
+    return []
+  }
+
+  const flushDefinesKey = (key: string) =>
+    decomposed.some(
+      (patch) =>
+        patch.path.includes('markDefs') &&
+        ((patch.type === 'insert' &&
+          JSON.stringify(patch.items).includes(`"${key}"`)) ||
+          (patch.type === 'set' &&
+            JSON.stringify(patch.value).includes(`"${key}"`))),
+    )
+
+  const inserts: PtePatch[] = []
+
+  for (const [blockKey, markKeys] of referencedByBlock) {
+    const markDefsPath: Path = [{_key: blockKey}, 'markDefs']
+    const storeMarkDefs = getValueAtPath(
+      currentValue as unknown as JSONValue,
+      markDefsPath,
+    )
+    if (!Array.isArray(storeMarkDefs)) {
+      // The block (or its `markDefs`) is not at the store yet; the flush
+      // that creates it carries the definitions itself.
+      continue
+    }
+    const storeKeys = new Set(
+      (storeMarkDefs as Array<{_key?: string}>).map((item) => item._key),
+    )
+    const editorMarkDefs = getValueAtPath(
+      editorValue as unknown as JSONValue,
+      markDefsPath,
+    )
+    const editorDefsByKey = new Map(
+      (Array.isArray(editorMarkDefs)
+        ? (editorMarkDefs as Array<{_key?: string}>)
+        : []
+      ).map((item) => [item._key, item]),
+    )
+
+    const missing: JSONValue[] = []
+    for (const markKey of markKeys) {
+      if (storeKeys.has(markKey) || flushDefinesKey(markKey)) {
+        continue
+      }
+      const definition = editorDefsByKey.get(markKey)
+      if (definition) {
+        // Decorator marks never resolve here: they have no definition.
+        missing.push(definition as JSONValue)
+      }
+    }
+
+    if (missing.length > 0) {
+      inserts.push({
+        type: 'insert',
+        origin: 'local',
+        position: 'after',
+        path: [...markDefsPath, -1],
+        items: missing,
+      })
+    }
+  }
+
+  return inserts
+}
+
+/**
+ * Annotation keys the given patches write into span `marks`, grouped by
+ * block key. Covers direct `marks` sets, span inserts, whole-`children`
+ * sets, and whole-block sets.
+ */
+function collectWrittenMarkReferences(
+  patches: PtePatch[],
+): Map<string, Set<string>> {
+  const referencedByBlock = new Map<string, Set<string>>()
+
+  const add = (blockKey: string, marks: unknown) => {
+    if (!Array.isArray(marks)) {
+      return
+    }
+    let keys = referencedByBlock.get(blockKey)
+    if (!keys) {
+      keys = new Set()
+      referencedByBlock.set(blockKey, keys)
+    }
+    for (const mark of marks) {
+      if (typeof mark === 'string') {
+        keys.add(mark)
+      }
+    }
+  }
+
+  const addChildren = (blockKey: string, children: unknown) => {
+    if (!Array.isArray(children)) {
+      return
+    }
+    for (const child of children) {
+      if (typeof child === 'object' && child !== null) {
+        add(blockKey, (child as {marks?: unknown}).marks)
+      }
+    }
+  }
+
+  for (const patch of patches) {
+    const blockSegment = patch.path[0]
+    const blockKey =
+      typeof blockSegment === 'object' &&
+      blockSegment !== null &&
+      '_key' in blockSegment
+        ? blockSegment._key
+        : undefined
+    if (blockKey === undefined) {
+      continue
+    }
+
+    if (patch.type === 'set') {
+      if (patch.path.at(-1) === 'marks') {
+        add(blockKey, patch.value)
+      } else if (patch.path.at(-1) === 'children') {
+        addChildren(blockKey, patch.value)
+      } else if (patch.path.length === 1) {
+        addChildren(blockKey, (patch.value as {children?: unknown})?.children)
+      }
+    } else if (patch.type === 'insert' && patch.path[1] === 'children') {
+      addChildren(blockKey, patch.items)
+    }
+  }
+
+  return referencedByBlock
 }
 
 /**
@@ -642,6 +832,128 @@ const pendingRepairs = new WeakMap<Editor, PendingRepair>()
  */
 const unflushedEdits = new WeakMap<Editor, boolean>()
 
+/**
+ * Every `markDefs` key this session has observed, at the store or in the
+ * editor. A span mark matching one of these keys is an annotation
+ * reference; when its definition is missing from the block, the document
+ * holds invalid Portable Text (concurrent editing can remove a definition
+ * while another client's reference is in flight). Marks that never
+ * appeared in `markDefs` are left alone: they may be decorators from a
+ * schema this editor doesn't know, which are supported and must survive.
+ */
+const knownAnnotationKeys = new WeakMap<Editor, Set<string>>()
+
+function recordAnnotationKeys(
+  editor: Editor,
+  values: Array<PortableTextBlock[] | null | undefined>,
+): void {
+  let keys = knownAnnotationKeys.get(editor)
+  if (!keys) {
+    keys = new Set()
+    knownAnnotationKeys.set(editor, keys)
+  }
+  for (const value of values) {
+    for (const block of value ?? []) {
+      const markDefs = (block as {markDefs?: Array<{_key?: string}>}).markDefs
+      if (!Array.isArray(markDefs)) {
+        continue
+      }
+      for (const markDef of markDefs) {
+        if (typeof markDef._key === 'string') {
+          keys.add(markDef._key)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Patches that remove stranded annotation references from the given
+ * value: span marks whose key is a known `markDefs` key but has no
+ * definition on the block. Empty when the value is valid.
+ */
+function findOrphanedMarkCleanups(
+  editor: Editor,
+  value: PortableTextBlock[],
+): PtePatch[] {
+  const known = knownAnnotationKeys.get(editor)
+  if (!known || known.size === 0) {
+    return []
+  }
+
+  const cleanups: PtePatch[] = []
+
+  for (const block of value) {
+    const {
+      _key: blockKey,
+      markDefs,
+      children,
+    } = block as {
+      _key?: string
+      markDefs?: Array<{_key?: string}>
+      children?: Array<{_key?: string; marks?: unknown}>
+    }
+    if (typeof blockKey !== 'string' || !Array.isArray(children)) {
+      continue
+    }
+    const definedKeys = new Set(
+      (Array.isArray(markDefs) ? markDefs : []).map((markDef) => markDef._key),
+    )
+    for (const child of children) {
+      if (typeof child._key !== 'string' || !Array.isArray(child.marks)) {
+        continue
+      }
+      const marks = child.marks.filter(
+        (mark): mark is string => typeof mark === 'string',
+      )
+      const orphaned = marks.filter(
+        (mark) => known.has(mark) && !definedKeys.has(mark),
+      )
+      if (orphaned.length > 0) {
+        cleanups.push({
+          type: 'set',
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', {_key: child._key}, 'marks'],
+          value: marks.filter((mark) => !orphaned.includes(mark)),
+        })
+      }
+    }
+  }
+
+  return cleanups
+}
+
+/**
+ * Removes stranded annotation references the (stable, confirmed) store
+ * value holds, both at the document and in the local editor. See
+ * `findOrphanedMarkCleanups`. Runs on the confirmed-repair paths only,
+ * so any in-flight definition insert has had the confirm window to land.
+ */
+function healStrandedMarks(
+  editor: Editor,
+  value: PortableTextBlock[],
+  pushPatches: ((patches: PtePatch[]) => void) | undefined,
+): void {
+  if (!pushPatches) {
+    return
+  }
+  const cleanups = findOrphanedMarkCleanups(editor, value)
+  if (cleanups.length === 0) {
+    return
+  }
+  debug.repair('removing stranded annotation marks %o', cleanups)
+  try {
+    pushPatches(cleanups)
+  } catch {
+    return
+  }
+  editor.send({
+    type: 'patches',
+    patches: cleanups.map((patch) => ({...patch, origin: 'remote'})),
+    snapshot: editor.getSnapshot().context.value,
+  })
+}
+
 function computeRepair(
   editor: Editor,
   remoteValue: PortableTextBlock[],
@@ -673,12 +985,39 @@ function cancelPendingRepair(editor: Editor) {
   }
 }
 
+/**
+ * Whether the editor shows the placeholder it keeps when the document is
+ * empty: a single text block holding a single empty, unmarked span. The
+ * placeholder's keys are minted locally, so it can never equal an empty
+ * document value in a diff. Both states mean "empty document".
+ */
+function isEmptyPlaceholderValue(editor: Editor): boolean {
+  const value = editor.getSnapshot().context.value
+  if (value.length !== 1) {
+    return false
+  }
+  const block = value[0] as {
+    markDefs?: unknown[]
+    children?: Array<{text?: string; marks?: unknown[]}>
+  }
+  if (!Array.isArray(block.children) || block.children.length !== 1) {
+    return false
+  }
+  if (Array.isArray(block.markDefs) && block.markDefs.length > 0) {
+    return false
+  }
+  const child = block.children[0]!
+  return child.text === '' && (child.marks ?? []).length === 0
+}
+
 function applySync({
   editor,
   getRemoteValue,
+  pushPatches,
 }: {
   editor: Editor
   getRemoteValue: () => PortableTextBlock[] | null | undefined
+  pushPatches?: (patches: PtePatch[]) => void
 }) {
   const remoteValue = getRemoteValue()
 
@@ -686,8 +1025,25 @@ function applySync({
     return
   }
 
+  recordAnnotationKeys(editor, [
+    remoteValue,
+    editor.getSnapshot().context.value,
+  ])
+
+  if (remoteValue.length === 0 && isEmptyPlaceholderValue(editor)) {
+    // An empty document and the editor's local placeholder are the same
+    // state. Diffing them "repairs" the placeholder away, and the editor
+    // re-mints it with fresh keys on every pass, never converging.
+    cancelPendingRepair(editor)
+    return
+  }
+
   const first = computeRepair(editor, remoteValue)
-  if (first.convertible && first.patches.length === 0) {
+  if (
+    first.convertible &&
+    first.patches.length === 0 &&
+    (!pushPatches || findOrphanedMarkCleanups(editor, remoteValue).length === 0)
+  ) {
     cancelPendingRepair(editor)
     return
   }
@@ -714,7 +1070,7 @@ function applySync({
     // divergence either disappears once the push round-trips, or persists
     // and gets repaired then).
     if (unflushedEdits.get(editor)) {
-      applySync({editor, getRemoteValue})
+      applySync({editor, getRemoteValue, pushPatches})
       return
     }
 
@@ -727,20 +1083,35 @@ function applySync({
       return
     }
     const second = computeRepair(editor, latestRemote)
-    if (second.convertible && second.patches.length === 0) {
-      return
-    }
     if (second.signature !== first.signature) {
       // Still diverged but differently: re-arm so a stable state eventually
       // confirms. Transients converge to the empty diff; genuine divergence
       // stabilizes to a fixed signature within one flush cycle.
-      applySync({editor, getRemoteValue})
+      applySync({editor, getRemoteValue, pushPatches})
+      return
+    }
+    if (second.convertible && second.patches.length === 0) {
+      healStrandedMarks(editor, latestRemote, pushPatches)
+      return
+    }
+
+    if (latestRemote.length === 0) {
+      if (!isEmptyPlaceholderValue(editor)) {
+        // Adopt "empty" through the whole-value sync: it empties the
+        // first text block in place, keeping its keys, so this editor
+        // converges with the client that emptied the document. A patch
+        // diff would instead remove the block and re-mint placeholder
+        // keys the other client can never match.
+        debug.repair('adopting empty document via whole-value sync')
+        editor.send({type: 'update value', value: latestRemote})
+      }
       return
     }
 
     if (!second.convertible) {
       debug.repair('escalating to whole-value sync (unconvertible diff)')
       editor.send({type: 'update value', value: latestRemote})
+      healStrandedMarks(editor, latestRemote, pushPatches)
       return
     }
 
@@ -764,6 +1135,8 @@ function applySync({
       }
       editor.send({type: 'update value', value: latestRemote})
     }
+
+    healStrandedMarks(editor, latestRemote, pushPatches)
   }, REPAIR_CONFIRM_DELAY)
 
   pendingRepairs.set(editor, {signature: first.signature, timer})
@@ -834,12 +1207,14 @@ const valueSyncMachine = setup({
       getRemoteValue: ValueSyncConfig['getRemoteValue']
       onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
       onRemotePatches: ValueSyncConfig['onRemotePatches']
+      pushPatches: ValueSyncConfig['pushPatches']
     },
     input: {} as {
       editor: Editor
       getRemoteValue: ValueSyncConfig['getRemoteValue']
       onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
       onRemotePatches: ValueSyncConfig['onRemotePatches']
+      pushPatches: ValueSyncConfig['pushPatches']
     },
     events: {} as
       | {type: 'patch emitted'}
@@ -865,6 +1240,7 @@ const valueSyncMachine = setup({
       applySync({
         editor: context.editor,
         getRemoteValue: context.getRemoteValue,
+        pushPatches: context.pushPatches,
       })
     },
     'apply remote patches': ({context, event}) => {
@@ -903,6 +1279,7 @@ const valueSyncMachine = setup({
     getRemoteValue: input.getRemoteValue,
     onRemoteValueChange: input.onRemoteValueChange,
     onRemotePatches: input.onRemotePatches,
+    pushPatches: input.pushPatches,
   }),
   entry: ['send initial value'],
   invoke: [
@@ -1197,6 +1574,7 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
               const mergeable = toMergeableMarkDefsPatches(
                 event.patches,
                 context.getRemoteValue,
+                () => context.editor.getSnapshot().context.value,
               )
               debug.push('pushing patches %o', mergeable)
               pushPatches(mergeable)
@@ -1224,6 +1602,7 @@ export function ValueSyncPlugin(props: ValueSyncConfig) {
         getRemoteValue,
         onRemoteValueChange,
         onRemotePatches,
+        pushPatches,
       },
     },
   )

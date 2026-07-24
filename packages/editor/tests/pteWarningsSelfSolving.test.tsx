@@ -266,7 +266,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     })
   })
 
-  it('removes orphaned marksDefs', async () => {
+  it('keeps unused markDefs on load and prunes them on the next local edit', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
@@ -293,7 +293,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
 
     const onChange = vi.fn()
 
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       children: (
         <>
           <EventListenerPlugin on={onChange} />
@@ -310,6 +310,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
+
+    // Adoption keeps the document's structure, including a definition no
+    // span references: it may be referenced by a collaborator's in-flight
+    // edits. Pruning is deferred to local-edit fallout.
     await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
@@ -322,6 +326,42 @@ describe('when PTE would display warnings, instead it self solves', () => {
                 _key: 'def',
                 _type: 'span',
                 text: 'Hello',
+                marks: [],
+              },
+            ],
+            markDefs: [
+              {
+                _key: 'ghi',
+                _type: 'link',
+                href: 'https://sanity.io',
+              },
+            ],
+            style: 'normal',
+          },
+        ])
+      }
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'abc'}, 'children', {_key: 'def'}], offset: 5},
+        focus: {path: [{_key: 'abc'}, 'children', {_key: 'def'}], offset: 5},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'abc',
+            _type: 'block',
+            children: [
+              {
+                _key: 'def',
+                _type: 'span',
+                text: 'Hello!',
                 marks: [],
               },
             ],

@@ -12,6 +12,7 @@ import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
+import {canonicalizeOwnProperties} from './canonicalize-properties'
 
 export function insertChildren<T>(
   xs: T[],
@@ -71,7 +72,11 @@ export const modifyDescendant = <N extends Node>(
     return
   }
   const node = nodeEntry.node
-  let modifiedNode: Node = f(node as N)
+  // Modifiers add and remove properties with spreads, which appends new
+  // properties at the end; keep the node's property order canonical so
+  // converged editors serialize identically (see
+  // `canonicalize-properties.ts`).
+  let modifiedNode: Node = canonicalizeOwnProperties(f(node as N))
 
   // Walk down from the root to collect the child field name at each level.
   // This is needed to rebuild ancestors using the correct field (e.g. 'rows',

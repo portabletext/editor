@@ -108,14 +108,17 @@ describe('event.update value', () => {
       value: undefined,
     })
 
+    // Clearing empties the first text block in place instead of minting a
+    // fresh placeholder: a client that emptied the document by deleting
+    // its text keeps these keys, and adopting clients converge on them.
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
-          _key: 'k2',
+          _key: 'k0',
           _type: 'block',
           children: [
             {
-              _key: 'k3',
+              _key: 'k1',
               _type: 'span',
               text: '',
               marks: [],
@@ -438,15 +441,18 @@ describe('event.update value', () => {
       value: undefined,
     })
 
+    // Clearing empties the block in place, keeping its keys and resetting
+    // the style to the default, so converged clients agree on the empty
+    // document's shape.
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
-          _key: 'k4',
+          _key: blockKey,
           children: [
             {
               _type: 'span',
-              _key: 'k5',
+              _key: spanKey,
               text: '',
               marks: [],
             },
@@ -2036,7 +2042,7 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     )
   })
 
-  test('Scenario: a mid-session update with an unused markDef is repaired on both sides', async () => {
+  test('Scenario: a mid-session update with an unused markDef keeps the definition until a local edit', async () => {
     const patches: Array<Patch> = []
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -2079,15 +2085,10 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       ],
     })
 
-    const unsetPatch = {
-      type: 'unset',
-      path: [{_key: 'b0'}, 'markDefs', {_key: 'm1'}],
-    }
-
-    // The auto-resolution is emitted as a patch AND applied to the block
-    // the engine receives: the def is gone on both sides.
+    // The definition is adopted as the document has it: a def that looks
+    // unused in this snapshot may be referenced by a collaborator's
+    // in-flight edits, so adoption neither prunes it nor emits patches.
     await vi.waitFor(() => {
-      expect(patches).toEqual([unsetPatch])
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'b0',
@@ -2095,17 +2096,15 @@ describe('event.update value: auto-resolved invalid blocks', () => {
           children: [
             {_key: 's0', _type: 'span', text: 'hello changed', marks: []},
           ],
-          markDefs: [],
+          markDefs: [{_key: 'm1', _type: 'link', href: 'https://example.com'}],
           style: 'normal',
         },
       ])
+      expect(patches).toEqual([])
     })
 
-    // Causal sentinel: one local edit, then assert the full emission
-    // history. Before the fix the engine received the block with the def
-    // still present, its own normalizer pruned it and parked a whole-array
-    // `set` on the pristine editor, and that parked patch flushed here,
-    // ahead of the sentinel's.
+    // The next local edit canonicalizes the block: the unused definition
+    // is pruned as normalization fallout and rides out with the edit.
     editor.send({
       type: 'select',
       at: {
@@ -2116,14 +2115,30 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello changed!', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
       expect(patches).toEqual([
-        unsetPatch,
         {
           type: 'diffMatchPatch',
           path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
           value: stringifyPatches(
             makePatches(makeDiff('hello changed', 'hello changed!')),
           ),
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'markDefs'],
+          value: [],
           origin: 'local',
         },
       ])

@@ -37,7 +37,8 @@ import type {WithEditorFirstArg} from '../utils/types'
  * required fields, empty blocks, unbracketed inline objects) and always
  * run. Cosmetic rules canonicalize structure that is already valid
  * Portable Text (merging adjacent same-mark spans, dropping empty sibling
- * spans) and must not run while applying remote patches: emitted text
+ * spans, markDefs housekeeping, dropping annotations from empty spans)
+ * and must not run while applying remote patches: emitted text
  * patches are `diffMatchPatch` against a keyed span's text, so the wire
  * structure is the shared base between editor and store, and canonicalizing
  * a collaborator's structure either forks that base (kept local) or makes
@@ -339,8 +340,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   /**
    * Remove annotations from empty spans
+   *
+   * Cosmetic: an empty span carrying an annotation is valid Portable
+   * Text. During adoption a span can be transiently empty while a
+   * collaborator's text is still in flight, and stripping the annotation
+   * here pushed the removal at them.
    */
-  if (isSpan({schema: editor.snapshot.context.schema}, node)) {
+  if (
+    !isCosmeticNormalizationSkipped(editor) &&
+    isSpan({schema: editor.snapshot.context.schema}, node)
+  ) {
     const blockPath = parentPath(path)
     const blockEntry = getTextBlock(editor.snapshot, blockPath)
     if (!blockEntry) {
@@ -367,8 +376,15 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   /**
    * Remove duplicate markDefs
+   *
+   * Cosmetic: duplicates render fine and the rewrite is a whole-array
+   * `set` that overwrites concurrent `markDefs` changes at the document,
+   * so it must only run as fallout of local edits.
    */
-  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+  if (
+    !isCosmeticNormalizationSkipped(editor) &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+  ) {
     const markDefs = node.markDefs ?? []
     const markDefKeys = new Set<string>()
     const newMarkDefs: Array<PortableTextObject> = []
@@ -389,8 +405,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   /**
    * Remove markDefs not in use
+   *
+   * Cosmetic: unused markDefs are valid Portable Text. A definition that
+   * looks unused in an adopted snapshot may be referenced by a
+   * collaborator's in-flight edits, and pruning it here pushed an unset
+   * that orphaned their marks at the document.
    */
-  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+  if (
+    !isCosmeticNormalizationSkipped(editor) &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+  ) {
     const newMarkDefs = (node.markDefs || []).filter((def) => {
       return node.children.find((child) => {
         return (
