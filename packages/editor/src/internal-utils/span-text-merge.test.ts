@@ -39,6 +39,7 @@ describe(applyPatchesStrictly.name, () => {
     const patches = createPatches('hello world', 'hello brave world')
 
     expect(applyPatchesStrictly(patches, 'hello world')).toEqual({
+      ok: true,
       matchedRanges: [{start: 0, end: 11}],
       text: 'hello brave world',
     })
@@ -46,8 +47,12 @@ describe(applyPatchesStrictly.name, () => {
 
   test('applies patches using UTF-8 coordinates', () => {
     const patches = createPatches('🙂 café', '🙂 small café')
+    const result = applyPatchesStrictly(patches, '🙂 café')
 
-    expect(applyPatchesStrictly(patches, '🙂 café')?.text).toBe('🙂 small café')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.text).toBe('🙂 small café')
+    }
   })
 
   test('finds an exact source near the expected offset', () => {
@@ -56,9 +61,13 @@ describe(applyPatchesStrictly.name, () => {
       'prefix changed suffix',
     )
 
-    expect(
-      applyPatchesStrictly(patches, 'local prefix target suffix')?.text,
-    ).toBe('local prefix changed suffix')
+    expect(applyPatchesStrictly(patches, 'local prefix target suffix')).toEqual(
+      {
+        ok: true,
+        matchedRanges: [{start: 9, end: 23}],
+        text: 'local prefix changed suffix',
+      },
+    )
   })
 
   test('keeps a shifted coordinate across multiple patches', () => {
@@ -68,12 +77,17 @@ describe(applyPatchesStrictly.name, () => {
     const patches = createPatches(sourceText, targetText)
 
     expect(patches.length).toBeGreaterThan(1)
-    expect(applyPatchesStrictly(patches, `local ${sourceText}`)?.text).toBe(
-      `local ${targetText}`,
-    )
+    expect(applyPatchesStrictly(patches, `local ${sourceText}`)).toEqual({
+      ok: true,
+      matchedRanges: [
+        {start: 6, end: 15},
+        {start: 109, end: 116},
+      ],
+      text: `local ${targetText}`,
+    })
   })
 
-  test('rejects equal-distance repeated context', () => {
+  test('reports equal-distance repeated context as ambiguous', () => {
     const [patch] = createPatches('target', 'changed')
     const ambiguousPatch: Patch = {
       ...patch!,
@@ -83,15 +97,19 @@ describe(applyPatchesStrictly.name, () => {
       utf8Start2: 4,
     }
 
-    expect(
-      applyPatchesStrictly([ambiguousPatch], 'target__target'),
-    ).toBeUndefined()
+    expect(applyPatchesStrictly([ambiguousPatch], 'target__target')).toEqual({
+      ok: false,
+      reason: 'ambiguous',
+    })
   })
 
-  test('rejects a missing exact source', () => {
+  test('reports a missing exact source', () => {
     const patches = createPatches('before', 'after')
 
-    expect(applyPatchesStrictly(patches, 'unrelated')).toBeUndefined()
+    expect(applyPatchesStrictly(patches, 'unrelated')).toEqual({
+      ok: false,
+      reason: 'missing',
+    })
   })
 })
 
