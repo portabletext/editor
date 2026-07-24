@@ -1,0 +1,229 @@
+---
+title: Migrate render props to node registrations
+description: Move an editor from the render props on PortableTextEditable to defineX node registrations, one kind at a time.
+---
+
+The editor has two ways to render a document's nodes (text blocks, block objects, inline objects, and spans): the render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), and node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`) mounted through `NodePlugin`. Registrations are how [containers](/editor/concepts/containers/) render, and for a registered node they own the wrapper entirely: those four render props do not compose with them.
+
+This guide migrates each render prop to its registration. You don't have to do it in one go.
+
+## What maps to what
+
+| Legacy                                                                        | New                                                                                                                                       |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `renderStyle`, `renderListItem`, `renderBlock` (for text blocks)              | `defineTextBlock({type: 'block'})`                                                                                                        |
+| `renderBlock` (for block objects)                                             | `defineBlockObject`, per type or `type: '*'`                                                                                              |
+| `renderChild` (for inline objects)                                            | `defineInlineObject`, per type or `type: '*'`                                                                                             |
+| `renderChild` (for spans)                                                     | `defineSpan({type: 'span'})`                                                                                                              |
+| `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, range decorations | Unchanged, keep them                                                                                                                      |
+| Engine list wrapping and numbering                                            | Your text block render + [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) |
+| Engine drop indicator                                                         | [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd)                                        |
+
+## Migrate one kind at a time
+
+The engine dispatches per `_type`: a node renders through a registration when one matches its type (or a `'*'` catch-all for its kind), and at the top level falls back to the legacy pipeline when none does. Registering block objects doesn't affect how text blocks render, so you can migrate kind by kind and keep the remaining render props in place until their kind is migrated.
+
+One boundary to plan around: a registration claims everything rendered inside it. Inside a registered [container](/editor/concepts/containers/), unregistered types render through the engine defaults, not through your remaining render props, so when a container enters the picture mid-migration, register everything that renders inside it in the same step. The same applies one level down: a registered text block claims its inline children, and `renderChild` stops firing for the spans and inline objects inside it. That is why the steps below migrate inline objects and spans before text blocks.
+
+## Step 1: block objects
+
+The legacy `renderBlock` handles text blocks and block objects in one callback, branching on `schemaType`:
+
+```tsx
+const renderBlock: RenderBlockFunction = (props) => {
+  if (props.schemaType.name === 'image' && isImage(props.value)) {
+    return (
+      <div style={{border: '1px solid #ccc', padding: '0.5em'}}>
+        <img src={props.value.src} alt={props.value.alt || ''} />
+      </div>
+    )
+  }
+  // Default case for text blocks
+  return <div style={{marginBlockEnd: '0.5em'}}>{props.children}</div>
+}
+```
+
+The registration splits that branch into kinds. A block object registers by its type, no `isImage` guard needed, the registration _is_ the type match:
+
+```tsx
+import {defineBlockObject} from '@portabletext/editor'
+
+const imageBlock = defineBlockObject({
+  type: 'image',
+  render: ({attributes, children, node}) => (
+    <div {...attributes} style={{border: '1px solid #ccc', padding: '0.5em'}}>
+      <img
+        src={String(node.src)}
+        alt={String(node.alt ?? '')}
+        contentEditable={false}
+      />
+      {children}
+    </div>
+  ),
+})
+```
+
+Three contract differences from the legacy callback: spread `attributes` onto your outer element, render `children` even though the block is a void (the engine mounts its internals through them), and mark the visible content `contentEditable={false}` while keeping the outer element editable, the engine anchors the caret through it. This mirrors the engine's own default block-object render.
+
+If you render every block object the same way, a preview card, say, the catch-all `type: '*'` matches every block object type that has no more specific registration, which is the direct equivalent of the generic legacy callback:
+
+```tsx
+const blockObjectFallback = defineBlockObject({
+  type: '*',
+  render: ({attributes, children, node}) => (
+    <div {...attributes}>
+      <div contentEditable={false}>
+        <BlockObjectPreview node={node} />
+      </div>
+      {children}
+    </div>
+  ),
+})
+```
+
+Per-type registrations and the catch-all compose: register `image` specifically and `'*'` for the rest.
+
+## Step 2: inline objects
+
+`renderChild` migrates the same way. Before:
+
+```tsx
+const renderChild: RenderChildFunction = (props) => {
+  if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
+    return <span className="ticker">{props.value.symbol}</span>
+  }
+  return props.children
+}
+```
+
+After, per type or catch-all:
+
+```tsx
+import {defineInlineObject} from '@portabletext/editor'
+
+const stockTicker = defineInlineObject({
+  type: 'stock-ticker',
+  render: ({attributes, children, node}) => (
+    <span {...attributes} className="ticker">
+      {String(node.symbol)}
+      {children}
+    </span>
+  ),
+})
+```
+
+Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine and the span-level render props, and only registered inline object types hit your render.
+
+## Step 3: spans, if you customized them
+
+Most editors never touch how spans render: decorators and annotations are the span-level props' job, and those keep working. But the legacy `renderChild` also fired for the spans themselves, and if yours wrapped them, the registration equivalent is `defineSpan`:
+
+```tsx
+import {defineSpan} from '@portabletext/editor'
+
+const span = defineSpan({
+  type: 'span',
+  render: ({attributes, children}) => (
+    <span {...attributes} className="leaf">
+      {children}
+    </span>
+  ),
+})
+```
+
+A registered span owns the outer wrapper, and `children` arrive with `renderDecorator` and `renderAnnotation` already applied, the same composition the legacy pipeline produced inside the span. `'span'` is the span type at the top level; text blocks can positionally register renamed span-like types through their own `of` (a `code-span` inside a code block's line, say), which is a [containers](/editor/concepts/containers/) concern rather than a migration one.
+
+## Step 4: text blocks
+
+Text blocks register as `type: 'block'`, which is the text block type at every nesting level, top level and inside containers alike. The registration's render owns the whole wrapper, so the three legacy callbacks fold into one function. Reproduce the engine's legacy composition order: style innermost, list item around it, block wrapper outermost.
+
+:::note[Why pass `type` at all?]
+If the text block is always `block` and the span is always `span`, the parameter looks redundant. It exists because registrations live in a type-keyed registry with two tiers: `'*'` is an optional catch-all, matching any type of that kind without a more specific registration, and positional overrides can register renamed types at that scope: block-level kinds through a container's `of`, inline kinds through a text block's `of`. `'block'` and `'span'` are simply those kinds' canonical names at the top level.
+:::
+
+Before:
+
+```tsx
+const renderStyle: RenderStyleFunction = (props) => {
+  if (props.schemaType.value === 'h1') {
+    return <h1>{props.children}</h1>
+  }
+  if (props.schemaType.value === 'blockquote') {
+    return <blockquote>{props.children}</blockquote>
+  }
+  return <>{props.children}</>
+}
+
+const renderListItem: RenderListItemFunction = (props) => (
+  <ListItemWrapper level={props.level}>{props.children}</ListItemWrapper>
+)
+
+// Plus the text-block default case of the `renderBlock` from step 1:
+// <div style={{marginBlockEnd: '0.5em'}}>{props.children}</div>
+```
+
+After:
+
+```tsx
+import {defineTextBlock} from '@portabletext/editor'
+
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: ({attributes, children, node}) => {
+    let content = children
+
+    // Your `renderStyle` logic, innermost.
+    if (node.style === 'h1') {
+      content = <h1>{content}</h1>
+    } else if (node.style === 'blockquote') {
+      content = <blockquote>{content}</blockquote>
+    }
+
+    // Your `renderListItem` logic around it.
+    if (node.listItem !== undefined) {
+      content = (
+        <ListItemWrapper level={node.level ?? 1}>{content}</ListItemWrapper>
+      )
+    }
+
+    // Your `renderBlock` default case, outermost.
+    return (
+      <div {...attributes} style={{marginBlockEnd: '0.5em'}}>
+        {content}
+      </div>
+    )
+  },
+})
+```
+
+The render props carry `node`, `path`, `focused`, and `selected`, so components you already have keep receiving the information the legacy callbacks gave them.
+
+## Step 5: reclaim the engine's chrome
+
+Under the legacy pipeline the engine wrapped list items and numbered ordered lists for you, and drew a drop indicator during block drags. Under registrations both are yours. [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, and [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's `drag.*` events. Both follow the same pattern, a provider inside `EditorProvider` and a hook read from a component your render returns; the [containers page](/editor/concepts/containers/#registrations-opt-into-the-new-render-pipeline) has the worked example and each plugin's README carries the full recipe.
+
+## Step 6: mount and clean up
+
+Mount every registration through one `NodePlugin` with a stable identity, and drop the migrated render props:
+
+```tsx
+// Plus `span` from step 3, if you needed it.
+const nodes = [imageBlock, blockObjectFallback, stockTicker, textBlock]
+
+function App() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition}}>
+      <NodePlugin nodes={nodes} />
+      <PortableTextEditable
+        // These keep working and stay:
+        renderDecorator={renderDecorator}
+        renderAnnotation={renderAnnotation}
+        renderPlaceholder={renderPlaceholder}
+        // renderBlock, renderChild, renderStyle, renderListItem: removed
+      />
+    </EditorProvider>
+  )
+}
+```
+
+`renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations are span-level: they fire on the spans inside `children` no matter who renders the block, so they are not part of this migration.

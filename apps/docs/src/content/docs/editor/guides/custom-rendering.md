@@ -11,6 +11,10 @@ The Portable Text Editor gives you control of how it renders each schema type el
 This guide covers `@portabletext/editor` **v6.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 18+.
 :::
 
+:::note[Two rendering systems]
+The render props on this page are the editor's original rendering API, and they keep working. The editor also has node registrations (`defineTextBlock`, `defineBlockObject`, and friends), a newer pipeline that powers [containers](/editor/concepts/containers/) and owns the wrapper entirely where registered. To move an editor from these render props onto registrations, follow the [migration guide](/editor/guides/migrate-render-props/).
+:::
+
 The following props can be passed to the `PortableTextEditable` component:
 
 - `renderAnnotation`: For annotations (e.g., hyperlinks).

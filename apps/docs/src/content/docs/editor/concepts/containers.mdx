@@ -246,66 +246,9 @@ function TextBlock(props: TextBlockRenderProps) {
 
 Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
 
-### Route legacy render props into registrations
-
-An existing editor typically renders every custom object through the same two callbacks: `renderBlock` for block objects and `renderChild` for inline objects, one generic implementation regardless of `_type`. `defineBlockObject` and `defineInlineObject` accept the catch-all `type: '*'` for exactly this shape of code: one registration matches every object type that has no more specific registration, so your generic renderers route straight through:
-
-```tsx
-const nodes = [
-  defineBlockObject({
-    type: '*',
-    render: ({attributes, children, node}) => (
-      <div {...attributes}>
-        {/* Whatever your `renderBlock` callback returned. */}
-        <BlockObjectPreview node={node} />
-        {children}
-      </div>
-    ),
-  }),
-  defineInlineObject({
-    type: '*',
-    render: ({attributes, children, node}) => (
-      <span {...attributes}>
-        {/* Whatever your `renderChild` callback returned. */}
-        <InlineObjectPreview node={node} />
-        {children}
-      </span>
-    ),
-  }),
-]
-```
-
-For text blocks, `type: 'block'` is all you need. The engine's legacy composition nests style innermost, list item around it, and the block wrapper outermost; reproduce that order in the registration:
-
-```tsx
-const nodes = [
-  defineTextBlock({
-    type: 'block',
-    render: ({attributes, children, node}) => {
-      let content = children
-
-      if (node.style !== undefined) {
-        // Whatever your `renderStyle` callback returned.
-        content = <StyleWrapper style={node.style}>{content}</StyleWrapper>
-      }
-
-      if (node.listItem !== undefined) {
-        // Whatever your `renderListItem` callback returned.
-        content = (
-          <ListItemWrapper listItem={node.listItem} level={node.level ?? 1}>
-            {content}
-          </ListItemWrapper>
-        )
-      }
-
-      // Whatever your `renderBlock` callback wrapped around it all.
-      return <div {...attributes}>{content}</div>
-    },
-  }),
-]
-```
-
-The render props carry `node`, `path`, `focused`, and `selected`, so your existing components get the same information the legacy callbacks received. Once every kind you use is registered, the legacy props can come off `<PortableTextEditable>` entirely.
+:::note[Migrating from the render props?]
+If your editor renders through the legacy props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
+:::
 
 ## Editing follows the sub-schema
 
