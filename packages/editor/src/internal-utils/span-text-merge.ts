@@ -16,19 +16,10 @@ export type StrictPatchApplication = {
   text: string
 }
 
-export type StrictPatchResult =
-  | ({ok: true} & StrictPatchApplication)
-  | {ok: false; reason: 'missing' | 'ambiguous'}
-
-type ExactMatchResult =
-  | {status: 'found'; offset: number}
-  | {status: 'missing'}
-  | {status: 'ambiguous'}
-
 export function applyPatchesStrictly(
   patches: ReadonlyArray<Patch>,
   sourceText: string,
-): StrictPatchResult {
+): StrictPatchApplication | undefined {
   let displacement = 0
   let text = sourceText
   const matchedRanges: Array<{start: number; end: number}> = []
@@ -44,24 +35,28 @@ export function applyPatchesStrictly(
       .join('')
     const expectedOffset =
       utf8OffsetToStringOffset(text, patch.utf8Start2) + displacement
-    const match = findNearestExactMatch(text, sourcePattern, expectedOffset)
+    const matchOffset = findNearestExactMatch(
+      text,
+      sourcePattern,
+      expectedOffset,
+    )
 
-    if (match.status !== 'found') {
-      return {ok: false, reason: match.status}
+    if (matchOffset === undefined) {
+      return undefined
     }
 
     matchedRanges.push({
-      start: match.offset,
-      end: match.offset + sourcePattern.length,
+      start: matchOffset,
+      end: matchOffset + sourcePattern.length,
     })
     text =
-      text.slice(0, match.offset) +
+      text.slice(0, matchOffset) +
       targetPattern +
-      text.slice(match.offset + sourcePattern.length)
-    displacement += match.offset - expectedOffset
+      text.slice(matchOffset + sourcePattern.length)
+    displacement += matchOffset - expectedOffset
   }
 
-  return {ok: true, matchedRanges, text}
+  return {matchedRanges, text}
 }
 
 export function mergeSpanText(
@@ -127,21 +122,17 @@ function findNearestExactMatch(
   text: string,
   pattern: string,
   expectedOffset: number,
-): ExactMatchResult {
+): number | undefined {
   const boundedExpectedOffset = Math.max(
     0,
     Math.min(expectedOffset, text.length),
   )
 
   if (pattern.length === 0) {
-    return {status: 'found', offset: boundedExpectedOffset}
+    return boundedExpectedOffset
   }
 
   let matchOffset = text.indexOf(pattern)
-  if (matchOffset === -1) {
-    return {status: 'missing'}
-  }
-
   let nearestOffset: number | undefined
   let nearestDistance = Infinity
   let nearestIsAmbiguous = false
@@ -160,15 +151,7 @@ function findNearestExactMatch(
     matchOffset = text.indexOf(pattern, matchOffset + 1)
   }
 
-  if (nearestOffset === undefined) {
-    return {status: 'missing'}
-  }
-
-  if (nearestIsAmbiguous) {
-    return {status: 'ambiguous'}
-  }
-
-  return {status: 'found', offset: nearestOffset}
+  return nearestIsAmbiguous ? undefined : nearestOffset
 }
 
 function mergeInsertions(

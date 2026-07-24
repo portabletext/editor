@@ -137,8 +137,7 @@ function diffMatchPatch(
     return false
   }
 
-  const now = Date.now()
-  pruneStaleLocalTextEdits(editor.pendingLocalTextEdits, now)
+  pruneStaleLocalTextEdits(editor.pendingLocalTextEdits, Date.now())
 
   const pendingLocalEditKey = getPendingLocalTextEditsKey(spanEntry.path)
   const pendingLocalEdit = editor.pendingLocalTextEdits.get(pendingLocalEditKey)
@@ -146,9 +145,8 @@ function diffMatchPatch(
 
   if (!pendingLocalEdit) {
     const strictLiveApplication = applyPatchesStrictly(patches, liveText)
-    const newValue = strictLiveApplication.ok
-      ? strictLiveApplication.text
-      : applyFuzzyPatches(patches, liveText)
+    const newValue =
+      strictLiveApplication?.text ?? applyFuzzyPatches(patches, liveText)
     return newValue === undefined
       ? false
       : applyTextValue(editor, spanEntry.path, liveText, newValue)
@@ -160,7 +158,7 @@ function diffMatchPatch(
   )
   const strictLiveApplication = applyPatchesStrictly(patches, liveText)
 
-  if (strictBaseApplication.ok) {
+  if (strictBaseApplication) {
     const mergedText = mergeSpanText(
       pendingLocalEdit.baseText,
       liveText,
@@ -172,18 +170,11 @@ function diffMatchPatch(
       pendingLocalEdit,
       strictBaseApplication.text,
       mergedText,
-      now,
     )
     return applyTextValue(editor, spanEntry.path, liveText, mergedText)
   }
 
-  // Ambiguous base matches are not safe to treat as live acknowledgements.
-  // Keep the pending base and skip this patch rather than guessing.
-  if (strictBaseApplication.reason === 'ambiguous') {
-    return false
-  }
-
-  if (strictLiveApplication.ok) {
+  if (strictLiveApplication) {
     editor.pendingLocalTextEdits.delete(pendingLocalEditKey)
     return applyTextValue(
       editor,
@@ -217,6 +208,7 @@ function diffMatchPatch(
   )
 
   if (!candidate) {
+    editor.pendingLocalTextEdits.delete(pendingLocalEditKey)
     return false
   }
 
@@ -227,7 +219,6 @@ function diffMatchPatch(
       pendingLocalEdit,
       candidate.remoteText,
       candidate.text,
-      now,
     )
   } else {
     editor.pendingLocalTextEdits.delete(pendingLocalEditKey)
@@ -307,13 +298,11 @@ function updatePendingLocalTextEdit(
   edit: PendingLocalTextEdit,
   remoteText: string,
   mergedText: string,
-  now: number,
 ): void {
   if (remoteText === mergedText) {
     edits.delete(key)
   } else {
     edit.baseText = remoteText
-    edit.lastEditTime = now
   }
 }
 
