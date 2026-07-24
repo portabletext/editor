@@ -142,21 +142,20 @@ async function typeCharacterByCharacter(
 const expectedResult = linePrefix + pastedText + typedText
 
 /**
- * Reproduces a reported bug: two editors on the same field, with carets on
- * the same line. Editor A pastes text right after "A: ". A couple hundred
- * milliseconds later, before Editor B has received Editor A's edit, Editor
- * B starts typing at the same spot.
+ * Regression test for a reported bug: two editors on the same field, with
+ * carets on the same line. Editor A pastes text right after "A: ". A
+ * couple hundred milliseconds later, before Editor B has received Editor
+ * A's edit, Editor B starts typing at the same spot.
  *
  * Each editor learns about the other's edit through a `diffMatchPatch`
  * patch computed against the shared base text "A: ". Applying that patch
- * means fuzzy-matching the "A: " context in the editor's *current* (already
- * locally-edited) text and inserting right after it, regardless of what
- * that editor has already placed there. Neither side's local edit is
- * treated as coming "before" or "after" the other's; there's no tie-break
+ * used to mean fuzzy-matching the "A: " context in the editor's *current*
+ * (already locally-edited) text and inserting right after it, regardless
+ * of what that editor had already placed there — there was no tie-break
  * for concurrent inserts at the same anchor point. When the remote patch
- * lands mid-keystroke, the local typing burst itself ends up split around
- * it: both editors converge on the same document, but it's the wrong one,
- * with the pasted sentence nested inside the typed text.
+ * landed mid-keystroke, the local typing burst itself ended up split
+ * around it: both editors converged on the same document, but it was the
+ * wrong one, with the pasted sentence nested inside the typed text.
  */
 describe('Concurrent paste and typing race', () => {
   test.each([
@@ -209,14 +208,6 @@ describe('Concurrent paste and typing race', () => {
       // Both editors should converge on "A: {pasted text}{typed text}":
       // Editor A's paste, which happened first, followed by Editor B's typed
       // text as one unbroken run.
-      //
-      // In practice they converge on the same document, but it's the wrong
-      // one: the pasted text ends up nested inside the typed text instead
-      // (e.g. "A: asdALPHA The newsroom shipped its quarterly report before
-      // dawn.asds"). The exact split point is timing-dependent, so rather
-      // than assert on that garbled shape, these assertions are written
-      // against the correct outcome and are expected to fail, with
-      // Vitest's diff showing the actual, garbled text.
       const finalTextA = getTersePt(editor.getSnapshot().context)[0]
       const finalTextB = getTersePt(editorB.getSnapshot().context)[0]
 

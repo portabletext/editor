@@ -4,6 +4,7 @@ import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {EngineOperation} from '../engine/interfaces/operation'
+import type {PendingLocalTextEdit} from '../internal-utils/pending-local-text-edits'
 import type {
   BlockObjectConfig,
   InlineObjectConfig,
@@ -77,6 +78,17 @@ export interface PortableTextEditorEngine extends DOMEditor {
   verifiedUniqueChildGroups: Set<string>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
+  /**
+   * Local `insert.text`/`remove.text` operations applied to a span since
+   * the last remote `diffMatchPatch` for that span, keyed by
+   * `getPendingLocalTextEditsKey(spanPath)`. Populated by
+   * `subscribeLocalTextEdits`, consulted (and cleared) by the
+   * `diffMatchPatch` remote-patch handler in `internal-utils/applyPatch.ts`,
+   * and also cleared once a span's own edits flush out in a `mutation`
+   * event — this only needs to cover the window before this editor's edit
+   * has been sent anywhere.
+   */
+  pendingLocalTextEdits: Map<string, Array<PendingLocalTextEdit>>
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

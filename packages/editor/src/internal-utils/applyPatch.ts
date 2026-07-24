@@ -22,6 +22,12 @@ import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
 import {getValue} from './get-value'
+import {
+  getPendingLocalTextEditsKey,
+  mapOffsetThroughLocalEdits,
+  pruneStaleLocalTextEdits,
+  reconstructTextBeforeLocalEdits,
+} from './pending-local-text-edits'
 import {isEqualToEmptyEditor} from './values'
 
 /**
@@ -64,7 +70,7 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextEditorEngine,
-    'apply' | 'onChange' | 'containers' | 'snapshot'
+    'apply' | 'onChange' | 'containers' | 'snapshot' | 'pendingLocalTextEdits'
   >,
   patch: DiffMatchPatch,
 ): boolean {
@@ -103,29 +109,93 @@ function diffMatchPatch(
     return false
   }
 
+  const now = Date.now()
+  const pendingLocalEdits = pruneStaleLocalTextEdits(
+    editor.pendingLocalTextEdits.get(
+      getPendingLocalTextEditsKey(spanEntry.path),
+    ) ?? [],
+    now,
+  )
+
+  // The common case: no recent local edit to this span, so the live text
+  // is exactly what the remote diff was computed against. Apply it as-is.
+  if (pendingLocalEdits.length === 0) {
+    const patches = parsePatch(patch.value)
+    const [newValue] = diffMatchPatchApplyPatches(
+      patches,
+      spanEntry.node.text,
+      {allowExceedingIndices: true},
+    )
+    const diff = cleanupEfficiency(makeDiff(spanEntry.node.text, newValue), 5)
+
+    let offset = 0
+    for (const [op, text] of diff) {
+      if (op === DIFF_INSERT) {
+        editor.apply({
+          type: 'insert.text',
+          path: spanEntry.path,
+          offset,
+          text,
+        })
+        offset += text.length
+      } else if (op === DIFF_DELETE) {
+        editor.apply({
+          type: 'remove.text',
+          path: spanEntry.path,
+          offset,
+          text,
+        })
+      } else if (op === DIFF_EQUAL) {
+        offset += text.length
+      }
+    }
+
+    return true
+  }
+
+  // This span has local, unflushed edits sitting on top of the text the
+  // remote diff was computed against. Fuzzy-match and diff against the
+  // text as it stood *before* those local edits, then map each resulting
+  // change's offset forward through them, rather than fuzzy-matching
+  // against the live text directly — which would find wherever the
+  // remote's context happens to match inside the local edit and splice the
+  // remote content into the middle of it.
+  const textBeforeLocalEdits = reconstructTextBeforeLocalEdits(
+    spanEntry.node.text,
+    pendingLocalEdits,
+  )
   const patches = parsePatch(patch.value)
-  const [newValue] = diffMatchPatchApplyPatches(patches, spanEntry.node.text, {
+  const [newValue] = diffMatchPatchApplyPatches(patches, textBeforeLocalEdits, {
     allowExceedingIndices: true,
   })
-  const diff = cleanupEfficiency(makeDiff(spanEntry.node.text, newValue), 5)
+  const diff = cleanupEfficiency(makeDiff(textBeforeLocalEdits, newValue), 5)
 
   let offset = 0
+  let remoteShiftSoFar = 0
   for (const [op, text] of diff) {
     if (op === DIFF_INSERT) {
+      const liveOffset =
+        mapOffsetThroughLocalEdits(offset, pendingLocalEdits, now) +
+        remoteShiftSoFar
       editor.apply({
         type: 'insert.text',
         path: spanEntry.path,
-        offset,
+        offset: liveOffset,
         text,
       })
       offset += text.length
+      remoteShiftSoFar += text.length
     } else if (op === DIFF_DELETE) {
+      const liveOffset =
+        mapOffsetThroughLocalEdits(offset, pendingLocalEdits, now) +
+        remoteShiftSoFar
       editor.apply({
         type: 'remove.text',
         path: spanEntry.path,
-        offset,
+        offset: liveOffset,
         text,
       })
+      remoteShiftSoFar -= text.length
     } else if (op === DIFF_EQUAL) {
       offset += text.length
     }
