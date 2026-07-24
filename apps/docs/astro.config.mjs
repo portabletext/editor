@@ -119,6 +119,7 @@ export default defineConfig({
               label: 'Guides',
               items: [
                 {slug: 'editor/guides/custom-rendering'},
+                {slug: 'editor/guides/migrate-render-props'},
                 {slug: 'editor/guides/customize-toolbar'},
                 {slug: 'editor/guides/create-behavior'},
                 {slug: 'editor/guides/behavior-cheat-sheet'},
