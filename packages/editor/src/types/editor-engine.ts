@@ -79,16 +79,10 @@ export interface PortableTextEditorEngine extends DOMEditor {
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
   /**
-   * Local `insert.text`/`remove.text` operations applied to a span since
-   * the last remote `diffMatchPatch` for that span, keyed by
-   * `getPendingLocalTextEditsKey(spanPath)`. Populated by
-   * `subscribeLocalTextEdits`, consulted (and cleared) by the
-   * `diffMatchPatch` remote-patch handler in `internal-utils/applyPatch.ts`,
-   * and also cleared once a span's own edits flush out in a `mutation`
-   * event — this only needs to cover the window before this editor's edit
-   * has been sent anywhere.
+   * The text before unresolved local edits for each span. Remote text
+   * patches use this base to merge both branches without replaying offsets.
    */
-  pendingLocalTextEdits: Map<string, Array<PendingLocalTextEdit>>
+  pendingLocalTextEdits: Map<string, PendingLocalTextEdit>
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

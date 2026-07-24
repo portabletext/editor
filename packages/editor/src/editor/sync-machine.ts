@@ -540,6 +540,7 @@ async function updateValue({
   }
 
   if (isChanged) {
+    editorEngine.pendingLocalTextEdits.clear()
     debug.syncValue('remote value changed, syncing local value')
 
     try {

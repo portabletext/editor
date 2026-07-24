@@ -1,3 +1,4 @@
+import {applyAll, type Patch} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import React from 'react'
@@ -11,18 +12,6 @@ import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
-/**
- * Sets up two editors sharing one document, relaying `patches` between them
- * the way Studio's real-time collaboration delivers remote edits: through
- * the patch stream produced by each editor's own mutations.
- *
- * Studio also pushes a wholesale `update value` alongside the patch stream,
- * sourced from the document store's own snapshot. That channel introduces a
- * second, distinct failure mode (a client's pending local edit can be
- * clobbered outright if a value update arrives before the store has
- * incorporated that edit) which isn't modeled here. This test isolates the
- * patch-merging bug in the core editor.
- */
 async function createPatchOnlyTestEditors(options: {
   initialValue: Array<PortableTextBlock>
 }) {
@@ -31,6 +20,8 @@ async function createPatchOnlyTestEditors(options: {
 
   const keyGenerator = createTestKeyGenerator('ea-')
   const keyGeneratorB = createTestKeyGenerator('eb-')
+  const mutationsFromA: Array<Array<Patch>> = []
+  const mutationsFromB: Array<Array<Patch>> = []
 
   render(
     <>
@@ -46,14 +37,7 @@ async function createPatchOnlyTestEditors(options: {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'mutation') {
-              editorBRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: event.value,
-              })
+              mutationsFromA.push(event.patches)
             }
           }}
         />
@@ -70,14 +54,7 @@ async function createPatchOnlyTestEditors(options: {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'mutation') {
-              editorRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: event.value,
-              })
+              mutationsFromB.push(event.patches)
             }
           }}
         />
@@ -96,6 +73,8 @@ async function createPatchOnlyTestEditors(options: {
     locator,
     editorB: editorBRef.current!,
     locatorB,
+    mutationsFromA,
+    mutationsFromB,
   }
 }
 
@@ -116,56 +95,55 @@ function buildInitialValue(): Array<PortableTextBlock> {
   ]
 }
 
-/**
- * Types `text` one character at a time with a pause between keystrokes,
- * standing in for a real person typing rather than a test hand-syncing
- * itself to the exact moment a remote edit arrives. Nothing here reads the
- * editors' state; the timing is fixed up front, same as a person's typing
- * cadence doesn't adapt to network latency they can't see.
- */
-async function typeCharacterByCharacter(
+type SnapshotMode = 'optimistic' | 'undefined'
+
+async function typeAndWaitForMutation(
   locator: Parameters<typeof userEvent.type>[0],
-  text: string,
-  pauseMs: number,
-) {
-  for (const character of text) {
-    await userEvent.type(locator, character)
-    await new Promise((resolve) => setTimeout(resolve, pauseMs))
+  character: string,
+  mutations: Array<Array<Patch>>,
+): Promise<void> {
+  const mutationCount = mutations.length
+  await userEvent.type(locator, character)
+  await vi.waitFor(() => {
+    expect(mutations.length).toBeGreaterThan(mutationCount)
+  })
+}
+
+function deliverMutations(
+  mutations: Array<Array<Patch>>,
+  target: Editor,
+  snapshotMode: SnapshotMode,
+): void {
+  for (const patches of mutations.splice(0)) {
+    const remotePatches = patches.map(
+      (patch): Patch => ({...patch, origin: 'remote'}),
+    )
+    const snapshot =
+      snapshotMode === 'optimistic'
+        ? applyAll(target.getSnapshot().context.value, remotePatches)
+        : undefined
+
+    target.send({type: 'patches', patches: remotePatches, snapshot})
   }
 }
 
-/**
- * The correct outcome: Editor A's paste happened first, so it should end up
- * ahead of Editor B's typed text, with nothing lost or duplicated on either
- * side.
- */
 const expectedResult = linePrefix + pastedText + typedText
 
-/**
- * Regression test for a reported bug: two editors on the same field, with
- * carets on the same line. Editor A pastes text right after "A: ". A
- * couple hundred milliseconds later, before Editor B has received Editor
- * A's edit, Editor B starts typing at the same spot.
- *
- * Each editor learns about the other's edit through a `diffMatchPatch`
- * patch computed against the shared base text "A: ". Applying that patch
- * used to mean fuzzy-matching the "A: " context in the editor's *current*
- * (already locally-edited) text and inserting right after it, regardless
- * of what that editor had already placed there — there was no tie-break
- * for concurrent inserts at the same anchor point. When the remote patch
- * landed mid-keystroke, the local typing burst itself ended up split
- * around it: both editors converged on the same document, but it was the
- * wrong one, with the pasted sentence nested inside the typed text.
- */
 describe('Concurrent paste and typing race', () => {
   test.each([
-    {startDelayMs: 200, pauseMs: 120},
-    {startDelayMs: 250, pauseMs: 150},
+    {snapshotMode: 'optimistic' as const},
+    {snapshotMode: 'undefined' as const},
   ])(
-    "Editor B types over Editor A's paste (startDelay: $startDelayMs ms, keystroke pause: $pauseMs ms)",
-    async ({startDelayMs, pauseMs}) => {
-      const {editor, locator, editorB, locatorB} =
-        await createPatchOnlyTestEditors({initialValue: buildInitialValue()})
+    'rebases mixed-base patches with $snapshotMode snapshots',
+    async ({snapshotMode}) => {
+      const {
+        editor,
+        locator,
+        editorB,
+        locatorB,
+        mutationsFromA,
+        mutationsFromB,
+      } = await createPatchOnlyTestEditors({initialValue: buildInitialValue()})
 
       await userEvent.click(locator)
       const selectionA = getSelectionAfterText(
@@ -190,29 +168,34 @@ describe('Concurrent paste and typing race', () => {
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/plain', pastedText)
 
-      // Editor A pastes right after "A: ".
       editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {selection: editor.getSnapshot().context.selection!},
       })
 
-      // A couple hundred milliseconds later, Editor B starts typing at a
-      // natural, unhurried pace, unaware that Editor A just pasted there too.
-      await new Promise((resolve) => setTimeout(resolve, startDelayMs))
-      await typeCharacterByCharacter(locatorB, typedText, pauseMs)
+      await vi.waitFor(() => {
+        expect(mutationsFromA.length).toBeGreaterThan(0)
+      })
 
-      // Give both editors time to exchange and settle their patches.
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      for (const character of typedText.slice(0, 3)) {
+        await typeAndWaitForMutation(locatorB, character, mutationsFromB)
+      }
 
-      // Both editors should converge on "A: {pasted text}{typed text}":
-      // Editor A's paste, which happened first, followed by Editor B's typed
-      // text as one unbroken run.
-      const finalTextA = getTersePt(editor.getSnapshot().context)[0]
-      const finalTextB = getTersePt(editorB.getSnapshot().context)[0]
+      deliverMutations(mutationsFromA, editorB, snapshotMode)
+      deliverMutations(mutationsFromB, editor, snapshotMode)
 
-      expect(finalTextA).toBe(expectedResult)
-      expect(finalTextB).toBe(expectedResult)
+      for (const character of typedText.slice(3)) {
+        await typeAndWaitForMutation(locatorB, character, mutationsFromB)
+        deliverMutations(mutationsFromB, editor, snapshotMode)
+      }
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)[0]).toBe(expectedResult)
+        expect(getTersePt(editorB.getSnapshot().context)[0]).toBe(
+          expectedResult,
+        )
+      })
     },
   )
 })

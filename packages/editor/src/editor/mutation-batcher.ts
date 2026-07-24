@@ -12,11 +12,7 @@ type PendingMutation = {
   patches: Array<Patch>
 }
 
-/**
- * Also reused by `pending-local-text-edits.ts` as the cutoff for whether a
- * local text edit is still part of an active, in-progress typing burst.
- */
-export const TYPE_DEBOUNCE = 250
+const TYPE_DEBOUNCE = 250
 
 // A typed burst splits into two mutations mid-word if this fixed flush cadence
 // fires before the burst finishes typing, so in test mode the interval has to
