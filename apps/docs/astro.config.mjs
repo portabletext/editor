@@ -112,6 +112,7 @@ export default defineConfig({
               items: [
                 {slug: 'editor/concepts/portabletext'},
                 {slug: 'editor/concepts/behavior'},
+                {slug: 'editor/concepts/containers'},
               ],
             },
             {
