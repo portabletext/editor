@@ -4,11 +4,12 @@ import {
   type PortableTextBlock,
   type Patch as PtePatch,
 } from '@portabletext/editor'
-import type {
-  JSONValue,
-  Path,
-  PathSegment,
-  InsertPatch as PteInsertPatch,
+import {
+  applyAll,
+  type JSONValue,
+  type Path,
+  type PathSegment,
+  type InsertPatch as PteInsertPatch,
 } from '@portabletext/patches'
 import {diffValue, type SanityPatchOperations} from '@sanity/diff-patch'
 import {
@@ -381,9 +382,12 @@ export function toEngineSafePatches(
 }
 
 /**
- * A text paste can stage a temporary span and remove it in the same local
- * flush. The SDK may emit the insert before that cleanup even though its
- * current value already reflects the completed transaction.
+ * Drops insert items whose `_key` is absent from the remote value. A text
+ * paste can stage a temporary span and remove it again within the same
+ * transaction; applying the insert without the cleanup would flash the
+ * staged content. Callers must only run this once the store value reflects
+ * the transaction the patches belong to (see `'apply remote patches'`),
+ * otherwise every legitimately new node would be dropped.
  */
 function filterInsertsMissingFromRemoteValue(
   patches: PtePatch[],
@@ -556,6 +560,36 @@ export function canApplyToValue(
     default:
       return true
   }
+}
+
+/**
+ * Filters a patch batch down to the patches that can resolve (see
+ * `canApplyToValue`), checking each patch against the value as it stands
+ * after the preceding patches applied. A transaction routinely inserts a
+ * node and then addresses it, e.g. a span split followed by a `marks` set
+ * on the new span, so checking every patch against the starting value
+ * would drop valid operations.
+ */
+function filterResolvablePatches(
+  patches: PtePatch[],
+  value: PortableTextBlock[] | undefined,
+): PtePatch[] {
+  let projected = value
+  const resolvable: PtePatch[] = []
+  for (const patch of patches) {
+    if (!canApplyToValue(patch, projected)) {
+      continue
+    }
+    resolvable.push(patch)
+    if (projected) {
+      try {
+        projected = applyAll(projected, [patch])
+      } catch {
+        // the engine applies best-effort too; keep the projection as-is
+      }
+    }
+  }
+  return resolvable
 }
 
 /**
@@ -872,23 +906,33 @@ const valueSyncMachine = setup({
         return
       }
       debug.remote('applying remote patches %o', event.patches)
-      const snapshot = context.editor.getSnapshot().context.value
-      // The store already reflects this transaction, so it can serve as
-      // the target for coalescing sidecar-array item operations (which
-      // the engine misroutes) into whole-property sets.
-      const remoteValue = context.getRemoteValue()
-      const coalesced = remoteValue
-        ? toEngineSafePatches(event.patches, remoteValue)
-        : event.patches
-      const patches = (
-        remoteValue
-          ? filterInsertsMissingFromRemoteValue(coalesced, remoteValue)
-          : coalesced
-      ).filter((patch) => canApplyToValue(patch, snapshot))
-      if (patches.length === 0) {
-        return
-      }
-      context.editor.send({type: 'patches', patches, snapshot})
+      // The SDK emits `remote-patches` while it is still computing the
+      // state update for that transaction, so the store value visible at
+      // this moment does not include it yet. The commit lands within the
+      // same synchronous task, so after one microtask the store reflects
+      // the transaction, whether the event announced a fresh transaction
+      // or replayed one the store already had. Only then can the store
+      // value serve as the reference for dropping inserts the transaction
+      // itself cleaned up again, and as the target for coalescing
+      // sidecar-array item operations (which the engine misroutes) into
+      // whole-property sets.
+      queueMicrotask(() => {
+        const snapshot = context.editor.getSnapshot().context.value
+        const remoteValue = context.getRemoteValue()
+        const coalesced = remoteValue
+          ? toEngineSafePatches(event.patches, remoteValue)
+          : event.patches
+        const patches = filterResolvablePatches(
+          remoteValue
+            ? filterInsertsMissingFromRemoteValue(coalesced, remoteValue)
+            : coalesced,
+          snapshot,
+        )
+        if (patches.length === 0) {
+          return
+        }
+        context.editor.send({type: 'patches', patches, snapshot})
+      })
     },
   },
   actors: {

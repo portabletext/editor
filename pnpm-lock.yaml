@@ -1228,6 +1228,9 @@ importers:
 
   packages/plugin-sdk-value:
     dependencies:
+      '@portabletext/patches':
+        specifier: workspace:*
+        version: link:../patches
       '@sanity/diff-patch':
         specifier: ^6.0.0
         version: 6.0.0
@@ -1247,9 +1250,6 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
-      '@portabletext/patches':
-        specifier: workspace:*
-        version: link:../patches
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
