@@ -543,7 +543,6 @@ describe('ValueSyncPlugin', () => {
       })
       store.pushValue.mockClear()
 
-      // Type more text
       editor.send({type: 'insert.text', text: ' world'})
 
       // Simulate stale remote callback (e.g., Content Lake acknowledged

@@ -452,7 +452,6 @@ async function updateValue({
     isChanged = true
   }
 
-  // Remove, replace or add nodes according to what is changed.
   if (value && value.length > 0) {
     if (streamBlocks) {
       await new Promise<void>((resolve) => {
@@ -591,7 +590,7 @@ async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
 }
 
 /**
- * Remove all blocks and insert a placeholder block
+ * Unsets every block; normalization then inserts the empty placeholder block.
  */
 function clearEditor({
   editorEngine,
@@ -690,7 +689,6 @@ function syncBlock({
   const oldBlock = editorEngine.snapshot.context.value.at(index)
 
   if (!oldEngineBlock || !oldBlock) {
-    // Insert the new block
     const validation = validateValue(
       [block],
       context.schema,
@@ -742,7 +740,6 @@ function syncBlock({
   }
 
   if (isEqualBlocks(context, block, oldBlock)) {
-    // Nothing to sync, skipping the block
     return {
       blockChanged: false,
       blockValid: true,
@@ -775,7 +772,6 @@ function syncBlock({
       context.previousValue &&
       context.previousValue !== value
     ) {
-      // Give a console warning about the fact that it did an auto resolution
       console.warn(
         `${validation.resolution.action} for block with _key '${blockToValidate._key}'. ${validation.resolution?.description}`,
       )
@@ -946,8 +942,7 @@ function updateBlock({
     schemaTypes: context.schema,
   })
 
-  // Update the root props on the block.
-  // Strip children (managed by dedicated operations below).
+  // Strip `children`: they're synced by dedicated child operations below.
   const {children: _children, ...blockProps} = engineBlock as unknown as Record<
     string,
     unknown
@@ -1008,7 +1003,6 @@ function updateBlock({
     const oldBlockChildrenLength = oldEngineBlock.children.length
 
     if (engineBlock.children.length < oldBlockChildrenLength) {
-      // Remove any children that have become superfluous
       Array.from(
         Array(oldBlockChildrenLength - engineBlock.children.length),
       ).forEach((_, i) => {
@@ -1057,7 +1051,6 @@ function updateBlock({
         ]
 
         if (isChildChanged) {
-          // Update if this is the same child (same key and type)
           if (
             currentBlockChild._key === oldBlockChild?._key &&
             currentBlockChild._type === oldBlockChild?._type
@@ -1161,7 +1154,6 @@ function updateBlock({
 
             editorEngine.onChange()
           } else if (!oldBlockChild) {
-            // Insert it if it didn't exist before
             debug.syncValue('Inserting new child', currentBlockChild)
 
             const prevChild =
