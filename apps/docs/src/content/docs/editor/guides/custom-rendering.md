@@ -8,7 +8,7 @@ sidebar:
 The Portable Text Editor gives you control of how it renders each schema type element. You need to explicitly tell it what. These choices have no impact on the Portable Text output—they only affect how the editor itself renders content.
 
 :::note[Prerequisites]
-This guide covers `@portabletext/editor` **v6.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 18+.
+This guide covers `@portabletext/editor` **v7.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 19.2.7+.
 :::
 
 :::note[Two rendering systems]
@@ -30,7 +30,7 @@ All the different render functions passed to `PortableTextEditable` can be defin
 
 Most follow the same pattern of reading `props` and conditionally rendering elements based on schema data.
 
-Lists are a bit unique. Portable Text has no concept of block nesting, so the solution is to use pure CSS to style them. We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
+Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Visual nesting comes from CSS. We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
 
 Here are basic implementations of some core types:
 
