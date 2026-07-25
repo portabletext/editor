@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.6
+
+### Patch Changes
+
+- [#3025](https://github.com/portabletext/editor/pull/3025) [`92ecb55`](https://github.com/portabletext/editor/commit/92ecb55baacf700a25bef710563dde8676f839cf) Thanks [@ryanbonial](https://github.com/ryanbonial)! - fix: prevent remote decorator toggles from transiently dropping the formatted word
+
 ## 7.1.5
 
 ### Patch Changes
