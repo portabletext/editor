@@ -199,8 +199,11 @@ describe('ValueSyncPlugin', () => {
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
 
+      // No selection: adopting an empty store value keeps the editor's
+      // own placeholder untouched, just like mounting on a non-empty
+      // document leaves the editor unselected until the user interacts.
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual('B: |')
+        expect(getEditorText(editor)).toEqual('B: ')
       })
     })
   })
@@ -244,7 +247,7 @@ describe('ValueSyncPlugin', () => {
       cleanup = unmount
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual('B: |')
+        expect(getEditorText(editor)).toEqual('B: ')
       })
       // Real key events matter here: each keystroke is its own operation,
       // so a flush emits one mutation event per pending operation — the

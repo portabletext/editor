@@ -20,9 +20,20 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {Path} from '../types/paths'
 import {applyDeselect} from './apply-selection'
 import {getValue} from './get-value'
+import {
+  getPendingLocalTextEditsKey,
+  pruneStaleLocalTextEdits,
+  type PendingLocalTextEdit,
+} from './pending-local-text-edits'
+import {applyPatchesStrictly, mergeSpanText} from './span-text-merge'
 import {isEqualToEmptyEditor} from './values'
+
+type ApplyPatchOptions = {
+  snapshot?: Array<PortableTextBlock>
+}
 
 /**
  * Creates a function that can apply a patch onto a PortableTextEditorEngine.
@@ -31,8 +42,16 @@ export function createApplyPatch(
   context: Pick<EditorContext, 'schema' | 'keyGenerator'> & {
     initialValue: Array<PortableTextBlock> | undefined
   },
-): (editor: PortableTextEditorEngine, patch: Patch) => boolean {
-  return (editor: PortableTextEditorEngine, patch: Patch): boolean => {
+): (
+  editor: PortableTextEditorEngine,
+  patch: Patch,
+  options?: ApplyPatchOptions,
+) => boolean {
+  return (
+    editor: PortableTextEditorEngine,
+    patch: Patch,
+    options: ApplyPatchOptions = {},
+  ): boolean => {
     let changed = false
 
     try {
@@ -50,7 +69,7 @@ export function createApplyPatch(
           changed = setPatch(editor, patch)
           break
         case 'diffMatchPatch':
-          changed = diffMatchPatch(editor, patch)
+          changed = diffMatchPatch(editor, patch, options.snapshot)
           break
       }
     } catch (err) {
@@ -64,9 +83,10 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextEditorEngine,
-    'apply' | 'onChange' | 'containers' | 'snapshot'
+    'apply' | 'onChange' | 'containers' | 'snapshot' | 'pendingLocalTextEdits'
   >,
   patch: DiffMatchPatch,
+  snapshot: Array<PortableTextBlock> | undefined,
 ): boolean {
   const lastSegment = patch.path.at(-1)
   if (lastSegment !== 'text') {
@@ -78,11 +98,20 @@ function diffMatchPatch(
       return false
     }
 
-    const [newValue] = diffMatchPatchApplyPatches(
-      parsePatch(patch.value),
+    const patches = parsePatch(patch.value)
+    const [newValue, results] = diffMatchPatchApplyPatches(
+      patches,
       currentValue,
       {allowExceedingIndices: true},
     )
+
+    if (
+      results.length === 0 ||
+      results.some((result) => !result) ||
+      newValue === currentValue
+    ) {
+      return false
+    }
 
     editor.apply({
       type: 'set',
@@ -104,34 +133,177 @@ function diffMatchPatch(
   }
 
   const patches = parsePatch(patch.value)
-  const [newValue] = diffMatchPatchApplyPatches(patches, spanEntry.node.text, {
+  if (patches.length === 0) {
+    return false
+  }
+
+  pruneStaleLocalTextEdits(editor.pendingLocalTextEdits, Date.now())
+
+  const pendingLocalEditKey = getPendingLocalTextEditsKey(spanEntry.path)
+  const pendingLocalEdit = editor.pendingLocalTextEdits.get(pendingLocalEditKey)
+  const liveText = spanEntry.node.text
+
+  if (!pendingLocalEdit) {
+    const strictLiveApplication = applyPatchesStrictly(patches, liveText)
+    const newValue =
+      strictLiveApplication?.text ?? applyFuzzyPatches(patches, liveText)
+    return newValue === undefined
+      ? false
+      : applyTextValue(editor, spanEntry.path, liveText, newValue)
+  }
+
+  const strictBaseApplication = applyPatchesStrictly(
+    patches,
+    pendingLocalEdit.baseText,
+  )
+  const strictLiveApplication = applyPatchesStrictly(patches, liveText)
+
+  if (strictBaseApplication) {
+    const mergedText = mergeSpanText(
+      pendingLocalEdit.baseText,
+      liveText,
+      strictBaseApplication.text,
+    )
+    updatePendingLocalTextEdit(
+      editor.pendingLocalTextEdits,
+      pendingLocalEditKey,
+      pendingLocalEdit,
+      strictBaseApplication.text,
+      mergedText,
+    )
+    return applyTextValue(editor, spanEntry.path, liveText, mergedText)
+  }
+
+  if (strictLiveApplication) {
+    editor.pendingLocalTextEdits.delete(pendingLocalEditKey)
+    return applyTextValue(
+      editor,
+      spanEntry.path,
+      liveText,
+      strictLiveApplication.text,
+    )
+  }
+
+  const baseApplication = applyFuzzyPatches(patches, pendingLocalEdit.baseText)
+  const liveApplication = applyFuzzyPatches(patches, liveText)
+  const baseCandidate = baseApplication
+    ? {
+        source: 'base' as const,
+        text: mergeSpanText(
+          pendingLocalEdit.baseText,
+          liveText,
+          baseApplication,
+        ),
+        remoteText: baseApplication,
+      }
+    : undefined
+  const liveCandidate = liveApplication
+    ? {source: 'live' as const, text: liveApplication}
+    : undefined
+  const snapshotText = getValue(snapshot, patch.path)
+  const candidate = selectPatchCandidate(
+    baseCandidate,
+    liveCandidate,
+    typeof snapshotText === 'string' ? snapshotText : undefined,
+  )
+
+  if (!candidate) {
+    editor.pendingLocalTextEdits.delete(pendingLocalEditKey)
+    return false
+  }
+
+  if (candidate.source === 'base') {
+    updatePendingLocalTextEdit(
+      editor.pendingLocalTextEdits,
+      pendingLocalEditKey,
+      pendingLocalEdit,
+      candidate.remoteText,
+      candidate.text,
+    )
+  } else {
+    editor.pendingLocalTextEdits.delete(pendingLocalEditKey)
+  }
+
+  return applyTextValue(editor, spanEntry.path, liveText, candidate.text)
+}
+
+function applyFuzzyPatches(
+  patches: ReturnType<typeof parsePatch>,
+  text: string,
+): string | undefined {
+  const [newText, results] = diffMatchPatchApplyPatches(patches, text, {
     allowExceedingIndices: true,
   })
-  const diff = cleanupEfficiency(makeDiff(spanEntry.node.text, newValue), 5)
 
+  return results.length > 0 && results.every(Boolean) ? newText : undefined
+}
+
+function applyTextValue(
+  editor: Pick<PortableTextEditorEngine, 'apply'>,
+  path: Path,
+  currentText: string,
+  nextText: string,
+): boolean {
+  if (currentText === nextText) {
+    return false
+  }
+
+  const diff = cleanupEfficiency(makeDiff(currentText, nextText), 5)
   let offset = 0
-  for (const [op, text] of diff) {
-    if (op === DIFF_INSERT) {
-      editor.apply({
-        type: 'insert.text',
-        path: spanEntry.path,
-        offset,
-        text,
-      })
+
+  for (const [operation, text] of diff) {
+    if (operation === DIFF_INSERT) {
+      editor.apply({type: 'insert.text', path, offset, text})
       offset += text.length
-    } else if (op === DIFF_DELETE) {
-      editor.apply({
-        type: 'remove.text',
-        path: spanEntry.path,
-        offset,
-        text,
-      })
-    } else if (op === DIFF_EQUAL) {
+    } else if (operation === DIFF_DELETE) {
+      editor.apply({type: 'remove.text', path, offset, text})
+    } else if (operation === DIFF_EQUAL) {
       offset += text.length
     }
   }
 
   return true
+}
+
+function selectPatchCandidate(
+  baseCandidate: {source: 'base'; text: string; remoteText: string} | undefined,
+  liveCandidate: {source: 'live'; text: string} | undefined,
+  snapshotText: string | undefined,
+):
+  | {source: 'base'; text: string; remoteText: string}
+  | {source: 'live'; text: string}
+  | undefined {
+  if (!baseCandidate) {
+    return liveCandidate
+  }
+  if (!liveCandidate) {
+    return baseCandidate
+  }
+  if (baseCandidate.text === liveCandidate.text) {
+    return baseCandidate
+  }
+  if (snapshotText === baseCandidate.text) {
+    return baseCandidate
+  }
+  if (snapshotText === liveCandidate.text) {
+    return liveCandidate
+  }
+
+  return baseCandidate.text < liveCandidate.text ? baseCandidate : liveCandidate
+}
+
+function updatePendingLocalTextEdit(
+  edits: PortableTextEditorEngine['pendingLocalTextEdits'],
+  key: string,
+  edit: PendingLocalTextEdit,
+  remoteText: string,
+  mergedText: string,
+): void {
+  if (remoteText === mergedText) {
+    edits.delete(key)
+  } else {
+    edit.baseText = remoteText
+  }
 }
 
 function insertPatch(

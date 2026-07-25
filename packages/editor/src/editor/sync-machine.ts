@@ -30,7 +30,7 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {validateValue} from '../internal-utils/validateValue'
-import {toEngineBlock} from '../internal-utils/values'
+import {isEqualToEmptyEditor, toEngineBlock} from '../internal-utils/values'
 import {hasNode} from '../traversal/has-node'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
@@ -444,12 +444,27 @@ async function updateValue({
   const hadSelection = !!editorEngine.snapshot.context.selection
 
   if (!value || value.length === 0) {
-    clearEditor({
-      editorEngine,
-      doneSyncing,
-    })
+    if (
+      isEqualToEmptyEditor(
+        undefined,
+        editorEngine.snapshot.context.value,
+        context.schema,
+      )
+    ) {
+      // The editor already shows the empty placeholder. Re-clearing would
+      // mint fresh placeholder keys, and two converged editors adopting
+      // the same empty document would then hold permanently different
+      // keys. Keeping the current placeholder is the same empty state.
+      debug.syncValue('remote value is empty and editor is already empty')
+    } else {
+      clearEditor({
+        context,
+        editorEngine,
+        doneSyncing,
+      })
 
-    isChanged = true
+      isChanged = true
+    }
   }
 
   // Remove, replace or add nodes according to what is changed.
@@ -540,6 +555,7 @@ async function updateValue({
   }
 
   if (isChanged) {
+    editorEngine.pendingLocalTextEdits.clear()
     debug.syncValue('remote value changed, syncing local value')
 
     try {
@@ -591,12 +607,23 @@ async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
 }
 
 /**
- * Remove all blocks and insert a placeholder block
+ * Reduce the editor to the empty placeholder state.
+ *
+ * When the first block is a text block, it is emptied in place, keeping
+ * its `_key` (and the first span's `_key`). A local select-all-delete
+ * leaves exactly that shape behind, so an editor adopting "empty" from
+ * the document converges byte-for-byte with the editor that emptied it,
+ * instead of minting placeholder keys the other client can never match.
  */
 function clearEditor({
+  context,
   editorEngine,
   doneSyncing,
 }: {
+  context: {
+    keyGenerator: () => string
+    schema: EditorSchema
+  }
   editorEngine: PortableTextEditorEngine
   doneSyncing: boolean
 }) {
@@ -608,19 +635,55 @@ function clearEditor({
             return
           }
 
-          const childrenLength = editorEngine.snapshot.context.value.length
+          const value = editorEngine.snapshot.context.value
+          const firstBlock = value.at(0)
 
-          editorEngine.snapshot.context.value.forEach((_, index) => {
-            const removeNode =
-              editorEngine.snapshot.context.value[childrenLength - 1 - index]
+          for (let index = value.length - 1; index > 0; index--) {
+            const removeNode = value[index]
             if (!removeNode) {
-              return
+              continue
             }
             editorEngine.apply({
               type: 'unset',
               path: [{_key: removeNode._key}],
             })
-          })
+          }
+
+          if (!firstBlock) {
+            return
+          }
+
+          if (isTextBlock({schema: context.schema}, firstBlock)) {
+            const firstChild = firstBlock.children.at(0)
+            const spanKey =
+              firstChild && isSpan({schema: context.schema}, firstChild)
+                ? firstChild._key
+                : context.keyGenerator()
+
+            editorEngine.apply({
+              type: 'set',
+              path: [{_key: firstBlock._key}],
+              value: {
+                _type: context.schema.block.name,
+                _key: firstBlock._key,
+                style: context.schema.styles.at(0)?.name ?? 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: context.schema.span.name,
+                    _key: spanKey,
+                    text: '',
+                    marks: [],
+                  },
+                ],
+              },
+            })
+          } else {
+            editorEngine.apply({
+              type: 'unset',
+              path: [{_key: firstBlock._key}],
+            })
+          }
         })
       })
     })

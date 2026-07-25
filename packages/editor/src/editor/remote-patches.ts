@@ -1,4 +1,5 @@
 import type {Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
@@ -12,7 +13,7 @@ import type {EditorActor} from './editor-machine'
 
 /**
  * Applies incoming remote patches to the editor. Registered on the
- * `subscriptions` array before `subscribeHistory`'s remote-rebase handler —
+ * `subscriptions` array before `subscribeHistory`'s remote-rebase handler,
  * activation order is subscription order.
  */
 export function setupRemotePatches({
@@ -26,7 +27,10 @@ export function setupRemotePatches({
 }): void {
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
-  let bufferedPatches: Patch[] = []
+  let bufferedPatches: Array<{
+    patch: Patch
+    snapshot: Array<PortableTextBlock> | undefined
+  }> = []
 
   const handleBufferedRemotePatches = () => {
     if (bufferedPatches.length === 0) {
@@ -40,12 +44,13 @@ export function setupRemotePatches({
       withoutNormalizing(editor, () => {
         withoutPatching(editor, () => {
           pluginWithoutHistory(editor, () => {
-            for (const patch of patches) {
+            for (const {patch, snapshot} of patches) {
               try {
-                changed = applyPatch(editor, patch)
+                const patchChanged = applyPatch(editor, patch, {snapshot})
+                changed = patchChanged || changed
 
                 if (debug.syncPatch.enabled) {
-                  if (changed) {
+                  if (patchChanged) {
                     debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
                   } else {
                     debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
@@ -67,12 +72,20 @@ export function setupRemotePatches({
     })
   }
 
-  const handlePatches = ({patches}: {patches: Patch[]}) => {
+  const handlePatches = ({
+    patches,
+    snapshot,
+  }: {
+    patches: Patch[]
+    snapshot: Array<PortableTextBlock> | undefined
+  }) => {
     const remotePatches = patches.filter((patch) => patch.origin !== 'local')
     if (remotePatches.length === 0) {
       return
     }
-    bufferedPatches = bufferedPatches.concat(remotePatches)
+    bufferedPatches = bufferedPatches.concat(
+      remotePatches.map((patch) => ({patch, snapshot})),
+    )
     handleBufferedRemotePatches()
   }
 

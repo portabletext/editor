@@ -28,6 +28,7 @@ import {transformPoint} from '../point/transform-point'
 import {isBackwardRange} from '../range/is-backward-range'
 import {isRange} from '../range/is-range'
 import {rangePoints} from '../range/range-points'
+import {canonicalizeProperties} from '../utils/canonicalize-properties'
 import {
   insertChildren,
   modifyChildren,
@@ -43,6 +44,12 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
     case 'insert': {
       const {path} = op
       let {node} = op
+
+      // Canonicalize property order so nodes arriving from any source
+      // (local creation, remote patches, adopted documents) enter the
+      // tree byte-identically when they are semantically identical.
+      node = canonicalizeProperties(node)
+      op.node = node
 
       if (!targetsStructuralChildren(editor, path)) {
         // The path addresses an element of a sidecar array (e.g.
@@ -165,7 +172,11 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
     }
 
     case 'set': {
-      const {path, value} = op
+      const {path} = op
+      // Canonical property order for any objects the value carries; see
+      // the `insert` case.
+      const value = canonicalizeProperties(op.value)
+      op.value = value
 
       if (!op.inverse && !editor.isProcessingRemoteChanges) {
         const previousValue = getValue(editor.snapshot.context.value, path)
@@ -252,9 +263,9 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           break
         }
 
-        const updatedBlock = applyAll(block, [
-          setPatchHelper(value, path.slice(1)),
-        ])
+        const updatedBlock = canonicalizeProperties(
+          applyAll(block, [setPatchHelper(value, path.slice(1))]),
+        )
 
         const newChildren = editor.snapshot.context.value.slice()
         newChildren[blockIndex] = updatedBlock
@@ -465,7 +476,9 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           break
         }
 
-        const updatedBlock = applyAll(block, [unsetPatchHelper(path.slice(1))])
+        const updatedBlock = canonicalizeProperties(
+          applyAll(block, [unsetPatchHelper(path.slice(1))]),
+        )
 
         const newChildren = editor.snapshot.context.value.slice()
         newChildren[blockIndex] = updatedBlock
@@ -609,7 +622,7 @@ function applyOnRootBlock(editor: Editor, path: Path, patch: Patch): void {
     return
   }
 
-  const updatedBlock = applyAll(block, [patch])
+  const updatedBlock = canonicalizeProperties(applyAll(block, [patch]))
 
   const newValue = editor.snapshot.context.value.slice()
   newValue[blockIndex] = updatedBlock

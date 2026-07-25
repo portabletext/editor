@@ -1,0 +1,47 @@
+name: Publish Preview Packages
+
+on:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish-preview:
+    # Only run if the PR has the 'trigger: preview' label
+    if: "contains(github.event.pull_request.labels.*.name, 'trigger: preview')"
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          cache: pnpm
+          node-version: lts/*
+
+      - name: Install project dependencies
+        run: pnpm install
+
+      - name: Build packages
+        run: pnpm build --filter=@portabletext/editor --filter=@portabletext/plugin-sdk-value
+
+      - name: Publish preview packages
+        run: |
+          pnpm dlx pkg-pr-new publish \
+            'packages/editor' \
+            'packages/plugin-sdk-value' \
+            --comment=update
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

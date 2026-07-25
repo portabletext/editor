@@ -4,6 +4,7 @@ import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {EngineOperation} from '../engine/interfaces/operation'
+import type {PendingLocalTextEdit} from '../internal-utils/pending-local-text-edits'
 import type {
   BlockObjectConfig,
   InlineObjectConfig,
@@ -77,6 +78,11 @@ export interface PortableTextEditorEngine extends DOMEditor {
   verifiedUniqueChildGroups: Set<string>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
+  /**
+   * The text before unresolved local edits for each span. Remote text
+   * patches use this base to merge both branches without replaying offsets.
+   */
+  pendingLocalTextEdits: Map<string, PendingLocalTextEdit>
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

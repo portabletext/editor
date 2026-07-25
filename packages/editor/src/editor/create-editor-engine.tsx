@@ -9,6 +9,7 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {setupRemotePatches} from './remote-patches'
 import {subscribeHistory} from './subscriber.history'
+import {subscribeLocalTextEdits} from './subscriber.local-text-edits'
 import {subscribePatchGeneration} from './subscriber.patch-generation'
 import {subscribeUpdateValue} from './subscriber.update-value'
 
@@ -74,6 +75,7 @@ export function createEditorEngine(
   editor.verifiedUniqueChildGroups = new Set<string>()
   editor.remotePatches = []
   editor.undoStepId = undefined
+  editor.pendingLocalTextEdits = new Map()
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
@@ -99,6 +101,11 @@ export function createEditorEngine(
     editor: editorEngine,
   })
   subscribeHistory({
+    editorActor: config.editorActor,
+    subscriptions: config.subscriptions,
+    editor: editorEngine,
+  })
+  subscribeLocalTextEdits({
     editorActor: config.editorActor,
     subscriptions: config.subscriptions,
     editor: editorEngine,
