@@ -219,9 +219,7 @@ export function performEvent({
     // action prevented
     defaultBehaviorOverwritten = true
 
-    if (eventBehavior.actions.length === 0) {
-      nativeEventPrevented = true
-    }
+    nativeEventPrevented = true
 
     let actionSetIndex = -1
 
