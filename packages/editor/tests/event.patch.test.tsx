@@ -697,7 +697,7 @@ describe('event.patch', () => {
         ]),
         set([], [{_key: blockKey}, 'children', {_key: span2Key}, 'marks']),
         unset([{_key: blockKey}, 'children', {_key: span2Key}]),
-        set([], [{_key: blockKey}, 'markDefs']),
+        unset([{_key: blockKey}, 'markDefs', {_key: linkKey}]),
         unset([]),
       ].map((patch) => ({...patch, origin: 'local'})),
     )

@@ -498,7 +498,7 @@ describe('event.insert.block', () => {
         },
         {
           origin: 'local',
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: 'k2'}, 'markDefs'],
           value: [],
         },
@@ -597,7 +597,7 @@ describe('event.insert.block', () => {
         },
         {
           origin: 'local',
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: 'k2'}, 'markDefs'],
           value: [],
         },

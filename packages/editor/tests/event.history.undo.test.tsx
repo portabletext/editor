@@ -16,6 +16,99 @@ import type {EditorSelection} from '../src/types/editor'
 import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.history.undo', () => {
+  test('Scenario: Undoing a `child.set` that replaces an empty span\u2019s text', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const filledBlockKey = keyGenerator()
+    const filledSpanKey = keyGenerator()
+    const emptyBlockKey = keyGenerator()
+    const emptySpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{text: string}>({
+              on: 'custom.insert text',
+              actions: [
+                ({event}) => [execute({type: 'insert.text', text: event.text})],
+              ],
+            }),
+            defineBehavior<{text: string}>({
+              on: 'custom.replace empty span',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'child.set',
+                    at: [
+                      {_key: emptyBlockKey},
+                      'children',
+                      {_key: emptySpanKey},
+                    ],
+                    props: {text: event.text},
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+      initialValue: [
+        {
+          _key: filledBlockKey,
+          _type: 'block',
+          children: [
+            {_key: filledSpanKey, _type: 'span', text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: emptyBlockKey,
+          _type: 'block',
+          children: [{_key: emptySpanKey, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: filledBlockKey}, 'children', {_key: filledSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: filledBlockKey}, 'children', {_key: filledSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'custom.insert text', text: '!'})
+
+    // Replacing an empty span's text leads with a zero-length
+    // `remove.text`, an operation that doesn't affect history. The
+    // following `insert.text` must still open its own undo step instead
+    // of merging into the previous one.
+    editor.send({type: 'custom.replace empty span', text: 'bar'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo!|', 'B: bar'].join('\n'),
+      )
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo!|', 'B: '].join('\n'),
+      )
+    })
+  })
+
   test('Scenario: Undoing action sets', async () => {
     const {editor, locator} = await createTestEditor({
       children: (

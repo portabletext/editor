@@ -44,7 +44,7 @@ describe('Feature: Self-solving', () => {
       origin: 'local',
     }
     const blockPatch: Patch = {
-      type: 'set',
+      type: 'setIfMissing',
       path: [{_key: blockKey}, 'markDefs'],
       value: [],
       origin: 'local',
@@ -793,7 +793,7 @@ describe('Feature: Self-solving', () => {
         },
         {
           origin: 'local',
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: 'k5'}, 'markDefs'],
           value: [],
         },
