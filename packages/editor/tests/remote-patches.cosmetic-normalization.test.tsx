@@ -13,11 +13,11 @@ import {
 import {createTestEditor} from '../src/test/vitest'
 
 /**
- * Pins the cosmetic-normalization contract of
- * `isCosmeticNormalizationSkipped` (`engine/core/normalize-node.ts`): a
- * collaborator's span structure arrives untouched, nothing is emitted for
- * it, and it canonicalizes on the block's next local edit or via `update
- * value`.
+ * Pins the cosmetic-normalization contract (`engine/core/normalize-node.ts`):
+ * a collaborator's span structure and a document's untidy-but-valid shapes
+ * (unused/duplicate `markDefs`, annotations on empty spans) arrive
+ * untouched, nothing is emitted for them, and the block canonicalizes on
+ * its next local edit.
  */
 describe('remote patches skip cosmetic normalization', () => {
   test('a remote marks change does not merge the surrounding spans', async () => {
@@ -510,6 +510,246 @@ describe('remote patches skip cosmetic normalization', () => {
  * annotation logic must compute correctly over that structure, and the
  * first local touch canonicalizes it as fallout of the edit.
  */
+describe('adoption and remote patches skip markDef and annotation cleanup', () => {
+  test('a remote marks change does not prune the markDef it leaves unused', async () => {
+    // The interleave hazard: a collaborator removes an annotation as two
+    // patches (clear the mark, unset the definition). Between them the
+    // definition is unused, and a receiver pruning it would race the
+    // collaborator's own unset.
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const patchEvents: Array<PatchEvent> = []
+    const mutationEvents: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patchEvents.push(event)
+            }
+            if (event.type === 'mutation') {
+              mutationEvents.push(event)
+            }
+          }}
+        />
+      ),
+      keyGenerator,
+      schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['m0']},
+          ],
+          markDefs: [{_key: 'm0', _type: 'link'}],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+          value: [],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [{_key: 'm0', _type: 'link'}],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Deterministic negative assert: a local edit flushes through the same
+    // ordered channel, so a would-be echo of the remote patch would surface
+    // no later than the edit's own emission. The edit also completes the
+    // lifecycle: touching the block prunes the now-unused definition as the
+    // author's own, emitted cleanup.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patchEvents.map((event) => event.patch)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+          origin: 'local',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual(
+        patchEvents.map((event) => event.patch),
+      )
+    })
+  })
+
+  test('`update value` keeps duplicate markDefs as-is', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
+    })
+
+    const storedValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: ['m0']}],
+        markDefs: [
+          {_key: 'm0', _type: 'link'},
+          {_key: 'm0', _type: 'link'},
+        ],
+        style: 'normal',
+      },
+    ]
+
+    editor.send({type: 'update value', value: storedValue})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(storedValue)
+    })
+  })
+
+  test('an empty annotated span arriving via `initialValue` keeps its marks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const emptyKey = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+          {_type: 'span', _key: emptyKey, text: '', marks: ['m0']},
+        ],
+        markDefs: [{_key: 'm0', _type: 'link'}],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('the untidy block re-canonicalizes on its next local edit', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const emptyKey = keyGenerator()
+    const mutationEvents: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutationEvents.push(event)
+            }
+          }}
+        />
+      ),
+      keyGenerator,
+      schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: emptyKey, text: '', marks: ['m0']},
+          ],
+          markDefs: [
+            {_key: 'm0', _type: 'link'},
+            {_key: 'm0', _type: 'link'},
+          ],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      // The local edit runs all three cleanup rules as its fallout: the empty
+      // span loses its annotation and merges away, the duplicate def
+      // dedupes, and the now-unused def prunes.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(mutationEvents.length).toBeGreaterThan(0)
+    })
+  })
+})
+
 describe('mark state over adopted same-mark siblings', () => {
   test('caret at the boundary sees the shared decorator and typing continues it', async () => {
     const {editor} = await createTestEditor({
