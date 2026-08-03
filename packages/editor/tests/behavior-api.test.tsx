@@ -256,6 +256,92 @@ describe('Behavior API', () => {
     expect(sideEffectB).toHaveBeenCalled()
   })
 
+  test('Scenario: later action sets see the normalization fallout of previous sets', async () => {
+    let firstSetValue: unknown
+    let secondSetValue: unknown
+
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: 's0', _type: 'span', text: 'foo', marks: ['strong']},
+            {_key: 's1', _type: 'span', text: 'bar', marks: []},
+          ],
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'custom.clear formatting',
+              actions: [
+                ({snapshot}) => {
+                  firstSetValue = snapshot.context.value
+                  // Stripping `strong` from `s0` leaves two adjacent spans
+                  // with equal `marks`, the shape the cosmetic same-mark
+                  // merge canonicalizes as fallout of local edits.
+                  return [
+                    raise({type: 'decorator.remove', decorator: 'strong'}),
+                  ]
+                },
+                ({snapshot}) => {
+                  secondSetValue = snapshot.context.value
+                  return []
+                },
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+      },
+    })
+    editor.send({type: 'custom.clear formatting'})
+
+    await vi.waitFor(() => {
+      // The first set reads the guard-time world: both spans, `strong`
+      // intact.
+      expect(firstSetValue).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: 's0', _type: 'span', text: 'foo', marks: ['strong']},
+            {_key: 's1', _type: 'span', text: 'bar', marks: []},
+          ],
+        },
+      ])
+      // The second set's snapshot is created after the first set's
+      // operations and their normalization flushed: the spans arrive
+      // already merged.
+      expect(secondSetValue).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 's0', _type: 'span', text: 'foobar', marks: []}],
+        },
+      ])
+      // The editor itself agrees with what the second set saw.
+      expect(editor.getSnapshot().context.value).toEqual(secondSetValue)
+    })
+  })
+
   test('Scenario: Empty action sets stop event propagation', async () => {
     const {editor, locator} = await createTestEditor({
       children: (
