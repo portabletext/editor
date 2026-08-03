@@ -20,7 +20,12 @@ export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = (
     return undefined
   }
 
-  const firstStyle = firstTextBlock.node.style
+  // A block without a `style` reads as its sub-schema's default (the
+  // first declared style), the same value normalization fills in when a
+  // local edit touches the block.
+  const firstStyle =
+    firstTextBlock.node.style ??
+    getPathSubSchema(snapshot, firstTextBlock.path).styles.at(0)?.name
 
   if (!firstStyle) {
     return undefined
@@ -34,7 +39,14 @@ export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = (
     ),
   )
 
-  if (inScopeBlocks.every((block) => block.node.style === firstStyle)) {
+  if (
+    inScopeBlocks.every(
+      (block) =>
+        (block.node.style ??
+          getPathSubSchema(snapshot, block.path).styles.at(0)?.name) ===
+        firstStyle,
+    )
+  ) {
     return firstStyle
   }
 
