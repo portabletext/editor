@@ -1,4 +1,4 @@
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -35,8 +35,8 @@ function recordTabPrevented() {
   }
 }
 
-describe('repro #2271', () => {
-  test('BASELINE `actions: []` prevents the native event', async () => {
+describe('claiming the native event', () => {
+  test('Scenario: an empty `actions` array claims the native event', async () => {
     const {locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
@@ -61,7 +61,7 @@ describe('repro #2271', () => {
     expect(recorder.seen).toEqual([true])
   })
 
-  test('BUG `actions: [() => []]` should prevent the native event too', async () => {
+  test('Scenario: an action set returning no actions claims the native event', async () => {
     const {locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
@@ -86,7 +86,9 @@ describe('repro #2271', () => {
     expect(recorder.seen).toEqual([true])
   })
 
-  test('REGRESSION GUARD `forward` must NOT prevent the native event', async () => {
+  test('Scenario: a `forward`-only action set leaves the native event unclaimed', async () => {
+    // Passes even without the guard-time claim; it exists to catch fixes
+    // that flip `forward`'s abstention into a claim.
     const {locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
@@ -109,5 +111,46 @@ describe('repro #2271', () => {
     recorder.stop()
 
     expect(recorder.seen).toEqual([false])
+  })
+
+  test('Scenario: a throwing action set keeps the claim on the native event', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const {locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'keyboard.keydown',
+              guard: ({event}) => event.originEvent.key === 'Tab',
+              actions: [
+                () => {
+                  throw new Error('action set crashed')
+                },
+              ],
+            }),
+          ]}
+        />
+      ),
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+
+    const recorder = recordTabPrevented()
+    await userEvent.keyboard('{Tab}')
+    recorder.stop()
+
+    // The guard claimed the event; the crash is reported through
+    // `console.error`, not used as a reason to hand the keystroke back
+    // to the browser.
+    expect(recorder.seen).toEqual([true])
+    expect(consoleError).toHaveBeenCalledWith(
+      new Error(
+        'Evaluating actions for "keyboard.keydown" failed due to: action set crashed',
+      ),
+    )
+
+    consoleError.mockRestore()
   })
 })
