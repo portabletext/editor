@@ -132,6 +132,23 @@ const raisedUppercaseA = defineBehavior({
 })
 ```
 
+### Claiming the native event
+
+When a Behavior's guard matches an event that carries a native event (a `keyboard.keydown`, for example), the Behavior claims it: the editor calls `preventDefault()` and the browser's default action is suppressed. The action sets can revise that claim. Every action set that returns actions casts a vote, and the last vote wins:
+
+| The action set             | Native default              |
+| -------------------------- | --------------------------- |
+| contains `raise`/`execute` | prevented                   |
+| contains only `forward`    | passes down the chain       |
+| contains only `effect`s    | prevented                   |
+| returns nothing, or throws | keeps the previous decision |
+
+Within one set, `raise` and `execute` outrank `forward`: a set that both mutates and forwards still prevents the default.
+
+`forward` does not mean "let the browser act". It means "no opinion at this level": the event moves on to the next Behavior in the chain, which makes its own decision, and the browser's default only survives when no Behavior along the chain claims the event.
+
+Multiple action sets are also an undo boundary: each set after the first starts a new undo step. [`@portabletext/plugin-input-rule`](https://github.com/portabletext/editor/tree/main/packages/plugin-input-rule) uses this to let the typed text land as its own undo step before a second set transforms it, so undo peels the transformation off first.
+
 ## Selectors
 
 Selectors are pure functions that derive state from the editor snapshot (`snapshot` in the examples). A collection of selectors is included with the core library.
