@@ -487,6 +487,22 @@ export function toMergeableMarkDefsPatches(
 
     const inserted = local.filter((item) => !storeByKey.has(item._key))
     if (inserted.length > 0) {
+      for (const item of inserted) {
+        if (item._key === undefined) {
+          continue
+        }
+        // The store view can wrongly lack an in-flight insert (a colliding
+        // transaction makes the optimistic rebase fail silently), so a
+        // re-send would stack a duplicate. The keyed unset makes the
+        // insert an upsert: it is a no-op while the key is absent, and
+        // the client's own transactions apply in order, so a re-send
+        // self-cleans any earlier copy instead of duplicating it.
+        ops.push({
+          type: 'unset',
+          origin,
+          path: [...patch.path, {_key: item._key}],
+        })
+      }
       ops.push({
         type: 'insert',
         origin,
