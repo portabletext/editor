@@ -322,7 +322,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove annotations from empty spans
    */
-  if (isSpan({schema: editor.snapshot.context.schema}, node)) {
+  if (
+    !editor.isProcessingRemoteChanges &&
+    isSpan({schema: editor.snapshot.context.schema}, node)
+  ) {
     const blockPath = parentPath(path)
     const blockEntry = getTextBlock(editor.snapshot, blockPath)
     if (!blockEntry) {
@@ -350,7 +353,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove duplicate markDefs
    */
-  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+  if (
+    !editor.isProcessingRemoteChanges &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+  ) {
     const markDefs = node.markDefs ?? []
     const markDefKeys = new Set<string>()
     const newMarkDefs: Array<PortableTextObject> = []
@@ -372,7 +378,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Remove markDefs not in use
    */
-  if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+  if (
+    !editor.isProcessingRemoteChanges &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+  ) {
     const newMarkDefs = (node.markDefs || []).filter((def) => {
       return node.children.find((child) => {
         return (
