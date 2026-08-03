@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.10.14
+
+### Patch Changes
+
+- [#3027](https://github.com/portabletext/editor/pull/3027) [`04bc38e`](https://github.com/portabletext/editor/commit/04bc38ebc01a7dad7824bf1654306186475364af) Thanks [@voidhrithik](https://github.com/voidhrithik)! - fix: prevent the native event when a matched Behavior's actions return nothing
+
 ## 7.10.13
 
 ### Patch Changes
