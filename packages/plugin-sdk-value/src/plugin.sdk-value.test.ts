@@ -343,6 +343,14 @@ describe(toMergeableMarkDefsPatches.name, () => {
         () => storeValue,
       ),
     ).toEqual([
+      // The keyed unset makes the insert an upsert: a re-send self-cleans
+      // an earlier copy the store view failed to show, instead of stacking
+      // a duplicate.
+      {
+        type: 'unset',
+        origin: undefined,
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'new'}],
+      },
       {
         type: 'insert',
         origin: undefined,

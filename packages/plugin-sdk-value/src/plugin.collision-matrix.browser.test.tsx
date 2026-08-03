@@ -853,31 +853,6 @@ describe('multi-round link overlap', () => {
     )
   }
 
-  function withoutDuplicateMarkDefs(
-    blocks: PortableTextBlock[],
-  ): PortableTextBlock[] {
-    return blocks.map((block) => {
-      const markDefs = (block as {markDefs?: Array<{_key: string}>}).markDefs
-
-      if (!Array.isArray(markDefs)) {
-        return block
-      }
-
-      const seenKeys = new Set<string>()
-
-      return {
-        ...block,
-        markDefs: markDefs.filter((markDef) => {
-          if (seenKeys.has(markDef._key)) {
-            return false
-          }
-          seenKeys.add(markDef._key)
-          return true
-        }),
-      }
-    })
-  }
-
   async function waitForNewPush(store: Store, baseline: number) {
     await vi.waitFor(
       () => {
@@ -937,12 +912,9 @@ describe('multi-round link overlap', () => {
           server.deliverAll()
           expect(server.hasPendingDeliveries()).toBe(false)
 
-          // Known limitation, not a regression gate: repeated concurrent
-          // link toggles can leave duplicate markDef entries (same `_key`,
-          // same fields) in the server document. Editors normalize the
-          // duplicates away locally and the repair sync never rewrites
-          // them, so the comparison dedupes the server value.
-          const serverValue = withoutDuplicateMarkDefs(server.getServerValue())
+          // Upserted def inserts self-clean re-sends, so the server value
+          // must be duplicate-free and the editors must mirror it exactly.
+          const serverValue = server.getServerValue()
           expect(editorA.getSnapshot().context.value).toEqual(serverValue)
           expect(editorB.getSnapshot().context.value).toEqual(serverValue)
         },
