@@ -230,6 +230,40 @@ export function validateValue(
           ),
         ]
 
+        // Duplicate `markDef` keys make keyed addressing ambiguous (a patch
+        // targeting `markDefs[_key=="x"]` can hit either copy). The repair
+        // is a whole-array `set` because keyed unsets would be ambiguous
+        // against the duplicates themselves.
+        if (Array.isArray(blk.markDefs) && blk.markDefs.length > 0) {
+          const seenMarkDefKeys = new Set<string>()
+          const dedupedMarkDefs = blk.markDefs.filter((def) => {
+            if (seenMarkDefKeys.has(def._key)) {
+              return false
+            }
+            seenMarkDefKeys.add(def._key)
+            return true
+          })
+          if (dedupedMarkDefs.length !== blk.markDefs.length) {
+            resolution = {
+              autoResolve: true,
+              patches: [set(dedupedMarkDefs, [{_key: blk._key}, 'markDefs'])],
+              description: `Block with _key '${blk._key}' contains duplicate mark definitions.`,
+              action: 'Remove duplicate mark definitions',
+              item: blk,
+              i18n: {
+                description:
+                  'inputs.portable-text.invalid-value.duplicate-mark-defs.description',
+                action:
+                  'inputs.portable-text.invalid-value.duplicate-mark-defs.action',
+                values: {
+                  key: blk._key,
+                },
+              },
+            }
+            return true
+          }
+        }
+
         // Test that all markDefs are in use (remove orphaned markDefs)
         if (Array.isArray(blk.markDefs) && blk.markDefs.length > 0) {
           const unusedMarkDefs: string[] = [

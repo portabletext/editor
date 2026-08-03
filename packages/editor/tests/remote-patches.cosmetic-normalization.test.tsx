@@ -618,7 +618,11 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
   })
 
-  test('`update value` keeps duplicate markDefs as-is', async () => {
+  test('`update value` repairs duplicate markDefs at ingress', async () => {
+    // Duplicate keys are structural, not cosmetic: patch addressing against
+    // them is ambiguous. Unlike the gated cleanup rules, they are repaired
+    // at ingress. On a pristine editor the repair's write parks and rides
+    // the first local edit, like the other validity repairs.
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -628,23 +632,36 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
       schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
     })
 
-    const storedValue = [
-      {
-        _type: 'block',
-        _key: blockKey,
-        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: ['m0']}],
-        markDefs: [
-          {_key: 'm0', _type: 'link'},
-          {_key: 'm0', _type: 'link'},
-        ],
-        style: 'normal',
-      },
-    ]
-
-    editor.send({type: 'update value', value: storedValue})
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['m0']},
+          ],
+          markDefs: [
+            {_key: 'm0', _type: 'link'},
+            {_key: 'm0', _type: 'link'},
+          ],
+          style: 'normal',
+        },
+      ],
+    })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(storedValue)
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['m0']},
+          ],
+          markDefs: [{_key: 'm0', _type: 'link'}],
+          style: 'normal',
+        },
+      ])
     })
   })
 
@@ -705,13 +722,32 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
             {_type: 'span', _key: fooKey, text: 'foo', marks: []},
             {_type: 'span', _key: emptyKey, text: '', marks: ['m0']},
           ],
-          markDefs: [
-            {_key: 'm0', _type: 'link'},
-            {_key: 'm0', _type: 'link'},
-          ],
+          markDefs: [{_key: 'm0', _type: 'link'}],
           style: 'normal',
         },
       ],
+    })
+
+    // Duplicates can only reach the engine via remote patches now (ingress
+    // dedupes adoption), and the gate keeps them there until a local edit.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [
+            {_key: 'm0', _type: 'link'},
+            {_key: 'm0', _type: 'link'},
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value.at(0)?.markDefs).toHaveLength(2)
     })
 
     editor.send({

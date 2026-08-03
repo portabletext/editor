@@ -375,6 +375,70 @@ describe('when PTE would display warnings, instead it self solves', () => {
     })
   })
 
+  it('removes duplicate markDefs', async () => {
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+    const linkDef = {
+      _key: 'ghi',
+      _type: 'link',
+      href: 'https://sanity.io',
+    }
+    const initialValue = [
+      {
+        _key: 'abc',
+        _type: 'block',
+        style: 'normal',
+        // The same definition twice: keyed addressing against it is
+        // ambiguous, so ingress repairs it, first copy wins.
+        markDefs: [linkDef, linkDef],
+        children: [
+          {
+            _key: 'def',
+            _type: 'span',
+            marks: ['ghi'],
+            text: 'Hello',
+          },
+        ],
+      },
+    ]
+
+    const onChange = vi.fn()
+
+    await createTestEditor({
+      children: (
+        <>
+          <EventListenerPlugin on={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+    })
+    await vi.waitFor(() => {
+      if (editorRef.current) {
+        PortableTextEditor.focus(editorRef.current)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'abc',
+            _type: 'block',
+            children: [
+              {
+                _key: 'def',
+                _type: 'span',
+                text: 'Hello',
+                marks: ['ghi'],
+              },
+            ],
+            markDefs: [linkDef],
+            style: 'normal',
+          },
+        ])
+      }
+    })
+  })
+
   it('allows undefined value', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
