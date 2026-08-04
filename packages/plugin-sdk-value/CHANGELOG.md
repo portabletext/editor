@@ -1,5 +1,30 @@
 # Changelog
 
+## 7.2.0
+
+### Minor Changes
+
+- [#3036](https://github.com/portabletext/editor/pull/3036) [`fd68074`](https://github.com/portabletext/editor/commit/fd6807457c39bc92c2fb5bce5018bb5742d07856) Thanks [@ryanbonial](https://github.com/ryanbonial)! - feat: add presence, and `SDKPortableTextEditable`
+
+  Other people's carets now show up in a Portable Text field, and the local user's caret is reported so they show up elsewhere, including in the Studio.
+
+  `SDKPortableTextEditable` replaces `PortableTextEditable` and does all of it: value sync both ways, presence reporting, and drawing remote carets. It names the document and field once, so a separate `SDKValuePlugin` is no longer needed. Any `rangeDecorations` you pass are kept and merged with the presence carets rather than replaced.
+
+  Remote carets are drawn with a built-in caret component, so presence works without styling anything. Pass `renderCursor` to replace it, or `renderCursor={null}` to report presence without drawing carets.
+
+  `SDKPresencePlugin` and `useSDKPresenceCursors` are available for apps that render `PortableTextEditable` themselves.
+
+  The `@sanity/sdk-react` peer range moves to `^2.19.0`, which is where the presence hooks were added.
+
+### Patch Changes
+
+- [#3033](https://github.com/portabletext/editor/pull/3033) [`6b2c0c8`](https://github.com/portabletext/editor/commit/6b2c0c8b923237a4c42164be7fb1bd103aecee4d) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop concurrent annotation edits from duplicating mark definitions
+
+  When two people annotated at the same time, the same mark definition could be saved into the document twice. When the sync layer re-sends a definition it now replaces its earlier copy instead of adding a second one.
+
+- Updated dependencies [[`520e1be`](https://github.com/portabletext/editor/commit/520e1bebae3aa6853262b66775f9e941217c7eaf), [`ff7e095`](https://github.com/portabletext/editor/commit/ff7e095f681967031bd84d586a7a0f0f7a27e671), [`03a0aaa`](https://github.com/portabletext/editor/commit/03a0aaa8861debda4d1ba81f8af3b3e73409588d)]:
+  - @portabletext/editor@7.10.15
+
 ## 7.1.7
 
 ### Patch Changes
