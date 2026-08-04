@@ -1,5 +1,23 @@
 # Changelog
 
+## 7.10.15
+
+### Patch Changes
+
+- [`520e1be`](https://github.com/portabletext/editor/commit/520e1bebae3aa6853262b66775f9e941217c7eaf) Thanks [@christianhg](https://github.com/christianhg)! - fix: run `markDef` and empty-span-annotation cleanup only as fallout of local edits
+
+  Unused and duplicate `markDefs`, and annotations on empty spans, are no longer cleaned up while adopting outside content or applying a collaborator's patches: adopted blocks keep those shapes exactly as the document has them. A local edit touching the block still cleans them up, emitted as part of that edit. Note that unused `markDefs` arriving via `initialValue` or `update value` are still pruned at ingress by value validation.
+
+- [#3030](https://github.com/portabletext/editor/pull/3030) [`ff7e095`](https://github.com/portabletext/editor/commit/ff7e095f681967031bd84d586a7a0f0f7a27e671) Thanks [@christianhg](https://github.com/christianhg)! - fix: report the sub-schema default style from `getActiveStyle` for blocks missing `style`
+
+  `getActiveStyle` now reports the block's sub-schema default style (its first declared style) when the block carries no `style` field, instead of `undefined`. Observable for values adopted without the field; toolbar style selectors stay populated on such blocks. A sub-schema declaring no styles still reports `undefined`.
+
+- [#3016](https://github.com/portabletext/editor/pull/3016) [`03a0aaa`](https://github.com/portabletext/editor/commit/03a0aaa8861debda4d1ba81f8af3b3e73409588d) Thanks [@christianhg](https://github.com/christianhg)! - fix: normalize optional-field defaults only when a local edit touches the block
+
+  Loading a document (`initialValue`) or receiving an `update value` no longer fills in missing `style`, `marks`, or `markDefs` fields: adopted blocks stay exactly as the document has them, in the editor's value too, and no patches are held back for them. When a local edit touches such a block, its defaults are filled in and emitted as part of that edit.
+
+  Consumers reading `editor.getSnapshot().context.value` will see adopted blocks without these optional fields until the user edits them (renderers already default the fields at read time). The first edit after opening no longer flushes a document-wide wave of default writes; each block's defaults ride the edit that touches it. Validity-critical repairs (missing `_key`/`_type`/`text`, duplicate keys, empty blocks) still run on every path.
+
 ## 7.10.14
 
 ### Patch Changes
