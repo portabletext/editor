@@ -91,10 +91,89 @@ describe('remote patches skip cosmetic normalization', () => {
       ])
     })
 
-    // Negative assert: the sleep gives a would-be echo time to surface.
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(patchEvents).toEqual([])
-    expect(mutationEvents).toEqual([])
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: bazKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: bazKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patchEvents.map((event) => event.patch)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: bazKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: stringifyPatches(
+            makePatches(makeDiff('foobar', 'foobarbaz!')),
+          ),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: bazKey}],
+          origin: 'local',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: bazKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: stringifyPatches(
+            makePatches(makeDiff('foobar', 'foobarbaz!')),
+          ),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: bazKey}],
+          origin: 'local',
+        },
+      ])
+    })
   })
 
   test('adjacent same-mark spans arriving via remote patches are kept', async () => {
@@ -161,11 +240,63 @@ describe('remote patches skip cosmetic normalization', () => {
       ])
     })
 
-    // Negative assert: the old behavior pushed the merge back as a
-    // mutation. The sleep gives a would-be emission time to surface.
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(patchEvents).toEqual([])
-    expect(mutationEvents).toEqual([])
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patchEvents.map((event) => event.patch)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar!'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
+          origin: 'local',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar!'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
+          origin: 'local',
+        },
+      ])
+    })
   })
 
   test('an empty span arriving via remote patches is kept', async () => {
@@ -237,9 +368,51 @@ describe('remote patches skip cosmetic normalization', () => {
       ])
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(patchEvents).toEqual([])
-    expect(mutationEvents).toEqual([])
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patchEvents.map((event) => event.patch)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
+          origin: 'local',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
+          origin: 'local',
+        },
+      ])
+    })
   })
 
   test('the block re-canonicalizes on its next local edit', async () => {
@@ -428,7 +601,25 @@ describe('remote patches skip cosmetic normalization', () => {
       patches: [collaboratorPatches[0]!],
       snapshot: undefined,
     })
-    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // The interleave window: the marks change has landed, the merge
+    // fallout has not. All three spans are still present and unmerged.
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: barKey, text: 'bar', marks: []},
+            {_type: 'span', _key: bazKey, text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
     editor.send({
       type: 'patches',
       patches: collaboratorPatches.slice(1),
@@ -441,18 +632,51 @@ describe('remote patches skip cosmetic normalization', () => {
       expect(editor.getSnapshot().context.value).toEqual(documentValue)
     })
 
-    // Negative assert: the sleep gives a would-be echo time to surface.
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(patchEvents).toEqual([])
+    // Everything the receiver emitted while converging: patches relay
+    // synchronously off the same apply cycle that produced the value
+    // above, so this is already final for that cycle. The receiver
+    // normalized nothing itself, so there is no echo to emit.
+    const patchEventsFromRemoteConvergence = patchEvents.map(
+      (event) => event.patch,
+    )
+    expect(patchEventsFromRemoteConvergence).toEqual([])
 
-    // And therefore the document survives: applying the receiver's
-    // emissions (none) leaves it untouched. Before the fix the echo's
+    // The document survives: applying the receiver's emissions (asserted
+    // empty above) leaves it untouched. Before the fix the echo's
     // `diffMatchPatch`es re-inserted "bar" and "baz" here.
     const documentAfterEcho = applyAll(
       documentValue,
-      patchEvents.map((event) => ({...event.patch})),
+      patchEventsFromRemoteConvergence,
     )
     expect(documentAfterEcho).toEqual(documentValue)
+
+    // The empty snapshot above pins the apply cycle; this edit pins later
+    // ticks, since an echo must surface no later than the edit's own emission.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 9,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 9,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patchEvents.map((event) => event.patch)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+          value: diffMatchPatchFor('foobarbaz', 'foobarbaz!'),
+          origin: 'local',
+        },
+      ])
+    })
   })
 
   test('`update value` keeps adjacent same-mark spans as-is', async () => {
@@ -575,11 +799,6 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
       ])
     })
 
-    // Deterministic negative assert: a local edit flushes through the same
-    // ordered channel, so a would-be echo of the remote patch would surface
-    // no later than the edit's own emission. The edit also completes the
-    // lifecycle: touching the block prunes the now-unused definition as the
-    // author's own, emitted cleanup.
     editor.send({
       type: 'select',
       at: {
@@ -612,9 +831,20 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
       ])
     })
     await vi.waitFor(() => {
-      expect(mutationEvents.flatMap((event) => event.patches)).toEqual(
-        patchEvents.map((event) => event.patch),
-      )
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+          origin: 'local',
+        },
+      ])
     })
   })
 
