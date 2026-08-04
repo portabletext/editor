@@ -13,6 +13,8 @@ import {subscribeToOperations, type OperationEvent} from './operation-channel'
 
 const schema = compileSchema(defineSchema({}))
 
+// Keep in sync with `createBareEditor` in `normalize-node.test.ts`; not
+// extracted to a shared helper so each suite can drift independently.
 function createBareEditor(value: Array<PortableTextBlock>): Editor {
   const editor = createEditor()
 

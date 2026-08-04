@@ -72,6 +72,9 @@ export function validateValue(
         return true
       }
       // Test that every block has a _key prop
+      // Same defect as normalize rule `node.missing-key` (which repairs it
+      // unconditionally, local or remote); policy at this entrance is
+      // reject-with-suggested-patch. Keep ids in sync with NORMALIZE_RULES.
       if (!blk._key || typeof blk._key !== 'string') {
         resolution = {
           patches: [set({...blk, _key: keyGenerator()}, [index])],
@@ -113,6 +116,9 @@ export function validateValue(
         }
 
         // If the block has no `_type`, but aside from that is a valid Portable Text block
+        // Same defect as normalize rule `node.missing-type` (which repairs it
+        // unconditionally, local or remote); policy at this entrance is
+        // reject-with-suggested-patch. Keep ids in sync with NORMALIZE_RULES.
         if (
           !blk._type &&
           isTextBlock({schema: types}, {...blk, _type: types.block.name})
@@ -136,6 +142,9 @@ export function validateValue(
           return true
         }
 
+        // Same defect as normalize rule `node.missing-type` (which repairs it
+        // unconditionally, local or remote); policy at this entrance is
+        // reject-with-suggested-patch. Keep ids in sync with NORMALIZE_RULES.
         if (!blk._type) {
           resolution = {
             patches: [unset([{_key: blk._key}])],
@@ -173,6 +182,10 @@ export function validateValue(
       if (blk._type === types.block.name) {
         const textBlock = blk as PortableTextTextBlock
         // Test that it has a valid children property (array)
+        // Same defect as normalize rule `text-block.children-not-array` (which
+        // repairs it unconditionally, local or remote); policy at this
+        // entrance is reject-with-suggested-patch. Keep ids in sync with
+        // NORMALIZE_RULES.
         if (textBlock.children && !Array.isArray(textBlock.children)) {
           resolution = {
             patches: [set({children: []}, [{_key: textBlock._key}])],
@@ -191,6 +204,11 @@ export function validateValue(
           return true
         }
         // Test that children is set and lengthy
+        // Same defect as normalize rules `text-block.children-not-array`
+        // (the `undefined` half) and `text-block.no-children` (the
+        // empty-array half), both of which repair it unconditionally, local
+        // or remote; policy at this entrance is reject-with-suggested-patch.
+        // Keep ids in sync with NORMALIZE_RULES.
         if (
           textBlock.children === undefined ||
           (Array.isArray(textBlock.children) && textBlock.children.length === 0)
@@ -231,6 +249,10 @@ export function validateValue(
         ]
 
         // Test that all markDefs are in use (remove orphaned markDefs)
+        // Same defect as normalize rule `text-block.unused-mark-defs` (which
+        // defers this repair while `isProcessingRemoteChanges`); policy at
+        // this entrance is reject-with-suggested-patch. Keep ids in sync
+        // with NORMALIZE_RULES.
         if (Array.isArray(blk.markDefs) && blk.markDefs.length > 0) {
           const unusedMarkDefs: string[] = [
             ...new Set(
@@ -286,6 +308,10 @@ export function validateValue(
               return true
             }
 
+            // Same defect as normalize rule `node.missing-key` (which
+            // repairs it unconditionally, local or remote); policy at this
+            // entrance is reject-with-suggested-patch. Keep ids in sync with
+            // NORMALIZE_RULES.
             if (!child._key || typeof child._key !== 'string') {
               const newChild = {...child, _key: keyGenerator()}
               resolution = {
@@ -309,6 +335,10 @@ export function validateValue(
             }
 
             // Verify that children have valid types
+            // Same defect as normalize rule `node.missing-type` (which
+            // repairs it unconditionally, local or remote); policy at this
+            // entrance is reject-with-suggested-patch. Keep ids in sync with
+            // NORMALIZE_RULES.
             if (!child._type) {
               resolution = {
                 patches: [
@@ -354,6 +384,10 @@ export function validateValue(
             }
 
             // Verify that spans have .text property that is a string
+            // Same defect as normalize rule `span.missing-text` (which
+            // repairs it unconditionally, local or remote); policy at this
+            // entrance is reject-with-suggested-patch. Keep ids in sync with
+            // NORMALIZE_RULES.
             if (
               child._type === types.span.name &&
               typeof child.text !== 'string'

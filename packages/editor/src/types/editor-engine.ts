@@ -86,11 +86,9 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * True while the editor applies content that arrived from outside:
    * remote `patches` and value sync.
    *
-   * Normalization reads this flag to leave adopted content alone. While
-   * it is set, only repairs of invalid structure run (missing `_key` or
-   * `text`, empty blocks). Optional fix-ups (merging same-mark spans,
-   * filling in `style`/`marks`/`markDefs` defaults) wait until a local
-   * edit touches the block and then emit as part of that edit.
+   * Normalization reads this flag to leave adopted content alone for the
+   * duration. Which repairs run anyway and which wait for a local edit is
+   * a per-rule policy; see `NORMALIZE_RULES` in `normalize-node.ts`.
    */
   isProcessingRemoteChanges: boolean
   isRedoing: boolean

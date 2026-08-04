@@ -249,6 +249,9 @@ function parseTextBlock({
     }
   }
 
+  // Same defect as normalize rule `node.missing-key` (which repairs it
+  // unconditionally, local or remote); policy at this entrance is to mint a
+  // key while parsing. Keep ids in sync with NORMALIZE_RULES.
   const _key =
     typeof block['_key'] === 'string' ? block['_key'] : keyGenerator()
 
@@ -282,6 +285,11 @@ function parseTextBlock({
           },
         ]
 
+  // Same defect as the inline-object-bracketing arm of normalize rule
+  // `text-block.adjacent-spans` (which always repairs it, unlike that
+  // rule's span-merge arm which defers during remote changes); policy at
+  // this entrance is to bracket while parsing. Keep ids in sync with
+  // NORMALIZE_RULES.
   const normalizedChildren = options.normalize
     ? // Ensure that inline objects re surrounded by spans
       children.reduce<Array<PortableTextObject | PortableTextSpan>>(
@@ -329,6 +337,10 @@ function parseTextBlock({
   }
 
   if (typeof block['markDefs'] === 'object' && block['markDefs'] !== null) {
+    // Same defect as normalize rule `text-block.unused-mark-defs` (which
+    // defers this repair while `isProcessingRemoteChanges`); policy at this
+    // entrance is to filter while parsing, when `removeUnusedMarkDefs` is
+    // requested. Keep ids in sync with NORMALIZE_RULES.
     parsedBlock.markDefs = options.removeUnusedMarkDefs
       ? markDefs.filter((markDef) => marks.includes(markDef._key))
       : markDefs
@@ -501,10 +513,17 @@ function parseSpanInternal({
     return undefined
   }
 
+  // Same defect as normalize rule `node.missing-type` (which infers the
+  // span type for children of a text block, unconditionally, local or
+  // remote); policy at this entrance is to infer while parsing. Keep ids in
+  // sync with NORMALIZE_RULES.
   if (typeof span['_type'] !== 'string') {
     if (typeof span['text'] === 'string') {
       return {
         _type: schema.span.name as 'span',
+        // Same defect as normalize rule `node.missing-key` (which repairs it
+        // unconditionally, local or remote); policy at this entrance is to
+        // mint a key while parsing. Keep ids in sync with NORMALIZE_RULES.
         _key: typeof span['_key'] === 'string' ? span['_key'] : keyGenerator(),
         text: span['text'],
         marks,
@@ -517,7 +536,13 @@ function parseSpanInternal({
 
   return {
     _type: schema.span.name as 'span',
+    // Same defect as normalize rule `node.missing-key` (which repairs it
+    // unconditionally, local or remote); policy at this entrance is to mint
+    // a key while parsing. Keep ids in sync with NORMALIZE_RULES.
     _key: typeof span['_key'] === 'string' ? span['_key'] : keyGenerator(),
+    // Same defect as normalize rule `span.missing-text` (which repairs it
+    // unconditionally, local or remote); policy at this entrance is to fill
+    // in empty text while parsing. Keep ids in sync with NORMALIZE_RULES.
     text: typeof span['text'] === 'string' ? span['text'] : '',
     marks,
     ...(options.validateFields ? {} : customFields),
@@ -701,6 +726,9 @@ function parseObject({
 
   return {
     _type: schemaType.name,
+    // Same defect as normalize rule `node.missing-key` (which repairs it
+    // unconditionally, local or remote); policy at this entrance is to mint
+    // a key while parsing. Keep ids in sync with NORMALIZE_RULES.
     _key: typeof _key === 'string' ? _key : keyGenerator(),
     ...values,
   }
