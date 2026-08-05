@@ -9,15 +9,14 @@ export default defineConfig({
   plugins: [
     react(),
     babel({
-      presets: [
-        reactCompilerPreset({
-          target: '19',
-          sources: (filename) =>
-            !filename.includes('/src/engine/') &&
-            !filename.includes('/src/engine-dom/') &&
-            !filename.includes('/src/engine-react/'),
-        }),
+      exclude: [
+        /[\/\\]node_modules[\/\\]/,
+        /\0rolldown\/runtime\.js/,
+        /[\/\\]src[\/\\]engine[\/\\]/,
+        /[\/\\]src[\/\\]engine-dom[\/\\]/,
+        /[\/\\]src[\/\\]engine-react[\/\\]/,
       ],
+      presets: [reactCompilerPreset({target: '19'})],
     }),
     tailwindcss(),
   ],
