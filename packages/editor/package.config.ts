@@ -70,10 +70,8 @@ const UN_EXCLUDED_SLATE_PATHS = [
 
 /**
  * Everything under `src/` except `src/engine/` is compiled. Expressed as
- * data, not a function: pkg-utils runs babel in a parallel worker pool
- * (`@rollup/plugin-babel`'s `parallel: true`), which requires plugin
- * options to be structured-cloneable, so `sources` must be an array of
- * substrings (`filename.indexOf(entry) !== -1`), not a predicate.
+ * data, not a function: `reactCompiler.sources` is an array of substrings
+ * (`filename.indexOf(entry) !== -1`), not a predicate.
  *
  * The trailing slash on directory entries keeps `/src/engine/` from
  * matching `/src/engine-plugins/`. Keep in sync with the actual top-level
@@ -109,28 +107,28 @@ export default defineConfig({
     __DEV__: false,
   },
   dist: 'lib',
-  extract: {
-    customTags: [
-      {
-        name: 'group',
-        allowMultiple: true,
-        syntaxKind: 'block',
-      },
-    ],
-    rules: {
-      // Disable rules for now
-      'ae-incompatible-release-tags': 'off',
-    },
-  },
+  // `./test/vitest` pulls Vitest's browser type graph into API Extractor, which
+  // crashes resolving `@vitest/browser-webdriverio/context`. Re-enable when that
+  // graph is resolvable or the test entry moves to its own package.
+  tsdoc: false,
   tsconfig: 'tsconfig.dist.json',
   strictOptions: {
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
   },
-  babel: {reactCompiler: true},
-  reactCompilerOptions: {
+  deps: {
+    neverBundle: [
+      'racejar',
+      'vitest',
+      'vitest/browser',
+      'vitest-browser-react',
+      /^@cucumber\//,
+      /^@vitest(\/|$)/,
+      /^@portabletext\/test(\/|$)/,
+    ],
+  },
+  reactCompiler: {
     target: '19',
     sources: COMPILED_SOURCES,
   },
-  dts: 'rolldown',
 })

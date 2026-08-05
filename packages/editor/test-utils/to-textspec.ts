@@ -22,6 +22,8 @@ import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
 /**
  * Serialize PTE state to a textspec notation string.
+ *
+ * @internal
  */
 export function toTextspec(
   context: {

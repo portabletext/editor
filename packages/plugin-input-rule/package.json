@@ -24,6 +24,7 @@
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -39,7 +40,7 @@
     }
   },
   "scripts": {
-    "build": "pkg-utils build --strict --check --clean",
+    "build": "pkg-utils build --strict --check",
     "check:lint": "biome lint .",
     "check:react-compiler": "eslint --cache .",
     "check:types": "tsc",
@@ -66,6 +67,7 @@
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:*",
     "@portabletext/test": "workspace:^",
+    "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",

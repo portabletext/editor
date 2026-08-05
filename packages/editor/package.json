@@ -30,6 +30,7 @@
   "type": "module",
   "sideEffects": false,
   "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
@@ -49,10 +50,12 @@
       "default": "./lib/selectors/index.js"
     },
     "./test": {
-      "default": "./src/test/_exports/index.ts"
+      "source": "./src/test/_exports/index.ts",
+      "default": "./lib/test/index.js"
     },
     "./test/vitest": {
-      "default": "./src/test/vitest/_exports/index.ts"
+      "source": "./src/test/vitest/_exports/index.ts",
+      "default": "./lib/test/vitest/index.js"
     },
     "./traversal": {
       "source": "./src/traversal/_exports/index.ts",
@@ -70,15 +73,15 @@
       "./behaviors": "./lib/behaviors/index.js",
       "./plugins": "./lib/plugins/index.js",
       "./selectors": "./lib/selectors/index.js",
-      "./test": "./src/test/_exports/index.ts",
-      "./test/vitest": "./src/test/vitest/_exports/index.ts",
+      "./test": "./lib/test/index.js",
+      "./test/vitest": "./lib/test/vitest/index.js",
       "./traversal": "./lib/traversal/index.js",
       "./utils": "./lib/utils/index.js",
       "./package.json": "./package.json"
     }
   },
   "scripts": {
-    "build": "pkg-utils build --strict --check --clean",
+    "build": "pkg-utils build --strict --check",
     "check:lint": "biome lint .",
     "check:react-compiler": "eslint --cache .",
     "check:types": "tsc",
@@ -114,6 +117,7 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
+    "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/diff-match-patch": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
@@ -145,5 +149,9 @@
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
+  },
+  "inlinedDependencies": {
+    "@sanity/diff-match-patch": "3.2.0",
+    "@textspec/notation": "1.0.2"
   }
 }
