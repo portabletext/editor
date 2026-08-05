@@ -1,9 +1,9 @@
-import {diffMatchPatch, insert, unset} from '@portabletext/patches'
+import {diffMatchPatch, insert, set, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {createTestEditor} from '../src/test/vitest'
+import {createTestEditor, createTestEditors} from '../src/test/vitest'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -431,7 +431,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     })
   })
 
-  test('Scenario: Remote split of block where cursor is', async () => {
+  test('Scenario: Remote split with the caret in the moved tail follows the content into the new block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const b1 = keyGenerator()
     const s1 = keyGenerator()
@@ -492,14 +492,14 @@ describe('Feature: Selection adjustment after remote patches', () => {
 
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo|', 'B: bar'].join('\n'),
+        ['B: foo', 'B: bar|'].join('\n'),
       )
     })
 
     await vi.waitFor(() => {
       const adjustedSelection = getSelectionAfterText(
         editor.getSnapshot().context,
-        'foo',
+        'bar',
       )
       expect(editor.getSnapshot().context.selection).toEqual(adjustedSelection)
     })
@@ -681,6 +681,430 @@ describe('Feature: Selection adjustment after remote patches', () => {
         {_key: newSpan},
       ])
       expect(selection?.focus.offset).toBe(0)
+    })
+  })
+
+  test('Scenario: Remote span merge keeps the caret at its text position', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+    const s2 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [
+          {_type: 'span', _key: s1, text: 'foo', marks: []},
+          {_type: 'span', _key: s2, text: 'bar', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'b')
+
+    // What a collaborator's editor emits when they unbold "bar": the mark
+    // change, then their normalizer's span merge as a text patch on the
+    // surviving span plus an unset of the absorbed one.
+    editor.send({
+      type: 'patches',
+      patches: [
+        set([], [{_key: b1}, 'children', {_key: s2}, 'marks']),
+        diffMatchPatch('foo', 'foobar', [
+          {_key: b1},
+          'children',
+          {_key: s1},
+          'text',
+        ]),
+        unset([{_key: b1}, 'children', {_key: s2}]),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: b1,
+          children: [{_type: 'span', _key: s1, text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The block's text is unchanged by the merge, so the caret belongs at
+    // the same text position: after "foob", not at the end of the merged
+    // span.
+    await vi.waitFor(() => {
+      const expectedSelection = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'foob',
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
+    })
+  })
+
+  test('Scenario: Remote block merge keeps the caret in its span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+    const b2 = keyGenerator()
+    const s2 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [{_type: 'span', _key: s1, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: b2,
+        children: [{_type: 'span', _key: s2, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'b')
+
+    // What a collaborator's editor emits when they press Backspace at the
+    // start of the second block: the block merge moves the children (keys
+    // intact) into the previous block and unsets the emptied block.
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert([{_type: 'span', _key: s2, text: 'bar', marks: []}], 'after', [
+          {_key: b1},
+          'children',
+          {_key: s1},
+        ]),
+        unset([{_key: b2}]),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: b1,
+          children: [
+            {_type: 'span', _key: s1, text: 'foo', marks: []},
+            {_type: 'span', _key: s2, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The caret's span survived the move with its key intact, so the caret
+    // belongs where it was: inside that span, after the "b".
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      expect(selection?.focus.path).toEqual([
+        {_key: b1},
+        'children',
+        {_key: s2},
+      ])
+      expect(selection?.focus.offset).toBe(1)
+    })
+  })
+
+  test('Scenario: Remote block merge followed by span merge keeps the caret at its text position', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+    const b2 = keyGenerator()
+    const s2 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [{_type: 'span', _key: s1, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: b2,
+        children: [{_type: 'span', _key: s2, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'b')
+
+    // What a collaborator's editor emits when they press Backspace at the
+    // start of the second block and the spans carry the same marks: the
+    // block merge moves the span into the previous block, then their
+    // normalizer merges the now-adjacent same-marked spans, absorbing the
+    // moved span into the first one.
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert([{_type: 'span', _key: s2, text: 'bar', marks: []}], 'after', [
+          {_key: b1},
+          'children',
+          {_key: s1},
+        ]),
+        unset([{_key: b2}]),
+        diffMatchPatch('foo', 'foobar', [
+          {_key: b1},
+          'children',
+          {_key: s1},
+          'text',
+        ]),
+        unset([{_key: b1}, 'children', {_key: s2}]),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: b1,
+          children: [{_type: 'span', _key: s1, text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The merged block's text is the concatenation of the two blocks'
+    // texts, so the caret's character position maps exactly: after "foob".
+    await vi.waitFor(() => {
+      const expectedSelection = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'foob',
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
+    })
+  })
+
+  test('Scenario: Remote split before the caret moves the caret into the new block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [{_type: 'span', _key: s1, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'foob')
+
+    const newBlockKey = keyGenerator()
+
+    // What a collaborator's editor emits when they press Enter between
+    // "foo" and "bar": the original span is truncated to the first half
+    // and the second half moves to a new block. The split reuses the
+    // span's `_key` in the new block.
+    editor.send({
+      type: 'patches',
+      patches: [
+        diffMatchPatch('foobar', 'foo', [
+          {_key: b1},
+          'children',
+          {_key: s1},
+          'text',
+        ]),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: newBlockKey,
+              children: [{_type: 'span', _key: s1, text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'after',
+          [{_key: b1}],
+        ),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: b|ar'].join('\n'),
+      )
+    })
+
+    await vi.waitFor(() => {
+      const expectedSelection = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'b',
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
+    })
+  })
+
+  test('Scenario: Two editors: a real split via Enter moves the caret into the new block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    const s1 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [{_type: 'span', _key: s1, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator, editorB} = await createTestEditors({
+      keyGenerator,
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'foob')
+
+    // Editor B splits the block between "foo" and "bar" through its full
+    // editing pipeline; the harness relays its mutation to editor A as
+    // remote patches, whatever their real shape is.
+    editorB.send({
+      type: 'select',
+      at: getSelectionAfterText(editorB.getSnapshot().context, 'foo'),
+    })
+    editorB.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: b|ar'].join('\n'),
+      )
+    })
+  })
+
+  test('Scenario: Remote block delete never follows a duplicate span key across the document', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const b1 = keyGenerator()
+    // Splitting a block reuses the span `_key` in the new block, so
+    // real documents contain doc-wide duplicate span keys. The caret's
+    // span key existing elsewhere must never make the caret jump there.
+    const duplicateSpanKey = keyGenerator()
+    const b2 = keyGenerator()
+    const s2 = keyGenerator()
+    const b3 = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: b1,
+        children: [
+          {_type: 'span', _key: duplicateSpanKey, text: 'foo', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: b2,
+        children: [{_type: 'span', _key: s2, text: 'mid', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: b3,
+        children: [
+          {_type: 'span', _key: duplicateSpanKey, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+    await whenTheCaretIsPutAfter(editor, 'b')
+
+    editor.send({
+      type: 'patches',
+      patches: [unset([{_key: b3}])],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: b1,
+          children: [
+            {_type: 'span', _key: duplicateSpanKey, text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: b2,
+          children: [{_type: 'span', _key: s2, text: 'mid', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The deleted block's content is gone (not merged anywhere), so no
+    // exact mapping exists and the generic fallback stands: the caret
+    // collapses into the adjacent block, never onto the same-keyed span
+    // in the first block.
+    await vi.waitFor(() => {
+      const expectedSelection = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'mid',
+      )
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
   })
 })
