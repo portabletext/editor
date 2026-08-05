@@ -1,7 +1,18 @@
 {
   "extends": "./tsconfig.settings.json",
   "compilerOptions": {
-    "types": ["@vitest/browser-playwright"]
+    "types": ["@vitest/browser-playwright"],
+    // Points this package's own specifiers at `src`, because `lib` is not built
+    // yet when `check:types` runs. `customConditions: ["source"]` would do the
+    // same through `exports`, but it also redirects dependencies to their
+    // `source` condition, and type-checking their `.ts` bypasses
+    // `skipLibCheck`.
+    "paths": {
+      "@portabletext/editor/test": ["./src/test/_exports/index.ts"],
+      "@portabletext/editor/test/vitest": [
+        "./src/test/vitest/_exports/index.ts"
+      ]
+    }
   },
   "include": ["./src", "./gherkin-tests", "./tests"],
   "exclude": ["dist", "node_modules"]

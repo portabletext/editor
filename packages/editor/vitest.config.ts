@@ -1,7 +1,16 @@
 import babel from '@rolldown/plugin-babel'
 import react, {reactCompilerPreset} from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
+import {defaultClientConditions} from 'vite'
 import {defineConfig} from 'vitest/config'
+
+/**
+ * Resolves this package's own `@portabletext/editor/*` specifiers through the
+ * `source` condition in `exports`, so tests run against `src` instead of `lib`,
+ * which is not built yet when the test tasks run. Projects are separate Vite
+ * configs, so this cannot live at the top level.
+ */
+const resolve = {conditions: ['source', ...defaultClientConditions]}
 
 export default defineConfig({
   test: {
@@ -19,6 +28,7 @@ export default defineConfig({
           react(),
           babel({presets: [reactCompilerPreset({target: '19'})]}),
         ],
+        resolve,
         test: {
           name: 'browser',
           include: [
@@ -56,6 +66,7 @@ export default defineConfig({
           react(),
           babel({presets: [reactCompilerPreset({target: '19'})]}),
         ],
+        resolve,
         test: {
           name: 'unit',
           exclude: [
