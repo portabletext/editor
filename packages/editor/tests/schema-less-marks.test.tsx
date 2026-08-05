@@ -1,7 +1,7 @@
-import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
+import {createTestEditor} from '../src/test/vitest'
 
 // A schema without `strong`. The value below still uses it, the situation
 // after removing a decorator from a schema with existing documents.
