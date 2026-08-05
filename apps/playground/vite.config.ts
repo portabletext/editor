@@ -10,11 +10,11 @@ export default defineConfig({
     react(),
     babel({
       exclude: [
-        /[\/\\]node_modules[\/\\]/,
+        /[/\\]node_modules[/\\]/,
         /\0rolldown\/runtime\.js/,
-        /[\/\\]src[\/\\]engine[\/\\]/,
-        /[\/\\]src[\/\\]engine-dom[\/\\]/,
-        /[\/\\]src[\/\\]engine-react[\/\\]/,
+        /[/\\]src[/\\]engine[/\\]/,
+        /[/\\]src[/\\]engine-dom[/\\]/,
+        /[/\\]src[/\\]engine-react[/\\]/,
       ],
       presets: [reactCompilerPreset({target: '19'})],
     }),
