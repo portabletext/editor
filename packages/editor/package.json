@@ -145,7 +145,25 @@
     "vitest-browser-react": "catalog:tooling"
   },
   "peerDependencies": {
-    "react": "^19.2.7"
+    "@portabletext/test": "workspace:^",
+    "racejar": "workspace:^",
+    "react": "^19.2.7",
+    "vitest": "^4.1.10",
+    "vitest-browser-react": "^2.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@portabletext/test": {
+      "optional": true
+    },
+    "racejar": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    },
+    "vitest-browser-react": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

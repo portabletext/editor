@@ -107,10 +107,17 @@ export default defineConfig({
     __DEV__: false,
   },
   dist: 'lib',
-  // `./test/vitest` pulls Vitest's browser type graph into API Extractor, which
-  // crashes resolving `@vitest/browser-webdriverio/context`. Re-enable when that
-  // graph is resolvable or the test entry moves to its own package.
-  tsdoc: false,
+  // Works only while the test entry points' `vitest` imports stay in
+  // `peerDependencies`: API Extractor inlines the types of every
+  // `devDependency`, and crawling `vitest/browser` reaches its optional
+  // `@vitest/browser-webdriverio` peer, which is not installed.
+  tsdoc: {
+    customTags: [{name: 'group', allowMultiple: true, syntaxKind: 'block'}],
+    rules: {
+      // Disable rules for now
+      'ae-incompatible-release-tags': 'off',
+    },
+  },
   tsconfig: 'tsconfig.dist.json',
   strictOptions: {
     noImplicitBrowsersList: 'off',

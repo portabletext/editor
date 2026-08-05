@@ -201,6 +201,9 @@ async function selectionFromInput(context: Context, textspec: string) {
   })
 }
 
+/**
+ * @internal
+ */
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const {editor, locator} = await createTestEditor({
