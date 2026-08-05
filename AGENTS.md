@@ -61,3 +61,23 @@ Guidance for coding agents working on the Portable Text Editor monorepo.
   `fix: only rewrite the DOM selection when it disagrees with the model`.
 - User-facing changes ship a changeset (`.changeset/*.md`); tests, tooling,
   and internal refactors do not.
+
+## Cursor Cloud specific instructions
+
+- Use Node 24 (the nvm default). The VM's baseline `node` on `PATH`
+  (`/exec-daemon/node`) is v22.14, whose V8 predates duplicate named capture
+  groups; under it `@portabletext/plugin-character-pair-decorator`'s
+  `regex.character-pair` unit suite throws `Duplicate capture group name` and
+  `pnpm test:unit` fails. Interactive shells source `~/.bashrc` → nvm and pick
+  up the Node 24 default automatically; if a command lands on v22.14, run
+  `nvm use 24` first. CI runs the suite on `lts/*` (Node 24).
+- Browser tests (`.test.tsx`, e.g. `pnpm test:browser:chromium`) need the
+  Playwright Chromium browser; it is provisioned by the startup update script.
+  Only Chromium is installed, so `test:browser:firefox` / `:webkit` need their
+  browsers added first (`pnpm exec playwright install firefox webkit`).
+- The runnable demo app is `playground`: `pnpm dev:playground` serves it at
+  `http://localhost:5173/` (Vite). `apps/docs` (`pnpm dev:docs`) and
+  `examples/basic` (`pnpm dev:example-basic`) are the other runnable targets;
+  there is no backend, database, or env/secret to configure.
+- `pnpm install` prints an "Ignored build scripts: esbuild" warning. It is
+  benign here — builds, Vite, and tests all work without approving it.
