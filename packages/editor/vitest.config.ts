@@ -5,10 +5,12 @@ import {defaultClientConditions} from 'vite'
 import {defineConfig} from 'vitest/config'
 
 /**
- * Resolves this package's own `@portabletext/editor/*` specifiers through the
- * `source` condition in `exports`, so tests run against `src` instead of `lib`,
- * which is not built yet when the test tasks run. Projects are separate Vite
- * configs, so this cannot live at the top level.
+ * Opts into the `source` condition for every package that publishes one, not
+ * just this one: the workspace siblings and dependencies such as
+ * `@sanity/diff-match-patch` resolve to TypeScript source here too. What needs
+ * it are this package's own `./test` and `./test/vitest` subpaths, which
+ * resolve to `lib`, and the test tasks never build `lib` first. Projects are
+ * separate Vite configs, so this cannot live at the top level.
  */
 const resolve = {conditions: ['source', ...defaultClientConditions]}
 
