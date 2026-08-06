@@ -20,8 +20,7 @@
   },
   "files": [
     "dist",
-    "src/ui/styles.css",
-    "src/ui/styles.css.node-stub.js"
+    "styles"
   ],
   "type": "module",
   "sideEffects": false,
@@ -38,10 +37,10 @@
       "default": "./dist/ui/index.js"
     },
     "./ui/styles.css": {
-      "browser": "./src/ui/styles.css",
-      "style": "./src/ui/styles.css",
-      "node": "./src/ui/styles.css.node-stub.js",
-      "default": "./src/ui/styles.css.node-stub.js"
+      "browser": "./styles/table.css",
+      "style": "./styles/table.css",
+      "node": "./styles/table.css.node-stub.js",
+      "default": "./styles/table.css.node-stub.js"
     },
     "./package.json": "./package.json"
   },
@@ -50,10 +49,10 @@
       ".": "./dist/index.js",
       "./ui": "./dist/ui/index.js",
       "./ui/styles.css": {
-        "browser": "./src/ui/styles.css",
-        "style": "./src/ui/styles.css",
-        "node": "./src/ui/styles.css.node-stub.js",
-        "default": "./src/ui/styles.css.node-stub.js"
+        "browser": "./styles/table.css",
+        "style": "./styles/table.css",
+        "node": "./styles/table.css.node-stub.js",
+        "default": "./styles/table.css.node-stub.js"
       },
       "./package.json": "./package.json"
     }
