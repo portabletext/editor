@@ -20,7 +20,7 @@ catalogMode: prefer
 catalogs:
   tooling:
     "@portabletext/react": ^7.0.1
-    "@sanity/pkg-utils": ^12.0.0
+    "@sanity/pkg-utils": ^12.0.1
     "@sanity/tsconfig": ^2.1.0
     "@rolldown/plugin-babel": ^0.2.3
     "@tailwindcss/vite": ^4.3.3
