@@ -12,7 +12,10 @@ export function isEqualValues(
   b: Array<PortableTextBlock | Node> | undefined,
 ): boolean {
   if (!a || !b) {
-    return a === b
+    // `undefined` and `[]` both mean "empty value". Treating them as
+    // different makes the sync machine count an empty→empty value update
+    // as a remote change and clear locally typed content.
+    return (a?.length ?? 0) === (b?.length ?? 0)
   }
 
   if (a.length !== b.length) {
