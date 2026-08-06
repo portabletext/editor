@@ -1,6 +1,7 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {
   defineSchema,
   type EditorEmittedEvent,
@@ -2311,6 +2312,52 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       expect(patches).toEqual([sentinelPatch])
       expect(mutations.map((mutation) => mutation.patches)).toEqual([
         [sentinelPatch],
+      ])
+    })
+  })
+
+  test('Scenario: Stale empty array update does not clear locally typed text', async () => {
+    const mutations: Array<MutationEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    // Wait for the mutation flush so the sync machine is not busy and acts
+    // on the incoming value right away.
+    await vi.waitFor(() => {
+      expect(mutations.length).toBeGreaterThan(0)
+    })
+
+    // A stale snapshot can present an empty field as `[]` even though the
+    // editor mounted with `undefined` (observed in Studio after a dropped
+    // listener connection). Both shapes mean "empty", so the update must
+    // not count as a remote change that clears the locally typed text.
+    editor.send({type: 'update value', value: []})
+
+    await userEvent.type(locator, 'bar')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
   })
