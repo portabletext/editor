@@ -5,8 +5,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
-import {createTestEditor} from '../src/test/vitest'
-import {getSelectionAfterText} from '../test-utils/text-selection'
+import {createTestEditor, createTestEditors} from '../src/test/vitest'
+import {
+  getSelectionAfterText,
+  getTextSelection,
+} from '../test-utils/text-selection'
 
 /**********
  * Step definitions
@@ -1704,6 +1707,147 @@ describe('Collaborative editing', () => {
       })
 
       expect(emittedPatches).toEqual([])
+    })
+  })
+
+  describe('Concurrent structural edits', () => {
+    test('Scenario: Typing survives a concurrent block merge by the peer', async () => {
+      const initialValue = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      const {editor, editorB} = await createTestEditors({
+        initialValue,
+      })
+
+      // Editor B puts the caret after "bar". Editor A puts the caret
+      // before "bar". Selections do not relay, so this settles first.
+      const afterBar = getSelectionAfterText(
+        editorB.getSnapshot().context,
+        'bar',
+      )
+      editorB.send({type: 'select', at: afterBar})
+      const barSelection = getTextSelection(editor.getSnapshot().context, 'bar')
+      const beforeBar = {
+        anchor: barSelection.anchor,
+        focus: barSelection.anchor,
+        backward: false,
+      }
+      editor.send({type: 'select', at: beforeBar})
+
+      await vi.waitFor(() => {
+        expect(editorB.getSnapshot().context.selection).toEqual(afterBar)
+        expect(editor.getSnapshot().context.selection).toEqual(beforeBar)
+      })
+
+      // Both edits fire before either editor receives the other's
+      // mutation: B types at the end of "bar" while A merges the block
+      // into the previous one with Backspace.
+      editorB.send({type: 'insert.text', text: 'baz'})
+      editor.send({type: 'delete.backward', unit: 'character'})
+
+      // Both editors must converge, and B's typed text must survive.
+      await vi.waitFor(() => {
+        const textA = editor
+          .getSnapshot()
+          .context.value.flatMap((block) =>
+            'children' in block
+              ? (block.children as Array<{text?: string}>).map(
+                  (child) => child.text ?? '',
+                )
+              : [],
+          )
+          .join('')
+        const textB = editorB
+          .getSnapshot()
+          .context.value.flatMap((block) =>
+            'children' in block
+              ? (block.children as Array<{text?: string}>).map(
+                  (child) => child.text ?? '',
+                )
+              : [],
+          )
+          .join('')
+        expect(textA).toBe('foobarbaz')
+        expect(textB).toBe('foobarbaz')
+      })
+    })
+
+    test('Scenario: Bold lands on the selected text despite a concurrent split by the peer', async () => {
+      const initialValue = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      const {editor, editorB} = await createTestEditors({
+        initialValue,
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}],
+        }),
+      })
+
+      // Editor B selects "bar". Editor A puts the caret after "foo".
+      const barSelection = getTextSelection(
+        editorB.getSnapshot().context,
+        'bar',
+      )
+      editorB.send({type: 'select', at: barSelection})
+      const afterFoo = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'foo',
+      )
+      editor.send({type: 'select', at: afterFoo})
+
+      await vi.waitFor(() => {
+        expect(editorB.getSnapshot().context.selection).toEqual(barSelection)
+        expect(editor.getSnapshot().context.selection).toEqual(afterFoo)
+      })
+
+      // Both edits fire before either editor receives the other's
+      // mutation: B bolds "bar" while A splits the block between "foo"
+      // and "bar".
+      editorB.send({type: 'decorator.add', decorator: 'strong'})
+      editor.send({type: 'insert.break'})
+
+      // Both editors must converge on the same value, the text must not
+      // duplicate, and the bold must sit on "bar" and nothing else.
+      await vi.waitFor(() => {
+        const valueA = editor.getSnapshot().context.value
+        const valueB = editorB.getSnapshot().context.value
+        expect(valueA).toEqual(valueB)
+
+        const spans = valueA.flatMap((block) =>
+          'children' in block
+            ? (block.children as Array<{text?: string; marks?: Array<string>}>)
+            : [],
+        )
+        const fullText = spans.map((span) => span.text ?? '').join('')
+        expect(fullText).toBe('foobar')
+
+        const boldText = spans
+          .filter((span) => span.marks?.includes('strong'))
+          .map((span) => span.text ?? '')
+          .join('')
+        expect(boldText).toBe('bar')
+      })
     })
   })
 })
