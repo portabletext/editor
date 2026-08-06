@@ -30,17 +30,10 @@ fix: publish export maps that resolve, and add a `module` entry point
 the build, so the published manifests no longer carry development-only
 conditions that point outside the tarball.
 
-`@portabletext/test` had no `publishConfig.exports`, so it published its
-development `exports` map verbatim, `source` condition included. That condition
-points at `./src/index.ts`, which `files: ["dist"]` never publishes, so any
-resolver honouring `source` — bundlers and monorepo tooling configured for it —
-resolved to a file the tarball does not contain. It now publishes a map that
-points at `dist` only.
-
-`@portabletext/editor` had the same problem in its `./test` and `./test/vitest`
-entry points, where both `exports` and `publishConfig.exports` pointed at
-`./src/test/…` against `files: ["lib"]`. Those entry points are built now and
-resolve to `lib`.
+`@portabletext/editor`'s `./test` and `./test/vitest` entry points pointed at
+`./src/test/…` in both `exports` and `publishConfig.exports`, against
+`files: ["lib"]`, so they resolved to files the tarball does not contain. Those
+entry points are built now and resolve to `lib`.
 
 Every package also gains a `module` field next to `main`, which bundlers that
 predate `exports` use to pick the ESM build.
