@@ -24,16 +24,8 @@
 'racejar': patch
 ---
 
-fix: publish export maps that resolve, and add a `module` entry point
+fix: add a `module` entry point
 
-`@sanity/pkg-utils` v12 reconciles `exports` with `publishConfig.exports` during
-the build, so the published manifests no longer carry development-only
-conditions that point outside the tarball.
-
-`@portabletext/editor`'s `./test` and `./test/vitest` entry points pointed at
-`./src/test/…` in both `exports` and `publishConfig.exports`, against
-`files: ["lib"]`, so they resolved to files the tarball does not contain. Those
-entry points are built now and resolve to `lib`.
-
-Every package also gains a `module` field next to `main`, which bundlers that
-predate `exports` use to pick the ESM build.
+`@sanity/pkg-utils` v12 regenerates the `exports` map during the build, which
+adds a `module` field next to `main`. Bundlers that predate `exports` use it to
+pick the ESM build.
