@@ -5,7 +5,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
-import {createTestEditor} from '../src/test/vitest'
+import {createTestEditor, createTestEditors} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 /**********
@@ -1704,6 +1704,75 @@ describe('Collaborative editing', () => {
       })
 
       expect(emittedPatches).toEqual([])
+    })
+  })
+
+  describe('Concurrent structural repairs', () => {
+    test('Scenario: Two editors repair the same missing `_key` with the same key', async () => {
+      const initialValue = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      // No shared `keyGenerator`: each editor gets its own, with an
+      // `ea-`/`eb-` prefix, which is the production situation.
+      const {editor, editorB} = await createTestEditors({
+        initialValue,
+      })
+
+      // A third client inserts a block without a `_key`. Both open
+      // editors receive the same patch.
+      const keylessBlock = {
+        _type: 'block',
+        children: [{_type: 'span', _key: 's2', text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const remotePatches = [
+        {
+          type: 'insert' as const,
+          position: 'after' as const,
+          path: [{_key: 'b1'}],
+          items: [keylessBlock],
+          origin: 'remote' as const,
+        },
+      ]
+
+      editor.send({
+        type: 'patches',
+        patches: remotePatches,
+        snapshot: undefined,
+      })
+      editorB.send({
+        type: 'patches',
+        patches: remotePatches,
+        snapshot: undefined,
+      })
+
+      // Both editors run the structural missing-`_key` repair and assign
+      // a key.
+      await vi.waitFor(() => {
+        const blockA = editor.getSnapshot().context.value.at(1)
+        const blockB = editorB.getSnapshot().context.value.at(1)
+        expect(blockA?._key).toBeDefined()
+        expect(blockB?._key).toBeDefined()
+      })
+
+      // The repair must be deterministic: both editors must converge on
+      // the same key for the same block. Different keys mean each editor
+      // addresses the block by an identity the other editor does not
+      // have, and keyed patches for the block stop resolving across
+      // clients until a full value sync.
+      await vi.waitFor(() => {
+        const blockA = editor.getSnapshot().context.value.at(1)
+        const blockB = editorB.getSnapshot().context.value.at(1)
+        expect(blockA?._key).toBe(blockB?._key)
+      })
     })
   })
 })
