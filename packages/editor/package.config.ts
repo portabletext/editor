@@ -123,17 +123,6 @@ export default defineConfig({
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
   },
-  deps: {
-    neverBundle: [
-      'racejar',
-      'vitest',
-      'vitest/browser',
-      'vitest-browser-react',
-      /^@cucumber\//,
-      /^@vitest(\/|$)/,
-      /^@portabletext\/test(\/|$)/,
-    ],
-  },
   reactCompiler: {
     target: '19',
     sources: COMPILED_SOURCES,
