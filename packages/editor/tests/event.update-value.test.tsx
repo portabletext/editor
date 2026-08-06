@@ -2316,6 +2316,178 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     })
   })
 
+  test('Scenario: Clearing synced value with an empty array', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The existing clearing scenarios all spell "empty" as `undefined`;
+    // this pins that the `[]` shape clears a non-empty synced value too.
+    editor.send({type: 'update value', value: []})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Clearing locally typed text with an empty array after the value echoed back', async () => {
+    const mutations: Array<MutationEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(mutations.length).toBeGreaterThan(0)
+    })
+
+    // The controlled-host flow: the host receives the mutation and echoes
+    // the value back down. After the echo the machine holds a non-empty
+    // synced value, so a later `[]` is a genuine remote clear.
+    editor.send({type: 'update value', value: mutations[0]!.value})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'update value', value: []})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Stale `undefined` update does not clear locally typed text', async () => {
+    const mutations: Array<MutationEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(mutations.length).toBeGreaterThan(0)
+    })
+
+    // The other spelling of the stale empty snapshot. Must behave exactly
+    // like the `[]` shape: local text survives.
+    editor.send({type: 'update value', value: undefined})
+
+    await userEvent.type(locator, 'bar')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Empty array update on a pristine editor keeps the placeholder', async () => {
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+    })
+
+    editor.send({type: 'update value', value: []})
+
+    // The sentinel edit pins placeholder identity: if the `[]` had counted
+    // as a remote change, the clear would have minted a fresh placeholder
+    // block (`k2`/`k3`) and the typed text would land there.
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Stale empty array update does not clear locally typed text', async () => {
     const mutations: Array<MutationEvent> = []
     const {editor, locator} = await createTestEditor({
