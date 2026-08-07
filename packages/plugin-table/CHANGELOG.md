@@ -1,5 +1,31 @@
 # @portabletext/plugin-table
 
+## 1.3.14
+
+### Patch Changes
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: add a `module` entry point
+
+  Every package now declares `module` alongside `main`, pointing at the ESM build.
+  Bundlers that predate `exports` use it to pick the ESM output instead of falling
+  back to `main`.
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: stop publishing `src` on npm
+
+  The tarball carried `src/ui/styles.css` and a hand-written Node stub, because
+  `@portabletext/plugin-table/ui/styles.css` resolved into `src`. The stylesheet
+  now ships minified from `dist` next to a generated no-op shim for runtimes that
+  cannot load `.css` files, and `src` is gone from the package. The import
+  specifier is unchanged, and the `light-dark()` tokens still resolve against the
+  consumer's `color-scheme`.
+
+  The package also declares `sideEffects: ["*.css"]`, so bundlers keep the
+  stylesheet instead of tree-shaking the import away.
+
+- Updated dependencies [[`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c), [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c), [`46c019c`](https://github.com/portabletext/editor/commit/46c019cc3ae1112c1027059b06d80432fd2ca1d7)]:
+  - @portabletext/editor@7.10.17
+  - @portabletext/keyboard-shortcuts@2.1.4
+
 ## 1.3.13
 
 ### Patch Changes

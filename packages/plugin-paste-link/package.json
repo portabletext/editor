@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-paste-link",
-  "version": "4.0.43",
+  "version": "4.0.44",
   "description": "Allow pasting links in the Portable Text Editor",
   "keywords": [
     "behaviors",
