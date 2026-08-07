@@ -13,6 +13,9 @@ export default defineConfig({
         },
       },
       {
+        // Resolves the monorepo-only `@portabletext/editor/test*` specifiers
+        // through this package's tsconfig `paths`.
+        resolve: {tsconfigPaths: true},
         plugins: [
           react(),
           babel({presets: [reactCompilerPreset({target: '19'})]}),

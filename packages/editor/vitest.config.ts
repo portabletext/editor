@@ -1,18 +1,14 @@
 import babel from '@rolldown/plugin-babel'
 import react, {reactCompilerPreset} from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
-import {defaultClientConditions} from 'vite'
 import {defineConfig} from 'vitest/config'
 
 /**
- * Opts into the `source` condition for every package that publishes one, not
- * just this one: the workspace siblings and dependencies such as
- * `@sanity/diff-match-patch` resolve to TypeScript source here too. What needs
- * it are this package's own `./test` and `./test/vitest` subpaths, which
- * resolve to `lib`, and the test tasks never build `lib` first. Projects are
- * separate Vite configs, so this cannot live at the top level.
+ * Resolves the monorepo-only `@portabletext/editor/test*` specifiers through
+ * this package's tsconfig `paths`. Projects are separate Vite configs, so this
+ * cannot live at the top level.
  */
-const resolve = {conditions: ['source', ...defaultClientConditions]}
+const resolve = {tsconfigPaths: true}
 
 export default defineConfig({
   test: {

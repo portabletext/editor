@@ -107,10 +107,6 @@ export default defineConfig({
     __DEV__: false,
   },
   dist: 'lib',
-  // Works only while the test entry points' `vitest` imports stay in
-  // `peerDependencies`: API Extractor inlines the types of every
-  // `devDependency`, and crawling `vitest/browser` reaches its optional
-  // `@vitest/browser-webdriverio` peer, which is not installed.
   tsdoc: {
     customTags: [{name: 'group', allowMultiple: true, syntaxKind: 'block'}],
     rules: {

@@ -1,7 +1,14 @@
 {
   "extends": "./tsconfig.settings.json",
   "compilerOptions": {
-    "types": ["@vitest/browser-playwright"]
+    "types": ["@vitest/browser-playwright"],
+    "paths": {
+      "@portabletext/editor/test": ["../editor/src/test/_exports/index.ts"],
+      "@portabletext/editor/test/vitest": [
+        "../editor/src/test/vitest/_exports/index.ts"
+      ]
+    },
+    "rootDir": ".."
   },
   "include": ["src/*.ts", "src/*.tsx"],
   "exclude": ["dist", "node_modules"]

@@ -49,14 +49,6 @@
       "source": "./src/selectors/_exports/index.ts",
       "default": "./lib/selectors/index.js"
     },
-    "./test": {
-      "source": "./src/test/_exports/index.ts",
-      "default": "./lib/test/index.js"
-    },
-    "./test/vitest": {
-      "source": "./src/test/vitest/_exports/index.ts",
-      "default": "./lib/test/vitest/index.js"
-    },
     "./traversal": {
       "source": "./src/traversal/_exports/index.ts",
       "default": "./lib/traversal/index.js"
@@ -73,8 +65,6 @@
       "./behaviors": "./lib/behaviors/index.js",
       "./plugins": "./lib/plugins/index.js",
       "./selectors": "./lib/selectors/index.js",
-      "./test": "./lib/test/index.js",
-      "./test/vitest": "./lib/test/vitest/index.js",
       "./traversal": "./lib/traversal/index.js",
       "./utils": "./lib/utils/index.js",
       "./package.json": "./package.json"
@@ -145,31 +135,12 @@
     "vitest-browser-react": "catalog:tooling"
   },
   "peerDependencies": {
-    "@portabletext/test": "workspace:^",
-    "racejar": "workspace:^",
-    "react": "^19.2.7",
-    "vitest": "^4.1.10",
-    "vitest-browser-react": "^2.2.0"
-  },
-  "peerDependenciesMeta": {
-    "@portabletext/test": {
-      "optional": true
-    },
-    "racejar": {
-      "optional": true
-    },
-    "vitest": {
-      "optional": true
-    },
-    "vitest-browser-react": {
-      "optional": true
-    }
+    "react": "^19.2.7"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
   },
   "inlinedDependencies": {
-    "@sanity/diff-match-patch": "3.2.0",
-    "@textspec/notation": "1.0.2"
+    "@sanity/diff-match-patch": "3.2.0"
   }
 }
