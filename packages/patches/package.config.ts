@@ -5,5 +5,4 @@ export default defineConfig({
   strictOptions: {
     noImplicitBrowsersList: 'off',
   },
-  dts: 'rolldown',
 })

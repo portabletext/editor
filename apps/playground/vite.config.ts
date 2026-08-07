@@ -9,7 +9,13 @@ export default defineConfig({
   plugins: [
     react(),
     babel({
-      exclude: [/[/\\]node_modules[/\\]/, /[/\\]src[/\\]engine[/\\]/],
+      // Overriding `exclude` replaces the plugin's defaults, so Rolldown's
+      // runtime helper has to be re-listed alongside the vendored engine.
+      exclude: [
+        /[/\\]node_modules[/\\]/,
+        /\0rolldown\/runtime\.js/,
+        /[/\\]src[/\\]engine[/\\]/,
+      ],
       presets: [reactCompilerPreset({target: '19'})],
     }),
     tailwindcss(),

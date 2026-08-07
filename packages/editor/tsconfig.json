@@ -1,7 +1,17 @@
 {
   "extends": "./tsconfig.settings.json",
   "compilerOptions": {
-    "types": ["@vitest/browser-playwright"]
+    "types": ["@vitest/browser-playwright"],
+    // The test helpers are monorepo-only: they are not in `exports`, so these
+    // specifiers resolve nowhere without the mapping. Sibling packages carry
+    // the same one, and the vitest configs reuse it via
+    // `resolve.tsconfigPaths`.
+    "paths": {
+      "@portabletext/editor/test": ["./src/test/_exports/index.ts"],
+      "@portabletext/editor/test/vitest": [
+        "./src/test/vitest/_exports/index.ts"
+      ]
+    }
   },
   "include": ["./src", "./gherkin-tests", "./tests"],
   "exclude": ["dist", "node_modules"]

@@ -70,10 +70,8 @@ const UN_EXCLUDED_SLATE_PATHS = [
 
 /**
  * Everything under `src/` except `src/engine/` is compiled. Expressed as
- * data, not a function: pkg-utils runs babel in a parallel worker pool
- * (`@rollup/plugin-babel`'s `parallel: true`), which requires plugin
- * options to be structured-cloneable, so `sources` must be an array of
- * substrings (`filename.indexOf(entry) !== -1`), not a predicate.
+ * data, not a function: `reactCompiler.sources` is an array of substrings
+ * (`filename.indexOf(entry) !== -1`), not a predicate.
  *
  * The trailing slash on directory entries keeps `/src/engine/` from
  * matching `/src/engine-plugins/`. Keep in sync with the actual top-level
@@ -109,14 +107,8 @@ export default defineConfig({
     __DEV__: false,
   },
   dist: 'lib',
-  extract: {
-    customTags: [
-      {
-        name: 'group',
-        allowMultiple: true,
-        syntaxKind: 'block',
-      },
-    ],
+  tsdoc: {
+    customTags: [{name: 'group', allowMultiple: true, syntaxKind: 'block'}],
     rules: {
       // Disable rules for now
       'ae-incompatible-release-tags': 'off',
@@ -127,10 +119,8 @@ export default defineConfig({
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
   },
-  babel: {reactCompiler: true},
-  reactCompilerOptions: {
+  reactCompiler: {
     target: '19',
     sources: COMPILED_SOURCES,
   },
-  dts: 'rolldown',
 })

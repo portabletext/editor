@@ -21,9 +21,10 @@ catalogs:
   tooling:
     "@portabletext/react": ^7.0.1
     "@rolldown/plugin-babel": ^0.2.3
-    "@sanity/pkg-utils": ^10.8.2
+    "@sanity/pkg-utils": ^12.1.0
     "@sanity/tsconfig": ^2.1.0
     "@tailwindcss/vite": ^4.3.3
+    "@tsdown/css": ^0.22.14
     "@types/jsdom": ^27.0.0
     "@types/node": ^20
     "@types/react": ^19.2.17

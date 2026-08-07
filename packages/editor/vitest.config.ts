@@ -3,6 +3,13 @@ import react, {reactCompilerPreset} from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
 import {defineConfig} from 'vitest/config'
 
+/**
+ * Resolves the monorepo-only `@portabletext/editor/test*` specifiers through
+ * this package's tsconfig `paths`. Projects are separate Vite configs, so this
+ * cannot live at the top level.
+ */
+const resolve = {tsconfigPaths: true}
+
 export default defineConfig({
   test: {
     coverage: {
@@ -22,6 +29,7 @@ export default defineConfig({
             presets: [reactCompilerPreset({target: '19'})],
           }),
         ],
+        resolve,
         test: {
           name: 'browser',
           include: [
@@ -62,6 +70,7 @@ export default defineConfig({
             presets: [reactCompilerPreset({target: '19'})],
           }),
         ],
+        resolve,
         test: {
           name: 'unit',
           exclude: [

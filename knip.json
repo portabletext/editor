@@ -10,7 +10,8 @@
         "@vitest/browser",
         "@vitest/browser-playwright",
         "@vitest/coverage-v8",
-        "@vitest/coverage-istanbul"
+        "@vitest/coverage-istanbul",
+        "vite"
       ]
     },
     "packages/editor": {
@@ -30,7 +31,8 @@
         "@vitest/browser",
         "@vitest/browser-playwright",
         "@vitest/coverage-v8",
-        "@vitest/coverage-istanbul"
+        "@vitest/coverage-istanbul",
+        "vite"
       ]
     },
     "packages/html": {
@@ -46,7 +48,8 @@
         "@vitest/browser",
         "@vitest/browser-playwright",
         "@vitest/coverage-v8",
-        "@vitest/coverage-istanbul"
+        "@vitest/coverage-istanbul",
+        "vite"
       ]
     },
     "apps/*": {

@@ -5,7 +5,7 @@ export default defineConfig({
     __DEV__: false,
   },
   dist: 'lib',
-  extract: {
+  tsdoc: {
     customTags: [
       {
         name: 'hidden',
@@ -28,5 +28,4 @@ export default defineConfig({
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
   },
-  dts: 'rolldown',
 })
