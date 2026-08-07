@@ -27,6 +27,26 @@ export type EditorEvent =
   | ExternalEditorEvent
   | ExternalBehaviorEvent
   | {
+      /**
+       * Hands the editor the host's latest snapshot of the value so it can
+       * reconcile. This is not a setter: the snapshot is compared against
+       * the previous snapshot the host sent, not against the editor's
+       * current content, and only the remote change that comparison implies
+       * is applied. A snapshot equal to the previous one is ignored, even
+       * if the editor's content has since diverged from it through local
+       * edits.
+       *
+       * Reconciliation is not an edit: it emits no `patch` or `mutation`
+       * events and adds no history step. While local changes are in
+       * flight, it is deferred until they have flushed. `undefined` and
+       * `[]` are the same empty snapshot: sending either when the previous
+       * snapshot was also empty is a no-op and never clears locally typed
+       * content.
+       *
+       * To change content programmatically, use editing events so the
+       * change flows through behaviors and emits patches; to reset the
+       * editor wholesale, remount it with a fresh `initialValue`.
+       */
       type: 'update value'
       value: Array<PortableTextBlock> | undefined
     }
