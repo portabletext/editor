@@ -352,4 +352,81 @@ describe('two clients through a shared patch-channel store', () => {
 
     await settleAndAssertConvergence({server, editorA, editorB})
   })
+
+  test('deleting one of two exact duplicates while the peer types at the end', async () => {
+    // Field report: deleting text that exists as an exact duplicate during
+    // concurrent editing corrupts. The deletion travels as a
+    // `diffMatchPatch` whose context anchors are identical at both copies,
+    // so against a base shifted by the peer's typing it can anchor at the
+    // wrong copy and swallow the peer's text.
+    const copy = "I'm feeling pretty good honestly. "
+    const server = createTwoClientServer([makeBlock('b1', copy + copy)])
+    const {editorA, editorB, locatorA, locatorB, unmount} =
+      await renderTwoClients(server)
+    cleanup = unmount
+
+    // B types at the very end; A deletes the second copy. B's insert
+    // reaches the server first, so A's delete applies against a base
+    // shifted by text A never saw.
+    await locatorB.click()
+    selectRange(editorB, 'b1', 'b1-span', copy.length * 2, copy.length * 2)
+    editorB.send({type: 'insert.text', text: 'hi'})
+    await locatorA.click()
+    selectRange(editorA, 'b1', 'b1-span', copy.length, copy.length * 2)
+    editorA.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      expect(server.storeA.pushPatches).toHaveBeenCalled()
+      expect(server.storeB.pushPatches).toHaveBeenCalled()
+    })
+
+    await settleAndAssertConvergence({server, editorA, editorB})
+
+    // One copy deleted, the peer's text kept.
+    const texts = server
+      .getServerValue()
+      .map((block) =>
+        ((block as {children?: Array<{text?: string}>}).children ?? [])
+          .map((child) => child.text ?? '')
+          .join(''),
+      )
+    expect(texts).toEqual([`${copy}hi`])
+  })
+
+  test('deleting one of two exact duplicates while the peer types inside the deleted copy', async () => {
+    const copy = "I'm feeling pretty good honestly. "
+    const server = createTwoClientServer([makeBlock('b1', copy + copy)])
+    const {editorA, editorB, locatorA, locatorB, unmount} =
+      await renderTwoClients(server)
+    cleanup = unmount
+
+    // B types twelve characters into the second copy; A deletes it. B's
+    // insert reaches the server first, so A's delete applies against a
+    // base shifted by text A never saw.
+    await locatorB.click()
+    selectRange(editorB, 'b1', 'b1-span', copy.length + 12, copy.length + 12)
+    editorB.send({type: 'insert.text', text: 'hi'})
+    await locatorA.click()
+    selectRange(editorA, 'b1', 'b1-span', copy.length, copy.length * 2)
+    editorA.send({type: 'delete'})
+
+    await vi.waitFor(() => {
+      expect(server.storeA.pushPatches).toHaveBeenCalled()
+      expect(server.storeB.pushPatches).toHaveBeenCalled()
+    })
+
+    await settleAndAssertConvergence({server, editorA, editorB})
+
+    // The delete wins the region, but the peer's text typed inside it
+    // should survive somewhere; at minimum nothing beyond the two intended
+    // edits may change. Pin the correct merge: one copy gone, "hi" kept.
+    const texts = server
+      .getServerValue()
+      .map((block) =>
+        ((block as {children?: Array<{text?: string}>}).children ?? [])
+          .map((child) => child.text ?? '')
+          .join(''),
+      )
+    expect(texts).toEqual([`${copy.slice(0, 12)}hi${copy.slice(12)}`])
+  })
 })
