@@ -20,14 +20,15 @@ catalogMode: prefer
 catalogs:
   tooling:
     "@portabletext/react": ^7.0.1
+    "@rolldown/plugin-babel": ^0.2.3
     "@sanity/pkg-utils": ^10.8.2
     "@sanity/tsconfig": ^2.1.0
-    "@tailwindcss/vite": ^4.1.18
+    "@tailwindcss/vite": ^4.3.3
     "@types/jsdom": ^27.0.0
     "@types/node": ^20
     "@types/react": ^19.2.17
     "@types/react-dom": ^19.2.3
-    "@vitejs/plugin-react": ^5.2.0
+    "@vitejs/plugin-react": ^6.0.5
     "@vitest/browser": ^4.1.10
     "@vitest/browser-playwright": ^4.1.10
     babel-plugin-react-compiler: ^1.0.0
@@ -42,7 +43,7 @@ catalogs:
     tailwindcss: ^4.1.18
     typescript: 6.0.3
     typescript-eslint: ^8.62.0
-    vite: ^7.3.5
+    vite: ^8.2.0
     vitest: ^4.1.10
     vitest-browser-react: ^2.2.0
 

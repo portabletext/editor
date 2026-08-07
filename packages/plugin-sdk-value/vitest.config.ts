@@ -1,4 +1,5 @@
-import react from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
+import react, {reactCompilerPreset} from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
 import {defineConfig} from 'vitest/config'
 
@@ -7,11 +8,8 @@ export default defineConfig({
     projects: [
       {
         plugins: [
-          react({
-            babel: {
-              plugins: [['babel-plugin-react-compiler', {target: '19'}]],
-            },
-          }),
+          react(),
+          babel({presets: [reactCompilerPreset({target: '19'})]}),
         ],
         test: {
           name: 'browser',
