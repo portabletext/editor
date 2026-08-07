@@ -6,6 +6,7 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import {subscribeToOperations} from '../engine/core/operation-channel'
+import {isEqualValues} from '../internal-utils/equality'
 import {
   insertNodePatch,
   textPatch,
@@ -45,11 +46,21 @@ export function subscribePatchGeneration({
 
     const editorWasEmpty =
       previousValue.length === 1 &&
-      isEqualToEmptyEditor(initialValue, previousValue, schema)
+      isEqualToEmptyEditor(initialValue, previousValue, schema) &&
+      !isEqualValues({schema}, editor.lastSyncedValue, previousValue)
 
     const editorIsEmpty =
       editor.snapshot.context.value.length === 1 &&
-      isEqualToEmptyEditor(initialValue, editor.snapshot.context.value, schema)
+      isEqualToEmptyEditor(
+        initialValue,
+        editor.snapshot.context.value,
+        schema,
+      ) &&
+      !isEqualValues(
+        {schema},
+        editor.lastSyncedValue,
+        editor.snapshot.context.value,
+      )
 
     // If the editor was empty and now isn't, insert the placeholder into it.
     if (

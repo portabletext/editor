@@ -160,6 +160,10 @@ export const syncMachine = setup({
         return event.value
       },
     }),
+    'record synced value on engine': ({context, event}) => {
+      assertEvent(event, 'done syncing')
+      context.editorEngine.lastSyncedValue = event.value
+    },
     'emit done syncing value': emit({
       type: 'done syncing value',
     }),
@@ -401,7 +405,11 @@ export const syncMachine = setup({
         'done syncing': [
           {
             guard: 'value changed while syncing',
-            actions: ['assign previous value', 'assign initial value synced'],
+            actions: [
+              'assign previous value',
+              'record synced value on engine',
+              'assign initial value synced',
+            ],
             target: 'syncing',
             reenter: true,
           },
@@ -410,6 +418,7 @@ export const syncMachine = setup({
             actions: [
               'clear pending value',
               'assign previous value',
+              'record synced value on engine',
               'assign initial value synced',
             ],
           },

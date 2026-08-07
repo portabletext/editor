@@ -21,6 +21,7 @@ import type {Node} from '../engine/interfaces/node'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
+import {isEqualValues} from './equality'
 import {getValue} from './get-value'
 import {isEqualToEmptyEditor} from './values'
 
@@ -149,6 +150,11 @@ function insertPatch(
       context.initialValue,
       editor.snapshot.context.value,
       context.schema,
+    ) &&
+    !isEqualValues(
+      {schema: context.schema},
+      editor.lastSyncedValue,
+      editor.snapshot.context.value,
     )
 
   const arrayFieldPath = patch.path.slice(0, -1)
