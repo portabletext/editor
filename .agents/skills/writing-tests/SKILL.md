@@ -41,7 +41,9 @@ When scaffolding a new package, mirror `plugin-typeahead-picker`'s vitest config
 
 ## Structure
 
-- `test('Scenario: ...')` naming for integration tests; plain `test(...)` with the function name for unit tests of a single function (`describe(buildIndexMaps.name, ...)`).
+- `test('Scenario: ...')` naming for integration tests; plain `test(...)` with the function name for unit tests of a single function (`describe(buildIndexMaps.name, ...)`). Every integration test carries its own `Scenario:`; a `describe` may group by mechanism or function name but never carries the scenario, narration, or a comment preamble.
+- Test files hold comments to the same bar as source files: the default is none. The scenario name and the full-value assertions are the documentation; narrative about why a contract exists belongs in the commit body, not in a comment above the test.
+- A known-broken contract is pinned with `test.fails` asserting the desired behavior: it documents the bug executably, and the fix flips it to a plain `test` (CI reports it as unexpectedly passing until someone does).
 - A quote character inside a test name is solved by switching the string's quotes (`"...set's fallout..."`), never with `\u` escapes or backslash-escaping. Prettier keeps whichever quote style avoids the escape.
 - Tests first, helpers below (per repo AGENTS.md: helper functions below main functions).
 - Fixtures are plain functions returning complete objects (`function block(key, text): PortableTextBlock`), local to the test file.
