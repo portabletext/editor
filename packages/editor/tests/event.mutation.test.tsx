@@ -263,4 +263,90 @@ describe('event.mutation', () => {
       expect(mutationEvents.length).toBe(2)
     })
   })
+
+  test('Scenario: A merged insert does not emit its transient spans', async () => {
+    // Inserting text that merges into an existing same-mark span stages
+    // temporary spans and merges them away within the same flush. The
+    // emitted mutation carries only the net change: receivers whose
+    // delivery slices a transaction would otherwise render the transient
+    // spans (a remote paste briefly showing its text twice).
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'A: ', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const mutations: Array<Array<Patch>> = []
+    editor.on('mutation', (event) => {
+      mutations.push(event.patches)
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        {
+          _type: 'block',
+          children: [{_type: 'span', text: 'ALPHA', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(mutations).toEqual([
+        [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'markDefs'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'b1'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'b1'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,8 @@\n A: \n+ALPHA\n',
+            origin: 'local',
+          },
+        ],
+      ])
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'A: ALPHA', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
 })

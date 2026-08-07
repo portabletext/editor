@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {isNormalizing} from '../engine/editor/is-normalizing'
+import {cancelNetZeroPatches} from '../internal-utils/cancel-net-zero-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import type {Relay} from './relay'
@@ -122,11 +123,19 @@ export function createMutationBatcher({
     editorEngine.isDeferringMutations = false
 
     for (const bulk of mutations) {
+      const patches = cancelNetZeroPatches(bulk.patches)
+
+      if (patches.length === 0) {
+        // Every patch in the bulk cancelled out: the mutation nets to
+        // nothing, so there is nothing to tell consumers.
+        continue
+      }
+
       // The editor machine still gates mutations through its setup states
       // and re-emits them to the relay.
       editorActor.send({
         type: 'mutation',
-        patches: bulk.patches,
+        patches,
         value: bulk.value,
       })
     }
