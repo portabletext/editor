@@ -59,12 +59,6 @@ export default defineConfig({
         __dirname,
         '../../packages/plugin-paste-link/src',
       ),
-      // The stylesheet is a published asset rather than a `src` module, so it
-      // needs its own entry ahead of the package-wide alias.
-      '@portabletext/plugin-table/ui/styles.css': path.resolve(
-        __dirname,
-        '../../packages/plugin-table/styles/table.css',
-      ),
       '@portabletext/plugin-table': path.resolve(
         __dirname,
         '../../packages/plugin-table/src',

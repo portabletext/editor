@@ -19,11 +19,12 @@
     "directory": "packages/plugin-table"
   },
   "files": [
-    "dist",
-    "styles"
+    "dist"
   ],
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -37,10 +38,12 @@
       "default": "./dist/ui/index.js"
     },
     "./ui/styles.css": {
-      "browser": "./styles/table.css",
-      "style": "./styles/table.css",
-      "node": "./styles/table.css.node-stub.js",
-      "default": "./styles/table.css.node-stub.js"
+      "source": "./src/ui/styles.css",
+      "types": "./dist/ui/styles-css.d.ts",
+      "browser": "./dist/ui/styles.css",
+      "style": "./dist/ui/styles.css",
+      "node": "./dist/ui/styles-css.js",
+      "default": "./dist/ui/styles-css.js"
     },
     "./package.json": "./package.json"
   },
@@ -48,13 +51,14 @@
     "exports": {
       ".": "./dist/index.js",
       "./ui": "./dist/ui/index.js",
+      "./package.json": "./package.json",
       "./ui/styles.css": {
-        "browser": "./styles/table.css",
-        "style": "./styles/table.css",
-        "node": "./styles/table.css.node-stub.js",
-        "default": "./styles/table.css.node-stub.js"
-      },
-      "./package.json": "./package.json"
+        "types": "./dist/ui/styles-css.d.ts",
+        "browser": "./dist/ui/styles.css",
+        "style": "./dist/ui/styles.css",
+        "node": "./dist/ui/styles-css.js",
+        "default": "./dist/ui/styles-css.js"
+      }
     }
   },
   "scripts": {
@@ -78,6 +82,7 @@
     "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
+    "@tsdown/css": "catalog:tooling",
     "@types/react": "catalog:tooling",
     "@vitejs/plugin-react": "catalog:tooling",
     "@vitest/browser": "catalog:tooling",
