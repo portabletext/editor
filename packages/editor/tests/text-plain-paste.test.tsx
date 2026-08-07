@@ -178,4 +178,106 @@ describe('`text/plain` paste', () => {
       )
     })
   })
+
+  test('Scenario: Pasted `text/plain` inherits formatting even when a consumer behavior raises `deserialization.success` directly', async () => {
+    // Mirror the playground's markdown-deserializer pattern: a consumer
+    // behavior catches `deserialize.data` for `text/plain` and emits
+    // `deserialization.success` with a bare text block. This bypasses the
+    // engine's abstract `text/plain` -> `insert.span` behavior that inherits
+    // active marks. The engine should still inherit active marks when the
+    // resulting `insert.blocks` merges a bare span at a caret in a text block.
+    const keyGenerator = createTestKeyGenerator()
+
+    const consumerDeserializer = defineBehavior({
+      on: 'deserialize.data',
+      guard: ({event}) => {
+        if (event.mimeType !== 'text/plain') {
+          return false
+        }
+
+        return {
+          blocks: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              children: [
+                {
+                  _type: 'span',
+                  _key: keyGenerator(),
+                  text: event.data,
+                  marks: [],
+                },
+              ],
+              style: 'normal',
+              markDefs: [],
+            },
+          ],
+        }
+      },
+      actions: [
+        ({event}, {blocks}) => [
+          raise({
+            type: 'deserialization.success',
+            data: blocks,
+            mimeType: event.mimeType,
+            originEvent: event.originEvent,
+          }),
+        ],
+      ],
+    })
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: {
+        decorators: [{name: 'strong'}],
+      },
+      children: <BehaviorPlugin behaviors={[consumerDeserializer]} />,
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {_key: keyGenerator(), _type: 'span', text: 'foo ', marks: []},
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: 'bar',
+              marks: ['strong'],
+            },
+            {_key: keyGenerator(), _type: 'span', text: ' buz', marks: []},
+          ],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    // Place caret inside the bold span, after "ba"
+    await vi.waitFor(() => {
+      const selection = getSelectionAfterText(
+        editor.getSnapshot().context,
+        'ba',
+      )
+      editor.send({type: 'select', at: selection})
+      expect(editor.getSnapshot().context.selection).toEqual(selection)
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'new')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo [strong:banew|r] buz',
+      )
+    })
+  })
 })
