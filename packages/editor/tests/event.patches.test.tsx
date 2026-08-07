@@ -5338,4 +5338,44 @@ describe('event.patches', () => {
       })
     })
   })
+
+  test('Scenario: Typing into a pristine `initialValue` block', async () => {
+    const patches: Array<Patch> = []
+    const {locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'a'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
 })
