@@ -11,22 +11,11 @@ import {DOMEditor} from '../plugin/dom-editor'
 type DOMNode = globalThis.Node
 type DOMComment = globalThis.Comment
 type DOMElement = globalThis.Element
-// DOMText is used as a value (instanceof) in dom-editor.ts, so we need both
-// the type alias and a const reference to the global constructor.
-type DOMText = globalThis.Text
-const DOMText = globalThis.Text
 type DOMRange = globalThis.Range
 type DOMSelection = globalThis.Selection
 type DOMStaticRange = globalThis.StaticRange
 
-export {
-  type DOMNode,
-  type DOMElement,
-  DOMText,
-  type DOMRange,
-  type DOMSelection,
-  type DOMStaticRange,
-}
+export type {DOMNode, DOMElement, DOMRange, DOMSelection, DOMStaticRange}
 
 declare global {
   interface Window {
