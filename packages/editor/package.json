@@ -114,6 +114,7 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
+    "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/diff-match-patch": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",

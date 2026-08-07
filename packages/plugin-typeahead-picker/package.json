@@ -71,6 +71,7 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:*",
+    "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",

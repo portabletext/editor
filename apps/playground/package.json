@@ -31,6 +31,7 @@
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/react": "catalog:tooling",
     "@portabletext/toolbar": "workspace:*",
+    "@rolldown/plugin-babel": "catalog:tooling",
     "@xstate/react": "catalog:",
     "emojilib": "^4.0.2",
     "fuse.js": "^7.1.0",

@@ -1,23 +1,16 @@
 import path from 'node:path'
+import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
+import react, {reactCompilerPreset} from '@vitejs/plugin-react'
 import {defineConfig} from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      babel: (id) => {
-        const isVendoredEngine =
-          id.includes('/src/engine/') ||
-          id.includes('/src/engine-dom/') ||
-          id.includes('/src/engine-react/')
-        return {
-          plugins: isVendoredEngine
-            ? []
-            : [['babel-plugin-react-compiler', {target: '19'}]],
-        }
-      },
+    react(),
+    babel({
+      exclude: [/[/\\]node_modules[/\\]/, /[/\\]src[/\\]engine[/\\]/],
+      presets: [reactCompilerPreset({target: '19'})],
     }),
     tailwindcss(),
   ],
