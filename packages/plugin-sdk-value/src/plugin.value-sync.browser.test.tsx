@@ -296,7 +296,12 @@ describe('ValueSyncPlugin', () => {
         },
         {timeout: 5000},
       )
-    })
+      // The explicit test timeout is generous because the bursts above are
+      // ~70 real key events, each a round-trip to the browser whose cost
+      // scales with machine load: the interaction takes ~3s idle but has
+      // measured ~13s on CI, and vitest's 15s default leaves too little
+      // room for the convergence wait on top of that.
+    }, 60_000)
   })
 
   describe('remote changes apply to editor', () => {
