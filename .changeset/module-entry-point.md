@@ -26,6 +26,6 @@
 
 fix: add a `module` entry point
 
-`@sanity/pkg-utils` v12 regenerates the `exports` map during the build, which
-adds a `module` field next to `main`. Bundlers that predate `exports` use it to
-pick the ESM build.
+Every package now declares `module` alongside `main`, pointing at the ESM build.
+Bundlers that predate `exports` use it to pick the ESM output instead of falling
+back to `main`.
