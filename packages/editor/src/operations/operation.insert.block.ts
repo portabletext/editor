@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getSubSchema, isSpan, isTextBlock} from '@portabletext/schema'
 import {end as editorEnd} from '../engine/editor/end'
 import {pathRef} from '../engine/editor/path-ref'
 import {rangeRef} from '../engine/editor/range-ref'
@@ -23,6 +23,7 @@ import {deleteRange} from '../internal-utils/delete-range'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toEngineBlock} from '../internal-utils/values'
+import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
@@ -38,6 +39,51 @@ import type {
   OperationImplementation,
   OperationSnapshot,
 } from './operation.types'
+
+/**
+ * The validation scope for `placement: 'before' | 'after'`. Those land the
+ * block as a sibling of the enclosing block at the destination (see
+ * `resolveTarget`), so the scope is that block's parent array, not the
+ * destination path's own sub-schema view. The two only differ when the
+ * destination points at a container member: a point at a table row
+ * resolves toward the cell content view, while a sibling insertion lands
+ * in `rows`.
+ *
+ * Acceptance is an explicit membership check against the parent array's
+ * `of`: a sub-schema alone cannot reject a text block, since `Schema`
+ * structurally always carries a text-block type. Returns `undefined` for
+ * other placements and for root-level destinations, where the root schema
+ * accepts everything it declares.
+ */
+function siblingPlacementScope(
+  snapshot: OperationSnapshot,
+  destinationPath: Path,
+  placement: 'auto' | 'before' | 'after',
+) {
+  if (placement !== 'before' && placement !== 'after') {
+    return undefined
+  }
+  const enclosingBlock = getEnclosingBlock(snapshot, destinationPath)
+  if (!enclosingBlock) {
+    return undefined
+  }
+  const enclosingContainer = getEnclosingContainer(
+    snapshot,
+    enclosingBlock.path,
+  )
+  if (!enclosingContainer) {
+    return undefined
+  }
+  return {
+    schema: getSubSchema(snapshot.context.schema, enclosingContainer.of),
+    accepts: (blockType: string) =>
+      enclosingContainer.of.some((member) =>
+        member.type === 'block'
+          ? blockType === snapshot.context.schema.block.name
+          : ((member as {name?: string}).name ?? member.type) === blockType,
+      ),
+  }
+}
 
 /**
  * Describes a concrete insertion strategy resolved from the operation's
@@ -92,9 +138,23 @@ export const insertBlockOperationImplementation: OperationImplementation<
     : editor.snapshot.context.value.length > 0
       ? editorEnd(editor, []).path
       : undefined
-  const schema = destinationPath
-    ? getPathSubSchema(snapshot, destinationPath)
-    : context.schema
+  const siblingScope = destinationPath
+    ? siblingPlacementScope(snapshot, destinationPath, operation.placement)
+    : undefined
+  const insertedType = operation.block._type
+  if (
+    siblingScope &&
+    (typeof insertedType !== 'string' || !siblingScope.accepts(insertedType))
+  ) {
+    // Sibling placements land beside the enclosing block at the
+    // destination; a type its parent array rejects must not land there.
+    return
+  }
+  const schema =
+    siblingScope?.schema ??
+    (destinationPath
+      ? getPathSubSchema(snapshot, destinationPath)
+      : context.schema)
 
   const parsedBlock = parseBlock({
     block: operation.block,
