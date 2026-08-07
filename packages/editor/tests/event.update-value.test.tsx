@@ -173,9 +173,10 @@ describe('event.update value', () => {
           },
         ])
       },
-      {
-        timeout: 1100,
-      },
+      // The sync machine parks in `busy` while the insert's emitted
+      // mutation flushes and re-checks on a 1s timer, so the value cannot
+      // land sooner than that.
+      {timeout: 5000},
     )
   })
 
