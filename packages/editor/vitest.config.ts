@@ -28,7 +28,10 @@ export default defineConfig({
       {
         plugins: [
           react(),
-          babel({presets: [reactCompilerPreset({target: '19'})]}),
+          babel({
+            exclude: [/\/node_modules\//, /\/src\/engine\//],
+            presets: [reactCompilerPreset({target: '19'})],
+          }),
         ],
         resolve,
         test: {
@@ -66,7 +69,10 @@ export default defineConfig({
       {
         plugins: [
           react(),
-          babel({presets: [reactCompilerPreset({target: '19'})]}),
+          babel({
+            exclude: [/\/node_modules\//, /\/src\/engine\//],
+            presets: [reactCompilerPreset({target: '19'})],
+          }),
         ],
         resolve,
         test: {

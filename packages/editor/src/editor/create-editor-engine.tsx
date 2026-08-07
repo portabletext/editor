@@ -76,6 +76,7 @@ export function createEditorEngine(
   editor.undoStepId = undefined
 
   editor.isDeferringMutations = false
+  editor.lastSyncedValue = undefined
   editor.isNormalizingNode = false
   editor.isPatching = true
   editor.isPerformingBehaviorOperation = false

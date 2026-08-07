@@ -1,5 +1,13 @@
 # @portabletext/plugin-typeahead-picker
 
+## 6.0.44
+
+### Patch Changes
+
+- Updated dependencies [[`b18469f`](https://github.com/portabletext/editor/commit/b18469f7c73ef036c633142f3864ed16a70fa93c)]:
+  - @portabletext/editor@7.10.16
+  - @portabletext/plugin-input-rule@6.0.13
+
 ## 6.0.43
 
 ### Patch Changes
