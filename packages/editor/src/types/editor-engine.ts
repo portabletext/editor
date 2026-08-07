@@ -79,6 +79,11 @@ export interface PortableTextEditorEngine extends DOMEditor {
   undoStepId: string | undefined
 
   isDeferringMutations: boolean
+  /**
+   * The last host value written in by value sync. A pristine block equal
+   * to it is persisted content, not the local placeholder.
+   */
+  lastSyncedValue: Array<PortableTextBlock> | undefined
   isNormalizingNode: boolean
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
