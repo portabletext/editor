@@ -1,5 +1,19 @@
 # Changelog
 
+## 8.0.45
+
+### Patch Changes
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: add a `module` entry point
+
+  Every package now declares `module` alongside `main`, pointing at the ESM build.
+  Bundlers that predate `exports` use it to pick the ESM output instead of falling
+  back to `main`.
+
+- Updated dependencies [[`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c), [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c), [`46c019c`](https://github.com/portabletext/editor/commit/46c019cc3ae1112c1027059b06d80432fd2ca1d7)]:
+  - @portabletext/editor@7.10.17
+  - @portabletext/plugin-input-rule@6.0.14
+
 ## 8.0.44
 
 ### Patch Changes
