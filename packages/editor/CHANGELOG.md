@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.10.18
+
+### Patch Changes
+
+- [#3012](https://github.com/portabletext/editor/pull/3012) [`94b4106`](https://github.com/portabletext/editor/commit/94b4106a22fd44096fd8b8bcc594ebf8918ff60d) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react to ^19.2.8
+
+- [#3060](https://github.com/portabletext/editor/pull/3060) [`5f073b5`](https://github.com/portabletext/editor/commit/5f073b53ae184606e52cb52567f688c7805a7515) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.32.5
+
+- Updated dependencies [[`1418967`](https://github.com/portabletext/editor/commit/14189673ba8cabeae7e9347d5d269341201d2541)]:
+  - @portabletext/markdown@1.4.6
+
 ## 7.10.17
 
 ### Patch Changes

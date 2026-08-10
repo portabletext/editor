@@ -1,5 +1,11 @@
 # @portabletext/markdown
 
+## 1.4.6
+
+### Patch Changes
+
+- [#3062](https://github.com/portabletext/editor/pull/3062) [`1418967`](https://github.com/portabletext/editor/commit/14189673ba8cabeae7e9347d5d269341201d2541) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency markdown-it to ^14.3.0
+
 ## 1.4.5
 
 ### Patch Changes

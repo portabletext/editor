@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.1.14
+
+### Patch Changes
+
+- [#2852](https://github.com/portabletext/editor/pull/2852) [`95ea591`](https://github.com/portabletext/editor/commit/95ea591402fe8febc8402b6033baf2ddf1cee6db) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^6.9.1
+
+- Updated dependencies [[`95ea591`](https://github.com/portabletext/editor/commit/95ea591402fe8febc8402b6033baf2ddf1cee6db)]:
+  - @portabletext/sanity-bridge@3.2.5
+
 ## 5.1.13
 
 ### Patch Changes
