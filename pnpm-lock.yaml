@@ -13,11 +13,11 @@ catalogs:
       specifier: ^3.2.0
       version: 3.2.0
     '@sanity/schema':
-      specifier: ^6.1.0
-      version: 6.1.0
+      specifier: ^6.9.1
+      version: 6.9.1
     '@sanity/types':
-      specifier: ^6.1.0
-      version: 6.1.0
+      specifier: ^6.9.1
+      version: 6.9.1
     '@types/debug':
       specifier: ^4.1.12
       version: 4.1.12
@@ -519,14 +519,14 @@ importers:
         version: link:../schema
       '@sanity/types':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.9.1(@types/react@19.2.17)
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 12.1.0(@babel/runtime@7.28.4)(@tsdown/css@0.22.14)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1)(rolldown@1.2.2)(typescript@6.0.3)(vite@8.2.0(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.5)(yaml@2.8.3))
       '@sanity/schema':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.9.1(@types/react@19.2.17)
       '@types/jsdom':
         specifier: catalog:tooling
         version: 27.0.0
@@ -1607,10 +1607,10 @@ importers:
         version: link:../schema
       '@sanity/schema':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.9.1(@types/react@19.2.17)
       '@sanity/types':
         specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)
+        version: 6.9.1(@types/react@19.2.17)
     devDependencies:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
@@ -4717,10 +4717,6 @@ packages:
   '@sanity/browserslist-config@1.0.5':
     resolution: {integrity: sha512-so+/UtCge8t1jq509hH0otbbptRz0zM/Aa0dh5MhMD7HGT6n2igWIL2VWH/9QR9e77Jn3dJsjz23mW1WCxT+sg==}
 
-  '@sanity/client@7.22.1':
-    resolution: {integrity: sha512-DrQqLAes7W9Ek2iKgTZ+ffY1v3DURJ6//iXJZMEQSUeRbxls2ifRTdV1gRS26v8nMkL0OCH+WCoUUseD4vhuQQ==}
-    engines: {node: '>=20'}
-
   '@sanity/client@7.26.0':
     resolution: {integrity: sha512-7GEzTFRY6kWRjHbJYUDEGKPXHVl/XItGpV5LYCLcWMvBlgfujXuAjdp4hJVZqX8F8OtBzIFqdhiSn5Kh5u/V5Q==}
     engines: {node: '>=20'}
@@ -4758,9 +4754,6 @@ packages:
   '@sanity/json-match@1.0.5':
     resolution: {integrity: sha512-skhIX8gT/hLritEBkjfc7+TBlJNu/NLisyA8noKceCk28OatFK0wX7dIuFawkt3pfhTYVomVPykAYFcIm2OqJg==}
     engines: {node: '>=18.2'}
-
-  '@sanity/media-library-types@1.4.0':
-    resolution: {integrity: sha512-DZwNT+dDSc1JPW4e7U5C+IJELq5IAeU2A1UcY1079gl+Hakx2USvu5LyY1hrjb1eifRPAhL8uwOVcMNBUmSmzg==}
 
   '@sanity/media-library-types@1.6.0':
     resolution: {integrity: sha512-1Nqw8GSUr7E8AFue9luyTOM4Ev0ZlJ35SHcQrHZ6T68G5llfXw99e3GkLXzk6qYFk9r9fJaBTSpW5IyO2mObZQ==}
@@ -4800,8 +4793,8 @@ packages:
     peerDependencies:
       prettier: ^3.7.3
 
-  '@sanity/schema@6.1.0':
-    resolution: {integrity: sha512-+/nIeQrkUJDWBBnKUP4F0TxFaxi16UrtfckrbTSLH4wd8mWUtrPdnxmzMTedQ2dhMj3VRLMuuu1+h/lh3iy50Q==}
+  '@sanity/schema@6.9.1':
+    resolution: {integrity: sha512-bLMnZaBx/dT+avceIgIaNDQ/WccS27zvtuCpsuhvX9sjjtv5Latp8vCHQlRBQa7t8gyE6C6h+gbOr0dbPg9+nw==}
 
   '@sanity/sdk-react@2.19.0':
     resolution: {integrity: sha512-dphdWEAY7vO3i9Y4Eht85LJnezqwAhTH2U/7iewMMqLXBYPrfRHIEium2eTWb5rX7UpigiqRcJpREi9ZkcKjBA==}
@@ -4841,13 +4834,13 @@ packages:
       babel-plugin-react-compiler:
         optional: true
 
-  '@sanity/types@6.1.0':
-    resolution: {integrity: sha512-EtkC/oB1585wkTEiVyuBsIJYLGlbNldWzMuYPvi91WKBGhMyJ1OJqMfpZDcqWpsvTqjV8TH+/YlVwi+CQBKcTA==}
+  '@sanity/types@6.8.0':
+    resolution: {integrity: sha512-VvhWNrupGjXxytz/tRbjOHeEHctUsZqf7AF+eT1MxP0pgOdhtRlXsroV6e4Uayoux/cbbuYTX5JpCnW6cAuZYw==}
     peerDependencies:
       '@types/react': ^19.2.17
 
-  '@sanity/types@6.8.0':
-    resolution: {integrity: sha512-VvhWNrupGjXxytz/tRbjOHeEHctUsZqf7AF+eT1MxP0pgOdhtRlXsroV6e4Uayoux/cbbuYTX5JpCnW6cAuZYw==}
+  '@sanity/types@6.9.1':
+    resolution: {integrity: sha512-C9Pe/mVn1ZGqgE4Zpwd1Y2IeTjL33/60imsDocqzdwezJPGN5I3XPOced/M/6Uvxl+afuyt0Sx9+B+TXmrUrBQ==}
     peerDependencies:
       '@types/react': ^19.2.17
 
@@ -5633,9 +5626,9 @@ packages:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
 
-  arrify@2.0.1:
-    resolution: {integrity: sha512-3duEwti880xqi4eAMN8AyR4a0ByT90zoYdLlevfrvU43vb0YZwZVfxOgxWrLXXXpyugL0hNZc9G6BiB5B3nUug==}
-    engines: {node: '>=8'}
+  arrify@3.0.0:
+    resolution: {integrity: sha512-tLkvA81vQG/XqE2mjDkGQHoOINtMHtysSnemrmoGe6PydDPMRbVugqyk4A6V/WDWEfm3l+0d8anA9r8cv/5Jaw==}
+    engines: {node: '>=12'}
 
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
@@ -6373,6 +6366,10 @@ packages:
     resolution: {integrity: sha512-t8HkAfY0DkInjAv3o4EzkjJ/9vD1PWXMlX3ASzQ6yN1QlmYN8z2ISRD7BCf/rGC73TYPbbN7FsnOV7jw90a9Yg==}
     engines: {node: '>=14.0.0'}
 
+  get-it@8.8.3:
+    resolution: {integrity: sha512-IfkbWqOGO2kd2Ccgiz/NIzk3bcwjtVqBm3RNa3j/veHg2q7c1DgS3EXrCrvIWH0jbNTbhkdblnxBP7Dm8CiH+A==}
+    engines: {node: '>=14.0.0'}
+
   get-latest-version@6.0.1:
     resolution: {integrity: sha512-6Zub9FhioDbCJzGTZtetVvAkLeA5UnvQEbKfFZUc62hcZm3gO3Txr21oRGOcT6SdiKhjI0vWd/Jxct+wuLJgHA==}
     engines: {node: '>=20'}
@@ -6443,10 +6440,6 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
-
-  groq-js@1.30.2:
-    resolution: {integrity: sha512-FqF7NNzBxya6Oq4VkTl9lg3W5Gjd3Cjwc6Et2OeAcTdmHOClwcYeAZkWR6wIm+KPtvESSYtzP59aj/+9egOKZQ==}
-    engines: {node: '>= 14'}
 
   groq-js@2.0.0:
     resolution: {integrity: sha512-kj56ZjnOFbgDt91zYwQ10jsVUtVGJqAKfRbAir0EvTK84O5ZsSyc0rDEm2P3jmAJkxs4X1DOG8vtaYJQIA/XCA==}
@@ -6870,9 +6863,9 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  leven@3.1.0:
-    resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
-    engines: {node: '>=6'}
+  leven@4.1.0:
+    resolution: {integrity: sha512-KZ9W9nWDT7rF7Dazg8xyLHGLrmpgq2nVNFUckhqdW3szVP6YhCpp/RAnpmVExA9JvrMynjwSLVrEj3AepHR6ew==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -12436,18 +12429,11 @@ snapshots:
 
   '@sanity/browserslist-config@1.0.5': {}
 
-  '@sanity/client@7.22.1':
-    dependencies:
-      '@sanity/eventsource': 5.0.4
-      get-it: 8.8.1
-      nanoid: 3.3.12
-      rxjs: 7.8.2
-
   '@sanity/client@7.26.0':
     dependencies:
       '@sanity/eventsource': 5.0.4
       get-it: 8.8.1
-      nanoid: 3.3.12
+      nanoid: 3.3.17
       rxjs: 7.8.2
 
   '@sanity/comlink@4.0.1':
@@ -12486,8 +12472,6 @@ snapshots:
       '@sanity/signed-urls': 2.0.4
 
   '@sanity/json-match@1.0.5': {}
-
-  '@sanity/media-library-types@1.4.0': {}
 
   '@sanity/media-library-types@1.6.0': {}
 
@@ -12616,20 +12600,20 @@ snapshots:
       prettier: 3.9.1
       prettier-plugin-packagejson: 2.5.20(prettier@3.9.1)
 
-  '@sanity/schema@6.1.0(@types/react@19.2.17)':
+  '@sanity/schema@6.9.1(@types/react@19.2.17)':
     dependencies:
       '@sanity/descriptors': 1.3.0
       '@sanity/generate-help-url': 4.0.0
-      '@sanity/types': 6.1.0(@types/react@19.2.17)
-      arrify: 2.0.1
-      groq-js: 1.30.2
+      '@sanity/types': 6.9.1(@types/react@19.2.17)
+      arrify: 3.0.0
+      get-it: 8.8.3
+      groq-js: 2.0.0
       humanize-list: 1.0.1
-      leven: 3.1.0
+      leven: 4.1.0
       lodash-es: 4.18.1
       object-inspect: 1.13.4
     transitivePeerDependencies:
       - '@types/react'
-      - supports-color
 
   '@sanity/sdk-react@2.19.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))(xstate@5.32.4)':
     dependencies:
@@ -12747,13 +12731,13 @@ snapshots:
       - supports-color
       - vite
 
-  '@sanity/types@6.1.0(@types/react@19.2.17)':
+  '@sanity/types@6.8.0(@types/react@19.2.17)':
     dependencies:
-      '@sanity/client': 7.22.1
-      '@sanity/media-library-types': 1.4.0
+      '@sanity/client': 7.26.0
+      '@sanity/media-library-types': 1.6.0
       '@types/react': 19.2.17
 
-  '@sanity/types@6.8.0(@types/react@19.2.17)':
+  '@sanity/types@6.9.1(@types/react@19.2.17)':
     dependencies:
       '@sanity/client': 7.26.0
       '@sanity/media-library-types': 1.6.0
@@ -13593,7 +13577,7 @@ snapshots:
 
   array-union@2.1.0: {}
 
-  arrify@2.0.1: {}
+  arrify@3.0.0: {}
 
   assertion-error@2.0.1: {}
 
@@ -14424,6 +14408,13 @@ snapshots:
       through2: 4.0.2
       tunnel-agent: 0.6.0
 
+  get-it@8.8.3:
+    dependencies:
+      decompress-response: 7.0.0
+      is-retry-allowed: 2.2.0
+      through2: 4.0.2
+      tunnel-agent: 0.6.0
+
   get-latest-version@6.0.1:
     dependencies:
       get-it: 8.8.1
@@ -14504,12 +14495,6 @@ snapshots:
   graceful-fs@4.2.10: {}
 
   graceful-fs@4.2.11: {}
-
-  groq-js@1.30.2:
-    dependencies:
-      debug: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
 
   groq-js@2.0.0:
     dependencies:
@@ -15107,7 +15092,7 @@ snapshots:
       yaml: 2.8.2
       zod: 4.1.13
 
-  leven@3.1.0: {}
+  leven@4.1.0: {}
 
   levn@0.4.1:
     dependencies:
