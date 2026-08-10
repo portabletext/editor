@@ -1,5 +1,39 @@
 # Changelog
 
+## 7.10.17
+
+### Patch Changes
+
+- [#3054](https://github.com/portabletext/editor/pull/3054) [`7e1bc11`](https://github.com/portabletext/editor/commit/7e1bc11554247318356aef8f36151763674c6dcb) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^5.0.3
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: remove the `./test` and `./test/vitest` export subpaths
+
+  Neither has ever resolved from the published package: both pointed at `src`
+  files the tarball does not contain. They are internal test helpers for this
+  monorepo, so they are no longer declared as exports at all. Nothing that
+  resolved before stops resolving.
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: add a `module` entry point
+
+  Every package now declares `module` alongside `main`, pointing at the ESM build.
+  Bundlers that predate `exports` use it to pick the ESM output instead of falling
+  back to `main`.
+
+- [#3050](https://github.com/portabletext/editor/pull/3050) [`46c019c`](https://github.com/portabletext/editor/commit/46c019cc3ae1112c1027059b06d80432fd2ca1d7) Thanks [@christianhg](https://github.com/christianhg)! - fix: treat a pristine block from value sync as persisted content
+
+  Typing into an empty-looking block that arrived through an `update value` event no longer re-emits `setIfMissing` and an `insert` for that block. Previously the block was mistaken for the editor's own local placeholder, and the first edit inserted a copy of it into a document that already contained its `_key`, producing duplicate-key content that breaks keyed patch addressing from then on. This could occur when another client stored an empty Portable Text field as a single empty block instead of unsetting it.
+
+  The same misjudgment affected incoming patches: a remote root-level `insert` arriving next to such a block removed it locally, leaving the editor briefly missing a block the document still has until the next value sync repaired it. The block now survives the insert.
+
+  One narrow behavioral delta rides along: deleting all content back down to exactly such a synced-in empty block no longer emits `unset` for the field; the document keeps the empty block it already had.
+
+- Updated dependencies [[`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c)]:
+  - @portabletext/html@1.1.2
+  - @portabletext/keyboard-shortcuts@2.1.4
+  - @portabletext/markdown@1.4.5
+  - @portabletext/patches@2.0.6
+  - @portabletext/schema@2.2.4
+
 ## 7.10.16
 
 ### Patch Changes
