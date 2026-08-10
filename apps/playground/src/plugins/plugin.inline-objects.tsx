@@ -29,7 +29,7 @@ const mentionStyle = tv({
 })
 
 const inlineImageStyle = tv({
-  base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
+  base: 'max-w-35 inline-grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
   variants: {
     selected: {
       true: 'border-blue-300 dark:border-blue-600',
