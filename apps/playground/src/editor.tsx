@@ -57,6 +57,10 @@ import {
 } from './feature-flags'
 import {FullscreenProvider, FullscreenToggle, useFullscreen} from './fullscreen'
 import {highlightMachine} from './highlight-json-machine'
+import {
+  InsertInvisibleCharacterButtons,
+  useInvisibleCharacterDecorations,
+} from './invisible-characters'
 import {MentionPickerPlugin} from './mention-picker'
 import type {EditorActorRef} from './playground-machine'
 import {
@@ -158,6 +162,7 @@ export function Editor(props: {
                       })
                     }}
                   />
+                  <InsertInvisibleCharacterButtons />
                 </PortableTextToolbar>
               </FullscreenAwareToolbarWrapper>
             ) : null}
@@ -224,6 +229,7 @@ function FullscreenAwareEditable(props: {
   loading: boolean
 }) {
   const {isFullscreen} = useFullscreen()
+  const invisibleCharacterDecorations = useInvisibleCharacterDecorations()
   const wrapperClasses = isFullscreen
     ? 'flex gap-2 items-stretch flex-1 min-h-0'
     : 'flex gap-2 items-center'
@@ -240,7 +246,10 @@ function FullscreenAwareEditable(props: {
         <EditorFeatureFlagsContext.Provider value={props.featureFlags}>
           <PortableTextEditable
             className={editableClasses}
-            rangeDecorations={props.rangeDecorations}
+            rangeDecorations={[
+              ...props.rangeDecorations,
+              ...invisibleCharacterDecorations,
+            ]}
             renderAnnotation={renderAnnotation}
             renderBlock={RenderBlock}
             renderDecorator={renderDecorator}
