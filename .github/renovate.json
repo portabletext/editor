@@ -80,6 +80,11 @@
       "matchPackageNames": ["/vitest/"],
       "groupName": "vitest",
       "semanticCommitType": "chore"
+    },
+    {
+      "description": "`@types/*` are devDependencies in every published package (they all bundle their own declarations), so a bump changes nothing a consumer can observe. Always `chore`: these are catalog-managed, and catalog updates edit `pnpm-workspace.yaml`, bypassing the `matchFileNames`+`matchDepTypes` rules above and inheriting the preset's `fix` default, which made the changeset bot cut empty patch releases",
+      "matchPackageNames": ["@types/*"],
+      "semanticCommitType": "chore"
     }
   ]
 }
