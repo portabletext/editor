@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.0.46
+
+### Patch Changes
+
+- [#3012](https://github.com/portabletext/editor/pull/3012) [`94b4106`](https://github.com/portabletext/editor/commit/94b4106a22fd44096fd8b8bcc594ebf8918ff60d) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react to ^19.2.8
+
+- Updated dependencies [[`94b4106`](https://github.com/portabletext/editor/commit/94b4106a22fd44096fd8b8bcc594ebf8918ff60d), [`5f073b5`](https://github.com/portabletext/editor/commit/5f073b53ae184606e52cb52567f688c7805a7515)]:
+  - @portabletext/editor@7.10.18
+  - @portabletext/plugin-character-pair-decorator@8.0.46
+  - @portabletext/plugin-input-rule@6.0.15
+
 ## 8.0.45
 
 ### Patch Changes
