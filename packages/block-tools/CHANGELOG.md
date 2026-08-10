@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.1.13
+
+### Patch Changes
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: add a `module` entry point
+
+  Every package now declares `module` alongside `main`, pointing at the ESM build.
+  Bundlers that predate `exports` use it to pick the ESM output instead of falling
+  back to `main`.
+
+- Updated dependencies [[`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c)]:
+  - @portabletext/html@1.1.2
+  - @portabletext/sanity-bridge@3.2.4
+  - @portabletext/schema@2.2.4
+
 ## 5.1.12
 
 ### Patch Changes

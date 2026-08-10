@@ -1,5 +1,22 @@
 # @portabletext/test
 
+## 1.0.5
+
+### Patch Changes
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: add a `module` entry point
+
+  Every package now declares `module` alongside `main`, pointing at the ESM build.
+  Bundlers that predate `exports` use it to pick the ESM output instead of falling
+  back to `main`.
+
+- [#3042](https://github.com/portabletext/editor/pull/3042) [`cddbf04`](https://github.com/portabletext/editor/commit/cddbf041ded81ac7fe3ee6e5aed0869f014f420c) Thanks [@stipsan](https://github.com/stipsan)! - fix: publish an export map without the unresolvable `source` condition
+
+  The published `exports` map carried a `source` condition pointing at
+  `./src/index.ts`, which this package does not publish, so resolvers configured
+  for that condition — bundlers and monorepo tooling — resolved to a file the
+  tarball does not contain. The published map points at `dist` only now.
+
 ## 1.0.4
 
 ### Patch Changes
