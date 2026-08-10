@@ -702,3 +702,307 @@ describe('RangeDecorations inside editable containers', () => {
     )
   })
 })
+
+describe('caret painting at zero-advance leaf boundaries', () => {
+  test('Scenario: The caret after a decorated soft hyphen paints in the following text', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: 'foo\u00ADbar'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: decorateRange({anchor: 3, focus: 4}),
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    const afterSoftHyphen = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 4,
+    }
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: afterSoftHyphen, focus: afterSoftHyphen},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: 'bar', offset: 0})
+    })
+
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+        offset: 4,
+      },
+      focus: {
+        path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+        offset: 4,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: The caret after a decorated zero-width run paints in the following text', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [
+            {_type: 'span', _key: 'a1', text: 'foo\u200B\u2060\uFEFFbar'},
+          ],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: decorateRange({anchor: 3, focus: 6}),
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    const afterRun = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 6,
+    }
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: afterRun, focus: afterRun},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: 'bar', offset: 0})
+    })
+  })
+
+  test('Scenario: The caret before a decorated soft hyphen paints in the preceding text', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: 'foo\u00ADbar'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: decorateRange({anchor: 3, focus: 4}),
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    const beforeSoftHyphen = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 3,
+    }
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: beforeSoftHyphen, focus: beforeSoftHyphen},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: 'foo', offset: 3})
+    })
+  })
+
+  test('Scenario: The caret after a block-leading decorated soft hyphen paints in the following text', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: '\u00ADbar'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: decorateRange({anchor: 0, focus: 1}),
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    const afterSoftHyphen = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 1,
+    }
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: afterSoftHyphen, focus: afterSoftHyphen},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: 'bar', offset: 0})
+    })
+  })
+
+  test('Scenario: The caret before a block-leading decorated soft hyphen stays on its text node', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: '\u00ADbar'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: decorateRange({anchor: 0, focus: 1}),
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    const beforeSoftHyphen = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 0,
+    }
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: beforeSoftHyphen, focus: beforeSoftHyphen},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: '\u00AD', offset: 0})
+    })
+  })
+
+  test('Scenario: The caret after a block-ending decorated soft hyphen stays on its text node', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: 'foo\u00AD'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: decorateRange({anchor: 3, focus: 4}),
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    const afterSoftHyphen = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 4,
+    }
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: afterSoftHyphen, focus: afterSoftHyphen},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: '\u00AD', offset: 1})
+    })
+  })
+
+  test('Scenario: The caret after a block-ending decorated soft hyphen ignores trailing spacer leaves', async () => {
+    const collapsedEnd = {
+      path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+      offset: 4,
+    }
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: 'foo\u00AD'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: [
+          ...decorateRange({anchor: 3, focus: 4}),
+          {
+            component: (props: {children?: ReactNode}) => (
+              <span data-testid="collapsed-decoration">{props.children}</span>
+            ),
+            selection: {anchor: collapsedEnd, focus: collapsedEnd},
+          },
+        ],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {anchor: collapsedEnd, focus: collapsedEnd},
+    })
+
+    await vi.waitFor(() => {
+      expect(domCaret()).toEqual({text: '\u00AD', offset: 1})
+    })
+  })
+
+  function decorateRange(offsets: {anchor: number; focus: number}) {
+    return [
+      {
+        component: (props: {children?: ReactNode}) => (
+          <span data-testid="range-decoration">{props.children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: offsets.anchor,
+          },
+          focus: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: offsets.focus,
+          },
+        },
+      },
+    ]
+  }
+
+  function domCaret() {
+    const selection = window.getSelection()
+    return {
+      text: selection?.anchorNode?.textContent,
+      offset: selection?.anchorOffset,
+    }
+  }
+})

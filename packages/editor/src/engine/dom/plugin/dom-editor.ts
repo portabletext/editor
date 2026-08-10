@@ -37,6 +37,8 @@ import {IS_ANDROID, IS_CHROME, IS_FIREFOX} from '../utils/environment'
 
 export type Action = {at?: Point | Range; run: () => void}
 
+const zeroAdvanceText = /^[\u00AD\u200B\u2060\uFEFF]+$/
+
 /**
  * A DOM-specific version of the `Editor` interface.
  */
@@ -425,6 +427,23 @@ export const DOMEditor: DOMEditorInterface = {
       const end = start + trueLength
 
       if (point.offset <= end) {
+        if (
+          point.offset === end &&
+          length > 0 &&
+          !text.hasAttribute('data-pt-zero-width') &&
+          zeroAdvanceText.test(domNode.textContent) &&
+          texts
+            .slice(i + 1)
+            .some((laterLeaf) => !laterLeaf.hasAttribute('data-pt-zero-width'))
+        ) {
+          // A zero-advance leaf (soft hyphens, zero-width spaces) paints
+          // its start and end at the same x. The next leaf's start is the
+          // same model point but paints distinctly, after any decoration
+          // chrome wrapping the zero-advance leaf.
+          start = end
+          continue
+        }
+
         const offset = Math.min(length, Math.max(0, point.offset - start))
         domPoint = [domNode, offset]
         break
