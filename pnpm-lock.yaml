@@ -19,8 +19,8 @@ catalogs:
       specifier: ^6.9.1
       version: 6.9.1
     '@types/debug':
-      specifier: ^4.1.12
-      version: 4.1.12
+      specifier: ^4.1.13
+      version: 4.1.13
     '@xstate/react':
       specifier: ^6.1.0
       version: 6.1.0
@@ -599,7 +599,7 @@ importers:
         version: 1.0.2
       '@types/debug':
         specifier: 'catalog:'
-        version: 4.1.12
+        version: 4.1.13
       '@types/node':
         specifier: catalog:tooling
         version: 20.19.25
@@ -1312,7 +1312,7 @@ importers:
         version: 2.1.0
       '@types/debug':
         specifier: 'catalog:'
-        version: 4.1.12
+        version: 4.1.13
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
@@ -5120,6 +5120,9 @@ packages:
 
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
+
+  '@types/debug@4.1.13':
+    resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
 
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
@@ -13013,6 +13016,10 @@ snapshots:
       assertion-error: 2.0.1
 
   '@types/debug@4.1.12':
+    dependencies:
+      '@types/ms': 2.1.0
+
+  '@types/debug@4.1.13':
     dependencies:
       '@types/ms': 2.1.0
 
