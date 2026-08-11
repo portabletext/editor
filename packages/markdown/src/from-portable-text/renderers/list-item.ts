@@ -7,10 +7,11 @@ export const DefaultListItemRenderer: PortableTextListItemRenderer = ({
   children,
   value,
   listIndex,
+  listDepth,
 }) => {
   const listStyle = value.listItem || 'bullet'
-  const level = value.level || 1
-  const indent = '   '.repeat(level - 1)
+  const depth = listDepth ?? (value.level || 1) - 1
+  const indent = '   '.repeat(depth)
 
   if (listStyle === 'number') {
     return `${indent}${listIndex ?? 1}. ${children}`

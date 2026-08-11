@@ -158,6 +158,15 @@ export interface PortableTextRendererOptions<T> {
   listIndex?: number | undefined
 
   /**
+   * How deeply the list item should be indented, starting at 0.
+   *
+   * This is not the same as the block's `level`. A list can start deeper than
+   * level 1, and can skip levels, neither of which Markdown can express, so each
+   * jump to a deeper level counts as a single step of nesting.
+   */
+  listDepth?: number | undefined
+
+  /**
    * Whether or not this node is "inline" - ie as a child of a text block,
    * alongside text spans, or a block in and of itself.
    */
