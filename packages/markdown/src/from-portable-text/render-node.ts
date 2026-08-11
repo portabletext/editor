@@ -29,6 +29,7 @@ interface SerializedBlock {
 export const createRenderNode = (
   renderers: PortableTextRenderers,
   listIndexMap: Map<string, number>,
+  listDepthMap: Map<string, number>,
 ): RenderNode => {
   function renderNode<N extends TypedObject>(options: Serializable<N>): string {
     const {node, index, isInline} = options
@@ -91,6 +92,7 @@ export const createRenderNode = (
       value: node,
       index,
       listIndex: node._key ? listIndexMap.get(node._key) : undefined,
+      listDepth: node._key ? listDepthMap.get(node._key) : undefined,
       isInline: false,
       renderNode,
       children,

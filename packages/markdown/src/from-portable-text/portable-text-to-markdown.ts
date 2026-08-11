@@ -101,8 +101,8 @@ export function portableTextToMarkdown<
   }
   const renderBlockSpacing = options.blockSpacing ?? DefaultBlockSpacingRenderer
 
-  const listIndexMap = buildListIndexMap(blocks)
-  const renderNode = createRenderNode(renderers, listIndexMap)
+  const {listIndexMap, listDepthMap} = buildListIndexMap(blocks)
+  const renderNode = createRenderNode(renderers, listIndexMap, listDepthMap)
 
   return blocks
     .map((node, index) => {

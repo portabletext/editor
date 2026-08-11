@@ -682,6 +682,76 @@ describe(portableTextToMarkdown.name, () => {
     })
   })
 
+  describe('lists with skipped levels', () => {
+    const listItem = (text: string, level: number, style = 'bullet') => ({
+      _type: 'block',
+      _key: text,
+      style: 'normal',
+      listItem: style,
+      level,
+      children: [{_type: 'span', _key: `s-${text}`, text, marks: []}],
+      markDefs: [],
+    })
+
+    test('a list starting deeper than level 1 is not indented into a code block', () => {
+      expect(portableTextToMarkdown([listItem('foo', 3)])).toBe('- foo')
+    })
+
+    test('a jump of more than one level indents a single step', () => {
+      expect(
+        portableTextToMarkdown([
+          listItem('foo', 1),
+          listItem('bar', 4),
+          listItem('baz', 1),
+        ]),
+      ).toBe(['- foo', '   - bar', '- baz'].join('\n'))
+    })
+
+    test('numbered lists starting deep keep their marker', () => {
+      expect(
+        portableTextToMarkdown([
+          listItem('foo', 3, 'number'),
+          listItem('bar', 1, 'number'),
+        ]),
+      ).toBe(['1. foo', '2. bar'].join('\n'))
+    })
+
+    test('intermediate levels still nest one step at a time', () => {
+      expect(
+        portableTextToMarkdown([
+          listItem('foo', 1),
+          listItem('bar', 2),
+          listItem('baz', 5),
+          listItem('qux', 2),
+        ]),
+      ).toBe(['- foo', '   - bar', '      - baz', '   - qux'].join('\n'))
+    })
+
+    test('round-trips back to portable text with the same structure', () => {
+      const markdown = portableTextToMarkdown([
+        listItem('foo', 3),
+        listItem('bar', 1),
+        listItem('baz', 4),
+      ])
+      const portableText = markdownToPortableText(markdown)
+
+      expect(
+        portableText.map((block) => ({
+          listItem: 'listItem' in block ? block.listItem : undefined,
+          level: 'level' in block ? block.level : undefined,
+          text:
+            'children' in block && Array.isArray(block.children)
+              ? block.children.map((child) => child.text).join('')
+              : undefined,
+        })),
+      ).toEqual([
+        {listItem: 'bullet', level: 1, text: 'foo'},
+        {listItem: 'bullet', level: 1, text: 'bar'},
+        {listItem: 'bullet', level: 2, text: 'baz'},
+      ])
+    })
+  })
+
   describe('lists', () => {
     const markdown = ['- foo', '   - bar', '      - baz'].join('\n')
 
