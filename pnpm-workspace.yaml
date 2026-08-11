@@ -5,6 +5,7 @@ packages:
 
 catalog:
   "@floating-ui/dom": ^1.8.0
+  "@portabletext/toolkit": ^6.0.0
   "@sanity/diff-match-patch": ^3.2.0
   "@sanity/diff-patch": ^6.0.0
   "@sanity/json-match": ^1.0.5
