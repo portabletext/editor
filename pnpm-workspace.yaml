@@ -21,7 +21,7 @@ catalogMode: prefer
 
 catalogs:
   tooling:
-    "@portabletext/react": ^7.0.1
+    "@portabletext/react": ^8.0.0
     "@rolldown/plugin-babel": ^0.2.3
     "@sanity/pkg-utils": ^12.1.0
     "@sanity/tsconfig": ^2.1.0
