@@ -405,6 +405,34 @@ describe(createFlattenTableRule.name, () => {
     ).toEqual(['Name', 'John Doe', 'Age', '18'])
   })
 
+  test('table with a nested table in a cell', () => {
+    const html = [
+      '<table>',
+      '<thead>',
+      '<tr>',
+      '<th>foo</th>',
+      '<th>bar</th>',
+      '</tr>',
+      '</thead>',
+      '<tbody>',
+      '<tr>',
+      '<td>baz</td>',
+      '<td><table><tr><td>fizz</td></tr></table></td>',
+      '</tr>',
+      '</tbody>',
+      '</table>',
+    ].join('')
+
+    expect(
+      getTersePt({
+        schema,
+        value: transform(html, {
+          rules: [flattenTableRule],
+        }),
+      }),
+    ).toEqual(['foo, ,baz', 'bar, ,fizz'])
+  })
+
   describe('table with images', () => {
     /**
      * | Name       | Photo                                                          |
