@@ -120,12 +120,10 @@ describe(PortableTextEditor.addAnnotation.name, () => {
 
     await vi.waitFor(() => {
       expect(paths).toEqual({
-        markDefPath: [{_key: blockBKey}, 'markDefs', {_key: 'k12'}],
         markDefPaths: [
           [{_key: blockAKey}, 'markDefs', {_key: 'k9'}],
           [{_key: blockBKey}, 'markDefs', {_key: 'k12'}],
         ],
-        spanPath: [{_key: blockBKey}, 'children', {_key: bazSpanKey}],
       })
     })
   })
