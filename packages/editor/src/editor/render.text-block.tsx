@@ -6,12 +6,7 @@ import {useRef, type ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
-import type {
-  BlockRenderProps,
-  BlockStyleRenderProps,
-  RenderBlockFunction,
-  RenderStyleFunction,
-} from '../types/editor'
+import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import {useElementDropPosition} from './drop-position-state-context'
 import type {EditorSchema} from './editor-schema'
 import type {LegacyRenderHooks} from './legacy-render-hooks'
@@ -20,7 +15,6 @@ import {
   useIsFocusedContainer,
   useIsSelectedContainer,
 } from './selection-state-context'
-import {useBlockSubSchema} from './use-block-sub-schema'
 
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
@@ -41,39 +35,8 @@ export function RenderTextBlock(props: {
   const selected = useIsSelectedContainer(serializedPath)
   const focused = useIsFocusedContainer(serializedPath)
   const dropPosition = useElementDropPosition(props.path)
-  const subSchema = useBlockSubSchema(props.path)
 
-  let children = props.children
-
-  if (props.legacy.renderStyle && props.textBlock.style) {
-    const styleSchemaType =
-      props.textBlock.style !== undefined
-        ? subSchema.styles.find(
-            (style) => style.value === props.textBlock.style,
-          )
-        : undefined
-
-    if (styleSchemaType) {
-      children = (
-        <RenderStyle
-          renderStyle={props.legacy.renderStyle}
-          block={props.textBlock}
-          editorElementRef={blockRef}
-          focused={focused}
-          path={[{_key: props.textBlock._key}]}
-          schemaType={styleSchemaType}
-          selected={selected}
-          value={props.textBlock.style}
-        >
-          {children}
-        </RenderStyle>
-      )
-    } else {
-      console.error(
-        `Unable to find Schema type for text block style ${props.textBlock.style}`,
-      )
-    }
-  }
+  const children = props.children
 
   return (
     <div
@@ -163,31 +126,6 @@ function RenderBlock({
     selected,
     style,
     schemaType,
-    value,
-  })
-}
-
-function RenderStyle({
-  renderStyle,
-  block,
-  children,
-  editorElementRef,
-  focused,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderStyle: RenderStyleFunction
-} & BlockStyleRenderProps) {
-  return renderStyle({
-    block,
-    children,
-    editorElementRef,
-    focused,
-    path,
-    schemaType,
-    selected,
     value,
   })
 }

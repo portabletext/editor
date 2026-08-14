@@ -1,8 +1,4 @@
-import type {
-  RenderBlockFunction,
-  RenderChildFunction,
-  RenderStyleFunction,
-} from '../types/editor'
+import type {RenderBlockFunction, RenderChildFunction} from '../types/editor'
 
 /**
  * The legacy v6 render-callback bundle that the engine forwards to the
@@ -16,5 +12,4 @@ import type {
 export type LegacyRenderHooks = {
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
-  renderStyle?: RenderStyleFunction
 }
