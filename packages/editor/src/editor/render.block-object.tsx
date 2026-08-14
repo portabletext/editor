@@ -50,11 +50,7 @@ export function RenderBlockObject(props: {
   }
 
   if (props.blockObjectConfig) {
-    const {
-      'data-slate-node': _slateNode,
-      'data-slate-void': _slateVoid,
-      ...ptAttributes
-    } = props.attributes
+    const ptAttributes = props.attributes
     const render = props.blockObjectConfig.blockObject.render
     const renderProps: BlockObjectRenderProps = {
       attributes: {

@@ -170,7 +170,7 @@ async function performDomSelection(
   text: string,
 ) {
   const editorEl = context.locator.element() as HTMLElement
-  const textNode = editorEl.querySelector('[data-slate-string]')?.childNodes[0]
+  const textNode = editorEl.querySelector('[data-pt-text]')?.childNodes[0]
 
   if (!textNode) {
     throw new Error('Could not find text node in editor')

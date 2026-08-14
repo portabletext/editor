@@ -171,7 +171,7 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       const list = editorElement!.querySelector('[data-testid="list"]')
       expect(list).not.toEqual(null)
@@ -231,7 +231,7 @@ describe('Registration silent-skip behavior', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       const callout = editorElement!.querySelector('[data-testid="callout"]')
       expect(callout).not.toEqual(null)
@@ -302,7 +302,7 @@ describe('Registration silent-skip behavior', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       const callout = editorElement!.querySelector('[data-testid="callout"]')
       expect(callout).not.toEqual(null)
@@ -363,7 +363,7 @@ describe('Registration silent-skip behavior', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       // Custom render did NOT apply (registration dropped); engine
       // default renders the callout block-object.

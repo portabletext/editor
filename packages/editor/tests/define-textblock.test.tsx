@@ -53,7 +53,7 @@ test('TextBlockPlugin renders custom wrapper', async () => {
   })
 
   await vi.waitFor(() => {
-    const editorElement = document.querySelector('[data-slate-editor]')
+    const editorElement = document.querySelector('[data-pt-editor]')
     expect(editorElement).not.toEqual(null)
     const customBlock = editorElement!.querySelector(
       '[data-testid="custom-block"]',
@@ -83,7 +83,7 @@ test('Without TextBlockPlugin, engine default renders', async () => {
   })
 
   await vi.waitFor(() => {
-    const editorElement = document.querySelector('[data-slate-editor]')
+    const editorElement = document.querySelector('[data-pt-editor]')
     expect(editorElement).not.toEqual(null)
     const customBlock = editorElement!.querySelector(
       '[data-testid="custom-block"]',

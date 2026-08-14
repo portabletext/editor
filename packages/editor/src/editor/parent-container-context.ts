@@ -12,7 +12,7 @@ import type {ContainerConfig} from '../renderers/renderer.types'
  *
  * Not a pipeline gate. Whether the current render position emits the
  * new-pipeline DOM shape (clean `data-pt-*`) or the legacy shape
- * (`data-slate-*` + `data-child-*`) is governed by `NewPipelineContext`.
+ * (`data-child-*`) is governed by `NewPipelineContext`.
  * A top-level catch-all `defineTextBlock` puts a render position inside
  * the new pipeline without any parent container — reading this
  * context's truthiness as a pipeline gate produces a stale answer for
