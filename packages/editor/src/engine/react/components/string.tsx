@@ -165,13 +165,13 @@ const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   }
 
   // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an
-  // empty editor (https://github.com/ianstormtaylor/engine/issues/5199).
+  // empty editor (https://github.com/ianstormtaylor/slate/issues/5199).
   //
   // However, not inserting the \uFEFF on iOS causes the editor to crash when
   // inserting any text using an IME at the start of a block. This appears to
   // be because accepting an IME suggestion when at the start of a block (no
   // preceding \uFEFF) removes one or more DOM elements that `toEditorSelection`
-  // depends on. (https://github.com/ianstormtaylor/engine/issues/5703)
+  // depends on. (https://github.com/ianstormtaylor/slate/issues/5703)
   return (
     <span {...attributes}>
       {!IS_ANDROID || !isLineBreak ? '\uFEFF' : null}

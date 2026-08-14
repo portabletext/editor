@@ -11,7 +11,7 @@ const schemaDefinition = defineSchema({})
  * the block tree: only the indicator at the hovered block appears, and no
  * block's content render runs. Pins that the drop position is delivered per
  * block (via the drop-position store), not as a `renderElement` dependency
- * that hands Slate a new render function every tick and re-renders everything.
+ * that hands the engine a new render function every tick and re-renders everything.
  */
 describe('drop position re-renders', () => {
   test('a dragover shows the indicator without re-rendering any block', async () => {

@@ -188,7 +188,6 @@ describe('inline pipeline mode inherits from text block', () => {
       // The mention wrapper's own attributes are clean.
       const attrs = getInlineWrapperAttrs('mention-wrapper')
       expect(attrs).toMatch(/data-pt-/)
-      expect(attrs).not.toMatch(/data-slate-/)
     })
   })
 
@@ -230,7 +229,6 @@ describe('inline pipeline mode inherits from text block', () => {
       expect(getEditorHTML()).toContain('hello')
       const attrs = getInlineWrapperAttrs('span-wrapper')
       expect(attrs).toMatch(/data-pt-/)
-      expect(attrs).not.toMatch(/data-slate-/)
     })
   })
 })

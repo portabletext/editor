@@ -403,7 +403,7 @@ export const Editable = forwardRef(
         let anchorNode: globalThis.Node | null = null
 
         // COMPAT: In firefox the normal selection way does not work
-        // (https://github.com/ianstormtaylor/engine/pull/5486#issue-1820720223)
+        // (https://github.com/ianstormtaylor/slate/pull/5486#issue-1820720223)
         if (IS_FIREFOX && domSelection.rangeCount > 1) {
           const firstRange = domSelection.getRangeAt(0)
           const lastRange = domSelection.getRangeAt(domSelection.rangeCount - 1)
@@ -639,7 +639,7 @@ export const Editable = forwardRef(
             type === 'insertCompositionText' || type === 'deleteCompositionText'
 
           // COMPAT: use composition change events as a hint to where we should insert
-          // composition text if we aren't composing to work around https://github.com/ianstormtaylor/engine/issues/5038
+          // composition text if we aren't composing to work around https://github.com/ianstormtaylor/slate/issues/5038
           if (isCompositionChange && editor.composing) {
             return
           }

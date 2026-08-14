@@ -1,7 +1,7 @@
 import {defineConfig} from '@sanity/pkg-utils'
 
 /**
- * The slate-fork lives at `src/engine/`. Historically excluded
+ * The engine lives at `src/engine/`. Historically excluded
  * wholesale from react-compiler; we are un-excluding it in tiers as
  * code is audited safe for the compiler.
  *
@@ -62,7 +62,7 @@ const TIER_3_PATHS = [
   '/src/engine/react/components/string.tsx',
 ]
 
-const UN_EXCLUDED_SLATE_PATHS = [
+const UN_EXCLUDED_ENGINE_PATHS = [
   ...TIER_1_PATHS,
   ...TIER_2_PATHS,
   ...TIER_3_PATHS,
@@ -99,7 +99,7 @@ const COMPILED_SOURCES = [
   '/src/editor.ts',
   '/src/index.ts',
   '/src/type-utils.ts',
-  ...UN_EXCLUDED_SLATE_PATHS,
+  ...UN_EXCLUDED_ENGINE_PATHS,
 ]
 
 export default defineConfig({
