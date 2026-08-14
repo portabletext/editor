@@ -1,7 +1,7 @@
 import {useEditor} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
-import {createFlattenTableRule} from '@portabletext/html/rules'
+import {createTableRule} from '@portabletext/html/rules'
 import {useEffect} from 'react'
 
 const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
@@ -80,12 +80,7 @@ export function HtmlDeserializerPlugin() {
               image: imageMatcher,
               code: codeMatcher,
             },
-            rules: [
-              createFlattenTableRule({
-                schema: snapshot.context.schema,
-                separator: () => ({_type: 'span', text: ': '}),
-              }),
-            ],
+            rules: [createTableRule({schema: snapshot.context.schema})],
             whitespaceMode: 'normalize',
           })
 
