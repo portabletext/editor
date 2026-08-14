@@ -22,6 +22,7 @@ import {
   defaultSchema,
   defaultStrikeThroughDecoratorDefinition,
   defaultStrongDecoratorDefinition,
+  defaultTableObjectDefinition,
   defaultTaskListItemDefinition,
   defaultUnorderedListItemDefinition,
   h1StyleDefinition,
@@ -149,6 +150,23 @@ const imageBlockMatcher: ObjectMatcher<
   return imageObject
 }
 
+const tableBlockMatcher: ObjectMatcher<
+  ExtractValue<typeof defaultTableObjectDefinition>
+> = ({context, value, isInline}) => {
+  const defaultMatcher = buildObjectMatcher(defaultTableObjectDefinition)
+  const tableObject = defaultMatcher({context, value, isInline})
+
+  if (!tableObject) {
+    return undefined
+  }
+
+  if (!('rows' in tableObject)) {
+    return undefined
+  }
+
+  return tableObject
+}
+
 const defaultOptions = {
   schema: defaultSchema,
   keyGenerator: defaultKeyGenerator,
@@ -185,6 +203,7 @@ const defaultOptions = {
     html: buildObjectMatcher(defaultHtmlObjectDefinition),
     image: imageBlockMatcher,
     callout: buildObjectMatcher(defaultCalloutObjectDefinition),
+    table: tableBlockMatcher,
   },
 } as const satisfies Options
 

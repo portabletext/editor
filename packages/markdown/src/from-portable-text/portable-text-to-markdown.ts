@@ -34,11 +34,16 @@ import {
   DefaultNormalRenderer,
   DefaultUnknownStyleRenderer,
 } from './renderers/style'
-import {DefaultUnknownTypeRenderer} from './renderers/type'
+import {
+  DefaultTableRenderer,
+  DefaultUnknownTypeRenderer,
+} from './renderers/type'
 import type {PortableTextRenderers} from './types'
 
 const defaultRenderers: PortableTextRenderers = {
-  types: {},
+  types: {
+    table: DefaultTableRenderer,
+  },
 
   block: {
     normal: DefaultNormalRenderer,

@@ -4543,12 +4543,13 @@ describe(markdownToPortableText.name, () => {
       ])
     })
 
-    test('no table matcher', () => {
+    test('schema without `table` flattens', () => {
       const keyGenerator = createTestKeyGenerator()
       const markdown = ['| A | B |', '|---|---|', '| 1 | 2 |'].join('\n')
       expect(
         markdownToPortableText(markdown, {
           keyGenerator,
+          schema: compileSchema(defineSchema({})),
         }),
       ).toEqual([
         {
@@ -4736,6 +4737,241 @@ describe(markdownToPortableText.name, () => {
       expect(result.at(0) as Record<string, unknown>).not.toHaveProperty(
         'alignment',
       )
+    })
+
+    describe('zero-config (default schema)', () => {
+      test('GFM table with alignment converts to the canonical table object', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['| L | R |', '| :--- | ---: |', '| foo | bar |'].join(
+          '\n',
+        )
+
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k14',
+            _type: 'table',
+            headerRows: 1,
+            alignment: ['left', 'right'],
+            rows: [
+              {
+                _key: 'k6',
+                _type: 'row',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k2',
+                    value: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        children: [
+                          {_type: 'span', _key: 'k1', text: 'L', marks: []},
+                        ],
+                        markDefs: [],
+                      },
+                    ],
+                  },
+                  {
+                    _type: 'cell',
+                    _key: 'k5',
+                    value: [
+                      {
+                        _type: 'block',
+                        _key: 'k3',
+                        style: 'normal',
+                        children: [
+                          {_type: 'span', _key: 'k4', text: 'R', marks: []},
+                        ],
+                        markDefs: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                _key: 'k13',
+                _type: 'row',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k9',
+                    value: [
+                      {
+                        _type: 'block',
+                        _key: 'k7',
+                        style: 'normal',
+                        children: [
+                          {_type: 'span', _key: 'k8', text: 'foo', marks: []},
+                        ],
+                        markDefs: [],
+                      },
+                    ],
+                  },
+                  {
+                    _type: 'cell',
+                    _key: 'k12',
+                    value: [
+                      {
+                        _type: 'block',
+                        _key: 'k10',
+                        style: 'normal',
+                        children: [
+                          {_type: 'span', _key: 'k11', text: 'bar', marks: []},
+                        ],
+                        markDefs: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+
+      test('headerless GFM table (empty header row) converts to headerRows: 0', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['|  |  |', '| --- | --- |', '| foo | bar |'].join(
+          '\n',
+        )
+
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k13',
+            _type: 'table',
+            headerRows: 0,
+            rows: [
+              {
+                _key: 'k12',
+                _type: 'row',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k8',
+                    value: [
+                      {
+                        _type: 'block',
+                        style: 'normal',
+                        children: [
+                          {_type: 'span', _key: 'k7', text: 'foo', marks: []},
+                        ],
+                        _key: 'k6',
+                        markDefs: [],
+                      },
+                    ],
+                  },
+                  {
+                    _type: 'cell',
+                    _key: 'k11',
+                    value: [
+                      {
+                        _type: 'block',
+                        style: 'normal',
+                        children: [
+                          {_type: 'span', _key: 'k10', text: 'bar', marks: []},
+                        ],
+                        _key: 'k9',
+                        markDefs: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+
+      test('`types: {table: undefined}` opts out and flattens', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['| A | B |', '| --- | --- |', '| 1 | 2 |'].join('\n')
+
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            types: {table: undefined},
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k1', text: 'A', marks: []}],
+            markDefs: [],
+          },
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k4', text: 'B', marks: []}],
+            markDefs: [],
+          },
+          {
+            _type: 'block',
+            _key: 'k7',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k8', text: '1', marks: []}],
+            markDefs: [],
+          },
+          {
+            _type: 'block',
+            _key: 'k10',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k11', text: '2', marks: []}],
+            markDefs: [],
+          },
+        ])
+      })
+
+      test('a differently-shaped schema `table` (no `rows` field) flattens instead of losing content', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const schema = compileSchema(
+          defineSchema({
+            ...defaultSchema,
+            blockObjects: [
+              ...defaultSchema.blockObjects.filter(
+                (blockObject) => blockObject.name !== 'table',
+              ),
+              {name: 'table', fields: [{name: 'data', type: 'string'}]},
+            ],
+          }),
+        )
+        const markdown = ['| A | B |', '| --- | --- |', '| 1 | 2 |'].join('\n')
+
+        expect(
+          markdownToPortableText(markdown, {keyGenerator, schema}),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k1', text: 'A', marks: []}],
+            markDefs: [],
+          },
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k4', text: 'B', marks: []}],
+            markDefs: [],
+          },
+          {
+            _type: 'block',
+            _key: 'k7',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k8', text: '1', marks: []}],
+            markDefs: [],
+          },
+          {
+            _type: 'block',
+            _key: 'k10',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k11', text: '2', marks: []}],
+            markDefs: [],
+          },
+        ])
+      })
     })
   })
 
