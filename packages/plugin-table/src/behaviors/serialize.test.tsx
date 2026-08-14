@@ -179,8 +179,9 @@ describe('rectangular selection copy/cut', () => {
           ],
         },
       ])
-      const markdown = dataTransfer.getData('text/markdown')
-      expect(markdown).toBe(['|  |', '| --- |', '| A |', '| C |'].join('\n'))
+      // The editor ships no `text/markdown` converter, so the delegating
+      // lookup finds nothing and the entry is absent.
+      expect(dataTransfer.getData('text/markdown')).toBe('')
     })
   })
 

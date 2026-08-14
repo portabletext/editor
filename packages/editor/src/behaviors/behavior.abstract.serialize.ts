@@ -16,6 +16,8 @@ export const abstractSerializeBehaviors = [
           mimeType: 'application/json',
           originEvent: event.originEvent,
         }),
+        // No core converter answers `text/markdown`; this raise is the
+        // seam consumer `serialize.data` Behaviors serialize it through.
         raise({
           type: 'serialize.data',
           mimeType: 'text/markdown',
