@@ -52,15 +52,13 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 /**
  * A table is table-shaped when everything the renderer dereferences is
  * there: `rows` an array of typed objects with a `cells` array, every cell
- * a typed object with a `value` array, and no nullish entries in `value`
- * (the recursive `renderNode` dispatches on `entry._type`, so `null` throws
- * where `42` merely renders as unknown). A malformed `table` value (e.g. a
- * consumer's differently-shaped `table` type) falls back to the fenced-JSON
- * path instead of throwing.
+ * a typed object whose `value` array holds typed objects (`renderNode`'s
+ * input contract). The predicate narrows to exactly what `renderTable`
+ * consumes, so the renderer needs no casts. A malformed `table` value
+ * (e.g. a consumer's differently-shaped `table` type) falls back to the
+ * fenced-JSON path instead of throwing.
  */
-function isTableShaped(
-  value: unknown,
-): value is {rows: Array<{cells: Array<{value: Array<unknown>}>}>} {
+function isTableShaped(value: unknown): value is TableShaped {
   const rows = (value as {rows?: unknown} | null)?.rows
   return (
     Array.isArray(rows) &&
@@ -72,10 +70,16 @@ function isTableShaped(
           (cell) =>
             isTypedObject(cell) &&
             Array.isArray(cell['value']) &&
-            cell['value'].every((entry) => entry != null),
+            cell['value'].every(isTypedObject),
         ),
     )
   )
+}
+
+type TableShaped = {
+  headerRows?: unknown
+  alignment?: unknown
+  rows: Array<{cells: Array<{value: Array<TypedObject>}>}>
 }
 
 /**
@@ -128,27 +132,17 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
 }
 
 function renderTable(
-  value: {
-    headerRows?: unknown
-    alignment?: unknown
-    rows: Array<{cells: Array<{value: Array<unknown>}>}>
-  },
+  value: TableShaped,
   renderNode: Parameters<PortableTextTypeRenderer>[0]['renderNode'],
 ): string {
-  const rows = value.rows as Array<{
-    _key: string
-    _type: 'row'
-    cells: Array<{
-      _type: 'cell'
-      _key: string
-      value: Array<{_type: string; children?: Array<unknown>}>
-    }>
-  }>
+  const rows = value.rows
   // `alignment` is an extension field, not part of the table shape: junk
   // here should not send an otherwise valid table to the fenced-JSON path,
   // so it is normalized away instead of guarded (`{}.at` would throw below).
-  const alignment = Array.isArray(value.alignment)
-    ? (value.alignment as Array<'left' | 'center' | 'right' | null>)
+  const alignment: ReadonlyArray<unknown> | undefined = Array.isArray(
+    value.alignment,
+  )
+    ? value.alignment
     : undefined
 
   const headerRow = rows.at(0)
@@ -158,13 +152,11 @@ function renderTable(
   }
 
   // Helper to extract text from cell blocks
-  const getCellText = (
-    cellBlocks: Array<{_type: string; children?: Array<unknown>}>,
-  ): string => {
+  const getCellText = (cellBlocks: Array<TypedObject>): string => {
     return cellBlocks
       .map((block, index) =>
         renderNode({
-          node: block as {_type: string},
+          node: block,
           index,
           isInline: false,
           renderNode,
