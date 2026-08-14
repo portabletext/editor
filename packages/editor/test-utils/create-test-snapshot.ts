@@ -23,7 +23,7 @@ export function createTestSnapshot(snapshot: {
       value: context.value,
       containers: context.containers,
     },
-    {blockIndexMap, listIndexMap: new Map<string, number>()},
+    {blockIndexMap},
   )
 
   return {

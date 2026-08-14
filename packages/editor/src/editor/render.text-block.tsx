@@ -5,15 +5,11 @@ import type {
 import {useRef, type ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
-import {useListIndexSelector} from '../engine/react/hooks/use-engine-selector'
-import {getListIndexMap} from '../internal-utils/build-index-maps'
 import {serializePath} from '../paths/serialize-path'
 import type {
-  BlockListItemRenderProps,
   BlockRenderProps,
   BlockStyleRenderProps,
   RenderBlockFunction,
-  RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
 import {useElementDropPosition} from './drop-position-state-context'
@@ -45,9 +41,6 @@ export function RenderTextBlock(props: {
   const selected = useIsSelectedContainer(serializedPath)
   const focused = useIsFocusedContainer(serializedPath)
   const dropPosition = useElementDropPosition(props.path)
-  const listIndex = useListIndexSelector((editor) =>
-    getListIndexMap(editor).get(serializedPath),
-  )
   const subSchema = useBlockSubSchema(props.path)
 
   let children = props.children
@@ -78,34 +71,6 @@ export function RenderTextBlock(props: {
     } else {
       console.error(
         `Unable to find Schema type for text block style ${props.textBlock.style}`,
-      )
-    }
-  }
-
-  if (props.legacy.renderListItem && props.textBlock.listItem) {
-    const listItemSchemaType = subSchema.lists.find(
-      (list) => list.value === props.textBlock.listItem,
-    )
-
-    if (listItemSchemaType) {
-      children = (
-        <RenderListItem
-          renderListItem={props.legacy.renderListItem}
-          block={props.textBlock}
-          editorElementRef={blockRef}
-          focused={focused}
-          level={props.textBlock.level ?? 1}
-          path={[{_key: props.textBlock._key}]}
-          selected={selected}
-          value={props.textBlock.listItem}
-          schemaType={listItemSchemaType}
-        >
-          {children}
-        </RenderListItem>
-      )
-    } else {
-      console.error(
-        `Unable to find Schema type for text block list item ${props.textBlock.listItem}`,
       )
     }
   }
@@ -144,11 +109,6 @@ export function RenderTextBlock(props: {
       {...(props.textBlock.style !== undefined
         ? {
             'data-style': props.textBlock.style,
-          }
-        : {})}
-      {...(listIndex !== undefined
-        ? {
-            'data-list-index': listIndex,
           }
         : {})}
     >
@@ -203,33 +163,6 @@ function RenderBlock({
     selected,
     style,
     schemaType,
-    value,
-  })
-}
-
-function RenderListItem({
-  renderListItem,
-  block,
-  children,
-  editorElementRef,
-  focused,
-  level,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderListItem: RenderListItemFunction
-} & BlockListItemRenderProps) {
-  return renderListItem({
-    block,
-    children,
-    editorElementRef,
-    focused,
-    level,
-    path,
-    schemaType,
-    selected,
     value,
   })
 }

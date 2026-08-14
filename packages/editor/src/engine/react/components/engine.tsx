@@ -23,10 +23,8 @@ export const Engine = (props: {editor: Editor; children: React.ReactNode}) => {
     // could have changed.
     const pending = editor.selectorChannelsPending
     const registrations = pending.registrations
-    const listIndex = pending.listIndex
     pending.registrations = false
-    pending.listIndex = false
-    handleSelectorChange({registrations, listIndex})
+    handleSelectorChange({registrations})
   }, [editor, handleSelectorChange])
 
   useEffect(() => {

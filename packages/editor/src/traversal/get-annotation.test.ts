@@ -69,10 +69,7 @@ function createAnnotationTestbed() {
   const value = [textBlock, weirdContainer]
   const containers = resolveTestbedContainers(schema, [weirdContainerDef])
   const blockIndexMap = new Map<string, number>()
-  buildIndexMaps(
-    {schema, containers, value},
-    {blockIndexMap, listIndexMap: new Map<string, number>()},
-  )
+  buildIndexMaps({schema, containers, value}, {blockIndexMap})
 
   const snapshot = {
     context: {schema, containers, value},

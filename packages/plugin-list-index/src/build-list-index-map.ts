@@ -51,11 +51,9 @@ type Block = NonNullable<
  * sequence. List items nested inside a container (e.g. a table cell) number
  * within their own array, independently of siblings and the enclosing array.
  *
- * Duplicated from the editor's internal `buildIndexMaps` (the part that fills
- * `listIndexMap`) rather than imported, for the same reason as `serializePath`
- * above. Descends containers with the public `getContainerChildren`, seeding
- * the document root from `context.value`. Keep the numbering semantics in sync
- * with `packages/editor/src/internal-utils/build-index-maps.ts`.
+ * This is the sole implementation of the numbering semantics; the editor
+ * core does not compute list indices. Descends containers with the public
+ * `getContainerChildren`, seeding the document root from `context.value`.
  */
 export function buildListIndexMap(
   context: ListIndexInput,

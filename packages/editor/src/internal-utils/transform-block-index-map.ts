@@ -112,7 +112,7 @@ export function transformBlockIndexMap(
             value: afterValue as unknown as PortableTextBlock[],
             containers: context.containers,
           },
-          {blockIndexMap: map, listIndexMap: new Map()},
+          {blockIndexMap: map},
         )
         return
       }

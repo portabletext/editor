@@ -255,7 +255,7 @@ export type Container = {
  * The consumer's `render` callback owns the outer wrapper entirely:
  * the engine emits `data-pt-*` attributes only - no `pt-*` CSS classes,
  * no legacy `data-block-*` attributes - and the block-level
- * `renderStyle`/`renderListItem`/`renderBlock` props on
+ * `renderStyle`/`renderBlock` props on
  * `<PortableTextEditable>` do not compose under this registration.
  *
  * Span-level render props - `renderDecorator`, `renderAnnotation`,

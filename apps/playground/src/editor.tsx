@@ -3,22 +3,20 @@ import './editor.css'
 import {
   defineAnnotation,
   defineDecorator,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
   useEditor,
   useEditorSelector,
   type AnnotationRenderProps,
-  type BlockListItemRenderProps,
   type BlockPath,
   type BlockRenderProps,
-  type BlockStyleRenderProps,
   type DecoratorRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
   type RangeDecoration,
-  type RenderListItemFunction,
   type RenderPlaceholderFunction,
-  type RenderStyleFunction,
+  type TextBlockRenderProps,
 } from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import {portableTextToMarkdown} from '@portabletext/markdown'
@@ -66,6 +64,7 @@ import {
   LinkAnnotationSchema,
   playgroundSchemaDefinition,
 } from './playground-schema-definition'
+import {ListItemBlock} from './plugins/list-item-block'
 import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
@@ -165,6 +164,7 @@ export function Editor(props: {
             ) : null}
             <ListIndexProvider>
               <FullscreenAwareContainer>
+                <NodePlugin nodes={playgroundNodes} />
                 {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
                 {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
                 {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
@@ -245,9 +245,7 @@ function FullscreenAwareEditable(props: {
             className={editableClasses}
             rangeDecorations={props.rangeDecorations}
             renderBlock={RenderBlock}
-            renderListItem={renderListItem}
             renderPlaceholder={renderPlaceholder}
-            renderStyle={renderStyle}
           />
         </EditorFeatureFlagsContext.Provider>
       </ErrorBoundary>
@@ -577,10 +575,7 @@ const decoratorNode = defineDecorator({
 
 const markNodes = [decoratorNode, annotationNode]
 
-function TaskListCheckbox(props: {
-  block: BlockListItemRenderProps['block']
-  path: BlockPath
-}) {
+function TaskListCheckbox(props: {block: PortableTextBlock; path: BlockPath}) {
   const editor = useEditor()
   const checked = (props.block as {checked?: boolean}).checked === true
 
@@ -607,28 +602,77 @@ function TaskListCheckbox(props: {
   )
 }
 
-const renderListItem: RenderListItemFunction = (props) => {
-  if (props.value === 'task') {
-    const checked = (props.block as {checked?: boolean}).checked === true
-    return (
-      <span
-        className="flex items-center gap-2 data-[checked=true]:text-gray-400 data-[checked=true]:line-through [&>*:last-child]:flex-1"
-        data-checked={checked}
-      >
-        <TaskListCheckbox block={props.block} path={props.path} />
-        {props.children}
-      </span>
-    )
-  }
-  return props.children
-}
-
 const renderPlaceholder: RenderPlaceholderFunction = () => (
   <span className="text-gray-400 dark:text-gray-500 px-2">Type something</span>
 )
 
-const renderStyle: RenderStyleFunction = (props) => {
-  return (styleMap.get(props.value) ?? ((props) => props.children))(props)
+const playgroundTextBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => <PlaygroundTextBlock {...props} />,
+})
+
+const playgroundNodes = [playgroundTextBlock]
+
+function PlaygroundTextBlock(props: TextBlockRenderProps) {
+  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
+
+  if (props.path.length > 1) {
+    // Inside a container the positional `of` registrations own the rich
+    // rendering; this catch-all only mirrors the engine default so
+    // containers without a positional text block (the code block's
+    // lines) keep their plain shape.
+    return <div {...props.attributes}>{props.children}</div>
+  }
+
+  const style = styleMap.get(props.node.style ?? 'normal')
+
+  if (props.node.listItem !== undefined) {
+    let children = style ? style({children: props.children}) : props.children
+    if (props.node.listItem === 'task') {
+      const checked = (props.node as {checked?: boolean}).checked === true
+      children = (
+        <span
+          className="flex items-center gap-2 data-[checked=true]:text-gray-400 data-[checked=true]:line-through [&>*:last-child]:flex-1"
+          data-checked={checked}
+        >
+          <TaskListCheckbox block={props.node} path={props.path as BlockPath} />
+          {children}
+        </span>
+      )
+    }
+    return (
+      <ListItemBlock
+        attributes={props.attributes}
+        node={props.node}
+        path={props.path}
+      >
+        {children}
+      </ListItemBlock>
+    )
+  }
+
+  if (enableDragHandles) {
+    return (
+      <div {...props.attributes} className="me-1 relative">
+        <div
+          contentEditable={false}
+          draggable={!props.readOnly}
+          className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
+        >
+          <span />
+        </div>
+        <div>{style ? style({children: props.children}) : props.children}</div>
+      </div>
+    )
+  }
+
+  return style ? (
+    style({attributes: props.attributes, children: props.children})
+  ) : (
+    <p {...props.attributes} className="my-1">
+      {props.children}
+    </p>
+  )
 }
 
 const decoratorMap: Map<string, (props: DecoratorRenderProps) => JSX.Element> =
@@ -661,42 +705,82 @@ const decoratorMap: Map<string, (props: DecoratorRenderProps) => JSX.Element> =
     ['superscript', (props) => <sup>{props.children}</sup>],
   ])
 
-const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
-  new Map([
-    ['normal', (props) => <p className="my-1">{props.children}</p>],
+type StyleRenderProps = {
+  attributes?: TextBlockRenderProps['attributes']
+  children: React.ReactNode
+}
+
+const styleMap: Map<string, (props: StyleRenderProps) => JSX.Element> = new Map(
+  [
+    [
+      'normal',
+      (props) => (
+        <p {...props.attributes} className="my-1">
+          {props.children}
+        </p>
+      ),
+    ],
     [
       'h1',
-      (props) => <h1 className="my-1 font-bold text-3xl">{props.children}</h1>,
+      (props) => (
+        <h1 {...props.attributes} className="my-1 font-bold text-3xl">
+          {props.children}
+        </h1>
+      ),
     ],
     [
       'h2',
-      (props) => <h2 className="my-1 font-bold text-2xl">{props.children}</h2>,
+      (props) => (
+        <h2 {...props.attributes} className="my-1 font-bold text-2xl">
+          {props.children}
+        </h2>
+      ),
     ],
     [
       'h3',
-      (props) => <h3 className="my-1 font-bold text-xl">{props.children}</h3>,
+      (props) => (
+        <h3 {...props.attributes} className="my-1 font-bold text-xl">
+          {props.children}
+        </h3>
+      ),
     ],
     [
       'h4',
-      (props) => <h4 className="my-1 font-bold text-lg">{props.children}</h4>,
+      (props) => (
+        <h4 {...props.attributes} className="my-1 font-bold text-lg">
+          {props.children}
+        </h4>
+      ),
     ],
     [
       'h5',
-      (props) => <h5 className="my-1 font-bold text-base">{props.children}</h5>,
+      (props) => (
+        <h5 {...props.attributes} className="my-1 font-bold text-base">
+          {props.children}
+        </h5>
+      ),
     ],
     [
       'h6',
-      (props) => <h6 className="my-1 font-bold text-sm">{props.children}</h6>,
+      (props) => (
+        <h6 {...props.attributes} className="my-1 font-bold text-sm">
+          {props.children}
+        </h6>
+      ),
     ],
     [
       'blockquote',
       (props) => (
-        <blockquote className="my-1 pl-2 py-1 border-gray-300 dark:border-gray-600 border-l-4">
+        <blockquote
+          {...props.attributes}
+          className="my-1 pl-2 py-1 border-gray-300 dark:border-gray-600 border-l-4"
+        >
           {props.children}
         </blockquote>
       ),
     ],
-  ])
+  ],
+)
 
 function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
   const editor = useEditor()

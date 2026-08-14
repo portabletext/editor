@@ -160,12 +160,6 @@ export function invalidateVerifiedGroups(
  * incrementally per operation so the operation pipeline (which resolves
  * keyed paths through it) never observes a stale map.
  *
- * `listIndexMap` is only consumed by the text-block renderer, never by
- * operations or selectors, so it is invalidated here and rebuilt lazily
- * on read (`getListIndexMap`) instead of per operation. List-item
- * numbering depends on block adjacency that any structural op can disturb
- * non-locally, so any structural op marks it dirty.
- *
  * `verifiedUniqueChildGroups` is invalidated per structural op so per-node
  * duplicate-key normalization can skip groups whose membership is unchanged
  * (see `invalidateVerifiedGroups`).
@@ -214,13 +208,6 @@ export function subscribeUpdateValue(
         containers: editor.snapshot.context.containers,
       },
     )
-
-    // List-item numbering depends on block adjacency that a structural op
-    // anywhere in the tree can disturb non-locally, so invalidate rather
-    // than reason about which paths matter. The map is rebuilt lazily the
-    // next time the renderer reads it.
-    editor.listIndexMapDirty = true
-    editor.selectorChannelsPending.listIndex = true
 
     invalidateVerifiedGroups(editor.verifiedUniqueChildGroups, operation)
   })
