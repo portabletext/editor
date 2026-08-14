@@ -18,7 +18,7 @@ Then open the local URL Vite prints (defaults to `http://localhost:5173`).
 ## What it demonstrates
 
 - Defining a schema with `defineSchema` (decorators, annotations, styles, lists, block and inline objects)
-- Render functions: `renderDecorator`, `renderAnnotation`, `renderStyle`, `renderBlock`, `renderChild`
+- Render functions: `renderDecorator`, `renderAnnotation`, `renderStyle`, `renderBlock`, `renderChild`, `renderListItem` (the block-level ones are deprecated; see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/))
 - A toolbar that toggles marks, styles, and lists using `useEditor` and `useEditorSelector` with selectors from `@portabletext/editor/selectors`
 - Reading the editor value through `EventListenerPlugin` and rendering it as JSON
 
