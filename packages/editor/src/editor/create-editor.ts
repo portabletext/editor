@@ -142,11 +142,9 @@ export function createInternalEditor(config: EditorConfig): {
       return relay.on(type, (event) => {
         switch (event.type) {
           case 'blurred':
-          case 'done loading':
           case 'editable':
           case 'focused':
           case 'invalid value':
-          case 'loading':
           case 'mutation':
           case 'operation':
           case 'patch':
