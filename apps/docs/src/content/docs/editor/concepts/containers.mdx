@@ -147,7 +147,7 @@ Scope is one level deep: an `of` override applies to the container's immediate c
 
 ## Registrations opt into the new render pipeline
 
-The editor has two rendering paths: the render props on `<PortableTextEditable>` are the older one, and registrations replace them rather than compose with them. Registering nodes with `NodePlugin` opts those positions, and everything rendered inside them, into the editor's new render pipeline, and that changes who owns what. Your `render` owns the outer wrapper entirely: the engine emits only `data-pt-*` attributes, and the node render props on `<PortableTextEditable>`, `renderBlock`, `renderStyle`, and `renderChild`, do not compose for registered nodes. Span-level rendering keeps working: `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations fire on the spans inside `children` regardless of who renders the block.
+The editor has two rendering paths: the render props on `<PortableTextEditable>` are the older one, and registrations replace them rather than compose with them. Registering nodes with `NodePlugin` opts those positions, and everything rendered inside them, into the editor's new render pipeline, and that changes who owns what. Your `render` owns the outer wrapper entirely: the engine emits only `data-pt-*` attributes, and the node render props on `<PortableTextEditable>`, `renderBlock` and `renderChild`, do not compose for registered nodes. Span-level rendering keeps working: `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations fire on the spans inside `children` regardless of who renders the block.
 
 The pipeline boundary is the subtree. Inside a registered container, unregistered node types render through the engine defaults, never through the node render props, so registering a container usually means bringing a `defineTextBlock` (and registrations for anything else that renders inside it) along with it.
 
@@ -247,7 +247,7 @@ function TextBlock(props: TextBlockRenderProps) {
 Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
 
 :::note[Migrating from the render props?]
-If your editor renders through the legacy props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
+If your editor renders through the legacy props on `<PortableTextEditable>` (`renderBlock`, `renderChild`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
 :::
 
 ## Editing follows the sub-schema

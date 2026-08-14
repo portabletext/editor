@@ -218,6 +218,7 @@ export interface BlockDecoratorRenderProps {
   value: string
 }
 /**
+ * @beta
  * @deprecated The `renderListItem` render prop is removed; render list
  * items with `defineTextBlock` and `@portabletext/plugin-list-index`
  * instead. This props shape will be removed in the next major version.
@@ -268,14 +269,10 @@ export type RenderPlaceholderFunction = () => React.ReactNode
 
 /**
  * @beta
- * @deprecated The `renderStyle` render prop is deprecated. Render
- * text-block styles with `defineTextBlock` mounted through `NodePlugin`
- * instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
+ * @deprecated The `renderStyle` render prop is removed; render text-block
+ * styles with `defineTextBlock` instead. This props shape will be removed
+ * in the next major version.
  */
-export type RenderStyleFunction = (props: BlockStyleRenderProps) => JSX.Element
-
-/** @beta */
 export interface BlockStyleRenderProps {
   block: PortableTextTextBlock
   children: ReactElement<any>

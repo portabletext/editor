@@ -12,7 +12,7 @@ This guide covers `@portabletext/editor` **v7.x** ([changelog](https://github.co
 :::
 
 :::caution[Deprecated]
-The block-level render props (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`) are deprecated and will be removed in future major versions. Node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`) replace them; the [migration guide](/editor/guides/migrate-render-props/) walks through each prop. The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated.
+The `renderBlock` and `renderChild` render props are deprecated and will be removed in a future major version. Node registrations (`defineBlockObject`, `defineInlineObject`, `defineSpan`) replace them; the [migration guide](/editor/guides/migrate-render-props/) walks through each prop. The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated. Text block styles and lists render through a `defineTextBlock` registration, not a render prop.
 :::
 
 The following props can be passed to the `PortableTextEditable` component:
@@ -21,7 +21,7 @@ The following props can be passed to the `PortableTextEditable` component:
 - `renderBlock`: For block objects (e.g., images, embeds). (deprecated)
 - `renderChild`: For inline objects (e.g., custom emoji, stock symbols). (deprecated)
 - `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
-- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote). (deprecated)
+
 - `renderPlaceholder`: For custom placeholder text when the editor is empty.
 - `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
@@ -80,23 +80,6 @@ function isImage(
   props: PortableTextBlock,
 ): props is PortableTextBlock & {src: string} {
   return 'src' in props
-}
-
-// Styles
-const renderStyle: RenderStyleFunction = (props) => {
-  if (props.schemaType.value === 'h1') {
-    return <h1>{props.children}</h1>
-  }
-  if (props.schemaType.value === 'h2') {
-    return <h2>{props.children}</h2>
-  }
-  if (props.schemaType.value === 'h3') {
-    return <h3>{props.children}</h3>
-  }
-  if (props.schemaType.value === 'blockquote') {
-    return <blockquote>{props.children}</blockquote>
-  }
-  return <>{props.children}</>
 }
 
 // Inline objects

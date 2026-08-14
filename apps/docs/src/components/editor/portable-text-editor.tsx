@@ -1,13 +1,16 @@
 import './editor.css'
 import {
+  defineInlineObject,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
   type BlockRenderProps,
-  type ChildRenderProps,
   type PortableTextBlock,
   type SchemaDefinition,
+  type TextBlockRenderProps,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {TypographyPlugin} from '@portabletext/plugin-typography'
 import {PortableText} from '@portabletext/react'
@@ -26,6 +29,72 @@ import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 type PortableTextEditorProps = {
   customSchema?: SchemaDefinition
 }
+
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => <DocsTextBlock {...props} />,
+})
+
+function DocsTextBlock(props: TextBlockRenderProps) {
+  const listIndex = useListIndex(props.path)
+
+  let children = props.children
+  if (props.node.style === 'h1') {
+    children = <h1 className="mb-1 font-bold text-3xl relative">{children}</h1>
+  } else if (props.node.style === 'h2') {
+    children = <h2 className="mb-1 font-bold text-2xl relative">{children}</h2>
+  } else if (props.node.style === 'h3') {
+    children = <h3 className="mb-1 font-bold text-xl relative">{children}</h3>
+  } else if (props.node.style === 'blockquote') {
+    children = (
+      <blockquote className="mb-1 pl-2 py-1 border-gray-200 dark:border-gray-600 border-l-4 relative">
+        {children}
+      </blockquote>
+    )
+  } else {
+    children = <p className="mb-1 relative">{children}</p>
+  }
+
+  return (
+    <div
+      {...props.attributes}
+      data-list-item={props.node.listItem}
+      data-level={props.node.level}
+      data-list-index={listIndex}
+    >
+      {children}
+    </div>
+  )
+}
+
+const stockTicker = defineInlineObject({
+  type: 'stock-ticker',
+  render: (props) => {
+    const value = props.node as {symbol?: string}
+    return (
+      <span
+        {...props.attributes}
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-xs font-mono ${
+          props.selected
+            ? 'border-blue-400 dark:border-blue-500'
+            : 'border-gray-300 dark:border-gray-600'
+        } ${props.focused ? 'bg-blue-50 dark:bg-blue-950' : 'bg-gray-50 dark:bg-gray-800'}`}
+      >
+        {props.children}
+        {/* `draggable` makes the object movable and keeps its text
+            unselectable: a draggable element starts a drag instead of a
+            text selection */}
+        <span
+          draggable={!props.readOnly}
+          className="inline-flex items-center gap-1"
+        >
+          <ActivityIcon className="size-3" />
+          {value.symbol || 'TICKER'}
+        </span>
+      </span>
+    )
+  },
+})
 
 export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
   const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
@@ -81,6 +150,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
           }}
         />
         <TypographyPlugin />
+        <NodePlugin nodes={[textBlock, stockTicker]} />
         <div className="w-full mb-4">
           <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
             <div className="bg-gray-50 dark:bg-gray-800 px-2 py-1 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
@@ -89,130 +159,83 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
                 @portabletext/editor
               </span>
             </div>
-            <PortableTextEditable
-              className="min-h-[200px] p-4 outline-none"
-              renderBlock={(props: BlockRenderProps) => {
-                if (props.schemaType.name === 'image') {
-                  const value = props.value as {src?: string; alt?: string}
-                  return (
-                    <div
-                      className={`my-2 p-2 border-2 rounded flex items-start gap-3 ${
-                        props.selected
-                          ? 'border-blue-400 dark:border-blue-500'
-                          : 'border-gray-200 dark:border-gray-700'
-                      } ${props.focused ? 'bg-blue-50 dark:bg-blue-950' : ''}`}
-                    >
-                      <div className="bg-gray-100 dark:bg-gray-800 size-16 flex items-center justify-center rounded overflow-hidden shrink-0">
-                        {value.src ? (
-                          <img
-                            src={value.src}
-                            alt={value.alt ?? ''}
-                            className="object-cover max-w-full max-h-full"
-                          />
-                        ) : (
-                          <ImageIcon className="size-6 text-gray-400 dark:text-gray-500" />
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 min-w-0 text-sm">
-                        <span className="truncate text-gray-600 dark:text-gray-300">
-                          {value.src || 'No source'}
-                        </span>
-                        <span className="truncate text-gray-400 dark:text-gray-500 text-xs">
-                          {value.alt || 'No alt text'}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                }
-                return props.children
-              }}
-              renderChild={(props: ChildRenderProps) => {
-                if (props.schemaType.name === 'stock-ticker') {
-                  const value = props.value as {symbol?: string}
-                  return (
-                    <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-xs font-mono ${
-                        props.selected
-                          ? 'border-blue-400 dark:border-blue-500'
-                          : 'border-gray-300 dark:border-gray-600'
-                      } ${props.focused ? 'bg-blue-50 dark:bg-blue-950' : 'bg-gray-50 dark:bg-gray-800'}`}
-                    >
-                      <ActivityIcon className="size-3" />
-                      {value.symbol || 'TICKER'}
-                    </span>
-                  )
-                }
-                return props.children
-              }}
-              renderStyle={(props) => {
-                if (props.value === 'h1') {
-                  return (
-                    <h1 className="mb-1 font-bold text-3xl relative">
-                      {props.children}
-                    </h1>
-                  )
-                }
-                if (props.value === 'h2') {
-                  return (
-                    <h2 className="mb-1 font-bold text-2xl relative">
-                      {props.children}
-                    </h2>
-                  )
-                }
-                if (props.value === 'h3') {
-                  return (
-                    <h3 className="mb-1 font-bold text-xl relative">
-                      {props.children}
-                    </h3>
-                  )
-                }
-                if (props.value === 'blockquote') {
-                  return (
-                    <blockquote className="mb-1 pl-2 py-1 border-gray-200 dark:border-gray-600 border-l-4 relative">
-                      {props.children}
-                    </blockquote>
-                  )
-                }
-                return <p className="mb-1 relative">{props.children}</p>
-              }}
-              renderDecorator={(props) => {
-                if (props.value === 'strong') {
-                  return <strong>{props.children}</strong>
-                }
-                if (props.value === 'em') {
-                  return <em>{props.children}</em>
-                }
-                if (props.value === 'underline') {
-                  return <span className="underline">{props.children}</span>
-                }
-                return props.children
-              }}
-              renderAnnotation={(props) => {
-                if (props.schemaType.name === 'link') {
-                  const href = (props.value as {href?: string}).href
-                  return (
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="text-blue-700 dark:text-blue-400 underline">
-                            {props.children}
+            <ListIndexProvider>
+              <PortableTextEditable
+                className="min-h-[200px] p-4 outline-none"
+                renderBlock={(props: BlockRenderProps) => {
+                  if (props.schemaType.name === 'image') {
+                    const value = props.value as {src?: string; alt?: string}
+                    return (
+                      <div
+                        className={`my-2 p-2 border-2 rounded flex items-start gap-3 ${
+                          props.selected
+                            ? 'border-blue-400 dark:border-blue-500'
+                            : 'border-gray-200 dark:border-gray-700'
+                        } ${props.focused ? 'bg-blue-50 dark:bg-blue-950' : ''}`}
+                      >
+                        <div className="bg-gray-100 dark:bg-gray-800 size-16 flex items-center justify-center rounded overflow-hidden shrink-0">
+                          {value.src ? (
+                            <img
+                              src={value.src}
+                              alt={value.alt ?? ''}
+                              className="object-cover max-w-full max-h-full"
+                            />
+                          ) : (
+                            <ImageIcon className="size-6 text-gray-400 dark:text-gray-500" />
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1 min-w-0 text-sm">
+                          <span className="truncate text-gray-600 dark:text-gray-300">
+                            {value.src || 'No source'}
                           </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <span className="text-xs">{href || 'No URL'}</span>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )
-                }
-                return props.children
-              }}
-              renderPlaceholder={() => (
-                <span className="text-gray-400 dark:text-gray-500">
-                  Type something
-                </span>
-              )}
-            />
+                          <span className="truncate text-gray-400 dark:text-gray-500 text-xs">
+                            {value.alt || 'No alt text'}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return props.children
+                }}
+                renderDecorator={(props) => {
+                  if (props.value === 'strong') {
+                    return <strong>{props.children}</strong>
+                  }
+                  if (props.value === 'em') {
+                    return <em>{props.children}</em>
+                  }
+                  if (props.value === 'underline') {
+                    return <span className="underline">{props.children}</span>
+                  }
+                  return props.children
+                }}
+                renderAnnotation={(props) => {
+                  if (props.schemaType.name === 'link') {
+                    const href = (props.value as {href?: string}).href
+                    return (
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-blue-700 dark:text-blue-400 underline">
+                              {props.children}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <span className="text-xs">{href || 'No URL'}</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                  }
+                  return props.children
+                }}
+                renderPlaceholder={() => (
+                  <span className="text-gray-400 dark:text-gray-500">
+                    Type something
+                  </span>
+                )}
+              />
+            </ListIndexProvider>
           </div>
         </div>
       </EditorProvider>

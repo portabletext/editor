@@ -56,12 +56,12 @@ import {
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
+import {defineTextBlock} from '@portabletext/editor'
 import type {
   PortableTextBlock,
   RenderDecoratorFunction,
-  RenderStyleFunction,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 ```
 
 You won't need all of these right away, but you can add them now.
@@ -125,12 +125,12 @@ import {
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
+import {defineTextBlock} from '@portabletext/editor'
 import type {
   PortableTextBlock,
   RenderDecoratorFunction,
-  RenderStyleFunction,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
@@ -174,33 +174,32 @@ Include the `App` component in your application and run it. You should see an ou
 
 ## Create render functions for schema elements
 
-:::caution[Deprecated]
-The block-level render props used below (`renderStyle`, `renderBlock`, `renderListItem`) are deprecated and will be removed in future major versions in favor of node registrations. The [migration guide](/editor/guides/migrate-render-props/) shows the replacement for each prop.
-:::
+At this point the PTE only has a schema, but it doesn't know how to render anything. Fix that by registering a render for text blocks and creating render functions for the marks.
 
-At this point the PTE only has a schema, but it doesn't know how to render anything. Fix that by creating render functions for each property in the schema.
-
-Start by creating a render function for styles.
+Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
 ```tsx
-const renderStyle: RenderStyleFunction = (props) => {
-  if (props.schemaType.value === 'h1') {
-    return <h1>{props.children}</h1>
-  }
-  if (props.schemaType.value === 'h2') {
-    return <h2>{props.children}</h2>
-  }
-  if (props.schemaType.value === 'h3') {
-    return <h3>{props.children}</h3>
-  }
-  if (props.schemaType.value === 'blockquote') {
-    return <blockquote>{props.children}</blockquote>
-  }
-  return <>{props.children}</>
-}
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => {
+    if (props.node.style === 'h1') {
+      return <h1 {...props.attributes}>{props.children}</h1>
+    }
+    if (props.node.style === 'h2') {
+      return <h2 {...props.attributes}>{props.children}</h2>
+    }
+    if (props.node.style === 'h3') {
+      return <h3 {...props.attributes}>{props.children}</h3>
+    }
+    if (props.node.style === 'blockquote') {
+      return <blockquote {...props.attributes}>{props.children}</blockquote>
+    }
+    return <div {...props.attributes}>{props.children}</div>
+  },
+})
 ```
 
-Render functions all follow the same format:
+Marks (decorators and annotations) use render functions instead. Render functions all follow the same format:
 
 - They take in props and return JSX elements.
 - They use the schema to make decisions.
@@ -226,19 +225,16 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 ```
 
 :::note
-By default, text is rendered as an inline `span` element in the editor. While most render functions return a fragment (`<>`) as the fallback, make sure block-level elements return blocks, like `<div>` elements.
+By default, text is rendered as an inline `span` element in the editor. While mark render functions return a fragment (`<>`) as the fallback, the registered text block render must return a block-level element, like a `<div>`.
 :::
 
-Update the `PortableTextEditable` with each corresponding function to attach them to the editor.
-
-You may notice that we skipped a few types from the schema. Declare these inline in the configuration:
+Mount the registration with `NodePlugin` and pass the render functions to `PortableTextEditable`. Both belong inside the `EditorProvider`:
 
 ```tsx
+<NodePlugin nodes={[textBlock]} />
 <PortableTextEditable
   style={{border: '1px solid black', padding: '0.5em'}}
-  renderStyle={renderStyle}
   renderDecorator={renderDecorator}
-  renderBlock={(props) => <div>{props.children}</div>}
 />
 ```
 
@@ -393,11 +389,10 @@ function App() {
             }
           }}
         />
+        <NodePlugin nodes={[textBlock]} />
         <PortableTextEditable
           style={{border: '1px solid black', padding: '0.5em'}}
-          renderStyle={renderStyle}
           renderDecorator={renderDecorator}
-          renderBlock={(props) => <div>{props.children}</div>}
         />
         <Toolbar />
       </EditorProvider>

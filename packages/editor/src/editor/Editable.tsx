@@ -35,7 +35,6 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
   RenderPlaceholderFunction,
-  RenderStyleFunction,
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
@@ -83,12 +82,6 @@ export type PortableTextEditableProps = Omit<
   renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
   renderPlaceholder?: RenderPlaceholderFunction
-  /**
-   * @deprecated Render text-block styles with `defineTextBlock` mounted
-   * through `NodePlugin` instead. See the migration guide:
-   * https://www.portabletext.org/editor/guides/migrate-render-props/
-   */
-  renderStyle?: RenderStyleFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
   selection?: EditorSelection
   spellCheck?: boolean
@@ -140,7 +133,6 @@ export const PortableTextEditable = forwardRef<
     renderChild,
     renderDecorator,
     renderPlaceholder,
-    renderStyle,
     selection: propsSelection,
     scrollSelectionIntoView,
     ...restProps
@@ -193,9 +185,8 @@ export const PortableTextEditable = forwardRef<
     () => ({
       renderBlock,
       renderChild,
-      renderStyle,
     }),
-    [renderBlock, renderChild, renderStyle],
+    [renderBlock, renderChild],
   )
 
   const renderElement = useCallback(
