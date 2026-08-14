@@ -80,7 +80,6 @@ import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {ErrorBoundary} from './primitives/error-boundary'
 import {ErrorScreen} from './primitives/error-screen'
-import {Spinner} from './primitives/spinner'
 import {ToggleButton} from './primitives/toggle-button'
 import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
@@ -96,7 +95,6 @@ export function Editor(props: {
     props.editorRef,
     (s) => s.context.keyGenerator,
   )
-  const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
   const playgroundFeatureFlags = useContext(PlaygroundFeatureFlagsContext)
   const featureFlags = useSelector(
@@ -126,12 +124,6 @@ export function Editor(props: {
               on={(event) => {
                 if (event.type === 'mutation') {
                   props.editorRef.send(event)
-                }
-                if (event.type === 'loading') {
-                  setLoading(true)
-                }
-                if (event.type === 'done loading') {
-                  setLoading(false)
                 }
                 if (event.type === 'editable') {
                   setReadOnly(false)
@@ -207,7 +199,6 @@ export function Editor(props: {
                 <FullscreenAwareEditable
                   rangeDecorations={props.rangeDecorations}
                   featureFlags={featureFlags}
-                  loading={loading}
                 />
                 <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
               </FullscreenAwareContainer>
@@ -222,7 +213,6 @@ export function Editor(props: {
 function FullscreenAwareEditable(props: {
   rangeDecorations: RangeDecoration[]
   featureFlags: EditorFeatureFlags
-  loading: boolean
 }) {
   const {isFullscreen} = useFullscreen()
   const wrapperClasses = isFullscreen
@@ -249,7 +239,6 @@ function FullscreenAwareEditable(props: {
           />
         </EditorFeatureFlagsContext.Provider>
       </ErrorBoundary>
-      {props.loading ? <Spinner /> : null}
     </div>
   )
 }

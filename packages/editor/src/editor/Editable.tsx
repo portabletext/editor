@@ -404,8 +404,6 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
-        relay.send({type: 'loading'})
-
         Promise.resolve(onPasteResult)
           .then((result) => {
             debug.behaviors(
@@ -469,9 +467,6 @@ export const PortableTextEditable = forwardRef<
 
             return error
           })
-          .finally(() => {
-            relay.send({type: 'done loading'})
-          })
       } else if (event.nativeEvent.clipboardData) {
         // Prevent the engine from handling the event
         event.preventDefault()
@@ -501,7 +496,7 @@ export const PortableTextEditable = forwardRef<
 
       debug.behaviors('No result from custom paste handler, pasting normally')
     },
-    [editorActor, onPaste, portableTextEditor, relay, editorEngine],
+    [editorActor, onPaste, portableTextEditor, editorEngine],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
