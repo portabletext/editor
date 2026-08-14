@@ -1,1 +1,5 @@
-export {createFlattenTableRule} from '@portabletext/html/rules'
+export {
+  createFlattenTableRule,
+  createTableRule,
+  type TableRuleContainers,
+} from '@portabletext/html/rules'
