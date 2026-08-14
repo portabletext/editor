@@ -109,7 +109,6 @@ export type {
   RenderChildFunction,
   RenderDecoratorFunction,
   RenderEditableFunction,
-  RenderListItemFunction,
   RenderPlaceholderFunction,
   RenderStyleFunction,
   ScrollSelectionIntoViewFunction,

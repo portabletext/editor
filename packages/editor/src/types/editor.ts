@@ -252,10 +252,9 @@ export interface BlockDecoratorRenderProps {
 }
 /**
  * @beta
- * @deprecated `BlockListItemRenderProps` is deprecated together with the
- * `renderListItem` render prop it serves. Render list items with
- * `defineTextBlock` mounted through `NodePlugin` instead. See the
- * migration guide:
+ * @deprecated The `renderListItem` render prop is removed; render list
+ * items with `defineTextBlock` and `@portabletext/plugin-list-index`
+ * instead. See the migration guide:
  * https://www.portabletext.org/editor/guides/migrate-render-props/
  */
 export interface BlockListItemRenderProps {
@@ -335,18 +334,6 @@ export interface BlockStyleRenderProps {
   schemaType: StyleSchemaType
   value: string
 }
-
-/**
- * @beta
- * @deprecated The `renderListItem` render prop is deprecated. Render list
- * items with `defineTextBlock` mounted through `NodePlugin`, with list
- * numbering from `@portabletext/plugin-list-index`. See the migration
- * guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderListItemFunction = (
-  props: BlockListItemRenderProps,
-) => JSX.Element
 
 /**
  * @beta

@@ -70,9 +70,7 @@ export function createEditorEngine(
   editor.blockIndexMap = blockIndexMap
   editor.history = {undos: [], redos: []}
 
-  editor.listIndexMap = new Map<string, number>()
-  editor.listIndexMapDirty = false
-  editor.selectorChannelsPending = {registrations: false, listIndex: false}
+  editor.selectorChannelsPending = {registrations: false}
   editor.verifiedUniqueChildGroups = new Set<string>()
   editor.remotePatches = []
   editor.undoStepId = undefined
@@ -115,7 +113,6 @@ export function createEditorEngine(
     },
     {
       blockIndexMap: editorEngine.blockIndexMap,
-      listIndexMap: editorEngine.listIndexMap,
     },
   )
 

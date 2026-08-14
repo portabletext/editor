@@ -4,23 +4,17 @@ import {defineBlockObject} from '../src'
 import type {Editor} from '../src/engine/interfaces/editor'
 import {
   EngineSelectorContext,
-  useListIndexSelector,
   useRegistrationsSelector,
 } from '../src/engine/react/hooks/use-engine-selector'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
-const selectorRuns = {default: 0, registrations: 0, listIndex: 0}
+const selectorRuns = {default: 0, registrations: 0}
 
 // Module-level selectors have stable identities, so they only run on
 // mount and when their channel is notified, never on unrelated renders.
 function registrationsSelector(_engine: Editor) {
   selectorRuns.registrations++
-  return null
-}
-
-function listIndexSelector(_engine: Editor) {
-  selectorRuns.listIndex++
   return null
 }
 
@@ -39,7 +33,6 @@ function ChannelProbe() {
     [addEventListener],
   )
   useRegistrationsSelector(registrationsSelector)
-  useListIndexSelector(listIndexSelector)
 
   const [latePluginMounted, setLatePluginMounted] = useState(false)
   mountLateNodePlugin = () => setLatePluginMounted(true)
@@ -93,27 +86,17 @@ describe('engine selector channels', () => {
     })
     await new Promise((resolve) => setTimeout(resolve, 100))
 
-    // Typing and moving the caret cannot change registration maps or
-    // list indices, so those selectors must not have run.
+    // Typing and moving the caret cannot change registration maps, so
+    // the registrations selector must not have run.
     expect(selectorRuns.registrations).toBe(afterSetup.registrations)
-    expect(selectorRuns.listIndex).toBe(afterSetup.listIndex)
 
     const afterTyping = {...selectorRuns}
-
-    // A structural op (block split) can shift list indices.
-    editor.send({type: 'insert.break'})
-    await vi.waitFor(() => {
-      expect(selectorRuns.listIndex).toBeGreaterThan(afterTyping.listIndex)
-    })
-    expect(selectorRuns.registrations).toBe(afterTyping.registrations)
-
-    const afterBreak = {...selectorRuns}
 
     // Registering a renderer arms the registrations channel.
     mountLateNodePlugin?.()
     await vi.waitFor(() => {
       expect(selectorRuns.registrations).toBeGreaterThan(
-        afterBreak.registrations,
+        afterTyping.registrations,
       )
     })
   })
