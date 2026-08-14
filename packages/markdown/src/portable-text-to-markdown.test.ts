@@ -14,9 +14,6 @@ import {portableTextToMarkdown} from './from-portable-text/portable-text-to-mark
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
   DefaultBlockquoteObjectRenderer,
-  DefaultCalloutRenderer,
-  DefaultCodeBlockRenderer,
-  DefaultImageRenderer,
   DefaultListRenderer,
   DefaultTableRenderer,
 } from './from-portable-text/renderers/type'
@@ -905,7 +902,6 @@ describe(portableTextToMarkdown.name, () => {
         portableTextToMarkdown(portableText, {
           types: {
             list: DefaultListRenderer,
-            code: DefaultCodeBlockRenderer,
           },
         }),
       ).toBe(markdown)
@@ -1014,6 +1010,23 @@ describe(portableTextToMarkdown.name, () => {
       expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
     })
 
+    test('nested content that falls back to fenced JSON is not polluted with the injected `style`', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const malformedCode = {_type: 'code', _key: keyGenerator(), code: 42}
+      const value = {
+        _type: 'blockquote',
+        _key: keyGenerator(),
+        content: [malformedCode],
+      }
+
+      const jsonLines = JSON.stringify(malformedCode, null, 2).split('\n')
+      expect(portableTextToMarkdown([value], outOpts)).toBe(
+        ['> ```json', ...jsonLines.map((line) => `> ${line}`), '> ```'].join(
+          '\n',
+        ),
+      )
+    })
+
     test('multi-paragraph blockquote', () => {
       const markdown = ['> one', '>', '> two'].join('\n')
       const keyGenerator = createTestKeyGenerator()
@@ -1051,7 +1064,6 @@ describe(portableTextToMarkdown.name, () => {
         portableTextToMarkdown(portableText, {
           types: {
             blockquote: DefaultBlockquoteObjectRenderer,
-            code: DefaultCodeBlockRenderer,
           },
         }),
       ).toBe(markdown)
@@ -1067,21 +1079,7 @@ describe(portableTextToMarkdown.name, () => {
       const portableText = markdownToPortableText(markdownIn, {keyGenerator})
 
       test('default renderer', () => {
-        const markdownOut = [
-          'foo',
-          '',
-          '```json',
-          '{',
-          '  "_key": "k3",',
-          '  "_type": "image",',
-          '  "src": "https://example.com/image.png",',
-          '  "alt": "alt text"',
-          '}',
-          '```',
-          '',
-          'bar',
-        ].join('\n')
-        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+        expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
       })
 
       test('custom renderer', () => {
@@ -1111,13 +1109,9 @@ describe(portableTextToMarkdown.name, () => {
           alt: 'photo [1]',
         },
       ]
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe('![photo \\[1\\]](https://example.com/image.png)')
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '![photo \\[1\\]](https://example.com/image.png)',
+      )
     })
 
     test('image with backslashes in alt text', () => {
@@ -1129,13 +1123,9 @@ describe(portableTextToMarkdown.name, () => {
           alt: 'path\\to\\file',
         },
       ]
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe('![path\\\\to\\\\file](https://example.com/image.png)')
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '![path\\\\to\\\\file](https://example.com/image.png)',
+      )
     })
 
     test('image with backslash before bracket in alt text', () => {
@@ -1147,13 +1137,9 @@ describe(portableTextToMarkdown.name, () => {
           alt: 'a\\]b',
         },
       ]
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe('![a\\\\\\]b](https://example.com/image.png)')
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '![a\\\\\\]b](https://example.com/image.png)',
+      )
     })
 
     test('image with backslash in title', () => {
@@ -1166,13 +1152,7 @@ describe(portableTextToMarkdown.name, () => {
           title: 'example\\image',
         },
       ]
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe(
+      expect(portableTextToMarkdown(portableText)).toBe(
         '![example image](https://example.com/image.png "example\\\\image")',
       )
     })
@@ -1181,37 +1161,56 @@ describe(portableTextToMarkdown.name, () => {
       const markdown =
         '![example image](https://example.com/image.png "example\\\\image")'
       const portableText = markdownToPortableText(markdown)
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe(markdown)
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
     })
 
     test('image with escaped bracket in alt text roundtrip', () => {
       const markdown = '![photo \\[1\\]](https://example.com/image.png)'
       const portableText = markdownToPortableText(markdown)
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe(markdown)
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
     })
 
     test('image with escaped backslash in alt text roundtrip', () => {
       const markdown = '![path\\\\to\\\\file](https://example.com/image.png)'
       const portableText = markdownToPortableText(markdown)
-      expect(
-        portableTextToMarkdown(portableText, {
-          types: {
-            image: DefaultImageRenderer,
-          },
-        }),
-      ).toBe(markdown)
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+
+    test('malformed image value (no `src` field) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'image', _key: keyGenerator(), alt: 'foo'}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test.each([
+      ['`src` is not a string', {src: 42}],
+      ['`alt` is not a string', {src: 'foo.png', alt: 42}],
+      ['`title` is not a string', {src: 'foo.png', title: 42}],
+    ])('malformed image value (%s) falls back to fenced JSON', (_, image) => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'image', _key: keyGenerator(), ...image}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('`null` in the optional `alt`/`title` fields is treated as absent', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'image',
+        _key: keyGenerator(),
+        src: 'https://example.com/image.png',
+        alt: null,
+        title: null,
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        '![](https://example.com/image.png)',
+      )
     })
   })
 
@@ -1223,19 +1222,7 @@ describe(portableTextToMarkdown.name, () => {
       const portableText = markdownToPortableText(markdown, {keyGenerator})
 
       test('default renderer', () => {
-        const markdownOut = [
-          'foo ',
-          '```json',
-          '{',
-          '  "_key": "k2",',
-          '  "_type": "image",',
-          '  "src": "https://example.com/image.png",',
-          '  "alt": "alt text"',
-          '}',
-          '```',
-          ' bar',
-        ].join('\n')
-        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
       })
 
       test('custom renderer', () => {
@@ -1314,17 +1301,7 @@ describe(portableTextToMarkdown.name, () => {
       const portableText = markdownToPortableText(markdownIn, {keyGenerator})
 
       test('default renderer', () => {
-        const markdownOut = [
-          '```json',
-          '{',
-          '  "_key": "k0",',
-          '  "_type": "code",',
-          '  "language": "js",',
-          '  "code": "const foo = \'bar\'"',
-          '}',
-          '```',
-        ].join('\n')
-        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+        expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
       })
 
       test('custom renderer', () => {
@@ -1393,34 +1370,101 @@ describe(portableTextToMarkdown.name, () => {
       const portableText = markdownToPortableText(markdownIn, {keyGenerator})
 
       test('default renderer', () => {
-        const markdownOut = [
-          '```json',
-          '{',
-          '  "_key": "k0",',
-          '  "_type": "code",',
-          '  "language": "js",',
-          '  "code": "const foo = \'bar\'\\nconst bar = \'baz\'"',
-          '}',
-          '```',
-        ].join('\n')
-        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+        expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
+      })
+    })
+
+    test('malformed code value (no `code` field) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'code', _key: keyGenerator(), language: 'js'}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('malformed code value (`code` is not a string) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'code', _key: keyGenerator(), code: 42}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('non-string `language` normalizes to a plain fence, code body intact', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'code',
+        _key: keyGenerator(),
+        code: "const foo = 'bar'",
+        language: {foo: 1},
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```', "const foo = 'bar'", '```'].join('\n'),
+      )
+    })
+
+    test('`language` containing newlines does not inject a line into the code body', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'code',
+        _key: keyGenerator(),
+        code: "const foo = 'bar'",
+        language: 'js\nalert(1)',
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```', "const foo = 'bar'", '```'].join('\n'),
+      )
+    })
+  })
+
+  describe('horizontal rule', () => {
+    test('renders as `---` by default', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [{_type: 'horizontal-rule', _key: keyGenerator()}]
+
+      expect(portableTextToMarkdown(portableText)).toBe('---')
+    })
+
+    test('MD -> PT -> MD round-trip is stable', () => {
+      const markdown = 'foo\n\n---\n\nbar'
+      const portableText = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
       })
 
-      test('pluggable default renderer', () => {
-        const markdownOut = [
-          '```js',
-          `const foo = 'bar'`,
-          `const bar = 'baz'`,
-          '```',
-        ].join('\n')
-        expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              code: DefaultCodeBlockRenderer,
-            },
-          }),
-        ).toBe(markdownOut)
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+  })
+
+  describe('html', () => {
+    test('renders the raw HTML by default', () => {
+      const markdown = '<div class="note">hello</div>'
+      const portableText = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
       })
+
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+
+    test('malformed html value (no `html` field) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'html', _key: keyGenerator()}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('malformed html value (`html` is not a string) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'html', _key: keyGenerator(), html: 42}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
     })
   })
 
@@ -2250,18 +2294,82 @@ describe(portableTextToMarkdown.name, () => {
       ]
 
       test('replaces newlines with <br> so the row stays intact', () => {
-        const result = portableTextToMarkdown(portableText, {
-          types: {
-            table: DefaultTableRenderer,
-            code: DefaultCodeBlockRenderer,
-          },
-        })
+        const result = portableTextToMarkdown(portableText)
 
         expect(result).toBe(
           [
             '| Header |',
             '| --- |',
             '| ```js<br>const x = 1<br>const y = 2<br>``` |',
+          ].join('\n'),
+        )
+      })
+    })
+
+    describe('table with an image in a cell', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: keyGenerator(),
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'Header',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'image',
+                      _key: keyGenerator(),
+                      src: 'https://example.com/image.png',
+                      alt: 'alt text',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      test('renders `![alt](src)` inline in the GFM cell', () => {
+        const result = portableTextToMarkdown(portableText)
+
+        expect(result).toBe(
+          [
+            '| Header |',
+            '| --- |',
+            '| ![alt text](https://example.com/image.png) |',
           ].join('\n'),
         )
       })
@@ -2673,23 +2781,7 @@ describe(portableTextToMarkdown.name, () => {
       const portableText = markdownToPortableText(markdownIn, {keyGenerator})
 
       test('default renderer', () => {
-        const markdownOut = [
-          '```json',
-          JSON.stringify(portableText.at(0), null, 2),
-          '```',
-        ].join('\n')
-
-        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
-      })
-
-      test('pluggable default renderer', () => {
-        expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              callout: DefaultCalloutRenderer,
-            },
-          }),
-        ).toBe(markdownIn)
+        expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
       })
     })
 
@@ -2698,14 +2790,10 @@ describe(portableTextToMarkdown.name, () => {
       const markdownIn = '> [!TIP]\n> This is **bold** and *italic*'
       const portableText = markdownToPortableText(markdownIn, {keyGenerator})
 
-      test('pluggable default renderer', () => {
-        expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              callout: DefaultCalloutRenderer,
-            },
-          }),
-        ).toBe('> [!TIP]\n> This is **bold** and _italic_')
+      test('default renderer', () => {
+        expect(portableTextToMarkdown(portableText)).toBe(
+          '> [!TIP]\n> This is **bold** and _italic_',
+        )
       })
     })
 
@@ -2715,14 +2803,8 @@ describe(portableTextToMarkdown.name, () => {
         '> [!IMPORTANT]\n> First paragraph\n>\n> Second paragraph'
       const portableText = markdownToPortableText(markdownIn, {keyGenerator})
 
-      test('pluggable default renderer', () => {
-        expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              callout: DefaultCalloutRenderer,
-            },
-          }),
-        ).toBe(markdownIn)
+      test('default renderer', () => {
+        expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
       })
     })
 
@@ -2737,15 +2819,85 @@ describe(portableTextToMarkdown.name, () => {
             keyGenerator,
           })
 
-          expect(
-            portableTextToMarkdown(portableText, {
-              types: {
-                callout: DefaultCalloutRenderer,
-              },
-            }),
-          ).toBe(markdownIn)
+          expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
         })
       }
+    })
+
+    test('malformed callout value (no `tone`) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'callout', _key: keyGenerator(), content: []}
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test.each([
+      ['`tone` is not a string', {tone: 42, content: []}],
+      ['no `content` array', {tone: 'note'}],
+      [
+        '`content` contains a non-typed-object',
+        {tone: 'note', content: [null]},
+      ],
+    ])(
+      'malformed callout value (%s) falls back to fenced JSON',
+      (_, callout) => {
+        const keyGenerator = createTestKeyGenerator()
+        const value = {_type: 'callout', _key: keyGenerator(), ...callout}
+
+        expect(portableTextToMarkdown([value])).toBe(
+          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        )
+      },
+    )
+
+    test('nested content that falls back to fenced JSON is not polluted with the injected `style`', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const malformedCode = {_type: 'code', _key: keyGenerator(), code: 42}
+      const value = {
+        _type: 'callout',
+        _key: keyGenerator(),
+        tone: 'note',
+        content: [malformedCode],
+      }
+
+      const jsonLines = JSON.stringify(malformedCode, null, 2).split('\n')
+      expect(portableTextToMarkdown([value])).toBe(
+        [
+          '> [!NOTE]',
+          '> ```json',
+          ...jsonLines.map((line) => `> ${line}`),
+          '> ```',
+        ].join('\n'),
+      )
+    })
+  })
+
+  describe('zero-config round-trip', () => {
+    test('MD -> PT -> MD round-trip is stable for a document exercising code, image, horizontal rule, HTML, and a callout', () => {
+      const markdown = [
+        'Some text with `inline code`.',
+        '',
+        '```js',
+        "console.log('hi')",
+        '```',
+        '',
+        '![alt text](https://example.com/image.png)',
+        '',
+        '---',
+        '',
+        '<div class="note">Raw HTML</div>',
+        '',
+        '> [!NOTE]',
+        '> A callout',
+      ].join('\n')
+
+      const portableText = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
     })
   })
 })

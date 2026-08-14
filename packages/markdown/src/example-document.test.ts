@@ -1,16 +1,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import type {BlockObjectDefinition} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
-import {
-  DefaultCodeBlockRenderer,
-  DefaultTableRenderer,
-} from './from-portable-text/renderers/type'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
-import {buildObjectMatcher} from './to-portable-text/matchers'
 
 const exampleDocumentMarkdown = fs.readFileSync(
   path.resolve(__dirname, 'example-document.md'),
@@ -28,28 +22,11 @@ const exampleDocumentTersePt = JSON.parse(
   ),
 )
 
-const tableObjectDefinition = {
-  name: 'table',
-  fields: [
-    {name: 'headerRows', type: 'number'},
-    {name: 'rows', type: 'array'},
-  ],
-} as const satisfies BlockObjectDefinition
-
-const tableObjectMatcher = buildObjectMatcher(tableObjectDefinition)
-
 describe('example document', () => {
   test('markdown to portable text', () => {
     const keyGenerator = createTestKeyGenerator()
     const blocks = markdownToPortableText(exampleDocumentMarkdown, {
       keyGenerator,
-      schema: {
-        ...defaultSchema,
-        blockObjects: [...defaultSchema.blockObjects, tableObjectDefinition],
-      },
-      types: {
-        table: tableObjectMatcher,
-      },
     })
     const tersePt = getTersePt({schema: defaultSchema, value: blocks})
 
@@ -60,27 +37,24 @@ describe('example document', () => {
     const keyGenerator = createTestKeyGenerator()
     const blocks = markdownToPortableText(exampleDocumentMarkdown, {
       keyGenerator,
-      schema: {
-        ...defaultSchema,
-        blockObjects: [...defaultSchema.blockObjects, tableObjectDefinition],
-      },
-      types: {
-        table: tableObjectMatcher,
-      },
       html: {
         inline: 'text',
       },
     })
-    const markdown = portableTextToMarkdown(blocks, {
-      types: {
-        'horizontal-rule': () => '---',
-        'table': DefaultTableRenderer,
-        'code': DefaultCodeBlockRenderer,
-        'html': ({value}) => value.html || '',
-        'image': ({value}) =>
-          `![${value.alt}](${value.src}${value.title ? ` "${value.title}"` : ''})`,
+    const markdown = portableTextToMarkdown(blocks)
+
+    expect(`${markdown}\n`).toBe(exampleDocumentMarkdownOut)
+  })
+
+  test('round-trip closes: the normalized markdown is a fixpoint', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blocks = markdownToPortableText(exampleDocumentMarkdownOut, {
+      keyGenerator,
+      html: {
+        inline: 'text',
       },
     })
+    const markdown = portableTextToMarkdown(blocks)
 
     expect(`${markdown}\n`).toBe(exampleDocumentMarkdownOut)
   })

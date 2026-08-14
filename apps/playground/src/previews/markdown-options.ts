@@ -1,5 +1,4 @@
 import {
-  DefaultCalloutRenderer,
   DefaultHorizontalRuleRenderer,
   type PortableTextRenderers,
   type PortableTextTypeRenderer,
@@ -39,8 +38,6 @@ export const markdownOptions: Partial<PortableTextRenderers> = {
         .join('\n')
       return `\`\`\`\n${code}\n\`\`\``
     },
-
-    'callout': DefaultCalloutRenderer,
 
     // No native markdown for fact-box. Render inner content as a
     // collapsible `<details>` block so the preview still surfaces the
