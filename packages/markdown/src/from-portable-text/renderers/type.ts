@@ -117,18 +117,7 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     return DefaultUnknownTypeRenderer(options)
   }
 
-  // The serializer dispatches on the `_type` name alone, so this renderer
-  // receives arbitrary values whenever a consumer schema has its own `table`
-  // type. `isTableShaped` classifies deliberately, but cell contents recurse
-  // through `renderNode` into the whole rendering pipeline, whose
-  // dereferences no local shape check can enumerate. The catch makes the
-  // fenced-JSON degradation total for values this renderer was never meant
-  // to understand.
-  try {
-    return renderTable(value, renderNode)
-  } catch {
-    return DefaultUnknownTypeRenderer(options)
-  }
+  return renderTable(value, renderNode)
 }
 
 function renderTable(
