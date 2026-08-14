@@ -230,10 +230,23 @@ export interface BlockListItemRenderProps {
   value: string
 }
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `renderBlock` render prop is deprecated. Register your
+ * block objects and text blocks with `defineBlockObject` /
+ * `defineTextBlock` mounted through `NodePlugin` instead. See the
+ * migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export type RenderBlockFunction = (props: BlockRenderProps) => JSX.Element
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `renderChild` render prop is deprecated. Register your
+ * inline objects and spans with `defineInlineObject` / `defineSpan`
+ * mounted through `NodePlugin` instead. See the migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export type RenderChildFunction = (props: BlockChildRenderProps) => JSX.Element
 
 /** @beta */
@@ -249,7 +262,13 @@ export type RenderAnnotationFunction = (
 /** @beta */
 export type RenderPlaceholderFunction = () => React.ReactNode
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `renderStyle` render prop is deprecated. Render
+ * text-block styles with `defineTextBlock` mounted through `NodePlugin`
+ * instead. See the migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export type RenderStyleFunction = (props: BlockStyleRenderProps) => JSX.Element
 
 /** @beta */
@@ -264,7 +283,14 @@ export interface BlockStyleRenderProps {
   value: string
 }
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `renderListItem` render prop is deprecated. Render list
+ * items with `defineTextBlock` mounted through `NodePlugin`, with list
+ * numbering from `@portabletext/plugin-list-index`. See the migration
+ * guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export type RenderListItemFunction = (
   props: BlockListItemRenderProps,
 ) => JSX.Element
