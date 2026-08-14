@@ -737,8 +737,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/toolkit':
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^6.0.0
+        version: 6.0.0
       markdown-it:
         specifier: ^14.3.0
         version: 14.3.0

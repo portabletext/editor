@@ -55,7 +55,7 @@
   "dependencies": {
     "@mdit/plugin-alert": "^0.23.2",
     "@portabletext/schema": "workspace:^",
-    "@portabletext/toolkit": "^5.0.2",
+    "@portabletext/toolkit": "^6.0.0",
     "markdown-it": "^14.3.0"
   },
   "devDependencies": {
