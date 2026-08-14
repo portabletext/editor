@@ -5,7 +5,7 @@ import {
   type Schema,
 } from '@portabletext/schema'
 import {flattenNestedBlocks} from '../deserializer/flatten-nested-blocks'
-import {isElement, tagName} from '../deserializer/helpers'
+import {isTableElement, tagName} from '../deserializer/helpers'
 import type {
   ArbitraryTypedObject,
   DeserializerRule,
@@ -82,7 +82,7 @@ export function createFlattenTableRule({
 }): DeserializerRule {
   return {
     deserialize: (node, next) => {
-      if (!isElement(node) || tagName(node) !== 'table') {
+      if (!isTableElement(node)) {
         return undefined
       }
 
