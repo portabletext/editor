@@ -364,9 +364,7 @@ export function createEditableAPI(
 
       if (focusBlockAfter && spanPath && markDef) {
         return {
-          markDefPath: markDef.path,
           markDefPaths: markDefs.map((markDef) => markDef.path),
-          spanPath,
         }
       }
 
