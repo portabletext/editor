@@ -2,12 +2,9 @@ import type {Patch} from '@portabletext/patches'
 import type {
   AnnotationSchemaType,
   DecoratorSchemaType,
-  ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
-  PortableTextTextBlock,
-  StyleSchemaType,
   TypedObject,
 } from '@portabletext/schema'
 import type {
@@ -178,24 +175,6 @@ export interface BlockDecoratorRenderProps {
   selected: boolean
   value: string
 }
-/**
- * @beta
- * @deprecated The `renderListItem` render prop is removed; render list
- * items with `defineTextBlock` and `@portabletext/plugin-list-index`
- * instead. This props shape will be removed in the next major version.
- */
-export interface BlockListItemRenderProps {
-  block: PortableTextTextBlock
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  level: number
-  path: Path
-  schemaType: ListSchemaType
-  selected: boolean
-  value: string
-}
-
 /** @beta */
 export type RenderEditableFunction = (
   props: PortableTextEditableProps,
@@ -208,23 +187,6 @@ export type RenderAnnotationFunction = (
 
 /** @beta */
 export type RenderPlaceholderFunction = () => React.ReactNode
-
-/**
- * @beta
- * @deprecated The `renderStyle` render prop is removed; render text-block
- * styles with `defineTextBlock` instead. This props shape will be removed
- * in the next major version.
- */
-export interface BlockStyleRenderProps {
-  block: PortableTextTextBlock
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  path: Path
-  selected: boolean
-  schemaType: StyleSchemaType
-  value: string
-}
 
 /** @beta */
 export type RenderDecoratorFunction = (

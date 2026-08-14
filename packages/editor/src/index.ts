@@ -81,8 +81,6 @@ export type {BlockOffset} from './types/block-offset'
 export type {
   BlockAnnotationRenderProps,
   BlockDecoratorRenderProps,
-  BlockListItemRenderProps,
-  BlockStyleRenderProps,
   EditableAPIDeleteOptions,
   EditorSelection,
   EditorSelectionPoint,

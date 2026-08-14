@@ -23,5 +23,3 @@ const textBlock = defineTextBlock({
 // Inside `EditorProvider`:
 // <NodePlugin nodes={[textBlock]} />
 ```
-
-The `BlockStyleRenderProps` type remains exported but is deprecated.
