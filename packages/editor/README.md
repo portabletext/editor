@@ -156,6 +156,9 @@ Include the `App` component in your application and run it. You should see an ou
 
 ### Create render functions for schema elements
 
+> [!WARNING]
+> The block-level render props (`renderStyle`, `renderBlock`, `renderListItem`, `renderChild`) are deprecated and will be removed in future major versions in favor of node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`). See the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/). The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated.
+
 At this point the PTE only has a schema, but it doesn't know how to render anything. Fix that by creating render functions for each property in the schema.
 
 Start by creating a render function for styles.

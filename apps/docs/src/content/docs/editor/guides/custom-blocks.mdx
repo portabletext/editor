@@ -13,6 +13,10 @@ The Portable Text Editor handles text blocks (paragraphs, headings, lists) by de
 This guide covers `@portabletext/editor` **v7.x** and `@portabletext/toolbar` **v8.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 19.2.7+. You should be familiar with the [getting started guide](/editor/getting-started/) and [custom rendering](/editor/guides/custom-rendering/).
 :::
 
+:::caution[Deprecated]
+The `renderBlock` and `renderChild` props used in this guide are deprecated and will be removed in future major versions in favor of node registrations (`defineBlockObject`, `defineInlineObject`). The [migration guide](/editor/guides/migrate-render-props/) shows the replacement for each prop.
+:::
+
 ## How custom blocks work
 
 There are two kinds of custom content in Portable Text:

@@ -11,18 +11,18 @@ The Portable Text Editor gives you control of how it renders each schema type el
 This guide covers `@portabletext/editor` **v7.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 19.2.7+.
 :::
 
-:::note[Two rendering systems]
-The render props on this page are the editor's original rendering API, and they keep working. The editor also has node registrations (`defineTextBlock`, `defineBlockObject`, and friends), a newer pipeline that powers [containers](/editor/concepts/containers/) and owns the wrapper entirely where registered. To move an editor from these render props onto registrations, follow the [migration guide](/editor/guides/migrate-render-props/).
+:::caution[Deprecated]
+The block-level render props (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`) are deprecated and will be removed in future major versions. Node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`) replace them; the [migration guide](/editor/guides/migrate-render-props/) walks through each prop. The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated.
 :::
 
 The following props can be passed to the `PortableTextEditable` component:
 
 - `renderAnnotation`: For annotations (e.g., hyperlinks).
-- `renderBlock`: For block objects (e.g., images, embeds).
-- `renderChild`: For inline objects (e.g., custom emoji, stock symbols).
+- `renderBlock`: For block objects (e.g., images, embeds). (deprecated)
+- `renderChild`: For inline objects (e.g., custom emoji, stock symbols). (deprecated)
 - `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
-- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote).
-- `renderListItem`: For list item styling (e.g., bullet, numbered lists).
+- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote). (deprecated)
+- `renderListItem`: For list item styling (e.g., bullet, numbered lists). (deprecated)
 - `renderPlaceholder`: For custom placeholder text when the editor is empty.
 - `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
