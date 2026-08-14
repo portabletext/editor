@@ -255,6 +255,35 @@ const blocks = htmlToPortableText(html, {
 })
 ```
 
+### Table deserialization
+
+The `createTableRule` helper converts `<table>` elements into a nested table shape (`table` → `rows` → `cells` → `value`), the shape `@portabletext/plugin-table`'s `defineTable` produces:
+
+```ts
+import {htmlToPortableText} from '@portabletext/html'
+import {createTableRule} from '@portabletext/html/rules'
+
+const blocks = htmlToPortableText(html, {
+  schema,
+  rules: [createTableRule({schema})],
+})
+```
+
+`headerRows` is set to the count of leading rows inside `<thead>`, or whose cells are all `<th>`, and omitted when there are none. Rows shorter than the widest row are padded with empty cells; `colspan`/`rowspan` are ignored, so a spanning cell contributes one cell and the padding fills the rest. Pass `containers` to match a `defineTable` call whose container names were renamed; it is role-keyed like `defineTable`'s own option, and only `type` and `arrayField` are read, so the container definitions given to `defineTable` can be passed through unchanged:
+
+```ts
+createTableRule({
+  schema,
+  containers: {
+    table: {type: 'richTable', arrayField: 'tableRows'},
+    row: {type: 'tableRow', arrayField: 'rowCells'},
+    cell: {type: 'tableCell', arrayField: 'content'},
+  },
+})
+```
+
+Rows are read in the DOM's table row order, which places `<thead>` rows first and `<tfoot>` rows last regardless of where they appear in the source markup, so a `<thead>` written after `<tbody>` still counts toward `headerRows`.
+
 ### Key generation
 
 By default, random keys are generated for each block and span. You can provide your own key generator for deterministic output:
