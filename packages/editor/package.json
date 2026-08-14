@@ -99,7 +99,7 @@
     "@portabletext/markdown": "workspace:^",
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@portabletext/to-html": "^5.0.3",
+    "@portabletext/to-html": "^6.0.0",
     "@xstate/react": "catalog:",
     "debug": "catalog:",
     "scroll-into-view-if-needed": "^3.1.0",
