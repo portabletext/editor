@@ -1,9 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {
   AnnotationSchemaType,
-  BlockObjectSchemaType,
   DecoratorSchemaType,
-  InlineObjectSchemaType,
   ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
@@ -22,7 +20,7 @@ import type {
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
-import type {BlockPath, Path} from './paths'
+import type {Path} from './paths'
 
 /**
  * @beta
@@ -177,46 +175,6 @@ export type OnCopyFn = (
 
 /**
  * @beta
- * @deprecated `BlockRenderProps` is deprecated together with the
- * `renderBlock` render prop it serves. Type against
- * `BlockObjectRenderProps` / `TextBlockRenderProps` from the node
- * registration API instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export interface BlockRenderProps {
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  level?: number
-  listItem?: string
-  path: BlockPath
-  selected: boolean
-  style?: string
-  schemaType: BlockObjectSchemaType
-  value: PortableTextBlock
-}
-
-/**
- * @beta
- * @deprecated `BlockChildRenderProps` is deprecated together with the
- * `renderChild` render prop it serves. Type against
- * `InlineObjectRenderProps` / `SpanRenderProps` from the node
- * registration API instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export interface BlockChildRenderProps {
-  annotations: PortableTextObject[]
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  path: Path
-  selected: boolean
-  schemaType: InlineObjectSchemaType
-  value: PortableTextChild
-}
-
-/**
- * @beta
  * @deprecated `BlockAnnotationRenderProps` is deprecated together with the
  * `renderAnnotation` render prop it serves. Type against
  * `AnnotationRenderProps` from the node registration API instead. See the
@@ -268,25 +226,6 @@ export interface BlockListItemRenderProps {
   selected: boolean
   value: string
 }
-
-/**
- * @beta
- * @deprecated The `renderBlock` render prop is deprecated. Register your
- * block objects and text blocks with `defineBlockObject` /
- * `defineTextBlock` mounted through `NodePlugin` instead. See the
- * migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderBlockFunction = (props: BlockRenderProps) => JSX.Element
-
-/**
- * @beta
- * @deprecated The `renderChild` render prop is deprecated. Register your
- * inline objects and spans with `defineInlineObject` / `defineSpan`
- * mounted through `NodePlugin` instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderChildFunction = (props: BlockChildRenderProps) => JSX.Element
 
 /** @public */
 export type RenderEditableFunction = (

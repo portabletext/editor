@@ -1,23 +1,25 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page, userEvent} from 'vitest/browser'
 import {
   defineSchema,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
-  type BlockRenderProps,
   type Editor,
   type MutationEvent,
   type PortableTextBlock,
+  type TextBlockRenderProps,
 } from '../src'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
-describe('renderBlock', () => {
-  test('Receives the updated value for text block changes', async () => {
+describe('registered render: blocks', () => {
+  test('Receives the updated node for text block changes', async () => {
     const keyGenerator = createTestKeyGenerator()
     const fooBlock = {
       _type: 'block',
@@ -62,10 +64,13 @@ describe('renderBlock', () => {
     const initialValue: PortableTextBlock[] = [fooBlock, barBlock]
 
     const renderBlockValues: Array<PortableTextBlock> = []
-    const renderBlock = (props: BlockRenderProps) => {
-      renderBlockValues.push(props.value)
-      return props.children
-    }
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: (props) => {
+        renderBlockValues.push(props.node)
+        return props.renderDefault(props)
+      },
+    })
 
     const {locator} = await createTestEditor({
       keyGenerator,
@@ -73,7 +78,7 @@ describe('renderBlock', () => {
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],
       }),
-      editableProps: {renderBlock},
+      children: <NodePlugin nodes={[textBlock]} />,
     })
 
     const barSpanLocator = locator.getByText('b')
@@ -171,10 +176,13 @@ describe('renderBlock', () => {
     ]
 
     const renderBlockValues: Array<PortableTextBlock> = []
-    const renderBlock = (props: BlockRenderProps) => {
-      renderBlockValues.push(props.value)
-      return props.children
-    }
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: (props) => {
+        renderBlockValues.push(props.node)
+        return props.renderDefault(props)
+      },
+    })
 
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -182,7 +190,7 @@ describe('renderBlock', () => {
       schemaDefinition: defineSchema({
         block: {fields: [{name: 'metadata', type: 'object'}]},
       }),
-      editableProps: {renderBlock},
+      children: <NodePlugin nodes={[textBlock]} />,
     })
 
     await vi.waitFor(() => {
@@ -279,10 +287,13 @@ describe('renderBlock', () => {
     ]
 
     const renderBlockValues: Array<PortableTextBlock> = []
-    const renderBlock = (props: BlockRenderProps) => {
-      renderBlockValues.push(props.value)
-      return props.children
-    }
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: (props) => {
+        renderBlockValues.push(props.node)
+        return props.renderDefault(props)
+      },
+    })
 
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -290,7 +301,7 @@ describe('renderBlock', () => {
       schemaDefinition: defineSchema({
         block: {fields: [{name: 'metadata', type: 'object'}]},
       }),
-      editableProps: {renderBlock},
+      children: <NodePlugin nodes={[textBlock]} />,
     })
 
     await vi.waitFor(() => {
@@ -336,29 +347,35 @@ describe('renderBlock', () => {
   test('Scenario: Stable across re-renders', async () => {
     const keyGenerator = createTestKeyGenerator()
     const editorRef = React.createRef<Editor>()
-    // Keeping track of the mount/unmount events for the `renderBlock` callback
-    const renderBlockMountEvents: Array<'mount' | 'unmount'> = []
+    // Keeping track of the mount/unmount events for the registered
+    // text block's `render`
+    const textBlockMountEvents: Array<'mount' | 'unmount'> = []
     // Keeping track of the mutation events emitted by the editor
     const mutationEvents: Array<MutationEvent> = []
 
     function App(props: {children: React.ReactNode}) {
       const [value, setValue] = useState<Array<PortableTextBlock>>([])
 
-      const renderBlock = useCallback(
-        (props: BlockRenderProps) => {
+      const textBlockRender = useCallback(
+        (props: TextBlockRenderProps) => {
           // biome-ignore lint/correctness/useHookAtTopLevel: This is the only way to keep track of the mount/unmount events
           useEffect(() => {
-            renderBlockMountEvents.push('mount')
+            textBlockMountEvents.push('mount')
             return () => {
-              renderBlockMountEvents.push('unmount')
+              textBlockMountEvents.push('unmount')
             }
           }, [])
 
-          return props.children
+          return props.renderDefault(props)
         },
-        // Making `renderBlock` depend on `value` to provoke a recreation
-        // of the callback
+        // Making `textBlockRender` depend on `value` to provoke a
+        // recreation of the callback
         [value],
+      )
+
+      const nodes = useMemo(
+        () => [defineTextBlock({type: 'block', render: textBlockRender})],
+        [textBlockRender],
       )
 
       return (
@@ -374,12 +391,13 @@ describe('renderBlock', () => {
               if (event.type === 'mutation') {
                 mutationEvents.push(event)
                 // Setting the value to trigger a re-render of App and thereby
-                // a recreation of the `renderBlock` callback
+                // a recreation of the `render` callback
                 setValue(event.value ?? [])
               }
             }}
           />
-          <PortableTextEditable renderBlock={renderBlock} />
+          <PortableTextEditable />
+          <NodePlugin nodes={nodes} />
           {props.children}
         </EditorProvider>
       )
@@ -403,10 +421,10 @@ describe('renderBlock', () => {
       expect(mutationEvents.length).toEqual(1)
     })
 
-    // Asserting that the `renderBlock` callback has been mounted exactly once
+    // Asserting that the text block's `render` has been mounted exactly once
     // and never unmounted
     await vi.waitFor(() => {
-      expect(renderBlockMountEvents).toEqual(['mount'])
+      expect(textBlockMountEvents).toEqual(['mount'])
     })
   })
 
@@ -416,10 +434,13 @@ describe('renderBlock', () => {
     const spanKey = keyGenerator()
 
     const renderBlockValues: Array<PortableTextBlock> = []
-    const renderBlock = (props: BlockRenderProps) => {
-      renderBlockValues.push(props.value)
-      return props.children
-    }
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: (props) => {
+        renderBlockValues.push(props.node)
+        return props.renderDefault(props)
+      },
+    })
 
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -432,7 +453,7 @@ describe('renderBlock', () => {
           style: 'normal',
         },
       ],
-      editableProps: {renderBlock},
+      children: <NodePlugin nodes={[textBlock]} />,
     })
 
     const countBefore = renderBlockValues.length

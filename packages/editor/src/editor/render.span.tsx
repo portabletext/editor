@@ -1,7 +1,4 @@
-import type {
-  InlineObjectSchemaType,
-  PortableTextSpan,
-} from '@portabletext/schema'
+import type {PortableTextSpan} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {RenderLeafProps} from '../engine/react/components/editable'
@@ -13,10 +10,8 @@ import type {
 } from '../renderers/renderer.types'
 import type {
   BlockAnnotationRenderProps,
-  BlockChildRenderProps,
   BlockDecoratorRenderProps,
   RenderAnnotationFunction,
-  RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
@@ -24,7 +19,6 @@ import {
   findPositionalAnnotationOverride,
   findPositionalDecoratorOverride,
 } from './find-positional-override'
-import {NewPipelineContext} from './new-pipeline-context'
 import {ParentTextBlockContext} from './parent-text-block-context'
 import {
   renderDefaultAnnotation,
@@ -42,7 +36,6 @@ import {useBlockSubSchema} from './use-block-sub-schema'
 interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
   renderAnnotation?: RenderAnnotationFunction
-  renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
   readOnly: boolean
   schema: EditorSchema
@@ -51,11 +44,6 @@ interface RenderSpanProps extends RenderLeafProps {
 export function RenderSpan(props: RenderSpanProps) {
   const schema = props.schema
   const spanRef = useRef<HTMLElement>(null)
-  const schemaType = {
-    name: schema.span.name,
-    fields: [],
-  } satisfies InlineObjectSchemaType
-
   const parent = props.children.props.parent
   const block = parent && isTextBlock({schema}, parent) ? parent : undefined
   const child = block?.children.find(
@@ -70,7 +58,6 @@ export function RenderSpan(props: RenderSpanProps) {
   const annotationConfigs = useAnnotationConfigs()
   const parentTextBlock = useContext(ParentTextBlockContext)
 
-  const isInNewPipeline = useContext(NewPipelineContext)
   const serializedPath = serializePath(props.path)
   const focused = useIsFocusedLeaf(serializedPath)
   const selected = useIsSelectedLeaf(serializedPath)
@@ -235,26 +222,6 @@ export function RenderSpan(props: RenderSpanProps) {
     }
   }
 
-  /**
-   * Support `renderChild` render function for the Span itself
-   */
-  if (block && props.renderChild && child && !spanConfig && !isInNewPipeline) {
-    children = (
-      <RenderChild
-        renderChild={props.renderChild}
-        annotations={annotationMarkDefs}
-        editorElementRef={spanRef}
-        focused={focused}
-        path={props.path}
-        schemaType={schemaType}
-        selected={selected}
-        value={child}
-      >
-        {children}
-      </RenderChild>
-    )
-  }
-
   if (spanConfig) {
     const render = spanConfig.span.render
     const renderProps: SpanRenderProps = {
@@ -315,31 +282,6 @@ function RenderDecorator({
   renderDecorator: RenderDecoratorFunction
 } & BlockDecoratorRenderProps) {
   return renderDecorator({
-    children,
-    editorElementRef,
-    focused,
-    path,
-    schemaType,
-    selected,
-    value,
-  })
-}
-
-function RenderChild({
-  renderChild,
-  annotations,
-  children,
-  editorElementRef,
-  focused,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderChild: RenderChildFunction
-} & BlockChildRenderProps) {
-  return renderChild({
-    annotations,
     children,
     editorElementRef,
     focused,

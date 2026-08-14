@@ -1,13 +1,19 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema, type BlockChildRenderProps} from '../src'
+import {
+  defineInlineObject,
+  defineSchema,
+  defineSpan,
+  type InlineObjectRenderProps,
+  type SpanRenderProps,
+} from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import type {Path} from '../src/types/paths'
 
-describe('renderChild', () => {
+describe('registered render: children', () => {
   test('span focused and selected props', async () => {
     const keyGenerator = createTestKeyGenerator()
 
@@ -17,18 +23,21 @@ describe('renderChild', () => {
     const bazSpanKey = keyGenerator()
 
     const renderChildValues: Array<
-      Pick<BlockChildRenderProps, 'focused' | 'selected'>
+      Pick<SpanRenderProps, 'focused' | 'selected'>
     > = []
 
-    const renderChild = (props: BlockChildRenderProps) => {
-      if (props.value._key === barSpanKey) {
-        renderChildValues.push({
-          focused: props.focused,
-          selected: props.selected,
-        })
-      }
-      return props.children
-    }
+    const span = defineSpan({
+      type: 'span',
+      render: (props) => {
+        if (props.node._key === barSpanKey) {
+          renderChildValues.push({
+            focused: props.focused,
+            selected: props.selected,
+          })
+        }
+        return props.renderDefault(props)
+      },
+    })
 
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -53,7 +62,7 @@ describe('renderChild', () => {
       schemaDefinition: defineSchema({
         decorators: [{name: 'strong'}],
       }),
-      editableProps: {renderChild},
+      children: <NodePlugin nodes={[span]} />,
     })
 
     await userEvent.click(locator)
@@ -128,18 +137,21 @@ describe('renderChild', () => {
     const barKey = keyGenerator()
 
     const renderChildValues: Array<
-      Pick<BlockChildRenderProps, 'focused' | 'selected'>
+      Pick<InlineObjectRenderProps, 'focused' | 'selected'>
     > = []
 
-    const renderChild = (props: BlockChildRenderProps) => {
-      if (props.value._key === imageKey) {
-        renderChildValues.push({
-          focused: props.focused,
-          selected: props.selected,
-        })
-      }
-      return props.children
-    }
+    const image = defineInlineObject({
+      type: 'image',
+      render: (props) => {
+        if (props.node._key === imageKey) {
+          renderChildValues.push({
+            focused: props.focused,
+            selected: props.selected,
+          })
+        }
+        return props.renderDefault(props)
+      },
+    })
 
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -157,7 +169,7 @@ describe('renderChild', () => {
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'image'}],
       }),
-      editableProps: {renderChild},
+      children: <NodePlugin nodes={[image]} />,
     })
 
     await userEvent.click(locator)
@@ -213,19 +225,34 @@ describe('renderChild', () => {
     const barSpanKey = keyGenerator()
 
     let renderChildValues: Array<
-      Pick<BlockChildRenderProps, 'focused' | 'selected'> & {
+      Pick<SpanRenderProps, 'focused' | 'selected'> & {
         path: Path
       }
     > = []
 
-    const renderChild = (props: BlockChildRenderProps) => {
-      renderChildValues.push({
-        focused: props.focused,
-        selected: props.selected,
-        path: props.path,
-      })
-      return props.children
-    }
+    const span = defineSpan({
+      type: 'span',
+      render: (props) => {
+        renderChildValues.push({
+          focused: props.focused,
+          selected: props.selected,
+          path: props.path,
+        })
+        return props.renderDefault(props)
+      },
+    })
+
+    const stockTicker = defineInlineObject({
+      type: 'stock-ticker',
+      render: (props) => {
+        renderChildValues.push({
+          focused: props.focused,
+          selected: props.selected,
+          path: props.path,
+        })
+        return props.renderDefault(props)
+      },
+    })
 
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -258,7 +285,7 @@ describe('renderChild', () => {
           {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
         ],
       }),
-      editableProps: {renderChild},
+      children: <NodePlugin nodes={[span, stockTicker]} />,
     })
 
     await vi.waitFor(() => {
@@ -345,11 +372,21 @@ describe('renderChild', () => {
 
     const renderChildPaths: Array<{path: Path}> = []
 
-    const renderChild = (props: BlockChildRenderProps) => {
-      renderChildPaths.push({path: props.path})
+    const span = defineSpan({
+      type: 'span',
+      render: (props) => {
+        renderChildPaths.push({path: props.path})
+        return props.renderDefault(props)
+      },
+    })
 
-      return props.children
-    }
+    const image = defineInlineObject({
+      type: 'image',
+      render: (props) => {
+        renderChildPaths.push({path: props.path})
+        return props.renderDefault(props)
+      },
+    })
 
     const schemaDefinition = defineSchema({
       blockObjects: [
@@ -452,17 +489,66 @@ describe('renderChild', () => {
         },
       ],
       children: (
-        <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
+        <NodePlugin
+          nodes={[tableContainer, rowContainer, cellContainer, span, image]}
+        />
       ),
-      editableProps: {renderChild},
     })
 
+    // Children rendered underneath containers receive their full,
+    // absolute path from the document root, ancestry included, not a
+    // path truncated to the nearest enclosing block. A trailing
+    // placeholder block also renders a span outside the table; filter
+    // to the table's own descendants.
     await vi.waitFor(() => {
-      const containerChildPaths = renderChildPaths.filter(
-        ({path}) => path.length > 3,
+      const tableChildPaths = renderChildPaths.filter(
+        ({path}) =>
+          typeof path[0] === 'object' &&
+          '_key' in path[0] &&
+          path[0]._key === tableKey,
       )
 
-      expect(containerChildPaths).toEqual([])
+      expect(tableChildPaths).toEqual([
+        {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: fooSpanKey},
+          ],
+        },
+        {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: imageKey},
+          ],
+        },
+        {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: barSpanKey},
+          ],
+        },
+      ])
     })
   })
 })

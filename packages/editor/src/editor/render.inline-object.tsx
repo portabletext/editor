@@ -7,9 +7,7 @@ import type {
   InlineObjectConfig,
   InlineObjectRenderProps,
 } from '../renderers/renderer.types'
-import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
-import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {renderDefaultInlineObject} from './render.default'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
@@ -20,7 +18,6 @@ export function RenderInlineObject(props: {
   children: ReactElement
   element: PortableTextObject
   inlineObjectConfig?: InlineObjectConfig
-  legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
   schema: EditorSchema
@@ -63,25 +60,7 @@ export function RenderInlineObject(props: {
     return render ? render(renderProps) : renderDefaultInlineObject(renderProps)
   }
 
-  let innerContent: ReactElement
-  if (props.legacy.renderChild && inlineObjectSchemaType) {
-    innerContent = (
-      <RenderChild
-        renderChild={props.legacy.renderChild}
-        annotations={[]}
-        editorElementRef={inlineObjectRef}
-        selected={selected}
-        focused={focused}
-        path={props.path}
-        schemaType={inlineObjectSchemaType}
-        value={inlineObject}
-      >
-        <RenderDefaultInlineObject inlineObject={inlineObject} />
-      </RenderChild>
-    )
-  } else {
-    innerContent = <RenderDefaultInlineObject inlineObject={inlineObject} />
-  }
+  const innerContent = <RenderDefaultInlineObject inlineObject={inlineObject} />
 
   const attributes = {
     ...props.attributes,
@@ -104,29 +83,4 @@ export function RenderInlineObject(props: {
       </span>
     </span>
   )
-}
-
-function RenderChild({
-  renderChild,
-  annotations,
-  children,
-  editorElementRef,
-  focused,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderChild: RenderChildFunction
-} & BlockChildRenderProps) {
-  return renderChild({
-    annotations,
-    children,
-    editorElementRef,
-    focused,
-    path,
-    schemaType,
-    selected,
-    value,
-  })
 }

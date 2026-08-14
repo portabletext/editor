@@ -1,7 +1,12 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema, type BlockAnnotationRenderProps} from '../src'
+import {
+  defineSchema,
+  defineTextBlock,
+  type BlockAnnotationRenderProps,
+} from '../src'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('renderAnnotation', () => {
@@ -115,5 +120,48 @@ describe('renderAnnotation', () => {
         {focused: false, selected: false},
       ])
     })
+  })
+
+  test('composes inside a registered text block', async () => {
+    const schema = defineSchema({
+      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+    })
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: ({attributes, children}) => (
+        <div data-testid="text" {...attributes}>
+          {children}
+        </div>
+      ),
+    })
+    const renderAnnotation = vi.fn(({children}) => (
+      <a href="https://x">{children}</a>
+    ))
+
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: schema,
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'linked', marks: ['m1']},
+          ],
+          markDefs: [{_key: 'm1', _type: 'link', href: 'https://x'}],
+          style: 'normal',
+        },
+      ],
+      editableProps: {renderAnnotation},
+      children: <NodePlugin nodes={[textBlock]} />,
+    })
+
+    await vi.waitFor(() => {
+      const root = document.querySelector('[data-testid="text"]')
+      expect(root).not.toEqual(null)
+      expect(root!.innerHTML).toContain('<a href="https://x">')
+    })
+
+    expect(renderAnnotation).toHaveBeenCalled()
   })
 })

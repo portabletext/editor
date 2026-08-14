@@ -7,10 +7,8 @@ import type {
   BlockObjectConfig,
   BlockObjectRenderProps,
 } from '../renderers/renderer.types'
-import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import {useElementDropPosition} from './drop-position-state-context'
 import type {EditorSchema} from './editor-schema'
-import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {renderDefaultBlockObject} from './render.default'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
@@ -24,7 +22,6 @@ export function RenderBlockObject(props: {
   blockObjectConfig?: BlockObjectConfig
   path: Path
   readOnly: boolean
-  legacy: LegacyRenderHooks
   schema: EditorSchema
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
@@ -68,24 +65,7 @@ export function RenderBlockObject(props: {
     return render ? render(renderProps) : renderDefaultBlockObject(renderProps)
   }
 
-  let innerContent: ReactElement
-  if (props.legacy.renderBlock && blockObjectSchemaType) {
-    innerContent = (
-      <RenderBlock
-        renderBlock={props.legacy.renderBlock}
-        editorElementRef={blockObjectRef}
-        focused={focused}
-        path={[{_key: props.element._key}]}
-        schemaType={blockObjectSchemaType}
-        selected={selected}
-        value={blockObject}
-      >
-        <RenderDefaultBlockObject blockObject={blockObject} />
-      </RenderBlock>
-    )
-  } else {
-    innerContent = <RenderDefaultBlockObject blockObject={blockObject} />
-  }
+  const innerContent = <RenderDefaultBlockObject blockObject={blockObject} />
 
   const attributes = {
     ...props.attributes,
@@ -110,27 +90,4 @@ export function RenderBlockObject(props: {
       {dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
-}
-
-function RenderBlock({
-  renderBlock,
-  children,
-  editorElementRef,
-  focused,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderBlock: RenderBlockFunction
-} & BlockRenderProps) {
-  return renderBlock({
-    children,
-    editorElementRef,
-    focused,
-    path,
-    schemaType,
-    selected,
-    value,
-  })
 }
