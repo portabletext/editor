@@ -1,6 +1,5 @@
 ---
 '@portabletext/markdown': minor
-'@portabletext/editor': minor
 ---
 
 feat: convert GFM tables by default
@@ -11,4 +10,3 @@ feat: convert GFM tables by default
 
 `DefaultTableRenderer` now treats a missing or non-positive `headerRows` as headerless, rather than promoting the first row to a header. `markdownToPortableText` always sets `headerRows` explicitly, so converting GFM to Portable Text and back is unaffected.
 
-`@portabletext/editor`'s markdown clipboard converter picks up both defaults: copying a table now puts GFM on the clipboard instead of fenced JSON, and pasting GFM produces `@portabletext/plugin-table`-compatible values when the editor's schema declares `table`.
