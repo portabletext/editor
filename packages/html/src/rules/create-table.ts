@@ -1,6 +1,6 @@
 import type {Schema} from '@portabletext/schema'
 import {flattenNestedBlocks} from '../deserializer/flatten-nested-blocks'
-import {isElement, tagName} from '../deserializer/helpers'
+import {isTableElement, tagName} from '../deserializer/helpers'
 import {normalizeBlock} from '../deserializer/normalize-block'
 import {keyGenerator as defaultKeyGenerator} from '../deserializer/random-key'
 import type {
@@ -78,12 +78,11 @@ export function createTableRule({
 
   return {
     deserialize: (node, next, createBlock) => {
-      if (!isElement(node) || tagName(node) !== 'table') {
+      if (!isTableElement(node)) {
         return undefined
       }
 
-      const tableElement = node as HTMLTableElement
-      const rowElements = [...tableElement.rows]
+      const rowElements = [...node.rows]
 
       if (rowElements.length === 0) {
         return undefined

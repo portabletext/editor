@@ -140,3 +140,12 @@ export function hasPreservedWhitespaceStyle(el: Node): boolean {
 export function isElement(node: Node): node is Element {
   return node.nodeType === 1
 }
+
+/**
+ * Narrows to `HTMLTableElement` so the scoped `rows`, `cells`, `tHead`, and
+ * `tBodies` collections are available: unlike `querySelectorAll`, they stop
+ * at the table's own structure and never reach into a nested table.
+ */
+export function isTableElement(node: Node): node is HTMLTableElement {
+  return isElement(node) && tagName(node) === 'table'
+}
