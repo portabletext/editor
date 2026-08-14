@@ -2,7 +2,6 @@ import {
   getSubSchema,
   type FieldDefinition,
   type OfDefinition,
-  type Schema,
 } from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
 import {builtinTypes} from '@sanity/schema/_internal'
@@ -21,25 +20,25 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
 const defaultBlockOfMember = {
   type: 'block',
   styles: [
-    {name: 'normal', title: 'Normal', value: 'normal'},
-    {name: 'h1', title: 'Heading 1', value: 'h1'},
-    {name: 'h2', title: 'Heading 2', value: 'h2'},
-    {name: 'h3', title: 'Heading 3', value: 'h3'},
-    {name: 'h4', title: 'Heading 4', value: 'h4'},
-    {name: 'h5', title: 'Heading 5', value: 'h5'},
-    {name: 'h6', title: 'Heading 6', value: 'h6'},
-    {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+    {name: 'normal', title: 'Normal'},
+    {name: 'h1', title: 'Heading 1'},
+    {name: 'h2', title: 'Heading 2'},
+    {name: 'h3', title: 'Heading 3'},
+    {name: 'h4', title: 'Heading 4'},
+    {name: 'h5', title: 'Heading 5'},
+    {name: 'h6', title: 'Heading 6'},
+    {name: 'blockquote', title: 'Quote'},
   ],
   lists: [
-    {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
-    {name: 'number', title: 'Numbered list', value: 'number'},
+    {name: 'bullet', title: 'Bulleted list'},
+    {name: 'number', title: 'Numbered list'},
   ],
   decorators: [
-    {name: 'strong', title: 'Strong', value: 'strong'},
-    {name: 'em', title: 'Italic', value: 'em'},
-    {name: 'code', title: 'Code', value: 'code'},
-    {name: 'underline', title: 'Underline', value: 'underline'},
-    {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+    {name: 'strong', title: 'Strong'},
+    {name: 'em', title: 'Italic'},
+    {name: 'code', title: 'Code'},
+    {name: 'underline', title: 'Underline'},
+    {name: 'strike-through', title: 'Strike'},
   ],
   annotations: [
     {
@@ -52,7 +51,7 @@ const defaultBlockOfMember = {
 }
 
 describe(sanitySchemaToPortableTextSchema.name, () => {
-  const defaultSchema: Schema = {
+  const defaultSchema = {
     block: {
       name: 'block',
     },
@@ -62,81 +61,66 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     styles: [
       {
         name: 'normal',
-        value: 'normal',
         title: 'Normal',
       },
       {
         name: 'h1',
-        value: 'h1',
         title: 'Heading 1',
       },
       {
         name: 'h2',
-        value: 'h2',
         title: 'Heading 2',
       },
       {
         name: 'h3',
-        value: 'h3',
         title: 'Heading 3',
       },
       {
         name: 'h4',
-        value: 'h4',
         title: 'Heading 4',
       },
       {
         name: 'h5',
-        value: 'h5',
         title: 'Heading 5',
       },
       {
         name: 'h6',
-        value: 'h6',
         title: 'Heading 6',
       },
       {
         name: 'blockquote',
-        value: 'blockquote',
         title: 'Quote',
       },
     ],
     lists: [
       {
         name: 'bullet',
-        value: 'bullet',
         title: 'Bulleted list',
       },
       {
         name: 'number',
-        value: 'number',
         title: 'Numbered list',
       },
     ],
     decorators: [
       {
         name: 'strong',
-        value: 'strong',
         title: 'Strong',
       },
       {
         name: 'em',
-        value: 'em',
         title: 'Italic',
       },
       {
         name: 'code',
-        value: 'code',
         title: 'Code',
       },
       {
         name: 'underline',
-        value: 'underline',
         title: 'Underline',
       },
       {
         name: 'strike-through',
-        value: 'strike-through',
         title: 'Strike',
       },
     ],
@@ -1108,19 +1092,19 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     expect({
       codeLine: {
         styles: (
-          codeLine as {styles?: ReadonlyArray<{value: string}>}
-        )?.styles?.map((s) => s.value),
+          codeLine as {styles?: ReadonlyArray<{name: string}>}
+        )?.styles?.map((s) => s.name),
         decorators: (
-          codeLine as {decorators?: ReadonlyArray<{value: string}>}
-        )?.decorators?.map((d) => d.value),
+          codeLine as {decorators?: ReadonlyArray<{name: string}>}
+        )?.decorators?.map((d) => d.name),
       },
       quoteLine: {
         styles: (
-          quoteLine as {styles?: ReadonlyArray<{value: string}>}
-        )?.styles?.map((s) => s.value),
+          quoteLine as {styles?: ReadonlyArray<{name: string}>}
+        )?.styles?.map((s) => s.name),
         decorators: (
-          quoteLine as {decorators?: ReadonlyArray<{value: string}>}
-        )?.decorators?.map((d) => d.value),
+          quoteLine as {decorators?: ReadonlyArray<{name: string}>}
+        )?.decorators?.map((d) => d.name),
       },
     }).toEqual({
       // Sanity always injects the `normal` style on every block, so the
