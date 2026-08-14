@@ -197,12 +197,11 @@ export function RenderElement(props: {
   }
 
   if (isTextBlock({schema}, props.element)) {
-    const {'data-slate-node': _sn, ...rest} = props.attributes
     let rendered: ReactElement | null
     if (renderableTextBlockConfig?.textBlock.render) {
       rendered = (
         <RenderTextBlockConfig
-          attributes={{...rest, 'data-pt-block': 'text'}}
+          attributes={{...props.attributes, 'data-pt-block': 'text'}}
           render={renderableTextBlockConfig.textBlock.render}
           node={props.element}
           path={props.path}
@@ -216,7 +215,7 @@ export function RenderElement(props: {
       // subtree. Same shape as `renderDefault` returns when a
       // registered text-block omits `render`.
       rendered = renderDefaultTextBlock({
-        attributes: {...rest, 'data-pt-block': 'text'},
+        attributes: {...props.attributes, 'data-pt-block': 'text'},
         children: props.children,
       })
     } else {
@@ -250,13 +249,8 @@ export function RenderElement(props: {
 
   if (isInline(engineStatic.snapshot, props.path)) {
     if (isInNewPipeline && !inlineObjectConfig) {
-      const {
-        'data-slate-node': _sn,
-        'data-slate-void': _sv,
-        ...rest
-      } = props.attributes
       return (
-        <span {...rest} data-pt-inline="object">
+        <span {...props.attributes} data-pt-inline="object">
           {props.children}
           <span contentEditable={false}>
             [{props.element._type}: {props.element._key}]
@@ -280,13 +274,8 @@ export function RenderElement(props: {
   }
 
   if (isInNewPipeline && !blockObjectConfig) {
-    const {
-      'data-slate-node': _sn,
-      'data-slate-void': _sv,
-      ...rest
-    } = props.attributes
     return (
-      <div {...rest} data-pt-block="object">
+      <div {...props.attributes} data-pt-block="object">
         {props.children}
         <div contentEditable={false}>
           [{props.element._type}: {props.element._key}]

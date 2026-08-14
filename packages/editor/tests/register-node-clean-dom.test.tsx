@@ -11,17 +11,6 @@ import {
 } from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-/**
- * The load-bearing TDD contract for PR #2681: any subtree rendered
- * through `registerNode` (the new pipeline) must emit ZERO
- * `data-slate-*` attributes. The engine's legacy pipeline still emits
- * `data-slate-*` for backwards compatibility with consumers that walk
- * engine-shaped legacy DOM; the new pipeline strictly emits `data-pt-*` only.
- *
- * One assertion per kind. If any of these fail, a registration
- * mechanism is leaking legacy attrs into the new pipeline.
- */
-
 function getSubtreeHTML(testid: string): string {
   const root = document.querySelector(`[data-testid="${testid}"]`)
   if (!root) {

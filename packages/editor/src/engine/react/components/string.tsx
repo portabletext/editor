@@ -5,8 +5,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {forwardRef, memo, useContext, useRef, useState} from 'react'
-import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import {forwardRef, memo, useRef, useState} from 'react'
 import {getNodes} from '../../../traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
@@ -108,7 +107,6 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
   // of which build (lib, tests, playground) sets the react-compiler boundary.
   'use no memo'
   const {text, isTrailing = false} = props
-  const isInNewPipeline = useContext(NewPipelineContext)
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
@@ -138,30 +136,17 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
 
   // We intentionally render a memoized <span> that only receives the initial text content when the component is mounted.
   // We defer to the layout effect above to update the `textContent` of the span element when needed.
-  return (
-    <MemoizedText ref={ref} isInNewPipeline={isInNewPipeline}>
-      {initialText}
-    </MemoizedText>
-  )
+  return <MemoizedText ref={ref}>{initialText}</MemoizedText>
 }
 
 const MemoizedText = memo(
-  forwardRef<HTMLSpanElement, {children: string; isInNewPipeline: boolean}>(
-    (props, ref) => {
-      if (props.isInNewPipeline) {
-        return (
-          <span data-pt-text ref={ref}>
-            {props.children}
-          </span>
-        )
-      }
-      return (
-        <span data-slate-string data-pt-text ref={ref}>
-          {props.children}
-        </span>
-      )
-    },
-  ),
+  forwardRef<HTMLSpanElement, {children: string}>((props, ref) => {
+    return (
+      <span data-pt-text ref={ref}>
+        {props.children}
+      </span>
+    )
+  }),
 )
 
 /**
@@ -170,23 +155,14 @@ const MemoizedText = memo(
 
 const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   const {isLineBreak = false} = props
-  const isInNewPipeline = useContext(NewPipelineContext)
 
-  const engineValue = isLineBreak ? 'n' : 'z'
   const attributes: {
-    'data-slate-zero-width'?: string
     'data-pt-zero-width': true
     'data-pt-line-break'?: true
-  } = isInNewPipeline
-    ? {
-        'data-pt-zero-width': true,
-        ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),
-      }
-    : {
-        'data-slate-zero-width': engineValue,
-        'data-pt-zero-width': true,
-        ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),
-      }
+  } = {
+    'data-pt-zero-width': true,
+    ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),
+  }
 
   // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an
   // empty editor (https://github.com/ianstormtaylor/engine/issues/5199).

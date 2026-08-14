@@ -2,8 +2,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import React, {useContext, type JSX} from 'react'
-import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import React, {type JSX} from 'react'
 import {serializePath} from '../../../paths/serialize-path'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -61,19 +60,12 @@ const Text = (props: {
   }
 
   const dataPath = serializePath(path)
-  const isInNewPipeline = useContext(NewPipelineContext)
 
   const attributes: {
-    'data-slate-node'?: 'text'
     'data-pt-path': string
-  } = isInNewPipeline
-    ? {
-        'data-pt-path': dataPath,
-      }
-    : {
-        'data-slate-node': 'text',
-        'data-pt-path': dataPath,
-      }
+  } = {
+    'data-pt-path': dataPath,
+  }
 
   return renderText({
     text,

@@ -16,11 +16,16 @@ import {createTestEditor} from '../src/test/vitest'
  * children, producing inconsistent DOM (legacy attrs on the outer
  * block, clean `data-pt-*` only on the inline subtree).
  *
+ * A registered inline node's own wrapper receives the same clean
+ * `data-pt-*` attributes in both modes; the mode signal lives on the
+ * legacy pipeline's surrounding DOM (`data-child-*` on span text
+ * wrappers, `pt-*` classes on the block).
+ *
  * The four tests below pin both directions of the contract:
  *
  *   - Tests 1 & 2: a registered inline node inside an UNregistered
- *     text block keeps legacy attributes on its wrapper (inherits
- *     legacy from the parent text block).
+ *     text block gets a clean wrapper while the surrounding legacy
+ *     DOM keeps its legacy attributes.
  *   - Tests 3 & 4: the same inline node inside a REGISTERED text
  *     block emits clean `data-pt-*` attributes (inherits new pipeline
  *     from the parent text block).
@@ -46,7 +51,7 @@ function getInlineWrapperAttrs(testid: string): string {
 }
 
 describe('inline pipeline mode inherits from text block', () => {
-  test('registered inline-object inside LEGACY text block keeps data-slate-* attributes on its wrapper', async () => {
+  test('registered inline-object inside LEGACY text block gets a clean wrapper inside legacy surroundings', async () => {
     const schema = defineSchema({
       inlineObjects: [{name: 'mention', fields: []}],
     })
@@ -81,17 +86,21 @@ describe('inline pipeline mode inherits from text block', () => {
 
     await vi.waitFor(() => {
       const editorHTML = getEditorHTML()
-      // Sanity: the text block is legacy (data-slate-node="element" on it).
-      expect(editorHTML).toMatch(/data-slate-node="element"/)
+      // Sanity: the text block is legacy (`pt-*` classes and
+      // `data-child-*` wrappers around it).
+      expect(editorHTML).toMatch(/data-block-key="b0"/)
+      expect(editorHTML).toMatch(/data-child-key="s0"/)
       // The mention is rendered.
       expect(editorHTML).toContain('@alice')
-      // The mention wrapper's own attributes include legacy data-slate-*.
+      // The mention wrapper's own attributes are the clean `data-pt-*`
+      // shape, identical to what a registered text block would produce.
       const attrs = getInlineWrapperAttrs('mention-wrapper')
-      expect(attrs).toMatch(/data-slate-/)
+      expect(attrs).toMatch(/data-pt-inline="object"/)
+      expect(attrs).not.toMatch(/data-child-/)
     })
   })
 
-  test('registered span inside LEGACY text block keeps data-slate-* attributes on its wrapper', async () => {
+  test('registered span inside LEGACY text block gets a clean wrapper inside legacy surroundings', async () => {
     const schema = defineSchema({})
     const span = defineSpan({
       type: 'span',
@@ -119,13 +128,16 @@ describe('inline pipeline mode inherits from text block', () => {
 
     await vi.waitFor(() => {
       const editorHTML = getEditorHTML()
-      // Sanity: the text block is legacy.
-      expect(editorHTML).toMatch(/data-slate-node="element"/)
+      // Sanity: the text block is legacy (`data-child-*` on the span's
+      // text wrapper).
+      expect(editorHTML).toMatch(/data-child-key="s0"/)
       // The span is rendered.
       expect(editorHTML).toContain('hello')
-      // The span wrapper's own attributes include legacy data-slate-*.
+      // The span wrapper's own attributes are the clean `data-pt-*`
+      // shape, identical to what a registered text block would produce.
       const attrs = getInlineWrapperAttrs('span-wrapper')
-      expect(attrs).toMatch(/data-slate-/)
+      expect(attrs).toMatch(/data-pt-marks/)
+      expect(attrs).not.toMatch(/data-child-/)
     })
   })
 

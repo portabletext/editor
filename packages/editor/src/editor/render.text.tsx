@@ -10,12 +10,8 @@ export function RenderText(props: RenderTextProps) {
   const isInNewPipeline = useContext(NewPipelineContext)
 
   if (isInNewPipeline) {
-    const {'data-slate-node': _sn, ...rest} =
-      props.attributes as typeof props.attributes & {
-        'data-slate-node'?: string
-      }
     return (
-      <span {...rest} data-pt-inline="span">
+      <span {...props.attributes} data-pt-inline="span">
         {props.children}
       </span>
     )

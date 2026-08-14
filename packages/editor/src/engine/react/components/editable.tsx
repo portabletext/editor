@@ -96,9 +96,7 @@ export interface RenderElementProps {
   element: PortableTextTextBlock | PortableTextObject
   path: Path
   attributes: {
-    'data-slate-node'?: 'element'
     'data-pt-block'?: 'container'
-    'data-slate-void'?: true
     'data-pt-path': string
     'contentEditable'?: false
     'dir'?: 'rtl'
@@ -119,7 +117,6 @@ export interface RenderLeafProps {
   text: PortableTextSpan
   path: Path
   attributes: {
-    'data-slate-leaf'?: true
     'data-pt-marks': true
   }
   /**
@@ -135,7 +132,6 @@ export interface RenderTextProps {
   text: PortableTextSpan
   children: any
   attributes: {
-    'data-slate-node'?: 'text'
     'data-pt-path': string
   }
 }
@@ -1091,9 +1087,7 @@ export const Editable = forwardRef(
                   ? attributes.autoCapitalize
                   : 'false'
               }
-              data-slate-editor
               data-pt-editor
-              data-slate-node="value"
               data-pt-path=""
               // explicitly set this
               contentEditable={!readOnly}

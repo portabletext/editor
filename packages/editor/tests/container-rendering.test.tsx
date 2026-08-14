@@ -84,13 +84,12 @@ describe('container rendering', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
 
       expect(editorElement!.innerHTML).toEqual(
         [
           '<div',
-          ' data-slate-node="element"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           ' class="pt-block pt-text-block pt-text-block-style-normal"',
           ' data-block-key="k0"',
@@ -100,14 +99,13 @@ describe('container rendering', () => {
           ' data-style="normal">',
           '<div>',
           '<span',
-          ' data-slate-node="text"',
           ' data-pt-path="[_key==&quot;k0&quot;].children[_key==&quot;k1&quot;]"',
           ' data-child-key="k1"',
           ' data-child-name="span"',
           ' data-child-type="span"',
           ' data-pt-inline="span">',
-          '<span data-slate-leaf="true" data-pt-marks="true">',
-          '<span data-slate-string="true" data-pt-text="true">',
+          '<span data-pt-marks="true">',
+          '<span data-pt-text="true">',
           'hello',
           '</span>',
           '</span>',
@@ -316,7 +314,7 @@ describe('table with nested rows and cells', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
 
       expect(editorElement!.innerHTML).toEqual(
@@ -419,7 +417,7 @@ describe('container with non-editable fields', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
 
       expect(editorElement!.innerHTML).toEqual(
@@ -524,7 +522,7 @@ describe('positional block-leaf override', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
 
       // The text block inside the callout picks up the positional override
@@ -597,7 +595,7 @@ describe('container and renderer independence', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
 
       expect(editorElement!.innerHTML).toEqual(
@@ -655,7 +653,7 @@ describe('container and renderer independence', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
 
       // The callout renders as a void block object, not using the custom renderer
@@ -749,7 +747,7 @@ describe('code block container', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       expect(editorElement!.innerHTML).toEqual(
         [
@@ -844,7 +842,7 @@ describe('gallery with void block objects', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
         [
@@ -1032,7 +1030,7 @@ describe('cell with mixed content', () => {
     })
 
     await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
+      const editorElement = document.querySelector('[data-pt-editor]')
       expect(editorElement).not.toEqual(null)
       expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
         [
