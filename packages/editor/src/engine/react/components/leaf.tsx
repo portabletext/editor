@@ -3,8 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import React, {useContext, type JSX} from 'react'
-import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import React, {type JSX} from 'react'
 import type {Path} from '../../interfaces/path'
 import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
@@ -35,8 +34,6 @@ const Leaf = (props: {
     leafPosition,
   } = props
 
-  const isInNewPipeline = useContext(NewPipelineContext)
-
   const children = (
     <EngineString
       isLast={isLast}
@@ -51,16 +48,10 @@ const Leaf = (props: {
   // in certain misbehaving browsers they aren't weirdly cloned/destroyed by
   // contenteditable behaviors. (2019/05/08)
   const attributes: {
-    'data-slate-leaf'?: true
     'data-pt-marks': true
-  } = isInNewPipeline
-    ? {
-        'data-pt-marks': true,
-      }
-    : {
-        'data-slate-leaf': true,
-        'data-pt-marks': true,
-      }
+  } = {
+    'data-pt-marks': true,
+  }
 
   return renderLeaf({
     attributes,

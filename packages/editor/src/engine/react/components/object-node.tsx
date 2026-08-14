@@ -1,6 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import React, {useContext, type JSX} from 'react'
-import {NewPipelineContext} from '../../../editor/new-pipeline-context'
+import React, {type JSX} from 'react'
 import {serializePath} from '../../../paths/serialize-path'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -13,12 +12,6 @@ import type {RenderElementProps} from './editable'
  * Wrapper for block or inline object nodes that have no children in the engine
  * model. The DOM still needs a hidden zero-width text node for caret
  * anchoring, which is the spacer below.
- *
- * Reads `NewPipelineContext` to decide between the new-pipeline shape
- * (`data-pt-*` only) and the legacy shape (`data-slate-*` mixed in for
- * backwards compatibility). The context is provided by `useChildren`
- * (wrapping each new-pipeline child) and by the dispatch sites in
- * `render.element.tsx` / `render.span.tsx`.
  */
 const ObjectNodeComponent = (props: {
   decorations: DecoratedRange[]
@@ -30,17 +23,10 @@ const ObjectNodeComponent = (props: {
   const {isInline, objectNode, path, renderElement} = props
   const dataPath = serializePath(path)
   const readOnly = useReadOnly()
-  const isInNewPipeline = useContext(NewPipelineContext)
 
-  const attributes: RenderElementProps['attributes'] = isInNewPipeline
-    ? {
-        'data-pt-path': dataPath,
-      }
-    : {
-        'data-slate-node': 'element',
-        'data-slate-void': true,
-        'data-pt-path': dataPath,
-      }
+  const attributes: RenderElementProps['attributes'] = {
+    'data-pt-path': dataPath,
+  }
 
   if (isInline && !readOnly) {
     attributes.contentEditable = false
@@ -48,7 +34,7 @@ const ObjectNodeComponent = (props: {
 
   const Tag = isInline ? 'span' : 'div'
 
-  const children = isInNewPipeline ? (
+  const children = (
     <Tag
       data-pt-spacer
       style={{
@@ -61,25 +47,6 @@ const ObjectNodeComponent = (props: {
       <span>
         <span data-pt-marks>
           <span data-pt-zero-width>{'\uFEFF'}</span>
-        </span>
-      </span>
-    </Tag>
-  ) : (
-    <Tag
-      data-slate-spacer
-      data-pt-spacer
-      style={{
-        height: '0',
-        color: 'transparent',
-        outline: 'none',
-        position: 'absolute',
-      }}
-    >
-      <span data-slate-node="text">
-        <span data-slate-leaf data-pt-marks>
-          <span data-slate-zero-width="z" data-pt-zero-width>
-            {'\uFEFF'}
-          </span>
         </span>
       </span>
     </Tag>

@@ -46,11 +46,6 @@ export function RenderInlineObject(props: {
   const inlineObject = props.element as unknown as PortableTextChild
 
   if (props.inlineObjectConfig) {
-    // `props.attributes` is already shaped by `object-node.tsx`'s
-    // `NewPipelineContext` read: clean `data-pt-*` when inside a new-
-    // pipeline subtree, legacy + PT when the parent text block is
-    // legacy. The registered render runs in both modes; only the
-    // attribute shape inherits.
     const render = props.inlineObjectConfig.inlineObject.render
     const renderProps: InlineObjectRenderProps = {
       attributes: {

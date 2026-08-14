@@ -205,5 +205,5 @@ function findTextNode(
   if (!spanEl) {
     return undefined
   }
-  return spanEl.querySelector('[data-slate-string="true"]')?.childNodes[0]
+  return spanEl.querySelector('[data-pt-text="true"]')?.childNodes[0]
 }

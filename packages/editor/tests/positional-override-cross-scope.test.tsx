@@ -126,7 +126,7 @@ describe('Cross-scope positional override', () => {
         calloutEl!.querySelector('[data-testid="mention-in-callout"]'),
       ).not.toEqual(null)
       // The top-level mention is rendered by the GLOBAL render.
-      const editor = document.querySelector('[data-slate-editor]')
+      const editor = document.querySelector('[data-pt-editor]')
       const globals = editor!.querySelectorAll('[data-testid="mention-global"]')
       // The top-level block has one mention via global render.
       expect(globals.length).toEqual(1)
