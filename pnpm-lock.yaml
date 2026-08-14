@@ -570,8 +570,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
-        specifier: ^5.0.3
-        version: 5.0.3
+        specifier: ^6.0.0
+        version: 6.0.0
       '@xstate/react':
         specifier: 'catalog:'
         version: 6.1.0(@types/react@19.2.17)(react@19.2.8)(xstate@5.32.5)
@@ -737,8 +737,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/toolkit':
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^6.0.0
+        version: 6.0.0
       markdown-it:
         specifier: ^14.3.0
         version: 14.3.0
@@ -3396,13 +3396,9 @@ packages:
     peerDependencies:
       react: ^19
 
-  '@portabletext/to-html@5.0.3':
-    resolution: {integrity: sha512-62xml8ywsBjsNHfaQsMEZbj5VvJhWcGq5e4PCZpyb5yWl5zxukBRKal42201t5nu2Vt+JEMj9ezKU776C0elrQ==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-
-  '@portabletext/toolkit@5.0.2':
-    resolution: {integrity: sha512-Njc1LE1PMJkTx/wEPqZ6sOWGgFgX2B47fxpOQ/Ia4ByhsZoA5Sq8dNvvV5F052j/xE8TbOLiBEjS848FkKADDQ==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
+  '@portabletext/to-html@6.0.0':
+    resolution: {integrity: sha512-kMqr55pJDBsIyOHLeVccFMFfJxSdozS+A1TeYhiihIinSDhb6ibUxpQIpg0B1n54vZJJW8rDs+QayP3vQqLKUg==}
+    engines: {node: '>=22.12'}
 
   '@portabletext/toolkit@6.0.0':
     resolution: {integrity: sha512-+qSqe0KnefuZfNLUhzQRTpbSKxslZof+3pNwxg0DC8dfZ1yLKyyBUw6iR7EpDL+SJlrnpiBfEcfmEuFitK1NSQ==}
@@ -10799,13 +10795,9 @@ snapshots:
       '@portabletext/types': 4.0.2
       react: 19.2.8
 
-  '@portabletext/to-html@5.0.3':
+  '@portabletext/to-html@6.0.0':
     dependencies:
-      '@portabletext/toolkit': 5.0.2
-      '@portabletext/types': 4.0.2
-
-  '@portabletext/toolkit@5.0.2':
-    dependencies:
+      '@portabletext/toolkit': 6.0.0
       '@portabletext/types': 4.0.2
 
   '@portabletext/toolkit@6.0.0':
