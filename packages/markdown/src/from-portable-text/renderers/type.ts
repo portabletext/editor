@@ -1,3 +1,4 @@
+import {isTypedObject} from '@portabletext/schema'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {
   escapeImageAndLinkText,
@@ -50,9 +51,9 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 
 /**
  * A table is table-shaped when everything the renderer dereferences is
- * there: `rows` an array of objects with a `cells` array, every cell an
- * object with a `value` array, and no nullish entries in `value` (the
- * recursive `renderNode` dispatches on `entry._type`, so `null` throws
+ * there: `rows` an array of typed objects with a `cells` array, every cell
+ * a typed object with a `value` array, and no nullish entries in `value`
+ * (the recursive `renderNode` dispatches on `entry._type`, so `null` throws
  * where `42` merely renders as unknown). A malformed `table` value (e.g. a
  * consumer's differently-shaped `table` type) falls back to the fenced-JSON
  * path instead of throwing.
@@ -65,19 +66,14 @@ function isTableShaped(
     Array.isArray(rows) &&
     rows.every(
       (row) =>
-        typeof row === 'object' &&
-        row !== null &&
-        Array.isArray((row as {cells?: unknown}).cells) &&
-        (row as {cells: Array<unknown>}).cells.every((cell) => {
-          if (typeof cell !== 'object' || cell === null) {
-            return false
-          }
-          const cellValue = (cell as {value?: unknown}).value
-          return (
-            Array.isArray(cellValue) &&
-            cellValue.every((entry) => entry != null)
-          )
-        }),
+        isTypedObject(row) &&
+        Array.isArray(row['cells']) &&
+        row['cells'].every(
+          (cell) =>
+            isTypedObject(cell) &&
+            Array.isArray(cell['value']) &&
+            cell['value'].every((entry) => entry != null),
+        ),
     )
   )
 }
