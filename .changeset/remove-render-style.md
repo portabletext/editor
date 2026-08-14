@@ -4,7 +4,7 @@
 
 feat!: remove the `renderStyle` render prop
 
-The `renderStyle` render prop on `<PortableTextEditable>` is removed, along with the `RenderStyleFunction` type. Text-block styles render through a `defineTextBlock` registration instead: the registered `render` callback receives the block as `props.node` and owns the wrapper element.
+The `renderStyle` render prop on `<PortableTextEditable>` is removed, along with its `RenderStyleFunction` and `BlockStyleRenderProps` types. Text-block styles render through a `defineTextBlock` registration instead: the registered `render` callback receives the block as `props.node` and owns the wrapper element.
 
 ```tsx
 import {defineTextBlock} from '@portabletext/editor'
@@ -23,4 +23,3 @@ const textBlock = defineTextBlock({
 // Inside `EditorProvider`:
 // <NodePlugin nodes={[textBlock]} />
 ```
-

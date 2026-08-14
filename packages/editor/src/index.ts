@@ -87,8 +87,6 @@ export type {
 export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'
 export type {
-  BlockListItemRenderProps,
-  BlockStyleRenderProps,
   EditableAPIDeleteOptions,
   EditorSelection,
   EditorSelectionPoint,
