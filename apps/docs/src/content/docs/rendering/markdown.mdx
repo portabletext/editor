@@ -90,13 +90,7 @@ portableTextToMarkdown(blocks, {
 })
 ```
 
-`table` uses `DefaultTableRenderer` automatically; pass `types: {table: undefined}` to opt out and fall back to a JSON code block instead.
-
-```ts
-portableTextToMarkdown(blocks, {
-  types: {table: undefined},
-})
-```
+`table` uses `DefaultTableRenderer` automatically; supply your own `table` renderer to override how tables serialize.
 
 | Renderer                        | Expected fields         | Output                         |
 | ------------------------------- | ----------------------- | ------------------------------ |
@@ -145,7 +139,7 @@ By default, unknown types render as JSON code blocks. Unknown marks, block style
 | HTML blocks      |      ✅\*      |
 | Callouts         |      ✅\*      |
 
-\* Requires registering the built-in renderer (see above). Tables render by default; pass `types: {table: undefined}` to opt out.
+\* Requires registering the built-in renderer (see above). Tables render by default.
 
 :::note
 This package uses markdown-it as its Markdown parser. Remark and unified plugins are not compatible.

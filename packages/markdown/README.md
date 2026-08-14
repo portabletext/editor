@@ -249,14 +249,6 @@ markdownToPortableText(markdown, {
 
 **Table matcher:** GFM pipe tables convert by default, in the canonical shape `@portabletext/plugin-table` expects: a `table` block object (`headerRows`, `rows`), each row a `row` object (`cells`), each cell a `cell` object (`value`, an array of Portable Text blocks; a cell holding a single image becomes a standalone block-level `image` object instead of a text block wrapping it). `alignment` is a `@portabletext/markdown` extension field; `@portabletext/plugin-table` ignores it. This needs no configuration when the schema declares a `table` block object with a `rows` field (see `blockObjects` above). A schema whose `table` doesn't declare `rows`, or that doesn't declare `table` at all, keeps the pre-default behavior: the table's cell content flattens into top-level blocks, in reading order.
 
-Opt out and flatten regardless of what the schema declares:
-
-```ts
-markdownToPortableText(markdown, {
-  types: {table: undefined},
-})
-```
-
 Provide your own matcher to map onto a differently-shaped `table` type:
 
 ```ts
@@ -501,14 +493,8 @@ portableTextToMarkdown(blocks, {
 
 `table` block objects render as GFM tables by default; a value that isn't
 table-shaped (no `rows` array of row-shaped objects) falls back to the JSON
-code block `unknownType` renders. Opt out and fall back for every `table`
-value:
-
-```ts
-portableTextToMarkdown(blocks, {
-  types: {table: undefined},
-})
-```
+code block `unknownType` renders. Provide your own `types.table` renderer to
+override how tables serialize.
 
 **Custom block styles:** Override how block styles render:
 
