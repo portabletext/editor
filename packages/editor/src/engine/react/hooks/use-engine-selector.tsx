@@ -10,12 +10,10 @@ type Callback = () => void
  * Which editor state a selector depends on, so the notify dispatch can
  * skip listeners whose inputs cannot have changed. 'registrations'
  * fires only when a renderer registration map is swapped
- * (`register-node-on-engine.ts`, the sole mutation site); 'listIndex'
- * fires only when a flush contained a structural operation (the same
- * signal that invalidates `listIndexMap`). Omitted means every editor
- * change, the previous behavior for all listeners.
+ * (`register-node-on-engine.ts`, the sole mutation site). Omitted means
+ * every editor change, the previous behavior for all listeners.
  */
-type EngineSelectorChannel = 'registrations' | 'listIndex'
+type EngineSelectorChannel = 'registrations'
 
 /**
  * A React context for sharing the editor selector context in a way to control
@@ -45,20 +43,6 @@ export function useRegistrationsSelector<T>(
   equalityFn: (a: T | null, b: T) => boolean = refEquality,
 ): T {
   return useChannelSelector(selector, equalityFn, 'registrations')
-}
-
-/**
- * `useEngineSelector` scoped to the 'listIndex' channel: the selector
- * re-runs on its component's renders and when a flush contained a
- * structural operation (the same signal that invalidates
- * `listIndexMap`), not on text or selection changes. Only for
- * selectors that read `getListIndexMap`.
- */
-export function useListIndexSelector<T>(
-  selector: (editor: Editor) => T,
-  equalityFn: (a: T | null, b: T) => boolean = refEquality,
-): T {
-  return useChannelSelector(selector, equalityFn, 'listIndex')
 }
 
 function useChannelSelector<T>(
@@ -104,35 +88,24 @@ function useChannelSelector<T>(
 export function useSelectorContext() {
   const eventListeners = useRef(new Set<Callback>())
   const registrationListeners = useRef(new Set<Callback>())
-  const listIndexListeners = useRef(new Set<Callback>())
 
-  const onChange = useCallback(
-    (changed: {registrations: boolean; listIndex: boolean}) => {
-      eventListeners.current.forEach((listener) => {
+  const onChange = useCallback((changed: {registrations: boolean}) => {
+    eventListeners.current.forEach((listener) => {
+      listener()
+    })
+    if (changed.registrations) {
+      registrationListeners.current.forEach((listener) => {
         listener()
       })
-      if (changed.registrations) {
-        registrationListeners.current.forEach((listener) => {
-          listener()
-        })
-      }
-      if (changed.listIndex) {
-        listIndexListeners.current.forEach((listener) => {
-          listener()
-        })
-      }
-    },
-    [],
-  )
+    }
+  }, [])
 
   const addEventListener = useCallback(
     (callbackProp: Callback, channel?: EngineSelectorChannel) => {
       const listeners =
         channel === 'registrations'
           ? registrationListeners.current
-          : channel === 'listIndex'
-            ? listIndexListeners.current
-            : eventListeners.current
+          : eventListeners.current
       listeners.add(callbackProp)
 
       return () => {

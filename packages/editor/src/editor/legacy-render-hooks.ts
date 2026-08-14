@@ -1,7 +1,6 @@
 import type {
   RenderBlockFunction,
   RenderChildFunction,
-  RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
 
@@ -17,6 +16,5 @@ import type {
 export type LegacyRenderHooks = {
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
-  renderListItem?: RenderListItemFunction
   renderStyle?: RenderStyleFunction
 }

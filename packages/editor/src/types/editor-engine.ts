@@ -42,26 +42,14 @@ export interface PortableTextEditorEngine extends DOMEditor {
   decoratedRanges: Array<DecoratedRange>
   blockIndexMap: Map<string, number>
   history: History
-  listIndexMap: Map<string, number>
-  /**
-   * `listIndexMap` is derived from the whole value (list-item numbering
-   * depends on block adjacency), so structural operations invalidate it
-   * rather than rebuild it. The only reader is the text-block renderer,
-   * which rebuilds on demand via `getListIndexMap`. Deferring the rebuild
-   * to read time collapses a per-operation O(value) walk into one rebuild
-   * per render, regardless of how many operations a batch applied.
-   */
-  listIndexMapDirty: boolean
   /**
    * Per-notify pending flags for the segmented selector channels
    * (`EngineSelectorChannel`). Set where the corresponding state mutates
-   * (registration map swaps in `register-node-on-engine.ts`, list-index
-   * invalidation in the update-value subscriber) and consumed by the
-   * React layer's `onContextChange` dispatch. Separate from
-   * `listIndexMapDirty`, which any read clears via `getListIndexMap`;
-   * these are cleared only when the notification is delivered.
+   * (registration map swaps in `register-node-on-engine.ts`) and consumed
+   * by the React layer's `onContextChange` dispatch; cleared only when
+   * the notification is delivered.
    */
-  selectorChannelsPending: {registrations: boolean; listIndex: boolean}
+  selectorChannelsPending: {registrations: boolean}
   /**
    * Serialized paths of sibling groups (a node's keyed child array, or the
    * root value array as `''`) whose children have been verified to carry no

@@ -32,7 +32,7 @@ function assertEquivalent({
   const incrementalMap = new BlockIndexMap()
   buildIndexMaps(
     {schema, value: beforeValue as PortableTextBlock[], containers},
-    {blockIndexMap: incrementalMap, listIndexMap: new Map()},
+    {blockIndexMap: incrementalMap},
   )
   transformBlockIndexMap(incrementalMap, op, beforeValue, afterValue, {
     schema,
@@ -42,7 +42,7 @@ function assertEquivalent({
   const oracleMap = new BlockIndexMap()
   buildIndexMaps(
     {schema, value: afterValue as PortableTextBlock[], containers},
-    {blockIndexMap: oracleMap, listIndexMap: new Map()},
+    {blockIndexMap: oracleMap},
   )
 
   expect(Object.fromEntries([...incrementalMap].sort())).toEqual(

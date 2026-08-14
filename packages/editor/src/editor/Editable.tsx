@@ -34,7 +34,6 @@ import type {
   RenderBlockFunction,
   RenderChildFunction,
   RenderDecoratorFunction,
-  RenderListItemFunction,
   RenderPlaceholderFunction,
   RenderStyleFunction,
   ScrollSelectionIntoViewFunction,
@@ -83,13 +82,6 @@ export type PortableTextEditableProps = Omit<
    */
   renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
-  /**
-   * @deprecated Render list items with `defineTextBlock` mounted through
-   * `NodePlugin`, with list numbering from
-   * `@portabletext/plugin-list-index`. See the migration guide:
-   * https://www.portabletext.org/editor/guides/migrate-render-props/
-   */
-  renderListItem?: RenderListItemFunction
   renderPlaceholder?: RenderPlaceholderFunction
   /**
    * @deprecated Render text-block styles with `defineTextBlock` mounted
@@ -147,7 +139,6 @@ export const PortableTextEditable = forwardRef<
     renderBlock,
     renderChild,
     renderDecorator,
-    renderListItem,
     renderPlaceholder,
     renderStyle,
     selection: propsSelection,
@@ -202,10 +193,9 @@ export const PortableTextEditable = forwardRef<
     () => ({
       renderBlock,
       renderChild,
-      renderListItem,
       renderStyle,
     }),
-    [renderBlock, renderChild, renderListItem, renderStyle],
+    [renderBlock, renderChild, renderStyle],
   )
 
   const renderElement = useCallback(

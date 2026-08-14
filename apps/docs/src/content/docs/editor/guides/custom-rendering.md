@@ -22,7 +22,6 @@ The following props can be passed to the `PortableTextEditable` component:
 - `renderChild`: For inline objects (e.g., custom emoji, stock symbols). (deprecated)
 - `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
 - `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote). (deprecated)
-- `renderListItem`: For list item styling (e.g., bullet, numbered lists). (deprecated)
 - `renderPlaceholder`: For custom placeholder text when the editor is empty.
 - `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
@@ -124,15 +123,10 @@ function isStockTicker(
 ): props is PortableTextChild & {symbol: string} {
   return 'symbol' in props
 }
-
-// List items
-const renderListItem: RenderListItemFunction = (props) => {
-  return <>{props.children}</>
-}
 ```
 
 :::note
-List items in Portable Text don't nest like HTML lists. The `renderListItem` function wraps the content, but visual nesting is achieved through CSS. See the [example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) for list styling patterns.
+List items in Portable Text don't nest like HTML lists. Visual nesting is achieved through CSS, and list numbering is available through `@portabletext/plugin-list-index`. See the [example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) for list styling patterns.
 :::
 
 ## Placeholder text

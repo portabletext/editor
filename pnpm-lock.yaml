@@ -465,6 +465,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@portabletext/plugin-list-index':
+        specifier: workspace:*
+        version: link:../../packages/plugin-list-index
       react:
         specifier: 'catalog:'
         version: 19.2.8

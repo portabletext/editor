@@ -103,7 +103,7 @@ describe('transformBlockIndexMap fuzz', () => {
           value: value as unknown as PortableTextBlock[],
           containers: fuzzContainers,
         },
-        {blockIndexMap: incrementalMap, listIndexMap: new Map()},
+        {blockIndexMap: incrementalMap},
       )
 
       for (let step = 0; step < 150; step++) {
@@ -124,7 +124,7 @@ describe('transformBlockIndexMap fuzz', () => {
             value: value as unknown as PortableTextBlock[],
             containers: fuzzContainers,
           },
-          {blockIndexMap: oracleMap, listIndexMap: new Map()},
+          {blockIndexMap: oracleMap},
         )
 
         expect(

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@portabletext/editor": "workspace:*",
+    "@portabletext/plugin-list-index": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

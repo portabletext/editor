@@ -239,7 +239,6 @@ You may notice that we skipped a few types from the schema. Declare these inline
   renderStyle={renderStyle}
   renderDecorator={renderDecorator}
   renderBlock={(props) => <div>{props.children}</div>}
-  renderListItem={(props) => <>{props.children}</>}
 />
 ```
 
@@ -399,7 +398,6 @@ function App() {
           renderStyle={renderStyle}
           renderDecorator={renderDecorator}
           renderBlock={(props) => <div>{props.children}</div>}
-          renderListItem={(props) => <>{props.children}</>}
         />
         <Toolbar />
       </EditorProvider>

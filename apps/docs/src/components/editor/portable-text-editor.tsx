@@ -144,7 +144,6 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
                 }
                 return props.children
               }}
-              renderListItem={(props) => props.children}
               renderStyle={(props) => {
                 if (props.value === 'h1') {
                   return (
