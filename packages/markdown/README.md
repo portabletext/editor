@@ -75,7 +75,7 @@ const markdown = portableTextToMarkdown([
 | Code blocks      | ✅                       | ✅\*                     |
 | Horizontal rules | ✅                       | ✅\*                     |
 | Images           | ✅                       | ✅\*                     |
-| Tables           | ✅\*                     | ✅\*                     |
+| Tables           | ✅                       | ✅                       |
 | HTML blocks      | ✅                       | ✅\*                     |
 | Callouts         | ✅\*                     | ✅\*                     |
 
@@ -162,14 +162,14 @@ Out of the box, the library includes sensible defaults for both. Customize them 
 
 The default schema includes the following definitions:
 
-| Type            | Values                                                                                                                                                                                                                                  |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                              |
-| `lists`         | `'number'`, `'bullet'`                                                                                                                                                                                                                  |
-| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                        |
-| `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                  |
-| `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (fields: `'headerRows'`, `'rows'`), `'callout'` (fields: `'tone'`, `'content'`) |
-| `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                                                                         |
+| Type            | Values                                                                                                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                                                                                              |
+| `lists`         | `'number'`, `'bullet'`                                                                                                                                                                                                                                                                                  |
+| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                                                                                        |
+| `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                                                                                  |
+| `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (fields: `'headerRows'`, `'alignment'`, `'rows'` of `'row'` of `'cells'` of `'cell'` of `'value'`), `'callout'` (fields: `'tone'`, `'content'`) |
+| `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                                                                                                                                         |
 
 To use a custom Schema, import `compileSchema` and `defineSchema` from `@portabletext/schema`:
 
@@ -218,6 +218,7 @@ Matchers map Markdown concepts to Portable Text types defined in the Schema. Eac
 |            | `image`          | `![alt](src)`           | `'image'`           |
 |            | `html`           | HTML blocks             | `'html'`            |
 |            | `callout`        | `> [!NOTE]`, etc.       | `'callout'`         |
+|            | `table`          | GFM pipe tables         | `'table'`           |
 |            | `blockquote`     | `>` blockquotes         | `'blockquote'`      |
 |            | `list`           | `- ` or `1. ` lists     | `'list'`            |
 
@@ -246,7 +247,9 @@ markdownToPortableText(markdown, {
 
 > **Note:** Checking if the type exists in the schema isn't required, but it's good practice. Returning `undefined` gracefully skips unsupported types.
 
-**Table matcher:** Markdown tables are parsed but there's no default matcher. Provide one if your schema includes tables:
+**Table matcher:** GFM pipe tables convert by default, in the canonical shape `@portabletext/plugin-table` expects: a `table` block object (`headerRows`, `rows`), each row a `row` object (`cells`), each cell a `cell` object (`value`, an array of Portable Text blocks; a cell holding a single image becomes a standalone block-level `image` object instead of a text block wrapping it). `alignment` is a `@portabletext/markdown` extension field; `@portabletext/plugin-table` ignores it. This needs no configuration when the schema declares a `table` block object with a `rows` field (see `blockObjects` above). A schema whose `table` doesn't declare `rows`, or that doesn't declare `table` at all, keeps the pre-default behavior: the table's cell content flattens into top-level blocks, in reading order.
+
+Provide your own matcher to map onto a differently-shaped `table` type:
 
 ```ts
 markdownToPortableText(markdown, {
@@ -451,6 +454,7 @@ The conversion is driven by **Renderers**: functions that render Portable Text e
 
 | Group               | Renderer         | Renders                           | Output                   |
 | ------------------- | ---------------- | --------------------------------- | ------------------------ |
+| `types`             | `table`          | `table` block objects             | Markdown table           |
 | `block`             | `normal`         | Paragraphs                        | `{children}`             |
 |                     | `h1`–`h6`        | Headings                          | `# `–`###### `           |
 |                     | `blockquote`     | Blockquotes                       | `> {children}`           |
@@ -486,6 +490,11 @@ portableTextToMarkdown(blocks, {
   },
 })
 ```
+
+`table` block objects render as GFM tables by default; a value that isn't
+table-shaped (no `rows` array of row-shaped objects) falls back to the JSON
+code block `unknownType` renders. Provide your own `types.table` renderer to
+override how tables serialize.
 
 **Custom block styles:** Override how block styles render:
 

@@ -122,12 +122,48 @@ export const defaultHtmlObjectDefinition = {
   fields: [{name: 'html', type: 'string'}],
 } as const satisfies BlockObjectDefinition
 
-const defaultTableObjectDefinition = {
+/**
+ * Mirrors the canonical shape `@portabletext/plugin-table` expects: `table`
+ * (`headerRows`, `rows`), `row` (`cells`), `cell` (`value`, text blocks or
+ * standalone `image` objects). `alignment` is a `@portabletext/markdown`
+ * extension field; `@portabletext/plugin-table` ignores it. Keep this in
+ * sync with `packages/plugin-table/src/table-config.ts`'s
+ * `defaultTableConfig`.
+ */
+export const defaultTableObjectDefinition = {
   name: 'table',
   fields: [
     {name: 'headerRows', type: 'number'},
     {name: 'alignment', type: 'array'},
-    {name: 'rows', type: 'array'},
+    {
+      name: 'rows',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          name: 'row',
+          fields: [
+            {
+              name: 'cells',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'cell',
+                  fields: [
+                    {
+                      name: 'value',
+                      type: 'array',
+                      of: [{type: 'block'}, {type: 'image'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ],
 } as const satisfies BlockObjectDefinition
 

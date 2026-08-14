@@ -179,21 +179,8 @@ describe('rectangular selection copy/cut', () => {
           ],
         },
       ])
-      // The core markdown converter renders tables as fenced JSON unless
-      // the app registers `DefaultTableRenderer` (the playground does). The
-      // concern here is rectangle scoping, so parse the fence and assert
-      // the same rectangle-only table.
       const markdown = dataTransfer.getData('text/markdown')
-      expect(
-        JSON.parse(markdown.replace(/^```json\n/, '').replace(/\n```$/, '')),
-      ).toEqual({
-        _type: 'table',
-        _key: 't0',
-        rows: [
-          {_type: 'row', _key: 'r0', cells: [cell('c00', 'A')]},
-          {_type: 'row', _key: 'r1', cells: [cell('c10', 'C')]},
-        ],
-      })
+      expect(markdown).toBe(['|  |', '| --- |', '| A |', '| C |'].join('\n'))
     })
   })
 

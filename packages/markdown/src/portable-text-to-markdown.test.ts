@@ -1453,17 +1453,7 @@ describe(portableTextToMarkdown.name, () => {
         },
       })
 
-      test('default renderer', () => {
-        const markdownOut = [
-          '```json',
-          JSON.stringify(portableText.at(0), null, 2),
-          '```',
-        ].join('\n')
-
-        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
-      })
-
-      test('pluggable default renderer', () => {
+      test('renders as GFM by default', () => {
         const markdownOut = [
           '| Header 1 | Header 2 |',
           '| --- | --- |',
@@ -1471,12 +1461,18 @@ describe(portableTextToMarkdown.name, () => {
           '| Cell 3 | Cell 4 |',
         ].join('\n')
 
+        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+      })
+
+      test('`types: {table: undefined}` opts out and falls back to fenced JSON', () => {
+        const markdownOut = [
+          '```json',
+          JSON.stringify(portableText.at(0), null, 2),
+          '```',
+        ].join('\n')
+
         expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              table: DefaultTableRenderer,
-            },
-          }),
+          portableTextToMarkdown(portableText, {types: {table: undefined}}),
         ).toBe(markdownOut)
       })
     })
@@ -1584,10 +1580,11 @@ describe(portableTextToMarkdown.name, () => {
         },
       ]
 
-      test('headerRows undefined promotes the first row to header', () => {
+      test('headerRows undefined renders headerless, same as headerRows 0', () => {
         const markdownOut = [
-          '| Cell 1 | Cell 2 |',
+          '|  |  |',
           '| --- | --- |',
+          '| Cell 1 | Cell 2 |',
           '| Cell 3 | Cell 4 |',
         ].join('\n')
 
@@ -1818,6 +1815,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           rows: [
             {
               _type: 'row',
@@ -1888,6 +1886,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           rows: [
             {
               _type: 'row',
@@ -2008,6 +2007,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           rows: [
             {
               _type: 'row',
@@ -2128,6 +2128,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           rows: [
             {
               _type: 'row',
@@ -2198,6 +2199,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           rows: [
             {
               _type: 'row',
@@ -2271,6 +2273,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           alignment: ['left', 'center', 'right', null],
           rows: [
             {
@@ -2472,6 +2475,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'table',
           _key: keyGenerator(),
+          headerRows: 1,
           alignment: [null, null, 'right'],
           rows: [
             {
@@ -2552,6 +2556,112 @@ describe(portableTextToMarkdown.name, () => {
             },
           }),
         ).toBe(['| A | B | C |', '| --- | --- | ---: |'].join('\n'))
+      })
+    })
+
+    describe('zero-config default table', () => {
+      test('renders a canonical table object as GFM', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const cell = (text: string) => ({
+          _type: 'cell',
+          _key: keyGenerator(),
+          value: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text, marks: []},
+              ],
+            },
+          ],
+        })
+        const portableText = [
+          {
+            _type: 'table',
+            _key: keyGenerator(),
+            headerRows: 1,
+            rows: [
+              {_type: 'row', _key: keyGenerator(), cells: [cell('foo')]},
+              {_type: 'row', _key: keyGenerator(), cells: [cell('bar')]},
+            ],
+          },
+        ]
+
+        expect(portableTextToMarkdown(portableText)).toBe(
+          ['| foo |', '| --- |', '| bar |'].join('\n'),
+        )
+      })
+
+      test('MD -> PT -> MD round-trip is stable for a table with alignment', () => {
+        const markdown = ['| L | R |', '| :--- | ---: |', '| foo | bar |'].join(
+          '\n',
+        )
+
+        const portableText = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('malformed table value (no `rows` array) falls back to fenced JSON', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const value = {_type: 'table', _key: keyGenerator(), headerRows: 1}
+
+        expect(portableTextToMarkdown([value])).toBe(
+          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        )
+      })
+
+      test.each([
+        ['cell without `value`', {rows: [{cells: [{_key: 'foo'}]}]}],
+        ['cell `value` is not an array', {rows: [{cells: [{value: 'foo'}]}]}],
+        ['`cells` contains `null`', {rows: [{cells: [null]}]}],
+        ['cell `value` contains `null`', {rows: [{cells: [{value: [null]}]}]}],
+      ])('malformed table value (%s) falls back to fenced JSON', (_, table) => {
+        const keyGenerator = createTestKeyGenerator()
+        const value = {_type: 'table', _key: keyGenerator(), ...table}
+
+        expect(portableTextToMarkdown([value])).toBe(
+          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        )
+      })
+
+      test('non-array `alignment` is ignored, the table still renders', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const value = {
+          _type: 'table',
+          _key: keyGenerator(),
+          headerRows: 1,
+          alignment: {},
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      children: [
+                        {_type: 'span', _key: keyGenerator(), text: 'foo'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }
+
+        expect(portableTextToMarkdown([value])).toBe(
+          ['| foo |', '| --- |'].join('\n'),
+        )
       })
     })
   })

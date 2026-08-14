@@ -29,7 +29,7 @@ const markdown = portableTextToMarkdown(blocks)
 
 ## Custom type renderers
 
-Custom block types (objects in the blocks array) are not rendered by default. Register a renderer for each type you use.
+Custom block types (objects in the blocks array) are not rendered by default, with one exception: `table` renders as GFM Markdown out of the box. Register a renderer for other types you use.
 
 ```ts
 portableTextToMarkdown(blocks, {
@@ -76,7 +76,6 @@ import {
   DefaultHorizontalRuleRenderer,
   DefaultHtmlRenderer,
   DefaultImageRenderer,
-  DefaultTableRenderer,
   portableTextToMarkdown,
 } from '@portabletext/markdown'
 
@@ -87,19 +86,20 @@ portableTextToMarkdown(blocks, {
     'horizontal-rule': DefaultHorizontalRuleRenderer,
     'html': DefaultHtmlRenderer,
     'image': DefaultImageRenderer,
-    'table': DefaultTableRenderer,
   },
 })
 ```
 
-| Renderer                        | Expected fields         | Output                 |
-| ------------------------------- | ----------------------- | ---------------------- |
-| `DefaultCalloutRenderer`        | `tone`, `content`       | `> [!TYPE]\n> content` |
-| `DefaultCodeBlockRenderer`      | `code`, `language?`     | ` ```lang\ncode\n``` ` |
-| `DefaultHorizontalRuleRenderer` | (none required)         | `---`                  |
-| `DefaultHtmlRenderer`           | `html`                  | Raw HTML string        |
-| `DefaultImageRenderer`          | `src`, `alt?`, `title?` | `![alt](src "title")`  |
-| `DefaultTableRenderer`          | `rows`, `headerRows?`   | Markdown table         |
+`table` uses `DefaultTableRenderer` automatically; supply your own `table` renderer to override how tables serialize.
+
+| Renderer                        | Expected fields         | Output                         |
+| ------------------------------- | ----------------------- | ------------------------------ |
+| `DefaultCalloutRenderer`        | `tone`, `content`       | `> [!TYPE]\n> content`         |
+| `DefaultCodeBlockRenderer`      | `code`, `language?`     | ` ```lang\ncode\n``` `         |
+| `DefaultHorizontalRuleRenderer` | (none required)         | `---`                          |
+| `DefaultHtmlRenderer`           | `html`                  | Raw HTML string                |
+| `DefaultImageRenderer`          | `src`, `alt?`, `title?` | `![alt](src "title")`          |
+| `DefaultTableRenderer`          | `rows`, `headerRows?`   | Markdown table (on by default) |
 
 ## Renderer map keys
 
@@ -135,11 +135,11 @@ By default, unknown types render as JSON code blocks. Unknown marks, block style
 | Code blocks      |      ✅\*      |
 | Horizontal rules |      ✅\*      |
 | Images           |      ✅\*      |
-| Tables           |      ✅\*      |
+| Tables           |       ✅       |
 | HTML blocks      |      ✅\*      |
 | Callouts         |      ✅\*      |
 
-\* Requires registering the built-in renderer (see above).
+\* Requires registering the built-in renderer (see above). Tables render by default.
 
 :::note
 This package uses markdown-it as its Markdown parser. Remark and unified plugins are not compatible.

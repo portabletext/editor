@@ -1,3 +1,4 @@
+import {isTypedObject} from '@portabletext/schema'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {
   escapeImageAndLinkText,
@@ -49,15 +50,48 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 }
 
 /**
+ * A table is table-shaped when everything the renderer dereferences is
+ * there: `rows` an array of typed objects with a `cells` array, every cell
+ * a typed object whose `value` array holds typed objects (`renderNode`'s
+ * input contract). The predicate narrows to exactly what `renderTable`
+ * consumes, so the renderer needs no casts. A malformed `table` value
+ * (e.g. a consumer's differently-shaped `table` type) falls back to the
+ * fenced-JSON path instead of throwing.
+ */
+function isTableShaped(value: unknown): value is TableShaped {
+  const rows = (value as {rows?: unknown} | null)?.rows
+  return (
+    Array.isArray(rows) &&
+    rows.every(
+      (row) =>
+        isTypedObject(row) &&
+        Array.isArray(row['cells']) &&
+        row['cells'].every(
+          (cell) =>
+            isTypedObject(cell) &&
+            Array.isArray(cell['value']) &&
+            cell['value'].every(isTypedObject),
+        ),
+    )
+  )
+}
+
+type TableShaped = {
+  headerRows?: unknown
+  alignment?: unknown
+  rows: Array<{cells: Array<{value: Array<TypedObject>}>}>
+}
+
+/**
  * Renders a Portable Text table block-object back to Markdown.
  *
- * The PT `headerRows` field decides the header. `headerRows === 0` is an
- * explicit headerless table: GFM has no headerless form, so an empty header
- * row is emitted and every row goes in the body (that empty header reads back
- * as `headerRows: 0` via `markdownToPortableText`). Any other value
- * (`undefined` or `>= 1`) promotes `rows[0]` to the header. GFM allows exactly
- * one header row, so header rows beyond the first flatten into the body,
- * lossy, but the extra rows stay on the Portable Text side.
+ * The PT `headerRows` field decides the header. Missing `headerRows` and
+ * `headerRows === 0` both render headerless: GFM has no headerless form, so
+ * an empty header row is emitted and every row goes in the body (that empty
+ * header reads back as `headerRows: 0` via `markdownToPortableText`).
+ * `headerRows >= 1` promotes `rows[0]` to the header. GFM allows exactly one
+ * header row, so header rows beyond the first flatten into the body, lossy,
+ * but the extra rows stay on the Portable Text side.
  *
  * Asymmetric tables (rows of varying cell counts) are widened to match
  * the row with the most cells. Narrower rows are padded with empty cells
@@ -76,17 +110,29 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
       value: Array<PortableTextBlock>
     }>
   }>
-}> = ({value, renderNode}) => {
-  const rows = value.rows as Array<{
-    _key: string
-    _type: 'row'
-    cells: Array<{
-      _type: 'cell'
-      _key: string
-      value: Array<{_type: string; children?: Array<unknown>}>
-    }>
-  }>
-  const alignment = value.alignment
+}> = (options) => {
+  const {value, renderNode} = options
+
+  if (!isTableShaped(value)) {
+    return DefaultUnknownTypeRenderer(options)
+  }
+
+  return renderTable(value, renderNode)
+}
+
+function renderTable(
+  value: TableShaped,
+  renderNode: Parameters<PortableTextTypeRenderer>[0]['renderNode'],
+): string {
+  const rows = value.rows
+  // `alignment` is an extension field, not part of the table shape: junk
+  // here should not send an otherwise valid table to the fenced-JSON path,
+  // so it is normalized away instead of guarded (`{}.at` would throw below).
+  const alignment: ReadonlyArray<unknown> | undefined = Array.isArray(
+    value.alignment,
+  )
+    ? value.alignment
+    : undefined
 
   const headerRow = rows.at(0)
 
@@ -95,13 +141,11 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   }
 
   // Helper to extract text from cell blocks
-  const getCellText = (
-    cellBlocks: Array<{_type: string; children?: Array<unknown>}>,
-  ): string => {
+  const getCellText = (cellBlocks: Array<TypedObject>): string => {
     return cellBlocks
       .map((block, index) =>
         renderNode({
-          node: block as {_type: string},
+          node: block,
           index,
           isInline: false,
           renderNode,
@@ -150,9 +194,11 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   })
   const delimiter = `|${separators.join('|')}|`
 
-  if (value.headerRows === 0) {
-    // Explicit headerless table: emit an empty header row and keep every row
-    // in the body.
+  const hasHeader = (Number(value.headerRows) || 0) >= 1
+
+  if (!hasHeader) {
+    // Headerless table: emit an empty header row and keep every row in the
+    // body.
     lines.push(renderCells([]))
     lines.push(delimiter)
     for (const row of rows) {
