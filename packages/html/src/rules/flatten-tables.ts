@@ -86,10 +86,7 @@ export function createFlattenTableRule({
         return undefined
       }
 
-      const columnCounts = [...node.querySelectorAll('tr')].map((row) => {
-        const cells = row.querySelectorAll('td, th')
-        return cells.length
-      })
+      const columnCounts = [...node.rows].map((row) => row.cells.length)
 
       const firstColumnCount = columnCounts[0]
 
@@ -101,10 +98,9 @@ export function createFlattenTableRule({
         return undefined
       }
 
-      const thead = node.querySelector('thead')
-      const headerRows = thead?.querySelectorAll('tr')
-      const tbody = node.querySelector('tbody')
-      const bodyRows = tbody ? [...tbody.querySelectorAll('tr')] : []
+      const headerRows = node.tHead?.rows
+      const tbody = node.tBodies[0]
+      const bodyRows = tbody ? [...tbody.rows] : []
 
       if (!headerRows || !bodyRows) {
         return undefined
@@ -116,7 +112,7 @@ export function createFlattenTableRule({
         return undefined
       }
 
-      const headerCells = headerRow.querySelectorAll('th, td')
+      const headerCells = headerRow.cells
       const headerResults = [...headerCells].map((headerCell) =>
         next(headerCell),
       )
@@ -125,7 +121,7 @@ export function createFlattenTableRule({
       const rows: TypedObject[] = []
 
       for (const row of bodyRows) {
-        const cells = row.querySelectorAll('td')
+        const cells = [...row.cells].filter((cell) => tagName(cell) === 'td')
 
         let cellIndex = 0
         for (const cell of cells) {
