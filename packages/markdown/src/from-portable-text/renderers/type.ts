@@ -113,6 +113,28 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
     return DefaultUnknownTypeRenderer(options)
   }
 
+  // The serializer dispatches on the `_type` name alone, so this renderer
+  // receives arbitrary values whenever a consumer schema has its own `table`
+  // type. `isTableShaped` classifies deliberately, but cell contents recurse
+  // through `renderNode` into the whole rendering pipeline, whose
+  // dereferences no local shape check can enumerate. The catch makes the
+  // fenced-JSON degradation total for values this renderer was never meant
+  // to understand.
+  try {
+    return renderTable(value, renderNode)
+  } catch {
+    return DefaultUnknownTypeRenderer(options)
+  }
+}
+
+function renderTable(
+  value: {
+    headerRows?: unknown
+    alignment?: unknown
+    rows: Array<{cells: Array<{value: Array<unknown>}>}>
+  },
+  renderNode: Parameters<PortableTextTypeRenderer>[0]['renderNode'],
+): string {
   const rows = value.rows as Array<{
     _key: string
     _type: 'row'
@@ -125,7 +147,9 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
   // `alignment` is an extension field, not part of the table shape: junk
   // here should not send an otherwise valid table to the fenced-JSON path,
   // so it is normalized away instead of guarded (`{}.at` would throw below).
-  const alignment = Array.isArray(value.alignment) ? value.alignment : undefined
+  const alignment = Array.isArray(value.alignment)
+    ? (value.alignment as Array<'left' | 'center' | 'right' | null>)
+    : undefined
 
   const headerRow = rows.at(0)
 

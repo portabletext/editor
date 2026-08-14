@@ -2620,6 +2620,19 @@ describe(portableTextToMarkdown.name, () => {
         ['cell `value` is not an array', {rows: [{cells: [{value: 'foo'}]}]}],
         ['`cells` contains `null`', {rows: [{cells: [null]}]}],
         ['cell `value` contains `null`', {rows: [{cells: [{value: [null]}]}]}],
+        [
+          'cell block whose `children` contains `null` crashes the pipeline',
+          {
+            rows: [
+              {
+                _type: 'row',
+                cells: [
+                  {_type: 'cell', value: [{_type: 'block', children: [null]}]},
+                ],
+              },
+            ],
+          },
+        ],
       ])('malformed table value (%s) falls back to fenced JSON', (_, table) => {
         const keyGenerator = createTestKeyGenerator()
         const value = {_type: 'table', _key: keyGenerator(), ...table}
