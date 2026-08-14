@@ -52,7 +52,7 @@ describe('selection emission dedup', () => {
       expect(onSelection).toHaveBeenLastCalledWith(selectionInsideText)
     })
 
-    // A remote patch that mutates the span's text triggers Slate's
+    // A remote patch that mutates the span's text triggers the engine's
     // apply-operation selection re-spread, which produces an EditorSelection
     // with a fresh reference but the same semantic value.
     editor.send({

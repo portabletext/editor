@@ -401,8 +401,8 @@ export const Editable = forwardRef(
         const focusNode = domSelection.focusNode
         let anchorNode: globalThis.Node | null = null
 
-        // COMPAT: In firefox the normal selection way does not work
-        // (https://github.com/ianstormtaylor/engine/pull/5486#issue-1820720223)
+        // COMPAT: In Firefox, a selection can span multiple ranges; reading
+        // only the first loses the real focus point.
         if (IS_FIREFOX && domSelection.rangeCount > 1) {
           const firstRange = domSelection.getRangeAt(0)
           const lastRange = domSelection.getRangeAt(domSelection.rangeCount - 1)
@@ -637,8 +637,8 @@ export const Editable = forwardRef(
           const isCompositionChange =
             type === 'insertCompositionText' || type === 'deleteCompositionText'
 
-          // COMPAT: use composition change events as a hint to where we should insert
-          // composition text if we aren't composing to work around https://github.com/ianstormtaylor/engine/issues/5038
+          // COMPAT: use composition change events as a hint to where we should
+          // insert composition text if we aren't composing.
           if (isCompositionChange && editor.composing) {
             return
           }

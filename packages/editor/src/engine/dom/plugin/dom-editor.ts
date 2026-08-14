@@ -295,7 +295,6 @@ export const DOMEditor: DOMEditorInterface = {
     // COMPAT: In Firefox, reading `target.nodeType` will throw an error if
     // target is originating from an internal "restricted" element (e.g. a
     // stepper arrow on a number input). (2018/05/04)
-    // https://github.com/ianstormtaylor/engine/issues/1819
     try {
       targetEl = (
         isDOMElement(target) ? target : target.parentElement
@@ -803,8 +802,8 @@ export const DOMEditor: DOMEditorInterface = {
 
     if (el) {
       if (isDOMSelection(domRange)) {
-        // COMPAT: In firefox the normal seletion way does not work
-        // (https://github.com/ianstormtaylor/engine/pull/5486#issue-1820720223)
+        // COMPAT: In Firefox, a selection can span multiple ranges; reading
+        // only the first loses the real focus point.
         if (IS_FIREFOX && domRange.rangeCount > 1) {
           focusNode = domRange.focusNode // Focus node works fine
           const firstRange = domRange.getRangeAt(0)
