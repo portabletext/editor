@@ -49,13 +49,17 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 }
 
 /**
- * A row is row-shaped when it carries a `cells` array; a malformed `table`
- * value (wrong shape, e.g. a consumer's differently-shaped `table` type)
- * falls back to the fenced-JSON path instead of throwing on `rows.at(0)`.
+ * A table is table-shaped when everything the renderer dereferences is
+ * there: `rows` an array of objects with a `cells` array, every cell an
+ * object with a `value` array, and no nullish entries in `value` (the
+ * recursive `renderNode` dispatches on `entry._type`, so `null` throws
+ * where `42` merely renders as unknown). A malformed `table` value (e.g. a
+ * consumer's differently-shaped `table` type) falls back to the fenced-JSON
+ * path instead of throwing.
  */
 function isTableShaped(
   value: unknown,
-): value is {rows: Array<{cells: unknown}>} {
+): value is {rows: Array<{cells: Array<{value: Array<unknown>}>}>} {
   const rows = (value as {rows?: unknown} | null)?.rows
   return (
     Array.isArray(rows) &&
@@ -63,7 +67,17 @@ function isTableShaped(
       (row) =>
         typeof row === 'object' &&
         row !== null &&
-        Array.isArray((row as {cells?: unknown}).cells),
+        Array.isArray((row as {cells?: unknown}).cells) &&
+        (row as {cells: Array<unknown>}).cells.every((cell) => {
+          if (typeof cell !== 'object' || cell === null) {
+            return false
+          }
+          const cellValue = (cell as {value?: unknown}).value
+          return (
+            Array.isArray(cellValue) &&
+            cellValue.every((entry) => entry != null)
+          )
+        }),
     )
   )
 }
@@ -112,7 +126,10 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
       value: Array<{_type: string; children?: Array<unknown>}>
     }>
   }>
-  const alignment = value.alignment
+  // `alignment` is an extension field, not part of the table shape: junk
+  // here should not send an otherwise valid table to the fenced-JSON path,
+  // so it is normalized away instead of guarded (`{}.at` would throw below).
+  const alignment = Array.isArray(value.alignment) ? value.alignment : undefined
 
   const headerRow = rows.at(0)
 

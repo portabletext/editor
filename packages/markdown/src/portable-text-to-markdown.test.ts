@@ -2614,6 +2614,55 @@ describe(portableTextToMarkdown.name, () => {
           ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
         )
       })
+
+      test.each([
+        ['cell without `value`', {rows: [{cells: [{_key: 'foo'}]}]}],
+        ['cell `value` is not an array', {rows: [{cells: [{value: 'foo'}]}]}],
+        ['`cells` contains `null`', {rows: [{cells: [null]}]}],
+        ['cell `value` contains `null`', {rows: [{cells: [{value: [null]}]}]}],
+      ])('malformed table value (%s) falls back to fenced JSON', (_, table) => {
+        const keyGenerator = createTestKeyGenerator()
+        const value = {_type: 'table', _key: keyGenerator(), ...table}
+
+        expect(portableTextToMarkdown([value])).toBe(
+          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        )
+      })
+
+      test('non-array `alignment` is ignored, the table still renders', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const value = {
+          _type: 'table',
+          _key: keyGenerator(),
+          headerRows: 1,
+          alignment: {},
+          rows: [
+            {
+              _type: 'row',
+              _key: keyGenerator(),
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keyGenerator(),
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      children: [
+                        {_type: 'span', _key: keyGenerator(), text: 'foo'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }
+
+        expect(portableTextToMarkdown([value])).toBe(
+          ['| foo |', '| --- |'].join('\n'),
+        )
+      })
     })
   })
 
