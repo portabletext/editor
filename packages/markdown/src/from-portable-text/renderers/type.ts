@@ -5,7 +5,10 @@ import {
   escapeImageAndLinkTitle,
   escapeTableCell,
 } from '../../escape'
-import type {PortableTextTypeRenderer} from '../types'
+import type {
+  PortableTextTypeRenderer,
+  PortableTextTypeRendererOptions,
+} from '../types'
 
 /**
  * @public
@@ -54,9 +57,7 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
  * there: `rows` an array of typed objects with a `cells` array, every cell
  * a typed object whose `value` array holds typed objects (`renderNode`'s
  * input contract). The predicate narrows to exactly what `renderTable`
- * consumes, so the renderer needs no casts. A malformed `table` value
- * (e.g. a consumer's differently-shaped `table` type) falls back to the
- * fenced-JSON path instead of throwing.
+ * consumes, so the renderer needs no casts.
  */
 function isTableShaped(value: unknown): value is TableShaped {
   const rows = (value as {rows?: unknown} | null)?.rows
@@ -110,14 +111,29 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
       value: Array<PortableTextBlock>
     }>
   }>
-}> = (options) => {
-  const {value, renderNode} = options
+}> = guarded(isTableShaped, ({value, renderNode}) =>
+  renderTable(value, renderNode),
+)
 
-  if (!isTableShaped(value)) {
-    return DefaultUnknownTypeRenderer(options)
+/**
+ * Wires the classify-then-render pattern used by `DefaultTableRenderer`:
+ * `isShaped` decides whether `options.value` matches what `render`
+ * dereferences, and an unshaped value falls back to
+ * `DefaultUnknownTypeRenderer`'s fenced-JSON output instead of throwing.
+ * `isShaped` must check exactly what `render` dereferences, no more and no
+ * less: the predicate is `render`'s input type, earned, not assumed by a
+ * cast.
+ */
+function guarded<V extends TypedObject, T>(
+  isShaped: (value: unknown) => value is T,
+  render: (options: PortableTextTypeRendererOptions<V & T>) => string,
+): PortableTextTypeRenderer<V> {
+  return (options) => {
+    if (!isShaped(options.value)) {
+      return DefaultUnknownTypeRenderer(options)
+    }
+    return render({...options, value: options.value})
   }
-
-  return renderTable(value, renderNode)
 }
 
 function renderTable(
