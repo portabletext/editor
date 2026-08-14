@@ -1,39 +1,18 @@
-import type {
-  BlockObjectSchemaType,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
-import {useRef, type ReactElement} from 'react'
+import type {PortableTextTextBlock} from '@portabletext/schema'
+import type {ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
-import {serializePath} from '../paths/serialize-path'
-import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import {useElementDropPosition} from './drop-position-state-context'
-import type {EditorSchema} from './editor-schema'
-import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {DropIndicator} from './render.drop-indicator'
-import {
-  useIsFocusedContainer,
-  useIsSelectedContainer,
-} from './selection-state-context'
 
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextTextBlock
-  legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
-  schema: EditorSchema
   textBlock: PortableTextTextBlock
 }) {
-  const blockRef = useRef<HTMLDivElement>(null)
-  const schemaType = {
-    name: props.schema.block.name,
-    fields: props.schema.block.fields ?? [],
-  } satisfies BlockObjectSchemaType
-  const serializedPath = serializePath(props.path)
-  const selected = useIsSelectedContainer(serializedPath)
-  const focused = useIsFocusedContainer(serializedPath)
   const dropPosition = useElementDropPosition(props.path)
 
   const children = props.children
@@ -76,56 +55,8 @@ export function RenderTextBlock(props: {
         : {})}
     >
       {dropPosition === 'start' ? <DropIndicator /> : null}
-      <div ref={blockRef}>
-        {props.legacy.renderBlock ? (
-          <RenderBlock
-            renderBlock={props.legacy.renderBlock}
-            editorElementRef={blockRef}
-            focused={focused}
-            level={props.textBlock.level}
-            listItem={props.textBlock.listItem}
-            path={[{_key: props.textBlock._key}]}
-            selected={selected}
-            schemaType={schemaType}
-            style={props.textBlock.style}
-            value={props.textBlock}
-          >
-            {children}
-          </RenderBlock>
-        ) : (
-          children
-        )}
-      </div>
+      <div>{children}</div>
       {dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
-}
-
-function RenderBlock({
-  renderBlock,
-  children,
-  editorElementRef,
-  focused,
-  level,
-  listItem,
-  path,
-  selected,
-  style,
-  schemaType,
-  value,
-}: {
-  renderBlock: RenderBlockFunction
-} & BlockRenderProps) {
-  return renderBlock({
-    children,
-    editorElementRef,
-    focused,
-    level,
-    listItem,
-    path,
-    selected,
-    style,
-    schemaType,
-    value,
-  })
 }

@@ -1,12 +1,12 @@
 import './editor.css'
 import {
+  defineBlockObject,
   defineInlineObject,
   defineTextBlock,
   defineAnnotation,
   defineDecorator,
   EditorProvider,
   PortableTextEditable,
-  type BlockRenderProps,
   type PortableTextBlock,
   type SchemaDefinition,
   type TextBlockRenderProps,
@@ -99,10 +99,55 @@ const stockTicker = defineInlineObject({
   },
 })
 
+const imageBlock = defineBlockObject({
+  type: 'image',
+  render: (props) => {
+    const value = props.node as {src?: string; alt?: string}
+    return (
+      <div
+        {...props.attributes}
+        className={`my-2 p-2 border-2 rounded ${
+          props.selected
+            ? 'border-blue-400 dark:border-blue-500'
+            : 'border-gray-200 dark:border-gray-700'
+        } ${props.focused ? 'bg-blue-50 dark:bg-blue-950' : ''}`}
+      >
+        {props.children}
+        <div
+          contentEditable={false}
+          draggable={!props.readOnly}
+          className="flex items-start gap-3"
+        >
+          <div className="bg-gray-100 dark:bg-gray-800 size-16 flex items-center justify-center rounded overflow-hidden shrink-0">
+            {value.src ? (
+              <img
+                src={value.src}
+                alt={value.alt ?? ''}
+                className="object-cover max-w-full max-h-full"
+              />
+            ) : (
+              <ImageIcon className="size-6 text-gray-400 dark:text-gray-500" />
+            )}
+          </div>
+          <div className="flex flex-col gap-1 min-w-0 text-sm">
+            <span className="truncate text-gray-600 dark:text-gray-300">
+              {value.src || 'No source'}
+            </span>
+            <span className="truncate text-gray-400 dark:text-gray-500 text-xs">
+              {value.alt || 'No alt text'}
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  },
+})
+
 // Module scope: a new array identity re-registers the nodes on every render.
 const nodes = [
   textBlock,
   stockTicker,
+  imageBlock,
   defineDecorator({
     type: 'strong',
     render: ({children}) => <strong>{children}</strong>,
@@ -204,41 +249,6 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
             <ListIndexProvider>
               <PortableTextEditable
                 className="min-h-[200px] p-4 outline-none"
-                renderBlock={(props: BlockRenderProps) => {
-                  if (props.schemaType.name === 'image') {
-                    const value = props.value as {src?: string; alt?: string}
-                    return (
-                      <div
-                        className={`my-2 p-2 border-2 rounded flex items-start gap-3 ${
-                          props.selected
-                            ? 'border-blue-400 dark:border-blue-500'
-                            : 'border-gray-200 dark:border-gray-700'
-                        } ${props.focused ? 'bg-blue-50 dark:bg-blue-950' : ''}`}
-                      >
-                        <div className="bg-gray-100 dark:bg-gray-800 size-16 flex items-center justify-center rounded overflow-hidden shrink-0">
-                          {value.src ? (
-                            <img
-                              src={value.src}
-                              alt={value.alt ?? ''}
-                              className="object-cover max-w-full max-h-full"
-                            />
-                          ) : (
-                            <ImageIcon className="size-6 text-gray-400 dark:text-gray-500" />
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1 min-w-0 text-sm">
-                          <span className="truncate text-gray-600 dark:text-gray-300">
-                            {value.src || 'No source'}
-                          </span>
-                          <span className="truncate text-gray-400 dark:text-gray-500 text-xs">
-                            {value.alt || 'No alt text'}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  }
-                  return props.children
-                }}
                 renderPlaceholder={() => (
                   <span className="text-gray-400 dark:text-gray-500">
                     Type something

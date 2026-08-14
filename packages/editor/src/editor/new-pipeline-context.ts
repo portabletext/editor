@@ -8,7 +8,6 @@ import {createContext} from 'react'
  * `render.text.tsx` emit the legacy DOM shape (`data-child-*`
  * attributes, legacy default renderers) or the new-pipeline shape.
  *
- * Provided by `useChildren` (wrapping each new-pipeline child) and by
- * the dispatch sites in `render.element.tsx` / `render.span.tsx`.
+ * Provided by `useChildren` (wrapping each new-pipeline child).
  */
 export const NewPipelineContext = createContext<boolean>(false)

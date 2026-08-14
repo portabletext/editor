@@ -12,10 +12,8 @@ const cellImageStyle = tv({
 /**
  * Positional `image` override inside table cells. Rendered as a
  * compact card so multiple images can fit per row. Top-level images
- * use the legacy `renderBlock` pipeline (the v6 image render that
- * showcases the legacy pipeline still works alongside the new Node
- * API). Wired into `tableContainer.of[0].of[0].of` in
- * `plugin.table.tsx`.
+ * fall through to the `'*'` block object catch-all in `editor.tsx`.
+ * Wired into `tableContainer.of[0].of[0].of` in `plugin.table.tsx`.
  */
 export const cellImageLeaf = defineBlockObject({
   type: 'image',

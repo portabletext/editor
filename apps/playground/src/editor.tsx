@@ -2,6 +2,7 @@ import '@portabletext/plugin-table/ui/styles.css'
 import './editor.css'
 import {
   defineAnnotation,
+  defineBlockObject,
   defineDecorator,
   defineTextBlock,
   EditorProvider,
@@ -9,8 +10,8 @@ import {
   useEditor,
   useEditorSelector,
   type AnnotationRenderProps,
+  type BlockObjectRenderProps,
   type BlockPath,
-  type BlockRenderProps,
   type DecoratorRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
@@ -234,7 +235,6 @@ function FullscreenAwareEditable(props: {
           <PortableTextEditable
             className={editableClasses}
             rangeDecorations={props.rangeDecorations}
-            renderBlock={RenderBlock}
             renderPlaceholder={renderPlaceholder}
           />
         </EditorFeatureFlagsContext.Provider>
@@ -421,141 +421,6 @@ function MarkdownFallback(props: {
   )
 }
 
-const RenderBlock = (props: BlockRenderProps) => {
-  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
-  const editor = useEditor()
-  const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
-
-  let children = props.children
-
-  if (props.schemaType.name === 'break') {
-    children = (
-      <div
-        className={breakStyle({
-          selected: props.selected,
-          focused: props.focused,
-        })}
-      >
-        <div
-          className={breakLineStyle({
-            selected: props.selected,
-            focused: props.focused,
-          })}
-        />
-      </div>
-    )
-  }
-
-  if (props.schemaType.name === 'image') {
-    const image = props.value as {src?: string; alt?: string}
-    children = (
-      <div
-        className={imageStyle({
-          selected: props.selected,
-          focused: props.focused,
-        })}
-      >
-        <div className="bg-gray-100 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
-          <img
-            className="object-scale-down max-w-full"
-            src={image.src}
-            alt={image.alt ?? ''}
-          />
-        </div>
-        <div className="flex flex-col gap-1 p-1 overflow-hidden">
-          <div className="flex items-center gap-1">
-            <TooltipTrigger>
-              <Button variant="ghost" size="sm">
-                <LinkIcon className="size-3 shrink-0" />
-              </Button>
-              <Tooltip className="max-w-120">
-                <span className="wrap-anywhere">{image.src}</span>
-              </Tooltip>
-            </TooltipTrigger>
-            <span className="text-ellipsis overflow-hidden whitespace-nowrap">
-              {image.src}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <PencilIcon className="size-3 shrink-0" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {image.alt}
-            </span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (props.schemaType.name === 'callout') {
-    const tone = (props.value as unknown as {tone?: string}).tone
-    children = (
-      <MarkdownFallback
-        value={props.value}
-        label={`Callout${tone ? ` · ${tone}` : ''}`}
-        icon={<InfoIcon className="size-3.5" />}
-        selected={props.selected}
-        focused={props.focused}
-      />
-    )
-  }
-
-  if (props.schemaType.name === 'fact-box') {
-    children = (
-      <MarkdownFallback
-        value={props.value}
-        label="Fact box"
-        icon={<LayersIcon className="size-3.5" />}
-        selected={props.selected}
-        focused={props.focused}
-      />
-    )
-  }
-
-  if (props.schemaType.name === 'code-block') {
-    const language = (props.value as unknown as {language?: string}).language
-    children = (
-      <MarkdownFallback
-        value={props.value}
-        label={`Code block${language ? ` · ${language}` : ''}`}
-        icon={<CodeIcon className="size-3.5" />}
-        selected={props.selected}
-        focused={props.focused}
-      />
-    )
-  }
-
-  if (props.schemaType.name === 'table') {
-    children = (
-      <MarkdownFallback
-        value={props.value}
-        label="Table"
-        icon={<TableIcon className="size-3.5" />}
-        selected={props.selected}
-        focused={props.focused}
-      />
-    )
-  }
-
-  if (props.level === undefined && enableDragHandles) {
-    // Don't render drag handle on other levels right now since the styling is off
-    return (
-      <div className="me-1 relative">
-        <div
-          contentEditable={false}
-          draggable={!readOnly}
-          className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
-        >
-          <span />
-        </div>
-        <div>{children}</div>
-      </div>
-    )
-  }
-
-  return children
-}
-
 const decoratorNode = defineDecorator({
   type: '*',
   render: (props) =>
@@ -595,12 +460,146 @@ const renderPlaceholder: RenderPlaceholderFunction = () => (
   <span className="text-gray-400 dark:text-gray-500 px-2">Type something</span>
 )
 
+const playgroundBlockObjectFallback = defineBlockObject({
+  type: '*',
+  render: (props) => <PlaygroundBlockObject {...props} />,
+})
+
+function PlaygroundBlockObject(props: BlockObjectRenderProps) {
+  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
+
+  let content: JSX.Element
+
+  if (props.node._type === 'break') {
+    content = (
+      <div
+        className={breakStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <div
+          className={breakLineStyle({
+            selected: props.selected,
+            focused: props.focused,
+          })}
+        />
+      </div>
+    )
+  } else if (props.node._type === 'image') {
+    const image = props.node as {src?: string; alt?: string}
+    content = (
+      <div
+        className={imageStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <div className="bg-gray-100 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
+          <img
+            className="object-scale-down max-w-full"
+            src={image.src}
+            alt={image.alt ?? ''}
+          />
+        </div>
+        <div className="flex flex-col gap-1 p-1 overflow-hidden">
+          <div className="flex items-center gap-1">
+            <TooltipTrigger>
+              <Button variant="ghost" size="sm">
+                <LinkIcon className="size-3 shrink-0" />
+              </Button>
+              <Tooltip className="max-w-120">
+                <span className="wrap-anywhere">{image.src}</span>
+              </Tooltip>
+            </TooltipTrigger>
+            <span className="text-ellipsis overflow-hidden whitespace-nowrap">
+              {image.src}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <PencilIcon className="size-3 shrink-0" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {image.alt}
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  } else if (props.node._type === 'callout') {
+    const tone = (props.node as {tone?: string}).tone
+    content = (
+      <MarkdownFallback
+        value={props.node}
+        label={`Callout${tone ? ` · ${tone}` : ''}`}
+        icon={<InfoIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  } else if (props.node._type === 'fact-box') {
+    content = (
+      <MarkdownFallback
+        value={props.node}
+        label="Fact box"
+        icon={<LayersIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  } else if (props.node._type === 'code-block') {
+    const language = (props.node as {language?: string}).language
+    content = (
+      <MarkdownFallback
+        value={props.node}
+        label={`Code block${language ? ` · ${language}` : ''}`}
+        icon={<CodeIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  } else if (props.node._type === 'table') {
+    content = (
+      <MarkdownFallback
+        value={props.node}
+        label="Table"
+        icon={<TableIcon className="size-3.5" />}
+        selected={props.selected}
+        focused={props.focused}
+      />
+    )
+  } else {
+    return props.renderDefault(props)
+  }
+
+  return (
+    <div {...props.attributes}>
+      {props.children}
+      <div contentEditable={false} draggable={!props.readOnly}>
+        {enableDragHandles ? (
+          <div className="me-1 relative">
+            <div
+              contentEditable={false}
+              draggable={!props.readOnly}
+              className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
+            >
+              <span />
+            </div>
+            <div>{content}</div>
+          </div>
+        ) : (
+          content
+        )}
+      </div>
+    </div>
+  )
+}
+
 const playgroundTextBlock = defineTextBlock({
   type: 'block',
   render: (props) => <PlaygroundTextBlock {...props} />,
 })
 
-const playgroundNodes = [playgroundTextBlock]
+const playgroundNodes = [playgroundTextBlock, playgroundBlockObjectFallback]
 
 function PlaygroundTextBlock(props: TextBlockRenderProps) {
   const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles

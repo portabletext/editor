@@ -31,8 +31,6 @@ import type {
   OnPasteFn,
   RangeDecoration,
   RenderAnnotationFunction,
-  RenderBlockFunction,
-  RenderChildFunction,
   RenderDecoratorFunction,
   RenderPlaceholderFunction,
   ScrollSelectionIntoViewFunction,
@@ -71,20 +69,6 @@ export type PortableTextEditableProps = Omit<
    * https://www.portabletext.org/editor/guides/migrate-render-props/
    */
   renderAnnotation?: RenderAnnotationFunction
-  /**
-   * @deprecated Register your block objects and text blocks with
-   * `defineBlockObject` / `defineTextBlock` mounted through `NodePlugin`
-   * instead. See the migration guide:
-   * https://www.portabletext.org/editor/guides/migrate-render-props/
-   */
-  renderBlock?: RenderBlockFunction
-  /**
-   * @deprecated Register your inline objects and spans with
-   * `defineInlineObject` / `defineSpan` mounted through `NodePlugin`
-   * instead. See the migration guide:
-   * https://www.portabletext.org/editor/guides/migrate-render-props/
-   */
-  renderChild?: RenderChildFunction
   /**
    * @deprecated Register your decorators with `defineDecorator` mounted
    * through `NodePlugin` instead. See the migration guide:
@@ -139,8 +123,6 @@ export const PortableTextEditable = forwardRef<
     onDragLeave,
     rangeDecorations,
     renderAnnotation,
-    renderBlock,
-    renderChild,
     renderDecorator,
     renderPlaceholder,
     selection: propsSelection,
@@ -191,24 +173,11 @@ export const PortableTextEditable = forwardRef<
     })
   }, [rangeDecorationsActor, rangeDecorations])
 
-  const legacy = useMemo(
-    () => ({
-      renderBlock,
-      renderChild,
-    }),
-    [renderBlock, renderChild],
-  )
-
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (
-      <RenderElement
-        {...eProps}
-        legacy={legacy}
-        readOnly={readOnly}
-        schema={schema}
-      />
+      <RenderElement {...eProps} readOnly={readOnly} schema={schema} />
     ),
-    [schema, readOnly, legacy],
+    [schema, readOnly],
   )
 
   const renderLeaf = useCallback(
@@ -224,20 +193,12 @@ export const PortableTextEditable = forwardRef<
         {...leafProps}
         readOnly={readOnly}
         renderAnnotation={renderAnnotation}
-        renderChild={renderChild}
         renderDecorator={renderDecorator}
         renderPlaceholder={renderPlaceholder}
         schema={schema}
       />
     ),
-    [
-      readOnly,
-      renderAnnotation,
-      renderChild,
-      renderDecorator,
-      renderPlaceholder,
-      schema,
-    ],
+    [readOnly, renderAnnotation, renderDecorator, renderPlaceholder, schema],
   )
 
   const renderText = useCallback(

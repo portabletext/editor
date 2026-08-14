@@ -21,7 +21,6 @@ import {
   findBlockPositionalOverride,
   findInlinePositionalOverride,
 } from './find-positional-override'
-import type {LegacyRenderHooks} from './legacy-render-hooks'
 import {NewPipelineContext} from './new-pipeline-context'
 import {ParentContainerContext} from './parent-container-context'
 import {ParentTextBlockContext} from './parent-text-block-context'
@@ -40,7 +39,6 @@ export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextTextBlock | PortableTextObject
-  legacy: LegacyRenderHooks
   path: Path
   readOnly: boolean
   schema: EditorSchema
@@ -224,10 +222,8 @@ export function RenderElement(props: {
         <RenderTextBlock
           attributes={props.attributes}
           element={props.element}
-          legacy={props.legacy}
           path={props.path}
           readOnly={props.readOnly}
-          schema={schema}
           textBlock={props.element}
         >
           {props.children}
@@ -263,7 +259,6 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         inlineObjectConfig={inlineObjectConfig}
-        legacy={props.legacy}
         path={props.path}
         readOnly={props.readOnly}
         schema={schema}
@@ -290,7 +285,6 @@ export function RenderElement(props: {
       blockObject={props.element}
       element={props.element}
       blockObjectConfig={blockObjectConfig}
-      legacy={props.legacy}
       path={props.path}
       readOnly={props.readOnly}
       schema={schema}
