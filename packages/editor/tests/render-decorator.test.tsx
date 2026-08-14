@@ -1,7 +1,12 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema, type BlockDecoratorRenderProps} from '../src'
+import {
+  defineSchema,
+  defineTextBlock,
+  type BlockDecoratorRenderProps,
+} from '../src'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('renderDecorator', () => {
@@ -112,5 +117,46 @@ describe('renderDecorator', () => {
         {focused: false, selected: false},
       ])
     })
+  })
+
+  test('composes inside a registered text block', async () => {
+    const schema = defineSchema({
+      decorators: [{name: 'strong'}],
+    })
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: ({attributes, children}) => (
+        <div data-testid="text" {...attributes}>
+          {children}
+        </div>
+      ),
+    })
+    const renderDecorator = vi.fn(({children}) => <strong>{children}</strong>)
+
+    await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: schema,
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'bold text', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      editableProps: {renderDecorator},
+      children: <NodePlugin nodes={[textBlock]} />,
+    })
+
+    await vi.waitFor(() => {
+      const root = document.querySelector('[data-testid="text"]')
+      expect(root).not.toEqual(null)
+      expect(root!.innerHTML).toContain('<strong>')
+    })
+
+    expect(renderDecorator).toHaveBeenCalled()
   })
 })

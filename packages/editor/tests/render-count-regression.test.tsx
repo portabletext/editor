@@ -6,7 +6,7 @@ import {createTestEditor} from '../src/test/vitest'
 
 /**
  * Render-count regression suite for the consumer-facing render
- * callbacks (`defineContainer.render`, `renderBlock`, etc.).
+ * callbacks (`defineContainer.render`, `defineTextBlock.render`, etc.).
  *
  * Why: a consumer's render callback is the entry point to their own JSX
  * tree (often expensive). It must not fire on keystrokes that don't

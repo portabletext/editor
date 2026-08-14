@@ -3,9 +3,9 @@ title: Migrate render props to node registrations
 description: Move an editor from the render props on PortableTextEditable to defineX node registrations, one kind at a time.
 ---
 
-The editor has two ways to render a document's nodes (text blocks, block objects, inline objects, and spans): the render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), and node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`) mounted through `NodePlugin`. Registrations are how [containers](/editor/concepts/containers/) render, and for a registered node they own the wrapper entirely: those four render props do not compose with them.
+In v7, the editor had two ways to render a document's nodes (text blocks, block objects, inline objects, and spans): the render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), and node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`) mounted through `NodePlugin`. v8 removes those four render props: node registrations are now the only way to render blocks and their children. On v7, registrations were how [containers](/editor/concepts/containers/) rendered, and for a registered node they owned the wrapper entirely: those four render props did not compose with them.
 
-This guide migrates each render prop to its registration. You don't have to do it in one go.
+This guide is for editors arriving from v7: it maps each render prop to its registration. You don't have to migrate every kind in one go before upgrading.
 
 ## What maps to what
 
@@ -21,7 +21,7 @@ This guide migrates each render prop to its registration. You don't have to do i
 
 ## Migrate one kind at a time
 
-The engine dispatches per `_type`: a node renders through a registration when one matches its type (or a `'*'` catch-all for its kind), and at the top level falls back to the legacy pipeline when none does. Registering block objects doesn't affect how text blocks render, so you can migrate kind by kind and keep the remaining render props in place until their kind is migrated.
+On v7, the engine dispatched per `_type`: a node rendered through a registration when one matched its type (or a `'*'` catch-all for its kind), and at the top level fell back to the render props when none did. Registering block objects didn't affect how text blocks rendered, so you could migrate kind by kind, keeping the remaining render props in place until their kind was migrated, and drop them all once every kind had one, ahead of the v8 upgrade.
 
 One boundary to plan around: a registration claims everything rendered inside it. Inside a registered [container](/editor/concepts/containers/), unregistered types render through the engine defaults, not through your remaining render props, so when a container enters the picture mid-migration, register everything that renders inside it in the same step. The same applies one level down: a registered text block claims its inline children, and `renderChild` stops firing for the spans and inline objects inside it. That is why the steps below migrate inline objects and spans before text blocks.
 

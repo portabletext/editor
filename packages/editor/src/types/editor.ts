@@ -1,9 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {
   AnnotationSchemaType,
-  BlockObjectSchemaType,
   DecoratorSchemaType,
-  InlineObjectSchemaType,
   ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
@@ -22,7 +20,7 @@ import type {
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
-import type {BlockPath, Path} from './paths'
+import type {Path} from './paths'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {
@@ -171,32 +169,6 @@ export type OnCopyFn = (
 ) => undefined | unknown
 
 /** @beta */
-export interface BlockRenderProps {
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  level?: number
-  listItem?: string
-  path: BlockPath
-  selected: boolean
-  style?: string
-  schemaType: BlockObjectSchemaType
-  value: PortableTextBlock
-}
-
-/** @beta */
-export interface BlockChildRenderProps {
-  annotations: PortableTextObject[]
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  path: Path
-  selected: boolean
-  schemaType: InlineObjectSchemaType
-  value: PortableTextChild
-}
-
-/** @beta */
 export interface BlockAnnotationRenderProps {
   block: PortableTextBlock
   children: ReactElement<any>
@@ -234,25 +206,6 @@ export interface BlockListItemRenderProps {
   selected: boolean
   value: string
 }
-
-/**
- * @beta
- * @deprecated The `renderBlock` render prop is deprecated. Register your
- * block objects and text blocks with `defineBlockObject` /
- * `defineTextBlock` mounted through `NodePlugin` instead. See the
- * migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderBlockFunction = (props: BlockRenderProps) => JSX.Element
-
-/**
- * @beta
- * @deprecated The `renderChild` render prop is deprecated. Register your
- * inline objects and spans with `defineInlineObject` / `defineSpan`
- * mounted through `NodePlugin` instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderChildFunction = (props: BlockChildRenderProps) => JSX.Element
 
 /** @beta */
 export type RenderEditableFunction = (

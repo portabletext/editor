@@ -1,14 +1,15 @@
 import '@portabletext/plugin-table/ui/styles.css'
 import './editor.css'
 import {
+  defineBlockObject,
   defineTextBlock,
   EditorProvider,
   PortableTextEditable,
   useEditor,
   useEditorSelector,
   type BlockDecoratorRenderProps,
+  type BlockObjectRenderProps,
   type BlockPath,
-  type BlockRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
   type RangeDecoration,
@@ -155,7 +156,9 @@ export function Editor(props: {
             ) : null}
             <ListIndexProvider>
               <FullscreenAwareContainer>
-                <NodePlugin nodes={[playgroundTextBlock]} />
+                <NodePlugin
+                  nodes={[playgroundTextBlock, playgroundBlockObjectFallback]}
+                />
                 {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
                 {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
                 {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
@@ -233,7 +236,6 @@ function FullscreenAwareEditable(props: {
             className={editableClasses}
             rangeDecorations={props.rangeDecorations}
             renderAnnotation={renderAnnotation}
-            renderBlock={RenderBlock}
             renderDecorator={renderDecorator}
             renderPlaceholder={renderPlaceholder}
           />
@@ -406,15 +408,18 @@ function MarkdownFallback(props: {
   )
 }
 
-const RenderBlock = (props: BlockRenderProps) => {
+const playgroundBlockObjectFallback = defineBlockObject({
+  type: '*',
+  render: (props) => <PlaygroundBlockObject {...props} />,
+})
+
+function PlaygroundBlockObject(props: BlockObjectRenderProps) {
   const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
-  const editor = useEditor()
-  const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
 
-  let children = props.children
+  let content: JSX.Element
 
-  if (props.schemaType.name === 'break') {
-    children = (
+  if (props.node._type === 'break') {
+    content = (
       <div
         className={breakStyle({
           selected: props.selected,
@@ -429,11 +434,9 @@ const RenderBlock = (props: BlockRenderProps) => {
         />
       </div>
     )
-  }
-
-  if (props.schemaType.name === 'image') {
-    const image = props.value as {src?: string; alt?: string}
-    children = (
+  } else if (props.node._type === 'image') {
+    const image = props.node as {src?: string; alt?: string}
+    content = (
       <div
         className={imageStyle({
           selected: props.selected,
@@ -470,75 +473,73 @@ const RenderBlock = (props: BlockRenderProps) => {
         </div>
       </div>
     )
-  }
-
-  if (props.schemaType.name === 'callout') {
-    const tone = (props.value as unknown as {tone?: string}).tone
-    children = (
+  } else if (props.node._type === 'callout') {
+    const tone = (props.node as {tone?: string}).tone
+    content = (
       <MarkdownFallback
-        value={props.value}
+        value={props.node}
         label={`Callout${tone ? ` · ${tone}` : ''}`}
         icon={<InfoIcon className="size-3.5" />}
         selected={props.selected}
         focused={props.focused}
       />
     )
-  }
-
-  if (props.schemaType.name === 'fact-box') {
-    children = (
+  } else if (props.node._type === 'fact-box') {
+    content = (
       <MarkdownFallback
-        value={props.value}
+        value={props.node}
         label="Fact box"
         icon={<LayersIcon className="size-3.5" />}
         selected={props.selected}
         focused={props.focused}
       />
     )
-  }
-
-  if (props.schemaType.name === 'code-block') {
-    const language = (props.value as unknown as {language?: string}).language
-    children = (
+  } else if (props.node._type === 'code-block') {
+    const language = (props.node as {language?: string}).language
+    content = (
       <MarkdownFallback
-        value={props.value}
+        value={props.node}
         label={`Code block${language ? ` · ${language}` : ''}`}
         icon={<CodeIcon className="size-3.5" />}
         selected={props.selected}
         focused={props.focused}
       />
     )
-  }
-
-  if (props.schemaType.name === 'table') {
-    children = (
+  } else if (props.node._type === 'table') {
+    content = (
       <MarkdownFallback
-        value={props.value}
+        value={props.node}
         label="Table"
         icon={<TableIcon className="size-3.5" />}
         selected={props.selected}
         focused={props.focused}
       />
     )
+  } else {
+    return props.renderDefault(props)
   }
 
-  if (props.level === undefined && enableDragHandles) {
-    // Don't render drag handle on other levels right now since the styling is off
-    return (
-      <div className="me-1 relative">
-        <div
-          contentEditable={false}
-          draggable={!readOnly}
-          className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
-        >
-          <span />
-        </div>
-        <div>{children}</div>
+  return (
+    <div {...props.attributes}>
+      {props.children}
+      <div contentEditable={false} draggable={!props.readOnly}>
+        {enableDragHandles ? (
+          <div className="me-1 relative">
+            <div
+              contentEditable={false}
+              draggable={!props.readOnly}
+              className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
+            >
+              <span />
+            </div>
+            <div>{content}</div>
+          </div>
+        ) : (
+          content
+        )}
       </div>
-    )
-  }
-
-  return children
+    </div>
+  )
 }
 
 const renderDecorator: RenderDecoratorFunction = (props) => {

@@ -5,23 +5,16 @@ sidebar:
   order: 1
 ---
 
-The Portable Text Editor gives you control of how it renders each schema type element. You need to explicitly tell it what. These choices have no impact on the Portable Text output—they only affect how the editor itself renders content.
+The Portable Text Editor gives you control of how it renders each schema type element. Text blocks, block objects, inline objects, and spans render through node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`) mounted with `NodePlugin`; see [Containers](/editor/concepts/containers/) for how those compose, and the [migration guide](/editor/guides/migrate-render-props/) if you're coming from the removed `renderBlock`/`renderChild` props. The render props on this page are span-level: they fire on the spans inside a block no matter who renders that block, registered or not. These choices have no impact on the Portable Text output—they only affect how the editor itself renders content.
 
 :::note[Prerequisites]
-This guide covers `@portabletext/editor` **v7.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 19.2.7+.
-:::
-
-:::caution[Deprecated]
-The `renderBlock` and `renderChild` render props are deprecated and will be removed in a future major version. Node registrations (`defineBlockObject`, `defineInlineObject`, `defineSpan`) replace them; the [migration guide](/editor/guides/migrate-render-props/) walks through each prop. The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated. Text block styles and lists render through a `defineTextBlock` registration, not a render prop.
+This guide covers `@portabletext/editor` **v8.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 19.2.7+.
 :::
 
 The following props can be passed to the `PortableTextEditable` component:
 
 - `renderAnnotation`: For annotations (e.g., hyperlinks).
-- `renderBlock`: For block objects (e.g., images, embeds). (deprecated)
-- `renderChild`: For inline objects (e.g., custom emoji, stock symbols). (deprecated)
 - `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
-
 - `renderPlaceholder`: For custom placeholder text when the editor is empty.
 - `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
@@ -54,57 +47,6 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
   }
 
   return <>{props.children}</>
-}
-
-// Block objects
-const renderBlock: RenderBlockFunction = (props) => {
-  if (props.schemaType.name === 'image' && isImage(props.value)) {
-    return (
-      <div
-        style={{
-          border: '1px dotted grey',
-          padding: '0.25em',
-          marginBlockEnd: '0.25em',
-        }}
-      >
-        IMG: {props.value.src}
-      </div>
-    )
-  }
-
-  return <div style={{marginBlockEnd: '0.25em'}}>{props.children}</div>
-}
-
-// Check the shape of an image and confirm it has a src.
-function isImage(
-  props: PortableTextBlock,
-): props is PortableTextBlock & {src: string} {
-  return 'src' in props
-}
-
-// Inline objects
-const renderChild: RenderChildFunction = (props) => {
-  if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
-    return (
-      <span
-        style={{
-          border: '1px dotted grey',
-          padding: '0.15em',
-        }}
-      >
-        {props.value.symbol}
-      </span>
-    )
-  }
-
-  return <>{props.children}</>
-}
-
-// Check the shape of the object by confirming it has a symbol.
-function isStockTicker(
-  props: PortableTextChild,
-): props is PortableTextChild & {symbol: string} {
-  return 'symbol' in props
 }
 ```
 

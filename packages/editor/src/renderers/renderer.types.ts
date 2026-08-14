@@ -170,11 +170,9 @@ export type Container = {
  * register a different `_type` to render at that lexical scope.
  *
  * `defineTextBlock` opts the text block into the new render pipeline.
- * The consumer's `render` callback owns the outer wrapper entirely:
- * the engine emits `data-pt-*` attributes only - no `pt-*` CSS classes,
- * no legacy `data-block-*` attributes - and the block-level
- * `renderBlock` prop on
- * `<PortableTextEditable>` do not compose under this registration.
+ * The consumer's `render` callback owns the outer wrapper entirely: the
+ * engine emits `data-pt-*` attributes only, no `pt-*` CSS classes and no
+ * legacy `data-block-*` attributes.
  *
  * Span-level render props - `renderDecorator`, `renderAnnotation`,
  * `renderPlaceholder`, and range decorations - keep working. They fire

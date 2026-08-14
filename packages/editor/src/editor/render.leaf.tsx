@@ -4,7 +4,6 @@ import type {RenderLeafProps} from '../engine/react/components/editable'
 import type {
   RangeDecoration,
   RenderAnnotationFunction,
-  RenderChildFunction,
   RenderDecoratorFunction,
   RenderPlaceholderFunction,
 } from '../types/editor'
@@ -27,7 +26,6 @@ export function RenderLeaf(
     }
     readOnly: boolean
     renderAnnotation?: RenderAnnotationFunction
-    renderChild?: RenderChildFunction
     renderDecorator?: RenderDecoratorFunction
     renderPlaceholder?: RenderPlaceholderFunction
     schema: EditorSchema

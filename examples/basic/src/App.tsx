@@ -1,5 +1,6 @@
 import './editor.css'
 import {
+  defineBlockObject,
   defineInlineObject,
   defineSchema,
   defineTextBlock,
@@ -9,7 +10,6 @@ import {
   PortableTextChild,
   PortableTextEditable,
   RenderAnnotationFunction,
-  RenderBlockFunction,
   RenderDecoratorFunction,
   TextBlockRenderProps,
   useEditor,
@@ -85,8 +85,8 @@ function App() {
             }
           }}
         />
-        {/* Register how text blocks (styles and lists) and inline objects are rendered */}
-        <NodePlugin nodes={[textBlock, stockTicker]} />
+        {/* Register how text blocks (styles and lists), inline objects, and block objects are rendered */}
+        <NodePlugin nodes={[textBlock, stockTicker, imageBlock]} />
         {/* Toolbar needs to be rendered inside the `EditorProvider` component */}
         <Toolbar />
         {/* Provides the list numbering that `useListIndex` reads */}
@@ -98,9 +98,6 @@ function App() {
             renderDecorator={renderDecorator}
             // Control how annotations are rendered
             renderAnnotation={renderAnnotation}
-            // Required to render block objects (text blocks render through the
-            // `textBlock` registration above)
-            renderBlock={renderBlock}
           />
         </ListIndexProvider>
       </EditorProvider>
@@ -196,23 +193,28 @@ const stockTicker = defineInlineObject({
   ),
 })
 
-const renderBlock: RenderBlockFunction = (props) => {
-  if (props.schemaType.name === 'image' && isImage(props.value)) {
-    return (
+// Block objects render through a registered node as well. `props.children`
+// carries a hidden spacer the editor needs for caret placement; always
+// render it inside the wrapper
+const imageBlock = defineBlockObject({
+  type: 'image',
+  render: (props) => (
+    <div {...props.attributes}>
+      {props.children}
       <div
+        contentEditable={false}
+        draggable={!props.readOnly}
         style={{
           border: '1px dotted grey',
           padding: '0.25em',
           marginBlockEnd: '0.25em',
         }}
       >
-        IMG: {props.value.src}
+        {isImage(props.node) ? `IMG: ${props.node.src}` : null}
       </div>
-    )
-  }
-
-  return <div style={{marginBlockEnd: '0.25em'}}>{props.children}</div>
-}
+    </div>
+  ),
+})
 
 function isImage(
   props: PortableTextBlock,
