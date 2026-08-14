@@ -14,8 +14,8 @@ import {createTestEditor} from '../src/test/vitest'
  * Legacy-suppression contract for the new render pipeline.
  *
  * Once a position is inside a `registerNode`-shaped subtree, the four
- * block-level legacy `renderX` hooks (renderBlock, renderListItem,
- * renderStyle, renderChild) are suppressed. The four span/leaf-level
+ * block-level legacy `renderX` hooks (renderBlock, renderChild) are
+ * suppressed. The four span/leaf-level
  * hooks (renderDecorator, renderAnnotation, renderPlaceholder, range
  * decorations) keep firing because they operate at the leaf level on
  * span text - they wrap runs of text and don't emit pipeline-shaped

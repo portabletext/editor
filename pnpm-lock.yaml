@@ -204,6 +204,9 @@ importers:
       '@portabletext/keyboard-shortcuts':
         specifier: workspace:*
         version: link:../../packages/keyboard-shortcuts
+      '@portabletext/plugin-list-index':
+        specifier: workspace:*
+        version: link:../../packages/plugin-list-index
       '@portabletext/plugin-markdown-shortcuts':
         specifier: workspace:*
         version: link:../../packages/plugin-markdown-shortcuts

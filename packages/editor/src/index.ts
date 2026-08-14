@@ -110,7 +110,6 @@ export type {
   RenderDecoratorFunction,
   RenderEditableFunction,
   RenderPlaceholderFunction,
-  RenderStyleFunction,
   ScrollSelectionIntoViewFunction,
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'
