@@ -55,7 +55,7 @@
   "dependencies": {
     "@mdit/plugin-alert": "^0.23.2",
     "@portabletext/schema": "workspace:^",
-    "@portabletext/toolkit": "^5.0.2",
+    "@portabletext/toolkit": "^6.0.0",
     "markdown-it": "^14.3.0"
   },
   "devDependencies": {
@@ -69,7 +69,7 @@
     "vitest": "catalog:tooling"
   },
   "engines": {
-    "node": ">=20.19 <22 || >=22.12"
+    "node": ">=22.12"
   },
   "inlinedDependencies": {
     "@portabletext/types": "4.0.2"
