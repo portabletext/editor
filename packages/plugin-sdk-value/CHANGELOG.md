@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.2.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@7.10.19
+
 ## 7.2.3
 
 ### Patch Changes

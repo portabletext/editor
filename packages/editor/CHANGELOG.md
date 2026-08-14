@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.10.19
+
+### Patch Changes
+
+- Updated dependencies [[`da0503e`](https://github.com/portabletext/editor/commit/da0503e4697339c740c787d14de3b12f7a7d4a90)]:
+  - @portabletext/markdown@1.4.7
+
 ## 7.10.18
 
 ### Patch Changes

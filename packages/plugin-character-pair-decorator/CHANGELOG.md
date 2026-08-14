@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.47
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@7.10.19
+  - @portabletext/plugin-input-rule@6.0.16
+
 ## 8.0.46
 
 ### Patch Changes

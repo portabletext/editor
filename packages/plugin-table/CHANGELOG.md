@@ -1,5 +1,12 @@
 # @portabletext/plugin-table
 
+## 1.3.16
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@7.10.19
+
 ## 1.3.15
 
 ### Patch Changes
