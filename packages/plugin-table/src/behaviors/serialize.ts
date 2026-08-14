@@ -1,5 +1,7 @@
 import type {EditorSnapshot, Path} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {getFragment} from '@portabletext/editor/selectors'
+import {portableTextToMarkdown} from '@portabletext/markdown'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveTableSelection} from '../get-table-selection'
 import {cellValue, rowCells, tableRows, type TableConfig} from '../table-config'
@@ -40,10 +42,16 @@ export function createSerializeBehaviors(config: TableConfig) {
         if (!resolved) {
           return false
         }
-        const converter = snapshot.context.converters.find(
-          (candidate) => candidate.mimeType === event.mimeType,
-        )
-        if (!converter) {
+
+        // Core ships no `text/markdown` converter, so the plugin produces
+        // that mime type itself instead of delegating to one.
+        const isMarkdown = event.mimeType === 'text/markdown'
+        const converter = isMarkdown
+          ? undefined
+          : snapshot.context.converters.find(
+              (candidate) => candidate.mimeType === event.mimeType,
+            )
+        if (!converter && !isMarkdown) {
           return false
         }
 
@@ -93,14 +101,32 @@ export function createSerializeBehaviors(config: TableConfig) {
           return false
         }
 
-        return converter.serialize({
-          snapshot: {
-            ...doctoredSnapshot,
-            context: {
-              ...doctoredSnapshot.context,
-              selection: {anchor, focus},
-            },
+        const rectangleSnapshot = {
+          ...doctoredSnapshot,
+          context: {
+            ...doctoredSnapshot.context,
+            selection: {anchor, focus},
           },
+        }
+
+        if (isMarkdown) {
+          const blocks = getFragment(rectangleSnapshot).map(
+            (entry) => entry.node,
+          )
+          return {
+            type: 'serialization.success' as const,
+            data: portableTextToMarkdown(blocks),
+            mimeType: 'text/markdown' as const,
+            originEvent: event.originEvent.type,
+          }
+        }
+
+        if (!converter) {
+          return false
+        }
+
+        return converter.serialize({
+          snapshot: rectangleSnapshot,
           event: {type: 'serialize', originEvent: event.originEvent.type},
         })
       },

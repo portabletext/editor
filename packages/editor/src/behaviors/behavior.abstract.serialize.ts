@@ -16,6 +16,9 @@ export const abstractSerializeBehaviors = [
           mimeType: 'application/json',
           originEvent: event.originEvent,
         }),
+        // Core ships no `text/markdown` converter; the raise stays so
+        // plugins and consumers that handle the mime type themselves (via
+        // their own `serialize.data` Behavior) still get invoked.
         raise({
           type: 'serialize.data',
           mimeType: 'text/markdown',
