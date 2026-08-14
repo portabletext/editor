@@ -68,11 +68,34 @@ export type PortableTextEditableProps = Omit<
   onCopy?: OnCopyFn
   rangeDecorations?: RangeDecoration[]
   renderAnnotation?: RenderAnnotationFunction
+  /**
+   * @deprecated Register your block objects and text blocks with
+   * `defineBlockObject` / `defineTextBlock` mounted through `NodePlugin`
+   * instead. See the migration guide:
+   * https://www.portabletext.org/editor/guides/migrate-render-props/
+   */
   renderBlock?: RenderBlockFunction
+  /**
+   * @deprecated Register your inline objects and spans with
+   * `defineInlineObject` / `defineSpan` mounted through `NodePlugin`
+   * instead. See the migration guide:
+   * https://www.portabletext.org/editor/guides/migrate-render-props/
+   */
   renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
+  /**
+   * @deprecated Render list items with `defineTextBlock` mounted through
+   * `NodePlugin`, with list numbering from
+   * `@portabletext/plugin-list-index`. See the migration guide:
+   * https://www.portabletext.org/editor/guides/migrate-render-props/
+   */
   renderListItem?: RenderListItemFunction
   renderPlaceholder?: RenderPlaceholderFunction
+  /**
+   * @deprecated Render text-block styles with `defineTextBlock` mounted
+   * through `NodePlugin` instead. See the migration guide:
+   * https://www.portabletext.org/editor/guides/migrate-render-props/
+   */
   renderStyle?: RenderStyleFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
   selection?: EditorSelection
