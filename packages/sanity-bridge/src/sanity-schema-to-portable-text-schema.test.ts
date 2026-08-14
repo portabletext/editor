@@ -2,7 +2,6 @@ import {
   getSubSchema,
   type FieldDefinition,
   type OfDefinition,
-  type Schema,
 } from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
 import {builtinTypes} from '@sanity/schema/_internal'
@@ -52,7 +51,7 @@ const defaultBlockOfMember = {
 }
 
 describe(sanitySchemaToPortableTextSchema.name, () => {
-  const defaultSchema: Schema = {
+  const defaultSchema = {
     block: {
       name: 'block',
     },
