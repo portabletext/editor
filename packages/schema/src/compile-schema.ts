@@ -1,7 +1,6 @@
 import type {SchemaDefinition} from './define-schema'
 import type {
   AnnotationSchemaType,
-  BaseDefinition,
   BlockOfDefinition,
   DecoratorSchemaType,
   FieldDefinition,
@@ -64,15 +63,8 @@ function resolveBlockInheritance(
   inheritance: BlockInheritance,
 ): BlockInheritance {
   return {
-    styles: member.styles
-      ? member.styles.map((style) => ({...style, value: style.name}))
-      : inheritance.styles,
-    decorators: member.decorators
-      ? member.decorators.map((decorator) => ({
-          ...decorator,
-          value: decorator.name,
-        }))
-      : inheritance.decorators,
+    styles: member.styles ?? inheritance.styles,
+    decorators: member.decorators ?? inheritance.decorators,
     annotations: member.annotations
       ? member.annotations.map((annotation) => ({
           ...annotation,
@@ -82,9 +74,7 @@ function resolveBlockInheritance(
             ) ?? [],
         }))
       : inheritance.annotations,
-    lists: member.lists
-      ? member.lists.map((list) => ({...list, value: list.name}))
-      : inheritance.lists,
+    lists: member.lists ?? inheritance.lists,
     inlineObjects: member.inlineObjects
       ? member.inlineObjects.map((inlineObject) => ({
           ...inlineObject,
@@ -142,30 +132,17 @@ function compileField(
   return field
 }
 
-function compileBaseDefinitionWithValue<T extends BaseDefinition>(
-  definition: T,
-): T & {value: string} {
-  return {...definition, value: definition.name}
-}
-
 /**
  * @public
  */
 export function compileSchema(definition: SchemaDefinition): Schema {
-  const userStyles = (definition.styles ?? []).map(
-    compileBaseDefinitionWithValue,
-  )
-  const styles = !userStyles.some((style) => style.value === 'normal')
-    ? [
-        {value: 'normal', name: 'normal', title: 'Normal'} as StyleSchemaType,
-        ...userStyles,
-      ]
+  const userStyles = definition.styles ?? []
+  const styles = !userStyles.some((style) => style.name === 'normal')
+    ? [{name: 'normal', title: 'Normal'} as StyleSchemaType, ...userStyles]
     : userStyles
 
-  const lists = (definition.lists ?? []).map(compileBaseDefinitionWithValue)
-  const decorators = (definition.decorators ?? []).map(
-    compileBaseDefinitionWithValue,
-  )
+  const lists = definition.lists ?? []
+  const decorators = definition.decorators ?? []
 
   // Annotations and inline objects may contain array fields whose `of`
   // includes `{type: 'block'}`. Those nested blocks must inherit from the

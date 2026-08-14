@@ -30,7 +30,7 @@ function asNamedTypes<
   if (!resolved) {
     return undefined
   }
-  return resolved.map((entry) => ({...entry, value: entry.name}) as T)
+  return resolved.map((entry) => entry as T)
 }
 
 function asFieldedTypes<

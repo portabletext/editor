@@ -20,35 +20,17 @@ export type Schema = {
 /**
  * @public
  */
-export type StyleSchemaType = BaseDefinition & {
-  /**
-   * @deprecated
-   * Use `name` instead
-   */
-  value: string
-}
+export type StyleSchemaType = BaseDefinition
 
 /**
  * @public
  */
-export type ListSchemaType = BaseDefinition & {
-  /**
-   * @deprecated
-   * Use `name` instead
-   */
-  value: string
-}
+export type ListSchemaType = BaseDefinition
 
 /**
  * @public
  */
-export type DecoratorSchemaType = BaseDefinition & {
-  /**
-   * @deprecated
-   * Use `name` instead
-   */
-  value: string
-}
+export type DecoratorSchemaType = BaseDefinition
 
 /**
  * @public
