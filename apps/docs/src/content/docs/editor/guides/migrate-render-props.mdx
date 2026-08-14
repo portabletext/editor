@@ -50,29 +50,27 @@ import {defineBlockObject} from '@portabletext/editor'
 
 const imageBlock = defineBlockObject({
   type: 'image',
-  render: ({attributes, children, node}) => (
+  render: ({attributes, children, node, readOnly}) => (
     <div {...attributes} style={{border: '1px solid #ccc', padding: '0.5em'}}>
-      <img
-        src={String(node.src)}
-        alt={String(node.alt ?? '')}
-        contentEditable={false}
-      />
+      <div contentEditable={false} draggable={!readOnly}>
+        <img src={String(node.src)} alt={String(node.alt ?? '')} />
+      </div>
       {children}
     </div>
   ),
 })
 ```
 
-Three contract differences from the legacy callback: spread `attributes` onto your outer element, render `children` even though the block is a void (the engine mounts its internals through them), and mark the visible content `contentEditable={false}` while keeping the outer element editable, the engine anchors the caret through it. This mirrors the engine's own default block-object render.
+Four contract differences from the legacy callback: spread `attributes` onto your outer element, render `children` even though the block is a void (the engine mounts its internals through them), mark the visible content `contentEditable={false}` while keeping the outer element editable (the engine anchors the caret through it), and put `draggable={!readOnly}` on that non-editable wrapper. The legacy pipeline added the `contentEditable` and `draggable` wrapper for you; a registration owns the whole node, so dropping `draggable` silently loses drag-to-move. This mirrors the engine's own default block-object render.
 
 If you render every block object the same way, a preview card, say, the catch-all `type: '*'` matches every block object type that has no more specific registration, which is the direct equivalent of the generic legacy callback:
 
 ```tsx
 const blockObjectFallback = defineBlockObject({
   type: '*',
-  render: ({attributes, children, node}) => (
+  render: ({attributes, children, node, readOnly}) => (
     <div {...attributes}>
-      <div contentEditable={false}>
+      <div contentEditable={false} draggable={!readOnly}>
         <BlockObjectPreview node={node} />
       </div>
       {children}
@@ -103,16 +101,18 @@ import {defineInlineObject} from '@portabletext/editor'
 
 const stockTicker = defineInlineObject({
   type: 'stock-ticker',
-  render: ({attributes, children, node}) => (
+  render: ({attributes, children, node, readOnly}) => (
     <span {...attributes} className="ticker">
-      {String(node.symbol)}
       {children}
+      <span draggable={!readOnly} style={{display: 'inline-block'}}>
+        {String(node.symbol)}
+      </span>
     </span>
   ),
 })
 ```
 
-Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine and the span-level render props, and only registered inline object types hit your render.
+Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. They DO need the inner `draggable={!readOnly}` wrapper around the visible content: the legacy pipeline wrapped your `renderChild` output in a `draggable` inline-block span, which is what makes an inline object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection). A registration that renders the content bare loses both behaviors, and nothing fails loudly. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine and the span-level render props, and only registered inline object types hit your render.
 
 ## Step 3: spans, if you customized them
 
