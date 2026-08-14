@@ -69,7 +69,8 @@
   },
   "dependencies": {
     "@floating-ui/dom": "catalog:",
-    "@portabletext/keyboard-shortcuts": "workspace:^"
+    "@portabletext/keyboard-shortcuts": "workspace:^",
+    "@portabletext/markdown": "workspace:^"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",

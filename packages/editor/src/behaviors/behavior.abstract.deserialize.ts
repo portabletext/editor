@@ -11,7 +11,6 @@ import {fitBlocksToDestination} from './fit-blocks-to-destination'
 const mimeTypePriority: Array<MIMEType> = [
   'application/x-portable-text',
   'application/json',
-  'text/markdown',
   'text/html',
   'text/plain',
 ]

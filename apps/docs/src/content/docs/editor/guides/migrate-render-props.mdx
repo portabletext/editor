@@ -360,3 +360,62 @@ function App() {
 ```
 
 `renderPlaceholder` is the only render prop left unmigrated: registrations render nodes identified by a schema type, and the placeholder is empty-editor chrome with no type to register under, so it stays as is. `rangeDecorations` is a separate data prop, not a render prop: it carries a component that wraps a span's rendered output from the outside, after the span (registered or not) has already rendered, so it is untouched by this migration too.
+
+## Restore the `text/markdown` clipboard behavior
+
+Unrelated to render props, but also a v8 change: the editor no longer ships a built-in `text/markdown` converter. Pasting Markdown-formatted text no longer auto-parses it into Portable Text blocks, and copying no longer writes a `text/markdown` entry to the clipboard alongside `text/html` and `text/plain`.
+
+To restore the old behavior, add [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown) as your own dependency and register two Behaviors:
+
+```tsx
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {getFragment} from '@portabletext/editor/selectors'
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
+const deserializeMarkdown = defineBehavior({
+  on: 'deserialize.data',
+  guard: ({snapshot, event}) => {
+    if (event.mimeType !== 'text/plain') {
+      return false
+    }
+
+    const blocks = markdownToPortableText(event.data, {
+      schema: snapshot.context.schema,
+      keyGenerator: snapshot.context.keyGenerator,
+    })
+
+    if (blocks.length === 0) {
+      return false
+    }
+
+    return {blocks}
+  },
+  actions: [
+    ({event}, {blocks}) => [
+      raise({...event, type: 'deserialization.success', data: blocks}),
+    ],
+  ],
+})
+
+const serializeMarkdown = defineBehavior({
+  on: 'serialize.data',
+  guard: ({event}) => event.mimeType === 'text/markdown',
+  actions: [
+    ({snapshot, event}) => [
+      raise({
+        type: 'serialization.success',
+        mimeType: 'text/markdown',
+        data: portableTextToMarkdown(
+          getFragment(snapshot).map((entry) => entry.node),
+        ),
+        originEvent: event.originEvent,
+      }),
+    ],
+  ],
+})
+```
+
+Mount both through `BehaviorPlugin`, the same way as any other custom Behavior. `plugin-table`'s table copy handler is a worked example of a `serialize.data` handler that produces `text/markdown` on its own, since the core converter is gone for it too.

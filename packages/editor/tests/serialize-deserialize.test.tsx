@@ -186,14 +186,13 @@ describe('Serialize/Deserialize', () => {
         <BehaviorPlugin
           behaviors={[
             // Given a custom plugin that deliberately fails to deserialize
-            // application/x-portable-text, application/json and text/markdown
+            // application/x-portable-text and application/json
             defineBehavior({
               on: 'deserialize.data',
               guard: ({event}) => {
                 if (
                   event.mimeType === 'application/x-portable-text' ||
-                  event.mimeType === 'application/json' ||
-                  event.mimeType === 'text/markdown'
+                  event.mimeType === 'application/json'
                 ) {
                   return true
                 }
@@ -304,8 +303,8 @@ describe('Serialize/Deserialize', () => {
       ]),
     )
 
-    // And text/markdown is put on the clipboard
-    expect(dataTransfer.getData('text/markdown')).toEqual('# foo bar baz')
+    // Core ships no text/markdown converter, so nothing is written for it
+    expect(dataTransfer.getData('text/markdown')).toEqual('')
 
     // And text/html is put on the clipboard
     expect(dataTransfer.getData('text/html')).toEqual('<h1>foo bar baz</h1>')
