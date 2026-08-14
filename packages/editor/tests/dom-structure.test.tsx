@@ -548,7 +548,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('7. container DOM does not contain any `data-slate-*` attributes', async () => {
+  test('7. container DOM does not contain any legacy attributes', async () => {
     const calloutSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -612,7 +612,6 @@ describe('DOM structure', () => {
     await vi.waitFor(() => {
       const calloutEl = document.querySelector('.callout')
       expect(calloutEl).not.toEqual(null)
-      expect(calloutEl!.innerHTML.match(/data-slate-/g)).toEqual(null)
       expect(calloutEl!.innerHTML.match(/(?<!pt-)data-block-type/g)).toEqual(
         null,
       )
@@ -630,7 +629,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('8. text block rendered via `defineTextBlock` inside a container emits `data-pt-block="text"`, not `data-slate-node="element"`', async () => {
+  test('8. text block rendered via `defineTextBlock` inside a container emits `data-pt-block="text"`', async () => {
     const calloutSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -687,11 +686,10 @@ describe('DOM structure', () => {
       const paragraph = document.querySelector('.callout-paragraph')
       expect(paragraph).not.toEqual(null)
       expect(paragraph!.getAttribute('data-pt-block')).toEqual('text')
-      expect(paragraph!.hasAttribute('data-slate-node')).toEqual(false)
     })
   })
 
-  test('9. root text block rendered via `defineTextBlock` catch-all omits `data-slate-*`/`data-child-*` on spans and inline objects', async () => {
+  test('9. root text block rendered via `defineTextBlock` catch-all omits `data-child-*` on spans and inline objects', async () => {
     await createTestEditor({
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],

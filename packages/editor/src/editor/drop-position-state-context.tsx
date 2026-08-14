@@ -36,7 +36,7 @@ const DropPositionStoreContext = createContext<DropPositionStore>(defaultStore)
  *
  * Why not thread `dropPosition` through `renderElement`? It changes on every
  * `dragover` (pointer-move frequency), so feeding it to `renderElement`'s
- * `useCallback` deps hands Slate a new render function each tick and re-renders
+ * `useCallback` deps hands the engine a new render function each tick and re-renders
  * the entire element tree. The per-path store re-renders only the blocks
  * gaining or losing the indicator. Mirrors `SelectionStateProvider`.
  */
