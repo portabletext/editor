@@ -92,7 +92,6 @@
   "dependencies": {
     "@portabletext/html": "workspace:^",
     "@portabletext/keyboard-shortcuts": "workspace:^",
-    "@portabletext/markdown": "workspace:^",
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^6.0.0",
