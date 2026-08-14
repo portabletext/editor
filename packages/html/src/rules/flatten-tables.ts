@@ -102,7 +102,7 @@ export function createFlattenTableRule({
       const tbody = node.tBodies[0]
       const bodyRows = tbody ? [...tbody.rows] : []
 
-      if (!headerRows || !bodyRows) {
+      if (!headerRows) {
         return undefined
       }
 
