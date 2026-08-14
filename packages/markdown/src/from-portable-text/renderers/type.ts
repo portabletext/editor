@@ -14,8 +14,29 @@ export const DefaultCodeBlockRenderer: PortableTextTypeRenderer<{
   _type: 'code'
   code: string
   language: string | undefined
-}> = ({value}) => {
-  return `\`\`\`${value.language ?? ''}\n${value.code}\n\`\`\``
+}> = (options) => {
+  if (!isCodeShaped(options.value)) {
+    return DefaultUnknownTypeRenderer(options)
+  }
+  return `\`\`\`${normalizeLanguage(options.value.language)}\n${options.value.code}\n\`\`\``
+}
+
+function isCodeShaped(value: unknown): value is {code: string} {
+  return typeof (value as {code?: unknown} | null)?.code === 'string'
+}
+
+/**
+ * A fence info string is everything after the opening fence on the same
+ * line, so a real `language` can never contain a newline, and the parser
+ * only ever produces a string. Junk in this optional field should not send
+ * an otherwise valid code block to the fenced-JSON path, so it is treated
+ * as absent instead of guarded.
+ */
+function normalizeLanguage(language: unknown): string {
+  if (typeof language !== 'string' || language.includes('\n')) {
+    return ''
+  }
+  return language
 }
 
 /**
@@ -31,8 +52,15 @@ export const DefaultHorizontalRuleRenderer: PortableTextTypeRenderer = () => {
 export const DefaultHtmlRenderer: PortableTextTypeRenderer<{
   _type: 'html'
   html: string
-}> = ({value}) => {
-  return value.html
+}> = (options) => {
+  if (!isHtmlShaped(options.value)) {
+    return DefaultUnknownTypeRenderer(options)
+  }
+  return options.value.html
+}
+
+function isHtmlShaped(value: unknown): value is {html: string} {
+  return typeof (value as {html?: unknown} | null)?.html === 'string'
 }
 
 /**
@@ -43,10 +71,30 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
   src: string
   alt: string | undefined
   title: string | undefined
-}> = ({value}) => {
-  const alt = escapeImageAndLinkText(value.alt ?? '')
-  const title = value.title ? ` "${escapeImageAndLinkTitle(value.title)}"` : ''
-  return `![${alt}](${value.src}${title})`
+}> = (options) => {
+  if (!isImageShaped(options.value)) {
+    return DefaultUnknownTypeRenderer(options)
+  }
+  const alt = escapeImageAndLinkText(options.value.alt ?? '')
+  const title = options.value.title
+    ? ` "${escapeImageAndLinkTitle(options.value.title)}"`
+    : ''
+  return `![${alt}](${options.value.src}${title})`
+}
+
+function isImageShaped(value: unknown): value is {
+  src: string
+  alt: string | null | undefined
+  title: string | null | undefined
+} {
+  const image = value as {src?: unknown; alt?: unknown; title?: unknown} | null
+  return (
+    typeof image?.src === 'string' &&
+    // CMS payloads commonly store cleared optional strings as `null`; the
+    // render body treats `null` like absent, so the guard must too
+    (image.alt == null || typeof image.alt === 'string') &&
+    (image.title == null || typeof image.title === 'string')
+  )
 }
 
 /**
@@ -227,11 +275,15 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
   _type: 'callout'
   tone: string
   content: Array<PortableTextBlock>
-}> = ({value, renderNode}) => {
-  const renderedContent = value.content
+}> = (options) => {
+  if (!isCalloutShaped(options.value)) {
+    return DefaultUnknownTypeRenderer(options)
+  }
+  const {renderNode} = options
+  const renderedContent = options.value.content
     .map((block, index) =>
       renderNode({
-        node: {...block, style: 'normal'},
+        node: block._type === 'block' ? {...block, style: 'normal'} : block,
         index,
         isInline: false,
         renderNode,
@@ -244,7 +296,18 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
     .map((line) => (line === '' ? '>' : `> ${line}`))
     .join('\n')
 
-  return `> [!${value.tone.toUpperCase()}]\n${prefixed}`
+  return `> [!${options.value.tone.toUpperCase()}]\n${prefixed}`
+}
+
+function isCalloutShaped(
+  value: unknown,
+): value is {tone: string; content: Array<TypedObject>} {
+  const callout = value as {tone?: unknown; content?: unknown} | null
+  return (
+    typeof callout?.tone === 'string' &&
+    Array.isArray(callout.content) &&
+    callout.content.every(isTypedObject)
+  )
 }
 
 /**
@@ -266,7 +329,7 @@ export const DefaultBlockquoteObjectRenderer: PortableTextTypeRenderer<{
   const renderedContent = value.content
     .map((block, index) =>
       renderNode({
-        node: {...block, style: 'normal'},
+        node: block._type === 'block' ? {...block, style: 'normal'} : block,
         index,
         isInline: false,
         renderNode,

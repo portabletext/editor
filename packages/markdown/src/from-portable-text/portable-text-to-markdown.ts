@@ -35,6 +35,11 @@ import {
   DefaultUnknownStyleRenderer,
 } from './renderers/style'
 import {
+  DefaultCalloutRenderer,
+  DefaultCodeBlockRenderer,
+  DefaultHorizontalRuleRenderer,
+  DefaultHtmlRenderer,
+  DefaultImageRenderer,
   DefaultTableRenderer,
   DefaultUnknownTypeRenderer,
 } from './renderers/type'
@@ -42,7 +47,12 @@ import type {PortableTextRenderers} from './types'
 
 const defaultRenderers: PortableTextRenderers = {
   types: {
-    table: DefaultTableRenderer,
+    'callout': DefaultCalloutRenderer,
+    'code': DefaultCodeBlockRenderer,
+    'horizontal-rule': DefaultHorizontalRuleRenderer,
+    'html': DefaultHtmlRenderer,
+    'image': DefaultImageRenderer,
+    'table': DefaultTableRenderer,
   },
 
   block: {
