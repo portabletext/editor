@@ -1,20 +1,11 @@
 import type {Patch} from '@portabletext/patches'
 import type {
-  ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
-  PortableTextTextBlock,
-  StyleSchemaType,
   TypedObject,
 } from '@portabletext/schema'
-import type {
-  ClipboardEvent,
-  JSX,
-  PropsWithChildren,
-  ReactElement,
-  RefObject,
-} from 'react'
+import type {ClipboardEvent, JSX, PropsWithChildren, ReactElement} from 'react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
@@ -171,25 +162,6 @@ export type OnCopyFn = (
   event: ClipboardEvent<HTMLDivElement | HTMLSpanElement>,
 ) => undefined | unknown
 
-/**
- * @beta
- * @deprecated The `renderListItem` render prop is removed; render list
- * items with `defineTextBlock` and `@portabletext/plugin-list-index`
- * instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export interface BlockListItemRenderProps {
-  block: PortableTextTextBlock
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  level: number
-  path: Path
-  schemaType: ListSchemaType
-  selected: boolean
-  value: string
-}
-
 /** @public */
 export type RenderEditableFunction = (
   props: PortableTextEditableProps,
@@ -197,24 +169,6 @@ export type RenderEditableFunction = (
 
 /** @public */
 export type RenderPlaceholderFunction = () => React.ReactNode
-
-/**
- * @beta
- * @deprecated The `renderStyle` render prop is removed; render text-block
- * styles with `defineTextBlock` instead. This props shape will be removed
- * in the next major version.
- */
-
-export interface BlockStyleRenderProps {
-  block: PortableTextTextBlock
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  path: Path
-  selected: boolean
-  schemaType: StyleSchemaType
-  value: string
-}
 
 /** @public */
 export type ScrollSelectionIntoViewFunction = (
