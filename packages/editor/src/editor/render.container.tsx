@@ -27,7 +27,7 @@ export function RenderContainer(props: {
   const render = props.containerConfig.container.render
 
   // Container registrations forbid the `'block'` and `'span'` types
-  // at the factory level (see `ContainerNodeForType`), so a container
+  // at the factory level (`defineContainer` rejects them), so a container
   // node here is always a `PortableTextObject`. The runtime invariant
   // is enforced by registration; expressing it in the type graph
   // would require threading the `_type` literal through dispatch.
