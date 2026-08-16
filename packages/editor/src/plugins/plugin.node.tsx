@@ -3,7 +3,7 @@ import {useEditor} from '../editor/use-editor'
 import type {RegistrableNode} from '../renderers/renderer.types'
 
 /**
- * @alpha
+ * @public
  *
  * Plugin component that registers a list of nodes (containers, text
  * blocks, spans, block objects, inline objects) with the editor. Each

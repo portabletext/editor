@@ -65,8 +65,8 @@ function toRegisteredOfEntry(
   if ('inlineObject' in entry) {
     return {kind: 'inlineObject', type: entry.inlineObject.type}
   }
-  // Text-block configs are not exposed on the public Containers tree -
-  // they have their own `textBlocks` map on the editor context.
+  // Text-block configs are deliberately dropped: they live on an
+  // engine-internal `textBlocks` map, not on the public `Containers` tree.
   return undefined
 }
 

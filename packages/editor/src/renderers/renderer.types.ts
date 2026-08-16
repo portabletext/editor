@@ -8,20 +8,7 @@ import type {Path} from '../engine/interfaces/path'
 import type {ChildArrayField} from '../schema/resolve-containers'
 
 /**
- * @alpha
- *
- * Narrow the container node type by the registered `_type`. Containers
- * always render portable text objects: `'span'` is always a leaf and
- * `'block'` is always a text block; both are excluded.
- */
-export type ContainerNodeForType<TType extends string> = TType extends
-  | 'span'
-  | 'block'
-  ? never
-  : PortableTextObject
-
-/**
- * @alpha
+ * @public
  *
  * A container's render function receives a node and renders an element
  * that wraps its editable children. The render is positional: it fires for
@@ -55,12 +42,12 @@ export type ContainerRenderProps = {
   renderDefault: (props: ContainerRenderProps) => ReactElement
 }
 /**
- * @alpha
+ * @public
  */
 export type ContainerRender = (props: ContainerRenderProps) => ReactElement
 
 /**
- * @alpha
+ * @public
  *
  * A span's render function. Receives a portable text span node and
  * wraps it. `children` carries the styled text already decorated by
@@ -81,12 +68,12 @@ export type SpanRenderProps = {
   renderDefault: (props: SpanRenderProps) => ReactElement
 }
 /**
- * @alpha
+ * @public
  */
 export type SpanRender = (props: SpanRenderProps) => ReactElement
 
 /**
- * @alpha
+ * @public
  *
  * A block object's render function. Receives a non-editable block-level
  * portable text object. `children` carries an engine-emitted void
@@ -109,12 +96,12 @@ export type BlockObjectRenderProps = {
   renderDefault: (props: BlockObjectRenderProps) => ReactElement
 }
 /**
- * @alpha
+ * @public
  */
 export type BlockObjectRender = (props: BlockObjectRenderProps) => ReactElement
 
 /**
- * @alpha
+ * @public
  *
  * An inline object's render function. Receives a non-editable inline
  * portable text object. `children` carries an engine-emitted void
@@ -137,14 +124,14 @@ export type InlineObjectRenderProps = {
   renderDefault: (props: InlineObjectRenderProps) => ReactElement
 }
 /**
- * @alpha
+ * @public
  */
 export type InlineObjectRender = (
   props: InlineObjectRenderProps,
 ) => ReactElement
 
 /**
- * @alpha
+ * @public
  *
  * A container registration. Identifies a block object `_type` whose value
  * holds editable children in `arrayField`. The optional `of` array carries
@@ -176,7 +163,7 @@ export type Container = {
 }
 
 /**
- * @alpha
+ * @public
  *
  * A text block registration. The text block `_type` is `'block'` at the
  * top level. Positional overrides nested in a container's `of` array can
@@ -213,7 +200,7 @@ export type TextBlock = {
 }
 
 /**
- * @alpha
+ * @public
  *
  * Text block render function. `children` carries the rendered spans -
  * `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range
@@ -236,12 +223,12 @@ export type TextBlockRenderProps = {
   renderDefault: (props: TextBlockRenderProps) => ReactElement
 }
 /**
- * @alpha
+ * @public
  */
 export type TextBlockRender = (props: TextBlockRenderProps) => ReactElement
 
 /**
- * @alpha
+ * @public
  *
  * A span registration. The span `_type` is `'span'` at the top level.
  * Positional overrides nested in a container's `of` array can register
@@ -261,7 +248,7 @@ export type Span = {
 }
 
 /**
- * @alpha
+ * @public
  *
  * A non-editable block-level object registration. Identifies a `_type`
  * whose value renders as a block-level void node (image, embed, etc.).
@@ -279,7 +266,7 @@ export type BlockObject = {
 }
 
 /**
- * @alpha
+ * @public
  *
  * A non-editable inline object registration. Identifies a `_type` whose
  * value renders as an inline void node (mention, inline image, etc.).
@@ -297,7 +284,7 @@ export type InlineObject = {
 }
 
 /**
- * @alpha
+ * @public
  *
  * The discriminated union of every registration accepted by
  * `editor.registerNode` and the `<NodePlugin>` component.
@@ -310,7 +297,7 @@ export type RegistrableNode =
   | InlineObject
 
 /**
- * @alpha
+ * @public
  *
  * Define a container renderer. The returned registration is mounted via
  * the `<NodePlugin>` component at the top level, or nested inside
@@ -354,7 +341,7 @@ export function defineContainer<const TType extends string>(config: {
     attributes: Record<string, unknown>
     children: ReactElement
     focused: boolean
-    node: ContainerNodeForType<TType>
+    node: TType extends 'span' | 'block' ? never : PortableTextObject
     path: Path
     readOnly: boolean
     selected: boolean
@@ -366,7 +353,7 @@ export function defineContainer<const TType extends string>(config: {
 }
 
 /**
- * @alpha
+ * @public
  *
  * Define a span renderer. The returned registration is mounted via the
  * `<NodePlugin>` component at the top level, or nested inside a
@@ -397,7 +384,7 @@ export function defineSpan<const TType extends string>(config: {
 }
 
 /**
- * @alpha
+ * @public
  *
  * Define a non-editable block-level object renderer for a `_type`
  * declared in the schema's `blockObjects` array.
@@ -432,7 +419,7 @@ export function defineBlockObject<const TType extends string>(config: {
 }
 
 /**
- * @alpha
+ * @public
  *
  * Define a non-editable inline object renderer for a `_type` declared
  * in the schema's `inlineObjects` array.
@@ -467,7 +454,7 @@ export function defineInlineObject<const TType extends string>(config: {
 }
 
 /**
- * @alpha
+ * @public
  *
  * Define a text block renderer. The returned registration is mounted
  * via the `<NodePlugin>` component, or nested inside a container's

@@ -67,7 +67,7 @@ export type Editor = {
    * `defineSpan`, `defineBlockObject`, `defineInlineObject`). Returns
    * a function that unregisters the node when called.
    *
-   * @alpha
+   * @public
    */
   registerNode: (config: {node: RegistrableNode}) => () => void
   send: (event: EditorEvent) => void

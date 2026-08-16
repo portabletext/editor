@@ -24,8 +24,8 @@ export type ChildArrayField = FieldDefinition & {
  *   scoped to this parent.
  *
  * The full container registration (including the render callback)
- * lives on the editor's internal {@link ResolvedContainers} map and
- * is not exposed on the public context.
+ * lives on an engine-internal map and is not exposed on the public
+ * context.
  *
  * Two top-level entries with the same `_type` cannot coexist - the
  * register handler warns on duplicates. But the SAME `_type`
@@ -81,8 +81,7 @@ export type RegisteredInlineObject = {
 /**
  * Union of non-container positional registrations that may appear in
  * a {@link RegisteredContainer}'s `of` array. Text-block registrations
- * are NOT included here; they surface on `EditorContext.textBlocks`,
- * not on the containers tree.
+ * are NOT included here and do not appear on the containers tree.
  *
  * @alpha
  */
