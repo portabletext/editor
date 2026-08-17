@@ -1,21 +1,23 @@
 import './editor.css'
 import {
+  defineBlockObject,
+  defineInlineObject,
   defineSchema,
+  defineTextBlock,
   EditorProvider,
   keyGenerator,
   PortableTextBlock,
   PortableTextChild,
   PortableTextEditable,
   RenderAnnotationFunction,
-  RenderBlockFunction,
-  RenderChildFunction,
   RenderDecoratorFunction,
-  RenderStyleFunction,
+  TextBlockRenderProps,
   useEditor,
   useEditorSelector,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import * as selectors from '@portabletext/editor/selectors'
+import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
 import {useState} from 'react'
 
 // Define the schema for the editor
@@ -83,26 +85,21 @@ function App() {
             }
           }}
         />
+        {/* Register how text blocks (styles and lists), inline objects, and block objects are rendered */}
+        <NodePlugin nodes={nodes} />
         {/* Toolbar needs to be rendered inside the `EditorProvider` component */}
         <Toolbar />
-        {/* Component that controls the actual rendering of the editor */}
-        <PortableTextEditable
-          style={{border: '1px solid black', padding: '0.5em'}}
-          // Control how decorators are rendered
-          renderDecorator={renderDecorator}
-          // Control how annotations are rendered
-          renderAnnotation={renderAnnotation}
-          // Required to render block objects but also to make `renderStyle` take effect
-          renderBlock={renderBlock}
-          // Control how styles are rendered
-          renderStyle={renderStyle}
-          // Control how inline objects are rendered
-          renderChild={renderChild}
-          // Rendering lists is harder and most likely requires a fair amount of CSS
-          // First, return the children like here
-          // Next, look in the imported `editor.css` file to see how list styles are implemented
-          renderListItem={(props) => <>{props.children}</>}
-        />
+        {/* Provides the list numbering that `useListIndex` reads */}
+        <ListIndexProvider>
+          {/* Component that controls the actual rendering of the editor */}
+          <PortableTextEditable
+            style={{border: '1px solid black', padding: '0.5em'}}
+            // Control how decorators are rendered
+            renderDecorator={renderDecorator}
+            // Control how annotations are rendered
+            renderAnnotation={renderAnnotation}
+          />
+        </ListIndexProvider>
       </EditorProvider>
       <pre style={{border: '1px dashed black', padding: '0.5em'}}>
         {JSON.stringify(value, null, 2)}
@@ -132,61 +129,101 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
   return <>{props.children}</>
 }
 
-const renderBlock: RenderBlockFunction = (props) => {
-  if (props.schemaType.name === 'image' && isImage(props.value)) {
-    return (
+// Text blocks render through a registered node: the `render` callback owns
+// the block's wrapper element and receives the block itself, so styles and
+// lists are handled in one place
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => <TextBlock {...props} />,
+})
+
+function TextBlock(props: TextBlockRenderProps) {
+  // The editor doesn't compute list numbering; `useListIndex` from
+  // `@portabletext/plugin-list-index` does. The `data-*` attributes below
+  // feed the list CSS: look in the imported `editor.css` file to see how
+  // list styles are implemented
+  const listIndex = useListIndex(props.path)
+
+  let children = props.children
+  if (props.node.style === 'h1') {
+    children = <h1>{children}</h1>
+  } else if (props.node.style === 'h2') {
+    children = <h2>{children}</h2>
+  } else if (props.node.style === 'h3') {
+    children = <h3>{children}</h3>
+  } else if (props.node.style === 'blockquote') {
+    children = <blockquote>{children}</blockquote>
+  }
+
+  return (
+    <div
+      {...props.attributes}
+      style={{marginBlockEnd: '0.25em'}}
+      data-list-item={props.node.listItem}
+      data-level={props.node.level}
+      data-list-index={listIndex}
+    >
+      {children}
+    </div>
+  )
+}
+
+// Inline objects render through a registered node as well. `props.children`
+// carries a hidden spacer the editor needs for caret placement; always
+// render it inside the wrapper
+const stockTicker = defineInlineObject({
+  type: 'stock-ticker',
+  render: (props) => (
+    <span {...props.attributes}>
+      {props.children}
+      {/* `draggable` makes the object movable and keeps its text
+          unselectable: a draggable element starts a drag instead of a
+          text selection */}
+      <span
+        draggable={!props.readOnly}
+        style={{
+          display: 'inline-block',
+          border: '1px dotted grey',
+          padding: '0.15em',
+        }}
+      >
+        {isStockTicker(props.node) ? props.node.symbol : null}
+      </span>
+    </span>
+  ),
+})
+
+// Block objects render through a registered node as well. `props.children`
+// carries a hidden spacer the editor needs for caret placement; always
+// render it inside the wrapper
+const imageBlock = defineBlockObject({
+  type: 'image',
+  render: (props) => (
+    <div {...props.attributes}>
+      {props.children}
       <div
+        contentEditable={false}
+        draggable={!props.readOnly}
         style={{
           border: '1px dotted grey',
           padding: '0.25em',
           marginBlockEnd: '0.25em',
         }}
       >
-        IMG: {props.value.src}
+        {isImage(props.node) ? `IMG: ${props.node.src}` : null}
       </div>
-    )
-  }
+    </div>
+  ),
+})
 
-  return <div style={{marginBlockEnd: '0.25em'}}>{props.children}</div>
-}
+// A stable module-level reference: a fresh array on every render would
+// make `NodePlugin` unregister and re-register on every keystroke.
+const nodes = [textBlock, stockTicker, imageBlock]
 
 function isImage(
   props: PortableTextBlock,
 ): props is PortableTextBlock & {src: string} {
   return 'src' in props
-}
-
-const renderStyle: RenderStyleFunction = (props) => {
-  if (props.schemaType.value === 'h1') {
-    return <h1>{props.children}</h1>
-  }
-  if (props.schemaType.value === 'h2') {
-    return <h2>{props.children}</h2>
-  }
-  if (props.schemaType.value === 'h3') {
-    return <h3>{props.children}</h3>
-  }
-  if (props.schemaType.value === 'blockquote') {
-    return <blockquote>{props.children}</blockquote>
-  }
-  return <>{props.children}</>
-}
-
-const renderChild: RenderChildFunction = (props) => {
-  if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
-    return (
-      <span
-        style={{
-          border: '1px dotted grey',
-          padding: '0.15em',
-        }}
-      >
-        {props.value.symbol}
-      </span>
-    )
-  }
-
-  return <>{props.children}</>
 }
 
 function isStockTicker(

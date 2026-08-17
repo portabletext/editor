@@ -17,7 +17,7 @@ In order to set up an editor you'll need to:
 
 - Create a schema that defines the rich text and block content elements.
 - Create a toolbar to toggle and insert these elements.
-- Write render functions to style and display each element type in the editor.
+- Set up rendering for each element type in the editor, including text blocks and inline formatting.
 - Render the editor.
 
 Check out the [Portable Text Playground](../../apps/playground/) for a comprehensive example of the editor in action.
@@ -42,15 +42,15 @@ Next, in your app or the component you're building, import `EditorProvider`, `Po
 // App.tsx
 import {
   defineSchema,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
 import type {
   PortableTextBlock,
   RenderDecoratorFunction,
-  RenderStyleFunction,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 ```
 
 ### Define the schema
@@ -104,15 +104,15 @@ Add `useState` from React, then scaffold out a basic application component. For 
 // app.tsx
 import {
   defineSchema,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
 import type {
   PortableTextBlock,
   RenderDecoratorFunction,
-  RenderStyleFunction,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
@@ -156,32 +156,34 @@ Include the `App` component in your application and run it. You should see an ou
 
 ### Create render functions for schema elements
 
-> [!WARNING]
-> The block-level render props (`renderStyle`, `renderBlock`, `renderListItem`, `renderChild`) are deprecated and will be removed in future major versions in favor of node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`). See the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/). The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated.
+At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a render for text blocks and creating render functions for the marks. If your editor still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, and `renderChild` props, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/) to move to node registrations instead.
 
-At this point the PTE only has a schema, but it doesn't know how to render anything. Fix that by creating render functions for each property in the schema.
-
-Start by creating a render function for styles.
+Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
 ```tsx
-const renderStyle: RenderStyleFunction = (props) => {
-  if (props.schemaType.value === 'h1') {
-    return <h1>{props.children}</h1>
-  }
-  if (props.schemaType.value === 'h2') {
-    return <h2>{props.children}</h2>
-  }
-  if (props.schemaType.value === 'h3') {
-    return <h3>{props.children}</h3>
-  }
-  if (props.schemaType.value === 'blockquote') {
-    return <blockquote>{props.children}</blockquote>
-  }
-  return <>{props.children}</>
-}
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => {
+    if (props.node.style === 'h1') {
+      return <h1 {...props.attributes}>{props.children}</h1>
+    }
+    if (props.node.style === 'h2') {
+      return <h2 {...props.attributes}>{props.children}</h2>
+    }
+    if (props.node.style === 'h3') {
+      return <h3 {...props.attributes}>{props.children}</h3>
+    }
+    if (props.node.style === 'blockquote') {
+      return <blockquote {...props.attributes}>{props.children}</blockquote>
+    }
+    return <div {...props.attributes}>{props.children}</div>
+  },
+})
+
+const nodes = [textBlock]
 ```
 
-Render functions all follow the same format.
+Marks (decorators and annotations) use render functions instead. Render functions all follow the same format.
 
 - They take in props and return JSX elements.
 - They use the schema to make decisions.
@@ -207,27 +209,25 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 ```
 
 > [!NOTE]
-> By default, text is rendered as an inline `span` element in the editor. While most render functions return a fragment (`<>`) as the fallback, make sure block level elements return blocks, like `<div>` elements.
+> By default, text is rendered as an inline `span` element in the editor. While mark render functions return a fragment (`<>`) as the fallback, the registered text block render must return a block-level element, like a `<div>`.
 
-Update the `PortableTextEditable` with each corresponding function to attach them to the editor.
-
-You may notice that we skipped a few types from the schema. Declare these inline in the configuration, like in the code below. You can learn more about [customizing the render functions](https://www.portabletext.org/editor/guides/custom-rendering/) in the documentation.
+Mount the registration with `NodePlugin` and pass the render functions to `PortableTextEditable`. Both belong inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke. You can learn more about [customizing the rendering](https://www.portabletext.org/editor/guides/custom-rendering/) in the documentation.
 
 ```tsx
-<PortableTextEditable
-  style={{border: '1px solid black', padding: '0.5em'}}
-  renderStyle={renderStyle}
-  renderDecorator={renderDecorator}
-  renderBlock={(props) => <div>{props.children}</div>}
-  renderListItem={(props) => <>{props.children}</>}
-/>
+<>
+  <NodePlugin nodes={nodes} />
+  <PortableTextEditable
+    style={{border: '1px solid black', padding: '0.5em'}}
+    renderDecorator={renderDecorator}
+  />
+</>
 ```
 
 Before you can see if anything changed, you need a way to interact with the editor.
 
 ### Create a toolbar
 
-A toolbar is a collection of UI elements for interacting with the editor. The PTE library gives you the necessary hooks to create a toolbar however you like. Learn more about [creating your own toolbar](https://www.portabletext.org/editor/guides/customize-toolbar/) in the documentation.
+A toolbar is a collection of UI elements for interacting with the editor. [`@portabletext/toolbar`](../toolbar/) provides ready-made hooks (`useStyleSelector`, `useDecoratorButton`, and more) for common toolbar UI; see the [toolbar customization guide](https://www.portabletext.org/editor/guides/customize-toolbar/) to use them. What follows here is the lower-level approach: sending events to the editor directly.
 
 1. Create a `Toolbar` component in the same file.
 2. Import the `useEditor` hook, and declare an `editor` constant in the component.
@@ -322,12 +322,10 @@ function App() {
           }}
         />
         <Toolbar />
+        <NodePlugin nodes={nodes} />
         <PortableTextEditable
           style={{border: '1px solid black', padding: '0.5em'}}
-          renderStyle={renderStyle}
           renderDecorator={renderDecorator}
-          renderBlock={(props) => <div>{props.children}</div>}
-          renderListItem={(props) => <>{props.children}</>}
         />
       </EditorProvider>
     </>

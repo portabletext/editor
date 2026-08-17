@@ -5,24 +5,16 @@ sidebar:
   order: 1
 ---
 
-The Portable Text Editor gives you control of how it renders each schema type element. You need to explicitly tell it what. These choices have no impact on the Portable Text output—they only affect how the editor itself renders content.
+The Portable Text Editor gives you control of how it renders each schema type element. Text blocks, block objects, inline objects, and spans render through node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`) mounted with `NodePlugin`; see [Containers](/editor/concepts/containers/) for how those compose. If your editor still renders through the deprecated `renderBlock`, `renderChild`, `renderStyle`, or `renderListItem` props, the [migration guide](/editor/guides/migrate-render-props/) walks through moving to registrations. Most of the render props on this page fire on the spans inside a block no matter who renders that block, registered or not; `renderPlaceholder` is the exception, it fires on the empty editor rather than on a span. These choices have no impact on the Portable Text output, they only affect how the editor itself renders content.
 
 :::note[Prerequisites]
-This guide covers `@portabletext/editor` **v7.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 19.2.7+.
-:::
-
-:::caution[Deprecated]
-The block-level render props (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`) are deprecated and will be removed in future major versions. Node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`) replace them; the [migration guide](/editor/guides/migrate-render-props/) walks through each prop. The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) are not deprecated.
+This guide covers `@portabletext/editor`. Requires React 19.2.8 or later. Check the [editor changelog](https://github.com/portabletext/editor/releases) for breaking changes.
 :::
 
 The following props can be passed to the `PortableTextEditable` component:
 
 - `renderAnnotation`: For annotations (e.g., hyperlinks).
-- `renderBlock`: For block objects (e.g., images, embeds). (deprecated)
-- `renderChild`: For inline objects (e.g., custom emoji, stock symbols). (deprecated)
 - `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
-- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote). (deprecated)
-- `renderListItem`: For list item styling (e.g., bullet, numbered lists). (deprecated)
 - `renderPlaceholder`: For custom placeholder text when the editor is empty.
 - `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
@@ -30,11 +22,16 @@ All the different render functions passed to `PortableTextEditable` can be defin
 
 Most follow the same pattern of reading `props` and conditionally rendering elements based on schema data.
 
-Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Visual nesting comes from CSS. We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
+Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Visual nesting comes from CSS, and list numbering comes from [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index). We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
 
 Here are basic implementations of some core types:
 
 ```tsx
+import type {
+  RenderAnnotationFunction,
+  RenderDecoratorFunction,
+} from '@portabletext/editor'
+
 const renderDecorator: RenderDecoratorFunction = (props) => {
   if (props.value === 'strong') {
     return <strong>{props.children}</strong>
@@ -56,83 +53,10 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
 
   return <>{props.children}</>
 }
-
-// Block objects
-const renderBlock: RenderBlockFunction = (props) => {
-  if (props.schemaType.name === 'image' && isImage(props.value)) {
-    return (
-      <div
-        style={{
-          border: '1px dotted grey',
-          padding: '0.25em',
-          marginBlockEnd: '0.25em',
-        }}
-      >
-        IMG: {props.value.src}
-      </div>
-    )
-  }
-
-  return <div style={{marginBlockEnd: '0.25em'}}>{props.children}</div>
-}
-
-// Check the shape of an image and confirm it has a src.
-function isImage(
-  props: PortableTextBlock,
-): props is PortableTextBlock & {src: string} {
-  return 'src' in props
-}
-
-// Styles
-const renderStyle: RenderStyleFunction = (props) => {
-  if (props.schemaType.value === 'h1') {
-    return <h1>{props.children}</h1>
-  }
-  if (props.schemaType.value === 'h2') {
-    return <h2>{props.children}</h2>
-  }
-  if (props.schemaType.value === 'h3') {
-    return <h3>{props.children}</h3>
-  }
-  if (props.schemaType.value === 'blockquote') {
-    return <blockquote>{props.children}</blockquote>
-  }
-  return <>{props.children}</>
-}
-
-// Inline objects
-const renderChild: RenderChildFunction = (props) => {
-  if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
-    return (
-      <span
-        style={{
-          border: '1px dotted grey',
-          padding: '0.15em',
-        }}
-      >
-        {props.value.symbol}
-      </span>
-    )
-  }
-
-  return <>{props.children}</>
-}
-
-// Check the shape of the object by confirming it has a symbol.
-function isStockTicker(
-  props: PortableTextChild,
-): props is PortableTextChild & {symbol: string} {
-  return 'symbol' in props
-}
-
-// List items
-const renderListItem: RenderListItemFunction = (props) => {
-  return <>{props.children}</>
-}
 ```
 
 :::note
-List items in Portable Text don't nest like HTML lists. The `renderListItem` function wraps the content, but visual nesting is achieved through CSS. See the [example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) for list styling patterns.
+List items in Portable Text don't nest like HTML lists. Visual nesting is achieved through CSS. See the [example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) for list styling patterns.
 :::
 
 ## Placeholder text
