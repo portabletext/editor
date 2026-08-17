@@ -1,5 +1,18 @@
 # Changelog
 
+## 5.2.0
+
+### Minor Changes
+
+- [#3074](https://github.com/portabletext/editor/pull/3074) [`d4d11e5`](https://github.com/portabletext/editor/commit/d4d11e5e0c0c00690123e8fe434e6dda664e8b86) Thanks [@christianhg](https://github.com/christianhg)! - feat: re-export `createTableRule` from `@portabletext/html`
+
+  `@portabletext/block-tools/rules` already re-exports `createFlattenTableRule`; it now also re-exports `createTableRule`, `@portabletext/html`'s deserializer rule for converting `<table>` HTML into a nested table shape.
+
+### Patch Changes
+
+- Updated dependencies [[`b7610ec`](https://github.com/portabletext/editor/commit/b7610ecf5a8a1edf59c9b18099fac36bfd4014a1), [`0e3505b`](https://github.com/portabletext/editor/commit/0e3505b6412781d237ae4b39b67f2fe730c0c7f7)]:
+  - @portabletext/html@1.2.0
+
 ## 5.1.14
 
 ### Patch Changes

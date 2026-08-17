@@ -1,5 +1,27 @@
 # @portabletext/markdown
 
+## 1.5.0
+
+### Minor Changes
+
+- [#3073](https://github.com/portabletext/editor/pull/3073) [`b7050a7`](https://github.com/portabletext/editor/commit/b7050a78d3f6b4b1da8eb05f5c16dfcfe4eef608) Thanks [@christianhg](https://github.com/christianhg)! - feat: convert GFM tables by default
+
+  `markdownToPortableText` now converts GFM pipe tables to a `table` block object out of the box, matching the shape `@portabletext/plugin-table` expects: `headerRows`, an optional `alignment` array, and `rows` of `row` objects holding `cell` objects with a `value` array of Portable Text blocks. This only kicks in when the schema declares a `table` block object with a `rows` field; a schema without that keeps flattening table cells into plain blocks, as before. A consumer-supplied `types.table` matcher still wins over the default.
+
+  `portableTextToMarkdown` now renders `table` block objects back to GFM by default too, instead of a fenced JSON block. A value that isn't table-shaped falls back to the fenced JSON rendering. A consumer-supplied `types.table` renderer still wins over the default.
+
+  `DefaultTableRenderer` now treats a missing or non-positive `headerRows` as headerless, rather than promoting the first row to a header. `markdownToPortableText` always sets `headerRows` explicitly, so converting GFM to Portable Text and back is unaffected.
+
+- [#3079](https://github.com/portabletext/editor/pull/3079) [`8ed2d1f`](https://github.com/portabletext/editor/commit/8ed2d1f58d431c3d87cf0ec502a6c4b74bd7a22e) Thanks [@christianhg](https://github.com/christianhg)! - feat: render code, image, horizontal rule, HTML, and callout blocks to markdown by default
+
+  `portableTextToMarkdown` now renders `code`, `image`, `horizontal-rule`, `html`, and `callout` block objects back to Markdown by default, instead of a fenced JSON block. This matches `table`, which already rendered as GFM by default.
+
+  `code`, `image`, `html`, and `callout` fall back to the fenced JSON rendering when a value doesn't match the shape its renderer expects, for example a consumer's own differently-shaped `code` type reaching the renderer via the same `_type` name; `horizontal-rule` always renders `---`. A consumer-supplied `types` renderer still wins over any of the defaults.
+
+  `@portabletext/editor`'s markdown clipboard picks this up via the automatic dependency bump: copying a code block, image, horizontal rule, HTML block, or callout out of the editor now produces real Markdown instead of a fenced JSON block.
+
+  One narrow behavioral fix rides along: when a `callout` or `DefaultBlockquoteObjectRenderer` content entry falls back to fenced JSON, the JSON is the original value; previously it carried a `style: 'normal'` field injected by the renderer.
+
 ## 1.4.7
 
 ### Patch Changes

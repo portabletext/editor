@@ -1,5 +1,31 @@
 # @portabletext/html
 
+## 1.2.0
+
+### Minor Changes
+
+- [#3074](https://github.com/portabletext/editor/pull/3074) [`b7610ec`](https://github.com/portabletext/editor/commit/b7610ecf5a8a1edf59c9b18099fac36bfd4014a1) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `createTableRule` for deserializing `<table>` HTML into a nested table shape
+
+  `createFlattenTableRule` was the only table deserializer, and it flattens a table into a list of standalone text blocks, losing the row/column structure. `createTableRule` keeps it: it turns a `<table>` into one block carrying `rows`, each row carrying `cells`, each cell carrying a Portable Text `value` array, the shape `@portabletext/plugin-table`'s `defineTable` produces.
+
+  ```ts
+  import {htmlToPortableText} from '@portabletext/html'
+  import {createTableRule} from '@portabletext/html/rules'
+
+  const blocks = htmlToPortableText(html, {
+    schema,
+    rules: [createTableRule({schema})],
+  })
+  ```
+
+  `headerRows` is set from leading `<thead>` rows or an all-`<th>` first row, and omitted when there are none. Ragged rows are padded to the widest row with empty cells, and `colspan`/`rowspan` are ignored: a spanning cell contributes one cell, and the padding fills the rest. The `containers` option matches a `defineTable` call whose container names were renamed. It is role-keyed like `defineTable`'s own option and reads only `type` and `arrayField`, so the same container definitions can be passed to both.
+
+### Patch Changes
+
+- [#3078](https://github.com/portabletext/editor/pull/3078) [`0e3505b`](https://github.com/portabletext/editor/commit/0e3505b6412781d237ae4b39b67f2fe730c0c7f7) Thanks [@christianhg](https://github.com/christianhg)! - fix: scope `createFlattenTableRule`'s row and cell lookup to its own table
+
+  A table containing another table in one of its cells was not flattened at all: its cells came through as separate blocks, as if the rule had not been passed. Rows and cells are now read from the table's own `rows` and `cells` collections, so a nested table stays inside the cell that holds it.
+
 ## 1.1.2
 
 ### Patch Changes

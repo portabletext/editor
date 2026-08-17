@@ -1,5 +1,153 @@
 # Changelog
 
+## 7.11.0
+
+### Minor Changes
+
+- [#3087](https://github.com/portabletext/editor/pull/3087) [`2f5c148`](https://github.com/portabletext/editor/commit/2f5c148b42a0f1dc5c1efb535ca4afd680e831b0) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote the Behavior API from beta to public
+
+  The Behavior API is no longer beta. `defineBehavior`, the action creators (`execute`, `forward`, `raise`, `effect`), `editor.registerBehavior`, and `BehaviorPlugin` are stable. Their types are stable too: `Behavior`, `BehaviorAction`, `BehaviorActionSet`, `BehaviorEvent`, `SyntheticBehaviorEvent`, `NativeBehaviorEvent`, `CustomBehaviorEvent`, `BehaviorGuard`, and `InsertPlacement`.
+
+  ```tsx
+  import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+  import {getFocusTextBlock} from '@portabletext/editor/selectors'
+
+  const noBreakInTitles = defineBehavior({
+    on: 'insert.break',
+    guard: ({snapshot}) =>
+      snapshot.context.selection !== null &&
+      getFocusTextBlock(snapshot)?.node.style === 'title',
+    actions: [() => [raise({type: 'insert.soft break'})]],
+  })
+  ```
+
+  The alpha primitive event forms stay alpha: `insert`, `remove.text`, `set`, `unset`, and the explicit `at`/`offset` form of `insert.text`.
+
+- [#3084](https://github.com/portabletext/editor/pull/3084) [`e7df9b8`](https://github.com/portabletext/editor/commit/e7df9b8ffcf51f984bb14439dbeaaa9a348b9b45) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote the `containers` introspection map from alpha to public
+
+  `snapshot.context.containers` is no longer alpha. Its types are stable too: `Containers`, `RegisteredContainer`, `RegisteredSpan`, `RegisteredBlockObject`, `RegisteredInlineObject`, and `RegisteredPositional`. `OfDefinition` is now re-exported from the package root; it appears in `RegisteredContainer['field']`, whose shape is named via indexed access rather than a dedicated export.
+
+  The map is the read side of node registration: entries keyed by container `_type`, each carrying the array field that holds the container's editable children and any position-scoped child registrations.
+
+  ```tsx
+  import {useEditorSelector} from '@portabletext/editor'
+
+  const tableRegistration = useEditorSelector(editor, (snapshot) =>
+    snapshot.context.containers.get('table'),
+  )
+  ```
+
+- [#3081](https://github.com/portabletext/editor/pull/3081) [`eb8cb6c`](https://github.com/portabletext/editor/commit/eb8cb6cff6c793e107cc1d5f4c85b78ba565b74b) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote node registration from alpha to public
+
+  `defineContainer`, `defineTextBlock`, `defineSpan`, `defineBlockObject`, `defineInlineObject`, `editor.registerNode`, and `NodePlugin` are no longer alpha. Their types are stable too: `Container`, `TextBlock`, `Span`, `BlockObject`, `InlineObject`, `RegistrableNode`, and the `ContainerRender`/`ContainerRenderProps`, `SpanRender`/`SpanRenderProps`, `BlockObjectRender`/`BlockObjectRenderProps`, `InlineObjectRender`/`InlineObjectRenderProps`, and `TextBlockRender`/`TextBlockRenderProps` pairs.
+
+  This is the supported replacement for the deprecated `renderBlock`, `renderChild`, `renderStyle`, and `renderListItem` render props:
+
+  ```tsx
+  import {defineTextBlock} from '@portabletext/editor'
+  import {NodePlugin} from '@portabletext/editor/plugins'
+
+  const textBlock = defineTextBlock({
+    type: 'block',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  })
+
+  function App() {
+    return (
+      <EditorProvider initialConfig={{schemaDefinition}}>
+        <NodePlugin nodes={[textBlock]} />
+        <PortableTextEditable />
+      </EditorProvider>
+    )
+  }
+  ```
+
+- [#3091](https://github.com/portabletext/editor/pull/3091) [`75d2dc4`](https://github.com/portabletext/editor/commit/75d2dc4ddfd5ae7f6be0630339d5fb34f6e0a750) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote the surviving render-prop types from beta to public
+
+  `RenderPlaceholderFunction`, `RenderEditableFunction`, and `ScrollSelectionIntoViewFunction` are now `@public`: editor-chrome hooks with no replacement on the horizon.
+
+  The content-rendering props stay `@beta`: `RenderAnnotationFunction`, `RenderDecoratorFunction`, and their prop types alongside the already-deprecated `RenderBlockFunction`, `RenderChildFunction`, `RenderStyleFunction`, and `RenderListItemFunction`.
+
+- [#3090](https://github.com/portabletext/editor/pull/3090) [`45fd070`](https://github.com/portabletext/editor/commit/45fd0706b72b92e5a663bdc019e1e464972eafb5) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote the config, offset, and editor-ref surface from beta to public
+
+  `EditorConfig.keyGenerator`, `InvalidValueResolution`, `BlockOffset`, and `EditorRefPlugin` move from `@beta` to `@public`. Their shapes and behavior are unchanged; they now follow the package's normal semver guarantees.
+
+- [#3089](https://github.com/portabletext/editor/pull/3089) [`bfd7058`](https://github.com/portabletext/editor/commit/bfd7058700754ba7ac5af35aae99b2bc8ce70dfb) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote the applicable-schema and mark-state selectors from beta to public
+
+  `ApplicableSchema`, `getApplicableSchema`, `compareApplicableSchema`, `MarkState`, and `getMarkState` are now stable, public API. Their behavior is unchanged; only the stability guarantee changes.
+
+  ```ts
+  import {useEditorSelector} from '@portabletext/editor'
+  import {
+    getApplicableSchema,
+    compareApplicableSchema,
+  } from '@portabletext/editor/selectors'
+
+  const applicableSchema = useEditorSelector(
+    editor,
+    getApplicableSchema,
+    compareApplicableSchema,
+  )
+  ```
+
+- [#3088](https://github.com/portabletext/editor/pull/3088) [`8c72f76`](https://github.com/portabletext/editor/commit/8c72f7622108f406d7930a9905f9c517a2e9c181) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote the traversal utils from beta to public
+
+  The traversal utilities are no longer beta: `getNode`, `getChildren`, `getParent`, `getSibling`, `getAncestor`, `getAncestors`, `getContainer`, `getFirstChild`, `getLastChild`, `getLeaf`, `getSpan`, `getText`, `getTextBlock`, `getAnnotation`, `getEnclosingBlock`, `getPathSubSchema`, `getUnionSchema`, `getBlock`, `isBlock`, `isInline`, `isLeafObject`, `isObject`, `hasNode`, `comparePoints`, `pathContains`, and `rangeIntersects` are all `@public` now and follow the package's normal semver guarantees.
+
+  ```ts
+  import {getEnclosingBlock, getNode} from '@portabletext/editor/traversal'
+
+  const entry = getNode(snapshot, selection.anchor.path)
+  const block = entry ? getEnclosingBlock(snapshot, entry.path) : undefined
+  ```
+
+  `getContainerChildren` stays `@beta`.
+
+- [#3082](https://github.com/portabletext/editor/pull/3082) [`db10bb7`](https://github.com/portabletext/editor/commit/db10bb7a3659f02d11b8aca5cc2424e62314faec) Thanks [@christianhg](https://github.com/christianhg)! - feat: promote `RangeDecoration` and `RangeDecorationOnMovedDetails` to public API
+
+  `RangeDecoration` and `RangeDecorationOnMovedDetails` are no longer alpha. The `rangeDecorations` prop on `PortableTextEditable` was already public; the types it takes are now stable too:
+
+  ```tsx
+  <PortableTextEditable
+    rangeDecorations={[
+      {
+        component: (props) => <SearchResultHighlight {...props} />,
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+        },
+        onMoved: (details) => {
+          rememberSelection(details.newSelection)
+        },
+      },
+    ]}
+  />
+  ```
+
+### Patch Changes
+
+- [#3092](https://github.com/portabletext/editor/pull/3092) [`5c61867`](https://github.com/portabletext/editor/commit/5c618674c28627ad742f326076d9e27d4a09ddf1) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate `EditableAPIDeleteOptions` in favor of behavior events
+
+  `EditableAPIDeleteOptions` is deprecated together with the `PortableTextEditor.delete` static it serves. Send a `delete` behavior event (with an optional `unit`) or a `delete.block` event via `editor.send` instead.
+
+- [#3075](https://github.com/portabletext/editor/pull/3075) [`9e3b7be`](https://github.com/portabletext/editor/commit/9e3b7be9cf95772a32724acea69cee233f0d9f9f) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate the block-level render props on `<PortableTextEditable>`
+
+  `renderBlock`, `renderChild`, `renderStyle`, and `renderListItem` are deprecated, along with their function types. They keep working, but node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan` mounted through `NodePlugin`) are the supported way to render nodes, and list numbering comes from `@portabletext/plugin-list-index`. The migration guide walks through each prop: https://www.portabletext.org/editor/guides/migrate-render-props/
+
+  The span-level props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) and `rangeDecorations` are not deprecated.
+
+- [#3093](https://github.com/portabletext/editor/pull/3093) [`fbb9a98`](https://github.com/portabletext/editor/commit/fbb9a9824dcea07aad66a4c69bb33db6c3fe0be8) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate the legacy render-prop payload types
+
+  `BlockRenderProps`, `BlockChildRenderProps`, `BlockStyleRenderProps`, and `BlockListItemRenderProps` are deprecated together with the render props they serve (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`). Type against the node registration API instead: `BlockObjectRenderProps` / `TextBlockRenderProps` for blocks, `InlineObjectRenderProps` / `SpanRenderProps` for children, and `defineTextBlock` render props for styles and list items. See the migration guide: https://www.portabletext.org/editor/guides/migrate-render-props/
+
+- [#3086](https://github.com/portabletext/editor/pull/3086) [`2c97777`](https://github.com/portabletext/editor/commit/2c97777c56746a418b582258268b452b6168a32b) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep the drag source when a drop fits no blocks
+
+  Dropping blocks that the destination rejects entirely (a table cell whose schema accepts none of them, for example) deleted the drag source with nothing inserted. That drop is now a no-op.
+
+- Updated dependencies [[`b7610ec`](https://github.com/portabletext/editor/commit/b7610ecf5a8a1edf59c9b18099fac36bfd4014a1), [`b7050a7`](https://github.com/portabletext/editor/commit/b7050a78d3f6b4b1da8eb05f5c16dfcfe4eef608), [`0e3505b`](https://github.com/portabletext/editor/commit/0e3505b6412781d237ae4b39b67f2fe730c0c7f7), [`8ed2d1f`](https://github.com/portabletext/editor/commit/8ed2d1f58d431c3d87cf0ec502a6c4b74bd7a22e)]:
+  - @portabletext/html@1.2.0
+  - @portabletext/markdown@1.5.0
+
 ## 7.10.19
 
 ### Patch Changes
