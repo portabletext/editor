@@ -6,10 +6,15 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {getDragSelection} from '../selectors/drag-selection'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getFragment} from '../selectors/selector.get-fragment'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import type {EditorSelection} from '../types/editor'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {effect, forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 import {fitBlocksToDestination} from './fit-blocks-to-destination'
@@ -350,6 +355,29 @@ export const coreDndBehaviors = [
       }
       const fittedBlocks = fitBlocksToDestination(dropSnapshot, event.data)
 
+      // A collapsed drop strictly inside a non-empty text block's own
+      // characters (not on an inline object leaf, which snaps like a void)
+      // resolves 'auto' placement to `split-insert` instead of snapping the
+      // dragged block before or after the hovered block.
+      const focusTextBlock = getFocusTextBlock(dropSnapshot)
+      const droppedInsideTextBlock =
+        isCollapsedRange(dropPosition) &&
+        focusTextBlock !== undefined &&
+        !isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
+        getFocusInlineObject(dropSnapshot) === undefined &&
+        !isEqualSelectionPoints(
+          dropPosition.focus,
+          getBlockStartPoint({
+            context: snapshot.context,
+            block: focusTextBlock,
+          }),
+        ) &&
+        !isEqualSelectionPoints(
+          dropPosition.focus,
+          getBlockEndPoint({context: snapshot.context, block: focusTextBlock}),
+        ) &&
+        fittedBlocks.length > 0
+
       if (!droppingOnDragOrigin) {
         return {
           dropPosition,
@@ -359,6 +387,7 @@ export const coreDndBehaviors = [
           originEvent: event.originEvent,
           fittedBlocks,
           movedInlineObjectKey,
+          droppedInsideTextBlock,
         }
       }
 
@@ -375,6 +404,7 @@ export const coreDndBehaviors = [
           originEvent,
           fittedBlocks,
           movedInlineObjectKey,
+          droppedInsideTextBlock,
         },
       ) => {
         // Nothing survives `fitBlocksToDestination`: leave the source where
@@ -426,11 +456,11 @@ export const coreDndBehaviors = [
             type: 'insert.blocks',
             blocks: fittedBlocks,
             placement: draggingEntireBlocks
-              ? originEvent.position.block === 'start'
-                ? 'before'
-                : originEvent.position.block === 'end'
-                  ? 'after'
-                  : 'auto'
+              ? droppedInsideTextBlock
+                ? 'auto'
+                : originEvent.position.block === 'start'
+                  ? 'before'
+                  : 'after'
               : 'auto',
             select: movedInlineObjectSelection ? 'none' : undefined,
           }),
