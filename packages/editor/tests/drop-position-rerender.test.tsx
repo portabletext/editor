@@ -10,11 +10,13 @@ const schemaDefinition = defineSchema({})
 
 /**
  * A `dragover` tick sets the editor-wide drop position. It must not re-render
- * the block tree: only the block gaining or losing the indicator re-renders,
- * and no block's content render runs. Pins that the drop position is
- * delivered per block (via the drop-position store), not as a
- * `renderElement` dependency that hands the engine a new render function
- * every tick and re-renders everything.
+ * the block tree: only the block gaining or losing a consumer-drawn
+ * indicator re-renders, and no block's content render runs. Pins that the
+ * drop position is delivered per block (via the drop-position store), not
+ * as a `renderElement` dependency that hands the engine a new render
+ * function every tick and re-renders everything. The engine itself draws no
+ * indicator chrome; `@portabletext/plugin-dnd` and consumer renders are the
+ * ones reading the store.
  */
 describe('drop position re-renders', () => {
   test('a dragover tracks the drop position without re-rendering any block', async () => {
@@ -78,33 +80,6 @@ describe('drop position re-renders', () => {
     // delivery, every block re-rendered on the tick: `renders` would hold
     // every key.
     expect(renders).toEqual([])
-  })
-
-  test('a dragover paints the indicator on the default, unregistered render path', async () => {
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue: [
-        block('b0', 'first'),
-        block('b1', 'second'),
-        block('b2', 'third'),
-        block('b3', 'fourth'),
-      ],
-    })
-
-    editor.send(
-      dragover({
-        dragOrigin: blockSelection('b0'),
-        over: caretIn('b2'),
-        block: 'end',
-      }),
-    )
-
-    await vi.waitFor(() => {
-      if (document.querySelectorAll('.pt-drop-indicator').length !== 1) {
-        throw new Error('drop indicator not shown yet')
-      }
-    })
   })
 })
 

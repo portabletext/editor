@@ -91,18 +91,10 @@ describe('container rendering', () => {
         [
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="k0"',
-          ' data-block-name="block"',
-          ' data-block-type="text"',
-          ' data-pt-block="text"',
-          ' data-style="normal">',
+          ' data-pt-block="text">',
           '<div>',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].children[_key==&quot;k1&quot;]"',
-          ' data-child-key="k1"',
-          ' data-child-name="span"',
-          ' data-child-type="span"',
           ' data-pt-inline="span">',
           '<span data-pt-marks="true">',
           '<span data-pt-text="true">',
@@ -664,7 +656,7 @@ describe('container and renderer independence', () => {
 
       // Verify it renders as a void block object with contentEditable=false
       const blockObject = editorElement!.querySelector(
-        '[data-block-type="object"]',
+        '[data-pt-block="object"]',
       )
       expect(blockObject).not.toEqual(null)
       expect(
@@ -861,7 +853,7 @@ describe('gallery with void block objects', () => {
           '</span>',
           '</span>',
           '</div>',
-          '<div contenteditable="false">',
+          '<div contenteditable="false" draggable="true">',
           '[image: img-0]',
           '</div>',
           '</div>',
@@ -879,7 +871,7 @@ describe('gallery with void block objects', () => {
           '</span>',
           '</span>',
           '</div>',
-          '<div contenteditable="false">',
+          '<div contenteditable="false" draggable="true">',
           '[image: img-1]',
           '</div>',
           '</div>',
@@ -1071,7 +1063,7 @@ describe('cell with mixed content', () => {
           '</span>',
           '</span>',
           '</div>',
-          '<div contenteditable="false">',
+          '<div contenteditable="false" draggable="true">',
           '[image: img-0]',
           '</div>',
           '</div>',

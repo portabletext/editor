@@ -43,7 +43,9 @@ describe('Feature: Scrolling the Selection Into View', () => {
     editor.send({type: 'select', at: {anchor: point, focus: point}})
 
     await vi.waitFor(() => {
-      const block = document.querySelector('[data-block-key="p100"]')
+      const block = document.querySelector(
+        `[data-pt-path="${CSS.escape('[_key=="p100"]')}"]`,
+      )
       if (!block) {
         throw new Error('block not rendered')
       }

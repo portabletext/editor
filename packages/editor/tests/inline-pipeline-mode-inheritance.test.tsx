@@ -10,25 +10,13 @@ import {
 import {createTestEditor} from '../src/test/vitest'
 
 /**
- * Inline pipeline mode inherits from the text block. Spans and inline
- * objects MUST NOT initiate a new-pipeline subtree on their own — if
- * they did, a legacy text block could end up with new-pipeline inline
- * children, producing inconsistent DOM (legacy attrs on the outer
- * block, clean `data-pt-*` only on the inline subtree).
- *
- * A registered inline node's own wrapper receives the same clean
- * `data-pt-*` attributes in both modes; the mode signal lives on the
- * legacy pipeline's surrounding DOM (`data-child-*` on span text
- * wrappers, `pt-*` classes on the block).
- *
- * The four tests below pin both directions of the contract:
- *
- *   - Tests 1 & 2: a registered inline node inside an UNregistered
- *     text block gets a clean wrapper while the surrounding legacy
- *     DOM keeps its legacy attributes.
- *   - Tests 3 & 4: the same inline node inside a REGISTERED text
- *     block emits clean `data-pt-*` attributes (inherits new pipeline
- *     from the parent text block).
+ * A registered inline node's own wrapper attributes don't depend on
+ * whether its surrounding text block is itself registered: the pipeline
+ * boundary no longer changes the DOM emitted at a position, only who
+ * owns rendering it. Each pair of tests below pins the identical
+ * attribute string for a registered inline object and a registered
+ * span, once inside an unregistered (bare) text block and once inside
+ * a registered one.
  */
 
 function getEditorHTML(): string {
@@ -50,8 +38,13 @@ function getInlineWrapperAttrs(testid: string): string {
     .join(' ')
 }
 
+const MENTION_WRAPPER_ATTRS =
+  'data-testid="mention-wrapper" data-pt-path="[_key=="b0"].children[_key=="m0"]" contenteditable="false" data-pt-inline="object"'
+
+const SPAN_WRAPPER_ATTRS = 'data-testid="span-wrapper" data-pt-marks="true"'
+
 describe('inline pipeline mode inherits from text block', () => {
-  test('registered inline-object inside LEGACY text block gets a clean wrapper inside legacy surroundings', async () => {
+  test('registered inline-object inside a bare text block gets the same wrapper attributes as inside a registered one', async () => {
     const schema = defineSchema({
       inlineObjects: [{name: 'mention', fields: []}],
     })
@@ -85,22 +78,14 @@ describe('inline pipeline mode inherits from text block', () => {
     })
 
     await vi.waitFor(() => {
-      const editorHTML = getEditorHTML()
-      // Sanity: the text block is legacy (`pt-*` classes and
-      // `data-child-*` wrappers around it).
-      expect(editorHTML).toMatch(/data-block-key="b0"/)
-      expect(editorHTML).toMatch(/data-child-key="s0"/)
-      // The mention is rendered.
-      expect(editorHTML).toContain('@alice')
-      // The mention wrapper's own attributes are the clean `data-pt-*`
-      // shape, identical to what a registered text block would produce.
-      const attrs = getInlineWrapperAttrs('mention-wrapper')
-      expect(attrs).toMatch(/data-pt-inline="object"/)
-      expect(attrs).not.toMatch(/data-child-/)
+      expect(getEditorHTML()).toContain('@alice')
+      expect(getInlineWrapperAttrs('mention-wrapper')).toEqual(
+        MENTION_WRAPPER_ATTRS,
+      )
     })
   })
 
-  test('registered span inside LEGACY text block gets a clean wrapper inside legacy surroundings', async () => {
+  test('registered span inside a bare text block gets the same wrapper attributes as inside a registered one', async () => {
     const schema = defineSchema({})
     const span = defineSpan({
       type: 'span',
@@ -127,21 +112,12 @@ describe('inline pipeline mode inherits from text block', () => {
     })
 
     await vi.waitFor(() => {
-      const editorHTML = getEditorHTML()
-      // Sanity: the text block is legacy (`data-child-*` on the span's
-      // text wrapper).
-      expect(editorHTML).toMatch(/data-child-key="s0"/)
-      // The span is rendered.
-      expect(editorHTML).toContain('hello')
-      // The span wrapper's own attributes are the clean `data-pt-*`
-      // shape, identical to what a registered text block would produce.
-      const attrs = getInlineWrapperAttrs('span-wrapper')
-      expect(attrs).toMatch(/data-pt-marks/)
-      expect(attrs).not.toMatch(/data-child-/)
+      expect(getEditorHTML()).toContain('hello')
+      expect(getInlineWrapperAttrs('span-wrapper')).toEqual(SPAN_WRAPPER_ATTRS)
     })
   })
 
-  test('registered inline-object inside REGISTERED text block emits clean data-pt-* on its wrapper', async () => {
+  test('registered inline-object inside a registered text block gets the same wrapper attributes as inside a bare one', async () => {
     const schema = defineSchema({
       inlineObjects: [{name: 'mention', fields: []}],
     })
@@ -183,15 +159,14 @@ describe('inline pipeline mode inherits from text block', () => {
     })
 
     await vi.waitFor(() => {
-      // The mention is rendered.
       expect(getEditorHTML()).toContain('@alice')
-      // The mention wrapper's own attributes are clean.
-      const attrs = getInlineWrapperAttrs('mention-wrapper')
-      expect(attrs).toMatch(/data-pt-/)
+      expect(getInlineWrapperAttrs('mention-wrapper')).toEqual(
+        MENTION_WRAPPER_ATTRS,
+      )
     })
   })
 
-  test('registered span inside REGISTERED text block emits clean data-pt-* on its wrapper', async () => {
+  test('registered span inside a registered text block gets the same wrapper attributes as inside a bare one', async () => {
     const schema = defineSchema({})
     const richBlock = defineTextBlock({
       type: 'block',
@@ -227,8 +202,7 @@ describe('inline pipeline mode inherits from text block', () => {
 
     await vi.waitFor(() => {
       expect(getEditorHTML()).toContain('hello')
-      const attrs = getInlineWrapperAttrs('span-wrapper')
-      expect(attrs).toMatch(/data-pt-/)
+      expect(getInlineWrapperAttrs('span-wrapper')).toEqual(SPAN_WRAPPER_ATTRS)
     })
   })
 })

@@ -258,10 +258,7 @@ const useChildren = (props: {
       if (textBlockParent !== undefined) {
         // Inline-object position: pipeline mode is inherited from the
         // parent text block. An inline object never kicks off a new-
-        // pipeline subtree on its own — if the parent text block is in
-        // the new pipeline, `parentIsInNewPipeline` already short-
-        // circuits upstream; otherwise the inline object stays legacy
-        // so the DOM is consistent across the block.
+        // pipeline subtree on its own.
         return false
       }
       // Block object position
