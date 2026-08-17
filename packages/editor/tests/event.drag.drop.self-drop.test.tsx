@@ -401,6 +401,82 @@ describe('event.drag.drop self-drop semantics', () => {
     })
   })
 
+  test('Scenario: collapsed drop mid-text of an entire-block drag origin is suppressed', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    // The full text of the block, so `isSelectingEntireBlocks` treats this
+    // as an entire-blocks drag, same as dragging a block-object.
+    const dragSelection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 0,
+      },
+      focus: {path: [{_key: blockKey}, 'children', {_key: spanKey}], offset: 6},
+    }
+    const dropSelection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+      },
+      focus: {path: [{_key: blockKey}, 'children', {_key: spanKey}], offset: 3},
+    }
+
+    await userEvent.click(locator)
+    editor.send({type: 'select', at: dragSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...dragSelection,
+        backward: false,
+      })
+    })
+
+    const initialValue = editor.getSnapshot().context.value
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: dragSelection},
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: dropSelection,
+      },
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
+  })
+
   test('Scenario: chrome drop inside the dragged container is suppressed', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
