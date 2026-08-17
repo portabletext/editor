@@ -1,5 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import {useRef, type ReactElement} from 'react'
+import type {ReactElement} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import type {RenderElementProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
@@ -7,16 +7,12 @@ import type {
   BlockObjectConfig,
   BlockObjectRenderProps,
 } from '../renderers/renderer.types'
-import {useElementDropPosition} from './drop-position-state-context'
 import type {EditorSchema} from './editor-schema'
 import {renderDefaultBlockObject} from './render.default'
-import {RenderDefaultBlockObject} from './render.default-object'
-import {DropIndicator} from './render.drop-indicator'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
-  blockObject: PortableTextObject | undefined
   children: ReactElement
   element: PortableTextObject
   blockObjectConfig?: BlockObjectConfig
@@ -24,12 +20,9 @@ export function RenderBlockObject(props: {
   readOnly: boolean
   schema: EditorSchema
 }) {
-  const blockObjectRef = useRef<HTMLDivElement>(null)
-
   const serializedPath = serializePath(props.path)
   const selected = useIsSelectedLeaf(serializedPath)
   const focused = useIsFocusedLeaf(serializedPath)
-  const dropPosition = useElementDropPosition(props.path)
 
   const blockObjectSchemaType = props.schema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
@@ -41,53 +34,19 @@ export function RenderBlockObject(props: {
     )
   }
 
-  const blockObject = props.blockObject ?? {
-    _key: props.element._key,
-    _type: props.element._type,
+  const render = props.blockObjectConfig?.blockObject.render
+  const renderProps: BlockObjectRenderProps = {
+    attributes: {
+      ...props.attributes,
+      'data-pt-block': 'object',
+    },
+    children: props.children,
+    focused,
+    node: props.element,
+    path: props.path,
+    readOnly: props.readOnly,
+    renderDefault: renderDefaultBlockObject,
+    selected,
   }
-
-  if (props.blockObjectConfig) {
-    const ptAttributes = props.attributes
-    const render = props.blockObjectConfig.blockObject.render
-    const renderProps: BlockObjectRenderProps = {
-      attributes: {
-        ...ptAttributes,
-        'data-pt-block': 'object',
-      },
-      children: props.children,
-      focused,
-      node: props.element,
-      path: props.path,
-      readOnly: props.readOnly,
-      renderDefault: renderDefaultBlockObject,
-      selected,
-    }
-    return render ? render(renderProps) : renderDefaultBlockObject(renderProps)
-  }
-
-  const innerContent = <RenderDefaultBlockObject blockObject={blockObject} />
-
-  const attributes = {
-    ...props.attributes,
-    'className': 'pt-block pt-object-block',
-    'data-block-key': props.element._key,
-    'data-block-name': props.element._type,
-    'data-block-type': 'object',
-    'data-pt-block': 'object',
-  }
-
-  return (
-    <div {...attributes}>
-      {dropPosition === 'start' ? <DropIndicator /> : null}
-      {props.children}
-      <div
-        ref={blockObjectRef}
-        contentEditable={false}
-        draggable={!props.readOnly}
-      >
-        {innerContent}
-      </div>
-      {dropPosition === 'end' ? <DropIndicator /> : null}
-    </div>
-  )
+  return render ? render(renderProps) : renderDefaultBlockObject(renderProps)
 }

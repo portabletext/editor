@@ -10,9 +10,9 @@ import type {ContainerConfig} from '../renderers/renderer.types'
  * a child `_type` declared inside the parent's `of` is rendered using
  * that positional registration instead of the global one.
  *
- * Not a pipeline gate. Whether the current render position emits the
- * new-pipeline DOM shape (clean `data-pt-*`) or the legacy shape
- * (`data-child-*`) is governed by `NewPipelineContext`.
+ * Not a pipeline gate. Whether an unregistered text block at this
+ * position wraps its children in the legacy extra `<div>` is governed
+ * by `NewPipelineContext`, not by this context's truthiness.
  * A top-level catch-all `defineTextBlock` puts a render position inside
  * the new pipeline without any parent container — reading this
  * context's truthiness as a pipeline gate produces a stale answer for
