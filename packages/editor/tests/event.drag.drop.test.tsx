@@ -1552,4 +1552,1036 @@ describe('event.drag.drop', () => {
       ])
     })
   })
+
+  test('Scenario: Dropping an entire block-object mid-text splits the paragraph at the drop point', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const dropPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: dropPath, offset: 3},
+          focus: {path: dropPath, offset: 3},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: 'k6',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k5', _type: 'span', text: 'bar', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Dropping at the very start of a non-empty text block snaps before it without splitting', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const dropPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: dropPath, offset: 0},
+          focus: {path: dropPath, offset: 0},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Dropping at the very end of a non-empty text block snaps after it without splitting', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const dropPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: dropPath, offset: 6},
+          focus: {path: dropPath, offset: 6},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Dropping onto a void block snaps before or after it without splitting', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageAKey = keyGenerator()
+    const imageBKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: imageAKey,
+          _type: 'image',
+          src: 'https://example.com/a.jpg',
+        },
+        {
+          _key: imageBKey,
+          _type: 'image',
+          src: 'https://example.com/b.jpg',
+        },
+      ],
+    })
+
+    const dragSelection = {
+      anchor: {path: [{_key: imageAKey}], offset: 0},
+      focus: {path: [{_key: imageAKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: dragSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: dragSelection},
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: [{_key: imageBKey}], offset: 0},
+          focus: {path: [{_key: imageBKey}], offset: 0},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: imageBKey,
+          _type: 'image',
+          src: 'https://example.com/b.jpg',
+        },
+        {
+          _key: imageAKey,
+          _type: 'image',
+          src: 'https://example.com/a.jpg',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Dropping with an expanded whole-block fallback position snaps without touching the hovered block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    // Mirrors the whole-block fallback `getEventPosition` builds when it
+    // can't resolve a caret from the DOM event: an expanded range spanning
+    // the hovered block's start to end, not a collapsed point.
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 6,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Undoing a splitting drop restores the pre-drop value in one step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foobar', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    const initialValue = editor.getSnapshot().context.value
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const dropPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: dropPath, offset: 3},
+          focus: {path: dropPath, offset: 3},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).not.toEqual(initialValue)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('Scenario: Dragging an image into a table cell mid-line splits the cell text line', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const cellBlockKey = keyGenerator()
+    const cellSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}, {type: 'image'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _key: cellSpanKey,
+                          _type: 'span',
+                          text: 'foobar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'table',
+              arrayField: 'rows',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+              of: [
+                defineContainer({
+                  type: 'row',
+                  arrayField: 'cells',
+                  render: ({attributes, children}) => (
+                    <div {...attributes}>{children}</div>
+                  ),
+                  of: [
+                    defineContainer({
+                      type: 'cell',
+                      arrayField: 'content',
+                      render: ({attributes, children}) => (
+                        <div {...attributes}>{children}</div>
+                      ),
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const cellSpanPath = [
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'content',
+      {_key: cellBlockKey},
+      'children',
+      {_key: cellSpanKey},
+    ]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: cellSpanPath, offset: 3},
+          focus: {path: cellSpanPath, offset: 3},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _key: cellSpanKey,
+                          _type: 'span',
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {
+                      _key: imageKey,
+                      _type: 'image',
+                      src: 'https://example.com/image.jpg',
+                    },
+                    {
+                      _key: 'k9',
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_key: 'k8', _type: 'span', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Dragging a type the destination cell rejects leaves the source and destination untouched', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const videoKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const cellBlockKey = keyGenerator()
+    const cellSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'video', fields: [{name: 'src', type: 'string'}]},
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_key: videoKey, _type: 'video', src: 'https://example.com/v.mp4'},
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _key: cellSpanKey,
+                          _type: 'span',
+                          text: 'foobar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'table',
+              arrayField: 'rows',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+              of: [
+                defineContainer({
+                  type: 'row',
+                  arrayField: 'cells',
+                  render: ({attributes, children}) => (
+                    <div {...attributes}>{children}</div>
+                  ),
+                  of: [
+                    defineContainer({
+                      type: 'cell',
+                      arrayField: 'content',
+                      render: ({attributes, children}) => (
+                        <div {...attributes}>{children}</div>
+                      ),
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    const videoSelection = {
+      anchor: {path: [{_key: videoKey}], offset: 0},
+      focus: {path: [{_key: videoKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: videoSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const cellSpanPath = [
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'content',
+      {_key: cellBlockKey},
+      'children',
+      {_key: cellSpanKey},
+    ]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: videoSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: cellSpanPath, offset: 3},
+          focus: {path: cellSpanPath, offset: 3},
+        },
+      },
+    })
+
+    // The video block's type isn't accepted anywhere in the cell's
+    // sub-schema (which only accepts `block`), so the fitted payload is
+    // empty: neither the source nor the destination change.
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_key: videoKey, _type: 'video', src: 'https://example.com/v.mp4'},
+      {
+        _key: tableKey,
+        _type: 'table',
+        rows: [
+          {
+            _key: rowKey,
+            _type: 'row',
+            cells: [
+              {
+                _key: cellKey,
+                _type: 'cell',
+                content: [
+                  {
+                    _key: cellBlockKey,
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _key: cellSpanKey,
+                        _type: 'span',
+                        text: 'foobar',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('Scenario: Dragging a multi-block selection (text, image, text) dropped mid-paragraph splits like a paste would', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const textAKey = keyGenerator()
+    const textASpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const textBKey = keyGenerator()
+    const textBSpanKey = keyGenerator()
+    const destKey = keyGenerator()
+    const destSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: textAKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: textASpanKey, _type: 'span', text: 'foo', marks: []},
+          ],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: textBKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: textBSpanKey, _type: 'span', text: 'bar', marks: []},
+          ],
+        },
+        {
+          _key: destKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: destSpanKey, _type: 'span', text: 'hello world', marks: []},
+          ],
+        },
+      ],
+    })
+
+    // `isSelectingEntireBlocks` treats a selection spanning a text block's
+    // full text, an entire block object, and another text block's full text
+    // as an entire-blocks drag, same as selecting all three with the mouse.
+    const dragSelection = {
+      anchor: {
+        path: [{_key: textAKey}, 'children', {_key: textASpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: textBKey}, 'children', {_key: textBSpanKey}],
+        offset: 3,
+      },
+    }
+    editor.send({type: 'select', at: dragSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const dropPath = [{_key: destKey}, 'children', {_key: destSpanKey}]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: dragSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: dropPath, offset: 5},
+          focus: {path: dropPath, offset: 5},
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      // The split reuses the same merge machinery as a multi-block paste at
+      // this position: the text before the caret ("hello") keeps the
+      // destination block's own keys and absorbs the first dragged text
+      // block's content, the block object keeps its own key in the middle,
+      // and the text after the caret (" world") is absorbed into the last
+      // dragged text block, which keeps its own key.
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: destKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: destSpanKey, _type: 'span', text: 'hellofoo', marks: []},
+          ],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: textBKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: textBSpanKey, _type: 'span', text: 'bar world', marks: []},
+          ],
+        },
+      ])
+    })
+  })
 })

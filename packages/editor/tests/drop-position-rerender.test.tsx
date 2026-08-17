@@ -61,6 +61,43 @@ describe('drop position re-renders', () => {
     // every key.
     expect(renders).toEqual([])
   })
+
+  test('a dragover strictly inside a text block hides the indicator', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: [block('b0', 'first'), block('b1', 'second')],
+    })
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b1'),
+        block: 'end',
+      }),
+    )
+    await vi.waitFor(() => {
+      if (document.querySelectorAll('.pt-drop-indicator').length !== 1) {
+        throw new Error('drop indicator not shown yet')
+      }
+    })
+
+    // Mid-block, the drop splits the block and the browser's native drop
+    // caret is the affordance: the boundary indicator must clear, not
+    // linger from the earlier boundary hover.
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretAt('b1', 3),
+        block: 'end',
+      }),
+    )
+    await vi.waitFor(() => {
+      if (document.querySelectorAll('.pt-drop-indicator').length !== 0) {
+        throw new Error('drop indicator still shown')
+      }
+    })
+  })
 })
 
 function dragover(options: {
@@ -106,5 +143,15 @@ function caretIn(blockKey: string): NonNullable<EditorSelection> {
   return {
     anchor: {path: spanPath(blockKey), offset: 0},
     focus: {path: spanPath(blockKey), offset: 0},
+  }
+}
+
+function caretAt(
+  blockKey: string,
+  offset: number,
+): NonNullable<EditorSelection> {
+  return {
+    anchor: {path: spanPath(blockKey), offset},
+    focus: {path: spanPath(blockKey), offset},
   }
 }

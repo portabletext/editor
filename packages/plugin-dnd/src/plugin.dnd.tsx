@@ -8,10 +8,19 @@ import {
 import {BehaviorPlugin} from '@portabletext/editor/plugins'
 import {
   getFocusBlock,
+  getFocusInlineObject,
+  getFocusTextBlock,
   getSelectedBlocks,
   isSelectingEntireBlocks,
 } from '@portabletext/editor/selectors'
-import {isKeyedSegment} from '@portabletext/editor/utils'
+import {
+  getBlockEndPoint,
+  getBlockStartPoint,
+  isEmptyTextBlock,
+  isEqualSelectionPoints,
+  isKeyedSegment,
+  isSelectionCollapsed,
+} from '@portabletext/editor/utils'
 import {
   createContext,
   useCallback,
@@ -181,15 +190,49 @@ function createDropPositionBehaviors(
           return false
         }
 
-        return {dropFocusBlock}
+        const dropSnapshot = {
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: event.position.selection,
+          },
+        }
+        const focusTextBlock = getFocusTextBlock(dropSnapshot)
+        // A collapsed drop strictly inside a non-empty text block already
+        // shows the browser's own drop caret there.
+        const droppedInsideTextBlock =
+          isSelectionCollapsed(event.position.selection) &&
+          focusTextBlock !== undefined &&
+          !isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
+          getFocusInlineObject(dropSnapshot) === undefined &&
+          !isEqualSelectionPoints(
+            event.position.selection.focus,
+            getBlockStartPoint({
+              context: snapshot.context,
+              block: focusTextBlock,
+            }),
+          ) &&
+          !isEqualSelectionPoints(
+            event.position.selection.focus,
+            getBlockEndPoint({
+              context: snapshot.context,
+              block: focusTextBlock,
+            }),
+          )
+
+        return {dropFocusBlock, droppedInsideTextBlock}
       },
       actions: [
-        ({event}, {dropFocusBlock}) => [
+        ({event}, {dropFocusBlock, droppedInsideTextBlock}) => [
           effect(() => {
-            setDropPosition({
-              path: dropFocusBlock.path,
-              position: event.position.block,
-            })
+            setDropPosition(
+              droppedInsideTextBlock
+                ? undefined
+                : {
+                    path: dropFocusBlock.path,
+                    position: event.position.block,
+                  },
+            )
           }),
           forward(event),
         ],

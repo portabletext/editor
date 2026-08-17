@@ -1,11 +1,18 @@
 import type {Path} from '../engine/interfaces/path'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import type {EventPositionBlock} from '../internal-utils/event-position'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import {getDragSelection} from '../selectors/drag-selection'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -76,6 +83,47 @@ export function createDropPositionBehaviorsConfig({
             return false
           }
 
+          // A collapsed drop strictly inside a non-empty text block's own
+          // characters splits the block on drop instead of snapping, and the
+          // browser's native drop caret is the affordance there: hide the
+          // boundary indicator so it doesn't promise a before/after placement
+          // the drop won't make. Mirror of the placement predicate in
+          // `behavior.core.dnd.ts`.
+          const dropSnapshot = {
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: event.position.selection,
+            },
+          }
+          const focusTextBlock = getFocusTextBlock(dropSnapshot)
+          const droppedInsideTextBlock =
+            isCollapsedRange(event.position.selection) &&
+            focusTextBlock !== undefined &&
+            !isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
+            getFocusInlineObject(dropSnapshot) === undefined &&
+            !isEqualSelectionPoints(
+              event.position.selection.focus,
+              getBlockStartPoint({
+                context: snapshot.context,
+                block: focusTextBlock,
+              }),
+            ) &&
+            !isEqualSelectionPoints(
+              event.position.selection.focus,
+              getBlockEndPoint({
+                context: snapshot.context,
+                block: focusTextBlock,
+              }),
+            )
+
+          if (droppedInsideTextBlock) {
+            // Clear rather than skip: a boundary hover may have painted an
+            // indicator that must not linger while the pointer sits mid-block
+            // (the clearing behavior below never fires on `drag.dragover`).
+            return {dropFocusBlock: undefined}
+          }
+
           return {dropFocusBlock}
         },
         actions: [
@@ -83,10 +131,14 @@ export function createDropPositionBehaviorsConfig({
             {
               type: 'effect',
               effect: () => {
-                setDropPosition({
-                  path: dropFocusBlock.path,
-                  position: event.position.block,
-                })
+                setDropPosition(
+                  dropFocusBlock
+                    ? {
+                        path: dropFocusBlock.path,
+                        position: event.position.block,
+                      }
+                    : undefined,
+                )
               },
             },
           ],

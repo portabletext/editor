@@ -84,6 +84,34 @@ describe('DndProvider', () => {
     expect(renders).not.toContain('b0')
   })
 
+  test('Scenario: Dragging over the middle of a non-empty text block hides the indicator', async () => {
+    const {editor} = await renderEditorWithProbes()
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretMidText('b2'),
+        block: 'end',
+      }),
+    )
+
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'none'})
+  })
+
+  test('Scenario: Dragging over the edge of a non-empty text block still shows the indicator', async () => {
+    const {editor} = await renderEditorWithProbes()
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'start',
+      }),
+    )
+
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'start'})
+  })
+
   test('Scenario: Ending the drag clears the drop position', async () => {
     const {editor} = await renderEditorWithProbes()
 
@@ -207,5 +235,12 @@ function caretIn(blockKey: string): NonNullable<EditorSelection> {
   return {
     anchor: {path: spanPath(blockKey), offset: 0},
     focus: {path: spanPath(blockKey), offset: 0},
+  }
+}
+
+function caretMidText(blockKey: string): NonNullable<EditorSelection> {
+  return {
+    anchor: {path: spanPath(blockKey), offset: 2},
+    focus: {path: spanPath(blockKey), offset: 2},
   }
 }
