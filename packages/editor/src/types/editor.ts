@@ -24,7 +24,12 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {BlockPath, Path} from './paths'
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated `EditableAPIDeleteOptions` is deprecated together with the
+ * `PortableTextEditor.delete` static. Send a `delete` behavior event (with
+ * an optional `unit`) or a `delete.block` event via `editor.send` instead.
+ */
 export interface EditableAPIDeleteOptions {
   mode?: 'blocks' | 'children' | 'selected'
 }
@@ -47,7 +52,7 @@ export type AddedAnnotationPaths = {
   spanPath: Path
 }
 
-/** @beta */
+/** @internal */
 export interface EditableAPI {
   activeAnnotations: () => PortableTextObject[]
   isAnnotationActive: (annotationType: PortableTextObject['_type']) => boolean
