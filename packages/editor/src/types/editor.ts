@@ -175,7 +175,14 @@ export type OnCopyFn = (
   event: ClipboardEvent<HTMLDivElement | HTMLSpanElement>,
 ) => undefined | unknown
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated `BlockRenderProps` is deprecated together with the
+ * `renderBlock` render prop it serves. Type against
+ * `BlockObjectRenderProps` / `TextBlockRenderProps` from the node
+ * registration API instead. See the migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export interface BlockRenderProps {
   children: ReactElement<any>
   editorElementRef: RefObject<HTMLElement | null>
@@ -189,7 +196,14 @@ export interface BlockRenderProps {
   value: PortableTextBlock
 }
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated `BlockChildRenderProps` is deprecated together with the
+ * `renderChild` render prop it serves. Type against
+ * `InlineObjectRenderProps` / `SpanRenderProps` from the node
+ * registration API instead. See the migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export interface BlockChildRenderProps {
   annotations: PortableTextObject[]
   children: ReactElement<any>
@@ -222,7 +236,14 @@ export interface BlockDecoratorRenderProps {
   selected: boolean
   value: string
 }
-/** @beta */
+/**
+ * @beta
+ * @deprecated `BlockListItemRenderProps` is deprecated together with the
+ * `renderListItem` render prop it serves. Render list items with
+ * `defineTextBlock` mounted through `NodePlugin` instead. See the
+ * migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export interface BlockListItemRenderProps {
   block: PortableTextTextBlock
   children: ReactElement<any>
@@ -276,7 +297,14 @@ export type RenderPlaceholderFunction = () => React.ReactNode
  */
 export type RenderStyleFunction = (props: BlockStyleRenderProps) => JSX.Element
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated `BlockStyleRenderProps` is deprecated together with the
+ * `renderStyle` render prop it serves. Render text-block styles with
+ * `defineTextBlock` mounted through `NodePlugin` instead. See the
+ * migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export interface BlockStyleRenderProps {
   block: PortableTextTextBlock
   children: ReactElement<any>
