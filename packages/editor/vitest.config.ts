@@ -32,6 +32,7 @@ export default defineConfig({
         resolve,
         test: {
           name: 'browser',
+          setupFiles: ['./vitest.setup.ts'],
           include: [
             'gherkin-tests/**/*.test.ts',
             'gherkin-tests/**/*.test.tsx',
