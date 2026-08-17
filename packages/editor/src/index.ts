@@ -32,6 +32,7 @@ export {
   type FieldDefinition,
   type InlineObjectDefinition,
   type ListDefinition,
+  type OfDefinition,
   type SchemaDefinition,
   type StyleDefinition,
 } from '@portabletext/schema'

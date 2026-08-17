@@ -1,11 +1,6 @@
 import type {FieldDefinition, OfDefinition} from '@portabletext/schema'
 import type {ContainerConfig} from '../renderers/renderer.types'
 
-export type ChildArrayField = FieldDefinition & {
-  type: 'array'
-  of: ReadonlyArray<OfDefinition>
-}
-
 /**
  * Public view of a registered editable container, surfaced on
  * {@link EditorContext.containers}.
@@ -33,21 +28,26 @@ export type ChildArrayField = FieldDefinition & {
  * a feature; `resolveContainerAt` walks the positional tree using
  * the path to return the entry that applies at a given position.
  *
- * @alpha
+ * @public
  */
 export type RegisteredContainer = {
   kind: 'container'
   type: string
-  field: ChildArrayField
+  field: FieldDefinition & {
+    type: 'array'
+    of: ReadonlyArray<OfDefinition>
+  }
   of?: ReadonlyArray<RegisteredContainer | RegisteredPositional>
 }
+
+export type ChildArrayField = RegisteredContainer['field']
 
 /**
  * Public view of a registered span, surfaced inside a containing
  * {@link RegisteredContainer}'s `of` array as a positional
  * registration. The render function is engine-internal.
  *
- * @alpha
+ * @public
  */
 export type RegisteredSpan = {
   kind: 'span'
@@ -59,7 +59,7 @@ export type RegisteredSpan = {
  * containing {@link RegisteredContainer}'s `of` array as a positional
  * registration. The render function is engine-internal.
  *
- * @alpha
+ * @public
  */
 export type RegisteredBlockObject = {
   kind: 'blockObject'
@@ -71,7 +71,7 @@ export type RegisteredBlockObject = {
  * containing {@link RegisteredContainer}'s `of` array as a positional
  * registration. The render function is engine-internal.
  *
- * @alpha
+ * @public
  */
 export type RegisteredInlineObject = {
   kind: 'inlineObject'
@@ -83,7 +83,7 @@ export type RegisteredInlineObject = {
  * a {@link RegisteredContainer}'s `of` array. Text-block registrations
  * are NOT included here and do not appear on the containers tree.
  *
- * @alpha
+ * @public
  */
 export type RegisteredPositional =
   | RegisteredSpan
@@ -107,7 +107,7 @@ export type RegisteredPositional =
  * does not find a positional override, the resolver falls back to the
  * top-level entry for the type if one is registered.
  *
- * @alpha
+ * @public
  */
 export type Containers = ReadonlyMap<string, RegisteredContainer>
 
