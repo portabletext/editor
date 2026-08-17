@@ -1,7 +1,7 @@
 import type {BlockPath} from './paths'
 
 /**
- * @beta
+ * @public
  */
 export type BlockOffset = {
   path: BlockPath

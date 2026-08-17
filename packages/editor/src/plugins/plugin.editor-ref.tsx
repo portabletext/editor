@@ -3,7 +3,7 @@ import type {Editor} from '../editor'
 import {useEditor} from '../editor/use-editor'
 
 /**
- * @beta
+ * @public
  */
 export const EditorRefPlugin = React.forwardRef<Editor | null>((_, ref) => {
   const editor = useEditor()

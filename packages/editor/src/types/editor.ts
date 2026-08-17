@@ -119,7 +119,7 @@ export type EditorSelection = {
 
 /**
  * The editor has invalid data in the value that can be resolved by the user
- * @beta */
+ * @public */
 export type InvalidValueResolution = {
   autoResolve?: boolean
   patches: Patch[]
