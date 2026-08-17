@@ -12,7 +12,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * When `match` is a type predicate, the returned `node` narrows to that type.
  *
- * @beta
+ * @public
  */
 export function getAncestor<TMatch extends PortableTextBlock>(
   snapshot: TraversalSnapshot,
@@ -23,7 +23,7 @@ export function getAncestor<TMatch extends PortableTextBlock>(
   },
 ): {node: TMatch; path: Path} | undefined
 /**
- * @beta
+ * @public
  */
 export function getAncestor(
   snapshot: TraversalSnapshot,

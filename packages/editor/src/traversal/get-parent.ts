@@ -13,7 +13,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * When `match` is provided and the parent does not satisfy it, returns
  * `undefined`.
  *
- * @beta
+ * @public
  */
 export function getParent<TMatch extends PortableTextBlock>(
   snapshot: TraversalSnapshot,
@@ -23,7 +23,7 @@ export function getParent<TMatch extends PortableTextBlock>(
   },
 ): {node: TMatch; path: Path} | undefined
 /**
- * @beta
+ * @public
  */
 export function getParent(
   snapshot: TraversalSnapshot,

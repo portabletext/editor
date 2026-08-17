@@ -23,7 +23,7 @@ import type {Containers} from '../schema/resolve-containers'
  * range) to determine which of the union's members are applicable at the
  * current selection.
  *
- * @beta
+ * @public
  */
 export function getUnionSchema(schema: Schema, containers: Containers): Schema {
   const decorators = mergeByName(schema.decorators, [])

@@ -8,7 +8,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * A node is inline if its parent is a text block. This is the inverse of
  * `isBlock`. Top-level nodes are never inline.
  *
- * @beta
+ * @public
  */
 export function isInline(snapshot: TraversalSnapshot, path: Path): boolean {
   return !isBlock(snapshot, path)

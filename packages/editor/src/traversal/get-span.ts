@@ -6,7 +6,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Get the span node at a given path.
  *
- * @beta
+ * @public
  */
 export function getSpan(
   snapshot: TraversalSnapshot,

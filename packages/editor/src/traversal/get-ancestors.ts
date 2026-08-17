@@ -21,7 +21,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Every ancestor is a `PortableTextBlock`: only text blocks and object
  * nodes can contain children.
  *
- * @beta
+ * @public
  */
 export function getAncestors(
   snapshot: TraversalSnapshot,

@@ -14,7 +14,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * When `match` is a type predicate, the returned `node` narrows to that type.
  *
- * @beta
+ * @public
  */
 export function getSibling<TMatch extends Node>(
   snapshot: TraversalSnapshot,
@@ -25,7 +25,7 @@ export function getSibling<TMatch extends Node>(
   },
 ): {node: TMatch; path: Path} | undefined
 /**
- * @beta
+ * @public
  */
 export function getSibling(
   snapshot: TraversalSnapshot,

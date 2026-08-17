@@ -6,7 +6,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Get the first child of a node at a given path.
  *
- * @beta
+ * @public
  */
 export function getFirstChild(
   snapshot: TraversalSnapshot,

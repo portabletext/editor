@@ -5,7 +5,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Check if a node is an object node (not a text block or span).
  *
- * @beta
+ * @public
  */
 export function isObject(
   snapshot: TraversalSnapshot,

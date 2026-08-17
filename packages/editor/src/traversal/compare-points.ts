@@ -12,7 +12,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Compares the two points by document order, resolved at any depth. When
  * the paths are equal, compares offsets.
  *
- * @beta
+ * @public
  */
 export function comparePoints(
   snapshot: TraversalSnapshot,
