@@ -341,16 +341,14 @@ export const coreDndBehaviors = [
           : undefined
 
       const draggedNodes = getFragment(dragSnapshot)
-      const fittedBlocks = fitBlocksToDestination(
-        {
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: dropPosition,
-          },
+      const dropSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dropPosition,
         },
-        event.data,
-      )
+      }
+      const fittedBlocks = fitBlocksToDestination(dropSnapshot, event.data)
 
       if (!droppingOnDragOrigin) {
         return {
@@ -379,6 +377,12 @@ export const coreDndBehaviors = [
           movedInlineObjectKey,
         },
       ) => {
+        // Nothing survives `fitBlocksToDestination`: leave the source where
+        // it is instead of deleting it with nothing to show for the drop.
+        if (fittedBlocks.length === 0) {
+          return []
+        }
+
         // The dropped object lives in the drop position's block, keyed by its
         // preserved `_key`. Re-selecting it keeps the moved inline object
         // selected, mirroring inserting an inline object, instead of leaving
