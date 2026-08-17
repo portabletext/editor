@@ -11,7 +11,7 @@ import {getPreviousSpan} from './selector.get-previous-span'
 import {getSelectedSpans} from './selector.get-selected-spans'
 
 /**
- * @beta
+ * @public
  */
 export type MarkState =
   | {
@@ -27,7 +27,7 @@ export type MarkState =
 /**
  * Given that text is inserted at the current position, what marks should
  * be applied?
- * @beta
+ * @public
  */
 export const getMarkState: EditorSelector<MarkState | undefined> = (
   snapshot,
