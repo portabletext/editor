@@ -219,13 +219,7 @@ export function RenderElement(props: {
     } else {
       // Legacy top-level rendering.
       rendered = (
-        <RenderTextBlock
-          attributes={props.attributes}
-          element={props.element}
-          path={props.path}
-          readOnly={props.readOnly}
-          textBlock={props.element}
-        >
+        <RenderTextBlock attributes={props.attributes}>
           {props.children}
         </RenderTextBlock>
       )
@@ -244,16 +238,6 @@ export function RenderElement(props: {
   }
 
   if (isInline(engineStatic.snapshot, props.path)) {
-    if (isInNewPipeline && !inlineObjectConfig) {
-      return (
-        <span {...props.attributes} data-pt-inline="object">
-          {props.children}
-          <span contentEditable={false}>
-            [{props.element._type}: {props.element._key}]
-          </span>
-        </span>
-      )
-    }
     return (
       <RenderInlineObject
         attributes={props.attributes}
@@ -268,21 +252,9 @@ export function RenderElement(props: {
     )
   }
 
-  if (isInNewPipeline && !blockObjectConfig) {
-    return (
-      <div {...props.attributes} data-pt-block="object">
-        {props.children}
-        <div contentEditable={false}>
-          [{props.element._type}: {props.element._key}]
-        </div>
-      </div>
-    )
-  }
-
   return (
     <RenderBlockObject
       attributes={props.attributes}
-      blockObject={props.element}
       element={props.element}
       blockObjectConfig={blockObjectConfig}
       path={props.path}

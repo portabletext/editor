@@ -3,6 +3,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
+import {serializePath} from '../src/paths/serialize-path'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('toEngineRange', () => {
@@ -142,7 +143,7 @@ describe('toEngineRange', () => {
     const editorEl = locator.element() as HTMLElement
     const startNode = findTextNode(editorEl, blockKey, spanKey)
     const voidEl = editorEl.querySelector(
-      `[data-block-key="${imageKey}"]`,
+      `[data-pt-path="${CSS.escape(serializePath([{_key: imageKey}]))}"]`,
     ) as HTMLElement | null
 
     if (!startNode || !voidEl) {
@@ -197,11 +198,17 @@ function findTextNode(
   blockKey: string,
   spanKey: string,
 ): Node | undefined {
-  const blockEl = editorEl.querySelector(`[data-block-key="${blockKey}"]`)
+  const blockEl = editorEl.querySelector(
+    `[data-pt-path="${CSS.escape(serializePath([{_key: blockKey}]))}"]`,
+  )
   if (!blockEl) {
     return undefined
   }
-  const spanEl = blockEl.querySelector(`[data-child-key="${spanKey}"]`)
+  const spanEl = blockEl.querySelector(
+    `[data-pt-path="${CSS.escape(
+      serializePath([{_key: blockKey}, 'children', {_key: spanKey}]),
+    )}"]`,
+  )
   if (!spanEl) {
     return undefined
   }
