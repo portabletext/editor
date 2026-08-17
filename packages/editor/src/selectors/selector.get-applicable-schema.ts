@@ -7,7 +7,7 @@ import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
  * The set of schema member names applicable at the current selection,
  * grouped by category.
  *
- * @beta
+ * @public
  */
 export type ApplicableSchema = {
   decorators: ReadonlySet<string>
@@ -51,7 +51,7 @@ export type ApplicableSchema = {
  * compare to avoid re-rendering on every editor tick. Use
  * {@link compareApplicableSchema} as the third argument.
  *
- * @beta
+ * @public
  */
 export const getApplicableSchema: EditorSelector<ApplicableSchema> = (
   snapshot,
@@ -106,7 +106,7 @@ export const getApplicableSchema: EditorSelector<ApplicableSchema> = (
  * Pass as the `compare` argument to `useEditorSelector` to keep React
  * subscriptions stable.
  *
- * @beta
+ * @public
  */
 export function compareApplicableSchema(
   a: ApplicableSchema,
