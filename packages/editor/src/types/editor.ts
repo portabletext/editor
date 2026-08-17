@@ -307,25 +307,25 @@ export type ScrollSelectionIntoViewFunction = (
 ) => void
 
 /**
- * Parameters for the callback that will be called for a RangeDecoration's onMoved.
- * @alpha */
+ * Details passed to a `RangeDecoration`'s `onMoved` callback.
+ * @public */
 export interface RangeDecorationOnMovedDetails {
   rangeDecoration: RangeDecoration
   newSelection: EditorSelection
   origin: 'remote' | 'local'
 }
 /**
- * A range decoration is a UI affordance that wraps a given selection range in the editor
- * with a custom component. This can be used to highlight search results,
- * mark validation errors on specific words, draw user presence and similar.
- * @alpha */
+ * A UI affordance that wraps a selection range in the editor with a custom
+ * component, for example to highlight search results, mark validation
+ * errors on specific words, or draw user presence.
+ * @public */
 export interface RangeDecoration {
   /**
-   * A component for rendering the range decoration.
-   * The component will receive the children (text) of the range decoration as its children.
+   * The component that renders the range decoration. It receives the
+   * decorated text as its children.
    *
    * @example
-   * ```ts
+   * ```tsx
    * (rangeComponentProps: PropsWithChildren) => (
    *    <SearchResultHighlight>
    *      {rangeComponentProps.children}
@@ -335,15 +335,17 @@ export interface RangeDecoration {
    */
   component: (props: PropsWithChildren) => ReactElement<any>
   /**
-   * The editor content selection range
+   * The editor content selection range to decorate.
    */
   selection: EditorSelection
   /**
-   * A optional callback that will be called when the range decoration potentially moves according to user edits.
+   * Called when edits move the decorated range. The details carry the new
+   * selection (`null` when the range is lost) and whether the edit was
+   * `local` or `remote`.
    */
   onMoved?: (details: RangeDecorationOnMovedDetails) => void
   /**
-   * A custom payload that can be set on the range decoration
+   * A custom payload that can be set on the range decoration.
    */
   payload?: Record<string, unknown>
 }
