@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.0.47
+
+### Patch Changes
+
+- Updated dependencies [[`5c61867`](https://github.com/portabletext/editor/commit/5c618674c28627ad742f326076d9e27d4a09ddf1), [`9e3b7be`](https://github.com/portabletext/editor/commit/9e3b7be9cf95772a32724acea69cee233f0d9f9f), [`fbb9a98`](https://github.com/portabletext/editor/commit/fbb9a9824dcea07aad66a4c69bb33db6c3fe0be8), [`2c97777`](https://github.com/portabletext/editor/commit/2c97777c56746a418b582258268b452b6168a32b), [`2f5c148`](https://github.com/portabletext/editor/commit/2f5c148b42a0f1dc5c1efb535ca4afd680e831b0), [`e7df9b8`](https://github.com/portabletext/editor/commit/e7df9b8ffcf51f984bb14439dbeaaa9a348b9b45), [`eb8cb6c`](https://github.com/portabletext/editor/commit/eb8cb6cff6c793e107cc1d5f4c85b78ba565b74b), [`75d2dc4`](https://github.com/portabletext/editor/commit/75d2dc4ddfd5ae7f6be0630339d5fb34f6e0a750), [`45fd070`](https://github.com/portabletext/editor/commit/45fd0706b72b92e5a663bdc019e1e464972eafb5), [`bfd7058`](https://github.com/portabletext/editor/commit/bfd7058700754ba7ac5af35aae99b2bc8ce70dfb), [`8c72f76`](https://github.com/portabletext/editor/commit/8c72f7622108f406d7930a9905f9c517a2e9c181), [`db10bb7`](https://github.com/portabletext/editor/commit/db10bb7a3659f02d11b8aca5cc2424e62314faec)]:
+  - @portabletext/editor@7.11.0
+
 ## 7.0.46
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-typeahead-picker",
-  "version": "6.0.47",
+  "version": "6.0.48",
   "description": "Build typeahead pickers (emoji, mentions, slash commands) for the Portable Text Editor",
   "keywords": [
     "autocomplete",
@@ -91,7 +91,7 @@
     "vitest": "catalog:tooling"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^7.10.19",
+    "@portabletext/editor": "workspace:^7.11.0",
     "react": "^19.2"
   },
   "engines": {
