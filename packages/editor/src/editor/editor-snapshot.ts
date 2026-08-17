@@ -31,7 +31,7 @@ export type EditorContext = {
    * `resolveContainerAt(containers, value, path)` for position-aware
    * resolution that handles both top-level and positional entries.
    *
-   * @alpha
+   * @public
    */
   containers: Containers
 }
