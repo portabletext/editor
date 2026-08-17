@@ -11,9 +11,6 @@ import type {RegistrableNode} from './renderers/renderer.types'
  * @public
  */
 export type EditorConfig = {
-  /**
-   * @beta
-   */
   keyGenerator?: () => string
   readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
