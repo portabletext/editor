@@ -1552,4 +1552,218 @@ describe('event.drag.drop', () => {
       ])
     })
   })
+  test('Scenario: Dragging a type the destination cell rejects leaves the source and destination untouched', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const videoKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const cellBlockKey = keyGenerator()
+    const cellSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'video', fields: [{name: 'src', type: 'string'}]},
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_key: videoKey, _type: 'video', src: 'https://example.com/v.mp4'},
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _key: cellSpanKey,
+                          _type: 'span',
+                          text: 'foobar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'table',
+              arrayField: 'rows',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+              of: [
+                defineContainer({
+                  type: 'row',
+                  arrayField: 'cells',
+                  render: ({attributes, children}) => (
+                    <div {...attributes}>{children}</div>
+                  ),
+                  of: [
+                    defineContainer({
+                      type: 'cell',
+                      arrayField: 'content',
+                      render: ({attributes, children}) => (
+                        <div {...attributes}>{children}</div>
+                      ),
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    const videoSelection = {
+      anchor: {path: [{_key: videoKey}], offset: 0},
+      focus: {path: [{_key: videoKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: videoSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    const cellSpanPath = [
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'content',
+      {_key: cellBlockKey},
+      'children',
+      {_key: cellSpanKey},
+    ]
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: videoSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: cellSpanPath, offset: 3},
+          focus: {path: cellSpanPath, offset: 3},
+        },
+      },
+    })
+
+    // The video block's type isn't accepted anywhere in the cell's
+    // sub-schema (which only accepts `block`), so the fitted payload is
+    // empty: neither the source nor the destination change. A no-op has
+    // no observable settle signal, so a real edit provides the anchor:
+    // once its text lands, any change the drop had caused would be
+    // visible too.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: cellSpanPath, offset: 6},
+        focus: {path: cellSpanPath, offset: 6},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: videoKey, _type: 'video', src: 'https://example.com/v.mp4'},
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cellBlockKey,
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _key: cellSpanKey,
+                          _type: 'span',
+                          text: 'foobar!',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })
