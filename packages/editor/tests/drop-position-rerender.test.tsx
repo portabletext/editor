@@ -2,39 +2,27 @@ import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineTextBlock, type EditorSelection, type Path} from '../src'
-import {useElementDropPosition} from '../src/editor/drop-position-state-context'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({})
 
 /**
- * A `dragover` tick sets the editor-wide drop position. It must not re-render
- * the block tree: only the block gaining or losing a consumer-drawn
- * indicator re-renders, and no block's content render runs. Pins that the
- * drop position is delivered per block (via the drop-position store), not
- * as a `renderElement` dependency that hands the engine a new render
- * function every tick and re-renders everything. The engine itself draws no
- * indicator chrome; `@portabletext/plugin-dnd` and consumer renders are the
- * ones reading the store.
+ * A `dragover` tick must not re-render the block tree: no block's content
+ * render runs. The engine draws no drop chrome and keeps no drop-position
+ * render state; `@portabletext/plugin-dnd` tracks positions from the public
+ * `drag.*` events in its own store. This pins that dragover stays out of
+ * the render path entirely.
  */
 describe('drop position re-renders', () => {
-  test('a dragover tracks the drop position without re-rendering any block', async () => {
+  test('a dragover re-renders no block', async () => {
     const renders: Array<string> = []
 
     const textBlock = defineTextBlock({
       type: 'block',
       render: ({attributes, children, node}) => {
         renders.push(node._key)
-        return (
-          <div {...attributes}>
-            {children}
-            <DropPositionProbe
-              blockKey={node._key}
-              path={[{_key: node._key}]}
-            />
-          </div>
-        )
+        return <div {...attributes}>{children}</div>
       },
     })
 
@@ -65,40 +53,12 @@ describe('drop position re-renders', () => {
       }),
     )
 
-    // The drag is tracked and delivered to the hovered block's slice of
-    // the drop-position store.
-    await vi.waitFor(() => {
-      const probe = document.querySelector(
-        '[data-testid="drop-position"][data-block-key="b2"]',
-      )
-      if (probe?.getAttribute('data-position') !== 'end') {
-        throw new Error('drop position not tracked yet')
-      }
-    })
-
-    // No block's content re-rendered to get there. Before the per-block
-    // delivery, every block re-rendered on the tick: `renders` would hold
-    // every key.
+    // Give the tick time to cause the damage it must not cause: a settled
+    // editor whose dragover re-rendered blocks would have pushed keys by now.
+    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(renders).toEqual([])
   })
 })
-
-/**
- * Reads the drop-position store directly (the store the drop indicator
- * consumes) to confirm the tick reached block `path` without depending on
- * a block-level default renderer wrapping the indicator.
- */
-function DropPositionProbe(props: {blockKey: string; path: Path}) {
-  const position = useElementDropPosition(props.path)
-  return (
-    <div
-      contentEditable={false}
-      data-testid="drop-position"
-      data-block-key={props.blockKey}
-      data-position={position ?? ''}
-    />
-  )
-}
 
 function dragover(options: {
   dragOrigin: NonNullable<EditorSelection>

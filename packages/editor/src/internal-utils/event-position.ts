@@ -33,7 +33,7 @@ export type EventPosition = {
   isContainer: boolean
   selection: NonNullable<EditorSelection>
 }
-export type EventPositionBlock = EventPosition['block']
+type EventPositionBlock = EventPosition['block']
 
 function isDragEvent(event: DragEvent | MouseEvent): event is DragEvent {
   return 'dataTransfer' in event

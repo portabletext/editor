@@ -36,7 +36,6 @@ import type {
 import type {HotkeyOptions} from '../types/options'
 import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
-import {DropPositionStateProvider} from './drop-position-state-context'
 import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
@@ -930,38 +929,36 @@ export const PortableTextEditable = forwardRef<
 
   return hasInvalidValue ? null : (
     <SelectionStateProvider>
-      <DropPositionStateProvider>
-        <EngineEditable
-          {...restProps}
-          ref={callbackRef}
-          editorActor={editorActor}
-          data-read-only={readOnly}
-          autoFocus={false}
-          className={restProps.className}
-          decorate={decorate}
-          onBlur={handleOnBlur}
-          onCopy={handleCopy}
-          onCut={handleCut}
-          onClick={handleClick}
-          onDOMBeforeInput={handleOnBeforeInput}
-          onDragStart={handleDragStart}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
-          onDragEnter={handleDragEnter}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onDragLeave={handleDragLeave}
-          onFocus={handleOnFocus}
-          onKeyDown={handleKeyDown}
-          onKeyUp={handleKeyUp}
-          onPaste={handlePaste}
-          readOnly={readOnly}
-          renderElement={renderElement}
-          renderLeaf={renderLeaf}
-          renderText={renderText}
-          scrollSelectionIntoView={scrollSelectionIntoViewToEngine}
-        />
-      </DropPositionStateProvider>
+      <EngineEditable
+        {...restProps}
+        ref={callbackRef}
+        editorActor={editorActor}
+        data-read-only={readOnly}
+        autoFocus={false}
+        className={restProps.className}
+        decorate={decorate}
+        onBlur={handleOnBlur}
+        onCopy={handleCopy}
+        onCut={handleCut}
+        onClick={handleClick}
+        onDOMBeforeInput={handleOnBeforeInput}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onDragLeave={handleDragLeave}
+        onFocus={handleOnFocus}
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        onPaste={handlePaste}
+        readOnly={readOnly}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        renderText={renderText}
+        scrollSelectionIntoView={scrollSelectionIntoViewToEngine}
+      />
     </SelectionStateProvider>
   )
 })
