@@ -96,3 +96,50 @@ const decorations: RangeDecoration[] = [
 ```
 
 You can apply styles, libraries like Tailwind, or use custom react components within the rendering functions.
+
+### Following a range across edits
+
+Edits can move, shrink, or invalidate a decorated range: typing before it shifts its offsets, and deleting it removes it entirely. Pass `onMoved` on a `RangeDecoration` to keep your own state in sync instead of recomputing the selection from scratch:
+
+```tsx
+import type {
+  EditorSelection,
+  RangeDecoration,
+  RangeDecorationOnMovedDetails,
+} from '@portabletext/editor'
+import {useState} from 'react'
+
+function Highlight() {
+  const [highlightSelection, setHighlightSelection] = useState<EditorSelection>(
+    {
+      anchor: {
+        path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
+        offset: 0,
+      },
+      focus: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 5},
+    },
+  )
+
+  const onMoved = (details: RangeDecorationOnMovedDetails) => {
+    // `newSelection` is `null` when the edit removed the decorated range.
+    setHighlightSelection(details.newSelection)
+  }
+
+  const decorations: RangeDecoration[] = [
+    {
+      selection: highlightSelection,
+      component: ({children}) => (
+        <span style={{backgroundColor: 'yellow'}}>{children}</span>
+      ),
+      onMoved,
+    },
+  ]
+
+  return (
+    <PortableTextEditable
+      rangeDecorations={decorations}
+      // ... other props
+    />
+  )
+}
+```
