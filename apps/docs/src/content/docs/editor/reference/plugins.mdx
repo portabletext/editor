@@ -43,6 +43,34 @@ function LogTextPlugin() {
 }
 ```
 
+Plugins that render document nodes register through `editor.registerNode(...)` instead, passing the result of a `defineX` factory (`defineContainer`, `defineTextBlock`, `defineSpan`, `defineBlockObject`, `defineInlineObject`). It also returns an unregister function:
+
+```tsx
+function LogImagesPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const unregisterNode = editor.registerNode({
+      node: defineBlockObject({
+        type: 'image',
+        render: (props) => {
+          console.log(props.node)
+          return props.renderDefault(props)
+        },
+      }),
+    })
+
+    return () => {
+      unregisterNode()
+    }
+  }, [editor])
+
+  return null
+}
+```
+
+`NodePlugin` is a thin wrapper around `registerNode` for the common case of registering a stable list of nodes; reach for `registerNode` directly when a plugin needs to register a node conditionally or alongside other setup.
+
 ## Available plugins
 
 <CardGrid>

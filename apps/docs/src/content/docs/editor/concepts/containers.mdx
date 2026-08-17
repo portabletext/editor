@@ -297,6 +297,19 @@ Your own code can resolve the schema at any position with `getPathSubSchema` fro
 
 A container registration that doesn't match the schema is skipped with a `console.warn` naming the actual mismatch: an unknown type, a missing field, a field that isn't an array, or an array of primitives only. The editor keeps working; the type renders as an ordinary block object until the registration and schema agree.
 
+## Read the registered containers
+
+`snapshot.context.containers` exposes what's currently registered, keyed by the container's bare block-object `_type` (`callout`, `table`, and so on). Each entry carries `type`, the `field` that holds the container's editable children (its name, plus the schema's `of` list of allowed child types), and, if the registration declared positional overrides, a nested `of` array of further container or positional (span, block object, inline object) entries. Only top-level registrations appear as flat map entries: a type registered solely inside a parent's `of` shows up nested there, not as its own entry.
+
+Read it with a selector like any other part of the snapshot:
+
+```ts
+import type {EditorSelector} from '@portabletext/editor'
+
+const isCalloutRegistered: EditorSelector<boolean> = (snapshot) =>
+  snapshot.context.containers.has('callout')
+```
+
 ## A complete example
 
 Everything above composes in one `nodes` array. This editor renders text blocks and images everywhere, and a callout that renders the same `image` type compactly inside itself:
