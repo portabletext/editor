@@ -17,13 +17,8 @@ export type MarkdownBehaviorsConfig = {
   }) => ObjectWithOptionalKey | undefined
   defaultStyle?: ({
     context,
-    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
-    /**
-     * @deprecated Use `context.schema` instead
-     */
-    schema: EditorContext['schema']
   }) => string | undefined
 }
 
@@ -118,7 +113,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const subSchema = getPathSubSchema(snapshot, focusTextBlock.path)
       const defaultStyle = config.defaultStyle?.({
         context: {schema: subSchema},
-        schema: subSchema,
       })
 
       if (defaultStyle && focusTextBlock.node.style !== defaultStyle) {
