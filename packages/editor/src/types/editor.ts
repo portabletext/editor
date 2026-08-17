@@ -249,7 +249,7 @@ export type RenderBlockFunction = (props: BlockRenderProps) => JSX.Element
  */
 export type RenderChildFunction = (props: BlockChildRenderProps) => JSX.Element
 
-/** @beta */
+/** @public */
 export type RenderEditableFunction = (
   props: PortableTextEditableProps,
 ) => JSX.Element
@@ -259,7 +259,7 @@ export type RenderAnnotationFunction = (
   props: BlockAnnotationRenderProps,
 ) => JSX.Element
 
-/** @beta */
+/** @public */
 export type RenderPlaceholderFunction = () => React.ReactNode
 
 /**
@@ -300,7 +300,7 @@ export type RenderDecoratorFunction = (
   props: BlockDecoratorRenderProps,
 ) => JSX.Element
 
-/** @beta */
+/** @public */
 export type ScrollSelectionIntoViewFunction = (
   editor: PortableTextEditor,
   domRange: globalThis.Range,
