@@ -58,7 +58,7 @@ export type Editor = {
   dom: EditorDom
   getSnapshot: () => EditorSnapshot
   /**
-   * @beta
+   * @public
    */
   registerBehavior: (config: {behavior: Behavior}) => () => void
   /**

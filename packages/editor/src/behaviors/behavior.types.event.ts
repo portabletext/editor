@@ -15,7 +15,7 @@ import type {EditorSelection} from '../types/editor'
 import type {AnnotationPath, BlockPath, ChildPath, Path} from '../types/paths'
 
 /**
- * @beta
+ * @public
  */
 export type BehaviorEvent =
   | SyntheticBehaviorEvent
@@ -97,7 +97,7 @@ type SyntheticBehaviorEventNamespace =
   ExtractNamespace<SyntheticBehaviorEventType>
 
 /**
- * @beta
+ * @public
  */
 export type SyntheticBehaviorEvent =
   | {
@@ -326,7 +326,7 @@ export type SyntheticBehaviorEvent =
   | AbstractBehaviorEvent
 
 /**
- * @beta
+ * @public
  */
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -631,7 +631,7 @@ export function isNativeBehaviorEvent(
 }
 
 /**
- * @beta
+ * @public
  */
 export type NativeBehaviorEvent =
   | ClipboardBehaviorEvent
@@ -766,7 +766,7 @@ type CustomBehaviorEventType<
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
 /**
- * @beta
+ * @public
  */
 export type CustomBehaviorEvent<
   TPayload extends Record<string, unknown> = Record<string, unknown>,

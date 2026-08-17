@@ -3,7 +3,7 @@ import type {Behavior} from '../behaviors/behavior.types.behavior'
 import {useEditor} from '../editor/use-editor'
 
 /**
- * @beta
+ * @public
  *
  * Plugin component that registers a list of `Behavior`s with the editor.
  *

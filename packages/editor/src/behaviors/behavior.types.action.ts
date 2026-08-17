@@ -9,7 +9,7 @@ import type {
 } from './behavior.types.event'
 
 /**
- * @beta
+ * @public
  */
 export type BehaviorAction =
   | {
@@ -68,7 +68,7 @@ export type BehaviorAction =
  * })
  * ```
  *
- * @beta
+ * @public
  */
 export function execute(
   event: SyntheticBehaviorEvent,
@@ -111,7 +111,7 @@ export function execute(
  * })
  * ```
  *
- * @beta
+ * @public
  */
 export function forward(
   event: NativeBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
@@ -150,7 +150,7 @@ export function forward(
  * })
  * ```
  *
- * @beta
+ * @public
  */
 export function raise(
   event: SyntheticBehaviorEvent | CustomBehaviorEvent,
@@ -198,7 +198,7 @@ export function raise(
  * })
  * ```
  *
- * @beta
+ * @public
  */
 export function effect(
   effect: PickFromUnion<BehaviorAction, 'type', 'effect'>['effect'],
@@ -207,7 +207,7 @@ export function effect(
 }
 
 /**
- * @beta
+ * @public
  */
 export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   payload: {

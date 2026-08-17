@@ -8,7 +8,7 @@ import type {
 import type {BehaviorGuard} from './behavior.types.guard'
 
 /**
- * @beta
+ * @public
  */
 export type Behavior<
   TBehaviorEventType extends
@@ -40,7 +40,7 @@ export type Behavior<
 }
 
 /**
- * @beta
+ * @public
  *
  * @example
  *
