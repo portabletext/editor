@@ -13,7 +13,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * `[..., {_key: block}, 'markDefs', {_key: annotation}, ...]` to the
  * annotation node on the enclosing text block.
  *
- * @beta
+ * @public
  */
 export function getAnnotation(
   snapshot: TraversalSnapshot,

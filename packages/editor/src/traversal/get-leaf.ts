@@ -9,7 +9,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * start or end edge. A leaf is any node that has no children according to the
  * traversal context.
  *
- * @beta
+ * @public
  */
 export function getLeaf(
   snapshot: TraversalSnapshot,

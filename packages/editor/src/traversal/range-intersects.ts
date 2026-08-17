@@ -25,7 +25,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * Returns `false` when either `range` or `target` is `null`.
  *
- * @beta
+ * @public
  */
 export function rangeIntersects(
   snapshot: TraversalSnapshot,

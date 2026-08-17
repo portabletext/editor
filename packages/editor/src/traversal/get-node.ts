@@ -27,7 +27,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * it, so `getNode` resolves an annotation path to the enclosing text
  * block. Use `getAnnotation` to resolve the annotation itself.
  *
- * @beta
+ * @public
  */
 export function getNode(
   snapshot: TraversalSnapshot,

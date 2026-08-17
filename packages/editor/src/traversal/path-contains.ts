@@ -5,7 +5,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * Returns true if `ancestor` is equal to `descendant`, or if `descendant`
  * lives anywhere inside `ancestor`'s subtree.
  *
- * @beta
+ * @public
  */
 export function pathContains(ancestor: Path, descendant: Path): boolean {
   if (ancestor.length > descendant.length) {

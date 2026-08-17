@@ -7,7 +7,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Get the registered editable container at a given path.
  *
- * @beta
+ * @public
  */
 export function getContainer(
   snapshot: TraversalSnapshot,

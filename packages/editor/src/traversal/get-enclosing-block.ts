@@ -20,7 +20,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * ancestor that matches, falling back to the node at the path only if no
  * ancestor does.
  *
- * @beta
+ * @public
  */
 export function getEnclosingBlock<TMatch extends PortableTextBlock>(
   snapshot: TraversalSnapshot,
@@ -31,7 +31,7 @@ export function getEnclosingBlock<TMatch extends PortableTextBlock>(
   },
 ): {node: TMatch; path: Path} | undefined
 /**
- * @beta
+ * @public
  */
 export function getEnclosingBlock(
   snapshot: TraversalSnapshot,

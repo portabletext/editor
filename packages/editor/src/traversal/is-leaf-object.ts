@@ -10,7 +10,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Returns true for block objects and inline objects that don't have
  * registered editable content (containers).
  *
- * @beta
+ * @public
  */
 export function isLeafObject(
   snapshot: TraversalSnapshot,

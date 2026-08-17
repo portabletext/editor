@@ -11,7 +11,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * container, walks ancestors to find the nearest container and returns the
  * sub-schema derived from its `of` declaration.
  *
- * @beta
+ * @public
  */
 export function getPathSubSchema(
   snapshot: TraversalSnapshot,
