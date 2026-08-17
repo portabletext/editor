@@ -1,0 +1,23 @@
+{
+  "name": "example-vanilla",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:types": "tsc",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@portabletext/editor": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:tooling",
+    "@types/react-dom": "catalog:tooling",
+    "@vitejs/plugin-react": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling"
+  }
+}
