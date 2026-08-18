@@ -36,7 +36,7 @@ const refEquality = (a: any, b: any) => a === b
  * selector re-runs on its component's renders and when a renderer
  * registration map is swapped, not on document or selection changes.
  * Only for selectors that read the registration maps
- * (`engine.containers/spans/textBlocks/blockObjects/inlineObjects`)
+ * (`engine.containers/spans/textBlocks/blockObjects/inlineObjects/decorators/annotations`)
  * exclusively; those maps are mutated only in
  * `register-node-on-engine.ts`, which arms this channel.
  */

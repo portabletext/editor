@@ -1,8 +1,10 @@
 import type {ReactElement} from 'react'
 import {describe, expect, test} from 'vitest'
 import {
+  defineAnnotation,
   defineBlockObject,
   defineContainer,
+  defineDecorator,
   defineInlineObject,
   defineSpan,
   defineTextBlock,
@@ -66,6 +68,38 @@ describe(defineSpan.name, () => {
     defineSpan({
       // @ts-expect-error - 'block' is always a text block, use defineTextBlock
       type: 'block',
+      render,
+    })
+  })
+})
+
+describe(defineDecorator.name, () => {
+  test('returns the config with injected kind: "decorator"', () => {
+    const render = ({children}: {children: ReactElement}) => children
+    expect(
+      defineDecorator({
+        type: 'strong',
+        render,
+      }),
+    ).toEqual({
+      kind: 'decorator',
+      type: 'strong',
+      render,
+    })
+  })
+})
+
+describe(defineAnnotation.name, () => {
+  test('returns the config with injected kind: "annotation"', () => {
+    const render = ({children}: {children: ReactElement}) => children
+    expect(
+      defineAnnotation({
+        type: 'link',
+        render,
+      }),
+    ).toEqual({
+      kind: 'annotation',
+      type: 'link',
       render,
     })
   })

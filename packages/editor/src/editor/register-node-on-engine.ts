@@ -72,13 +72,42 @@ export function registerNodeOnEngine(
     notifyRegistrationsChanged(engine)
     return
   }
-  // inlineObject
-  if (isTypeAlreadyRegistered(engine, 'inlineObject', node.type)) {
+  if (node.kind === 'inlineObject') {
+    if (isTypeAlreadyRegistered(engine, 'inlineObject', node.type)) {
+      return
+    }
+    const inlineObjects = new Map(engine.inlineObjects)
+    inlineObjects.set(node.type, {inlineObject: node})
+    engine.inlineObjects = inlineObjects
+    notifyRegistrationsChanged(engine)
     return
   }
-  const inlineObjects = new Map(engine.inlineObjects)
-  inlineObjects.set(node.type, {inlineObject: node})
-  engine.inlineObjects = inlineObjects
+  // Decorator mark names and annotation `_type`s live in namespaces
+  // separate from the node-kind maps above, so registration here is
+  // exclusive within its own map only: no cross-kind check applies.
+  if (node.kind === 'decorator') {
+    if (engine.decorators.has(node.type)) {
+      console.warn(
+        `registerNode: type "${node.type}" is already registered as a decorator. Registration skipped.`,
+      )
+      return
+    }
+    const decorators = new Map(engine.decorators)
+    decorators.set(node.type, {decorator: node})
+    engine.decorators = decorators
+    notifyRegistrationsChanged(engine)
+    return
+  }
+  // annotation
+  if (engine.annotations.has(node.type)) {
+    console.warn(
+      `registerNode: type "${node.type}" is already registered as an annotation. Registration skipped.`,
+    )
+    return
+  }
+  const annotations = new Map(engine.annotations)
+  annotations.set(node.type, {annotation: node})
+  engine.annotations = annotations
   notifyRegistrationsChanged(engine)
 }
 
@@ -121,10 +150,24 @@ export function unregisterNodeOnEngine(
     notifyRegistrationsChanged(engine)
     return
   }
-  // inlineObject
-  const inlineObjects = new Map(engine.inlineObjects)
-  inlineObjects.delete(node.type)
-  engine.inlineObjects = inlineObjects
+  if (node.kind === 'inlineObject') {
+    const inlineObjects = new Map(engine.inlineObjects)
+    inlineObjects.delete(node.type)
+    engine.inlineObjects = inlineObjects
+    notifyRegistrationsChanged(engine)
+    return
+  }
+  if (node.kind === 'decorator') {
+    const decorators = new Map(engine.decorators)
+    decorators.delete(node.type)
+    engine.decorators = decorators
+    notifyRegistrationsChanged(engine)
+    return
+  }
+  // annotation
+  const annotations = new Map(engine.annotations)
+  annotations.delete(node.type)
+  engine.annotations = annotations
   notifyRegistrationsChanged(engine)
 }
 

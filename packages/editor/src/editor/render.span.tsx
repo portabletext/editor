@@ -6,7 +6,11 @@ import {isTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {RenderLeafProps} from '../engine/react/components/editable'
 import {serializePath} from '../paths/serialize-path'
-import type {SpanRenderProps} from '../renderers/renderer.types'
+import type {
+  AnnotationRenderProps,
+  DecoratorRenderProps,
+  SpanRenderProps,
+} from '../renderers/renderer.types'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
@@ -17,8 +21,16 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {NewPipelineContext} from './new-pipeline-context'
-import {renderDefaultSpan} from './render.default'
-import {useSpanConfig} from './render.leaf-config'
+import {
+  renderDefaultAnnotation,
+  renderDefaultDecorator,
+  renderDefaultSpan,
+} from './render.default'
+import {
+  useAnnotationConfigs,
+  useDecoratorConfigs,
+  useSpanConfig,
+} from './render.leaf-config'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -49,6 +61,8 @@ export function RenderSpan(props: RenderSpanProps) {
   // Span leafs are looked up against the resolved span child. When no child
   // is found (transient state), fall back to the engine leaf for identity.
   const spanConfig = useSpanConfig(child ?? props.leaf, props.path)
+  const decoratorConfigs = useDecoratorConfigs()
+  const annotationConfigs = useAnnotationConfigs()
 
   const isInNewPipeline = useContext(NewPipelineContext)
   const serializedPath = serializePath(props.path)
@@ -86,14 +100,38 @@ export function RenderSpan(props: RenderSpanProps) {
   let children = props.children
 
   /**
-   * Support `renderDecorator` render function for each Decorator
+   * Support registered decorators, falling back to the legacy
+   * `renderDecorator` render function, for each Decorator mark.
    */
   for (const mark of decorators) {
     const decoratorSchemaType = subSchema.decorators.find(
       (dec) => dec.name === mark,
     )
+    if (!decoratorSchemaType) {
+      continue
+    }
 
-    if (decoratorSchemaType && props.renderDecorator) {
+    const decoratorConfig =
+      decoratorConfigs.get(mark) ?? decoratorConfigs.get('*')
+
+    if (decoratorConfig) {
+      const render = decoratorConfig.decorator.render
+      const renderProps: DecoratorRenderProps = {
+        children,
+        decorator: mark,
+        focused,
+        path: props.path,
+        readOnly: props.readOnly,
+        renderDefault: renderDefaultDecorator,
+        selected,
+      }
+      children = render
+        ? render(renderProps)
+        : renderDefaultDecorator(renderProps)
+      continue
+    }
+
+    if (props.renderDecorator) {
       children = (
         <RenderDecorator
           renderDecorator={props.renderDecorator}
@@ -111,13 +149,41 @@ export function RenderSpan(props: RenderSpanProps) {
   }
 
   /**
-   * Support `renderAnnotation` render function for each Annotation
+   * Support registered annotations, falling back to the legacy
+   * `renderAnnotation` render function, for each Annotation markDef.
+   * The `<span ref>` anchor is unconditional whenever the markDef's
+   * `_type` is a known annotation, independent of which render fires.
    */
   for (const annotationMarkDef of annotationMarkDefs) {
     const annotationSchemaType = subSchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
     if (annotationSchemaType) {
+      const annotationConfig =
+        annotationConfigs.get(annotationMarkDef._type) ??
+        annotationConfigs.get('*')
+
+      if (annotationConfig) {
+        const render = annotationConfig.annotation.render
+        const renderProps: AnnotationRenderProps = {
+          children,
+          focused,
+          annotation: annotationMarkDef,
+          path: props.path,
+          readOnly: props.readOnly,
+          renderDefault: renderDefaultAnnotation,
+          selected,
+        }
+        children = (
+          <span ref={spanRef}>
+            {render
+              ? render(renderProps)
+              : renderDefaultAnnotation(renderProps)}
+          </span>
+        )
+        continue
+      }
+
       if (block && props.renderAnnotation) {
         children = (
           <span ref={spanRef}>

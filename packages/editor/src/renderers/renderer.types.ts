@@ -51,7 +51,10 @@ export type ContainerRender = (props: ContainerRenderProps) => ReactElement
  *
  * A span's render function. Receives a portable text span node and
  * wraps it. `children` carries the styled text already decorated by
- * `renderDecorator`/`renderAnnotation`/range decorations.
+ * the decorator/annotation renders (registered via `defineDecorator`/
+ * `defineAnnotation`, or the legacy `renderDecorator`/`renderAnnotation`
+ * props). Range decorations wrap this render's output from the
+ * outside, so they are not part of `children`.
  */
 export type SpanRenderProps = {
   attributes: Record<string, unknown>
@@ -71,6 +74,85 @@ export type SpanRenderProps = {
  * @public
  */
 export type SpanRender = (props: SpanRenderProps) => ReactElement
+
+/**
+ * @public
+ *
+ * A decorator's render function. Receives the decorator name and
+ * wraps the styled text it applies to. Range and selection decorations
+ * can split one span into several leaves, so this fires once per
+ * decorator on each leaf, not once per span, nested in the span's
+ * `marks` order alongside any decorators still rendered by the legacy
+ * `renderDecorator` prop.
+ *
+ * The render is a plain function call, not a component: do not call
+ * hooks in it. When you need hooks, return an element of your own
+ * component: `render: (props) => <MyDecorator {...props} />`.
+ */
+export type DecoratorRenderProps = {
+  children: ReactElement
+  /**
+   * The decorator name, e.g. `'strong'`. A `'*'` render
+   * discriminates on this.
+   */
+  decorator: string
+  focused: boolean
+  /**
+   * Path of the span carrying the decorator.
+   */
+  path: Path
+  readOnly: boolean
+  selected: boolean
+  /**
+   * Render this position with the engine's default wrapper.
+   * See {@link ContainerRenderProps.renderDefault}. The default is
+   * identity: the engine applies no decorator markup of its own.
+   */
+  renderDefault: (props: DecoratorRenderProps) => ReactElement
+}
+/**
+ * @public
+ */
+export type DecoratorRender = (props: DecoratorRenderProps) => ReactElement
+
+/**
+ * @public
+ *
+ * An annotation's render function. Receives the annotation's `markDef`
+ * object and wraps the styled text it applies to. The engine anchors
+ * the text in a `<span>` outside this render regardless of whether a
+ * render is registered, kept for structural parity with the legacy
+ * `renderAnnotation` path (which hands that anchor to consumers as
+ * `editorElementRef`); this render's job is the styling wrapper only.
+ *
+ * The render is a plain function call, not a component: do not call
+ * hooks in it. When you need hooks, return an element of your own
+ * component: `render: (props) => <MyAnnotation {...props} />`.
+ */
+export type AnnotationRenderProps = {
+  /**
+   * The annotation's `markDef` object: `{_key, _type, ...fields}`.
+   * Named `annotation`, not `node`, because `path` addresses the span
+   * leaf carrying the annotation; the markDef itself lives in the block's
+   * `markDefs` array.
+   */
+  annotation: PortableTextObject
+  children: ReactElement
+  focused: boolean
+  path: Path
+  readOnly: boolean
+  selected: boolean
+  /**
+   * Render this position with the engine's default wrapper.
+   * See {@link ContainerRenderProps.renderDefault}. The default is
+   * identity: the engine applies no annotation markup of its own.
+   */
+  renderDefault: (props: AnnotationRenderProps) => ReactElement
+}
+/**
+ * @public
+ */
+export type AnnotationRender = (props: AnnotationRenderProps) => ReactElement
 
 /**
  * @public
@@ -250,6 +332,43 @@ export type Span = {
 /**
  * @public
  *
+ * A decorator registration. `type` is a decorator name declared in
+ * the schema's `decorators` array, or `'*'` to match every decorator.
+ */
+export type Decorator = {
+  kind: 'decorator'
+  type: string
+  /**
+   * Outer render. Two modes:
+   * - omitted: no wrapper is applied (identity)
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns identity when called.
+   */
+  render?: DecoratorRender
+}
+
+/**
+ * @public
+ *
+ * An annotation registration. `type` is an annotation `_type` declared
+ * in the schema's `annotations` array, or `'*'` to match every
+ * annotation type.
+ */
+export type Annotation = {
+  kind: 'annotation'
+  type: string
+  /**
+   * Outer render. Two modes:
+   * - omitted: no wrapper is applied (identity)
+   * - function: use this render. The function receives a `renderDefault`
+   *   prop that returns identity when called.
+   */
+  render?: AnnotationRender
+}
+
+/**
+ * @public
+ *
  * A non-editable block-level object registration. Identifies a `_type`
  * whose value renders as a block-level void node (image, embed, etc.).
  */
@@ -295,6 +414,8 @@ export type RegistrableNode =
   | Span
   | BlockObject
   | InlineObject
+  | Decorator
+  | Annotation
 
 /**
  * @public
@@ -381,6 +502,62 @@ export function defineSpan<const TType extends string>(config: {
   render?: SpanRender
 }): Span {
   return {kind: 'span', ...config} as unknown as Span
+}
+
+/**
+ * @public
+ *
+ * Define a decorator renderer for a decorator name declared in the
+ * schema's `decorators` array, or `'*'` to match every decorator.
+ * The returned registration is mounted via the `<NodePlugin>`
+ * component.
+ *
+ * Decorator names live in a different namespace than node
+ * `_type`s, so `type` has no forbidden values here (unlike
+ * `defineSpan`/`defineTextBlock`).
+ *
+ * @example
+ * ```ts
+ * defineDecorator({
+ *   type: 'strong',
+ *   render: ({children}) => <strong>{children}</strong>,
+ * })
+ * ```
+ */
+export function defineDecorator(config: {
+  type: string
+  render?: DecoratorRender
+}): Decorator {
+  return {kind: 'decorator', ...config}
+}
+
+/**
+ * @public
+ *
+ * Define an annotation renderer for a `_type` declared in the
+ * schema's `annotations` array, or `'*'` to match every annotation
+ * type. The returned registration is mounted via the `<NodePlugin>`
+ * component.
+ *
+ * Annotation `_type`s live in a different namespace than node
+ * `_type`s, so `type` has no forbidden values here (unlike
+ * `defineInlineObject`/`defineBlockObject`).
+ *
+ * @example
+ * ```ts
+ * defineAnnotation({
+ *   type: 'link',
+ *   render: ({annotation, children}) => (
+ *     <a href={(annotation as {href?: string}).href}>{children}</a>
+ *   ),
+ * })
+ * ```
+ */
+export function defineAnnotation(config: {
+  type: string
+  render?: AnnotationRender
+}): Annotation {
+  return {kind: 'annotation', ...config}
 }
 
 /**
@@ -492,6 +669,24 @@ export function defineTextBlock<const TType extends string>(config: {
  */
 export type SpanConfig = {
   span: Span
+}
+
+/**
+ * @internal
+ *
+ * Resolved decorator config.
+ */
+export type DecoratorConfig = {
+  decorator: Decorator
+}
+
+/**
+ * @internal
+ *
+ * Resolved annotation config.
+ */
+export type AnnotationConfig = {
+  annotation: Annotation
 }
 
 /**

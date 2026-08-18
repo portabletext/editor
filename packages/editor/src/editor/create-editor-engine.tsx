@@ -59,7 +59,9 @@ export function createEditorEngine(
   }
 
   editor.containers = new Map()
+  editor.annotations = new Map()
   editor.blockObjects = new Map()
+  editor.decorators = new Map()
   editor.inlineObjects = new Map()
   editor.spans = new Map()
   editor.textBlocks = new Map()

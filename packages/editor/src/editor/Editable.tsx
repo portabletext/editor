@@ -67,6 +67,11 @@ export type PortableTextEditableProps = Omit<
   onPaste?: OnPasteFn
   onCopy?: OnCopyFn
   rangeDecorations?: RangeDecoration[]
+  /**
+   * @deprecated Register your annotations with `defineAnnotation`
+   * mounted through `NodePlugin` instead. See the migration guide:
+   * https://www.portabletext.org/editor/guides/migrate-render-props/
+   */
   renderAnnotation?: RenderAnnotationFunction
   /**
    * @deprecated Register your block objects and text blocks with
@@ -82,6 +87,11 @@ export type PortableTextEditableProps = Omit<
    * https://www.portabletext.org/editor/guides/migrate-render-props/
    */
   renderChild?: RenderChildFunction
+  /**
+   * @deprecated Register your decorators with `defineDecorator` mounted
+   * through `NodePlugin` instead. See the migration guide:
+   * https://www.portabletext.org/editor/guides/migrate-render-props/
+   */
   renderDecorator?: RenderDecoratorFunction
   /**
    * @deprecated Render list items with `defineTextBlock` mounted through

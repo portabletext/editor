@@ -215,7 +215,14 @@ export interface BlockChildRenderProps {
   value: PortableTextChild
 }
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated `BlockAnnotationRenderProps` is deprecated together with the
+ * `renderAnnotation` render prop it serves. Type against
+ * `AnnotationRenderProps` from the node registration API instead. See the
+ * migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export interface BlockAnnotationRenderProps {
   block: PortableTextBlock
   children: ReactElement<any>
@@ -226,7 +233,14 @@ export interface BlockAnnotationRenderProps {
   selected: boolean
   value: PortableTextObject
 }
-/** @beta */
+/**
+ * @beta
+ * @deprecated `BlockDecoratorRenderProps` is deprecated together with the
+ * `renderDecorator` render prop it serves. Type against
+ * `DecoratorRenderProps` from the node registration API instead. See the
+ * migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export interface BlockDecoratorRenderProps {
   children: ReactElement<any>
   editorElementRef: RefObject<HTMLElement | null>
@@ -280,7 +294,13 @@ export type RenderEditableFunction = (
   props: PortableTextEditableProps,
 ) => JSX.Element
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `renderAnnotation` render prop is deprecated. Register
+ * your annotations with `defineAnnotation` mounted through `NodePlugin`
+ * instead. See the migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export type RenderAnnotationFunction = (
   props: BlockAnnotationRenderProps,
 ) => JSX.Element
@@ -328,7 +348,13 @@ export type RenderListItemFunction = (
   props: BlockListItemRenderProps,
 ) => JSX.Element
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `renderDecorator` render prop is deprecated. Register
+ * your decorators with `defineDecorator` mounted through `NodePlugin`
+ * instead. See the migration guide:
+ * https://www.portabletext.org/editor/guides/migrate-render-props/
+ */
 export type RenderDecoratorFunction = (
   props: BlockDecoratorRenderProps,
 ) => JSX.Element
