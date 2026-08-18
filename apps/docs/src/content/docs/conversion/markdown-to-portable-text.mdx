@@ -5,6 +5,8 @@ description: Convert Markdown strings into Portable Text blocks using @portablet
 
 import {PackageManagers} from 'starlight-package-managers'
 
+{/* The schema, matcher, and supported-features tables and the round-trip section mirror packages/markdown/README.md. Keep the twins in sync: a claim corrected in one place is stale in the other. */}
+
 :::note[Prerequisites]
 This guide covers `@portabletext/markdown` **v1.x** ([changelog](https://github.com/portabletext/editor/releases)). No framework dependencies. Works in Node.js, Deno, edge runtimes, and browsers.
 :::
@@ -38,34 +40,13 @@ The default schema includes:
 | Type            | Values                                                         |
 | --------------- | -------------------------------------------------------------- |
 | `styles`        | `normal`, `h1`-`h6`, `blockquote`                              |
-| `lists`         | `bullet`, `number`                                             |
+| `lists`         | `bullet`, `number`, `task`                                     |
 | `decorators`    | `strong`, `em`, `code`, `strike-through`                       |
 | `annotations`   | `link` (fields: `href`, `title`)                               |
 | `blockObjects`  | `code`, `image`, `horizontal-rule`, `html`, `table`, `callout` |
 | `inlineObjects` | `image`                                                        |
 
-To use a custom schema, import `compileSchema` and `defineSchema` from `@portabletext/schema`:
-
-```ts
-import {compileSchema, defineSchema} from '@portabletext/schema'
-
-markdownToPortableText(markdown, {
-  schema: compileSchema(
-    defineSchema({
-      styles: [{name: 'normal'}, {name: 'heading 1'}],
-    }),
-  ),
-})
-```
-
-If you are using a Sanity schema, use `@portabletext/sanity-bridge` to convert it first:
-
-```ts
-import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
-
-const schema = sanitySchemaToPortableTextSchema(sanityBlockArraySchema)
-markdownToPortableText(markdown, {schema})
-```
+To use a custom schema, build one with `compileSchema` and `defineSchema` from `@portabletext/schema` and pass it as the `schema` option; a Sanity schema converts first through `@portabletext/sanity-bridge`. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#schema-configuration) has the configuration recipes for both.
 
 ## Matchers
 
@@ -89,25 +70,7 @@ Matchers control how Markdown elements map to schema types. The library includes
 |            | `html`           | HTML blocks           | `'html'`            |
 |            | `callout`        | `> [!NOTE]`, etc.     | `'callout'`         |
 
-Override a matcher when your schema uses a different name for a type. For example, if your schema uses `'heading 1'` instead of `'h1'`:
-
-```ts
-markdownToPortableText(markdown, {
-  schema: compileSchema(
-    defineSchema({
-      /* your schema */
-    }),
-  ),
-  block: {
-    h1: ({context}) => {
-      const style = context.schema.styles.find((s) => s.name === 'heading 1')
-      return style?.name
-    },
-  },
-})
-```
-
-Returning `undefined` from a matcher skips the element gracefully. This is useful when a type may or may not exist in the schema depending on the content model.
+Override a matcher when your schema uses a different name for a type (say, `'heading 1'` instead of `'h1'`): pass your own function under the matcher's group and name, resolve the type against `context.schema`, and return its name, or `undefined` to skip the element gracefully. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#configuring-matchers) has worked matcher recipes, including the structural `table`, `list`, and `blockquote` shapes.
 
 ## Supported features
 
@@ -123,19 +86,28 @@ Returning `undefined` from a matcher skips the element gracefully. This is usefu
 | Blockquotes      |       ✅       |
 | Ordered lists    |       ✅       |
 | Unordered lists  |       ✅       |
+| Task lists       |       ✅       |
 | Nested lists     |       ✅       |
 | Code blocks      |       ✅       |
 | Horizontal rules |       ✅       |
 | Images           |       ✅       |
-| Tables           |      ✅\*      |
+| Tables           |       ✅       |
 | HTML blocks      |       ✅       |
-| Callouts         |      ✅\*      |
-
-\* Requires custom schema configuration (see above).
+| Callouts         |       ✅       |
 
 :::note
 This package uses markdown-it as its Markdown parser. Remark and unified plugins are not compatible.
 :::
+
+## Round-trip behavior
+
+Converting Markdown to Portable Text and back isn't a lossless mirror. Five things to expect:
+
+- Translation normalizes rather than preserves: a first Markdown → Portable Text → Markdown pass rewrites Markdown to one canonical spelling. Autolinks and reference links become inline links, indented code becomes fenced code, and `<https://portabletext.org>` comes back as `[https://portabletext.org](https://portabletext.org)`.
+- The normalized form is a fixpoint for the constructs in the table above: parsing it and serializing again reproduces it byte-for-byte. The exception is plain text containing literal Markdown punctuation: serialization doesn't yet escape it, so `\*bar\*` comes back as `*bar*`, which a second parse reads as emphasis.
+- Unrecognized constructs degrade, they don't fail. A mark, list, or task checkbox whose type isn't in the schema keeps its text and drops the formatting: an undeclared `strong` decorator turns `**bar**` into a plain span reading `bar`.
+- Portable Text structures with no Markdown form degrade predictably going back out. GFM has one header row, so extra header rows flatten into the body; deep or level-skipping lists collapse to relative nesting; unknown object types render as a fenced JSON block.
+- Keys and span boundaries aren't identity: every parse regenerates block and span keys, and adjacent spans with identical marks merge.
 
 ## Other conversion paths
 
