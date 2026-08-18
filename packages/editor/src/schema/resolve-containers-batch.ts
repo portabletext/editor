@@ -1,8 +1,10 @@
 import type {OfDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {
+  AnnotationConfig,
   BlockObjectConfig,
   ContainerConfig,
+  DecoratorConfig,
   InlineObjectConfig,
   Container as PublicContainer,
   SpanConfig,
@@ -140,14 +142,25 @@ function describeContainerFailure(
  * (if present) for inline-content positional overrides.
  */
 export function resolveTextBlockConfig(textBlock: TextBlock): TextBlockConfig {
-  const resolvedOf: ReadonlyArray<SpanConfig | InlineObjectConfig> | undefined =
-    textBlock.of
-      ? textBlock.of.flatMap<SpanConfig | InlineObjectConfig>((entry) => {
-          if (entry.kind === 'span') {
-            return [{span: entry}]
-          }
+  const resolvedOf:
+    | ReadonlyArray<
+        SpanConfig | InlineObjectConfig | DecoratorConfig | AnnotationConfig
+      >
+    | undefined = textBlock.of
+    ? textBlock.of.flatMap<
+        SpanConfig | InlineObjectConfig | DecoratorConfig | AnnotationConfig
+      >((entry) => {
+        if (entry.kind === 'span') {
+          return [{span: entry}]
+        }
+        if (entry.kind === 'inlineObject') {
           return [{inlineObject: entry}]
-        })
-      : undefined
+        }
+        if (entry.kind === 'decorator') {
+          return [{decorator: entry}]
+        }
+        return [{annotation: entry}]
+      })
+    : undefined
   return {textBlock, ...(resolvedOf ? {of: resolvedOf} : {})}
 }

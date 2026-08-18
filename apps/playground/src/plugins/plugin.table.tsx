@@ -1,4 +1,9 @@
-import {defineContainer, defineTextBlock} from '@portabletext/editor'
+import {
+  defineAnnotation,
+  defineContainer,
+  defineDecorator,
+  defineTextBlock,
+} from '@portabletext/editor'
 import {defineTable} from '@portabletext/plugin-table'
 import {referenceContainers, TableCell} from '@portabletext/plugin-table/ui'
 import {ListItemBlock} from './list-item-block'
@@ -29,6 +34,29 @@ export const table = defineTable({
             ) : (
               <div {...attributes}>{children}</div>
             ),
+          // Positional override demo: inside table cells only, the
+          // `strong` decorator renders with a highlight and the `link`
+          // annotation as a green dotted underline, while the top-level
+          // `'*'` decorator and annotation registrations (a plain
+          // `<strong>` and a blue underline) still apply everywhere else.
+          of: [
+            defineDecorator({
+              type: 'strong',
+              render: ({children}) => (
+                <strong className="bg-yellow-200 dark:bg-yellow-900/60 rounded px-0.5">
+                  {children}
+                </strong>
+              ),
+            }),
+            defineAnnotation({
+              type: 'link',
+              render: ({children}) => (
+                <span className="text-emerald-700 dark:text-emerald-400 underline decoration-dotted">
+                  {children}
+                </span>
+              ),
+            }),
+          ],
         }),
         cellImageLeaf,
         calloutContainer,

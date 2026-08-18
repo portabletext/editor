@@ -52,23 +52,29 @@ export function useSpanConfig(
 }
 
 /**
- * Hook: the engine's registered decorator map.
+ * Hook: the engine's registered GLOBAL decorator map. Positional
+ * (in-parent) decorator overrides are a separate layer: the caller
+ * resolves them from `ParentTextBlockContext` via
+ * `findPositionalDecoratorOverride` and combines that result with
+ * this map's.
  *
- * Global-only: decorators have no positional (in-parent) override
- * layer, unlike containers/spans/inline-objects. The per-mark
- * exact-then-`'*'` lookup happens as a plain `Map` read against this
- * snapshot rather than as one hook call per mark: a span carries a
- * variable number of decorator marks, and hooks cannot be called a
- * variable number of times.
+ * The per-mark exact-then-`'*'` lookup against this map happens as a
+ * plain `Map` read rather than as one hook call per mark: a span
+ * carries a variable number of decorator marks, and hooks cannot be
+ * called a variable number of times.
  */
 export function useDecoratorConfigs(): ReadonlyMap<string, DecoratorConfig> {
   return useRegistrationsSelector((engine) => engine.decorators)
 }
 
 /**
- * Hook: the engine's registered annotation map.
+ * Hook: the engine's registered GLOBAL annotation map. Positional
+ * (in-parent) annotation overrides are a separate layer: the caller
+ * resolves them from `ParentTextBlockContext` via
+ * `findPositionalAnnotationOverride` and combines that result with
+ * this map's.
  *
- * Global-only, for the same reason as {@link useDecoratorConfigs}: a
+ * Same plain-`Map`-read reasoning as {@link useDecoratorConfigs}: a
  * span's marks resolve to a variable number of annotation `markDef`s
  * per render.
  */
