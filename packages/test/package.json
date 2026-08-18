@@ -60,7 +60,6 @@
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
   },
-  "browserslist": "extends @sanity/browserslist-config",
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
   }
