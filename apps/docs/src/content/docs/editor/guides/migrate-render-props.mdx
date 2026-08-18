@@ -3,27 +3,31 @@ title: Migrate render props to node registrations
 description: Move an editor from the render props on PortableTextEditable to defineX node registrations, one kind at a time.
 ---
 
-The editor has two ways to render a document's nodes (text blocks, block objects, inline objects, and spans): the render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), and node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`) mounted through `NodePlugin`. Registrations are how [containers](/editor/concepts/containers/) render, and for a registered node they own the wrapper entirely: those four render props do not compose with them.
+The editor has two ways to render a document's content (text blocks, block objects, inline objects, spans, decorators, and annotations): the render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`, `renderDecorator`, `renderAnnotation`), and node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`, `defineDecorator`, `defineAnnotation`) mounted through `NodePlugin`. Registrations are how [containers](/editor/concepts/containers/) render, and for a registered node, decorator, or annotation they own the wrapper entirely: the matching render prop does not fire once a registration claims that type.
 
 This guide migrates each render prop to its registration. You don't have to do it in one go.
 
 ## What maps to what
 
-| Legacy                                                                        | New                                                                                                                                       |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `renderStyle`, `renderListItem`, `renderBlock` (for text blocks)              | `defineTextBlock({type: 'block'})`                                                                                                        |
-| `renderBlock` (for block objects)                                             | `defineBlockObject`, per type or `type: '*'`                                                                                              |
-| `renderChild` (for inline objects)                                            | `defineInlineObject`, per type or `type: '*'`                                                                                             |
-| `renderChild` (for spans)                                                     | `defineSpan({type: 'span'})`                                                                                                              |
-| `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, range decorations | Unchanged, keep them                                                                                                                      |
-| Engine list wrapping and numbering                                            | Your text block render + [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) |
-| Engine drop indicator                                                         | [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd)                                        |
+| Legacy                                                           | New                                                                                                                                       |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `renderStyle`, `renderListItem`, `renderBlock` (for text blocks) | `defineTextBlock({type: 'block'})`                                                                                                        |
+| `renderBlock` (for block objects)                                | `defineBlockObject`, per type or `type: '*'`                                                                                              |
+| `renderChild` (for inline objects)                               | `defineInlineObject`, per type or `type: '*'`                                                                                             |
+| `renderChild` (for spans)                                        | `defineSpan({type: 'span'})`                                                                                                              |
+| `renderDecorator`                                                | `defineDecorator`, per decorator name or `type: '*'`                                                                                      |
+| `renderAnnotation`                                               | `defineAnnotation`, per `_type` or `type: '*'`                                                                                            |
+| `renderPlaceholder`, range decorations                           | Unchanged, keep them                                                                                                                      |
+| Engine list wrapping and numbering                               | Your text block render + [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) |
+| Engine drop indicator                                            | [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd)                                        |
 
 ## Migrate one kind at a time
 
 The engine dispatches per `_type`: a node renders through a registration when one matches its type (or a `'*'` catch-all for its kind), and at the top level falls back to the legacy pipeline when none does. Registering block objects doesn't affect how text blocks render, so you can migrate kind by kind and keep the remaining render props in place until their kind is migrated.
 
 One boundary to plan around: a registration claims everything rendered inside it. Inside a registered [container](/editor/concepts/containers/), unregistered types render through the engine defaults, not through your remaining render props, so when a container enters the picture mid-migration, register everything that renders inside it in the same step. The same applies one level down: a registered text block claims its inline children, and `renderChild` stops firing for the spans and inline objects inside it. That is why the steps below migrate inline objects and spans before text blocks.
+
+Decorators and annotations sit outside this claiming rule. The engine dispatches them per decorator and annotation inside every span's leaf render, independent of whether the enclosing span or text block is registered, so migrating them carries no ordering dependency on the other kinds; do it whenever you like.
 
 ## Step 1: block objects
 
@@ -125,7 +129,7 @@ Unlike block objects, inline objects need no `contentEditable={false}`: the engi
 
 ## Step 3: spans, if you customized them
 
-Most editors never touch how spans render: decorators and annotations are the span-level props' job, and those keep working. But the legacy `renderChild` also fired for the spans themselves, and if yours wrapped them, the registration equivalent is `defineSpan`:
+Most editors never touch how spans render directly: decorators and annotations, covered in steps 5 and 6, handle the styling inside a span. But the legacy `renderChild` also fired for the spans themselves, and if yours wrapped them, the registration equivalent is `defineSpan`:
 
 ```tsx
 import {defineSpan} from '@portabletext/editor'
@@ -140,7 +144,7 @@ const span = defineSpan({
 })
 ```
 
-A registered span owns the outer wrapper, and `children` arrive with `renderDecorator` and `renderAnnotation` already applied, the same composition the legacy pipeline produced inside the span. `'span'` is the span type at the top level; text blocks can positionally register renamed span-like types through their own `of` (a `code-span` inside a code block's line, say), which is a [containers](/editor/concepts/containers/) concern rather than a migration one.
+A registered span owns the outer wrapper, and `children` arrive with the decorator and annotation renders already applied, whether they come from `defineDecorator`/`defineAnnotation` or the legacy `renderDecorator`/`renderAnnotation` props, the same composition the legacy pipeline produced inside the span. `'span'` is the span type at the top level; text blocks can positionally register renamed span-like types through their own `of` (a `code-span` inside a code block's line, say), which is a [containers](/editor/concepts/containers/) concern rather than a migration one.
 
 ## Step 4: text blocks
 
@@ -207,32 +211,148 @@ const textBlock = defineTextBlock({
 
 The render props carry `node`, `path`, `focused`, and `selected`, so components you already have keep receiving the information the legacy callbacks gave them.
 
-## Step 5: reclaim the engine's chrome
+## Step 5: decorators
+
+The legacy `renderDecorator` switches on the decorator name via `props.value`:
+
+```tsx
+const renderDecorator: RenderDecoratorFunction = (props) => {
+  if (props.value === 'strong') {
+    return <strong>{props.children}</strong>
+  }
+  if (props.value === 'em') {
+    return <em>{props.children}</em>
+  }
+  if (props.value === 'underline') {
+    return <u>{props.children}</u>
+  }
+  return <>{props.children}</>
+}
+```
+
+A per-decorator registration replaces each branch. `type` is the decorator name, so no `props.value` check is needed:
+
+```tsx
+import {defineDecorator} from '@portabletext/editor'
+
+const strong = defineDecorator({
+  type: 'strong',
+  render: ({children}) => <strong>{children}</strong>,
+})
+const em = defineDecorator({
+  type: 'em',
+  render: ({children}) => <em>{children}</em>,
+})
+const underline = defineDecorator({
+  type: 'underline',
+  render: ({children}) => <u>{children}</u>,
+})
+```
+
+If you'd rather keep one switching function, `type: '*'` matches every decorator that has no more specific registration and hands you the decorator name as `decorator` where the legacy callback gave you `value`:
+
+```tsx
+const decoratorFallback = defineDecorator({
+  type: '*',
+  render: ({children, decorator}) => {
+    if (decorator === 'strong') {
+      return <strong>{children}</strong>
+    }
+    if (decorator === 'em') {
+      return <em>{children}</em>
+    }
+    if (decorator === 'underline') {
+      return <u>{children}</u>
+    }
+    return <>{children}</>
+  },
+})
+```
+
+Per-decorator registrations and the catch-all compose: register `strong` specifically and `'*'` for the rest.
+
+## Step 6: annotations
+
+Before:
+
+```tsx
+const renderAnnotation: RenderAnnotationFunction = (props) => {
+  if (props.schemaType.name === 'link') {
+    return <span style={{textDecoration: 'underline'}}>{props.children}</span>
+  }
+  return <>{props.children}</>
+}
+```
+
+After, per `_type`. The registration receives the annotation's `markDef` object as `annotation`, in place of the legacy `schemaType`/`value` pair:
+
+```tsx
+import {defineAnnotation} from '@portabletext/editor'
+
+const link = defineAnnotation({
+  type: 'link',
+  render: ({children}) => (
+    <span style={{textDecoration: 'underline'}}>{children}</span>
+  ),
+})
+```
+
+Or, matching the legacy switching style, `type: '*'` and discriminate on `annotation._type`:
+
+```tsx
+const annotationFallback = defineAnnotation({
+  type: '*',
+  render: ({annotation, children}) =>
+    annotation._type === 'link' ? (
+      <span style={{textDecoration: 'underline'}}>{children}</span>
+    ) : (
+      <>{children}</>
+    ),
+})
+```
+
+`annotation` is the full `markDef` object (`{_key, _type, ...fields}`) with an `unknown` index signature, so a field the legacy callback read off a separately-typed `value` (a `link` annotation's `href`, say) needs a cast: `String(annotation.href)`. It is named `annotation`, not `node`, because `path` addresses the span carrying the annotation, not the markDef.
+
+:::caution[Registration renders are plain function calls, not components]
+This holds for every `define*` render, and it matters most here: the legacy `renderDecorator`/`renderAnnotation` callbacks each ran inside their own wrapper component, so hooks in them happened to work. A registration's `render` runs as a plain call inside the engine's render, where hooks violate the Rules of Hooks and crash as decorators toggle. If a migrated callback uses hooks, move them into a component and return it: `render: (props) => <MyDecorator {...props} />`.
+:::
+
+## Step 7: reclaim the engine's chrome
 
 Under the legacy pipeline the engine wrapped list items and numbered ordered lists for you, and drew a drop indicator during block drags. Under registrations both are yours. [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, and [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's `drag.*` events. Both follow the same pattern, a provider inside `EditorProvider` and a hook read from a component your render returns; the [containers page](/editor/concepts/containers/#registrations-opt-into-the-new-render-pipeline) has the worked example and each plugin's README carries the full recipe.
 
-## Step 6: mount and clean up
+## Step 8: mount and clean up
 
 Mount every registration through one `NodePlugin` with a stable identity, and drop the migrated render props:
 
 ```tsx
+import {NodePlugin} from '@portabletext/editor/plugins'
+
 // Plus `span` from step 3, if you needed it.
-const nodes = [imageBlock, blockObjectFallback, stockTicker, textBlock]
+const nodes = [
+  imageBlock,
+  blockObjectFallback,
+  stockTicker,
+  textBlock,
+  strong,
+  em,
+  underline,
+  link,
+]
 
 function App() {
   return (
     <EditorProvider initialConfig={{schemaDefinition}}>
       <NodePlugin nodes={nodes} />
       <PortableTextEditable
-        // These keep working and stay:
-        renderDecorator={renderDecorator}
-        renderAnnotation={renderAnnotation}
+        // This keeps working and stays:
         renderPlaceholder={renderPlaceholder}
-        // renderBlock, renderChild, renderStyle, renderListItem: removed
+        // renderBlock, renderChild, renderStyle, renderListItem,
+        // renderDecorator, renderAnnotation: removed
       />
     </EditorProvider>
   )
 }
 ```
 
-`renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations are span-level: they fire on the spans inside `children` no matter who renders the block, so they are not part of this migration.
+`renderPlaceholder` is the only render prop left unmigrated: it has no registration equivalent, so it stays as is. `rangeDecorations` is a separate data prop, not a render prop: it carries a component that wraps a span's rendered output from the outside, after the span (registered or not) has already rendered, so it is untouched by this migration too.
