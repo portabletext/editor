@@ -70,7 +70,7 @@ const markdown = portableTextToMarkdown([
 | Blockquotes      | ✅                       | ✅                       |
 | Ordered lists    | ✅                       | ✅                       |
 | Unordered lists  | ✅                       | ✅                       |
-| Task lists       | ✅\*                     | ✅\*                     |
+| Task lists       | ✅                       | ✅                       |
 | Nested lists     | ✅                       | ✅                       |
 | Code blocks      | ✅                       | ✅                       |
 | Horizontal rules | ✅                       | ✅                       |
@@ -79,9 +79,34 @@ const markdown = portableTextToMarkdown([
 | HTML blocks      | ✅                       | ✅                       |
 | Callouts         | ✅                       | ✅                       |
 
-\* Requires a schema that declares a `task` list; the default schema does not (see [GFM task lists](#configuring-matchers) below)
+## Round-trip behavior
+
+1. Translation preserves semantics, not source spelling. The first MD→PT→MD pass normalizes Markdown to one canonical spelling: autolinks and reference links become inline links, indented code becomes fenced code, and emphasis, headings, lists, and tables each get one canonical form.
+
+   ```
+   <https://portabletext.org>  ->  [https://portabletext.org](https://portabletext.org)
+   [ref link][id]              ->  [ref link](https://example.com "title")
+   ```
+
+2. The normalized Markdown is a fixpoint for the constructs in the [Supported features](#supported-features) table above: parsing it and serializing again reproduces it byte-for-byte, pinned by a full-document round-trip test. This doesn't yet extend to plain text that happens to contain literal Markdown punctuation: serialization doesn't escape it, so a second parse reads it back as markup instead of literal text.
+
+   ```
+   \*bar\*  ->  *bar*  (serialized unescaped; a second parse reads this as emphasis)
+   ```
+
+3. MD→PT survival is schema-driven. Constructs whose type the schema doesn't declare degrade predictably: they keep their content and drop the structure that named them. Marks drop formatting but keep the text (`**bar**` with no `strong` decorator in the schema becomes a plain span reading `bar`); tables flatten their cell content into top-level blocks; images fall back to their Markdown source as plain text; task-list checkboxes strip to plain list items.
+
+4. PT structures with no Markdown form degrade predictably on PT→MD. GFM tables have one header row, so header rows beyond the first flatten into the body. Deep or level-skipping lists collapse to relative nesting. A list's first item renders at the top level whatever its `level`, and each deeper jump between items indents one step, however many levels it skips. Multi-block table cells join their blocks with spaces. Unknown object types render as a fenced JSON block; unknown marks pass their text through unformatted.
+
+5. Identity does not round-trip. Keys are regenerated on every parse, and adjacent spans with identical marks merge into one.
 
 ## Usage
+
+<!-- The schema table, matcher table, supported-features table, and
+     round-trip section have condensed twins on the docs site
+     (apps/docs/src/content/docs/conversion/markdown-to-portable-text.mdx).
+     Keep them in sync: a claim corrected in one place is stale in the
+     other. -->
 
 ### `markdownToPortableText`
 
@@ -165,7 +190,7 @@ The default schema includes the following definitions:
 | Type            | Values                                                                                                                                                                                                                                                                       |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                                                                   |
-| `lists`         | `'number'`, `'bullet'`                                                                                                                                                                                                                                                       |
+| `lists`         | `'number'`, `'bullet'`, `'task'`                                                                                                                                                                                                                                             |
 | `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                                                             |
 | `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                                                       |
 | `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (the canonical nested shape, see [Default behavior](#default-behavior)), `'callout'` (fields: `'tone'`, `'content'`) |
@@ -318,7 +343,7 @@ The matcher receives `value.items` already assembled. Each item's `content` arra
 
 Without `types.list`, the existing flat-block path runs unchanged.
 
-**GFM task lists** (`- [ ]` / `- [x]`): Task lists are recognized when the schema declares a `task` list item. Without a `task` definition, the checkbox markers are stripped from the text and the items render as their surrounding list type (bullet or number). With a `task` definition, items carrying a checkbox become text blocks with `listItem: 'task'` and a `checked: boolean` field; items without a checkbox keep their surrounding list type.
+**GFM task lists** (`- [ ]` / `- [x]`): Task lists are recognized when the schema declares a `task` list item; the default schema does, so task lists parse zero-config. Without a `task` definition (a custom schema that omits it), the checkbox markers are stripped from the text and the items render as their surrounding list type (bullet or number). With a `task` definition, items carrying a checkbox become text blocks with `listItem: 'task'` and a `checked: boolean` field; items without a checkbox keep their surrounding list type.
 
 ```ts
 markdownToPortableText('- [x] done\n- [ ] todo', {

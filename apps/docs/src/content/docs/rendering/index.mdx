@@ -17,7 +17,7 @@ But Portable Text isn't just rich text. The same array can contain **any type of
 
 Within text blocks, **marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry structured data as mark definitions. A link annotation isn't just an `<a>` tag: it's a data object with href, target, tracking parameters, or whatever fields you define. You customize annotation rendering through the `marks` component map. Text blocks can also contain **inline objects**: structured data embedded in the text flow, like a stock ticker, a product reference, or a custom emoji. Inline objects are rendered through the same `types` component map as custom blocks.
 
-If a serializer encounters a type it doesn't recognize, it skips it. Nothing breaks.
+If a serializer encounters a type it doesn't recognize, it falls back to an unknown-type handler instead of throwing; what that fallback renders varies per serializer (the [Markdown serializer](/rendering/markdown/), for example, renders unrecognized types as a fenced JSON block).
 
 ## Get started
 
@@ -328,7 +328,7 @@ All serializers use the same component map structure (except Astro, which uses s
 | `listItem`  | List items                      | Custom list item rendering              |
 | `hardBreak` | Line breaks within text         | Custom line break handling              |
 
-Unknown types, marks, and styles are skipped by default. You can handle them with `unknownType`, `unknownMark`, `unknownBlockStyle`, `unknownList`, and `unknownListItem` components.
+Unknown types, marks, and styles go through an unknown-type fallback whose default varies per serializer (the React serializer renders a hidden warning, the Markdown serializer a fenced JSON block). You can take over with `unknownType`, `unknownMark`, `unknownBlockStyle`, `unknownList`, and `unknownListItem` components.
 
 ## Framework guides
 
