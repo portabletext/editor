@@ -1,24 +1,26 @@
 import '@portabletext/plugin-table/ui/styles.css'
 import './editor.css'
 import {
+  defineAnnotation,
+  defineDecorator,
   EditorProvider,
   PortableTextEditable,
   useEditor,
   useEditorSelector,
-  type BlockDecoratorRenderProps,
+  type AnnotationRenderProps,
   type BlockListItemRenderProps,
   type BlockPath,
   type BlockRenderProps,
   type BlockStyleRenderProps,
+  type DecoratorRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
   type RangeDecoration,
-  type RenderAnnotationFunction,
-  type RenderDecoratorFunction,
   type RenderListItemFunction,
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {portableTextToMarkdown} from '@portabletext/markdown'
 import {ListIndexProvider} from '@portabletext/plugin-list-index'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
@@ -238,12 +240,11 @@ function FullscreenAwareEditable(props: {
         onError={console.error}
       >
         <EditorFeatureFlagsContext.Provider value={props.featureFlags}>
+          <NodePlugin nodes={markNodes} />
           <PortableTextEditable
             className={editableClasses}
             rangeDecorations={props.rangeDecorations}
-            renderAnnotation={renderAnnotation}
             renderBlock={RenderBlock}
-            renderDecorator={renderDecorator}
             renderListItem={renderListItem}
             renderPlaceholder={renderPlaceholder}
             renderStyle={renderStyle}
@@ -323,23 +324,38 @@ function EditorEventListener(props: {
   return null
 }
 
-const renderAnnotation: RenderAnnotationFunction = (props) => {
-  if (CommentAnnotationSchema.safeParse(props).success) {
-    return (
-      <span className="bg-yellow-300 dark:bg-yellow-700">{props.children}</span>
-    )
-  }
+const annotationNode = defineAnnotation({
+  type: '*',
+  render: (props: AnnotationRenderProps) => {
+    if (
+      CommentAnnotationSchema.safeParse({
+        schemaType: {name: props.annotation._type},
+        value: props.annotation,
+      }).success
+    ) {
+      return (
+        <span className="bg-yellow-300 dark:bg-yellow-700">
+          {props.children}
+        </span>
+      )
+    }
 
-  if (LinkAnnotationSchema.safeParse(props).success) {
-    return (
-      <span className="text-blue-800 dark:text-blue-400 underline">
-        {props.children}
-      </span>
-    )
-  }
+    if (
+      LinkAnnotationSchema.safeParse({
+        schemaType: {name: props.annotation._type},
+        value: props.annotation,
+      }).success
+    ) {
+      return (
+        <span className="text-blue-800 dark:text-blue-400 underline">
+          {props.children}
+        </span>
+      )
+    }
 
-  return props.children
-}
+    return props.children
+  },
+})
 
 const breakStyle = tv({
   base: 'my-6 flex items-center justify-center',
@@ -553,9 +569,13 @@ const RenderBlock = (props: BlockRenderProps) => {
   return children
 }
 
-const renderDecorator: RenderDecoratorFunction = (props) => {
-  return (decoratorMap.get(props.value) ?? ((props) => props.children))(props)
-}
+const decoratorNode = defineDecorator({
+  type: '*',
+  render: (props) =>
+    (decoratorMap.get(props.decorator) ?? ((props) => props.children))(props),
+})
+
+const markNodes = [decoratorNode, annotationNode]
 
 function TaskListCheckbox(props: {
   block: BlockListItemRenderProps['block']
@@ -611,35 +631,35 @@ const renderStyle: RenderStyleFunction = (props) => {
   return (styleMap.get(props.value) ?? ((props) => props.children))(props)
 }
 
-const decoratorMap: Map<
-  string,
-  (props: BlockDecoratorRenderProps) => JSX.Element
-> = new Map([
-  ['strong', (props) => <strong>{props.children}</strong>],
-  ['em', (props) => <em>{props.children}</em>],
-  [
-    'code',
-    (props) => (
-      <code className="font-mono text-sm bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 rounded px-1 py-0.5 border border-gray-200 dark:border-gray-700">
-        {props.children}
-      </code>
-    ),
-  ],
-  [
-    'underline',
-    (props) => (
-      <span style={{textDecoration: 'underline'}}>{props.children}</span>
-    ),
-  ],
-  [
-    'strike-through',
-    (props) => (
-      <span style={{textDecorationLine: 'line-through'}}>{props.children}</span>
-    ),
-  ],
-  ['subscript', (props) => <sub>{props.children}</sub>],
-  ['superscript', (props) => <sup>{props.children}</sup>],
-])
+const decoratorMap: Map<string, (props: DecoratorRenderProps) => JSX.Element> =
+  new Map([
+    ['strong', (props) => <strong>{props.children}</strong>],
+    ['em', (props) => <em>{props.children}</em>],
+    [
+      'code',
+      (props) => (
+        <code className="font-mono text-sm bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 rounded px-1 py-0.5 border border-gray-200 dark:border-gray-700">
+          {props.children}
+        </code>
+      ),
+    ],
+    [
+      'underline',
+      (props) => (
+        <span style={{textDecoration: 'underline'}}>{props.children}</span>
+      ),
+    ],
+    [
+      'strike-through',
+      (props) => (
+        <span style={{textDecorationLine: 'line-through'}}>
+          {props.children}
+        </span>
+      ),
+    ],
+    ['subscript', (props) => <sub>{props.children}</sub>],
+    ['superscript', (props) => <sup>{props.children}</sup>],
+  ])
 
 const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
   new Map([
