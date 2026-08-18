@@ -159,33 +159,44 @@ Your own code can resolve the schema at any position with `getPathSubSchema` fro
 
 A registered node's markup is yours: the engine hands your `render` the `attributes` you spread on your outer element and the `children` you render inside it, and adds nothing else. The callout render above already shows the whole interface.
 
-That ownership covers everything inside the node, a rendering subtree, and anything unregistered inside it renders through the engine defaults. So in practice a container travels with a `defineTextBlock` for the paragraphs inside it:
+That ownership covers everything inside the node, a rendering subtree. Unregistered node types inside it render through the engine defaults: a registered callout holding an unregistered text block renders your `<aside>` with default paragraphs inside. Register both to own both:
 
 ```tsx
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
 
 const nodes = [
-  // A container: a block object with an editable child array.
+  // Paragraphs everywhere: `block` is the text block type at every
+  // nesting level.
+  defineTextBlock({
+    type: 'block',
+    render: ({attributes, children, node}) => (
+      <p {...attributes} data-style={node.style}>
+        {children}
+      </p>
+    ),
+  }),
   defineContainer({
     type: 'callout',
     arrayField: 'content',
     render: ({attributes, children}) => (
       <aside {...attributes}>{children}</aside>
     ),
-  }),
-  // Text blocks. `block` is the text block type at every nesting level,
-  // so this one registration covers paragraphs at the top level and
-  // inside the callout alike.
-  defineTextBlock({
-    type: 'block',
-    render: ({attributes, children, node}) => (
-      <div {...attributes} data-style={node.style}>
-        {children}
-      </div>
-    ),
+    // Inside the callout, the same `block` type renders tighter.
+    of: [
+      defineTextBlock({
+        type: 'block',
+        render: ({attributes, children}) => (
+          <p {...attributes} style={{margin: 0, fontSize: '0.875em'}}>
+            {children}
+          </p>
+        ),
+      }),
+    ],
   }),
 ]
 ```
+
+The `of` entry scopes its registration to the callout's immediate children, where it beats the global registration for the same type: paragraphs render through the first `defineTextBlock` everywhere else and through the tighter one inside the callout.
 
 Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. The span-level render props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) and range decorations keep composing on the spans inside `children`, no matter who renders the block.
 
