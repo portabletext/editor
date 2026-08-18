@@ -1,6 +1,8 @@
 import type {ReactElement} from 'react'
 import type {
+  AnnotationRenderProps,
   BlockObjectRenderProps,
+  DecoratorRenderProps,
   InlineObjectRenderProps,
 } from '../renderers/renderer.types'
 
@@ -38,6 +40,30 @@ export function renderDefaultSpan(props: {
   children: ReactElement
 }): ReactElement {
   return <span {...props.attributes}>{props.children}</span>
+}
+
+/**
+ * Engine-default wrapper for Decorator marks: identity. The engine
+ * applies no decorator markup of its own; a decorator's whole visual
+ * effect comes from its `render`.
+ */
+export function renderDefaultDecorator(
+  props: DecoratorRenderProps,
+): ReactElement {
+  return props.children
+}
+
+/**
+ * Engine-default wrapper for Annotation marks: identity. The engine
+ * always anchors the annotated text in a `<span ref>` outside this
+ * render, kept for structural parity with the legacy `renderAnnotation`
+ * path (which hands that anchor to consumers as `editorElementRef`);
+ * the render itself owns no markup by default.
+ */
+export function renderDefaultAnnotation(
+  props: AnnotationRenderProps,
+): ReactElement {
+  return props.children
 }
 
 /**

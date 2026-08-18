@@ -6,8 +6,8 @@ import type {RegistrableNode} from '../renderers/renderer.types'
  * @public
  *
  * Plugin component that registers a list of nodes (containers, text
- * blocks, spans, block objects, inline objects) with the editor. Each
- * node is the result of a `defineX` factory.
+ * blocks, spans, block objects, inline objects, decorators, annotations)
+ * with the editor. Each node is the result of a `defineX` factory.
  *
  * Stabilize the `nodes` array (a module-level constant or `useMemo`)
  * to avoid a full unregister/re-register cycle on every parent

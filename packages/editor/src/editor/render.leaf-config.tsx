@@ -6,7 +6,11 @@ import type {
 import {useCallback, useContext} from 'react'
 import type {Path} from '../engine/interfaces/path'
 import {useRegistrationsSelector} from '../engine/react/hooks/use-engine-selector'
-import type {SpanConfig} from '../renderers/renderer.types'
+import type {
+  AnnotationConfig,
+  DecoratorConfig,
+  SpanConfig,
+} from '../renderers/renderer.types'
 import {findInlinePositionalOverride} from './find-positional-override'
 import {ParentTextBlockContext} from './parent-text-block-context'
 import {tupleRefEqual} from './tuple-ref-equal'
@@ -45,4 +49,29 @@ export function useSpanConfig(
     return positional
   }
   return globalSpan ?? globalSpanCatchAll
+}
+
+/**
+ * Hook: the engine's registered decorator map.
+ *
+ * Global-only: decorators have no positional (in-parent) override
+ * layer, unlike containers/spans/inline-objects. The per-mark
+ * exact-then-`'*'` lookup happens as a plain `Map` read against this
+ * snapshot rather than as one hook call per mark: a span carries a
+ * variable number of decorator marks, and hooks cannot be called a
+ * variable number of times.
+ */
+export function useDecoratorConfigs(): ReadonlyMap<string, DecoratorConfig> {
+  return useRegistrationsSelector((engine) => engine.decorators)
+}
+
+/**
+ * Hook: the engine's registered annotation map.
+ *
+ * Global-only, for the same reason as {@link useDecoratorConfigs}: a
+ * span's marks resolve to a variable number of annotation `markDef`s
+ * per render.
+ */
+export function useAnnotationConfigs(): ReadonlyMap<string, AnnotationConfig> {
+  return useRegistrationsSelector((engine) => engine.annotations)
 }

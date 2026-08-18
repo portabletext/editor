@@ -1,10 +1,12 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import type {BlockDecoratorRenderProps} from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {
   defineBlockObject,
   defineContainer,
+  defineDecorator,
   defineInlineObject,
   defineTextBlock,
 } from '../src/renderers/renderer.types'
@@ -29,6 +31,10 @@ const calloutSchema = defineSchema({
 
 const mentionSchema = defineSchema({
   inlineObjects: [{name: 'mention'}, {name: 'emoji'}],
+})
+
+const decoratorSchema = defineSchema({
+  decorators: [{name: 'strong'}, {name: 'em'}],
 })
 
 describe('catch-all registration: global blockObject', () => {
@@ -154,6 +160,57 @@ describe('catch-all registration: global blockObject', () => {
       const fallback = callout!.querySelector('[data-testid="fallback-image"]')
       expect(fallback).not.toEqual(null)
     })
+  })
+})
+
+describe('catch-all registration: decorator', () => {
+  test("'*' registration handles every decorator; legacy prop is silenced", async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const renderDecorator = vi.fn((props: BlockDecoratorRenderProps) => (
+      <span data-testid={`legacy-${props.value}`}>{props.children}</span>
+    ))
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: decoratorSchema,
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'foo', marks: ['strong']},
+            {_key: 's1', _type: 'span', text: 'bar', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      editableProps: {renderDecorator},
+      children: (
+        <NodePlugin
+          nodes={[
+            defineDecorator({
+              type: '*',
+              render: ({children, decorator}) => (
+                <span data-testid={`wildcard-${decorator}`}>{children}</span>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        document.querySelector('[data-testid="wildcard-strong"]')?.textContent,
+      ).toEqual('foo')
+      expect(
+        document.querySelector('[data-testid="wildcard-em"]')?.textContent,
+      ).toEqual('bar')
+    })
+
+    expect(renderDecorator).not.toHaveBeenCalled()
   })
 })
 

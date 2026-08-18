@@ -5,7 +5,9 @@ import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {
+  AnnotationConfig,
   BlockObjectConfig,
+  DecoratorConfig,
   InlineObjectConfig,
   SpanConfig,
   TextBlockConfig,
@@ -34,7 +36,9 @@ export interface PortableTextEditorEngine extends DOMEditor {
   _type: 'editor'
 
   containers: ResolvedContainers
+  annotations: Map<string, AnnotationConfig>
   blockObjects: Map<string, BlockObjectConfig>
+  decorators: Map<string, DecoratorConfig>
   inlineObjects: Map<string, InlineObjectConfig>
   spans: Map<string, SpanConfig>
   textBlocks: Map<string, TextBlockConfig>
