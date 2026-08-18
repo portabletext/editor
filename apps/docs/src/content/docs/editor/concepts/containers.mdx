@@ -107,153 +107,13 @@ The render contract:
 - Spread `attributes` onto your outer element so the engine can track the node.
 - Render `children` where the editable content goes; the engine fills it with the container's blocks.
 - Mark any chrome that is not editable content (icons, buttons, drag handles) with `contentEditable={false}`.
-- `renderDefault` renders the engine's minimal wrapper; call it to fall back or wrap the default. It does not chain to a globally-registered render: the engine default is the canonical fallback at any position.
+- `renderDefault` renders the engine's minimal wrapper; call it to fall back or wrap the default.
 
 Omitting `render` falls through to the engine default, so a registration can exist purely to mark the field as editable.
 
-Registering a container also normalizes the value: existing blocks of the registered type are seeded down to a cursor-ready structure, so a bare `table` block gains a `rows` array holding an empty row, cell, and text block.
+Registering a container also normalizes the value: existing blocks of the registered type are seeded down to a cursor-ready structure, so a bare `callout` block gains a `content` array holding an empty text block.
 
-## Nest containers
-
-Containers nest through the `of` array, which scopes registrations to positions inside the parent. A table is three containers deep:
-
-```tsx
-defineContainer({
-  type: 'table',
-  arrayField: 'rows',
-  render: ({attributes, children}) => <table {...attributes}>{children}</table>,
-  of: [
-    defineContainer({
-      type: 'row',
-      arrayField: 'cells',
-      render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
-      of: [
-        defineContainer({
-          type: 'cell',
-          arrayField: 'content',
-          render: ({attributes, children}) => (
-            <td {...attributes}>{children}</td>
-          ),
-        }),
-      ],
-    }),
-  ],
-})
-```
-
-Nesting isn't limited to containers: `of` accepts any block-level registration, `defineContainer`, `defineTextBlock`, and `defineBlockObject`, so anything can render differently inside a container than in the rest of the document. A code block can render each line without paragraph spacing, and a callout can render images compactly. Inline kinds scope the same way one level down, through a text block's own `of`, which takes `defineSpan` and `defineInlineObject` registrations (a `code-span` inside a code block, for example).
-
-Scope is one level deep: an `of` override applies to the container's immediate children only, and anything nested deeper falls through to the global registrations. An image inside a table cell sees the cell's `of`, not the table's.
-
-## Registrations own their rendering subtree
-
-A registered node's markup is yours: the engine hands your `render` the `attributes` you spread on your outer element and the `children` you render inside it, and adds nothing else. The callout render above already shows the whole interface.
-
-That ownership covers everything inside the node, a rendering subtree, and anything unregistered inside it renders through the engine defaults. So in practice a container travels with company: a `defineTextBlock` for the paragraphs inside it, and a registration for anything else that renders there:
-
-```tsx
-import {
-  defineBlockObject,
-  defineContainer,
-  defineTextBlock,
-} from '@portabletext/editor'
-
-const nodes = [
-  // A container: a block object with an editable child array.
-  defineContainer({
-    type: 'callout',
-    arrayField: 'content',
-    render: ({attributes, children}) => (
-      <aside {...attributes}>{children}</aside>
-    ),
-  }),
-  // Text blocks. `block` is the text block type at every nesting level,
-  // so this one registration covers paragraphs at the top level and
-  // inside the callout alike.
-  defineTextBlock({
-    type: 'block',
-    render: ({attributes, children, node}) => (
-      <div {...attributes} data-style={node.style}>
-        {children}
-      </div>
-    ),
-  }),
-  // A non-editable void block. Render `children` as well: the engine
-  // mounts its internals through them.
-  defineBlockObject({
-    type: 'image',
-    render: (props) =>
-      typeof props.node.src === 'string' ? (
-        <figure {...props.attributes}>
-          <div contentEditable={false} draggable={!props.readOnly}>
-            <img src={props.node.src} alt="" />
-          </div>
-          {props.children}
-        </figure>
-      ) : (
-        props.renderDefault(props)
-      ),
-  }),
-]
-```
-
-Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. The span-level render props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) and range decorations keep composing on the spans inside `children`, no matter who renders the block.
-
-Two rendering concerns ship as plugins:
-
-- List numbering: your text-block render reads `node.listItem` and `node.level` for list markup, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
-- Drop indicators: pointer-driven UI rendered by you. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
-
-Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from your render, called from a component the render returns, not inline in the `render` callback, since hooks can't run there:
-
-```tsx
-import type {TextBlockRenderProps} from '@portabletext/editor'
-import {DndProvider, useDropPosition} from '@portabletext/plugin-dnd'
-import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
-
-const nodes = [
-  defineTextBlock({
-    type: 'block',
-    render: (props) => <TextBlock {...props} />,
-  }),
-]
-
-function TextBlock(props: TextBlockRenderProps) {
-  // The 1-based position within the list, or `undefined` for a block
-  // that is not a list item.
-  const listIndex = useListIndex(props.path)
-  // `'start' | 'end'` while a block drag hovers this block.
-  const dropPosition = useDropPosition(props.path)
-
-  return (
-    <div {...props.attributes} style={{position: 'relative'}}>
-      {listIndex !== undefined ? (
-        <span contentEditable={false}>{listIndex}. </span>
-      ) : null}
-      {props.children}
-      {/* `DropIndicator`: your own component, see the `plugin-dnd` README below */}
-      {dropPosition ? <DropIndicator edge={dropPosition} /> : null}
-    </div>
-  )
-}
-```
-
-```tsx
-<EditorProvider initialConfig={{schemaDefinition}}>
-  <ListIndexProvider>
-    <DndProvider>
-      <PortableTextEditable />
-    </DndProvider>
-  </ListIndexProvider>
-  <NodePlugin nodes={nodes} />
-</EditorProvider>
-```
-
-Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
-
-:::note[Migrating from the render props?]
-If your editor still renders through the deprecated render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
-:::
+A container registration that doesn't match the schema is skipped with a `console.warn` naming the actual mismatch: an unknown type, a missing field, a field that isn't an array, or an array of primitives only. The editor keeps working; the type renders as an ordinary block object until the registration and schema agree.
 
 ## Editing follows the sub-schema
 
@@ -295,22 +155,82 @@ The callback runs against the schema at the caret. In a regular paragraph the lo
 
 Your own code can resolve the schema at any position with `getPathSubSchema` from `@portabletext/editor/traversal`.
 
-## Registration validation
+## Registrations own their rendering subtree
 
-A container registration that doesn't match the schema is skipped with a `console.warn` naming the actual mismatch: an unknown type, a missing field, a field that isn't an array, or an array of primitives only. The editor keeps working; the type renders as an ordinary block object until the registration and schema agree.
+A registered node's markup is yours: the engine hands your `render` the `attributes` you spread on your outer element and the `children` you render inside it, and adds nothing else. The callout render above already shows the whole interface.
 
-## Read the registered containers
+That ownership covers everything inside the node, a rendering subtree, and anything unregistered inside it renders through the engine defaults. So in practice a container travels with a `defineTextBlock` for the paragraphs inside it:
 
-`snapshot.context.containers` exposes what's currently registered, keyed by the container's bare block-object `_type` (`callout`, `table`, and so on). Each entry carries `type` and the `field` that holds the container's editable children: the field's name, plus the schema's `of` list of allowed child types. If the registration declared a nested `of`, the entry also carries that array, holding further container entries or positional entries (span, block object, inline object overrides). Only top-level registrations appear as flat map entries: a type registered solely inside a parent's `of` shows up nested there, not as its own entry.
+```tsx
+import {defineContainer, defineTextBlock} from '@portabletext/editor'
 
-Read it with a selector like any other part of the snapshot:
-
-```ts
-import type {EditorSelector} from '@portabletext/editor'
-
-const isCalloutRegistered: EditorSelector<boolean> = (snapshot) =>
-  snapshot.context.containers.has('callout')
+const nodes = [
+  // A container: a block object with an editable child array.
+  defineContainer({
+    type: 'callout',
+    arrayField: 'content',
+    render: ({attributes, children}) => (
+      <aside {...attributes}>{children}</aside>
+    ),
+  }),
+  // Text blocks. `block` is the text block type at every nesting level,
+  // so this one registration covers paragraphs at the top level and
+  // inside the callout alike.
+  defineTextBlock({
+    type: 'block',
+    render: ({attributes, children, node}) => (
+      <div {...attributes} data-style={node.style}>
+        {children}
+      </div>
+    ),
+  }),
+]
 ```
+
+Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. The span-level render props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) and range decorations keep composing on the spans inside `children`, no matter who renders the block.
+
+Two rendering concerns ship as plugins:
+
+- List numbering: your text-block render reads `node.listItem` and `node.level` for list markup, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
+- Drop indicators: pointer-driven UI rendered by you. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
+
+Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from a component your `render` returns, not inline in the `render` callback, since hooks can't run there. Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
+
+:::note[Migrating from the render props?]
+If your editor still renders through the deprecated render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
+:::
+
+## Nest containers
+
+Containers nest through the `of` array, which scopes registrations to positions inside the parent. A table is three containers deep:
+
+```tsx
+defineContainer({
+  type: 'table',
+  arrayField: 'rows',
+  render: ({attributes, children}) => <table {...attributes}>{children}</table>,
+  of: [
+    defineContainer({
+      type: 'row',
+      arrayField: 'cells',
+      render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+      of: [
+        defineContainer({
+          type: 'cell',
+          arrayField: 'content',
+          render: ({attributes, children}) => (
+            <td {...attributes}>{children}</td>
+          ),
+        }),
+      ],
+    }),
+  ],
+})
+```
+
+Nesting isn't limited to containers: `of` accepts any block-level registration, `defineContainer`, `defineTextBlock`, and `defineBlockObject`, so anything can render differently inside a container than in the rest of the document. A code block can render each line without paragraph spacing, and a callout can render images compactly. Inline kinds scope the same way one level down, through a text block's own `of`, which takes `defineSpan` and `defineInlineObject` registrations (a `code-span` inside a code block, for example).
+
+Scope is one level deep: an `of` override applies to the container's immediate children only, and anything nested deeper falls through to the global registrations. An image inside a table cell sees the cell's `of`, not the table's.
 
 ## A complete example
 
@@ -415,7 +335,20 @@ function App() {
 
 An `image` block at the document root renders through the global registration, full width. The same `_type: 'image'` inside the callout's `content` hits the positional override first and renders compact. The text block registration needs no positional counterpart: `type: 'block'` already covers both scopes.
 
-Positional overrides only need to carry what they change: an `of` entry that omits `render` falls through to the global registration's render, so a positional registration never has to re-implement what the global one already does.
+Positional overrides only need to carry what they change: an `of` entry that omits `render` falls through to the global registration's render, so a positional registration never has to re-implement what the global one already does. Calling `renderDefault` is different: it renders the engine default at any position, never the global registration's render.
+
+## Read the registered containers
+
+`snapshot.context.containers` exposes what's currently registered, keyed by the container's bare block-object `_type` (`callout`, `table`, and so on). Each entry carries `type` and the `field` that holds the container's editable children: the field's name, plus the schema's `of` list of allowed child types. If the registration declared a nested `of`, the entry also carries that array, holding further container entries or positional entries (span, block object, inline object overrides). Only top-level registrations appear as flat map entries: a type registered solely inside a parent's `of` shows up nested there, not as its own entry.
+
+Read it with a [selector](/editor/reference/selectors/) like any other part of the snapshot:
+
+```ts
+import type {EditorSelector} from '@portabletext/editor'
+
+const isCalloutRegistered: EditorSelector<boolean> = (snapshot) =>
+  snapshot.context.containers.has('callout')
+```
 
 ## Containers in practice
 
