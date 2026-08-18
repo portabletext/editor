@@ -154,7 +154,7 @@ export default App
 
 Include the `App` component in your application and run it. You should see an outlined editor that accepts text, but doesn't do much else.
 
-### Create render functions for schema elements
+### Set up rendering for schema elements
 
 At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a render for text blocks and creating render functions for the marks. If your editor still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, and `renderChild` props, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/) to move to node registrations instead.
 
