@@ -20,7 +20,12 @@ import type {
   RenderDecoratorFunction,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import {
+  findPositionalAnnotationOverride,
+  findPositionalDecoratorOverride,
+} from './find-positional-override'
 import {NewPipelineContext} from './new-pipeline-context'
+import {ParentTextBlockContext} from './parent-text-block-context'
 import {
   renderDefaultAnnotation,
   renderDefaultDecorator,
@@ -63,6 +68,7 @@ export function RenderSpan(props: RenderSpanProps) {
   const spanConfig = useSpanConfig(child ?? props.leaf, props.path)
   const decoratorConfigs = useDecoratorConfigs()
   const annotationConfigs = useAnnotationConfigs()
+  const parentTextBlock = useContext(ParentTextBlockContext)
 
   const isInNewPipeline = useContext(NewPipelineContext)
   const serializedPath = serializePath(props.path)
@@ -111,8 +117,19 @@ export function RenderSpan(props: RenderSpanProps) {
       continue
     }
 
-    const decoratorConfig =
+    const globalDecoratorConfig =
       decoratorConfigs.get(mark) ?? decoratorConfigs.get('*')
+    const positionalDecorator = findPositionalDecoratorOverride(
+      parentTextBlock,
+      mark,
+    )
+    // Positional present: undefined render falls through to global;
+    // function render is used at this position.
+    const decoratorConfig = positionalDecorator
+      ? positionalDecorator.decorator.render === undefined
+        ? globalDecoratorConfig
+        : positionalDecorator
+      : globalDecoratorConfig
 
     if (decoratorConfig) {
       const render = decoratorConfig.decorator.render
@@ -159,9 +176,20 @@ export function RenderSpan(props: RenderSpanProps) {
       (t) => t.name === annotationMarkDef._type,
     )
     if (annotationSchemaType) {
-      const annotationConfig =
+      const globalAnnotationConfig =
         annotationConfigs.get(annotationMarkDef._type) ??
         annotationConfigs.get('*')
+      const positionalAnnotation = findPositionalAnnotationOverride(
+        parentTextBlock,
+        annotationMarkDef._type,
+      )
+      // Positional present: undefined render falls through to global;
+      // function render is used at this position.
+      const annotationConfig = positionalAnnotation
+        ? positionalAnnotation.annotation.render === undefined
+          ? globalAnnotationConfig
+          : positionalAnnotation
+        : globalAnnotationConfig
 
       if (annotationConfig) {
         const render = annotationConfig.annotation.render

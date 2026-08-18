@@ -277,8 +277,13 @@ export type TextBlock = {
    * Inline-content positional overrides. A `Span` or `InlineObject`
    * placed here scopes the inline render to this text block (or any
    * text block of this `type` if registered at the top level).
+   * `Decorator` and `Annotation` entries scope those renders the
+   * same way: the decorator or annotation renders through this entry
+   * inside the text block, and through the global registration (or
+   * the legacy `renderDecorator`/`renderAnnotation` prop) everywhere
+   * else.
    */
-  of?: ReadonlyArray<Span | InlineObject>
+  of?: ReadonlyArray<Span | InlineObject | Decorator | Annotation>
 }
 
 /**
@@ -340,7 +345,8 @@ export type Decorator = {
   type: string
   /**
    * Outer render. Two modes:
-   * - omitted: no wrapper is applied (identity)
+   * - omitted: fall through to global registered render (or identity,
+   *   the engine default, if no global registration exists)
    * - function: use this render. The function receives a `renderDefault`
    *   prop that returns identity when called.
    */
@@ -359,7 +365,8 @@ export type Annotation = {
   type: string
   /**
    * Outer render. Two modes:
-   * - omitted: no wrapper is applied (identity)
+   * - omitted: fall through to global registered render (or identity,
+   *   the engine default, if no global registration exists)
    * - function: use this render. The function receives a `renderDefault`
    *   prop that returns identity when called.
    */
@@ -657,7 +664,7 @@ export function defineTextBlock<const TType extends string>(config: {
     ? "Error: defineTextBlock({type: 'span'}) is forbidden -- 'span' is always a span, use defineSpan"
     : TType
   render?: TextBlockRender
-  of?: ReadonlyArray<Span | InlineObject>
+  of?: ReadonlyArray<Span | InlineObject | Decorator | Annotation>
 }): TextBlock {
   return {kind: 'textBlock', ...config} as unknown as TextBlock
 }
@@ -724,10 +731,13 @@ export type ContainerConfig = {
  * @internal
  *
  * Resolved text block config. The optional `of` carries resolved
- * inline-content positional overrides (spans, inline-objects) for
- * children rendered inside this text block.
+ * inline-content positional overrides (spans, inline-objects, and
+ * per-decorator and per-annotation overrides) for children rendered
+ * inside this text block.
  */
 export type TextBlockConfig = {
   textBlock: TextBlock
-  of?: ReadonlyArray<SpanConfig | InlineObjectConfig>
+  of?: ReadonlyArray<
+    SpanConfig | InlineObjectConfig | DecoratorConfig | AnnotationConfig
+  >
 }

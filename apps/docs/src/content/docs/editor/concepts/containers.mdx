@@ -198,7 +198,33 @@ const nodes = [
 
 The `of` entry scopes its registration to the callout's immediate children, where it beats the global registration for the same type: paragraphs render through the first `defineTextBlock` everywhere else and through the tighter one inside the callout.
 
-Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. The span-level render props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) and range decorations keep composing on the spans inside `children`, no matter who renders the block.
+A text block's own `of` goes one level deeper, into `defineDecorator` and `defineAnnotation` entries. Register the same decorator globally and positionally to see the scoping:
+
+```tsx
+defineDecorator({
+  type: 'strong',
+  render: ({children}) => <strong>{children}</strong>,
+})
+
+defineTextBlock({
+  type: 'block',
+  render: ({attributes, children}) => (
+    <p {...attributes} style={{margin: 0, fontSize: '0.875em'}}>
+      {children}
+    </p>
+  ),
+  of: [
+    defineDecorator({
+      type: 'strong',
+      render: ({children}) => <mark>{children}</mark>,
+    }),
+  ],
+})
+```
+
+With both registered, `strong` renders as `<mark>` inside these text blocks and as `<strong>` everywhere else. Remove the positional entry's `render` and `strong` renders as `<strong>` everywhere: an entry without a `render` defers to the global registration instead of silencing it, the same fall-through rule every positional `of` entry on this page follows. `'*'` entries work at both levels and lose to an exact `type` match at the same level.
+
+Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. Decorator and annotation rendering on the spans inside `children` happens through `defineDecorator`/`defineAnnotation` registrations, global or positional, or the deprecated `renderDecorator`/`renderAnnotation` render props, no matter who renders the block; `renderPlaceholder` and range decorations keep composing the same way regardless.
 
 Two rendering concerns ship as plugins:
 
@@ -347,6 +373,8 @@ function App() {
 An `image` block at the document root renders through the global registration, full width. The same `_type: 'image'` inside the callout's `content` hits the positional override first and renders compact. The text block registration needs no positional counterpart: `type: 'block'` already covers both scopes.
 
 Positional overrides only need to carry what they change: an `of` entry that omits `render` falls through to the global registration's render, so a positional registration never has to re-implement what the global one already does. Calling `renderDefault` is different: it renders the engine default at any position, never the global registration's render.
+
+Decorators and annotations scope the same way, one level deeper: a `defineDecorator` or `defineAnnotation` entry inside the callout's text block `of` (as shown under [Registrations own their rendering subtree](#registrations-own-their-rendering-subtree)) makes an annotation like `link` render differently only inside the callout, and the text block entry needs no `render` of its own to carry it.
 
 ## Read the registered containers
 
