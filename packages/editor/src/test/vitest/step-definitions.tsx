@@ -32,7 +32,10 @@ import {reverseSelection} from '../../utils/util.reverse-selection'
 import type {Parameter} from '../gherkin-parameter-types'
 import type {Context} from './step-context'
 
-const schemaDefinition = defineSchema({
+/**
+ * @internal
+ */
+export const gherkinSchemaDefinition = defineSchema({
   annotations: [{name: 'comment'}, {name: 'link'}],
   decorators: [{name: 'em'}, {name: 'strong'}],
   blockObjects: [{name: 'image'}, {name: 'break'}],
@@ -207,7 +210,7 @@ async function selectionFromInput(context: Context, textspec: string) {
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const {editor, locator} = await createTestEditor({
-      schemaDefinition,
+      schemaDefinition: gherkinSchemaDefinition,
     })
 
     context.locator = locator
@@ -215,7 +218,7 @@ export const stepDefinitions = [
   }),
   Given('two editors', async (context: Context) => {
     const {editor, locator, editorB, locatorB} = await createTestEditors({
-      schemaDefinition,
+      schemaDefinition: gherkinSchemaDefinition,
     })
 
     context.locator = locator
