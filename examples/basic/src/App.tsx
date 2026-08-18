@@ -7,7 +7,6 @@ import {
   EditorProvider,
   keyGenerator,
   PortableTextBlock,
-  PortableTextChild,
   PortableTextEditable,
   RenderAnnotationFunction,
   RenderDecoratorFunction,
@@ -169,68 +168,62 @@ function TextBlock(props: TextBlockRenderProps) {
 }
 
 // Inline objects render through a registered node as well. `props.children`
-// carries a hidden spacer the editor needs for caret placement; always
+// carries a caret spacer the editor needs for caret placement; always
 // render it inside the wrapper
 const stockTicker = defineInlineObject({
   type: 'stock-ticker',
-  render: (props) => (
-    <span {...props.attributes}>
-      {props.children}
-      {/* `draggable` makes the object movable and keeps its text
-          unselectable: a draggable element starts a drag instead of a
-          text selection */}
-      <span
-        draggable={!props.readOnly}
-        style={{
-          display: 'inline-block',
-          border: '1px dotted grey',
-          padding: '0.15em',
-        }}
-      >
-        {isStockTicker(props.node) ? props.node.symbol : null}
+  render: (props) =>
+    typeof props.node.symbol === 'string' ? (
+      <span {...props.attributes}>
+        {props.children}
+        {/* `draggable` makes the object movable and keeps its text
+            unselectable: a draggable element starts a drag instead of a
+            text selection */}
+        <span
+          draggable={!props.readOnly}
+          style={{
+            display: 'inline-block',
+            border: '1px dotted grey',
+            padding: '0.15em',
+          }}
+        >
+          {props.node.symbol}
+        </span>
       </span>
-    </span>
-  ),
+    ) : (
+      props.renderDefault(props)
+    ),
 })
 
 // Block objects render through a registered node as well. `props.children`
-// carries a hidden spacer the editor needs for caret placement; always
+// carries a caret spacer the editor needs for caret placement; always
 // render it inside the wrapper
 const imageBlock = defineBlockObject({
   type: 'image',
-  render: (props) => (
-    <div {...props.attributes}>
-      {props.children}
-      <div
-        contentEditable={false}
-        draggable={!props.readOnly}
-        style={{
-          border: '1px dotted grey',
-          padding: '0.25em',
-          marginBlockEnd: '0.25em',
-        }}
-      >
-        {isImage(props.node) ? `IMG: ${props.node.src}` : null}
+  render: (props) =>
+    typeof props.node.src === 'string' ? (
+      <div {...props.attributes}>
+        {props.children}
+        <div
+          contentEditable={false}
+          draggable={!props.readOnly}
+          style={{
+            border: '1px dotted grey',
+            padding: '0.25em',
+            marginBlockEnd: '0.25em',
+          }}
+        >
+          {`IMG: ${props.node.src}`}
+        </div>
       </div>
-    </div>
-  ),
+    ) : (
+      props.renderDefault(props)
+    ),
 })
 
 // A stable module-level reference: a fresh array on every render would
 // make `NodePlugin` unregister and re-register on every keystroke.
 const nodes = [textBlock, stockTicker, imageBlock]
-
-function isImage(
-  props: PortableTextBlock,
-): props is PortableTextBlock & {src: string} {
-  return 'src' in props
-}
-
-function isStockTicker(
-  props: PortableTextChild,
-): props is PortableTextChild & {symbol: string} {
-  return 'symbol' in props
-}
 
 function Toolbar() {
   // Obtain the editor instance

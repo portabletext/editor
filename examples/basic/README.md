@@ -23,6 +23,6 @@ Then open the local URL Vite prints (defaults to `http://localhost:5173`).
 - A toolbar that toggles marks, styles, and lists using `useEditor` and `useEditorSelector` with selectors from `@portabletext/editor/selectors`
 - Reading the editor value through `EventListenerPlugin` and rendering it as JSON
 
-If you're migrating an editor from the block-level render props (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`) to node registrations, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/).
+If you're migrating an editor from the deprecated render props (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`) to node registrations, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/).
 
 For a guided walkthrough of the same setup, see [Getting started](https://www.portabletext.org/editor/getting-started/).

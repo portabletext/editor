@@ -147,7 +147,7 @@ Scope is one level deep: an `of` override applies to the container's immediate c
 
 ## Registrations own their rendering subtree
 
-Registering nodes with `NodePlugin` hands the position, and everything rendered inside it, to registration-based rendering, and that changes who owns what. Containers, text blocks, and block objects each start a rendering subtree: your `render` owns the outer wrapper entirely, and the engine emits only `data-pt-*` attributes inside it. A standalone inline-object or span registration doesn't start a subtree on its own, it renders in whichever mode its enclosing text block is already in, registration-based if the text block is registered too, the deprecated render props' attribute shape otherwise. Span-level rendering keeps composing: `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations fire on the spans inside `children` regardless of who renders the block.
+Registering nodes with `NodePlugin` hands the position, and everything rendered inside it, to registration-based rendering, and that changes who owns what. Containers, text blocks, and block objects each start a rendering subtree: your `render` owns the outer wrapper entirely, and the engine emits only `data-pt-*` attributes inside it. A standalone inline-object or span registration doesn't start a subtree on its own. It renders in whichever mode its enclosing text block is already in: registration-based when the text block is registered, the deprecated render props' attribute shape when it is not. Span-level rendering keeps composing: `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations fire on the spans inside `children` regardless of who renders the block.
 
 The pipeline boundary is the subtree. Inside a registered container, unregistered node types render through the engine defaults, so registering a container usually means bringing a `defineTextBlock` (and registrations for anything else that renders inside it) along with it.
 
@@ -184,14 +184,17 @@ const nodes = [
   // mounts its internals through them.
   defineBlockObject({
     type: 'image',
-    render: ({attributes, children, node, readOnly}) => (
-      <figure {...attributes}>
-        <div contentEditable={false} draggable={!readOnly}>
-          <img src={String(node.src)} alt="" />
-        </div>
-        {children}
-      </figure>
-    ),
+    render: (props) =>
+      typeof props.node.src === 'string' ? (
+        <figure {...props.attributes}>
+          <div contentEditable={false} draggable={!props.readOnly}>
+            <img src={props.node.src} alt="" />
+          </div>
+          {props.children}
+        </figure>
+      ) : (
+        props.renderDefault(props)
+      ),
   }),
 ]
 ```
@@ -228,7 +231,7 @@ function TextBlock(props: TextBlockRenderProps) {
         <span contentEditable={false}>{listIndex}. </span>
       ) : null}
       {props.children}
-      {/* DropIndicator: your own component, see the plugin-dnd README below */}
+      {/* `DropIndicator`: your own component, see the `plugin-dnd` README below */}
       {dropPosition ? <DropIndicator edge={dropPosition} /> : null}
     </div>
   )
@@ -298,7 +301,7 @@ A container registration that doesn't match the schema is skipped with a `consol
 
 ## Read the registered containers
 
-`snapshot.context.containers` exposes what's currently registered, keyed by the container's bare block-object `_type` (`callout`, `table`, and so on). Each entry carries `type`, the `field` that holds the container's editable children (its name, plus the schema's `of` list of allowed child types), and, if the registration declared positional overrides, a nested `of` array of further container or positional (span, block object, inline object) entries. Only top-level registrations appear as flat map entries: a type registered solely inside a parent's `of` shows up nested there, not as its own entry.
+`snapshot.context.containers` exposes what's currently registered, keyed by the container's bare block-object `_type` (`callout`, `table`, and so on). Each entry carries `type` and the `field` that holds the container's editable children: the field's name, plus the schema's `of` list of allowed child types. If the registration declared a nested `of`, the entry also carries that array, holding further container entries or positional entries (span, block object, inline object overrides). Only top-level registrations appear as flat map entries: a type registered solely inside a parent's `of` shows up nested there, not as its own entry.
 
 Read it with a selector like any other part of the snapshot:
 
@@ -358,14 +361,17 @@ const nodes = [
   // Images at the root: full width.
   defineBlockObject({
     type: 'image',
-    render: ({attributes, children, node, readOnly}) => (
-      <figure {...attributes}>
-        <div contentEditable={false} draggable={!readOnly}>
-          <img src={String(node.src)} alt="" style={{width: '100%'}} />
-        </div>
-        {children}
-      </figure>
-    ),
+    render: (props) =>
+      typeof props.node.src === 'string' ? (
+        <figure {...props.attributes}>
+          <div contentEditable={false} draggable={!props.readOnly}>
+            <img src={props.node.src} alt="" style={{width: '100%'}} />
+          </div>
+          {props.children}
+        </figure>
+      ) : (
+        props.renderDefault(props)
+      ),
   }),
   // The callout, with a positional override: the same `image` type
   // renders compactly inside it.
@@ -381,14 +387,17 @@ const nodes = [
     of: [
       defineBlockObject({
         type: 'image',
-        render: ({attributes, children, node, readOnly}) => (
-          <span {...attributes}>
-            <span contentEditable={false} draggable={!readOnly}>
-              <img src={String(node.src)} alt="" style={{height: '4rem'}} />
+        render: (props) =>
+          typeof props.node.src === 'string' ? (
+            <span {...props.attributes}>
+              <span contentEditable={false} draggable={!props.readOnly}>
+                <img src={props.node.src} alt="" style={{height: '4rem'}} />
+              </span>
+              {props.children}
             </span>
-            {children}
-          </span>
-        ),
+          ) : (
+            props.renderDefault(props)
+          ),
       }),
     ],
   }),
