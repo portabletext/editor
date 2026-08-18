@@ -13,10 +13,14 @@ If your editor still renders through the deprecated `renderBlock`, `renderChild`
 This guide covers `@portabletext/editor`. Requires React 19.2.8 or later. Check the [editor changelog](https://github.com/portabletext/editor/releases) for breaking changes.
 :::
 
+:::caution[Deprecated]
+`renderDecorator` and `renderAnnotation` are deprecated and will be removed in a future major version. Node registrations (`defineDecorator`, `defineAnnotation`) replace them; the [migration guide](/editor/guides/migrate-render-props/) walks through both props. `renderPlaceholder` is not deprecated.
+:::
+
 The following props can be passed to the `PortableTextEditable` component:
 
-- `renderAnnotation`: For annotations (e.g., hyperlinks).
-- `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
+- `renderAnnotation`: For annotations (e.g., hyperlinks). (deprecated)
+- `renderDecorator`: For decorators (e.g., strong, italic, emphasis text). (deprecated)
 - `renderPlaceholder`: For custom placeholder text when the editor is empty.
 - `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
