@@ -110,14 +110,17 @@ export default defineConfig({
             {
               label: 'Concepts',
               items: [
+                {slug: 'editor/concepts', label: 'Overview'},
                 {slug: 'editor/concepts/portabletext'},
                 {slug: 'editor/concepts/behavior'},
                 {slug: 'editor/concepts/containers'},
+                {slug: 'editor/concepts/clipboard'},
               ],
             },
             {
               label: 'Guides',
               items: [
+                {slug: 'editor/guides', label: 'Overview'},
                 {slug: 'editor/guides/custom-rendering'},
                 {slug: 'editor/guides/migrate-render-props'},
                 {slug: 'editor/guides/customize-toolbar'},
