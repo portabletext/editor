@@ -73,7 +73,7 @@ Before you can render the editor, you need a schema. The editor schema configure
 Start with a schema that includes some common rich text elements.
 
 :::note
-This guide includes a limited set of schema types to get you started. See the [rendering guide](/editor/guides/custom-rendering/) for additional style and mark examples, and the [custom blocks guide](/editor/guides/custom-blocks/) for block and inline objects.
+This guide includes a limited set of schema types to get you started. See the [rendering guide](/editor/guides/custom-rendering/) for mark examples, and the [custom blocks guide](/editor/guides/custom-blocks/) for block and inline objects.
 :::
 
 ```tsx
@@ -98,10 +98,9 @@ const schemaDefinition = defineSchema({
   // Annotations are more complex marks that can hold data (for example, hyperlinks).
   annotations: [],
   // Lists apply to entire text blocks as well (for example, bullet, numbered).
+  // Lists render inside your registered text-block render; ordered-list
+  // numbering comes from `@portabletext/plugin-list-index`.
   lists: [],
-  // Left empty here; enabling lists also needs a registered list-item render.
-  // Ordered-list numbering isn't computed by the engine, it comes from
-  // `@portabletext/plugin-list-index`, see the migration guide.
   // Inline objects hold arbitrary data that can be inserted into the text (for example, custom emoji).
   inlineObjects: [],
   // Block objects hold arbitrary data that live side-by-side with text blocks (for example, images, code blocks, and tables).
@@ -175,7 +174,7 @@ export default App
 
 Include the `App` component in your application and run it. You should see an outlined editor that accepts text, but doesn't do much else.
 
-## Create render functions for schema elements
+## Set up rendering for schema elements
 
 At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a render for text blocks and creating render functions for the marks.
 
@@ -452,8 +451,8 @@ Learn more about [behaviors](/editor/concepts/behavior/) and how to [create your
 
 <CardGrid>
   <LinkCard
-    title="Create additional render functions"
-    description="Create more render functions for your schema."
+    title="Customize rendering"
+    description="Span-level render props and additional node registrations."
     href="/editor/guides/custom-rendering/"
   />
   <LinkCard

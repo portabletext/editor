@@ -147,11 +147,9 @@ Scope is one level deep: an `of` override applies to the container's immediate c
 
 ## Registrations own their rendering subtree
 
-Registering nodes with `NodePlugin` hands the position, and everything rendered inside it, to registration-based rendering, and that changes who owns what. Containers, text blocks, and block objects each start a rendering subtree: your `render` owns the outer wrapper entirely, and the engine emits only `data-pt-*` attributes inside it. A standalone inline-object or span registration doesn't start a subtree on its own. It renders in whichever mode its enclosing text block is already in: registration-based when the text block is registered, the deprecated render props' attribute shape when it is not. Span-level rendering keeps composing: `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range decorations fire on the spans inside `children` regardless of who renders the block.
+A registered node's markup is yours: the engine hands your `render` the `attributes` you spread on your outer element and the `children` you render inside it, and adds nothing else. The callout render above already shows the whole interface.
 
-The pipeline boundary is the subtree. Inside a registered container, unregistered node types render through the engine defaults, so registering a container usually means bringing a `defineTextBlock` (and registrations for anything else that renders inside it) along with it.
-
-Each kind of node has its own registration factory, and they mount together through one `NodePlugin`:
+That ownership covers everything inside the node, a rendering subtree, and anything unregistered inside it renders through the engine defaults. So in practice a container travels with company: a `defineTextBlock` for the paragraphs inside it, and a registration for anything else that renders there:
 
 ```tsx
 import {
@@ -198,6 +196,8 @@ const nodes = [
   }),
 ]
 ```
+
+Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. The span-level render props (`renderDecorator`, `renderAnnotation`, `renderPlaceholder`) and range decorations keep composing on the spans inside `children`, no matter who renders the block.
 
 Two rendering concerns ship as plugins:
 

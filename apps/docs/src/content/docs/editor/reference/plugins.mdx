@@ -43,7 +43,7 @@ function LogTextPlugin() {
 }
 ```
 
-Plugins that render document nodes register through `editor.registerNode(...)` instead, passing the result of a `defineX` factory (`defineContainer`, `defineTextBlock`, `defineSpan`, `defineBlockObject`, `defineInlineObject`). It also returns an unregister function:
+Plugins that render document nodes register through `editor.registerNode(...)` instead, passing the result of a `defineX` factory (`defineContainer`, `defineTextBlock`, `defineSpan`, `defineBlockObject`, `defineInlineObject`). Like `registerBehavior`, `registerNode` returns an unregister function:
 
 ```tsx
 function LogImagesPlugin() {
