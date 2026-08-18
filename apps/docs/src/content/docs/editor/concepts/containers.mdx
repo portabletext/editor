@@ -196,11 +196,10 @@ const nodes = [
 ]
 ```
 
-Owning the wrapper means owning things the engine used to do for you. The two that surprise people:
+Two rendering concerns ship as plugins:
 
-**List rendering.** The engine's default list-item wrapping and ordered-list numbering do not apply to custom text-block renders. Your render handles `node.listItem` and `node.level`, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
-
-**Drop indicators.** The engine renders no drop-indicator chrome for registered nodes: where a dragged block would land is pointer-driven UI, deliberately yours. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
+- List numbering: your text-block render reads `node.listItem` and `node.level` for list markup, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
+- Drop indicators: pointer-driven UI rendered by you. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
 
 Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from your render, called from a component the render returns, not inline in the `render` callback, since hooks can't run there:
 
