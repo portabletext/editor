@@ -1,0 +1,97 @@
+---
+title: Clipboard
+description: How the editor turns a selection into clipboard data and clipboard data back into content, and how behaviors compose when several of them care about the same clipboard.
+sidebar:
+  order: 3
+---
+
+import {LinkCard} from '@astrojs/starlight/components'
+
+Copying and pasting run entirely through [behaviors](/editor/concepts/behavior/). Both directions are a small pipeline of events, and every step is one your own behaviors can take over.
+
+## Copy
+
+A copy raises one `serialize` event, which fans out into five `serialize.data` events, one per format, in this order:
+
+1. `application/x-portable-text`
+2. `application/json`
+3. `text/markdown`
+4. `text/html`
+5. `text/plain`
+
+Each one is handled independently and writes its result into the same clipboard, so a single copy produces up to five representations and the receiving application picks the richest one it understands. A cut does the same, then raises `delete`. Neither does anything when the selection is collapsed.
+
+:::note
+Taking over one format leaves the other four untouched. Your HTML lands on the clipboard next to the editor's Portable Text, Markdown, and plain text.
+:::
+
+If a format fails to serialize, the editor logs a warning and moves on. There is no second attempt at that format, so the clipboard is left without it.
+
+## Paste
+
+A paste raises `deserialize`, which looks through the clipboard in the same order of preference and picks the first format that is present. That format becomes a `deserialize.data` event.
+
+On success the resulting blocks are fitted to the paste destination and inserted. On failure the editor tries the next format present on the clipboard, so a failed HTML paste can still fall back to plain text.
+
+## One handler per format
+
+Within a single `serialize.data` or `deserialize.data` event, the first behavior whose guard returns a truthy value handles it, and no later behavior sees that event.
+
+That makes the guard the contract. A guard that returns `false` declines cleanly and costs nothing, so a behavior should claim a format only in the situation it actually cares about:
+
+```tsx
+defineBehavior({
+  on: 'serialize.data',
+  guard: ({snapshot, event}) => {
+    if (event.mimeType !== 'text/plain') {
+      return false
+    }
+
+    const rectangle = getTableRectangle(snapshot)
+
+    if (!rectangle) {
+      return false
+    }
+
+    return {
+      type: 'serialization.success' as const,
+      mimeType: 'text/plain' as const,
+      data: toTabSeparatedValues(rectangle),
+      originEvent: event.originEvent.type,
+    }
+  },
+  actions: [
+    ({event}, serialization) => [
+      raise({...serialization, originEvent: event.originEvent}),
+    ],
+  ],
+})
+```
+
+The guard narrows twice, on the format and on the situation, so the behavior owns plain-text copy inside a table and leaves every other selection alone. A guard that checked only `event.mimeType` would own plain-text copy for the whole editor, including selections that have nothing to do with tables.
+
+The guard does the work and returns the `serialization.success` event, which the action raises; the editor writes the data to the clipboard. The paste direction mirrors this: raise `deserialization.success` with the blocks you produced, and the editor fits and inserts them. Raising the matching `failure` event hands the format back, and the editor moves on as if nothing had claimed it.
+
+## Ordering
+
+Behaviors you register always run before the editor's own. Among your own, the order is the order they were registered in: a `BehaviorPlugin` registers its `behaviors` array top to bottom, and separate plugins register in mount order.
+
+There is no way to declare that one behavior should run before or after another. If two behaviors claim the same format, the earlier registration wins, silently. When that matters, keep both guards narrow enough that only one of them can match.
+
+A behavior can also decline to end the event: `forward` passes it to the behaviors that come after, which is what lets several behaviors each inspect the same paste.
+
+<LinkCard
+  title="Claiming the native event"
+  description="How forward, raise, and execute differ, and which of them prevent the browser default."
+  href="/editor/concepts/behavior/#claiming-the-native-event"
+/>
+
+## The callback escape hatch
+
+`onCopy`, `onCut`, and `onPaste` on `PortableTextEditable` run in front of this pipeline, and they do not all fall through the same way.
+
+`onCopy` and `onCut` replace it. Providing either one means `clipboard.copy` and `clipboard.cut` are never sent, so no clipboard behavior runs and none of the five formats are written, whatever the callback returns. Adding an `onCopy` to log something removes the editor's own copy along with it.
+
+`onPaste` is the forgiving one: return nothing, or a result without blocks to insert, and the paste continues into `clipboard.paste` and the normal deserialization pipeline.
+
+Anything that can be a behavior should be one. Behaviors compose; callbacks replace.
