@@ -50,14 +50,20 @@ import {defineBlockObject} from '@portabletext/editor'
 
 const imageBlock = defineBlockObject({
   type: 'image',
-  render: ({attributes, children, node, readOnly}) => (
-    <div {...attributes} style={{border: '1px solid #ccc', padding: '0.5em'}}>
-      <div contentEditable={false} draggable={!readOnly}>
-        <img src={String(node.src)} alt={String(node.alt ?? '')} />
+  render: (props) =>
+    typeof props.node.src === 'string' ? (
+      <div
+        {...props.attributes}
+        style={{border: '1px solid #ccc', padding: '0.5em'}}
+      >
+        <div contentEditable={false} draggable={!props.readOnly}>
+          <img src={props.node.src} alt={String(props.node.alt ?? '')} />
+        </div>
+        {props.children}
       </div>
-      {children}
-    </div>
-  ),
+    ) : (
+      props.renderDefault(props)
+    ),
 })
 ```
 
@@ -101,14 +107,17 @@ import {defineInlineObject} from '@portabletext/editor'
 
 const stockTicker = defineInlineObject({
   type: 'stock-ticker',
-  render: ({attributes, children, node, readOnly}) => (
-    <span {...attributes} className="ticker">
-      {children}
-      <span draggable={!readOnly} style={{display: 'inline-block'}}>
-        {String(node.symbol)}
+  render: (props) =>
+    typeof props.node.symbol === 'string' ? (
+      <span {...props.attributes} className="ticker">
+        {props.children}
+        <span draggable={!props.readOnly} style={{display: 'inline-block'}}>
+          {props.node.symbol}
+        </span>
       </span>
-    </span>
-  ),
+    ) : (
+      props.renderDefault(props)
+    ),
 })
 ```
 

@@ -46,46 +46,57 @@ The schema tells the editor which block types are valid. The field data (image U
 
 ### Step 2: render it
 
-Register each block object type with `defineBlockObject`. The registration's `render` owns the block's wrapper element entirely, so it must: spread `attributes` onto the outer element, always render `children` (the engine's caret spacer, needed for the browser to place the cursor next to the block), and wrap the visible content in a `contentEditable={false}` element with `draggable={!readOnly}` (block objects are void, and this is what makes them drag-movable while keeping the outer element as the caret anchor):
+Register each block object type with `defineBlockObject`. The registration's `render` owns the block's wrapper element entirely:
+
+- Spread `attributes` onto the outer element.
+- Always render `children`, the engine's caret spacer that lets the browser place the cursor next to the block.
+- Wrap the visible content in a `contentEditable={false}` element with `draggable={!readOnly}`. Block objects are void, and this makes them drag-movable while the outer element stays the caret anchor.
+- Check for a field before using it: the registration already guarantees `node._type`, but individual fields can be absent on a partially-filled value. Fall back to `props.renderDefault(props)`, the engine's placeholder, when a field the render needs is missing.
 
 ```tsx
-import {defineBlockObject, type PortableTextObject} from '@portabletext/editor'
+import {defineBlockObject} from '@portabletext/editor'
 
 const imageBlock = defineBlockObject({
   type: 'image',
-  render: ({attributes, children, node, readOnly}) =>
-    isImage(node) ? (
-      <div {...attributes}>
-        {children}
+  render: (props) =>
+    typeof props.node.src === 'string' ? (
+      <div {...props.attributes}>
+        {props.children}
         <div
           contentEditable={false}
-          draggable={!readOnly}
+          draggable={!props.readOnly}
           style={{
             border: '1px solid #ccc',
             padding: '0.5em',
             margin: '0.5em 0',
           }}
         >
-          <img src={node.src} alt={node.alt || ''} style={{maxWidth: '100%'}} />
-          {node.caption ? (
-            <p style={{fontSize: '0.875em', color: '#666'}}>{node.caption}</p>
+          <img
+            src={props.node.src}
+            alt={typeof props.node.alt === 'string' ? props.node.alt : ''}
+            style={{maxWidth: '100%'}}
+          />
+          {typeof props.node.caption === 'string' ? (
+            <p style={{fontSize: '0.875em', color: '#666'}}>
+              {props.node.caption}
+            </p>
           ) : null}
         </div>
       </div>
     ) : (
-      <div {...attributes}>{children}</div>
+      props.renderDefault(props)
     ),
 })
 
 const codeBlock = defineBlockObject({
   type: 'code',
-  render: ({attributes, children, node, readOnly}) =>
-    isCodeBlock(node) ? (
-      <div {...attributes}>
-        {children}
+  render: (props) =>
+    typeof props.node.text === 'string' ? (
+      <div {...props.attributes}>
+        {props.children}
         <pre
           contentEditable={false}
-          draggable={!readOnly}
+          draggable={!props.readOnly}
           style={{
             background: '#f5f5f5',
             padding: '1em',
@@ -93,26 +104,13 @@ const codeBlock = defineBlockObject({
             overflow: 'auto',
           }}
         >
-          <code>{node.text}</code>
+          <code>{props.node.text}</code>
         </pre>
       </div>
     ) : (
-      <div {...attributes}>{children}</div>
+      props.renderDefault(props)
     ),
 })
-
-// Type guards for block data
-function isImage(
-  node: PortableTextObject,
-): node is PortableTextObject & {src: string; alt?: string; caption?: string} {
-  return 'src' in node
-}
-
-function isCodeBlock(
-  node: PortableTextObject,
-): node is PortableTextObject & {text: string; language?: string} {
-  return 'text' in node
-}
 ```
 
 Mount registrations through `NodePlugin`, alongside a `defineTextBlock` registration for your text blocks (a bare wrapper is enough if you don't customize them further):
@@ -278,19 +276,19 @@ const schemaDefinition = defineSchema({
 
 ### Step 2: render it
 
-`defineInlineObject` follows the same shape as `defineBlockObject`, with one difference: inline objects need no `contentEditable={false}` on the visible content, the engine's outer attributes already carry non-editability, and your content inherits it. They do need the visible content wrapped in a `draggable={!readOnly}`, `display: inline-block` element: that's what makes the object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection).
+`defineInlineObject` follows the same shape as `defineBlockObject`, with two differences. Inline objects need no `contentEditable={false}` on the visible content: the engine's outer attributes already carry non-editability, and your content inherits it. They do need the visible content wrapped in a `draggable={!readOnly}`, `display: inline-block` element, which makes the object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection).
 
 ```tsx
-import {defineInlineObject, type PortableTextObject} from '@portabletext/editor'
+import {defineInlineObject} from '@portabletext/editor'
 
 const stockTicker = defineInlineObject({
   type: 'stock-ticker',
-  render: ({attributes, children, node, readOnly}) =>
-    isStockTicker(node) ? (
-      <span {...attributes}>
-        {children}
+  render: (props) =>
+    typeof props.node.symbol === 'string' ? (
+      <span {...props.attributes}>
+        {props.children}
         <span
-          draggable={!readOnly}
+          draggable={!props.readOnly}
           style={{
             display: 'inline-block',
             border: '1px solid #e0e0e0',
@@ -300,24 +298,18 @@ const stockTicker = defineInlineObject({
             background: '#f9f9f9',
           }}
         >
-          📈 {node.symbol}
-          {node.exchange ? (
+          📈 {props.node.symbol}
+          {typeof props.node.exchange === 'string' ? (
             <span style={{color: '#999', fontSize: '0.75em'}}>
-              {node.exchange}
+              {props.node.exchange}
             </span>
           ) : null}
         </span>
       </span>
     ) : (
-      <span {...attributes}>{children}</span>
+      props.renderDefault(props)
     ),
 })
-
-function isStockTicker(
-  node: PortableTextObject,
-): node is PortableTextObject & {symbol: string; exchange?: string} {
-  return 'symbol' in node
-}
 ```
 
 Add it to the same `NodePlugin`:
