@@ -1,8 +1,31 @@
+import type {PortableTextBlock} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
+import React, {Profiler} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {cleanup, render} from 'vitest-browser-react'
+import {page, userEvent} from 'vitest/browser'
+import {
+  defineSchema,
+  EditorProvider,
+  PortableTextEditable,
+  type BlockChildRenderProps,
+  type BlockDecoratorRenderProps,
+  type BlockRenderProps,
+  type Editor,
+  type PortableTextEditableProps,
+  type RegistrableNode,
+} from '../src'
+import {safeStringify} from '../src/internal-utils/safe-json'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {
+  defineContainer,
+  defineDecorator,
+  defineSpan,
+  defineTextBlock,
+} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {getSelectionAfterText} from '../test-utils/text-selection'
 
 /**
  * Render-count regression suite for the consumer-facing render
@@ -325,4 +348,315 @@ describe('Render count regression', () => {
       errorSpy.mockRestore()
     }
   }, 60_000)
+})
+
+const SIBLING_BLOCKS = 500
+const KEYSTROKES = 20
+const RENDER_COUNT_TOLERANCE = 5
+
+function buildSiblingBlock(key: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: key,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: `${key}-span`, text: key, marks: []}],
+  }
+}
+
+function buildDocument(
+  targetBlockKey: string,
+  spanKeys: [string, string, string],
+): Array<PortableTextBlock> {
+  const before = Array.from({length: SIBLING_BLOCKS / 2}, (_, i) =>
+    buildSiblingBlock(`sibling-before-${i}`),
+  )
+  const after = Array.from({length: SIBLING_BLOCKS / 2}, (_, i) =>
+    buildSiblingBlock(`sibling-after-${i}`),
+  )
+  const targetBlock: PortableTextBlock = {
+    _type: 'block',
+    _key: targetBlockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: spanKeys[0], text: 'foo', marks: []},
+      {_type: 'span', _key: spanKeys[1], text: 'bar', marks: ['strong']},
+      {_type: 'span', _key: spanKeys[2], text: 'baz', marks: []},
+    ],
+  }
+  return [...before, targetBlock, ...after]
+}
+
+function median(values: Array<number>): number {
+  const sorted = [...values].sort((a, b) => a - b)
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
+    : (sorted[middle] ?? 0)
+}
+
+type TypingScenarioResult = {
+  editedBlockRenders: number
+  siblingBlockRenders: Array<[string, number]>
+  editedSpanRenders: number
+  decoratorRenders: Array<[string, number]>
+  withinBlockSiblingSpanKeys: [string, string]
+  withinBlockSiblingSpanRenders: Array<[string, number]>
+  siblingBlockSpanRenders: Array<[string, number]>
+  medianCommitDuration: number
+  commitCount: number
+}
+
+/**
+ * The `Profiler` wraps `PortableTextEditable` only, so recorded commit
+ * durations exclude `EditorProvider`/`NodePlugin` registration effects.
+ */
+async function runTypingScenario(options: {
+  editableProps?: PortableTextEditableProps
+  nodes?: Array<RegistrableNode>
+  blockRenders: Map<string, number>
+  spanRenders: Map<string, number>
+  decoratorRenders: Map<string, number>
+}): Promise<TypingScenarioResult> {
+  const keyGenerator = createTestKeyGenerator()
+  const targetBlockKey = keyGenerator()
+  const spanKeys: [string, string, string] = [
+    keyGenerator(),
+    keyGenerator(),
+    keyGenerator(),
+  ]
+  const initialValue = buildDocument(targetBlockKey, spanKeys)
+  const editorRef = React.createRef<Editor>()
+  const commitDurations: Array<number> = []
+
+  render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        initialValue,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      {options.nodes ? <NodePlugin nodes={options.nodes} /> : null}
+      <Profiler
+        id="render-path-perf-probe"
+        onRender={(_id, _phase, actualDuration) => {
+          commitDurations.push(actualDuration)
+        }}
+      >
+        <PortableTextEditable {...options.editableProps} />
+      </Profiler>
+    </EditorProvider>,
+  )
+
+  const locator = page.getByRole('textbox')
+  await vi.waitFor(() => expect.element(locator).toBeInTheDocument(), {
+    timeout: 10_000,
+  })
+  await vi.waitFor(() => expect(locator.getByText('bar')).toBeInTheDocument(), {
+    timeout: 10_000,
+  })
+
+  const editor = editorRef.current!
+
+  // If all three spans carried equal marks, normalize would merge them
+  // into one span and silently break the per-span instrumentation below.
+  const mountedTargetBlock = editor
+    .getSnapshot()
+    .context.value.find((block) => block._key === targetBlockKey)
+  expect(mountedTargetBlock).toEqual({
+    _type: 'block',
+    _key: targetBlockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: spanKeys[0], text: 'foo', marks: []},
+      {_type: 'span', _key: spanKeys[1], text: 'bar', marks: ['strong']},
+      {_type: 'span', _key: spanKeys[2], text: 'baz', marks: []},
+    ],
+  })
+
+  await userEvent.click(locator.getByText('bar'))
+  const selection = getSelectionAfterText(editor.getSnapshot().context, 'bar')
+  editor.send({type: 'select', at: selection})
+  await vi.waitFor(
+    () => expect(editor.getSnapshot().context.selection).toEqual(selection),
+    {timeout: 10_000},
+  )
+
+  options.blockRenders.clear()
+  options.spanRenders.clear()
+  options.decoratorRenders.clear()
+  commitDurations.length = 0
+
+  await userEvent.type(locator, 'x'.repeat(KEYSTROKES))
+
+  await vi.waitFor(
+    () =>
+      expect(
+        locator.getByText(`bar${'x'.repeat(KEYSTROKES)}`),
+      ).toBeInTheDocument(),
+    {timeout: 10_000},
+  )
+
+  const withinBlockSiblingSpanKeys: ReadonlySet<string> = new Set([
+    spanKeys[0],
+    spanKeys[2],
+  ])
+
+  return {
+    editedBlockRenders: options.blockRenders.get(targetBlockKey) ?? 0,
+    siblingBlockRenders: Array.from(options.blockRenders.entries()).filter(
+      ([key]) => key !== targetBlockKey,
+    ),
+    editedSpanRenders: options.spanRenders.get(spanKeys[1]) ?? 0,
+    decoratorRenders: Array.from(options.decoratorRenders.entries()),
+    withinBlockSiblingSpanKeys: [spanKeys[0], spanKeys[2]],
+    withinBlockSiblingSpanRenders: Array.from(
+      options.spanRenders.entries(),
+    ).filter(([key]) => withinBlockSiblingSpanKeys.has(key)),
+    siblingBlockSpanRenders: Array.from(options.spanRenders.entries()).filter(
+      ([key]) => key !== spanKeys[1] && !withinBlockSiblingSpanKeys.has(key),
+    ),
+    medianCommitDuration: median(commitDurations),
+    commitCount: commitDurations.length,
+  }
+}
+
+describe('Render path parity: legacy render props vs registered nodes', () => {
+  test('Typing produces zero cross-block render callbacks, re-renders same-block sibling spans on every keystroke, fires the decorator callback once per edited-span render, and keeps edited-block and edited-span callbacks bounded in both configs; registered issues no more edited-block callbacks than legacy', async () => {
+    const legacyBlockRenders = new Map<string, number>()
+    const legacySpanRenders = new Map<string, number>()
+    const legacyDecoratorRenders = new Map<string, number>()
+    const renderBlock = (props: BlockRenderProps) => {
+      legacyBlockRenders.set(
+        props.value._key,
+        (legacyBlockRenders.get(props.value._key) ?? 0) + 1,
+      )
+      return props.children
+    }
+    const renderChild = (props: BlockChildRenderProps) => {
+      legacySpanRenders.set(
+        props.value._key,
+        (legacySpanRenders.get(props.value._key) ?? 0) + 1,
+      )
+      return props.children
+    }
+    const renderDecorator = (props: BlockDecoratorRenderProps) => {
+      legacyDecoratorRenders.set(
+        props.value,
+        (legacyDecoratorRenders.get(props.value) ?? 0) + 1,
+      )
+      return props.children
+    }
+
+    const legacy = await runTypingScenario({
+      editableProps: {renderBlock, renderChild, renderDecorator},
+      blockRenders: legacyBlockRenders,
+      spanRenders: legacySpanRenders,
+      decoratorRenders: legacyDecoratorRenders,
+    })
+
+    await cleanup()
+
+    const registeredBlockRenders = new Map<string, number>()
+    const registeredSpanRenders = new Map<string, number>()
+    const registeredDecoratorRenders = new Map<string, number>()
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: (props) => {
+        registeredBlockRenders.set(
+          props.node._key,
+          (registeredBlockRenders.get(props.node._key) ?? 0) + 1,
+        )
+        return props.renderDefault(props)
+      },
+    })
+    const span = defineSpan({
+      type: 'span',
+      render: (props) => {
+        registeredSpanRenders.set(
+          props.node._key,
+          (registeredSpanRenders.get(props.node._key) ?? 0) + 1,
+        )
+        return props.renderDefault(props)
+      },
+    })
+
+    const decorator = defineDecorator({
+      type: 'strong',
+      render: (props) => {
+        registeredDecoratorRenders.set(
+          props.decorator,
+          (registeredDecoratorRenders.get(props.decorator) ?? 0) + 1,
+        )
+        return props.renderDefault(props)
+      },
+    })
+
+    const registered = await runTypingScenario({
+      nodes: [textBlock, span, decorator],
+      blockRenders: registeredBlockRenders,
+      spanRenders: registeredSpanRenders,
+      decoratorRenders: registeredDecoratorRenders,
+    })
+
+    expect(legacy.siblingBlockRenders).toEqual([])
+    expect(registered.siblingBlockRenders).toEqual([])
+    expect(legacy.siblingBlockSpanRenders).toEqual([])
+    expect(registered.siblingBlockSpanRenders).toEqual([])
+    expect(legacy.withinBlockSiblingSpanRenders).toEqual([
+      [legacy.withinBlockSiblingSpanKeys[0], KEYSTROKES],
+      [legacy.withinBlockSiblingSpanKeys[1], KEYSTROKES],
+    ])
+    expect(registered.withinBlockSiblingSpanRenders).toEqual([
+      [registered.withinBlockSiblingSpanKeys[0], KEYSTROKES],
+      [registered.withinBlockSiblingSpanKeys[1], KEYSTROKES],
+    ])
+    expect(legacy.decoratorRenders).toEqual([
+      ['strong', legacy.editedSpanRenders],
+    ])
+    expect(registered.decoratorRenders).toEqual([
+      ['strong', registered.editedSpanRenders],
+    ])
+    expect(legacy.editedBlockRenders).toBeLessThanOrEqual(
+      KEYSTROKES + RENDER_COUNT_TOLERANCE,
+    )
+    expect(registered.editedBlockRenders).toBeLessThanOrEqual(
+      KEYSTROKES + RENDER_COUNT_TOLERANCE,
+    )
+    expect(legacy.editedSpanRenders).toBeLessThanOrEqual(
+      KEYSTROKES + RENDER_COUNT_TOLERANCE,
+    )
+    expect(registered.editedSpanRenders).toBeLessThanOrEqual(
+      KEYSTROKES + RENDER_COUNT_TOLERANCE,
+    )
+    expect(registered.editedBlockRenders).toBeLessThanOrEqual(
+      legacy.editedBlockRenders + RENDER_COUNT_TOLERANCE,
+    )
+
+    console.warn(
+      `[legacy] edited-block renders: ${legacy.editedBlockRenders}, ` +
+        `sibling-block renders: ${legacy.siblingBlockRenders.length}, ` +
+        `edited-span renders: ${legacy.editedSpanRenders}, ` +
+        `decorator renders: ${safeStringify(legacy.decoratorRenders)}, ` +
+        `within-block sibling-span renders: ${safeStringify(legacy.withinBlockSiblingSpanRenders)}, ` +
+        `sibling-block span renders: ${legacy.siblingBlockSpanRenders.length}, ` +
+        `median commit: ${legacy.medianCommitDuration.toFixed(3)}ms across ${legacy.commitCount} commits ` +
+        `(per-block work differs from registered: legacy's default block/child render runs ` +
+        `useElementDropPosition/useListIndexSelector/useBlockSubSchema and extra wrapper divs)`,
+    )
+    console.warn(
+      `[registered] edited-block renders: ${registered.editedBlockRenders}, ` +
+        `sibling-block renders: ${registered.siblingBlockRenders.length}, ` +
+        `edited-span renders: ${registered.editedSpanRenders}, ` +
+        `decorator renders: ${safeStringify(registered.decoratorRenders)}, ` +
+        `within-block sibling-span renders: ${safeStringify(registered.withinBlockSiblingSpanRenders)}, ` +
+        `sibling-block span renders: ${registered.siblingBlockSpanRenders.length}, ` +
+        `median commit: ${registered.medianCommitDuration.toFixed(3)}ms across ${registered.commitCount} commits ` +
+        `(per-block work differs from legacy: registered's default block render is a single div)`,
+    )
+  }, 120_000)
 })
