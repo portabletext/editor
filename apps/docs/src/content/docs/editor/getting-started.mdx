@@ -26,7 +26,7 @@ This guide covers `@portabletext/editor`, `@portabletext/toolbar`, and `@portabl
 
 You'll need to:
 
-- Create a schema that defines the rich text and block content elements.
+- Create a schema that defines your content elements.
 - Create a toolbar to toggle and insert these elements.
 - Set up rendering for your text blocks and inline formatting, like bold and italic.
 - Render the editor.
@@ -38,8 +38,9 @@ Before starting, it helps to understand the components that make up the editor.
 - **Schema:** Describes the type of content the editor accepts. Think of this as the foundation for configuring the editor.
 - **`EditorProvider`:** Supplies the schema and initial state to the editor.
 - **`EventListenerPlugin`:** Listens to events emitted by the editor. Commonly used to update application state.
+- **Node registrations:** Own how each content element renders, mounted through `NodePlugin`. [Rendering](/editor/concepts/rendering/) covers the model.
 - **Toolbars:** UI elements that interact with the editor.
-- **`PortableTextEditable`:** The core editor component. Handles text rendering and manages behavior.
+- **`PortableTextEditable`:** The core editor component. Hosts the editable surface and manages behavior.
 
 ## Add the library to your project
 
@@ -52,15 +53,13 @@ Next, import the components and types you'll need:
 ```tsx
 // App.tsx
 import {
+  defineDecorator,
   defineSchema,
   defineTextBlock,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
-import type {
-  PortableTextBlock,
-  RenderDecoratorFunction,
-} from '@portabletext/editor'
+import type {PortableTextBlock} from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 ```
 
@@ -70,7 +69,7 @@ You won't need all of these right away, but you can add them now.
 
 Before you can render the editor, you need a schema. The editor schema configures the types of content rendered by the editor.
 
-Start with a schema that includes some common rich text elements.
+Start with a schema that includes some common formatting elements.
 
 :::note
 This guide includes a limited set of schema types to get you started. See the [rendering guide](/editor/guides/custom-rendering/) for mark examples, and the [custom blocks guide](/editor/guides/custom-blocks/) for block and inline objects.
@@ -123,15 +122,13 @@ Add `react` and `useState`, then scaffold out a basic application component:
 ```tsx
 // app.tsx
 import {
+  defineDecorator,
   defineSchema,
   defineTextBlock,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
-import type {
-  PortableTextBlock,
-  RenderDecoratorFunction,
-} from '@portabletext/editor'
+import type {PortableTextBlock} from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {useState} from 'react'
 
@@ -176,9 +173,9 @@ Include the `App` component in your application and run it. You should see an ou
 
 ## Set up rendering for schema elements
 
-At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a render for text blocks and creating render functions for the marks.
+At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a `defineTextBlock` node for the text blocks and `defineDecorator` nodes for the marks. The [Rendering](/editor/concepts/rendering/) page covers the model these registrations share.
 
-If you're maintaining an editor that still renders through the deprecated `renderStyle`, `renderBlock`, and `renderListItem` props, see the [migration guide](/editor/guides/migrate-render-props/) to move to node registrations instead of following this section from scratch.
+If you're maintaining an editor that still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, `renderDecorator`, and `renderAnnotation` props, see the [migration guide](/editor/guides/migrate-render-props/) to move to node registrations instead of following this section from scratch.
 
 Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
@@ -201,48 +198,45 @@ const textBlock = defineTextBlock({
     return <div {...props.attributes}>{props.children}</div>
   },
 })
-
-const nodes = [textBlock]
 ```
 
-Marks (decorators and annotations) use render functions instead. Render functions all follow the same format:
+Marks (decorators and annotations) join the same `nodes` array. Registrations all follow the same shape:
 
 - They take in props and return JSX elements.
-- They use the schema to make decisions.
-- They return JSX and pass `children` as a fallback.
+- They decide what to render from the registration's `type` and the node itself.
+- They return JSX that renders `children` somewhere inside it, the editable content the registration wraps.
 
 With this in mind, continue for the remaining schema types.
 
-Create a render function for decorators:
+Register a decorator with `defineDecorator`, one per decorator name:
 
 ```tsx
-const renderDecorator: RenderDecoratorFunction = (props) => {
-  if (props.value === 'strong') {
-    return <strong>{props.children}</strong>
-  }
-  if (props.value === 'em') {
-    return <em>{props.children}</em>
-  }
-  if (props.value === 'underline') {
-    return <u>{props.children}</u>
-  }
-  return <>{props.children}</>
-}
+const strong = defineDecorator({
+  type: 'strong',
+  render: ({children}) => <strong>{children}</strong>,
+})
+const em = defineDecorator({
+  type: 'em',
+  render: ({children}) => <em>{children}</em>,
+})
+const underline = defineDecorator({
+  type: 'underline',
+  render: ({children}) => <u>{children}</u>,
+})
+
+const nodes = [textBlock, strong, em, underline]
 ```
 
 :::note
-By default, text is rendered as an inline `span` element in the editor. While mark render functions return a fragment (`<>`) as the fallback, the registered text block render must return a block-level element, like a `<div>`.
+By default, text is rendered as an inline `span` element in the editor. A decorator's render can pass `children` through unwrapped, but the registered text block render must return a block-level element, like a `<div>`.
 :::
 
-Mount the registration with `NodePlugin` and pass the render functions to `PortableTextEditable`. Both belong inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke.
+Mount every registration through one `NodePlugin`, inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke.
 
 ```tsx
 <>
   <NodePlugin nodes={nodes} />
-  <PortableTextEditable
-    style={{border: '1px solid black', padding: '0.5em'}}
-    renderDecorator={renderDecorator}
-  />
+  <PortableTextEditable style={{border: '1px solid black', padding: '0.5em'}} />
 </>
 ```
 
@@ -378,7 +372,7 @@ In the next step, you'll add the toolbar to the editor.
 
 ## Bring it all together
 
-With render functions created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
+With the registrations created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
 
 ```tsx
 // App.tsx
@@ -407,7 +401,6 @@ function App() {
         <Toolbar />
         <PortableTextEditable
           style={{border: '1px solid black', padding: '0.5em'}}
-          renderDecorator={renderDecorator}
         />
       </EditorProvider>
     </>
@@ -456,8 +449,8 @@ Learn more about [behaviors](/editor/concepts/behavior/) and how to [create your
     href="/editor/guides/custom-rendering/"
   />
   <LinkCard
-    title="Nest rich text with containers"
-    description="Callouts, code blocks, and tables that carry editable Portable Text."
+    title="Nest block content with containers"
+    description="Callouts, code blocks, and tables that carry editable block content."
     href="/editor/concepts/containers/"
   />
   <LinkCard

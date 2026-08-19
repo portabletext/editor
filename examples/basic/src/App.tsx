@@ -1,6 +1,8 @@
 import './editor.css'
 import {
+  defineAnnotation,
   defineBlockObject,
+  defineDecorator,
   defineInlineObject,
   defineSchema,
   defineTextBlock,
@@ -8,8 +10,6 @@ import {
   keyGenerator,
   PortableTextBlock,
   PortableTextEditable,
-  RenderAnnotationFunction,
-  RenderDecoratorFunction,
   TextBlockRenderProps,
   useEditor,
   useEditorSelector,
@@ -84,7 +84,7 @@ function App() {
             }
           }}
         />
-        {/* Register how text blocks (styles and lists), inline objects, and block objects are rendered */}
+        {/* Register how text blocks (styles and lists), decorators, annotations, inline objects, and block objects are rendered */}
         <NodePlugin nodes={nodes} />
         {/* Toolbar needs to be rendered inside the `EditorProvider` component */}
         <Toolbar />
@@ -93,10 +93,6 @@ function App() {
           {/* Component that controls the actual rendering of the editor */}
           <PortableTextEditable
             style={{border: '1px solid black', padding: '0.5em'}}
-            // Control how decorators are rendered
-            renderDecorator={renderDecorator}
-            // Control how annotations are rendered
-            renderAnnotation={renderAnnotation}
           />
         </ListIndexProvider>
       </EditorProvider>
@@ -107,26 +103,29 @@ function App() {
   )
 }
 
-const renderDecorator: RenderDecoratorFunction = (props) => {
-  if (props.value === 'strong') {
-    return <strong>{props.children}</strong>
-  }
-  if (props.value === 'em') {
-    return <em>{props.children}</em>
-  }
-  if (props.value === 'underline') {
-    return <u>{props.children}</u>
-  }
-  return <>{props.children}</>
-}
+// Decorators render through a registered node: one entry per decorator
+// name, or `type: '*'` for a single switching function.
+const strongDecorator = defineDecorator({
+  type: 'strong',
+  render: ({children}) => <strong>{children}</strong>,
+})
+const emDecorator = defineDecorator({
+  type: 'em',
+  render: ({children}) => <em>{children}</em>,
+})
+const underlineDecorator = defineDecorator({
+  type: 'underline',
+  render: ({children}) => <u>{children}</u>,
+})
 
-const renderAnnotation: RenderAnnotationFunction = (props) => {
-  if (props.schemaType.name === 'link') {
-    return <span style={{textDecoration: 'underline'}}>{props.children}</span>
-  }
-
-  return <>{props.children}</>
-}
+// Annotations render through a registered node as well. `annotation` is
+// the markDef object: `{_key, _type, ...fields}`.
+const linkAnnotation = defineAnnotation({
+  type: 'link',
+  render: ({children}) => (
+    <span style={{textDecoration: 'underline'}}>{children}</span>
+  ),
+})
 
 // Text blocks render through a registered node: the `render` callback owns
 // the block's wrapper element and receives the block itself, so styles and
@@ -223,7 +222,15 @@ const imageBlock = defineBlockObject({
 
 // A stable module-level reference: a fresh array on every render would
 // make `NodePlugin` unregister and re-register on every keystroke.
-const nodes = [textBlock, stockTicker, imageBlock]
+const nodes = [
+  textBlock,
+  strongDecorator,
+  emDecorator,
+  underlineDecorator,
+  linkAnnotation,
+  stockTicker,
+  imageBlock,
+]
 
 function Toolbar() {
   // Obtain the editor instance
