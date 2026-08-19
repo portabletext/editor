@@ -1,5 +1,76 @@
 # Changelog
 
+## 7.12.0
+
+### Minor Changes
+
+- [#3099](https://github.com/portabletext/editor/pull/3099) [`e6a55a9`](https://github.com/portabletext/editor/commit/e6a55a9918e7ca78c5d3e9a2ef95854ec2df2e66) Thanks [@christianhg](https://github.com/christianhg)! - feat: accept `Decorator` and `Annotation` entries in `defineTextBlock`'s `of`
+
+  `defineTextBlock`'s `of` array, previously `Span | InlineObject` only,
+  now also takes `Decorator` and `Annotation` entries, giving decorators
+  and annotations the same positional scoping spans and inline objects
+  already had:
+
+  ```ts
+  defineDecorator({
+    type: 'strong',
+    render: ({children}) => <strong>{children}</strong>,
+  })
+
+  defineTextBlock({
+    type: 'block',
+    of: [
+      defineDecorator({
+        type: 'strong',
+        render: ({children}) => <mark>{children}</mark>,
+      }),
+    ],
+  })
+  ```
+
+  With both registered, `strong` renders as `<mark>` inside these text
+  blocks and as `<strong>` everywhere else. Remove the positional
+  entry's `render` and `strong` renders as `<strong>` everywhere: an
+  entry without a `render` defers to the global registration instead of
+  silencing it. `'*'` entries work at both levels and lose to an exact
+  `type` match at the same level. The legacy `renderDecorator`/
+  `renderAnnotation` render props fire only for types with no
+  registration at all.
+
+- [#3097](https://github.com/portabletext/editor/pull/3097) [`51e4bfe`](https://github.com/portabletext/editor/commit/51e4bfe39f7e25fd1d36305a95b5816ae02e7126) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `defineDecorator`/`defineAnnotation` node registrations
+
+  Decorators and annotations join the node registration API:
+  `defineDecorator` and `defineAnnotation`, mounted through `NodePlugin`,
+  alongside `Decorator`/`DecoratorRender`/`DecoratorRenderProps` and
+  `Annotation`/`AnnotationRender`/`AnnotationRenderProps`. `type` is the
+  decorator name (`defineDecorator`) or the annotation markDef
+  `_type` (`defineAnnotation`) declared in the schema, or `'*'` to match
+  every decorator or annotation:
+
+  ```ts
+  defineDecorator({
+    type: 'strong',
+    render: ({children}) => <strong>{children}</strong>,
+  })
+
+  defineAnnotation({
+    type: 'link',
+    render: ({annotation, children}) => (
+      <a href={(annotation as {href?: string}).href}>{children}</a>
+    ),
+  })
+  ```
+
+  A registration for a decorator or annotation type wins over the legacy
+  `renderDecorator`/`renderAnnotation` render props on
+  `<PortableTextEditable>`; those props still fire for any decorator or
+  annotation type without a matching registration. `renderDecorator` and
+  `renderAnnotation` (and their `RenderDecoratorFunction`/
+  `RenderAnnotationFunction`/`BlockDecoratorRenderProps`/
+  `BlockAnnotationRenderProps` types) are now deprecated in favor of the
+  node registration API. The migration guide walks through each prop:
+  https://www.portabletext.org/editor/guides/migrate-render-props/
+
 ## 7.11.0
 
 ### Minor Changes

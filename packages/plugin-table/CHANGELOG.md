@@ -1,5 +1,12 @@
 # @portabletext/plugin-table
 
+## 1.3.18
+
+### Patch Changes
+
+- Updated dependencies [[`e6a55a9`](https://github.com/portabletext/editor/commit/e6a55a9918e7ca78c5d3e9a2ef95854ec2df2e66), [`51e4bfe`](https://github.com/portabletext/editor/commit/51e4bfe39f7e25fd1d36305a95b5816ae02e7126)]:
+  - @portabletext/editor@7.12.0
+
 ## 1.3.17
 
 ### Patch Changes
