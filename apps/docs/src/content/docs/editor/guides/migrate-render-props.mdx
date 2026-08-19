@@ -125,7 +125,7 @@ const stockTicker = defineInlineObject({
 })
 ```
 
-Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. They DO need the inner `draggable={!readOnly}` wrapper around the visible content: the legacy pipeline wrapped your `renderChild` output in a `draggable` inline-block span, which is what makes an inline object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection). A registration that renders the content bare loses both behaviors, and nothing fails loudly. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine and the span-level render props, and only registered inline object types hit your render.
+Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. They DO need the inner `draggable={!readOnly}` wrapper around the visible content: the legacy pipeline wrapped your `renderChild` output in a `draggable` inline-block span, which is what makes an inline object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection). A registration that renders the content bare loses both behaviors, and nothing fails loudly. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine, with decorator and annotation renders, registered or legacy, still composing inside them exactly as before, and only registered inline object types hit your render.
 
 ## Step 3: spans, if you customized them
 
@@ -313,13 +313,17 @@ const annotationFallback = defineAnnotation({
 
 `annotation` is the full `markDef` object (`{_key, _type, ...fields}`) with an `unknown` index signature, so a field the legacy callback read off a separately-typed `value` (a `link` annotation's `href`, say) needs a cast: `String(annotation.href)`. It is named `annotation`, not `node`, because `path` addresses the span carrying the annotation, not the markDef.
 
+:::note[Legacy fields with no registration equivalent]
+`renderDecorator` and `renderAnnotation` both carried `editorElementRef`, a ref to the engine-owned leaf DOM anchor. No registration exposes it; consumers relying on it keep the render prop. Both also carried `schemaType` (`renderAnnotation` carried `block` too), which a registration's `render` doesn't receive, but you can derive them yourself from a `path`: `getPathSubSchema` and `getEnclosingBlock`, both from `@portabletext/editor/traversal`, read the sub-schema and enclosing text block inside a selector.
+:::
+
 :::caution[Registration renders are plain function calls, not components]
 This holds for every `define*` render, and it matters most here: the legacy `renderDecorator`/`renderAnnotation` callbacks each ran inside their own wrapper component, so hooks in them happened to work. A registration's `render` runs as a plain call inside the engine's render, where hooks violate the Rules of Hooks and crash as decorators toggle. If a migrated callback uses hooks, move them into a component and return it: `render: (props) => <MyDecorator {...props} />`.
 :::
 
 ## Step 7: reclaim the engine's chrome
 
-Under the legacy pipeline the engine wrapped list items and numbered ordered lists for you, and drew a drop indicator during block drags. Under registrations both are yours. [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, and [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's `drag.*` events. Both follow the same pattern, a provider inside `EditorProvider` and a hook read from a component your render returns; the [containers page](/editor/concepts/containers/#registrations-opt-into-the-new-render-pipeline) has the worked example and each plugin's README carries the full recipe.
+Under the legacy pipeline the engine wrapped list items and numbered ordered lists for you, and drew a drop indicator during block drags. Under registrations both are yours. [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, and [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's `drag.*` events. Both follow the same pattern, a provider inside `EditorProvider` and a hook read from a component your render returns; the [Rendering page](/editor/concepts/rendering/#plugins-for-lists-and-drag-and-drop) covers the pattern, and each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
 
 ## Step 8: mount and clean up
 

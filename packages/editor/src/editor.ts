@@ -61,8 +61,9 @@ export type Editor = {
   /**
    * Register a node renderer. The `node` argument is the result of one
    * of the `defineX` factories (`defineContainer`, `defineTextBlock`,
-   * `defineSpan`, `defineBlockObject`, `defineInlineObject`). Returns
-   * a function that unregisters the node when called.
+   * `defineSpan`, `defineBlockObject`, `defineInlineObject`,
+   * `defineDecorator`, `defineAnnotation`). Returns a function that
+   * unregisters the node when called.
    *
    * @public
    */
