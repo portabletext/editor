@@ -88,11 +88,51 @@ Keep `nodes` at module scope, as above: a fresh array identity on every render m
 
 ## Subtree ownership
 
-A block-level registration (a text block, block object, or container) owns everything rendered inside it, its rendering subtree. Unregistered node types inside it fall back to the engine defaults: a registered text block holding an unregistered inline object still renders that inline object through the engine's default wrapper, not through markup you control. Register a node type when you need to own its markup, wherever it appears.
+A block-level registration (a text block, block object, or container) owns everything rendered inside it, its rendering subtree. Unregistered node types inside it fall back to the engine defaults: a registered text block holding an unregistered inline object still renders that inline object through the engine's default wrapper, not through markup you control. Register a node type when you need to own its markup, wherever it appears:
+
+```tsx
+const nodes = [
+  defineTextBlock({
+    type: 'block',
+    render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+  }),
+  defineInlineObject({
+    type: 'stock-ticker',
+    render: (props) =>
+      typeof props.node.symbol === 'string' ? (
+        <span {...props.attributes}>
+          {props.children}
+          <span draggable={!props.readOnly} style={{display: 'inline-block'}}>
+            {props.node.symbol}
+          </span>
+        </span>
+      ) : (
+        props.renderDefault(props)
+      ),
+  }),
+]
+```
 
 ## Dispatch precedence
 
-At a given position, a positional registration (one scoped through a container or text block's own `of`, see [Containers](/editor/concepts/containers/)) beats a global registration, which beats the deprecated `renderDecorator`/`renderAnnotation` render props on `<PortableTextEditable>`. Within a level, an exact `type` match beats a `'*'` catch-all.
+At a given position, a positional registration (one scoped through a container or text block's own `of`, see [Containers](/editor/concepts/containers/)) beats a global registration, which beats the deprecated `renderDecorator`/`renderAnnotation` render props on `<PortableTextEditable>`. Within a level, an exact `type` match beats a `'*'` catch-all:
+
+```tsx
+const nodes = [
+  // `strong` hits the exact match...
+  defineDecorator({
+    type: 'strong',
+    render: ({children}) => <strong>{children}</strong>,
+  }),
+  // ...every other decorator hits the catch-all.
+  defineDecorator({
+    type: '*',
+    render: ({decorator, children}) => (
+      <span data-decorator={decorator}>{children}</span>
+    ),
+  }),
+]
+```
 
 [Narrow rendering with `of`](/editor/concepts/containers/#narrow-rendering-with-of) covers how far a positional entry's scope reaches and what it falls back to when it omits `render`.
 
@@ -104,6 +144,27 @@ Every render receives `renderDefault`, a function that renders the engine's mini
 render: (props) => props.renderDefault(props)
 ```
 
+Its most common use is the fallback branch of a field-presence check: a document can carry a partially filled value, and the engine default beats rendering nothing:
+
+```tsx
+defineBlockObject({
+  type: 'image',
+  render: (props) =>
+    typeof props.node.src === 'string' ? (
+      <figure {...props.attributes}>
+        <div contentEditable={false} draggable={!props.readOnly}>
+          <img src={props.node.src} alt="" />
+        </div>
+        {props.children}
+      </figure>
+    ) : (
+      props.renderDefault(props)
+    ),
+})
+```
+
+The `contentEditable={false}`/`draggable` wrapper is the block-object render contract; the [custom blocks guide](/editor/guides/custom-blocks/) covers it in full.
+
 `renderDefault` is the engine default at any position: it never chains back to a global registration's render, even from inside a positional one. PTE has one user layer plus positional overrides, and the engine default is the canonical fallback everywhere. For block-level, span, and inline-object registrations the default is a minimal wrapper; for decorators the default is identity, the engine applies no decorator markup of its own. For annotations the default is identity too, but every known annotation renders inside an engine-owned anchor span the engine adds regardless of which render fires.
 
 ## Plugins for lists and drag-and-drop
@@ -113,7 +174,34 @@ Two rendering concerns ship as plugins instead of registration props:
 - List numbering: your text-block render reads `node.listItem` and `node.level` for list markup, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
 - Drop indicators: pointer-driven UI rendered by you. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
 
-Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from a component your `render` returns, not inline in the `render` callback, since hooks can't run there. Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
+Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from a component your `render` returns, not inline in the `render` callback, since hooks can't run there:
+
+```tsx
+import type {TextBlockRenderProps} from '@portabletext/editor'
+import {useListIndex} from '@portabletext/plugin-list-index'
+
+const nodes = [
+  defineTextBlock({
+    type: 'block',
+    render: (props) => <TextBlock {...props} />,
+  }),
+]
+
+function TextBlock(props: TextBlockRenderProps) {
+  const listIndex = useListIndex(props.path)
+
+  return (
+    <p {...props.attributes}>
+      {listIndex !== undefined ? (
+        <span contentEditable={false}>{listIndex}. </span>
+      ) : null}
+      {props.children}
+    </p>
+  )
+}
+```
+
+`useListIndex` reads from `ListIndexProvider`, mounted inside `EditorProvider`. Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
 
 :::note[Migrating from the render props?]
 If your editor still renders through the deprecated render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
