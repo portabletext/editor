@@ -49,13 +49,13 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ steps.playwright-version.outputs.version }}-playwright-browsers
+          key: ${{ steps.playwright-version.outputs.version }}-${{ matrix.browser }}-playwright-browsers
 
       - name: Install Playwright Browsers
         # TODO: Fix webkit caching when downloading from cache
         # for some reason it doesn't work without installing again
         if: steps.cache-playwright-browsers.outputs.cache-hit != 'true' || matrix.browser == 'webkit'
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Test
         id: test
