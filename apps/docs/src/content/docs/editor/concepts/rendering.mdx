@@ -63,11 +63,12 @@ const nodes = [
   }),
   defineAnnotation({
     type: 'link',
-    render: ({annotation, children}) => (
-      <a href={String((annotation as {href?: string}).href ?? '')}>
-        {children}
-      </a>
-    ),
+    render: ({annotation, children}) =>
+      typeof annotation.href === 'string' ? (
+        <a href={annotation.href}>{children}</a>
+      ) : (
+        children
+      ),
   }),
 ]
 
@@ -81,7 +82,7 @@ function App() {
 }
 ```
 
-`annotation` is the markDef object from the block's `markDefs`: `{_key, _type, ...fields}`, cast here from its `unknown` index signature to read `href`. Each render callback is a plain function call, not a component: when a render needs hooks, return a component instead, `render: (props) => <MyAnnotation {...props} />`.
+`annotation` is the markDef object from the block's `markDefs`: `{_key, _type, ...fields}`. Its fields type as `unknown` because they depend on the schema, so narrow with `typeof` before use; the fallback renders `children` untouched, matching the engine default. Each render callback is a plain function call, not a component: when a render needs hooks, return a component instead, `render: (props) => <MyAnnotation {...props} />`.
 
 Keep `nodes` at module scope, as above: a fresh array identity on every render makes `NodePlugin` unregister and re-register every keystroke.
 

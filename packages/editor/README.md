@@ -41,15 +41,13 @@ Next, in your app or the component you're building, import `EditorProvider`, `Po
 ```tsx
 // App.tsx
 import {
+  defineDecorator,
   defineSchema,
   defineTextBlock,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
-import type {
-  PortableTextBlock,
-  RenderDecoratorFunction,
-} from '@portabletext/editor'
+import type {PortableTextBlock} from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 ```
 
@@ -103,15 +101,13 @@ Add `useState` from React, then scaffold out a basic application component. For 
 ```tsx
 // app.tsx
 import {
+  defineDecorator,
   defineSchema,
   defineTextBlock,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
-import type {
-  PortableTextBlock,
-  RenderDecoratorFunction,
-} from '@portabletext/editor'
+import type {PortableTextBlock} from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {useState} from 'react'
 
@@ -156,7 +152,7 @@ Include the `App` component in your application and run it. You should see an ou
 
 ### Set up rendering for schema elements
 
-At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a render for text blocks and creating render functions for the marks. If your editor still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, and `renderChild` props, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/) to move to node registrations instead.
+At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a `defineTextBlock` node for the text blocks and `defineDecorator`/`defineAnnotation` nodes for the marks. If your editor still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, `renderChild`, `renderDecorator`, and `renderAnnotation` props, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/) to move to node registrations instead.
 
 Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
@@ -179,47 +175,44 @@ const textBlock = defineTextBlock({
     return <div {...props.attributes}>{props.children}</div>
   },
 })
-
-const nodes = [textBlock]
 ```
 
-Marks (decorators and annotations) use render functions instead. Render functions all follow the same format.
+Marks (decorators and annotations) join the same `nodes` array. Registrations all follow the same shape.
 
 - They take in props and return JSX elements.
-- They use the schema to make decisions.
-- They return JSX and pass `children` as a fallback.
+- They decide what to render from the registration's `type` and the node itself, not a separate schema-type argument.
+- They return JSX that renders `children` somewhere inside it, the editable content the registration wraps.
 
 With this in mind, continue for the remaining schema types.
 
-Create a render function for decorators.
+Register a decorator with `defineDecorator`, one per decorator name.
 
 ```tsx
-const renderDecorator: RenderDecoratorFunction = (props) => {
-  if (props.value === 'strong') {
-    return <strong>{props.children}</strong>
-  }
-  if (props.value === 'em') {
-    return <em>{props.children}</em>
-  }
-  if (props.value === 'underline') {
-    return <u>{props.children}</u>
-  }
-  return <>{props.children}</>
-}
+const strong = defineDecorator({
+  type: 'strong',
+  render: ({children}) => <strong>{children}</strong>,
+})
+const em = defineDecorator({
+  type: 'em',
+  render: ({children}) => <em>{children}</em>,
+})
+const underline = defineDecorator({
+  type: 'underline',
+  render: ({children}) => <u>{children}</u>,
+})
+
+const nodes = [textBlock, strong, em, underline]
 ```
 
 > [!NOTE]
-> By default, text is rendered as an inline `span` element in the editor. While mark render functions return a fragment (`<>`) as the fallback, the registered text block render must return a block-level element, like a `<div>`.
+> By default, text is rendered as an inline `span` element in the editor. A decorator's render can pass `children` through unwrapped, but the registered text block render must return a block-level element, like a `<div>`.
 
-Mount the registration with `NodePlugin` and pass the render functions to `PortableTextEditable`. Both belong inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke. You can learn more about [customizing the rendering](https://www.portabletext.org/editor/guides/custom-rendering/) in the documentation.
+Mount every registration through one `NodePlugin`, inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke. You can learn more about [customizing the rendering](https://www.portabletext.org/editor/guides/custom-rendering/) in the documentation.
 
 ```tsx
 <>
   <NodePlugin nodes={nodes} />
-  <PortableTextEditable
-    style={{border: '1px solid black', padding: '0.5em'}}
-    renderDecorator={renderDecorator}
-  />
+  <PortableTextEditable style={{border: '1px solid black', padding: '0.5em'}} />
 </>
 ```
 
@@ -296,7 +289,7 @@ The `useEditor` hook gives you access to the active editor. `send` lets you send
 
 ### Bring it all together
 
-With render functions created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
+With the registrations created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
 
 ```tsx
 // App.tsx
@@ -325,7 +318,6 @@ function App() {
         <NodePlugin nodes={nodes} />
         <PortableTextEditable
           style={{border: '1px solid black', padding: '0.5em'}}
-          renderDecorator={renderDecorator}
         />
       </EditorProvider>
     </>

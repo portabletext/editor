@@ -1,5 +1,7 @@
 import './editor.css'
 import {
+  defineAnnotation,
+  defineDecorator,
   EditorProvider,
   PortableTextEditable,
   type BlockRenderProps,
@@ -7,7 +9,7 @@ import {
   type PortableTextBlock,
   type SchemaDefinition,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {TypographyPlugin} from '@portabletext/plugin-typography'
 import {PortableText} from '@portabletext/react'
@@ -22,6 +24,43 @@ import {
 import {defaultSchema} from './defaultSchema'
 import {initialValue as defaultInitialValue} from './initial-value'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
+
+// Module scope: a new array identity re-registers the nodes on every render.
+const nodes = [
+  defineDecorator({
+    type: 'strong',
+    render: ({children}) => <strong>{children}</strong>,
+  }),
+  defineDecorator({
+    type: 'em',
+    render: ({children}) => <em>{children}</em>,
+  }),
+  defineDecorator({
+    type: 'underline',
+    render: ({children}) => <span className="underline">{children}</span>,
+  }),
+  defineAnnotation({
+    type: 'link',
+    render: ({annotation, children}) => {
+      const href =
+        typeof annotation.href === 'string' ? annotation.href : undefined
+      return (
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-blue-700 dark:text-blue-400 underline">
+                {children}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span className="text-xs">{href || 'No URL'}</span>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
+    },
+  }),
+]
 
 type PortableTextEditorProps = {
   customSchema?: SchemaDefinition
@@ -81,6 +120,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
           }}
         />
         <TypographyPlugin />
+        <NodePlugin nodes={nodes} />
         <div className="w-full mb-4">
           <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
             <div className="bg-gray-50 dark:bg-gray-800 px-2 py-1 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
@@ -175,38 +215,6 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
                   )
                 }
                 return <p className="mb-1 relative">{props.children}</p>
-              }}
-              renderDecorator={(props) => {
-                if (props.value === 'strong') {
-                  return <strong>{props.children}</strong>
-                }
-                if (props.value === 'em') {
-                  return <em>{props.children}</em>
-                }
-                if (props.value === 'underline') {
-                  return <span className="underline">{props.children}</span>
-                }
-                return props.children
-              }}
-              renderAnnotation={(props) => {
-                if (props.schemaType.name === 'link') {
-                  const href = (props.value as {href?: string}).href
-                  return (
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="text-blue-700 dark:text-blue-400 underline">
-                            {props.children}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <span className="text-xs">{href || 'No URL'}</span>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )
-                }
-                return props.children
               }}
               renderPlaceholder={() => (
                 <span className="text-gray-400 dark:text-gray-500">
