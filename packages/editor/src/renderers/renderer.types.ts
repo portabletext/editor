@@ -31,7 +31,7 @@ export type ContainerRenderProps = {
    * inside a custom render to fall back to or wrap the default:
    *
    * ```ts
-   * render: ({renderDefault, ...rest}) => renderDefault(rest)
+   * render: (props) => props.renderDefault(props)
    * ```
    *
    * The default is the engine's minimal wrapper. It does not chain
