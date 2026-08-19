@@ -1,6 +1,6 @@
 ---
 name: reviewing-prs
-description: Review a PR in this repo against the house conventions before it is marked ready. Use when asked to review, pre-flight, or check a PR ("review this PR", "pre-flight", "is this PR ready"), and as a self-check before handing off any PR. Routes each artifact in the diff to its canonical skill (commits, changesets, writing-tests, code-comments) and verifies the PR's claims empirically instead of stylistically.
+description: Review a PR in this repo against the house conventions before it is marked ready. Use when asked to review, pre-flight, or check a PR ("review this PR", "pre-flight", "is this PR ready"), and as a self-check before handing off any PR. Routes each artifact in the diff to its canonical skill (commits, changesets, writing-tests, code-comments, pr-descriptions) and verifies the PR's claims empirically instead of stylistically.
 ---
 
 # Reviewing PTE PRs
@@ -33,10 +33,8 @@ Read the skill, then audit the artifact against it:
 - **Comments in the diff** → `code-comments`: default is no comment;
   why-only; nothing diff-relative; if the commit body already tells it,
   the comment is a duplicate and goes.
-- **PR body**: draft state, narrative shape, no internal context (no
-  ticket IDs, customers, support threads), semantic deltas volunteered,
-  one-screen budget. (Canonical conventions live outside the repo; when
-  they are not available, audit against this list.)
+- **PR body** → `pr-descriptions`: draft state, narrative shape, no
+  internal context, semantic deltas volunteered, body sized to the diff.
 
 ## Verify claims empirically
 

@@ -14,7 +14,7 @@ description: How to write commit messages in the Portable Text Editor monorepo. 
   - ✅ `fix: only rewrite the DOM selection when it disagrees with the model`
   - ❌ `fix: getNode path bug`, ❌ `fix: improve selection handling`
 - Backticks around code identifiers in subject and body.
-- **Never reference Linear ticket IDs** in subjects, bodies, or branch names. Branches are named after the change (`fix-inline-object-drag-selection`), not the ticket.
+- **Never reference issue-tracker ticket IDs** (Linear, Jira, anything) in subjects, bodies, or branch names. Branches are named after the change (`fix-inline-object-drag-selection`), not the ticket.
 
 ## Type selection
 
@@ -113,7 +113,7 @@ Why it's good: explains why the naive comparison was wrong (equivalent represent
 
 ## Anti-patterns
 
-- Subject naming the symptom or the ticket ("fix drag bug", "EDEX-1301").
+- Subject naming the symptom or the ticket ("fix drag bug", "TICKET-123").
 - Bodies that restate the diff ("changed X to Y") without the failure sequence.
 - Mixing a refactor into a fix commit, or tests into either.
 - `refactor:`/`chore:` on a commit that carries a changeset.

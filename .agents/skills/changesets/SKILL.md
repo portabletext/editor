@@ -104,7 +104,7 @@ Why it's good: states the wrong observable outputs (`undefined` where a sibling 
 
 - First line paraphrasing instead of mirroring the commit subject.
 - Diagnosis prose ("the bug was in `updateBlock`'s reconcile...") — consumers don't care where it was, only what changed for them.
-- Referencing tests, PR numbers, or Linear tickets.
+- Referencing tests, PR numbers, or issue-tracker tickets.
 - A changeset for an internal refactor "just in case" — no observable change, no changeset.
 - Bumping minor for a fix because it "feels big"; size ≠ semver.
 

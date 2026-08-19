@@ -19,7 +19,7 @@ What remains after those four channels is the legitimate comment: the fact a com
 ## The rules
 
 - Delete comments that restate the code. `// increment the counter` above `counter++` is noise. So is any comment a rename would make redundant.
-- **Never reference ticket IDs (Linear, Jira, anything) in code comments.** The codebase stands on its own; a ticket system is invisible to external contributors, dies on migrations, and the commit that introduced the line already links the context. Name the CONDITION instead of the ticket: "once `merge` is a first-class operation, this becomes a correction", not "EDEX-1919 promotes `merge`...". Same rule as commits, branches, and PRs.
+- **Never reference ticket IDs (Linear, Jira, anything) in code comments.** The codebase stands on its own; a ticket system is invisible to external contributors, dies on migrations, and the commit that introduced the line already links the context. Name the CONDITION instead of the ticket: "once `merge` is a first-class operation, this becomes a correction", not "TICKET-123 promotes `merge`...". Same rule as commits, branches, and PRs.
 - **Comments describe the present, never the diff.** A comment that argues for the new code against code that is no longer there ("Deterministic negative assert: ...", deterministic relative to a deleted sleep) is commit-body material wearing a comment's clothes. The tell: a label or contrast that only means something to someone who saw the old version.
 - Comments for an if statement go **inside** the if statement, not above it.
 - Use backticks around code identifiers: `` `markDefs` ``, not markDefs.
