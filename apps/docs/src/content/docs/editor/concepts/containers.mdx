@@ -2,7 +2,7 @@
 title: Containers
 description: Nest editable block content inside custom structures like callouts, code blocks, and tables, while the value stays plain Portable Text.
 sidebar:
-  order: 2
+  order: 3
 ---
 
 A container is a block object that holds editable block content: one of its fields is an array whose members include text blocks (or further containers). Containers are how callouts carry editable paragraphs, code blocks carry editable lines, and tables carry editable cells, without leaving Portable Text.
@@ -107,6 +107,8 @@ The render contract:
 - Spread `attributes` onto your outer element so the engine can track the node.
 - Render `children` where the editable content goes; the engine fills it with the container's blocks.
 - Mark any chrome that is not editable content (icons, buttons, drag handles) with `contentEditable={false}`.
+- `selected` is `true` when the container is the current selection; use it for selection styling, as `data-selected` above does.
+- `readOnly` is `true` when the editor is read-only; check it before making chrome interactive, for example `draggable={!readOnly}` on a drag handle.
 - `renderDefault` renders the engine's minimal wrapper; call it to fall back or wrap the default.
 
 Omitting `render` falls through to the engine default, so a registration can exist purely to mark the field as editable.
@@ -115,11 +117,13 @@ Registering a container also normalizes the value: existing blocks of the regist
 
 A container registration that doesn't match the schema is skipped with a `console.warn` naming the actual mismatch: an unknown type, a missing field, a field that isn't an array, or an array of primitives only. The editor keeps working; the type renders as an ordinary block object until the registration and schema agree.
 
+Containers only exist as registrations, there's no legacy render prop to migrate from. If the rest of your editor still renders through the deprecated props, the [migration guide](/editor/guides/migrate-render-props/) covers moving those to registrations too.
+
 ## Editing follows the sub-schema
 
 Inside a container, the editor resolves the schema at the caret, not the top-level schema. A code block whose sub-schema declares no decorators won't accept bold, whether from the keyboard, the toolbar, or a paste.
 
-Schema-aware plugins get the same gating for free, because their callbacks receive the sub-schema at the caret as `context.schema`. Take a schema whose code block forbids decorators, and a Markdown shortcut configured by schema lookup:
+Schema-aware plugins get the same gating for free: `MarkdownShortcutsPlugin` passes each callback a `context` object carrying the schema at the caret as `context.schema`. Take a schema whose code block forbids decorators, and a Markdown shortcut configured by schema lookup:
 
 ```tsx
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
@@ -155,11 +159,11 @@ The callback runs against the schema at the caret. In a regular paragraph the lo
 
 Your own code can resolve the schema at any position with `getPathSubSchema` from `@portabletext/editor/traversal`.
 
-## Registrations own their rendering subtree
+## Narrow rendering with `of`
 
-A registered node's markup is yours: the engine hands your `render` the `attributes` you spread on your outer element and the `children` you render inside it, and adds nothing else. The callout render above already shows the whole interface.
+A registration's markup ownership, and how the engine dispatches between global and positional renders, is one model shared by every kind of registration. [Rendering](/editor/concepts/rendering/) covers that model; this page covers the part specific to containers: an `of` array scopes registrations to positions inside one.
 
-That ownership covers everything inside the node, a rendering subtree. Unregistered node types inside it render through the engine defaults: a registered callout holding an unregistered text block renders your `<aside>` with default paragraphs inside. Register both to own both:
+A container's `of` entry beats the global registration for the same type, one level down, in its immediate children. A code block can render its lines without paragraph spacing, or a callout can render its paragraphs tighter than the rest of the document:
 
 ```tsx
 import {defineContainer, defineTextBlock} from '@portabletext/editor'
@@ -196,9 +200,9 @@ const nodes = [
 ]
 ```
 
-The `of` entry scopes its registration to the callout's immediate children, where it beats the global registration for the same type: paragraphs render through the first `defineTextBlock` everywhere else and through the tighter one inside the callout.
+Paragraphs render through the first `defineTextBlock` everywhere else and through the tighter one inside the callout.
 
-A text block's own `of` goes one level deeper, into `defineDecorator` and `defineAnnotation` entries. Register the same decorator globally and positionally to see the scoping:
+Any text block's `of` can scope marks one level deeper, into `defineDecorator` and `defineAnnotation` entries, whether or not that text block sits inside a container; it lives on this page because `of` scoping is this page's subject. Register the same decorator globally and positionally to see the scoping:
 
 ```tsx
 defineDecorator({
@@ -222,20 +226,7 @@ defineTextBlock({
 })
 ```
 
-With both registered, `strong` renders as `<mark>` inside these text blocks and as `<strong>` everywhere else. Remove the positional entry's `render` and `strong` renders as `<strong>` everywhere: an entry without a `render` defers to the global registration instead of silencing it, the same fall-through rule every positional `of` entry on this page follows. `'*'` entries work at both levels and lose to an exact `type` match at the same level.
-
-Inline objects and spans sit inside a text block's line, so the DOM around them belongs to whoever renders that text block: register the text block too when you want to own it. Decorator and annotation rendering on the spans inside `children` happens through `defineDecorator`/`defineAnnotation` registrations, global or positional, or the deprecated `renderDecorator`/`renderAnnotation` render props, no matter who renders the block; `renderPlaceholder` and range decorations keep composing the same way regardless.
-
-Two rendering concerns ship as plugins:
-
-- List numbering: your text-block render reads `node.listItem` and `node.level` for list markup, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
-- Drop indicators: pointer-driven UI rendered by you. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
-
-Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from a component your `render` returns, not inline in the `render` callback, since hooks can't run there. Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
-
-:::note[Migrating from the render props?]
-If your editor still renders through the deprecated render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
-:::
+With both registered, `strong` renders as `<mark>` inside these text blocks and as `<strong>` everywhere else. A global `defineDecorator` or `defineAnnotation` renders inside every text block; a positional entry, registered through a text block's `of`, only renders inside that scope, everywhere else the global registration still applies. Remove the positional entry's `render` and `strong` renders as `<strong>` everywhere: an `of` entry without its own `render` defers to the global registration, or, absent one, whatever would have rendered anyway. That is a different fall-through than a top-level registration: a top-level registration without `render` falls to the engine default, while an `of` entry without `render` falls to the global registration first. See [Dispatch precedence](/editor/concepts/rendering/#dispatch-precedence) for how positional, global, and the `'*'` catch-all rank against each other.
 
 ## Nest containers
 
@@ -372,9 +363,9 @@ function App() {
 
 An `image` block at the document root renders through the global registration, full width. The same `_type: 'image'` inside the callout's `content` hits the positional override first and renders compact. The text block registration needs no positional counterpart: `type: 'block'` already covers both scopes.
 
-Positional overrides only need to carry what they change: an `of` entry that omits `render` falls through to the global registration's render, so a positional registration never has to re-implement what the global one already does. Calling `renderDefault` is different: it renders the engine default at any position, never the global registration's render.
+Both registrations call `renderDefault` when `node.src` isn't a string; see [`renderDefault`](/editor/concepts/rendering/#renderdefault) on the Rendering page for what that falls back to.
 
-Decorators and annotations scope the same way, one level deeper: a `defineDecorator` or `defineAnnotation` entry inside the callout's text block `of` (as shown under [Registrations own their rendering subtree](#registrations-own-their-rendering-subtree)) makes an annotation like `link` render differently only inside the callout, and the text block entry needs no `render` of its own to carry it.
+Decorators and annotations scope the same way, one level deeper: a `defineDecorator` or `defineAnnotation` entry inside the callout's text block `of` (as shown under [Narrow rendering with `of`](#narrow-rendering-with-of)) makes an annotation like `link` render differently only inside the callout, and the text block entry needs no `render` of its own to carry it.
 
 ## Read the registered containers
 

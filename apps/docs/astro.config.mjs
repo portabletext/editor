@@ -113,6 +113,7 @@ export default defineConfig({
                 {slug: 'editor/concepts', label: 'Overview'},
                 {slug: 'editor/concepts/portabletext'},
                 {slug: 'editor/concepts/behavior'},
+                {slug: 'editor/concepts/rendering'},
                 {slug: 'editor/concepts/containers'},
                 {slug: 'editor/concepts/clipboard'},
               ],

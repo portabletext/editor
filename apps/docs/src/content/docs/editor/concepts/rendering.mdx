@@ -1,0 +1,119 @@
+---
+title: Rendering
+description: How node registrations own the editor's markup, and how the engine dispatches between global, positional, and legacy renders.
+sidebar:
+  order: 2
+---
+
+The editor renders every kind of Portable Text node, text blocks, spans, decorators, annotations, block objects, and inline objects, through the same mechanism: a node registration. This page covers the model that every registration shares. [Containers](/editor/concepts/containers/) covers the container-specific factory and how `of` scopes a registration to positions inside one.
+
+## Markup ownership
+
+Every registration owns its markup: your `render` gets `children` to render where the editable content goes, and the engine adds nothing around what you return (with one exception: annotations compose inside an engine-owned anchor span). Every kind except decorators and annotations also receives `attributes` to spread on the outer element, so the engine can track the node; decorators and annotations wrap inline content rather than owning an element the engine tracks, so their `render` receives no `attributes`.
+
+```tsx
+import {defineTextBlock} from '@portabletext/editor'
+
+const paragraph = defineTextBlock({
+  type: 'block',
+  render: ({attributes, children, node}) => (
+    <p {...attributes} data-style={node.style}>
+      {children}
+    </p>
+  ),
+})
+```
+
+Spread `attributes` onto your outer element when your registration receives one, and render `children` where the editable content goes. That's the whole interface: no hidden classes, no wrapper the engine adds behind your back.
+
+## Register a node
+
+The schema declares what the editor allows; a registration only renders what the schema already permits. `defineDecorator({type: 'strong'})` and `defineAnnotation({type: 'link'})` below render because the schema declares a `strong` decorator and a `link` annotation:
+
+```tsx
+import {defineSchema} from '@portabletext/editor'
+
+const schemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+})
+```
+
+Each node kind has a factory: `defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineDecorator`, `defineAnnotation`, and `defineContainer` (see [Containers](/editor/concepts/containers/) for that one). Every factory returns a plain registration object; mount them together through one `NodePlugin`:
+
+```tsx
+import {
+  defineAnnotation,
+  defineDecorator,
+  defineTextBlock,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
+
+// Module scope: a new array identity re-registers the nodes on every render.
+const nodes = [
+  defineTextBlock({
+    type: 'block',
+    render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+  }),
+  defineDecorator({
+    type: 'strong',
+    render: ({children}) => <strong>{children}</strong>,
+  }),
+  defineAnnotation({
+    type: 'link',
+    render: ({annotation, children}) => (
+      <a href={String((annotation as {href?: string}).href ?? '')}>
+        {children}
+      </a>
+    ),
+  }),
+]
+
+function App() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition}}>
+      <NodePlugin nodes={nodes} />
+      <PortableTextEditable />
+    </EditorProvider>
+  )
+}
+```
+
+`annotation` is the markDef object from the block's `markDefs`: `{_key, _type, ...fields}`, cast here from its `unknown` index signature to read `href`. Each render callback is a plain function call, not a component: when a render needs hooks, return a component instead, `render: (props) => <MyAnnotation {...props} />`.
+
+Keep `nodes` at module scope, as above: a fresh array identity on every render makes `NodePlugin` unregister and re-register every keystroke.
+
+## Subtree ownership
+
+A block-level registration (a text block, block object, or container) owns everything rendered inside it, its rendering subtree. Unregistered node types inside it fall back to the engine defaults: a registered text block holding an unregistered inline object still renders that inline object through the engine's default wrapper, not through markup you control. Register a node type when you need to own its markup, wherever it appears.
+
+## Dispatch precedence
+
+At a given position, a positional registration (one scoped through a container or text block's own `of`, see [Containers](/editor/concepts/containers/)) beats a global registration, which beats the deprecated `renderDecorator`/`renderAnnotation` render props on `<PortableTextEditable>`. Within a level, an exact `type` match beats a `'*'` catch-all.
+
+[Narrow rendering with `of`](/editor/concepts/containers/#narrow-rendering-with-of) covers how far a positional entry's scope reaches and what it falls back to when it omits `render`.
+
+## `renderDefault`
+
+Every render receives `renderDefault`, a function that renders the engine's minimal wrapper for that position. Call it to fall back, or to wrap the default instead of replacing it:
+
+```tsx
+render: (props) => props.renderDefault(props)
+```
+
+`renderDefault` is the engine default at any position: it never chains back to a global registration's render, even from inside a positional one. PTE has one user layer plus positional overrides, and the engine default is the canonical fallback everywhere. For block-level, span, and inline-object registrations the default is a minimal wrapper; for decorators the default is identity, the engine applies no decorator markup of its own. For annotations the default is identity too, but every known annotation renders inside an engine-owned anchor span the engine adds regardless of which render fires.
+
+## Plugins for lists and drag-and-drop
+
+Two rendering concerns ship as plugins instead of registration props:
+
+- List numbering: your text-block render reads `node.listItem` and `node.level` for list markup, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) computes the 1-based list index at any path, correct across nesting, remote edits, and non-list blocks interrupting a list.
+- Drop indicators: pointer-driven UI rendered by you. [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events.
+
+Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from a component your `render` returns, not inline in the `render` callback, since hooks can't run there. Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
+
+:::note[Migrating from the render props?]
+If your editor still renders through the deprecated render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
+:::
