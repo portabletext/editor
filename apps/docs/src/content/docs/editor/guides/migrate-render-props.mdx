@@ -355,4 +355,4 @@ function App() {
 }
 ```
 
-`renderPlaceholder` is the only render prop left unmigrated: it has no registration equivalent, so it stays as is. `rangeDecorations` is a separate data prop, not a render prop: it carries a component that wraps a span's rendered output from the outside, after the span (registered or not) has already rendered, so it is untouched by this migration too.
+`renderPlaceholder` is the only render prop left unmigrated: registrations render nodes identified by a schema type, and the placeholder is empty-editor chrome with no type to register under, so it stays as is. `rangeDecorations` is a separate data prop, not a render prop: it carries a component that wraps a span's rendered output from the outside, after the span (registered or not) has already rendered, so it is untouched by this migration too.
