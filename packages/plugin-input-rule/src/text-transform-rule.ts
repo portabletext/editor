@@ -74,12 +74,13 @@ export function defineTextTransformRule<TGuardResponse = true>(
     for (const groupName of Object.keys(transformRecord)) {
       if (!namedGroups.includes(groupName)) {
         throw new Error(
-          `defineTextTransformRule: \`transform\` targets the group "${groupName}", but \`on\` (${config.on}) has no such named capture group` +
-            (namedGroups.length > 0
+          `defineTextTransformRule: \`transform\` targets the group "${groupName}", but \`on\` (${config.on}) has no such named capture group${
+            namedGroups.length > 0
               ? `. Named groups: ${namedGroups
                   .map((name) => `"${name}"`)
                   .join(', ')}`
-              : `. The pattern has no named capture groups`),
+              : '. The pattern has no named capture groups'
+          }`,
         )
       }
     }

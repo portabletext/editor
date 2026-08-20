@@ -214,7 +214,7 @@ export function TableChrome({
       />
       {metrics.cols.map((col, index) => (
         <Handle
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
+          // oxlint-disable-next-line react/no-array-index-key -- positional by design; the index is the identity
           key={`col-${index}`}
           kind="column"
           index={index}
@@ -231,7 +231,7 @@ export function TableChrome({
       ))}
       {metrics.rows.map((row, index) => (
         <Handle
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
+          // oxlint-disable-next-line react/no-array-index-key -- positional by design; the index is the identity
           key={`row-${index}`}
           kind="row"
           index={index}
@@ -608,7 +608,6 @@ function DragDots({
     >
       {Array.from({length: 6}, (_, index) => (
         <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
           key={index}
           style={{
             width: HANDLE_DOT,
@@ -835,7 +834,6 @@ export function TableMenuAnchor({
   }, [])
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: preventing default on pointerdown keeps the editor focused; interaction lives on the consumer's widget
     <div
       ref={anchorRef}
       contentEditable={false}
@@ -1273,7 +1271,7 @@ export function ReorderGhost({
       >
         {metrics.cols.map((col, index) => (
           <div
-            // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
+            // oxlint-disable-next-line react/no-array-index-key -- positional by design; the index is the identity
             key={index}
             style={{
               width: col.width,
@@ -1320,7 +1318,7 @@ export function ReorderGhost({
     >
       {metrics.rows.map((row, index) => (
         <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
+          // oxlint-disable-next-line react/no-array-index-key -- positional by design; the index is the identity
           key={index}
           style={{
             height: row.height,

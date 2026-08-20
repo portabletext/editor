@@ -9,6 +9,7 @@ import type {Point} from './point'
  * at any time for the up-to-date point value.
  */
 
+// oxlint-disable-next-line no-redeclare -- interface and its companion `PointRef` const live in separate TypeScript namespaces
 export interface PointRef {
   current: Point | null
   affinity: TextDirection | null

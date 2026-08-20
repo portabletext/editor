@@ -210,6 +210,7 @@ const isLowSurrogate = (charCode: number) => {
   return charCode >= 0xdc00 && charCode <= 0xdfff
 }
 
+// oxlint-disable-next-line no-redeclare -- the `CodepointType` value and its derived type live in separate TypeScript namespaces
 const CodepointType = {
   None: 0,
   Extend: 1 << 0,

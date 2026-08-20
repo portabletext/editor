@@ -25,12 +25,9 @@ export const table = defineTable({
           type: 'block',
           render: ({attributes, children, node, path}) =>
             node.listItem !== undefined ? (
-              <ListItemBlock
-                attributes={attributes}
-                node={node}
-                path={path}
-                children={children}
-              />
+              <ListItemBlock attributes={attributes} node={node} path={path}>
+                {children}
+              </ListItemBlock>
             ) : (
               <div {...attributes}>{children}</div>
             ),

@@ -19,8 +19,7 @@
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
     "check:format": "oxfmt --check . && prettier --check \"**/*.{astro,feature}\"",
     "check:knip": "knip",
-    "check:lint": "turbo check:lint",
-    "check:react-compiler": "oxlint",
+    "check:lint": "oxlint",
     "check:types": "turbo check:types",
     "check:types:watch": "turbo check:types:watch",
     "clean": "turbo clean && del .turbo && del node_modules",
@@ -36,7 +35,7 @@
     "dev:schema": "turbo dev --filter=@portabletext/schema...",
     "dev:toolbar": "turbo dev --filter=@portabletext/toolbar...",
     "format": "oxfmt . && prettier --cache --write \"**/*.{astro,feature}\"",
-    "lint:fix": "turbo lint:fix",
+    "lint:fix": "oxlint --fix",
     "postinstall": "husky",
     "release": "pnpm build --filter=./packages/* && changeset publish",
     "test": "turbo test",
@@ -48,7 +47,6 @@
     "test:watch": "turbo test:watch"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
     "@playwright/test": "^1.62.1",

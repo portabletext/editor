@@ -9,8 +9,8 @@ description: How to write pull request descriptions for the Portable Text Editor
 
 - **Before `gh pr create`, run the static checks CI runs**, from the worktree
   being pushed: `pnpm check:format`, `pnpm check:lint`, `pnpm check:types`,
-  `pnpm check:react-compiler`, `pnpm check:knip` (repo root), plus the
-  affected package's `test:unit`. These are cheap; run them all, every time.
+  `pnpm check:knip` (repo root), plus the affected package's `test:unit`.
+  These are cheap; run them all, every time.
   A green test run is not a green PR: lint enforces the house assertion
   style (see the `writing-tests` skill), and `test:unit` and `check:types`
   typecheck test files where stale API shapes surface.

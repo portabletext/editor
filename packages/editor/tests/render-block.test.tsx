@@ -358,7 +358,7 @@ describe('registered render: blocks', () => {
 
       const textBlockRender = useCallback(
         (props: TextBlockRenderProps) => {
-          // biome-ignore lint/correctness/useHookAtTopLevel: This is the only way to keep track of the mount/unmount events
+          // oxlint-disable-next-line react-hooks/rules-of-hooks -- This is the only way to keep track of the mount/unmount events
           useEffect(() => {
             textBlockMountEvents.push('mount')
             return () => {

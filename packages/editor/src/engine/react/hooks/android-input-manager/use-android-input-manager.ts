@@ -30,12 +30,12 @@ export const useAndroidInputManager = !IS_ANDROID
         return null
       }
 
-      // biome-ignore lint/correctness/useHookAtTopLevel: engine's platform-conditional hook pattern (Android-only)
+      // oxlint-disable-next-line react-hooks/rules-of-hooks -- engine's platform-conditional hook pattern (Android-only)
       const editor = useEngineStatic()
-      // biome-ignore lint/correctness/useHookAtTopLevel: engine's platform-conditional hook pattern (Android-only)
+      // oxlint-disable-next-line react-hooks/rules-of-hooks -- engine's platform-conditional hook pattern (Android-only)
       const isMounted = useIsMounted()
 
-      // biome-ignore lint/correctness/useHookAtTopLevel: engine's platform-conditional hook pattern (Android-only)
+      // oxlint-disable-next-line react-hooks/rules-of-hooks -- engine's platform-conditional hook pattern (Android-only)
       const [inputManager] = useState(() =>
         createAndroidInputManager({
           editor,
@@ -44,7 +44,7 @@ export const useAndroidInputManager = !IS_ANDROID
         }),
       )
 
-      // biome-ignore lint/correctness/useHookAtTopLevel: engine's platform-conditional hook pattern (Android-only)
+      // oxlint-disable-next-line react-hooks/rules-of-hooks -- engine's platform-conditional hook pattern (Android-only)
       useMutationObserver(
         node,
         inputManager.handleDomMutations,

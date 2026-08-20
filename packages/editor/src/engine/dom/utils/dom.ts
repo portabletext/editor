@@ -13,6 +13,7 @@ type DOMComment = globalThis.Comment
 type DOMElement = globalThis.Element
 // DOMText is used as a value (instanceof) in dom-editor.ts, so we need both
 // the type alias and a const reference to the global constructor.
+// oxlint-disable-next-line no-redeclare -- type and value live in separate TypeScript namespaces
 type DOMText = globalThis.Text
 const DOMText = globalThis.Text
 type DOMRange = globalThis.Range

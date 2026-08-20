@@ -52,4 +52,4 @@ When scaffolding a new package, mirror `plugin-typeahead-picker`'s vitest config
 
 ## Gates before pushing
 
-From the package: `pnpm check:types`, `pnpm check:lint`, `pnpm check:react-compiler`, `pnpm test:unit`, `pnpm test:browser` (or `:chromium` while iterating), `pnpm build`. From the repo root: `pnpm check:knip`. The unit project fails on "no tests found": a package with only browser tests needs at least one `.test.ts`, which the drift-alarm suite usually provides.
+From the package: `pnpm check:types`, `pnpm test:unit`, `pnpm test:browser` (or `:chromium` while iterating), `pnpm build`. From the repo root: `pnpm check:lint`, `pnpm check:knip`. The unit project fails on "no tests found": a package with only browser tests needs at least one `.test.ts`, which the drift-alarm suite usually provides.

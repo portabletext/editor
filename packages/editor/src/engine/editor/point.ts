@@ -19,8 +19,6 @@ export function point(
   const {edge = 'start'} = options
 
   if (isPath(at)) {
-    let path: Path
-
     const deepest = getLeaf(editor.snapshot, at, {
       edge: edge === 'end' ? 'end' : 'start',
     })
@@ -31,7 +29,7 @@ export function point(
     }
 
     const {node, path: nodePath} = deepest
-    path = nodePath
+    const path: Path = nodePath
 
     if (
       !isSpan({schema: editor.snapshot.context.schema}, node) &&

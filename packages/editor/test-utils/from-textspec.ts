@@ -767,7 +767,8 @@ function convertSelectionToPTE(
   // to offset 1 on a non-text block. PTE represents it as a collapsed
   // selection at offset 0. Translate when the textspec selection points
   // resolve to the same path of a non-text block.
-  let {anchor: anchorPoint, focus: focusPoint} = state.selection
+  const {anchor: anchorPoint} = state.selection
+  let {focus: focusPoint} = state.selection
   if (
     anchorPoint.offset === 0 &&
     focusPoint.offset === 1 &&

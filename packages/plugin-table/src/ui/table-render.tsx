@@ -491,7 +491,6 @@ export function Table({
     // geometry (relative positioning, gutter padding) must not share an
     // element with styles it cannot control.
     <div {...attributes}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: mouse events only reveal the hover chrome; all interaction lives on the chrome's buttons */}
       <div
         className="pt-plugin-table-chrome"
         style={tokenStyle}
@@ -534,7 +533,6 @@ export function Table({
                 normalization; mark them non-editable so it skips them. */}
               <colgroup contentEditable={false}>
                 {Array.from({length: columnCount}, (_, index) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: positional by design; the index is the identity
                   <col key={index} />
                 ))}
               </colgroup>

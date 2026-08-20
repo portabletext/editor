@@ -3,7 +3,7 @@
  */
 export function safeStringify(value: unknown, space?: number): string {
   try {
-    // biome-ignore lint/style/noRestrictedGlobals: This is the one place where JSON.stringify is allowed
+    // oxlint-disable-next-line no-restricted-globals -- This is the one place where JSON.stringify is allowed
     return JSON.stringify(value, null, space)
   } catch (error) {
     console.error(error)
@@ -16,7 +16,7 @@ export function safeStringify(value: unknown, space?: number): string {
  */
 export function safeParse(text: string): unknown {
   try {
-    // biome-ignore lint/style/noRestrictedGlobals: This is the one place where JSON.parse is allowed
+    // oxlint-disable-next-line no-restricted-globals -- This is the one place where JSON.parse is allowed
     return JSON.parse(text)
   } catch (error) {
     console.error(error)

@@ -102,12 +102,9 @@ export const calloutContainer = defineContainer({
       render: ({attributes, children, node, path}) => {
         if (node.listItem !== undefined) {
           return (
-            <ListItemBlock
-              attributes={attributes}
-              node={node}
-              path={path}
-              children={children}
-            />
+            <ListItemBlock attributes={attributes} node={node} path={path}>
+              {children}
+            </ListItemBlock>
           )
         }
 

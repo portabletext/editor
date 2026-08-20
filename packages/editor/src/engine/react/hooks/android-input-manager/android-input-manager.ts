@@ -167,7 +167,6 @@ export function createAndroidInputManager({
     let scheduleSelectionChange = hasPendingDiffs()
 
     let diff: TextDiff | undefined
-    // biome-ignore lint/suspicious/noAssignInExpressions: engine upstream pattern
     while ((diff = editor.pendingDiffs?.[0])) {
       const range = targetRange(diff)
       if (
@@ -193,10 +192,9 @@ export function createAndroidInputManager({
 
       // Remove diff only after we have applied it to account for it when transforming
       // pending ranges.
-      // biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: engine upstream pattern — diffs guaranteed to exist in loop
       editor.pendingDiffs = editor.pendingDiffs?.filter(
         ({id}) => id !== diff!.id,
-      )!
+      )! // oxlint-disable-line typescript/no-non-null-asserted-optional-chain -- engine upstream pattern, diffs guaranteed to exist in loop
 
       if (!verifyDiffState(editor, diff)) {
         debug('invalid diff state')
