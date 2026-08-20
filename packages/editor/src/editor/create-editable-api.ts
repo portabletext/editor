@@ -355,14 +355,13 @@ export function createEditableAPI(
             (markDefBefore) => markDefBefore._key === markDef.markDef._key,
           ),
       )
-      const spanPath = focusSpanAfter?.path
-      const markDef = markDefs.find((markDef) =>
+      const focusSpanGainedMarkDef = markDefs.some((markDef) =>
         newMarkDefKeysOnFocusSpan?.some(
           (mark) => mark === markDef.markDef._key,
         ),
       )
 
-      if (focusBlockAfter && spanPath && markDef) {
+      if (focusBlockAfter && focusSpanAfter && focusSpanGainedMarkDef) {
         return {
           markDefPaths: markDefs.map((markDef) => markDef.path),
         }
