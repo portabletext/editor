@@ -136,14 +136,17 @@ function sanitySchemaTypeToSchema(
     styles: styles.map((style: BlockStyleDefinition) => ({
       name: style.value,
       title: style.title,
+      value: style.value,
     })),
     lists: lists.map((list: BlockListDefinition) => ({
       name: list.value,
       title: list.title,
+      value: list.value,
     })),
     decorators: decorators.map((decorator: BlockDecoratorDefinition) => ({
       name: decorator.value,
       title: decorator.title,
+      value: decorator.value,
     })),
     annotations: annotations.map((annotation) => {
       const built = buildFields(
@@ -524,17 +527,20 @@ function scheduleBlockOfMember(
       .map((style: BlockStyleDefinition) => ({
         name: style.value,
         title: style.title,
+        value: style.value,
       })),
     lists: (Array.isArray(listItemList) ? listItemList : [])
       .filter((list: BlockListDefinition) => list.value)
       .map((list: BlockListDefinition) => ({
         name: list.value,
         title: list.title,
+        value: list.value,
       })),
     decorators: (Array.isArray(spanDecorators) ? spanDecorators : []).map(
       (decorator: BlockDecoratorDefinition) => ({
         name: decorator.value,
         title: decorator.title,
+        value: decorator.value,
       }),
     ),
     annotations: (Array.isArray(spanAnnotations) ? spanAnnotations : []).map(
