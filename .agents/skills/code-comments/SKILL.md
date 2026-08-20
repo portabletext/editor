@@ -39,5 +39,5 @@ JSDoc on exported symbols (especially `@public`) is rendered by typedoc onto por
 
 Some things look like comments but are instructions to tools, and editing or deleting them changes behavior (suppressed errors resurface, coverage changes, formatting shifts). The rules above do not apply to:
 
-- Directives: `@ts-expect-error`, `@ts-ignore`, `biome-ignore`, `oxlint`, `eslint-disable`, `prettier-ignore`, `/// <reference`, `v8 ignore`, `c8 ignore`, `istanbul ignore`
+- Directives: `@ts-expect-error`, `@ts-ignore`, `oxlint-disable`, `oxlint-disable-next-line`, `eslint-disable`, `prettier-ignore`, `/// <reference`, `v8 ignore`, `c8 ignore`, `istanbul ignore`
 - `keep-in-sync` pointers: they pin deliberate duplication across packages (see the `writing-tests` skill), and deleting one silently breaks the contract that keeps the copies aligned

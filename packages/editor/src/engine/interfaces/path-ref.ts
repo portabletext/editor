@@ -8,6 +8,7 @@ import type {Path} from './path'
  * at any time for the up-to-date path value.
  */
 
+// oxlint-disable-next-line no-redeclare -- interface and its companion `PathRef` const live in separate TypeScript namespaces
 export interface PathRef {
   current: Path | null
   affinity: 'forward' | 'backward' | null

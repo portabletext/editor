@@ -41,6 +41,7 @@ export type Action = {at?: Point | Range; run: () => void}
  * A DOM-specific version of the `Editor` interface.
  */
 
+// oxlint-disable-next-line no-redeclare -- interface and its companion `DOMEditor` const live in separate TypeScript namespaces
 export interface DOMEditor extends BaseEditor {
   hasEditableTarget: (
     editor: Editor,
@@ -688,7 +689,9 @@ export const DOMEditor: DOMEditorInterface = {
           )
         }
 
-        let {path, offset} = editorStart(editor, nodePath)
+        const editorStartPoint = editorStart(editor, nodePath)
+        const {path} = editorStartPoint
+        let {offset} = editorStartPoint
 
         if (!node.querySelector('[data-pt-marks]')) {
           offset = nearestOffset
@@ -814,7 +817,7 @@ export const DOMEditor: DOMEditorInterface = {
             lastRange.startContainer instanceof HTMLTableRowElement
           ) {
             // HTMLElement, becouse Element is an engine element
-            function getLastChildren(element: HTMLElement): HTMLElement {
+            const getLastChildren = (element: HTMLElement): HTMLElement => {
               if (element.childElementCount > 0) {
                 return getLastChildren(element.children[0] as HTMLElement)
               } else {

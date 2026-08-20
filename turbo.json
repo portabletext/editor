@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": [".npmrc", "biome.json", "pnpm-lock.yaml"],
+  "globalDependencies": [".npmrc", ".oxlintrc.json", "pnpm-lock.yaml"],
   "tasks": {
     "build": {
       "outputs": ["dist/**", "lib/**"],
@@ -22,12 +22,6 @@
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "check:lint": {
-      "outputLogs": "errors-only"
-    },
-    "lint:fix": {
-      "outputs": [""]
     },
     "test": {
       "dependsOn": ["^build"],

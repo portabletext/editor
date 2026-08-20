@@ -371,7 +371,6 @@ export const Editable = forwardRef(
     useIsomorphicLayoutEffect(() => {
       // Update element-related editor maps with the DOM element ref.
       let window: Window | null = null
-      // biome-ignore lint/suspicious/noAssignInExpressions: engine upstream pattern — assignment in condition
       if (ref.current && (window = getDefaultView(ref.current))) {
         editor.domWindow = window
         editor.domElement = ref.current
@@ -1060,8 +1059,7 @@ export const Editable = forwardRef(
       <ReadOnlyContext.Provider value={readOnly}>
         <DecorateContext.Provider value={decorateContext}>
           <RestoreDOM node={ref} receivedUserInput={receivedUserInput}>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: role is conditionally set to textbox when editable */}
-            {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-multiline is conditionally set alongside textbox role */}
+            {/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- role is conditionally set to textbox when editable */}
             <div
               role={readOnly ? undefined : 'textbox'}
               aria-multiline={readOnly ? undefined : true}

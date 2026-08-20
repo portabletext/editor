@@ -5,12 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b && vite build",
-    "check:lint": "biome lint .",
     "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
     "check:types:watch": "tsc --watch --project tsconfig.app.json",
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "vite",
-    "lint:fix": "biome lint --write .",
     "preview": "vite preview"
   },
   "dependencies": {

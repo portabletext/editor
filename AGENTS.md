@@ -9,10 +9,9 @@ Guidance for coding agents working on the Portable Text Editor monorepo.
 - A fresh checkout needs `pnpm install`, then
   `pnpm --filter '<package>...' build` before that package's tests pass.
 - Before pushing, run the root checks CI runs: `pnpm check:format`,
-  `pnpm check:lint`, `pnpm check:types`, `pnpm check:react-compiler`,
-  `pnpm check:knip`, and the affected package's tests (`test:unit`,
-  `test:browser:chromium`). `pnpm format` and `pnpm lint:fix` fix what
-  their checks flag.
+  `pnpm check:lint`, `pnpm check:types`, `pnpm check:knip`, and the
+  affected package's tests (`test:unit`, `test:browser:chromium`).
+  `pnpm format` and `pnpm lint:fix` fix what their checks flag.
 
 ## Tests
 

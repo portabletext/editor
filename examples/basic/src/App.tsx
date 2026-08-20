@@ -8,11 +8,13 @@ import {
   defineTextBlock,
   EditorProvider,
   keyGenerator,
-  PortableTextBlock,
   PortableTextEditable,
-  TextBlockRenderProps,
   useEditor,
   useEditorSelector,
+} from '@portabletext/editor'
+import type {
+  PortableTextBlock,
+  TextBlockRenderProps,
 } from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import * as selectors from '@portabletext/editor/selectors'
@@ -254,6 +256,7 @@ function Toolbar() {
 
   const imageButton = (
     <button
+      type="button"
       onClick={() => {
         editor.send({
           type: 'insert.block object',
@@ -272,6 +275,7 @@ function Toolbar() {
 
   const stockTickerButton = (
     <button
+      type="button"
       onClick={() => {
         editor.send({
           type: 'insert.inline object',
@@ -310,6 +314,7 @@ function DecoratorButton(props: {decorator: string}) {
 
   return (
     <button
+      type="button"
       style={{
         textDecoration: active ? 'underline' : 'unset',
       }}
@@ -337,6 +342,7 @@ function AnnotationButton(props: {annotation: {name: string}}) {
 
   return (
     <button
+      type="button"
       style={{
         textDecoration: active ? 'underline' : 'unset',
       }}
@@ -374,6 +380,7 @@ function StyleButton(props: {style: string}) {
 
   return (
     <button
+      type="button"
       style={{
         textDecoration: active ? 'underline' : 'unset',
       }}
@@ -396,6 +403,7 @@ function ListButton(props: {list: string}) {
 
   return (
     <button
+      type="button"
       style={{
         textDecoration: active ? 'underline' : 'unset',
       }}
