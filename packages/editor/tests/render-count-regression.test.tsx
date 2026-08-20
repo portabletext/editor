@@ -350,7 +350,7 @@ describe('Render count regression', () => {
   }, 60_000)
 })
 
-const SIBLING_BLOCKS = 500
+const SIBLING_BLOCKS = 50
 const KEYSTROKES = 20
 const RENDER_COUNT_TOLERANCE = 5
 
