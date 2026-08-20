@@ -13,7 +13,7 @@ describe(compileSchema.name, () => {
       ).toEqual({
         block: {name: 'block'},
         span: {name: 'span'},
-        styles: [{name: 'normal', title: 'Normal'}],
+        styles: [{value: 'normal', name: 'normal', title: 'Normal'}],
         lists: [],
         decorators: [],
         annotations: [],
@@ -34,7 +34,7 @@ describe(compileSchema.name, () => {
       ).toEqual({
         block: {name: 'block', fields: [{name: 'foo', type: 'string'}]},
         span: {name: 'span'},
-        styles: [{name: 'normal', title: 'Normal'}],
+        styles: [{value: 'normal', name: 'normal', title: 'Normal'}],
         lists: [],
         decorators: [],
         annotations: [],
@@ -119,8 +119,11 @@ describe(compileSchema.name, () => {
               of: [
                 {
                   type: 'block',
-                  styles: [{name: 'normal'}, {name: 'h1'}],
-                  decorators: [{name: 'strong'}],
+                  styles: [
+                    {name: 'normal', value: 'normal'},
+                    {name: 'h1', value: 'h1'},
+                  ],
+                  decorators: [{name: 'strong', value: 'strong'}],
                   annotations: [],
                   lists: [],
                   inlineObjects: [],
@@ -220,13 +223,16 @@ describe(compileSchema.name, () => {
                 {
                   type: 'block',
                   styles: [
-                    {name: 'normal', title: 'Normal'},
-                    {name: 'h1'},
-                    {name: 'h2'},
+                    {name: 'normal', value: 'normal', title: 'Normal'},
+                    {name: 'h1', value: 'h1'},
+                    {name: 'h2', value: 'h2'},
                   ],
-                  decorators: [{name: 'strong'}, {name: 'em'}],
+                  decorators: [
+                    {name: 'strong', value: 'strong'},
+                    {name: 'em', value: 'em'},
+                  ],
                   annotations: [{name: 'link', fields: []}],
-                  lists: [{name: 'bullet'}],
+                  lists: [{name: 'bullet', value: 'bullet'}],
                   inlineObjects: [{name: 'mention', fields: []}],
                 },
               ],
@@ -270,8 +276,11 @@ describe(compileSchema.name, () => {
               of: [
                 {
                   type: 'block',
-                  styles: [{name: 'normal', title: 'Normal'}, {name: 'h1'}],
-                  decorators: [{name: 'strong'}],
+                  styles: [
+                    {name: 'normal', value: 'normal', title: 'Normal'},
+                    {name: 'h1', value: 'h1'},
+                  ],
+                  decorators: [{name: 'strong', value: 'strong'}],
                   annotations: [{name: 'link', fields: []}],
                   lists: [],
                   inlineObjects: [],
@@ -320,7 +329,7 @@ describe(compileSchema.name, () => {
               of: [
                 {
                   type: 'block',
-                  styles: [{name: 'normal', title: 'Normal'}],
+                  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
                   decorators: [],
                   annotations: [],
                   lists: [],
@@ -370,7 +379,7 @@ describe(compileSchema.name, () => {
               of: [
                 {
                   type: 'block',
-                  styles: [{name: 'normal', title: 'Normal'}],
+                  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
                   decorators: [],
                   annotations: [],
                   lists: [],
@@ -453,10 +462,13 @@ describe(compileSchema.name, () => {
                                   styles: [
                                     {
                                       name: 'normal',
+                                      value: 'normal',
                                       title: 'Normal',
                                     },
                                   ],
-                                  decorators: [{name: 'strong'}],
+                                  decorators: [
+                                    {name: 'strong', value: 'strong'},
+                                  ],
                                   annotations: [],
                                   lists: [],
                                   inlineObjects: [],
@@ -568,10 +580,13 @@ describe(compileSchema.name, () => {
                                   styles: [
                                     {
                                       name: 'normal',
+                                      value: 'normal',
                                       title: 'Normal',
                                     },
                                   ],
-                                  decorators: [{name: 'strong'}],
+                                  decorators: [
+                                    {name: 'strong', value: 'strong'},
+                                  ],
                                   annotations: [],
                                   lists: [],
                                   inlineObjects: [],
@@ -591,10 +606,13 @@ describe(compileSchema.name, () => {
                                           styles: [
                                             {
                                               name: 'normal',
+                                              value: 'normal',
                                               title: 'Normal',
                                             },
                                           ],
-                                          decorators: [{name: 'strong'}],
+                                          decorators: [
+                                            {name: 'strong', value: 'strong'},
+                                          ],
                                           annotations: [],
                                           lists: [],
                                           inlineObjects: [],
@@ -678,8 +696,11 @@ describe(compileSchema.name, () => {
               of: [
                 {
                   type: 'block',
-                  styles: [{name: 'normal', title: 'Normal'}],
-                  decorators: [{name: 'strong'}, {name: 'em'}],
+                  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
+                  decorators: [
+                    {name: 'strong', value: 'strong'},
+                    {name: 'em', value: 'em'},
+                  ],
                   annotations: [],
                   lists: [],
                   inlineObjects: [],
@@ -694,8 +715,10 @@ describe(compileSchema.name, () => {
                       of: [
                         {
                           type: 'block',
-                          styles: [{name: 'normal', title: 'Normal'}],
-                          decorators: [{name: 'strong'}],
+                          styles: [
+                            {name: 'normal', value: 'normal', title: 'Normal'},
+                          ],
+                          decorators: [{name: 'strong', value: 'strong'}],
                           annotations: [],
                           lists: [],
                           inlineObjects: [],
@@ -715,10 +738,13 @@ describe(compileSchema.name, () => {
                                   styles: [
                                     {
                                       name: 'normal',
+                                      value: 'normal',
                                       title: 'Normal',
                                     },
                                   ],
-                                  decorators: [{name: 'strong'}],
+                                  decorators: [
+                                    {name: 'strong', value: 'strong'},
+                                  ],
                                   annotations: [],
                                   lists: [],
                                   inlineObjects: [],
