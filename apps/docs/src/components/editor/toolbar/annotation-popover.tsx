@@ -1,3 +1,4 @@
+import type {AnnotationPath} from '@portabletext/editor'
 import {useAnnotationPopover} from '@portabletext/toolbar'
 import type {ToolbarAnnotationSchemaType} from '@portabletext/toolbar'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
@@ -22,7 +23,7 @@ export function AnnotationPopover(props: {
   const annotationPopover = useAnnotationPopover(props)
   const [editingAnnotation, setEditingAnnotation] = useState<{
     schemaType: ToolbarAnnotationSchemaType
-    at: unknown
+    at: AnnotationPath
     values: Record<string, string>
   } | null>(null)
 
