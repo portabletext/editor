@@ -64,7 +64,11 @@ export function Select<T extends object>({
       {label && <Label>{label}</Label>}
       <Button className={styles}>
         <SelectValue className="flex-1 text-xs placeholder-shown:italic">
-          {(props) => props.selectedText ?? props.defaultChildren}
+          {(props) =>
+            // `selectedText` is `''` (not `null`) in the placeholder state,
+            // and `defaultChildren` is what carries the `placeholder` text.
+            props.isPlaceholder ? props.defaultChildren : props.selectedText
+          }
         </SelectValue>
         <ChevronDown
           aria-hidden

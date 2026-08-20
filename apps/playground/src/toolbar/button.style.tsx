@@ -11,7 +11,6 @@ export function StyleButton(props: {
 }) {
   const styleSelector = useStyleSelector(props)
   const applicable = useApplicableSchema()
-  const activeStyle = styleSelector.snapshot.context.activeStyle ?? 'normal'
   const disabledKeys = props.schemaTypes
     .filter((schemaType) => !applicable.styles.has(schemaType.name))
     .map((schemaType) => schemaType.name)
@@ -23,7 +22,7 @@ export function StyleButton(props: {
         disabledKeys={disabledKeys}
         placeholder="Select style"
         aria-label="Style"
-        selectedKey={activeStyle}
+        selectedKey={styleSelector.snapshot.context.activeStyle ?? null}
         onSelectionChange={(style) => {
           if (typeof style === 'string') {
             styleSelector.send({type: 'toggle', style})
