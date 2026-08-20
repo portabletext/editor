@@ -9,9 +9,9 @@ import {useTypeaheadPicker} from './use-typeahead-picker'
 
 /**
  * Regression test for the typeahead picker hook's stability under
- * repeated renders. Runs in a vitest project that does not enable
- * `babel-plugin-react-compiler`, mirroring consumer environments that
- * have not opted into React Compiler memoisation.
+ * repeated renders. Runs in a vitest project that does not enable the
+ * React Compiler, mirroring consumer environments that have not opted
+ * into React Compiler memoisation.
  *
  * Without the fix, `useTypeaheadPicker` builds a fresh state machine
  * inside `useActor` on every render. When the picker becomes active,

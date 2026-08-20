@@ -102,7 +102,6 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@rolldown/plugin-babel": "catalog:tooling",
     "@sanity/diff-match-patch": "catalog:",
     "@sanity/diff-patch": "catalog:",
     "@sanity/json-match": "catalog:",
@@ -117,8 +116,8 @@
     "@vitest/browser": "catalog:tooling",
     "@vitest/browser-playwright": "catalog:tooling",
     "@vitest/coverage-istanbul": "^4.1.10",
-    "babel-plugin-react-compiler": "catalog:tooling",
     "jsdom": "catalog:tooling",
+    "oxc-transform-react": "catalog:tooling",
     "racejar": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",

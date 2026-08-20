@@ -23,8 +23,7 @@ catalogMode: prefer
 catalogs:
   tooling:
     "@portabletext/react": ^8.0.0
-    "@rolldown/plugin-babel": ^0.2.3
-    "@sanity/pkg-utils": ^12.1.0
+    "@sanity/pkg-utils": ^12.3.0
     "@sanity/tsconfig": ^2.1.0
     "@tailwindcss/vite": ^4.3.3
     "@tsdown/css": ^0.22.14
@@ -32,12 +31,12 @@ catalogs:
     "@types/node": ^20
     "@types/react": ^19.2.17
     "@types/react-dom": ^19.2.3
-    "@vitejs/plugin-react": ^6.0.5
+    "@vitejs/plugin-react": ^6.1.0
     "@vitest/browser": ^4.1.10
     "@vitest/browser-playwright": ^4.1.10
-    babel-plugin-react-compiler: ^1.0.0
     jsdom: ^27.2.0
     lucide-react: ^0.562.0
+    oxc-transform-react: ^0.145.0
     oxfmt: ^0.56.0
     oxlint: ^1.79.0
     remeda: ^2.32.0
@@ -67,6 +66,8 @@ minimumReleaseAgeExclude:
   - turbo@2.9.14
   - oxlint
   - "@oxlint/*"
+  - oxc-transform-react
+  - "@oxc-transform-react/*"
   - sharp@0.35.0
 
 trustPolicy: no-downgrade

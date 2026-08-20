@@ -1,7 +1,7 @@
-import babel from '@rolldown/plugin-babel'
-import react, {reactCompilerPreset} from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
 import {defineConfig} from 'vitest/config'
+import {COMPILED_SOURCES} from './react-compiler-sources.ts'
 
 /**
  * Resolves the monorepo-only `@portabletext/editor/test*` specifiers through
@@ -9,6 +9,17 @@ import {defineConfig} from 'vitest/config'
  * cannot live at the top level.
  */
 const resolve = {tsconfigPaths: true}
+
+/**
+ * `COMPILED_SOURCES` drives the published build; test-only harnesses that
+ * never ship are added here instead of there.
+ */
+const TEST_COMPILED_SOURCES = [
+  ...COMPILED_SOURCES,
+  '/packages/editor/tests/',
+  '/packages/editor/gherkin-tests/',
+  '/packages/editor/vitest.setup.ts',
+]
 
 export default defineConfig({
   test: {
@@ -23,11 +34,7 @@ export default defineConfig({
     projects: [
       {
         plugins: [
-          react(),
-          babel({
-            exclude: [/\/node_modules\//, /\/src\/engine\//],
-            presets: [reactCompilerPreset({target: '19'})],
-          }),
+          react({compiler: {target: '19', sources: TEST_COMPILED_SOURCES}}),
         ],
         resolve,
         test: {
@@ -65,11 +72,7 @@ export default defineConfig({
       },
       {
         plugins: [
-          react(),
-          babel({
-            exclude: [/\/node_modules\//, /\/src\/engine\//],
-            presets: [reactCompilerPreset({target: '19'})],
-          }),
+          react({compiler: {target: '19', sources: TEST_COMPILED_SOURCES}}),
         ],
         resolve,
         test: {

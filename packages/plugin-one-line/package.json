@@ -51,7 +51,7 @@
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
-    "babel-plugin-react-compiler": "catalog:tooling",
+    "oxc-transform-react": "catalog:tooling",
     "react": "catalog:",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling"
