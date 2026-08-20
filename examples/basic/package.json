@@ -17,11 +17,10 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@rolldown/plugin-babel": "catalog:tooling",
     "@types/react": "catalog:tooling",
     "@types/react-dom": "catalog:tooling",
     "@vitejs/plugin-react": "catalog:tooling",
-    "babel-plugin-react-compiler": "catalog:tooling",
+    "oxc-transform-react": "catalog:tooling",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling"
   }

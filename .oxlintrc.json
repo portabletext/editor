@@ -191,7 +191,7 @@
     },
     {
       // Keep in lock-step with `reactCompiler.sources` (the
-      // `COMPILED_SOURCES` constant) in `packages/editor/package.config.ts`.
+      // `COMPILED_SOURCES` constant) in `packages/editor/react-compiler-sources.ts`.
       // These vendored engine files are un-excluded from BOTH the
       // react-compiler boundary and the react rules in tiers as the code is
       // audited safe.

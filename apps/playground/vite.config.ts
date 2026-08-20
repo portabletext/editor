@@ -1,22 +1,29 @@
 import path from 'node:path'
-import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
-import react, {reactCompilerPreset} from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react'
 import {defineConfig} from 'vite'
+import {COMPILED_SOURCES} from '../../packages/editor/react-compiler-sources.ts'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
-    babel({
-      // Overriding `exclude` replaces the plugin's defaults, so Rolldown's
-      // runtime helper has to be re-listed alongside the vendored engine.
-      exclude: [
-        /[/\\]node_modules[/\\]/,
-        /\0rolldown\/runtime\.js/,
-        /[/\\]src[/\\]engine[/\\]/,
-      ],
-      presets: [reactCompilerPreset({target: '19'})],
+    react({
+      compiler: {
+        target: '19',
+        sources: [
+          ...COMPILED_SOURCES,
+          '/apps/playground/src/',
+          '/packages/plugin-emoji-picker/src/',
+          '/packages/plugin-input-rule/src/',
+          '/packages/plugin-markdown-shortcuts/src/',
+          '/packages/plugin-one-line/src/',
+          '/packages/plugin-paste-link/src/',
+          '/packages/plugin-table/src/',
+          '/packages/plugin-typeahead-picker/src/',
+          '/packages/plugin-typography/src/',
+          '/packages/toolbar/src/',
+        ],
+      },
     }),
     tailwindcss(),
   ],
