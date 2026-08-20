@@ -486,6 +486,10 @@ async function runTypingScenario(options: {
     {timeout: 10_000},
   )
 
+  // Settle: let any pending renders from the click and `select`
+  // finish before resetting counters.
+  await new Promise((resolve) => setTimeout(resolve, 100))
+
   options.blockRenders.clear()
   options.spanRenders.clear()
   options.decoratorRenders.clear()
