@@ -71,7 +71,6 @@
   "scripts": {
     "build": "pkg-utils build --strict --check",
     "check:lint": "biome lint .",
-    "check:react-compiler": "eslint --cache .",
     "check:types": "tsc",
     "check:types:watch": "tsc --watch",
     "clean": "del .turbo && del lib && del node_modules",
@@ -121,15 +120,11 @@
     "@vitest/browser-playwright": "catalog:tooling",
     "@vitest/coverage-istanbul": "^4.1.10",
     "babel-plugin-react-compiler": "catalog:tooling",
-    "eslint": "catalog:tooling",
-    "eslint-formatter-gha": "catalog:tooling",
-    "eslint-plugin-react-hooks": "catalog:tooling",
     "jsdom": "catalog:tooling",
     "racejar": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
     "typescript": "catalog:tooling",
-    "typescript-eslint": "catalog:tooling",
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling",
     "vitest-browser-react": "catalog:tooling"
