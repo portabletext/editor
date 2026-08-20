@@ -54,11 +54,10 @@ export function renderDefaultDecorator(
 }
 
 /**
- * Engine-default wrapper for Annotation marks: identity. The engine
- * always anchors the annotated text in a `<span ref>` outside this
- * render, kept for structural parity with the legacy `renderAnnotation`
- * path (which hands that anchor to consumers as `editorElementRef`);
- * the render itself owns no markup by default.
+ * Engine-default wrapper for Annotation marks: identity. For a markDef
+ * whose `_type` is a schema-known annotation, the engine anchors the
+ * annotated text in a `<span ref>` outside this render, whether or not
+ * a render is registered; the render itself owns no markup by default.
  */
 export function renderDefaultAnnotation(
   props: AnnotationRenderProps,

@@ -1,7 +1,5 @@
 import type {Patch} from '@portabletext/patches'
 import type {
-  AnnotationSchemaType,
-  DecoratorSchemaType,
   ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
@@ -175,41 +173,6 @@ export type OnCopyFn = (
 
 /**
  * @beta
- * @deprecated `BlockAnnotationRenderProps` is deprecated together with the
- * `renderAnnotation` render prop it serves. Type against
- * `AnnotationRenderProps` from the node registration API instead. See the
- * migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export interface BlockAnnotationRenderProps {
-  block: PortableTextBlock
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  path: Path
-  schemaType: AnnotationSchemaType
-  selected: boolean
-  value: PortableTextObject
-}
-/**
- * @beta
- * @deprecated `BlockDecoratorRenderProps` is deprecated together with the
- * `renderDecorator` render prop it serves. Type against
- * `DecoratorRenderProps` from the node registration API instead. See the
- * migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export interface BlockDecoratorRenderProps {
-  children: ReactElement<any>
-  editorElementRef: RefObject<HTMLElement | null>
-  focused: boolean
-  path: Path
-  schemaType: DecoratorSchemaType
-  selected: boolean
-  value: string
-}
-/**
- * @beta
  * @deprecated The `renderListItem` render prop is removed; render list
  * items with `defineTextBlock` and `@portabletext/plugin-list-index`
  * instead. See the migration guide:
@@ -232,17 +195,6 @@ export type RenderEditableFunction = (
   props: PortableTextEditableProps,
 ) => JSX.Element
 
-/**
- * @beta
- * @deprecated The `renderAnnotation` render prop is deprecated. Register
- * your annotations with `defineAnnotation` mounted through `NodePlugin`
- * instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderAnnotationFunction = (
-  props: BlockAnnotationRenderProps,
-) => JSX.Element
-
 /** @public */
 export type RenderPlaceholderFunction = () => React.ReactNode
 
@@ -263,17 +215,6 @@ export interface BlockStyleRenderProps {
   schemaType: StyleSchemaType
   value: string
 }
-
-/**
- * @beta
- * @deprecated The `renderDecorator` render prop is deprecated. Register
- * your decorators with `defineDecorator` mounted through `NodePlugin`
- * instead. See the migration guide:
- * https://www.portabletext.org/editor/guides/migrate-render-props/
- */
-export type RenderDecoratorFunction = (
-  props: BlockDecoratorRenderProps,
-) => JSX.Element
 
 /** @public */
 export type ScrollSelectionIntoViewFunction = (

@@ -1,12 +1,7 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import type {CSSProperties} from 'react'
 import type {RenderLeafProps} from '../engine/react/components/editable'
-import type {
-  RangeDecoration,
-  RenderAnnotationFunction,
-  RenderDecoratorFunction,
-  RenderPlaceholderFunction,
-} from '../types/editor'
+import type {RangeDecoration, RenderPlaceholderFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderSpan} from './render.span'
 
@@ -25,8 +20,6 @@ export function RenderLeaf(
       rangeDecoration?: RangeDecoration
     }
     readOnly: boolean
-    renderAnnotation?: RenderAnnotationFunction
-    renderDecorator?: RenderDecoratorFunction
     renderPlaceholder?: RenderPlaceholderFunction
     schema: EditorSchema
   },

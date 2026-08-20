@@ -1,7 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import type {BlockDecoratorRenderProps} from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {
   defineBlockObject,
@@ -164,12 +163,8 @@ describe('catch-all registration: global blockObject', () => {
 })
 
 describe('catch-all registration: decorator', () => {
-  test("'*' registration handles every decorator; legacy prop is silenced", async () => {
+  test("'*' registration handles every decorator", async () => {
     const keyGenerator = createTestKeyGenerator()
-
-    const renderDecorator = vi.fn((props: BlockDecoratorRenderProps) => (
-      <span data-testid={`legacy-${props.value}`}>{props.children}</span>
-    ))
 
     await createTestEditor({
       keyGenerator,
@@ -186,7 +181,6 @@ describe('catch-all registration: decorator', () => {
           style: 'normal',
         },
       ],
-      editableProps: {renderDecorator},
       children: (
         <NodePlugin
           nodes={[
@@ -209,8 +203,58 @@ describe('catch-all registration: decorator', () => {
         document.querySelector('[data-testid="wildcard-em"]')?.textContent,
       ).toEqual('bar')
     })
+  })
 
-    expect(renderDecorator).not.toHaveBeenCalled()
+  test("global exact beats global '*' for decorators", async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: decoratorSchema,
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'foo', marks: ['strong']},
+            {_key: 's1', _type: 'span', text: 'bar', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineDecorator({
+              type: 'strong',
+              render: ({children}) => (
+                <strong data-testid="exact-strong">{children}</strong>
+              ),
+            }),
+            defineDecorator({
+              type: '*',
+              render: ({children, decorator}) => (
+                <span data-testid={`wildcard-${decorator}`}>{children}</span>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        document.querySelector('[data-testid="exact-strong"]')?.textContent,
+      ).toEqual('foo')
+      expect(
+        document.querySelector('[data-testid="wildcard-em"]')?.textContent,
+      ).toEqual('bar')
+    })
+
+    expect(document.querySelector('[data-testid="wildcard-strong"]')).toEqual(
+      null,
+    )
   })
 })
 

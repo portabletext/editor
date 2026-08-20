@@ -87,8 +87,6 @@ export type {
 export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'
 export type {
-  BlockAnnotationRenderProps,
-  BlockDecoratorRenderProps,
   BlockListItemRenderProps,
   BlockStyleRenderProps,
   EditableAPIDeleteOptions,
@@ -102,8 +100,6 @@ export type {
   PasteData,
   RangeDecoration,
   RangeDecorationOnMovedDetails,
-  RenderAnnotationFunction,
-  RenderDecoratorFunction,
   RenderEditableFunction,
   RenderPlaceholderFunction,
   ScrollSelectionIntoViewFunction,

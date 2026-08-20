@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import type {BlockDecoratorRenderProps, PortableTextObject} from '../src'
+import type {PortableTextObject} from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {
   defineAnnotation,
@@ -20,9 +20,7 @@ import {createTestEditor} from '../src/test/vitest'
  *   1. Positional exact (`type` matches the mark) beats everything.
  *   2. Positional `'*'` beats a global exact registration.
  *   3. Global exact beats a global `'*'`.
- *   4. Global `'*'` beats the legacy `renderDecorator`/
- *      `renderAnnotation` render props.
- *   5. A positional entry with no `render` falls through to the
+ *   4. A positional entry with no `render` falls through to the
  *      global layer for that mark, ignoring a sibling positional
  *      `'*'`; it does not silence it for other marks.
  */
@@ -520,64 +518,6 @@ describe('positional overrides', () => {
         calloutEl!.querySelector('[data-testid="positional-wildcard"]'),
       ).toEqual(null)
     })
-  })
-
-  test('positional decorator beats renderDecorator prop when no global registration exists', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const calloutKey = keyGenerator()
-    const insideBlockKey = keyGenerator()
-    const insideSpanKey = keyGenerator()
-
-    const positionalStrong = defineDecorator({
-      type: 'strong',
-      render: ({children}) => (
-        <mark data-testid="positional-strong">{children}</mark>
-      ),
-    })
-    const calloutBlock = defineTextBlock({
-      type: 'block',
-      of: [positionalStrong],
-    })
-    const callout = defineContainer({
-      type: 'callout',
-      arrayField: 'content',
-      render: ({attributes, children}) => (
-        <aside data-testid="callout" {...attributes}>
-          {children}
-        </aside>
-      ),
-      of: [calloutBlock],
-    })
-
-    const renderDecorator = vi.fn((props: BlockDecoratorRenderProps) => (
-      <span data-testid="legacy-strong">{props.children}</span>
-    ))
-
-    await createTestEditor({
-      keyGenerator,
-      schemaDefinition: calloutDecoratorSchema,
-      initialValue: [
-        {
-          _key: calloutKey,
-          _type: 'callout',
-          content: [
-            markedBlock(insideBlockKey, insideSpanKey, 'bar', 'strong'),
-          ],
-        },
-      ],
-      editableProps: {renderDecorator},
-      children: <NodePlugin nodes={[callout]} />,
-    })
-
-    await vi.waitFor(() => {
-      const calloutEl = document.querySelector('[data-testid="callout"]')
-      expect(
-        calloutEl!.querySelector('[data-testid="positional-strong"]')
-          ?.textContent,
-      ).toEqual('bar')
-    })
-
-    expect(renderDecorator).not.toHaveBeenCalled()
   })
 })
 

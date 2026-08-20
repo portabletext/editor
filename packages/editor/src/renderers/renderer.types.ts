@@ -52,9 +52,8 @@ export type ContainerRender = (props: ContainerRenderProps) => ReactElement
  * A span's render function. Receives a portable text span node and
  * wraps it. `children` carries the styled text already decorated by
  * the decorator/annotation renders (registered via `defineDecorator`/
- * `defineAnnotation`, or the legacy `renderDecorator`/`renderAnnotation`
- * props). Range decorations wrap this render's output from the
- * outside, so they are not part of `children`.
+ * `defineAnnotation`). Range decorations wrap this render's output
+ * from the outside, so they are not part of `children`.
  */
 export type SpanRenderProps = {
   attributes: Record<string, unknown>
@@ -82,8 +81,7 @@ export type SpanRender = (props: SpanRenderProps) => ReactElement
  * wraps the styled text it applies to. Range and selection decorations
  * can split one span into several leaves, so this fires once per
  * decorator on each leaf, not once per span, nested in the span's
- * `marks` order alongside any decorators still rendered by the legacy
- * `renderDecorator` prop.
+ * `marks` order.
  *
  * The render is a plain function call, not a component: do not call
  * hooks in it. When you need hooks, return an element of your own
@@ -121,9 +119,7 @@ export type DecoratorRender = (props: DecoratorRenderProps) => ReactElement
  * An annotation's render function. Receives the annotation's `markDef`
  * object and wraps the styled text it applies to. The engine anchors
  * the text in a `<span>` outside this render regardless of whether a
- * render is registered, kept for structural parity with the legacy
- * `renderAnnotation` path (which hands that anchor to consumers as
- * `editorElementRef`); this render's job is the styling wrapper only.
+ * render is registered; this render's job is the styling wrapper only.
  *
  * The render is a plain function call, not a component: do not call
  * hooks in it. When you need hooks, return an element of your own
@@ -256,10 +252,10 @@ export type Container = {
  * engine emits `data-pt-*` attributes only, no `pt-*` CSS classes and no
  * legacy `data-block-*` attributes.
  *
- * Span-level render props - `renderDecorator`, `renderAnnotation`,
- * `renderPlaceholder`, and range decorations - keep working. They fire
- * on the spans inside `children` regardless of which text block outer
- * wrapper renders them.
+ * Span-level rendering - decorator and annotation registrations,
+ * `renderPlaceholder`, and range decorations - keeps working. It
+ * fires on the spans inside `children` regardless of which text
+ * block outer wrapper renders them.
  */
 export type TextBlock = {
   kind: 'textBlock'
@@ -277,9 +273,8 @@ export type TextBlock = {
    * text block of this `type` if registered at the top level).
    * `Decorator` and `Annotation` entries scope those renders the
    * same way: the decorator or annotation renders through this entry
-   * inside the text block, and through the global registration (or
-   * the legacy `renderDecorator`/`renderAnnotation` prop) everywhere
-   * else.
+   * inside the text block, and through the global registration
+   * everywhere else.
    */
   of?: ReadonlyArray<Span | InlineObject | Decorator | Annotation>
 }
@@ -288,10 +283,10 @@ export type TextBlock = {
  * @public
  *
  * Text block render function. `children` carries the rendered spans -
- * `renderDecorator`, `renderAnnotation`, `renderPlaceholder`, and range
- * decorations have already fired at the leaf level. The render's job
- * is the outer wrapper element and any block-level composition (style,
- * list-item) the consumer wants.
+ * decorator and annotation registrations, `renderPlaceholder`, and
+ * range decorations have already fired at the leaf level. The render's
+ * job is the outer wrapper element and any block-level composition
+ * (style, list-item) the consumer wants.
  */
 export type TextBlockRenderProps = {
   attributes: Record<string, unknown>
