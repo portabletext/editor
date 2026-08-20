@@ -60,3 +60,49 @@ test('Scenario: toggling a non-default style on a block missing `style` sets it'
     ])
   })
 })
+
+test('Scenario: toggling a style across a selection spanning blocks with different explicit styles sets both', async () => {
+  const blockH1 = {
+    _key: 'b0',
+    _type: 'block',
+    style: 'h1',
+    markDefs: [],
+    children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+  }
+  const blockH2 = {
+    _key: 'b1',
+    _type: 'block',
+    style: 'h2',
+    markDefs: [],
+    children: [{_key: 's1', _type: 'span', text: 'bar', marks: []}],
+  }
+  const {editor} = await createTestEditor({
+    schemaDefinition: defineSchema({
+      styles: [{name: 'normal'}, {name: 'h1'}, {name: 'h2'}],
+    }),
+    initialValue: [blockH1, blockH2],
+  })
+
+  const selection = {
+    anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+  }
+  editor.send({type: 'select', at: selection})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...selection,
+      backward: false,
+    })
+  })
+  expect(getActiveStyle(editor.getSnapshot())).toBeUndefined()
+
+  editor.send({type: 'style.toggle', style: 'normal'})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {...blockH1, style: 'normal'},
+      {...blockH2, style: 'normal'},
+    ])
+  })
+})
