@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.49
+
+### Patch Changes
+
+- [#3120](https://github.com/portabletext/editor/pull/3120) [`b9303b5`](https://github.com/portabletext/editor/commit/b9303b5c0ba16406050af5cc2aef1c49de6244cf) Thanks [@christianhg](https://github.com/christianhg)! - fix: accept `className` on toolbar schema `icon` components
+
+  The `icon` fields on the toolbar schema types were typed as a bare `React.ComponentType`, rejecting icon components that take a `className` prop, which is every common icon library. The type now accepts `React.ComponentType<{className?: string}>`; existing icons without props remain assignable.
+
 ## 8.0.48
 
 ### Patch Changes
