@@ -72,13 +72,10 @@ export function RenderSpan(props: RenderSpanProps) {
         return []
       }
 
-      const markDef = block?.markDefs?.find((markDef) => markDef._key === mark)
-
-      if (markDef) {
-        return [markDef]
-      }
-
-      return []
+      const markDef = block?.markDefs?.find(
+        (candidate) => candidate._key === mark,
+      )
+      return markDef ? [markDef] : []
     },
   )
 
