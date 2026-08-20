@@ -3,9 +3,9 @@ title: Migrate render props to node registrations
 description: Move an editor from the render props on PortableTextEditable to defineX node registrations, one kind at a time.
 ---
 
-The editor has two ways to render a document's content (text blocks, block objects, inline objects, spans, decorators, and annotations): the render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`, `renderDecorator`, `renderAnnotation`), and node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`, `defineDecorator`, `defineAnnotation`) mounted through `NodePlugin`. Registrations are how [containers](/editor/concepts/containers/) render, and for a registered node, decorator, or annotation they own the wrapper entirely: the matching render prop does not fire once a registration claims that type.
+Through v7, the editor rendered a document's content (text blocks, block objects, inline objects, spans, decorators, and annotations) through render props on `<PortableTextEditable>`: `renderBlock`, `renderChild`, `renderStyle`, `renderListItem`, `renderDecorator`, `renderAnnotation`. v8 removes them in favor of node registrations (`defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineContainer`, `defineDecorator`, `defineAnnotation`) mounted through `NodePlugin`. Registrations are how [containers](/editor/concepts/containers/) render, and for a registered node, decorator, or annotation they owned the wrapper entirely: the matching render prop did not fire once a registration claimed that type.
 
-This guide migrates each render prop to its registration. You don't have to do it in one go.
+This guide maps each render prop to its registration equivalent, so you can migrate before upgrading to v8. You don't have to do it in one go.
 
 ## What maps to what
 
@@ -23,11 +23,11 @@ This guide migrates each render prop to its registration. You don't have to do i
 
 ## Migrate one kind at a time
 
-The engine dispatches per `_type`: a node renders through a registration when one matches its type (or a `'*'` catch-all for its kind), and at the top level falls back to the legacy pipeline when none does. Registering block objects doesn't affect how text blocks render, so you can migrate kind by kind and keep the remaining render props in place until their kind is migrated.
+The engine dispatched per `_type`: a node rendered through a registration when one matched its type (or a `'*'` catch-all for its kind), and at the top level fell back to the render prop when none did. Registering block objects didn't affect how text blocks rendered, so you could migrate kind by kind and keep the remaining render props in place until their kind was migrated.
 
-One boundary to plan around: a registration claims everything rendered inside it. Inside a registered [container](/editor/concepts/containers/), unregistered types render through the engine defaults, not through your remaining render props, so when a container enters the picture mid-migration, register everything that renders inside it in the same step. The same applies one level down: a registered text block claims its inline children, and `renderChild` stops firing for the spans and inline objects inside it. That is why the steps below migrate inline objects and spans before text blocks.
+One boundary to plan around: a registration claimed everything rendered inside it. Inside a registered [container](/editor/concepts/containers/), unregistered types rendered through the engine defaults, not through your remaining render props, so when a container entered the picture mid-migration, you had to register everything that rendered inside it in the same step. The same applied one level down: a registered text block claimed its inline children, and `renderChild` stopped firing for the spans and inline objects inside it. That is why the steps below migrate inline objects and spans before text blocks.
 
-Decorators and annotations sit outside this claiming rule. The engine dispatches them per decorator and annotation inside every span's leaf render, independent of whether the enclosing span or text block is registered, so migrating them carries no ordering dependency on the other kinds; do it whenever you like.
+Decorators and annotations sat outside this claiming rule. The engine dispatched them per decorator and annotation inside every span's leaf render, independent of whether the enclosing span or text block was registered, so migrating them carried no ordering dependency on the other kinds; do it whenever you like.
 
 ## Step 1: block objects
 
@@ -125,7 +125,7 @@ const stockTicker = defineInlineObject({
 })
 ```
 
-Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. They DO need the inner `draggable={!readOnly}` wrapper around the visible content: the legacy pipeline wrapped your `renderChild` output in a `draggable` inline-block span, which is what makes an inline object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection). A registration that renders the content bare loses both behaviors, and nothing fails loudly. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine, with decorator and annotation renders, registered or legacy, still composing inside them exactly as before, and only registered inline object types hit your render.
+Unlike block objects, inline objects need no `contentEditable={false}`: the engine's outer attributes already carry non-editability, and your content inherits it. They DO need the inner `draggable={!readOnly}` wrapper around the visible content: the legacy pipeline wrapped your `renderChild` output in a `draggable` inline-block span, which is what makes an inline object drag-movable and keeps its text unselectable (a draggable element starts a drag instead of a text selection). A registration that renders the content bare loses both behaviors, and nothing fails loudly. The legacy default case (`return props.children`) disappears: spans keep rendering through the engine, with decorator and annotation renders still composing inside them exactly as before, and only registered inline object types hit your render.
 
 ## Step 3: spans, if you customized them
 
@@ -144,7 +144,7 @@ const span = defineSpan({
 })
 ```
 
-A registered span owns the outer wrapper, and `children` arrive with the decorator and annotation renders already applied, whether they come from `defineDecorator`/`defineAnnotation` or the legacy `renderDecorator`/`renderAnnotation` props, the same composition the legacy pipeline produced inside the span. `'span'` is the span type at the top level; text blocks can positionally register renamed span-like types through their own `of` (a `code-span` inside a code block's line, say), which is a [containers](/editor/concepts/containers/) concern rather than a migration one.
+A registered span owns the outer wrapper, and `children` arrive with the decorator and annotation renders from `defineDecorator`/`defineAnnotation` already applied, the same composition the legacy pipeline produced inside the span. `'span'` is the span type at the top level; text blocks can positionally register renamed span-like types through their own `of` (a `code-span` inside a code block's line, say), which is a [containers](/editor/concepts/containers/) concern rather than a migration one.
 
 ## Step 4: text blocks
 
@@ -314,7 +314,7 @@ const annotationFallback = defineAnnotation({
 `annotation` is the full `markDef` object (`{_key, _type, ...fields}`) with an `unknown` index signature, so a field the legacy callback read off a separately-typed `value` (a `link` annotation's `href`, say) needs a cast: `String(annotation.href)`. It is named `annotation`, not `node`, because `path` addresses the span carrying the annotation, not the markDef.
 
 :::note[Legacy fields with no registration equivalent]
-`renderDecorator` and `renderAnnotation` both carried `editorElementRef`, a ref to the engine-owned leaf DOM anchor. No registration exposes it; consumers relying on it keep the render prop. Both also carried `schemaType` (`renderAnnotation` carried `block` too), which a registration's `render` doesn't receive, but you can derive them yourself from a `path`: `getPathSubSchema` and `getEnclosingBlock`, both from `@portabletext/editor/traversal`, read the sub-schema and enclosing text block inside a selector.
+`renderDecorator` and `renderAnnotation` both carried `editorElementRef`, a ref to the engine-owned leaf DOM anchor. No registration exposes it, and the prop is gone, so there is nothing to fall back to: put a ref on your own rendered element instead. A decorator's `render` owns the markup and an annotation's composes inside the engine's anchor, so a ref on your own element reaches the same position in the DOM. Both props also carried `schemaType` (`renderAnnotation` carried `block` too), which a registration's `render` doesn't receive, but you can derive them yourself from a `path`: `getPathSubSchema` and `getEnclosingBlock`, both from `@portabletext/editor/traversal`, read the sub-schema and enclosing text block inside a selector.
 :::
 
 :::caution[Registration renders are plain function calls, not components]

@@ -1,16 +1,13 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import type {
-  AnnotationRenderProps,
-  BlockAnnotationRenderProps,
-  BlockDecoratorRenderProps,
-  PortableTextObject,
-} from '../src'
+import {userEvent} from 'vitest/browser'
+import type {AnnotationRenderProps, PortableTextObject} from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {
   defineAnnotation,
   defineDecorator,
+  defineTextBlock,
 } from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -63,48 +60,6 @@ describe('registered decorator', () => {
     })
   })
 
-  test('registered render beats renderDecorator prop for its type; prop still fires for an unregistered decorator', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanAKey = keyGenerator()
-    const spanBKey = keyGenerator()
-
-    const strongDecorator = defineDecorator({
-      type: 'strong',
-      render: ({children}) => (
-        <strong data-testid="registered-strong">{children}</strong>
-      ),
-    })
-
-    const renderDecorator = vi.fn((props: BlockDecoratorRenderProps) => (
-      <span data-testid={`legacy-${props.value}`}>{props.children}</span>
-    ))
-
-    await createTestEditor({
-      keyGenerator,
-      schemaDefinition: decoratorSchema,
-      initialValue: [
-        twoMarkedSpansBlock(blockKey, spanAKey, spanBKey, 'strong', 'em'),
-      ],
-      editableProps: {renderDecorator},
-      children: <NodePlugin nodes={[strongDecorator]} />,
-    })
-
-    await vi.waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="registered-strong"]')
-          ?.textContent,
-      ).toEqual('foo')
-      expect(
-        document.querySelector('[data-testid="legacy-em"]')?.textContent,
-      ).toEqual('bar')
-    })
-
-    expect(
-      renderDecorator.mock.calls.filter(([props]) => props.value === 'strong'),
-    ).toEqual([])
-  })
-
   test('renderDefault output equals the unregistered output', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -155,23 +110,27 @@ describe('registered decorator', () => {
     expect(identityRender).toHaveBeenCalled()
   })
 
-  test('nesting order follows marks order across mixed dispatch', async () => {
+  test('focused and selected marks reflect the cursor', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
 
     const strongDecorator = defineDecorator({
       type: 'strong',
-      render: ({children}) => (
-        <strong data-testid="registered-strong">{children}</strong>
+      render: ({children, focused, selected}) => (
+        <strong
+          data-testid="registered-strong"
+          data-focused={String(focused)}
+          data-selected={String(selected)}
+        >
+          {children}
+        </strong>
       ),
     })
 
-    const renderDecorator = (props: BlockDecoratorRenderProps) => (
-      <em data-testid="legacy-em">{props.children}</em>
-    )
-
-    await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: decoratorSchema,
       initialValue: [
@@ -179,32 +138,99 @@ describe('registered decorator', () => {
           _key: blockKey,
           _type: 'block',
           children: [
+            {_key: fooSpanKey, _type: 'span', text: 'foo '},
             {
-              _key: spanKey,
+              _key: barSpanKey,
               _type: 'span',
               text: 'bar',
-              marks: ['strong', 'em'],
+              marks: ['strong'],
             },
+            {_key: bazSpanKey, _type: 'span', text: ' baz'},
           ],
           markDefs: [],
           style: 'normal',
         },
       ],
-      editableProps: {renderDecorator},
       children: <NodePlugin nodes={[strongDecorator]} />,
     })
 
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          offset: 4,
+        },
+      },
+    })
+
     await vi.waitFor(() => {
-      expect(
-        document.querySelector(
-          '[data-testid="legacy-em"] [data-testid="registered-strong"]',
-        ),
-      ).not.toEqual(null)
-      expect(
-        document.querySelector(
-          '[data-testid="registered-strong"] [data-testid="legacy-em"]',
-        ),
-      ).toEqual(null)
+      const strong = document.querySelector('[data-testid="registered-strong"]')
+      expect(strong?.getAttribute('data-focused')).toEqual('false')
+      expect(strong?.getAttribute('data-selected')).toEqual('false')
+    })
+
+    // Cursor is now at "foo b|ar baz", inside the marked text.
+    await userEvent.keyboard('{ArrowRight}')
+    await vi.waitFor(() => {
+      const strong = document.querySelector('[data-testid="registered-strong"]')
+      expect(strong?.getAttribute('data-focused')).toEqual('true')
+      expect(strong?.getAttribute('data-selected')).toEqual('true')
+    })
+
+    // Cursor is now at "foo bar |baz", past the marked text.
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}')
+    await vi.waitFor(() => {
+      const strong = document.querySelector('[data-testid="registered-strong"]')
+      expect(strong?.getAttribute('data-focused')).toEqual('false')
+      expect(strong?.getAttribute('data-selected')).toEqual('false')
+    })
+  })
+
+  test('composes inside a registered text block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: ({attributes, children}) => (
+        <div data-testid="text" {...attributes}>
+          {children}
+        </div>
+      ),
+    })
+    const strongDecorator = defineDecorator({
+      type: 'strong',
+      render: ({children}) => <strong>{children}</strong>,
+    })
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={[textBlock, strongDecorator]} />,
+    })
+
+    await vi.waitFor(() => {
+      const root = document.querySelector('[data-testid="text"]')
+      expect(root).not.toEqual(null)
+      expect(root!.innerHTML).toContain('<strong>')
     })
   })
 
@@ -250,81 +276,14 @@ describe('registered decorator', () => {
       null,
     )
   })
-
-  test('unregister falls back to the legacy prop', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-
-    const strongDecorator = defineDecorator({
-      type: 'strong',
-      render: ({children}) => (
-        <strong data-testid="registered-strong">{children}</strong>
-      ),
-    })
-
-    const renderDecorator = (props: BlockDecoratorRenderProps) => (
-      <em data-testid="legacy-strong">{props.children}</em>
-    )
-
-    const initialValue = [
-      {
-        _key: blockKey,
-        _type: 'block' as const,
-        children: [
-          {
-            _key: spanKey,
-            _type: 'span' as const,
-            text: 'bar',
-            marks: ['strong'],
-          },
-        ],
-        markDefs: [],
-        style: 'normal',
-      },
-    ]
-
-    const {rerender} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: decoratorSchema,
-      initialValue,
-      editableProps: {renderDecorator},
-      children: <NodePlugin nodes={[strongDecorator]} />,
-    })
-
-    await vi.waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="registered-strong"]')
-          ?.textContent,
-      ).toEqual('bar')
-    })
-
-    await rerender({
-      keyGenerator,
-      schemaDefinition: decoratorSchema,
-      initialValue,
-      editableProps: {renderDecorator},
-    })
-
-    await vi.waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="registered-strong"]'),
-      ).toEqual(null)
-      expect(
-        document.querySelector('[data-testid="legacy-strong"]')?.textContent,
-      ).toEqual('bar')
-    })
-  })
 })
 
 describe('registered annotation', () => {
-  test('registered render receives the markDef as `annotation` and beats renderAnnotation prop; prop still fires for an unregistered annotation type', async () => {
+  test('registered render receives the markDef as `annotation`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
-    const spanAKey = keyGenerator()
-    const spanBKey = keyGenerator()
+    const spanKey = keyGenerator()
     const linkKey = keyGenerator()
-    const commentKey = keyGenerator()
 
     let receivedNode: PortableTextObject | undefined
 
@@ -343,10 +302,6 @@ describe('registered annotation', () => {
       },
     })
 
-    const renderAnnotation = vi.fn((props: BlockAnnotationRenderProps) => (
-      <span data-testid={`legacy-${props.value._type}`}>{props.children}</span>
-    ))
-
     await createTestEditor({
       keyGenerator,
       schemaDefinition: annotationSchema,
@@ -355,8 +310,7 @@ describe('registered annotation', () => {
           _key: blockKey,
           _type: 'block',
           children: [
-            {_key: spanAKey, _type: 'span', text: 'foo', marks: [linkKey]},
-            {_key: spanBKey, _type: 'span', text: 'bar', marks: [commentKey]},
+            {_key: spanKey, _type: 'span', text: 'foo', marks: [linkKey]},
           ],
           markDefs: [
             {
@@ -364,12 +318,10 @@ describe('registered annotation', () => {
               _type: 'link',
               href: 'https://example.com',
             },
-            {_key: commentKey, _type: 'comment', text: 'hi'},
           ],
           style: 'normal',
         },
       ],
-      editableProps: {renderAnnotation},
       children: <NodePlugin nodes={[linkAnnotation]} />,
     })
 
@@ -377,9 +329,6 @@ describe('registered annotation', () => {
       expect(
         document.querySelector('[data-testid="registered-link"]')?.textContent,
       ).toEqual('foo')
-      expect(
-        document.querySelector('[data-testid="legacy-comment"]')?.textContent,
-      ).toEqual('bar')
     })
 
     expect(receivedNode).toEqual({
@@ -387,11 +336,6 @@ describe('registered annotation', () => {
       _type: 'link',
       href: 'https://example.com',
     })
-    expect(
-      renderAnnotation.mock.calls.filter(
-        ([props]) => props.value._type === 'link',
-      ),
-    ).toEqual([])
   })
 
   test('renderDefault output equals the unregistered output', async () => {
@@ -445,6 +389,138 @@ describe('registered annotation', () => {
     })
 
     expect(identityRender).toHaveBeenCalled()
+  })
+
+  test('focused and selected marks reflect the cursor', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const linkKey = keyGenerator()
+
+    const linkAnnotation = defineAnnotation({
+      type: 'link',
+      render: ({children, focused, selected}) => (
+        <span
+          data-testid="registered-link"
+          data-focused={String(focused)}
+          data-selected={String(selected)}
+        >
+          {children}
+        </span>
+      ),
+    })
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: annotationSchema,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooSpanKey, _type: 'span', text: 'foo '},
+            {_key: barSpanKey, _type: 'span', text: 'bar', marks: [linkKey]},
+            {_key: bazSpanKey, _type: 'span', text: ' baz'},
+          ],
+          markDefs: [
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
+          ],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={[linkAnnotation]} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      const link = document.querySelector('[data-testid="registered-link"]')
+      expect(link?.getAttribute('data-focused')).toEqual('false')
+      expect(link?.getAttribute('data-selected')).toEqual('false')
+    })
+
+    // Cursor is now at "foo b|ar baz", inside the marked text.
+    await userEvent.keyboard('{ArrowRight}')
+    await vi.waitFor(() => {
+      const link = document.querySelector('[data-testid="registered-link"]')
+      expect(link?.getAttribute('data-focused')).toEqual('true')
+      expect(link?.getAttribute('data-selected')).toEqual('true')
+    })
+
+    // Cursor is now at "foo bar |baz", past the marked text.
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}')
+    await vi.waitFor(() => {
+      const link = document.querySelector('[data-testid="registered-link"]')
+      expect(link?.getAttribute('data-focused')).toEqual('false')
+      expect(link?.getAttribute('data-selected')).toEqual('false')
+    })
+  })
+
+  test('composes inside a registered text block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const linkKey = keyGenerator()
+
+    const textBlock = defineTextBlock({
+      type: 'block',
+      render: ({attributes, children}) => (
+        <div data-testid="text" {...attributes}>
+          {children}
+        </div>
+      ),
+    })
+    const linkAnnotation = defineAnnotation({
+      type: 'link',
+      render: ({annotation, children}) =>
+        typeof annotation['href'] === 'string' ? (
+          <a href={annotation['href']}>{children}</a>
+        ) : (
+          children
+        ),
+    })
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo', marks: [linkKey]},
+          ],
+          markDefs: [
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
+          ],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={[textBlock, linkAnnotation]} />,
+    })
+
+    await vi.waitFor(() => {
+      const root = document.querySelector('[data-testid="text"]')
+      expect(root).not.toEqual(null)
+      expect(root!.innerHTML).toContain('<a href="https://example.com">')
+    })
   })
 
   test('a registered annotation whose _type is not in the schema never fires', async () => {

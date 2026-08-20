@@ -30,8 +30,6 @@ import type {
   OnCopyFn,
   OnPasteFn,
   RangeDecoration,
-  RenderAnnotationFunction,
-  RenderDecoratorFunction,
   RenderPlaceholderFunction,
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
@@ -63,18 +61,6 @@ export type PortableTextEditableProps = Omit<
   onPaste?: OnPasteFn
   onCopy?: OnCopyFn
   rangeDecorations?: RangeDecoration[]
-  /**
-   * @deprecated Register your annotations with `defineAnnotation`
-   * mounted through `NodePlugin` instead. See the migration guide:
-   * https://www.portabletext.org/editor/guides/migrate-render-props/
-   */
-  renderAnnotation?: RenderAnnotationFunction
-  /**
-   * @deprecated Register your decorators with `defineDecorator` mounted
-   * through `NodePlugin` instead. See the migration guide:
-   * https://www.portabletext.org/editor/guides/migrate-render-props/
-   */
-  renderDecorator?: RenderDecoratorFunction
   renderPlaceholder?: RenderPlaceholderFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
   selection?: EditorSelection
@@ -122,8 +108,6 @@ export const PortableTextEditable = forwardRef<
     onDrop,
     onDragLeave,
     rangeDecorations,
-    renderAnnotation,
-    renderDecorator,
     renderPlaceholder,
     selection: propsSelection,
     scrollSelectionIntoView,
@@ -192,13 +176,11 @@ export const PortableTextEditable = forwardRef<
       <RenderLeaf
         {...leafProps}
         readOnly={readOnly}
-        renderAnnotation={renderAnnotation}
-        renderDecorator={renderDecorator}
         renderPlaceholder={renderPlaceholder}
         schema={schema}
       />
     ),
-    [readOnly, renderAnnotation, renderDecorator, renderPlaceholder, schema],
+    [readOnly, renderPlaceholder, schema],
   )
 
   const renderText = useCallback(

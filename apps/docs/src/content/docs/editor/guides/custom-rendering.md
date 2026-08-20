@@ -9,7 +9,7 @@ Marks (decorators and annotations) render through node registrations: `defineDec
 
 `renderPlaceholder` and `rangeDecorations`, the remaining rendering props without a registration equivalent, stay on `<PortableTextEditable>`; this guide documents them below.
 
-If your editor still renders through the deprecated `renderDecorator`, `renderAnnotation`, `renderBlock`, `renderChild`, `renderStyle`, or `renderListItem` props, the [migration guide](/editor/guides/migrate-render-props/) walks through moving to registrations. None of these choices affect the Portable Text output: they only change how the editor itself renders content.
+The `renderDecorator`, `renderAnnotation`, `renderBlock`, `renderChild`, `renderStyle`, and `renderListItem` props are removed in this major; the [migration guide](/editor/guides/migrate-render-props/) walks through moving to registrations. None of these choices affect the Portable Text output: they only change how the editor itself renders content.
 
 ## Decorators
 

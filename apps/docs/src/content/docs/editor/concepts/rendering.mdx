@@ -1,6 +1,6 @@
 ---
 title: Rendering
-description: How node registrations own the editor's markup, and how the engine dispatches between global, positional, and legacy renders.
+description: How node registrations own the editor's markup, and how the engine dispatches between positional, global, and default renders.
 sidebar:
   order: 2
 ---
@@ -115,7 +115,7 @@ const nodes = [
 
 ## Dispatch precedence
 
-At a given position, a positional registration (one scoped through a container or text block's own `of`, see [Containers](/editor/concepts/containers/)) beats a global registration, which beats the deprecated `renderDecorator`/`renderAnnotation` render props on `<PortableTextEditable>`. Within a level, an exact `type` match beats a `'*'` catch-all:
+At a given position, a positional registration (one scoped through a container or text block's own `of`, see [Containers](/editor/concepts/containers/)) beats a global registration, which beats the engine default. Within a level, an exact `type` match beats a `'*'` catch-all:
 
 ```tsx
 const nodes = [
@@ -204,5 +204,5 @@ function TextBlock(props: TextBlockRenderProps) {
 `useListIndex` reads from `ListIndexProvider`, mounted inside `EditorProvider`. Each plugin's README carries the full recipe, including a reference `DropIndicator` implementation.
 
 :::note[Migrating from the render props?]
-If your editor still renders through the deprecated render props on `<PortableTextEditable>` (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
+If your editor still renders through the render props from the previous major, removed in this one (`renderBlock`, `renderChild`, `renderStyle`, `renderListItem`, `renderDecorator`, `renderAnnotation`), each has a registration equivalent, and the engine dispatches per `_type`, so you can migrate one kind at a time. The [migration guide](/editor/guides/migrate-render-props/) walks through it.
 :::

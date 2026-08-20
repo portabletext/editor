@@ -171,7 +171,7 @@ Include the `App` component in your application and run it. You should see an ou
 
 At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a `defineTextBlock` node for the text blocks and `defineDecorator` nodes for the marks. The [Rendering](/editor/concepts/rendering/) page covers the model these registrations share.
 
-If you're maintaining an editor that still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, `renderDecorator`, and `renderAnnotation` props, see the [migration guide](/editor/guides/migrate-render-props/) to move to node registrations instead of following this section from scratch.
+If you're maintaining an editor that rendered through the `renderStyle`, `renderBlock`, `renderListItem`, `renderDecorator`, and `renderAnnotation` props, removed in this major, see the [migration guide](/editor/guides/migrate-render-props/) to move to node registrations instead of following this section from scratch.
 
 Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 

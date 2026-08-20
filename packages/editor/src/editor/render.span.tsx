@@ -8,12 +8,6 @@ import type {
   DecoratorRenderProps,
   SpanRenderProps,
 } from '../renderers/renderer.types'
-import type {
-  BlockAnnotationRenderProps,
-  BlockDecoratorRenderProps,
-  RenderAnnotationFunction,
-  RenderDecoratorFunction,
-} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {
   findPositionalAnnotationOverride,
@@ -35,8 +29,6 @@ import {useBlockSubSchema} from './use-block-sub-schema'
 
 interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
-  renderAnnotation?: RenderAnnotationFunction
-  renderDecorator?: RenderDecoratorFunction
   readOnly: boolean
   schema: EditorSchema
 }
@@ -92,10 +84,6 @@ export function RenderSpan(props: RenderSpanProps) {
 
   let children = props.children
 
-  /**
-   * Support registered decorators, falling back to the legacy
-   * `renderDecorator` render function, for each Decorator mark.
-   */
   for (const mark of decorators) {
     const decoratorSchemaType = subSchema.decorators.find(
       (dec) => dec.name === mark,
@@ -132,32 +120,9 @@ export function RenderSpan(props: RenderSpanProps) {
       children = render
         ? render(renderProps)
         : renderDefaultDecorator(renderProps)
-      continue
-    }
-
-    if (props.renderDecorator) {
-      children = (
-        <RenderDecorator
-          renderDecorator={props.renderDecorator}
-          editorElementRef={spanRef}
-          focused={focused}
-          path={props.path}
-          selected={selected}
-          schemaType={decoratorSchemaType}
-          value={mark}
-        >
-          {children}
-        </RenderDecorator>
-      )
     }
   }
 
-  /**
-   * Support registered annotations, falling back to the legacy
-   * `renderAnnotation` render function, for each Annotation markDef.
-   * The `<span ref>` anchor is unconditional whenever the markDef's
-   * `_type` is a known annotation, independent of which render fires.
-   */
   for (const annotationMarkDef of annotationMarkDefs) {
     const annotationSchemaType = subSchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
@@ -199,26 +164,7 @@ export function RenderSpan(props: RenderSpanProps) {
         continue
       }
 
-      if (block && props.renderAnnotation) {
-        children = (
-          <span ref={spanRef}>
-            <RenderAnnotation
-              renderAnnotation={props.renderAnnotation}
-              block={block}
-              editorElementRef={spanRef}
-              focused={focused}
-              path={props.path}
-              selected={selected}
-              schemaType={annotationSchemaType}
-              value={annotationMarkDef}
-            >
-              {children}
-            </RenderAnnotation>
-          </span>
-        )
-      } else {
-        children = <span ref={spanRef}>{children}</span>
-      }
+      children = <span ref={spanRef}>{children}</span>
     }
   }
 
@@ -242,52 +188,4 @@ export function RenderSpan(props: RenderSpanProps) {
       {children}
     </span>
   )
-}
-
-function RenderAnnotation({
-  renderAnnotation,
-  block,
-  children,
-  editorElementRef,
-  focused,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderAnnotation: RenderAnnotationFunction
-} & BlockAnnotationRenderProps) {
-  return renderAnnotation({
-    block,
-    children,
-    editorElementRef,
-    focused,
-    path,
-    schemaType,
-    selected,
-    value,
-  })
-}
-
-function RenderDecorator({
-  renderDecorator,
-  children,
-  editorElementRef,
-  focused,
-  path,
-  schemaType,
-  selected,
-  value,
-}: {
-  renderDecorator: RenderDecoratorFunction
-} & BlockDecoratorRenderProps) {
-  return renderDecorator({
-    children,
-    editorElementRef,
-    focused,
-    path,
-    schemaType,
-    selected,
-    value,
-  })
 }

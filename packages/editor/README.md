@@ -152,7 +152,7 @@ Include the `App` component in your application and run it. You should see an ou
 
 ### Set up rendering for schema elements
 
-At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a `defineTextBlock` node for the text blocks and `defineDecorator`/`defineAnnotation` nodes for the marks. If your editor still renders through the deprecated `renderStyle`, `renderBlock`, `renderListItem`, `renderChild`, `renderDecorator`, and `renderAnnotation` props, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/) to move to node registrations instead.
+At this point the editor renders every text block as plain text, whatever its style. Fix that by registering a `defineTextBlock` node for the text blocks and `defineDecorator`/`defineAnnotation` nodes for the marks. If your editor rendered through the `renderStyle`, `renderBlock`, `renderListItem`, `renderChild`, `renderDecorator`, and `renderAnnotation` props, removed in this major, see the [migration guide](https://www.portabletext.org/editor/guides/migrate-render-props/) to move to node registrations instead.
 
 Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
