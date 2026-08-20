@@ -6,7 +6,6 @@
       "entry": ["src/index.ts!", "package.config.ts!"],
       "ignoreDependencies": [
         "babel-plugin-react-compiler",
-        "eslint-formatter-gha",
         "@vitest/browser",
         "@vitest/browser-playwright",
         "@vitest/coverage-v8",
@@ -27,7 +26,6 @@
       ],
       "ignoreDependencies": [
         "babel-plugin-react-compiler",
-        "eslint-formatter-gha",
         "@vitest/browser",
         "@vitest/browser-playwright",
         "@vitest/coverage-v8",
@@ -44,7 +42,6 @@
       ],
       "ignoreDependencies": [
         "babel-plugin-react-compiler",
-        "eslint-formatter-gha",
         "@vitest/browser",
         "@vitest/browser-playwright",
         "@vitest/coverage-v8",
@@ -55,7 +52,6 @@
     "apps/*": {
       "ignoreDependencies": [
         "babel-plugin-react-compiler",
-        "eslint-formatter-gha",
         "tailwindcss-react-aria-components",
         "sharp"
       ]

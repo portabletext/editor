@@ -6,7 +6,6 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "check:lint": "biome lint .",
-    "check:react-compiler": "eslint --cache .",
     "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
     "check:types:watch": "tsc --watch --project tsconfig.app.json",
     "clean": "del .turbo && del dist && del node_modules",
@@ -52,15 +51,11 @@
     "@types/react-is": "^19.2.0",
     "@vitejs/plugin-react": "catalog:tooling",
     "babel-plugin-react-compiler": "catalog:tooling",
-    "eslint": "catalog:tooling",
-    "eslint-formatter-gha": "catalog:tooling",
-    "eslint-plugin-react-hooks": "catalog:tooling",
     "tailwind-merge": "catalog:tooling",
     "tailwind-variants": "^1.0.0",
     "tailwindcss": "catalog:tooling",
     "tailwindcss-react-aria-components": "^2.0.1",
     "typescript": "catalog:tooling",
-    "typescript-eslint": "catalog:tooling",
     "vite": "catalog:tooling"
   }
 }

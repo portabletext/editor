@@ -17,8 +17,7 @@ import {defineConfig} from '@sanity/pkg-utils'
  *   render; deleting the equalities is gated on a follow-up that
  *   compiles `useChildren`.
  *
- * See `/specs/render-pipeline-compiler-collapse.md`. Kept in lock-step
- * with `eslint.config.js` (the react-hooks ignores).
+ * Kept in lock-step with `.oxlintrc.json` (the react-hooks ignores).
  */
 const TIER_1_PATHS = [
   '/src/engine/path/path-equals.ts',

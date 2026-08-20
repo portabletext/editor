@@ -1,0 +1,67 @@
+{
+  "plugins": ["react"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/error-boundaries": "error",
+    "react/globals": "error",
+    "react/immutability": "error",
+    "react/incompatible-library": "warn",
+    "react/preserve-manual-memoization": "error",
+    "react/purity": "error",
+    "react/refs": "error",
+    "react/set-state-in-effect": "error",
+    "react/set-state-in-render": "error",
+    "react/static-components": "error",
+    "react/use-memo": "error",
+    "react/unsupported-syntax": "warn"
+  },
+  "ignorePatterns": [
+    "**/*",
+    "!packages/*/src/**",
+    "!apps/playground/src/**",
+    "**/*.test.*",
+    "**/__tests__/**",
+    "packages/editor/src/engine/**",
+
+    // Keep in lock-step with `reactCompiler.sources` (the
+    // `COMPILED_SOURCES` constant) in `packages/editor/package.config.ts`.
+    // These vendored engine files are un-excluded from BOTH the
+    // react-compiler boundary and the react rules in tiers as the code is
+    // audited safe.
+
+    // Tier 1 = pure utilities (no hooks, no React, no module-level
+    // mutation).
+    "!packages/editor/src/engine/path/path-equals.ts",
+    "!packages/editor/src/engine/path/parent-path.ts",
+    "!packages/editor/src/engine/text/text-equals.ts",
+    "!packages/editor/src/engine/text/get-text-decorations.ts",
+    "!packages/editor/src/engine/node/is-text-block-node.ts",
+    "!packages/editor/src/engine/node/is-object-node.ts",
+    "!packages/editor/src/engine/node/is-span-node.ts",
+    "!packages/editor/src/engine/editor/is-editor.ts",
+    "!packages/editor/src/engine/editor/start.ts",
+    "!packages/editor/src/engine/editor/end.ts",
+    "!packages/editor/src/engine/dom/utils/range-list.ts",
+    "!packages/editor/src/engine/dom/utils/environment.ts",
+    "!packages/editor/src/engine/react/utils/direction.ts",
+
+    // Tier 2 = hook utilities. Phase 2 of the un-exclusion plan.
+    "!packages/editor/src/engine/react/hooks/use-engine-static.tsx",
+    "!packages/editor/src/engine/react/hooks/use-isomorphic-layout-effect.ts",
+    "!packages/editor/src/engine/react/hooks/use-generic-selector.tsx",
+    "!packages/editor/src/engine/react/hooks/use-read-only.ts",
+    "!packages/editor/src/engine/react/hooks/use-decorations.ts",
+    "!packages/editor/src/engine/react/hooks/use-decorations-by-child.ts",
+
+    // Tier 3 = wrapper components rendered by `useChildren`.
+    "!packages/editor/src/engine/react/components/element.tsx",
+    "!packages/editor/src/engine/react/components/text.tsx",
+    "!packages/editor/src/engine/react/components/leaf.tsx",
+    "!packages/editor/src/engine/react/components/object-node.tsx",
+    "!packages/editor/src/engine/react/components/string.tsx"
+  ]
+}
