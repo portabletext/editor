@@ -6,6 +6,7 @@
   "scripts": {
     "astro": "astro",
     "build": "astro build",
+    "check:types": "astro check",
     "clean": "del .astro && del .turbo && del dist && del node_modules",
     "dev": "astro dev",
     "preview": "astro preview",
@@ -49,6 +50,7 @@
     "typedoc-plugin-markdown": "^4.8.0"
   },
   "devDependencies": {
+    "@astrojs/check": "catalog:",
     "starlight-llms-txt": "^0.11.0"
   }
 }
