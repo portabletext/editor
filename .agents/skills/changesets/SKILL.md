@@ -100,6 +100,14 @@ the anchor by numeric index now resolve instead of returning
 
 Why it's good: states the wrong observable outputs (`undefined` where a sibling exists, wrong sibling), then the new contract, and anchors it to sibling APIs the consumer already trusts ("matching `getNode` and `getChildren`").
 
+## Multi-PR release trains (stacks)
+
+When a major lands as a stack of PRs feeding one Version Packages release, three extra rules apply; each was learned from a real incident during the v8 stack:
+
+- **A changeset must be true of the release, not just its PR.** Before pushing, audit claims about untouched surface ("X stays", "remains exported but is deprecated", "Y keeps composing") against the other pending changesets: a sibling PR in the same train may remove exactly that surface, and the changelog would assert both. (The `remove-render-list-item` changeset promised `data-list-item`/`data-level` stay; the unified-DOM changeset removes them.)
+- **Changesets are keyed to consumer-observable changes, not PRs.** A PR that completes a story an earlier pending changeset began amends that changeset instead of adding a sibling; pending changesets are ordinary files on `main` until released. (The props-shape-types PR added no changeset: `remove-render-style` absorbed `BlockStyleRenderProps`, since prop and types leaving together is one change to the consumer.)
+- **Migration advice must name a reader you can point at.** If no consumer demonstrably uses the pattern the sentence addresses, delete the sentence; speculative hand-holding is noise wearing a helpful face. (An invented `Pick<BlockStyleRenderProps, ...>` consumer got a personalized migration note; nobody Picks from a callback-payload type.)
+
 ## Anti-patterns
 
 - First line paraphrasing instead of mirroring the commit subject.
