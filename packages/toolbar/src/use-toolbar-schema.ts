@@ -122,7 +122,7 @@ export type ToolbarSchema = {
  * @beta
  */
 export type ToolbarDecoratorSchemaType = DecoratorSchemaType & {
-  icon?: React.ComponentType
+  icon?: React.ComponentType<{className?: string}>
   shortcut?: KeyboardShortcut
   mutuallyExclusive?: ReadonlyArray<DecoratorDefinition['name']>
 }
@@ -131,7 +131,7 @@ export type ToolbarDecoratorSchemaType = DecoratorSchemaType & {
  * @beta
  */
 export type ToolbarAnnotationSchemaType = AnnotationSchemaType & {
-  icon?: React.ComponentType
+  icon?: React.ComponentType<{className?: string}>
   defaultValues?: Record<string, unknown>
   shortcut?: KeyboardShortcut
   /**
@@ -153,14 +153,14 @@ export type ToolbarAnnotationSchemaType = AnnotationSchemaType & {
  * @beta
  */
 export type ToolbarListSchemaType = ListSchemaType & {
-  icon?: React.ComponentType
+  icon?: React.ComponentType<{className?: string}>
 }
 
 /**
  * @beta
  */
 export type ToolbarBlockObjectSchemaType = BlockObjectSchemaType & {
-  icon?: React.ComponentType
+  icon?: React.ComponentType<{className?: string}>
   defaultValues?: Record<string, unknown>
   shortcut?: KeyboardShortcut
 }
@@ -169,7 +169,7 @@ export type ToolbarBlockObjectSchemaType = BlockObjectSchemaType & {
  * @beta
  */
 export type ToolbarInlineObjectSchemaType = InlineObjectSchemaType & {
-  icon?: React.ComponentType
+  icon?: React.ComponentType<{className?: string}>
   defaultValues?: Record<string, unknown>
   shortcut?: KeyboardShortcut
 }
@@ -178,7 +178,7 @@ export type ToolbarInlineObjectSchemaType = InlineObjectSchemaType & {
  * @beta
  */
 export type ToolbarStyleSchemaType = StyleSchemaType & {
-  icon?: React.ComponentType
+  icon?: React.ComponentType<{className?: string}>
   shortcut?: KeyboardShortcut
 }
 
