@@ -53,10 +53,25 @@ describe('drop position re-renders', () => {
       }),
     )
 
-    // Give the tick time to cause the damage it must not cause: a settled
-    // editor whose dragover re-rendered blocks would have pushed keys by now.
-    await new Promise((resolve) => setTimeout(resolve, 50))
-    expect(renders).toEqual([])
+    // A negative has no signal to await, so a real edit bounds the window:
+    // `b3`'s render flushes in the same React commit or later than any
+    // damage the dragover could have caused.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath('b3'), offset: 6},
+        focus: {path: spanPath('b3'), offset: 6},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      if (!renders.includes('b3')) {
+        throw new Error('edit not rendered yet')
+      }
+    })
+
+    expect([...new Set(renders)]).toEqual(['b3'])
   })
 })
 
