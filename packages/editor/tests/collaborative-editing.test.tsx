@@ -1,6 +1,6 @@
 import {applyAll, diffMatchPatch, type Patch} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
@@ -1704,6 +1704,120 @@ describe('Collaborative editing', () => {
       })
 
       expect(emittedPatches).toEqual([])
+    })
+  })
+
+  describe('Concurrent same-spot split', () => {
+    test.fails('Scenario: Two editors split the same block at the same offset', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const initialValue = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo bar baz', marks: []},
+          ],
+        },
+      ] satisfies Array<PortableTextBlock>
+
+      const localPatchesA: Array<Patch> = []
+      const localPatchesB: Array<Patch> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator('ea-'),
+        initialValue,
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' && event.patch.origin === 'local') {
+                localPatchesA.push(event.patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      const {editor: editorB} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator('eb-'),
+        initialValue,
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' && event.patch.origin === 'local') {
+                localPatchesB.push(event.patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      const selection = {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+        backward: false,
+      }
+
+      editor.send({type: 'select', at: selection})
+      editorB.send({type: 'select', at: selection})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual(selection)
+      })
+      await vi.waitFor(() => {
+        expect(editorB.getSnapshot().context.selection).toEqual(selection)
+      })
+
+      editor.send({type: 'insert.break'})
+      editorB.send({type: 'insert.break'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual([
+          'foo ',
+          'bar baz',
+        ])
+      })
+      await vi.waitFor(() => {
+        expect(getTersePt(editorB.getSnapshot().context)).toEqual([
+          'foo ',
+          'bar baz',
+        ])
+      })
+
+      const valueFromA = editor.getSnapshot().context.value
+      const valueFromB = editorB.getSnapshot().context.value
+
+      editorB.send({
+        type: 'patches',
+        patches: localPatchesA.map((patch) => ({...patch, origin: 'remote'})),
+        snapshot: valueFromA,
+      })
+      editor.send({
+        type: 'patches',
+        patches: localPatchesB.map((patch) => ({...patch, origin: 'remote'})),
+        snapshot: valueFromB,
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(
+          getTersePt(editorB.getSnapshot().context),
+        )
+      })
+
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo ',
+        'bar baz',
+      ])
     })
   })
 })
