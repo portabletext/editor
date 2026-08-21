@@ -7,7 +7,7 @@ next: false
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-Selectors are pure functions that derive state from the editor snapshot. They provide a clean way to access editor state without directly parsing the snapshot structure.
+Selectors are pure functions that derive state from the editor snapshot. They provide a clean way to access editor state without directly parsing the snapshot structure. Selectors delegate their path work to the [traversal API](/editor/concepts/traversal/).
 
 ```tsx
 import * as selectors from '@portabletext/editor/selectors'

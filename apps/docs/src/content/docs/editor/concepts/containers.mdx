@@ -157,7 +157,7 @@ const schemaDefinition = defineSchema({
 
 The callback runs against the schema at the caret. In a regular paragraph the lookup finds `strong`, so typing `**bold**` applies the decorator. Inside a code-block line the sub-schema declares `decorators: []`, the lookup returns `undefined`, and the shortcut skips itself. Nothing was configured per container: **the schema is the feature flag**, and the lookup is what reads it.
 
-Your own code can resolve the schema at any position with `getPathSubSchema` from `@portabletext/editor/traversal`.
+Your own code can resolve the schema at any position with `getPathSubSchema` from the [traversal API](/editor/concepts/traversal/).
 
 ## Narrow rendering with `of`
 

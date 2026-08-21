@@ -11,6 +11,8 @@ const [behaviorTypeDoc, behaviorTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [pluginsTypeDoc, pluginsTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [selectorsTypeDoc, selectorsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
+const [traversalTypeDoc, traversalTypeDocSidebar] =
+  createStarlightTypeDocPlugin()
 const [toolbarTypeDoc, toolbarTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [keyboardShortcutsTypeDoc, keyboardShortcutsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
@@ -115,6 +117,7 @@ export default defineConfig({
                 {slug: 'editor/concepts/behavior'},
                 {slug: 'editor/concepts/rendering'},
                 {slug: 'editor/concepts/containers'},
+                {slug: 'editor/concepts/traversal'},
                 {slug: 'editor/concepts/clipboard'},
               ],
             },
@@ -160,6 +163,13 @@ export default defineConfig({
                   items: [
                     {label: 'Overview', slug: 'editor/reference/selectors'},
                     {...selectorsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Traversal',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/traversal'},
+                    {...traversalTypeDocSidebar, badge: 'Generated'},
                   ],
                 },
                 {
@@ -249,6 +259,18 @@ export default defineConfig({
         selectorsTypeDoc({
           entryPoints: ['../../packages/editor/src/selectors/index.ts'],
           output: 'api/selectors',
+          typeDoc: {
+            excludeReferences: true,
+            skipErrorChecking: true,
+          },
+          sidebar: {
+            collapsed: true,
+          },
+          tsconfig,
+        }),
+        traversalTypeDoc({
+          entryPoints: ['../../packages/editor/src/traversal/index.ts'],
+          output: 'api/traversal',
           typeDoc: {
             excludeReferences: true,
             skipErrorChecking: true,
