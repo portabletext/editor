@@ -242,6 +242,130 @@ describe('event.delete.backward', () => {
     })
   })
 
+  test('Scenario: backspacing an Indic conjunct cluster removes one code unit at a time', async () => {
+    // GB9c treats KA VIRAMA TA (\u0915\u094d\u0924) as a single grapheme
+    // cluster, so backward character delete removes the whole cluster in
+    // one step. `applyDelete`'s compound-script reinsert keeps the visible
+    // result at one code unit per backspace, matching the pre-GB9c
+    // behavior where KA VIRAMA (\u0915\u094d) was already one cluster.
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const conjunct = '\u0915\u094d\u0924'
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: `${conjunct}b`}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: '\u0915\u094db', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: '\u0915b', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: backspacing a Gujarati conjunct cluster removes one code unit at a time', async () => {
+    // Gujarati is outside `COMPOUND_SCRIPT_REGEX`'s script ranges; the
+    // reinsert triggers on its conjunct linker (\u0ACD) instead. Pins that
+    // GB9c's whole-cluster delete still steps back one code unit per press.
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const conjunct = '\u0A95\u0ACD\u0AA4'
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: `${conjunct}b`}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: '\u0A95\u0ACDb', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   describe('Scenario: Deleting word', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
