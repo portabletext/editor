@@ -2,6 +2,7 @@ import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
+import {withDeprecatedSchema} from './deprecated-callback-args'
 import {createCharacterPairRegex} from './regex.character-pair'
 
 /**
@@ -51,10 +52,9 @@ export function createCharacterPairRule(config: {
       }
 
       const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
-      const decorator = config.decorator({
-        context: {schema: subSchema},
-        schema: subSchema,
-      })
+      const decorator = config.decorator(
+        withDeprecatedSchema({context: {schema: subSchema}}),
+      )
 
       if (decorator === undefined) {
         return false
