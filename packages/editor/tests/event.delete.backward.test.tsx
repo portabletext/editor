@@ -242,6 +242,57 @@ describe('event.delete.backward', () => {
     })
   })
 
+  test('Scenario: backspacing a ZWJ emoji removes the whole cluster', async () => {
+    // Unlike Indic conjunct clusters, emoji are not in the compound-script
+    // set that `applyDelete` reinserts into, so one backspace removes the
+    // entire ZWJ sequence, matching native inputs.
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const family = '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}'
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: `a${family}b`}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1 + family.length,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1 + family.length,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'ab', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: backspacing an Indic conjunct cluster removes one code unit at a time', async () => {
     // GB9c treats KA VIRAMA TA (\u0915\u094d\u0924) as a single grapheme
     // cluster, so backward character delete removes the whole cluster in
