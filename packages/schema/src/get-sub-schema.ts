@@ -1,3 +1,4 @@
+import {withDeprecatedValue} from './deprecated-value'
 import type {
   AnnotationSchemaType,
   BaseDefinition,
@@ -30,7 +31,7 @@ function asNamedTypes<
   if (!resolved) {
     return undefined
   }
-  return resolved.map((entry) => ({...entry, value: entry.name}) as T)
+  return resolved.map((entry) => withDeprecatedValue(entry) as T)
 }
 
 function asFieldedTypes<

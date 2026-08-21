@@ -1,4 +1,5 @@
 import type {SchemaDefinition} from './define-schema'
+import {withDeprecatedValue} from './deprecated-value'
 import type {
   AnnotationSchemaType,
   BaseDefinition,
@@ -65,13 +66,10 @@ function resolveBlockInheritance(
 ): BlockInheritance {
   return {
     styles: member.styles
-      ? member.styles.map((style) => ({...style, value: style.name}))
+      ? member.styles.map((style) => withDeprecatedValue(style))
       : inheritance.styles,
     decorators: member.decorators
-      ? member.decorators.map((decorator) => ({
-          ...decorator,
-          value: decorator.name,
-        }))
+      ? member.decorators.map((decorator) => withDeprecatedValue(decorator))
       : inheritance.decorators,
     annotations: member.annotations
       ? member.annotations.map((annotation) => ({
@@ -83,7 +81,7 @@ function resolveBlockInheritance(
         }))
       : inheritance.annotations,
     lists: member.lists
-      ? member.lists.map((list) => ({...list, value: list.name}))
+      ? member.lists.map((list) => withDeprecatedValue(list))
       : inheritance.lists,
     inlineObjects: member.inlineObjects
       ? member.inlineObjects.map((inlineObject) => ({
@@ -145,7 +143,7 @@ function compileField(
 function compileBaseDefinitionWithValue<T extends BaseDefinition>(
   definition: T,
 ): T & {value: string} {
-  return {...definition, value: definition.name}
+  return withDeprecatedValue(definition)
 }
 
 /**
@@ -155,11 +153,8 @@ export function compileSchema(definition: SchemaDefinition): Schema {
   const userStyles = (definition.styles ?? []).map(
     compileBaseDefinitionWithValue,
   )
-  const styles = !userStyles.some((style) => style.value === 'normal')
-    ? [
-        {value: 'normal', name: 'normal', title: 'Normal'} as StyleSchemaType,
-        ...userStyles,
-      ]
+  const styles = !userStyles.some((style) => style.name === 'normal')
+    ? [withDeprecatedValue({name: 'normal', title: 'Normal'}), ...userStyles]
     : userStyles
 
   const lists = (definition.lists ?? []).map(compileBaseDefinitionWithValue)
