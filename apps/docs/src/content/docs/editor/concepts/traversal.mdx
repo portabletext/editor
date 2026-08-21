@@ -1,0 +1,116 @@
+---
+title: Traversal
+description: Pure functions that answer questions about the editor's value tree, given a path and a snapshot.
+---
+
+import {LinkCard} from '@astrojs/starlight/components'
+
+The traversal API is a set of pure functions that answer questions about the editor's value tree: what node lives at this path, what is its parent, does this range intersect that selection. They take a snapshot and a path (or two) and return an answer, with no side effects and no dependency on the current selection.
+
+```ts
+import * as traversal from '@portabletext/editor/traversal'
+```
+
+## Snapshots
+
+The lookups and family walkers below take an `EditorSnapshot` as their first argument. You already hold one in the places where you'd reach for traversal: a selector receives it as its only argument, a behavior guard or action receives it as `snapshot`, and `editor.getSnapshot()` returns one at event time, for example inside a plugin's `useEffect`. A few functions work from narrower inputs instead: `pathContains` compares two paths with no snapshot at all, and `getUnionSchema` takes a schema and a container map, both readable off `snapshot.context`.
+
+```ts
+import type {EditorSelector} from '@portabletext/editor'
+import * as traversal from '@portabletext/editor/traversal'
+
+const hasFooBlock: EditorSelector<boolean> = (snapshot) =>
+  traversal.hasNode(snapshot, [{_key: 'foo'}])
+```
+
+There's no public way to build a snapshot yourself. Take the one your call site already has.
+
+## Paths
+
+A path is a sequence of keyed segments and field names: `{_key: 'foo'}` addresses a node by its key, and a string like `'children'` names the array field to descend into next. Nested containers chain the same shape one level deeper. Reaching a cell in a table looks like:
+
+```ts
+const cellPath = [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}]
+```
+
+`getNode` and the other lookups also accept numeric indexes in place of a keyed segment, but the path on the returned result is always fully keyed: an index like `0` resolves to whatever node currently sits there, and the answer comes back addressed by that node's `_key`, not by the index you passed in.
+
+## Entries
+
+A lookup like `getNode` or `getParent` doesn't return the node on its own. It returns the node together with its canonical keyed path, fully keyed even when the path you passed in used an index. That path is exactly what you'd pass into the next call, so results chain: get a node, get its parent, get the parent's first child, without re-deriving a path by hand at each step.
+
+## Finding and walking nodes
+
+`getNode` resolves any path to its node and canonical path, or `undefined` if nothing lives there. `hasNode` asks the same question as a boolean.
+
+Typed lookups narrow to a specific shape and return `undefined` if the node at the path isn't that shape:
+
+- `getBlock` - a block: a text block or an object node at block position
+- `getTextBlock` - a text block specifically
+- `getSpan` - a span
+- `getAnnotation` - resolves an annotation reference. Annotations live in `markDefs` on a text block, alongside `children` rather than inside it, so `getNode` can't reach one; use `getAnnotation` for a path like `[..., {_key: block}, 'markDefs', {_key: annotation}]`.
+- `getContainer` - the registered editable container at a path, or `undefined` if the node there isn't one
+
+`getText` sits alongside these: it returns the concatenated text content of the node at a path, walking its descendants for a span's text when the node itself isn't a span.
+
+Family walkers move relative to a path:
+
+- `getParent` - the enclosing text block or object node
+- `getAncestor` / `getAncestors` - one matching ancestor, or every ancestor from nearest to furthest
+- `getChildren` / `getFirstChild` / `getLastChild` - a node's children
+- `getSibling` - the next or previous sibling, optionally the first one matching a predicate
+- `getEnclosingBlock` - the node at the path if it's already a block, otherwise the nearest block ancestor
+- `getLeaf` - walks from a path toward the `start` or `end` edge and returns the deepest leaf it reaches
+
+## Narrowing
+
+`isBlock` and `isInline` classify a path by its parent: a node is a block unless its parent is a text block, and inline is the inverse. Children of a container are blocks within that container, the same way top-level nodes are blocks within the document. `isObject` classifies a node value directly and is true for anything that isn't a text block or span. `isLeafObject` takes the node's path as well as the node, and narrows further to an object with no editable children, an object that isn't a container.
+
+Reach for a typed lookup like `getSpan` or `getTextBlock` when the node also has to exist: it does the existence check and the narrowing in one call. Reach for a predicate like `isBlock` when you already have the node and only need the classification.
+
+## Points and ranges
+
+`comparePoints` orders two `EditorSelectionPoint`s by document position, returning `-1`, `0`, or `1`. `pathContains` asks whether one path's subtree contains another, comparing path shape alone with no snapshot and no notion of selection. `rangeIntersects` asks whether an `EditorSelection` overlaps a path, a point, or another selection.
+
+A behavior guard that only wants to run when the selection sits inside a specific subtree reaches for `rangeIntersects` with the selection on the snapshot:
+
+```ts
+defineBehavior({
+  on: 'delete.backward',
+  guard: ({snapshot}) => {
+    const rowPath = [{_key: 't1'}, 'rows', {_key: 'r1'}]
+
+    return traversal.rangeIntersects(
+      snapshot,
+      snapshot.context.selection,
+      rowPath,
+    )
+  },
+  actions: [
+    () => [
+      /* ... */
+    ],
+  ],
+})
+```
+
+## Schema at a position
+
+`getPathSubSchema` returns the `Schema` view that applies at a path: the top-level schema outside any container, or the sub-schema derived from the nearest enclosing container's `of` declaration. See [Containers](/editor/concepts/containers/) for how that sub-schema is built.
+
+`getUnionSchema` returns a `Schema` merging every named member reachable from any position where text is edited: the root schema plus the sub-schema of every registered container whose field accepts text blocks, deduped by name. It takes the schema and the container map directly rather than a snapshot, both available as `snapshot.context.schema` and `snapshot.context.containers`. Where `getPathSubSchema` answers "what applies right here," `getUnionSchema` answers "what could ever apply somewhere," useful for a toolbar whose buttons stay stable across selection moves.
+
+## Traversal and selectors
+
+Selectors build on the same snapshot and add current-selection semantics: `getFocusBlock` finds a block by asking where the selection focus is, using traversal underneath. Reach for traversal directly when you already hold a path, and for a selector when the question starts from the selection itself.
+
+<LinkCard
+  title="Traversal API overview"
+  description="Every traversal function, grouped by what it does."
+  href="/editor/reference/traversal/"
+/>
+<LinkCard
+  title="Selectors API overview"
+  description="Pure functions that derive state from the editor snapshot."
+  href="/editor/reference/selectors/"
+/>

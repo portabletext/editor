@@ -1,0 +1,66 @@
+---
+title: Traversal API overview
+description: Pure functions that answer questions about the editor's value tree, given a path and a snapshot.
+prev: false
+next: false
+---
+
+import {LinkCard} from '@astrojs/starlight/components'
+
+Traversal functions are pure functions that answer questions about the editor's value tree, given a snapshot and a path. They provide a clean way to navigate and inspect the value tree without directly parsing the snapshot structure.
+
+```ts
+import * as traversal from '@portabletext/editor/traversal'
+```
+
+<LinkCard
+  title="Traversal"
+  description="Snapshots, paths, and how to find and walk nodes."
+  href="/editor/concepts/traversal/"
+/>
+
+## Lookups
+
+Resolve a path to the node that lives there.
+
+- `getNode` - Get the node at a given path
+- `hasNode` - Check if a node exists at a given path
+- `getBlock` - Get the node at a given path if it is a block
+- `getTextBlock` - Get the text block node at a given path
+- `getSpan` - Get the span node at a given path
+- `getAnnotation` - Get the annotation at a given path
+- `getContainer` - Get the registered editable container at a given path only, does not walk up to an enclosing container
+- `getText` - Get the concatenated text content of the node at a given path
+
+## Family walkers
+
+Move relative to a path.
+
+- `getParent` - Get the parent of a node at a given path
+- `getAncestor` - Walk up from a path to find an ancestor that matches a predicate
+- `getAncestors` - Get all ancestors of the node at a given path, from nearest to furthest
+- `getChildren` - Get the children of a node at a given path
+- `getContainerChildren` - Resolve a container node's editable child array (beta)
+- `getFirstChild` - Get the first child of a node at a given path
+- `getLastChild` - Get the last child of a node at a given path
+- `getSibling` - Get a sibling of the node at a given path
+- `getEnclosingBlock` - Walk up from a path to find the nearest enclosing block
+- `getLeaf` - Walk from a path toward the `start` or `end` edge and get the deepest leaf node reached
+
+## Narrowing predicates
+
+- `isBlock` - Determine if a node at the given path is a block
+- `isInline` - Determine if a node at the given path is inline
+- `isObject` - Check if a node is an object node (not a text block or span)
+- `isLeafObject` - Check if a node is a leaf object: an object node that has no editable children
+
+## Path and point utilities
+
+- `pathContains` - Returns true if `ancestor` is equal to `descendant`, or if `descendant` lives anywhere inside `ancestor`'s subtree
+- `comparePoints` - Compares two points by document order, resolved at any depth
+- `rangeIntersects` - Returns true if a range and a target path, point, or selection intersect
+
+## Schema resolution
+
+- `getPathSubSchema` - Return the `Schema` view that applies at a given path; its `blockObjects` and `inlineObjects` fields answer what can exist there
+- `getUnionSchema` - Return a `Schema` that contains every named member reachable from a position where text is edited
