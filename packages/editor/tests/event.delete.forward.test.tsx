@@ -214,6 +214,57 @@ describe('event.delete.forward', () => {
     })
   })
 
+  test('Scenario: forward-deleting an Indic conjunct cluster', async () => {
+    // GB9c treats KA VIRAMA TA (\u0915\u094d\u0924) as a single grapheme
+    // cluster, so one forward delete at the cluster's start removes all
+    // three code points instead of stopping after KA VIRAMA.
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const conjunct = '\u0915\u094d\u0924'
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: `a${conjunct}b`}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Delete}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'ab', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   describe('expanded selection covering empty blocks', () => {
     // Field report: pressing Enter a few times creates empty lines, the
     // user highlights them and presses Delete, and the lines remain. Pins

@@ -38,10 +38,14 @@ export type SelectionMode = 'collapse-to-start' | 'preserve'
 /**
  * Indic scripts whose grapheme clusters span multiple code points. Backward
  * character delete on these scripts removes one code point at a time instead
- * of the entire cluster.
+ * of the entire cluster. Besides the script ranges, the class lists the BMP
+ * conjunct linkers (`InCB=Linker`) of scripts the ranges miss, since every
+ * cluster glued by grapheme rule GB9c contains its linker. The
+ * supplementary-plane linkers stay out on purpose: the reinsert below slices
+ * code units and would split a surrogate pair.
  */
 const COMPOUND_SCRIPT_REGEX =
-  /[\u0980-\u09FF\u0E00-\u0E7F\u1000-\u109F\u0900-\u097F\u1780-\u17FF\u0D00-\u0D7F\u0B00-\u0B7F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F]+/
+  /[\u0980-\u09FF\u0E00-\u0E7F\u1000-\u109F\u0900-\u097F\u1780-\u17FF\u0D00-\u0D7F\u0B00-\u0B7F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F\u0ACD\u1A60\u1B44\u1BAB\uA9C0\uAAF6]+/
 
 export interface ApplyDeleteOptions {
   /** Return the removed text. Used for compound-grapheme handling. */
