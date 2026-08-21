@@ -81,6 +81,7 @@ export function useGenericSelector<T>(
     forceRender()
 
     // don't rerender on equalityFn change since we want to be able to define it inline
+    // oxlint-disable-next-line react/rule-suppression -- the deps omission is deliberate (see above); the compiler skips this hook as a result
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
