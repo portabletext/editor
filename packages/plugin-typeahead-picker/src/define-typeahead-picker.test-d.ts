@@ -54,8 +54,8 @@ describe(defineTypeaheadPicker.name, () => {
     })
 
     test('rejects async getMatches when mode is sync', () => {
-      // @ts-expect-error - async function not allowed when mode is sync
       defineTypeaheadPicker<TestMatch>({
+        // @ts-expect-error - async function not allowed when mode is sync
         mode: 'sync',
         trigger: /:/,
         keyword: /\w*/,
@@ -65,11 +65,11 @@ describe(defineTypeaheadPicker.name, () => {
     })
 
     test('rejects sync getMatches when mode is async', () => {
-      // @ts-expect-error - sync function not allowed when mode is async
       defineTypeaheadPicker<TestMatch>({
         mode: 'async',
         trigger: /@/,
         keyword: /\w*/,
+        // @ts-expect-error - sync function not allowed when mode is async
         getMatches: () => [],
         onSelect: [() => []],
       })
@@ -123,6 +123,7 @@ describe(defineTypeaheadPicker.name, () => {
         keyword: /\w*/,
         // @ts-expect-error - delimiter requires AutoCompleteMatch which has type field
         delimiter: ':',
+        // @ts-expect-error - delimiter requires AutoCompleteMatch which has type field
         getMatches: () => [{key: '1', label: 'Test'}],
         onSelect: [() => []],
       })

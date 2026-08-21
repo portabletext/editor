@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
-    "starlight-llms-txt": "^0.11.0"
+    "starlight-llms-txt": "^0.11.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

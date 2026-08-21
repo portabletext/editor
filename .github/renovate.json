@@ -50,6 +50,12 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "apps/docs needs the TypeScript 6 programmatic API for typedoc/ts-morph, so keep its typescript alias on 6.x",
+      "matchDepNames": ["typescript"],
+      "matchFileNames": ["apps/docs/package.json"],
+      "allowedVersions": "/^6\\./"
+    },
+    {
       "description": "Group `react` and `react-dom`: React requires exact version parity between them at runtime, so they must bump atomically",
       "matchPackageNames": ["react", "react-dom"],
       "groupName": "react"
