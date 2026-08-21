@@ -2,6 +2,7 @@ import type {EditorContext} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
+import {withDeprecatedSchema} from './deprecated-callback-args'
 
 export type ObjectWithOptionalKey = {
   _type: string
@@ -116,10 +117,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const subSchema = getPathSubSchema(snapshot, focusTextBlock.path)
-      const defaultStyle = config.defaultStyle?.({
-        context: {schema: subSchema},
-        schema: subSchema,
-      })
+      const defaultStyle = config.defaultStyle?.(
+        withDeprecatedSchema({context: {schema: subSchema}}),
+      )
 
       if (defaultStyle && focusTextBlock.node.style !== defaultStyle) {
         return {defaultStyle, focusTextBlock}

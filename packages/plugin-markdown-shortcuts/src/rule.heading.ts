@@ -3,6 +3,10 @@ import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
+import {
+  withDeprecatedLevel,
+  withDeprecatedSchema,
+} from './deprecated-callback-args'
 
 export function createHeadingRule(config: {
   headingStyle: ({
@@ -41,12 +45,14 @@ export function createHeadingRule(config: {
       const level = match.text.length - 1
 
       const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
-      const style = config.headingStyle({
-        context: {schema: subSchema},
-        schema: subSchema,
-        props: {level},
-        level,
-      })
+      const style = config.headingStyle(
+        withDeprecatedLevel(
+          withDeprecatedSchema({
+            context: {schema: subSchema},
+            props: {level},
+          }),
+        ),
+      )
 
       if (!style) {
         return false

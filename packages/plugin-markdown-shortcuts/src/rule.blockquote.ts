@@ -3,6 +3,7 @@ import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
+import {withDeprecatedSchema} from './deprecated-callback-args'
 
 export function createBlockquoteRule(config: {
   blockquoteStyle: ({
@@ -20,10 +21,9 @@ export function createBlockquoteRule(config: {
     on: /^> /,
     guard: ({snapshot, event}) => {
       const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
-      const style = config.blockquoteStyle({
-        context: {schema: subSchema},
-        schema: subSchema,
-      })
+      const style = config.blockquoteStyle(
+        withDeprecatedSchema({context: {schema: subSchema}}),
+      )
 
       if (!style) {
         return false

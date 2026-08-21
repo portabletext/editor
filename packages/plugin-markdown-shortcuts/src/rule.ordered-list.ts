@@ -3,6 +3,7 @@ import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
+import {withDeprecatedSchema} from './deprecated-callback-args'
 
 export function createOrderedListRule(config: {
   orderedList: ({
@@ -20,10 +21,9 @@ export function createOrderedListRule(config: {
     on: /^1\. /,
     guard: ({snapshot, event}) => {
       const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
-      const orderedList = config.orderedList({
-        context: {schema: subSchema},
-        schema: subSchema,
-      })
+      const orderedList = config.orderedList(
+        withDeprecatedSchema({context: {schema: subSchema}}),
+      )
 
       if (!orderedList) {
         return false

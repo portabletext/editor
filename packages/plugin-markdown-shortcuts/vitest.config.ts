@@ -6,12 +6,19 @@ export default defineConfig({
   test: {
     projects: [
       {
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts'],
+        },
+      },
+      {
         // Resolves the monorepo-only `@portabletext/editor/test*` specifiers
         // through this package's tsconfig `paths`.
         resolve: {tsconfigPaths: true},
         plugins: [react({compiler: {target: '19'}})],
         test: {
           name: 'browser',
+          include: ['src/**/*.test.tsx'],
           browser: {
             enabled: true,
             headless: true,
