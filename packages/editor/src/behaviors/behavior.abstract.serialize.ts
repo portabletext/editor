@@ -1,3 +1,5 @@
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -52,7 +54,7 @@ export const abstractSerializeBehaviors = [
       // the drag pipeline does not update `snapshot.context.selection` on
       // dragstart, so override the snapshot here so converters see the
       // grabbed unit through plain `snapshot.context.selection` reads.
-      const snapshotForConverter =
+      const snapshotForDragOrigin =
         event.originEvent.type === 'drag.dragstart'
           ? {
               ...snapshot,
@@ -62,6 +64,33 @@ export const abstractSerializeBehaviors = [
               },
             }
           : snapshot
+
+      // `event.blocks` narrows or replaces the fragment a converter's own
+      // `getFragment(snapshot)` read would derive from the selection; that
+      // read stays the converter's job, so a snapshot spanning the given
+      // blocks start to end is handed over instead of the blocks directly.
+      const firstBlock = event.blocks?.[0]
+      const lastBlock = event.blocks?.[event.blocks.length - 1]
+      const snapshotForConverter =
+        event.blocks && firstBlock && lastBlock
+          ? {
+              ...snapshotForDragOrigin,
+              context: {
+                ...snapshotForDragOrigin.context,
+                value: event.blocks,
+                selection: {
+                  anchor: getBlockStartPoint({
+                    context: snapshotForDragOrigin.context,
+                    block: {node: firstBlock, path: [{_key: firstBlock._key}]},
+                  }),
+                  focus: getBlockEndPoint({
+                    context: snapshotForDragOrigin.context,
+                    block: {node: lastBlock, path: [{_key: lastBlock._key}]},
+                  }),
+                },
+              },
+            }
+          : snapshotForDragOrigin
 
       return converter.serialize({
         snapshot: snapshotForConverter,

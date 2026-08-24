@@ -460,6 +460,17 @@ type AbstractBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'serialize.data'>
       mimeType: MIMEType
+      /**
+       * The fragment to serialize, in place of the snapshot's
+       * selection-derived fragment.
+       *
+       * A serializer (a core converter or a consumer's own `serialize.data`
+       * Behavior) must prefer `blocks` over deriving its own fragment from
+       * the snapshot's selection: an upstream Behavior sets it to `forward`
+       * a narrower or different fragment than the current selection covers,
+       * and ignoring it serializes the wrong content.
+       */
+      blocks?: Array<PortableTextBlock>
       originEvent: PickFromUnion<
         NativeBehaviorEvent,
         'type',

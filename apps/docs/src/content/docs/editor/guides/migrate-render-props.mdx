@@ -409,7 +409,7 @@ const serializeMarkdown = defineBehavior({
         type: 'serialization.success',
         mimeType: 'text/markdown',
         data: portableTextToMarkdown(
-          getFragment(snapshot).map((entry) => entry.node),
+          event.blocks ?? getFragment(snapshot).map((entry) => entry.node),
         ),
         originEvent: event.originEvent,
       }),
@@ -418,4 +418,4 @@ const serializeMarkdown = defineBehavior({
 })
 ```
 
-Mount both through `BehaviorPlugin`, the same way as any other custom Behavior. `plugin-table`'s table copy handler is a worked example of a `serialize.data` handler that produces `text/markdown` on its own, since the core converter is gone for it too.
+Mount both through `BehaviorPlugin`, the same way as any other custom Behavior. `event.blocks` is set when an upstream Behavior narrows what gets serialized, `plugin-table`'s table copy handler does this for a rectangular cell selection, so preferring it over `getFragment(snapshot)` also gets that rectangle serialized to Markdown for free once this Behavior is mounted.
