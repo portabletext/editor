@@ -198,6 +198,66 @@ describe(transformPoint.name, () => {
     })
   })
 
+  test('set text: offset within new length is unchanged', () => {
+    const point = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+    }
+    const op: EngineOperation = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+      value: 'hello',
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+        value: 'hi',
+      },
+    }
+    expect(transformPoint(point, op)).toBe(point)
+  })
+
+  test('set text: offset beyond new length is clamped', () => {
+    const point = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 5,
+    }
+    const op: EngineOperation = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+      value: 'ab',
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+        value: 'hello',
+      },
+    }
+    expect(transformPoint(point, op)).toEqual({
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 2,
+    })
+  })
+
+  test('set text: non-string value clamps offset to zero', () => {
+    const point = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 4,
+    }
+    const op: EngineOperation = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+      value: null,
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+        value: 'hello',
+      },
+    }
+    expect(transformPoint(point, op)).toEqual({
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 0,
+    })
+  })
+
   test('unset text collapses offset', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
