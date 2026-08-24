@@ -1,4 +1,4 @@
-import type {EditorSelection, Path} from '@portabletext/editor'
+import type {Editor, EditorSelection, Path} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
@@ -131,7 +131,105 @@ describe('DndProvider', () => {
 
     await expectDropPositions({b0: 'none', b1: 'none', b2: 'none'})
   })
+
+  test('Scenario: An edge drop indicator hides the native drop caret', async () => {
+    const {editor} = await renderEditorWithProbes()
+    const editorElement = getEditorElement(editor)
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+
+    await expectDropPositions({b2: 'end'})
+    expect(editorElement.style.caretColor).toBe('transparent')
+  })
+
+  test('Scenario: Moving from an edge to a mid-block position restores the native drop caret', async () => {
+    const {editor} = await renderEditorWithProbes()
+    const editorElement = getEditorElement(editor)
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+    await expectDropPositions({b2: 'end'})
+    expect(editorElement.style.caretColor).toBe('transparent')
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretMidText('b2'),
+        block: 'end',
+      }),
+    )
+    await expectDropPositions({b2: 'none'})
+    expect(editorElement.style.caretColor).toBe('')
+  })
+
+  test('Scenario: Ending the drag restores the native drop caret', async () => {
+    const {editor} = await renderEditorWithProbes()
+    const editorElement = getEditorElement(editor)
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+    await expectDropPositions({b2: 'end'})
+    expect(editorElement.style.caretColor).toBe('transparent')
+
+    editor.send({
+      type: 'drag.dragend',
+      originEvent: {dataTransfer: new DataTransfer()},
+    })
+
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'none'})
+    expect(editorElement.style.caretColor).toBe('')
+  })
+
+  test('Scenario: A prior inline caret-color survives being hidden and restored', async () => {
+    const {editor} = await renderEditorWithProbes()
+    const editorElement = getEditorElement(editor)
+    editorElement.style.caretColor = 'red'
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+    await expectDropPositions({b2: 'end'})
+    expect(editorElement.style.caretColor).toBe('transparent')
+
+    editor.send({
+      type: 'drag.dragend',
+      originEvent: {dataTransfer: new DataTransfer()},
+    })
+
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'none'})
+    expect(editorElement.style.caretColor).toBe('red')
+  })
 })
+
+function getEditorElement(editor: Editor): HTMLElement {
+  const element = editor.dom.getEditorElement()
+
+  if (!(element instanceof HTMLElement)) {
+    throw new Error('Expected the editor element to be an HTMLElement')
+  }
+
+  return element
+}
 
 function DropPositionProbe(props: {
   blockKey: string

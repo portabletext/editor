@@ -1,4 +1,4 @@
-import type {Path} from '@portabletext/editor'
+import {useEditor, type Path} from '@portabletext/editor'
 import {
   defineBehavior,
   effect,
@@ -55,10 +55,13 @@ type DropPositionStore = {
   set: (next: DropPosition | undefined) => void
 }
 
-function createDropPositionStore(): DropPositionStore {
+function createDropPositionStore(
+  getEditorElement: () => HTMLElement | undefined,
+): DropPositionStore {
   let current:
     | {serializedPath: string; position: DropPosition['position']}
     | undefined
+  let restoreCaretColor: (() => void) | undefined
   const subscribers = new Map<string, Set<() => void>>()
 
   function notify(serializedPath: string | undefined) {
@@ -107,6 +110,24 @@ function createDropPositionStore(): DropPositionStore {
       current = next
         ? {serializedPath: serializePath(next.path), position: next.position}
         : undefined
+
+      const editorElement = getEditorElement()
+
+      if (editorElement) {
+        if (current && !restoreCaretColor) {
+          const previousCaretColor = editorElement.style.caretColor
+          restoreCaretColor = () => {
+            editorElement.style.caretColor = previousCaretColor
+          }
+          // The native drop caret renders at the hovered text position and
+          // promises a mid-text split, but an edge indicator means the drop
+          // will snap to the block edge instead.
+          editorElement.style.caretColor = 'transparent'
+        } else if (!current && restoreCaretColor) {
+          restoreCaretColor()
+          restoreCaretColor = undefined
+        }
+      }
 
       if (
         previous?.serializedPath === current?.serializedPath &&
@@ -274,7 +295,15 @@ const DndContext = createContext<DropPositionStore | undefined>(undefined)
  * @beta
  */
 export function DndProvider(props: {children?: ReactNode}) {
-  const store = useMemo(() => createDropPositionStore(), [])
+  const editor = useEditor()
+  const store = useMemo(
+    () =>
+      createDropPositionStore(() => {
+        const editorElement = editor.dom.getEditorElement()
+        return editorElement instanceof HTMLElement ? editorElement : undefined
+      }),
+    [editor],
+  )
   const behaviors = useMemo(
     () => createDropPositionBehaviors(store.set),
     [store],
