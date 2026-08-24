@@ -13,6 +13,7 @@ export const PlaygroundFeatureFlagsContext =
 
 export type EditorFeatureFlags = {
   dragHandles: boolean
+  dndPlugin: boolean
   imageDeserializerPlugin: boolean
   htmlDeserializerPlugin: boolean
   markdownDeserializerPlugin: boolean
@@ -33,6 +34,7 @@ export type EditorFeatureFlags = {
 
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
+  dndPlugin: true,
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: true,
   markdownDeserializerPlugin: true,
@@ -51,6 +53,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   typographyPlugin: true,
 }
 
-export const EditorFeatureFlagsContext = createContext<EditorFeatureFlags>(
-  defaultEditorFeatureFlags,
-)
+export const EditorFeatureFlagsContext = createContext<EditorFeatureFlags>({
+  ...defaultEditorFeatureFlags,
+  dndPlugin: false,
+})

@@ -3,19 +3,33 @@ import {
   defineContainer,
   defineDecorator,
   defineTextBlock,
+  type ContainerRenderProps,
 } from '@portabletext/editor'
 import {defineTable} from '@portabletext/plugin-table'
-import {referenceContainers, TableCell} from '@portabletext/plugin-table/ui'
+import {
+  referenceContainers,
+  Table,
+  TableCell,
+} from '@portabletext/plugin-table/ui'
+import {useContext, type JSX} from 'react'
+import {EditorFeatureFlagsContext} from '../feature-flags'
+import {BlockDropIndicator} from './block-drop-indicator'
 import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
 
-// The table/row renders come straight from the plugin's reference UI; the
-// cell definition is playground-owned so its `of` can carry the cell
-// *content* renders (list items, images, callouts).
+// The row's render comes straight from the plugin's reference UI; the table
+// render wraps the reference UI to add the drop indicator, and the cell
+// definition is playground-owned so its `of` can carry the cell *content*
+// renders (list items, images, callouts).
 export const table = defineTable({
   containers: {
     ...referenceContainers,
+    table: defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: (props) => <PlaygroundTable {...props} />,
+    }),
     cell: defineContainer({
       type: 'cell',
       arrayField: 'value',
@@ -61,5 +75,19 @@ export const table = defineTable({
     }),
   },
 })
+
+// The reference `Table` render positions its own chrome (handles, lanes,
+// menu) relative to an inner scroll wrapper, not its outermost element, so
+// the drop indicator gets its own `relative` wrapper around the whole thing
+// instead of reaching into that inner layout.
+function PlaygroundTable(props: ContainerRenderProps): JSX.Element {
+  const flags = useContext(EditorFeatureFlagsContext)
+  return (
+    <div className="relative">
+      <Table {...props} />
+      {flags.dndPlugin ? <BlockDropIndicator path={props.path} /> : null}
+    </div>
+  )
+}
 
 export const TablePlugin = table.Plugin

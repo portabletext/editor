@@ -1,12 +1,15 @@
-import {defineContainer} from '@portabletext/editor'
+import {defineContainer, type ContainerRenderProps} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
+import {useContext} from 'react'
+import {EditorFeatureFlagsContext} from '../feature-flags'
+import {BlockDropIndicator} from './block-drop-indicator'
 import {DragHandle} from './drag-handle'
 
-const codeBlockContainer = defineContainer({
-  type: 'code-block',
-  arrayField: 'lines',
-  render: ({attributes, children, readOnly, selected}) => (
+function CodeBlockContainer(props: ContainerRenderProps): JSX.Element {
+  const {attributes, children, path, readOnly, selected} = props
+  const flags = useContext(EditorFeatureFlagsContext)
+  return (
     <pre
       {...attributes}
       data-selected={selected ? '' : undefined}
@@ -14,8 +17,15 @@ const codeBlockContainer = defineContainer({
     >
       <code className="block min-w-0 cursor-text">{children}</code>
       <DragHandle readOnly={readOnly} />
+      {flags.dndPlugin ? <BlockDropIndicator path={path} /> : null}
     </pre>
-  ),
+  )
+}
+
+const codeBlockContainer = defineContainer({
+  type: 'code-block',
+  arrayField: 'lines',
+  render: (props) => <CodeBlockContainer {...props} />,
 })
 
 export function CodeBlockPlugin(): JSX.Element {

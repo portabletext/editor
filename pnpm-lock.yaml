@@ -322,6 +322,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
+      '@portabletext/plugin-dnd':
+        specifier: workspace:*
+        version: link:../../packages/plugin-dnd
       '@portabletext/plugin-emoji-picker':
         specifier: workspace:*
         version: link:../../packages/plugin-emoji-picker

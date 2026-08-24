@@ -2,6 +2,7 @@ import {
   defineBlockObject,
   defineContainer,
   defineTextBlock,
+  type ContainerRenderProps,
 } from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import {
@@ -12,6 +13,9 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react'
 import type {JSX} from 'react'
+import {useContext} from 'react'
+import {EditorFeatureFlagsContext} from '../feature-flags'
+import {BlockDropIndicator} from './block-drop-indicator'
 import {DragHandle} from './drag-handle'
 import {ListItemBlock} from './list-item-block'
 
@@ -73,29 +77,34 @@ const calloutImageLeaf = defineBlockObject({
   },
 })
 
+function CalloutContainer(props: ContainerRenderProps): JSX.Element {
+  const {attributes, children, node, path, readOnly, selected} = props
+  const flags = useContext(EditorFeatureFlagsContext)
+  const tone = typeof node.tone === 'string' ? node.tone : 'note'
+  const toneStyle = toneClassName[tone] ?? defaultToneClassName
+  return (
+    <aside
+      {...attributes}
+      data-selected={selected ? '' : undefined}
+      className={`group relative my-3 flex gap-2.5 rounded-md border-l-4 p-3 transition-shadow data-[selected]:shadow-md ${toneStyle}`}
+    >
+      <span
+        contentEditable={false}
+        className="mt-[0.3rem] flex shrink-0 items-center justify-center"
+      >
+        <ToneIcon tone={tone} />
+      </span>
+      <div className="min-w-0 flex-1 cursor-text">{children}</div>
+      <DragHandle readOnly={readOnly} />
+      {flags.dndPlugin ? <BlockDropIndicator path={path} /> : null}
+    </aside>
+  )
+}
+
 export const calloutContainer = defineContainer({
   type: 'callout',
   arrayField: 'content',
-  render: ({attributes, children, node, readOnly, selected}) => {
-    const tone = typeof node.tone === 'string' ? node.tone : 'note'
-    const toneStyle = toneClassName[tone] ?? defaultToneClassName
-    return (
-      <aside
-        {...attributes}
-        data-selected={selected ? '' : undefined}
-        className={`group relative my-3 flex gap-2.5 rounded-md border-l-4 p-3 transition-shadow data-[selected]:shadow-md ${toneStyle}`}
-      >
-        <span
-          contentEditable={false}
-          className="mt-[0.3rem] flex shrink-0 items-center justify-center"
-        >
-          <ToneIcon tone={tone} />
-        </span>
-        <div className="min-w-0 flex-1 cursor-text">{children}</div>
-        <DragHandle readOnly={readOnly} />
-      </aside>
-    )
-  },
+  render: (props) => <CalloutContainer {...props} />,
   of: [
     defineTextBlock({
       type: 'block',

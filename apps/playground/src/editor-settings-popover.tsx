@@ -35,6 +35,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               isSelected={featureFlags.dragHandles}
               onChange={() => toggleFlag('dragHandles')}
             />
+            <FeatureSwitch
+              label="Drop indicators (plugin-dnd)"
+              isSelected={featureFlags.dndPlugin}
+              onChange={() => toggleFlag('dndPlugin')}
+            />
           </Section>
 
           <Separator orientation="horizontal" />
