@@ -69,11 +69,11 @@
   },
   "dependencies": {
     "@floating-ui/dom": "catalog:",
-    "@portabletext/keyboard-shortcuts": "workspace:^",
-    "@portabletext/markdown": "workspace:^"
+    "@portabletext/keyboard-shortcuts": "workspace:^"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
+    "@portabletext/markdown": "workspace:^",
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",

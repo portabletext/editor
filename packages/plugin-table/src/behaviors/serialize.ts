@@ -1,35 +1,33 @@
-import type {EditorSnapshot, Path} from '@portabletext/editor'
-import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import type {Path} from '@portabletext/editor'
+import {defineBehavior, forward} from '@portabletext/editor/behaviors'
 import {getFragment} from '@portabletext/editor/selectors'
-import {portableTextToMarkdown} from '@portabletext/markdown'
 import {cellEndPoint, cellStartPoint} from '../cell-points'
 import {resolveTableSelection} from '../get-table-selection'
-import {cellValue, rowCells, tableRows, type TableConfig} from '../table-config'
+import {rowCells, tableRows, type TableConfig} from '../table-config'
 import type {CellNode, RowNode, TableNode, TableSelection} from './types'
-
-type SerializeDataResult = ReturnType<
-  EditorSnapshot['context']['converters'][number]['serialize']
->
 
 /**
  * Copying or cutting a rectangular cell selection must serialize the
  * rectangle, not the linear fragment between its corners, which covers
- * cells outside a column selection by construction. The interception calls
- * the same converter core would call, but against a snapshot whose value is
- * a synthetic table sliced to the rectangle and whose selection spans it
- * leaf-to-leaf, the same snapshot-override idiom core's own `serialize.data`
- * behavior uses for drag origins. The rectangle clear on cut comes from the
- * `delete` that `clipboard.cut` raises after `serialize`.
+ * cells outside a column selection by construction. The interception
+ * builds a synthetic table sliced to the rectangle and `forward`s the
+ * mime-type event with that rectangle attached as `event.blocks`, the same
+ * snapshot-override idiom core's own `serialize.data` Behavior uses for
+ * drag origins; core's converters and any consumer `serialize.data`
+ * Behavior downstream then serialize the rectangle instead of deriving a
+ * fragment from the raw selection. The `event.blocks === undefined` guard
+ * stops the rectangle from being re-resolved once it is already attached.
+ * The rectangle clear on cut comes from the `delete` that `clipboard.cut`
+ * raises after `serialize`.
  */
 export function createSerializeBehaviors(config: TableConfig) {
   return [
-    defineBehavior<
-      Record<string, never>,
-      'serialize.data',
-      SerializeDataResult
-    >({
+    defineBehavior({
       on: 'serialize.data',
       guard: ({snapshot, event}) => {
+        if (event.blocks !== undefined) {
+          return false
+        }
         if (
           event.originEvent.type !== 'clipboard.copy' &&
           event.originEvent.type !== 'clipboard.cut'
@@ -43,37 +41,11 @@ export function createSerializeBehaviors(config: TableConfig) {
           return false
         }
 
-        // Core ships no `text/markdown` converter, so the plugin produces
-        // that mime type itself instead of delegating to one.
-        const isMarkdown = event.mimeType === 'text/markdown'
-        const converter = isMarkdown
-          ? undefined
-          : snapshot.context.converters.find(
-              (candidate) => candidate.mimeType === event.mimeType,
-            )
-        if (!converter && !isMarkdown) {
-          return false
-        }
-
         const rectangle = sliceTable(
           config,
           resolved.table.node,
           resolved.tableSelection,
         )
-
-        if (event.mimeType === 'text/plain') {
-          // The plain-text converter flattens the linear fragment and comes up
-          // empty for a doctored table snapshot, and a rectangle has a better
-          // plain-text form anyway: the spreadsheet convention, cells joined by
-          // tabs and rows by newlines, which pastes straight into Sheets and
-          // Excel.
-          return {
-            type: 'serialization.success' as const,
-            data: tableToTsv(config, rectangle),
-            mimeType: 'text/plain' as const,
-            originEvent: event.originEvent.type,
-          }
-        }
 
         const rectangleRows = tableRows(config, rectangle)
         const firstRow = rectangleRows[0]
@@ -109,30 +81,11 @@ export function createSerializeBehaviors(config: TableConfig) {
           },
         }
 
-        if (isMarkdown) {
-          const blocks = getFragment(rectangleSnapshot).map(
-            (entry) => entry.node,
-          )
-          return {
-            type: 'serialization.success' as const,
-            data: portableTextToMarkdown(blocks),
-            mimeType: 'text/markdown' as const,
-            originEvent: event.originEvent.type,
-          }
-        }
-
-        if (!converter) {
-          return false
-        }
-
-        return converter.serialize({
-          snapshot: rectangleSnapshot,
-          event: {type: 'serialize', originEvent: event.originEvent.type},
-        })
+        return getFragment(rectangleSnapshot).map((entry) => entry.node)
       },
       actions: [
-        ({event}, serialization) => [
-          raise({...serialization, originEvent: event.originEvent}),
+        ({event}, rectangleBlocks) => [
+          forward({...event, blocks: rectangleBlocks}),
         ],
       ],
     }),
@@ -162,36 +115,6 @@ function sliceTable(
       rowStart === 0 ? Math.min(table.headerRows, slicedRows.length) : 0
   }
   return sliced
-}
-
-function tableToTsv(config: TableConfig, table: TableNode): string {
-  return tableRows(config, table)
-    .map((row) =>
-      rowCells(config, row)
-        .map((cell) => cellText(config, cell))
-        .join('\t'),
-    )
-    .join('\n')
-}
-
-function cellText(config: TableConfig, cell: CellNode): string {
-  return (
-    cellValue(config, cell)
-      .map((block) =>
-        'children' in block && Array.isArray(block.children)
-          ? block.children
-              .map((child) =>
-                typeof child.text === 'string' ? child.text : '',
-              )
-              .join('')
-          : '',
-      )
-      .join(' ')
-      // Tabs and newlines inside cell text would corrupt the TSV shape;
-      // flatten them to spaces. Quote-escaping can come if spreadsheet
-      // round-trips demand it.
-      .replace(/[\t\n]/g, ' ')
-  )
 }
 
 function cellPath(

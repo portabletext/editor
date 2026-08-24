@@ -1220,13 +1220,13 @@ importers:
       '@portabletext/keyboard-shortcuts':
         specifier: workspace:^
         version: link:../keyboard-shortcuts
-      '@portabletext/markdown':
-        specifier: workspace:^
-        version: link:../markdown
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@portabletext/markdown':
+        specifier: workspace:^
+        version: link:../markdown
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test

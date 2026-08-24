@@ -1,8 +1,69 @@
 import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
+import {getFragment} from '@portabletext/editor/selectors'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {TablePlugin} from '../plugin.table'
+
+/**
+ * A consumer `serialize.data`/`deserialize.data` Behavior pair standing in
+ * for a real one, e.g. the markdown restore Behaviors from the migration
+ * guide. Registered for `text/plain` (not `text/markdown`) to keep the
+ * assertions below focused on the forwarding contract rather than on any
+ * one mime type.
+ */
+const markdownTextPlainBehaviors = [
+  defineBehavior({
+    on: 'deserialize.data',
+    guard: ({snapshot, event}) => {
+      if (event.mimeType !== 'text/plain') {
+        return false
+      }
+
+      const blocks = markdownToPortableText(event.data, {
+        schema: snapshot.context.schema,
+        keyGenerator: snapshot.context.keyGenerator,
+      })
+
+      if (blocks.length === 0) {
+        return false
+      }
+
+      return {blocks}
+    },
+    actions: [
+      ({event}, {blocks}) => [
+        raise({...event, type: 'deserialization.success', data: blocks}),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'serialize.data',
+    guard: ({event}) => event.mimeType === 'text/plain',
+    actions: [
+      ({snapshot, event}) => [
+        raise({
+          type: 'serialization.success',
+          mimeType: 'text/plain',
+          data: portableTextToMarkdown(
+            event.blocks ?? getFragment(snapshot).map((entry) => entry.node),
+          ),
+          originEvent: event.originEvent,
+        }),
+      ],
+    ],
+  }),
+]
+
+function MarkdownTextPlainPlugin() {
+  return <BehaviorPlugin behaviors={markdownTextPlainBehaviors} />
+}
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -109,7 +170,7 @@ async function selectLeftColumn() {
 }
 
 describe('rectangular selection copy/cut', () => {
-  test('copying a column selection writes tab-separated text to `text/plain`', async () => {
+  test('copying a column selection leaves `text/plain` and `text/markdown` empty', async () => {
     const editor = await selectLeftColumn()
     const dataTransfer = new DataTransfer()
 
@@ -120,38 +181,216 @@ describe('rectangular selection copy/cut', () => {
     })
 
     await vi.waitFor(() => {
-      // One column: rows joined by newlines, no tabs. A wider rectangle
-      // joins the cells of each row with tabs (the spreadsheet convention).
-      expect(dataTransfer.getData('text/plain')).toBe('A\nC')
+      expect(
+        JSON.parse(dataTransfer.getData('application/x-portable-text')),
+      ).not.toEqual([])
     })
+    // Core's `text/html` and `text/plain` converters only read text blocks
+    // and known block objects; a table's `rows`/`cells` nesting is opaque to
+    // them, so the forwarded rectangle serializes to nothing for either.
+    // Core ships no `text/markdown` converter at all. A consumer that wants
+    // any of these mime types populated registers its own `serialize.data`
+    // Behavior (see the `text/plain` consumer test below).
+    expect(dataTransfer.getData('text/html')).toBe('')
+    expect(dataTransfer.getData('text/plain')).toBe('')
+    expect(dataTransfer.getData('text/markdown')).toBe('')
   })
 
-  test('copying the whole table writes rows of tab-joined cells to `text/plain`', async () => {
-    const wholeTableSelection = {
-      anchor: {path: spanPath('c00'), offset: 0},
-      focus: {path: spanPath('c11'), offset: 1},
-    }
+  test('a consumer `serialize.data` Behavior for `text/plain` serializes the forwarded rectangle, not the raw selection', async () => {
+    // The table plugin's `forward` only reaches Behaviors registered after
+    // it: mounting order is registration order, and a `forward`ed event
+    // resumes at the next not-yet-run Behavior in that order. Swapping the
+    // plugin order here would make this Behavior see the un-narrowed event
+    // (`event.blocks` still `undefined`) and serialize the raw selection
+    // instead of the rectangle.
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue,
-      children: <TablePlugin />,
+      children: (
+        <>
+          <TablePlugin />
+          <MarkdownTextPlainPlugin />
+        </>
+      ),
     })
     editor.send({type: 'focus'})
+    editor.send({type: 'select', at: leftColumnSelection})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
+    })
+
+    const dataTransfer = new DataTransfer()
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {selection: leftColumnSelection},
+    })
+
+    await vi.waitFor(() => {
+      // The linear fragment between the corners would include `c01` (`B`);
+      // the rectangle excludes it.
+      expect(dataTransfer.getData('text/plain')).toBe(
+        ['|  |', '| --- |', '| A |', '| C |'].join('\n'),
+      )
+    })
+  })
+
+  test('a consumer `deserialize.data` Behavior for `text/plain` round-trips a copied rectangle through markdown', async () => {
+    const localInitialValue = [
+      ...initialValue,
+      {
+        _type: 'block',
+        _key: 'p0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's-p0', text: '', marks: []}],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: localInitialValue,
+      children: (
+        <>
+          <TablePlugin />
+          <MarkdownTextPlainPlugin />
+        </>
+      ),
+    })
+    editor.send({type: 'focus'})
+
+    const wholeTableSelection = {
+      anchor: {path: spanPath('c00'), offset: 0},
+      focus: {path: spanPath('c11'), offset: 1},
+    }
     editor.send({type: 'select', at: wholeTableSelection})
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
     })
-    const dataTransfer = new DataTransfer()
 
+    const copyTransfer = new DataTransfer()
     editor.send({
       type: 'clipboard.copy',
-      originEvent: {dataTransfer},
+      originEvent: {dataTransfer: copyTransfer},
       position: {selection: wholeTableSelection},
     })
 
+    let markdown = ''
     await vi.waitFor(() => {
-      expect(dataTransfer.getData('text/plain')).toBe('A\tB\nC\tD')
+      markdown = copyTransfer.getData('text/plain')
+      expect(markdown).not.toBe('')
+    })
+
+    // Only `text/plain` reaches the paste's `DataTransfer`: the deserialize
+    // pipeline prefers `application/x-portable-text` when present, which
+    // would skip the markdown Behavior under test and paste the original
+    // rectangle back verbatim instead of round-tripping through markdown.
+    const outsideCaret = {
+      anchor: {path: [{_key: 'p0'}, 'children', {_key: 's-p0'}], offset: 0},
+      focus: {path: [{_key: 'p0'}, 'children', {_key: 's-p0'}], offset: 0},
+    }
+    editor.send({type: 'select', at: outsideCaret})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.anchor.path[0]).toEqual({
+        _key: 'p0',
+      })
+    })
+
+    const pasteTransfer = new DataTransfer()
+    pasteTransfer.setData('text/plain', markdown)
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer: pasteTransfer},
+      position: {selection: outsideCaret},
+    })
+
+    // `insert.blocks` at an empty text block's caret replaces the empty
+    // block instead of leaving it beside the inserted content, so `p0`
+    // itself does not survive the paste.
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        ...initialValue,
+        {
+          _key: 'k22',
+          _type: 'table',
+          rows: [
+            {
+              _key: 'k14',
+              _type: 'row',
+              cells: [
+                {
+                  _key: 'k10',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k8',
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_key: 'k9', _type: 'span', text: 'A', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _key: 'k13',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k11',
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_key: 'k12', _type: 'span', text: 'B', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k21',
+              _type: 'row',
+              cells: [
+                {
+                  _key: 'k17',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k15',
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_key: 'k16', _type: 'span', text: 'C', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _key: 'k20',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k18',
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_key: 'k19', _type: 'span', text: 'D', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
     })
   })
 
@@ -179,8 +418,6 @@ describe('rectangular selection copy/cut', () => {
           ],
         },
       ])
-      const markdown = dataTransfer.getData('text/markdown')
-      expect(markdown).toBe(['|  |', '| --- |', '| A |', '| C |'].join('\n'))
     })
   })
 
