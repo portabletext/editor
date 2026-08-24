@@ -299,6 +299,102 @@ describe(mapPointThroughStep.name, () => {
     })
   })
 
+  describe('move.text', () => {
+    test('maps a point at the start of the moved range to the destination start', () => {
+      const point = {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 4,
+      }
+      const step: Step = {
+        type: 'move.text',
+        from: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 4,
+          length: 7,
+        },
+        to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
+      }
+      expect(mapPointThroughStep(step, point)).toEqual({
+        path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        offset: 0,
+      })
+    })
+
+    test('maps a point at the end of the moved range to the destination end', () => {
+      const point = {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 11,
+      }
+      const step: Step = {
+        type: 'move.text',
+        from: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 4,
+          length: 7,
+        },
+        to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
+      }
+      expect(mapPointThroughStep(step, point)).toEqual({
+        path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        offset: 7,
+      })
+    })
+
+    test('is a no-op when the offset sits outside the moved range', () => {
+      const point = {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+      }
+      const step: Step = {
+        type: 'move.text',
+        from: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 4,
+          length: 7,
+        },
+        to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
+      }
+      expect(mapPointThroughStep(step, point)).toBe(point)
+    })
+
+    test('is a no-op on a different path', () => {
+      const point = {
+        path: [{_key: 'b1'}, 'children', {_key: 's9'}],
+        offset: 6,
+      }
+      const step: Step = {
+        type: 'move.text',
+        from: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 4,
+          length: 7,
+        },
+        to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
+      }
+      expect(mapPointThroughStep(step, point)).toBe(point)
+    })
+
+    test('offsets into the destination range by an offset target other than zero', () => {
+      const point = {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 6,
+      }
+      const step: Step = {
+        type: 'move.text',
+        from: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 4,
+          length: 7,
+        },
+        to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 5},
+      }
+      expect(mapPointThroughStep(step, point)).toEqual({
+        path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        offset: 7,
+      })
+    })
+  })
+
   describe('rekey', () => {
     test('substitutes the old key with the new key at the segment directly under the step path', () => {
       const point = {

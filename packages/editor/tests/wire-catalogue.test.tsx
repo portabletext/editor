@@ -146,6 +146,37 @@ describe('wire catalogue', () => {
     })
   })
 
+  test('Scenario: splitting a block with multiple spans with insert.break', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const seed = 'B: fo|o [strong:bar] baz'
+    const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
+
+    const {editor, patches, schema, compiledSchema, selection} =
+      await setupScenario({keyGenerator, seed, schemaDefinition})
+
+    editor.send({type: 'select', at: selection})
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'fo',
+        'o ,bar, baz',
+      ])
+    })
+
+    await writeCapture({
+      scenario: 'block-split-multi-span',
+      schema,
+      seed,
+      actions: [
+        'select {caret at offset 2 on the first span}',
+        "send {type: 'insert.break'}",
+      ],
+      patches,
+      result: captureResult(compiledSchema, editor),
+    })
+  })
+
   test('Scenario: merging two blocks with backspace at the boundary', async () => {
     const keyGenerator = createTestKeyGenerator()
     const seed = 'B: foo\nB: |bar'
