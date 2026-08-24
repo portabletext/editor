@@ -51,6 +51,31 @@ export type ReplaceChildrenStep = {
   newChildren: Array<unknown>
 }
 
+/**
+ * `from` is both-ends inclusive: an offset landing exactly on either
+ * boundary (the start or the end of the moved range) still maps through,
+ * matching the convention `insert.text`/`remove.text` already use for a
+ * point sitting exactly at their own edge.
+ */
+export type MoveTextStep = {
+  type: 'move.text'
+  from: {path: Path; offset: number; length: number}
+  to: {path: Path; offset: number}
+}
+
+/**
+ * A node (identified by its `_key`, not by matching text) reappeared
+ * somewhere else in the tree within the same transaction. Unlike
+ * `move.text`, there's no offset arithmetic: the node's own content is
+ * unchanged, so a point addressing it keeps its offset and only trades
+ * the `from` path prefix for `to`.
+ */
+export type MoveNodeStep = {
+  type: 'move.node'
+  from: Path
+  to: Path
+}
+
 export type Step =
   | InsertTextStep
   | RemoveTextStep
@@ -59,6 +84,8 @@ export type Step =
   | UnsetTextStep
   | RekeyStep
   | ReplaceChildrenStep
+  | MoveTextStep
+  | MoveNodeStep
 
 /**
  * Map a point through one step. Returns the same `point` reference when the
@@ -156,6 +183,32 @@ export function mapPointThroughStep(
     case 'unset.text': {
       if (pathEquals(step.path, point.path) && point.offset !== 0) {
         return {path: point.path, offset: 0}
+      }
+
+      return point
+    }
+
+    case 'move.text': {
+      if (
+        pathEquals(step.from.path, point.path) &&
+        step.from.offset <= point.offset &&
+        point.offset <= step.from.offset + step.from.length
+      ) {
+        return {
+          path: step.to.path,
+          offset: step.to.offset + (point.offset - step.from.offset),
+        }
+      }
+
+      return point
+    }
+
+    case 'move.node': {
+      if (pathContains(step.from, point.path)) {
+        return {
+          path: [...step.to, ...point.path.slice(step.from.length)],
+          offset: point.offset,
+        }
       }
 
       return point
