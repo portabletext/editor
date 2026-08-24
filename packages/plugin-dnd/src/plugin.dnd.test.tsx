@@ -1,4 +1,10 @@
-import type {Editor, EditorSelection, Path} from '@portabletext/editor'
+import {
+  defineContainer,
+  type Editor,
+  type EditorSelection,
+  type Path,
+} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
@@ -6,6 +12,20 @@ import {page} from 'vitest/browser'
 import {DndProvider, useDropPosition} from './plugin.dnd'
 
 const schemaDefinition = defineSchema({})
+
+const calloutContainer = defineContainer({
+  type: 'callout',
+  arrayField: 'content',
+})
+
+const containerSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+    },
+  ],
+})
 
 describe('DndProvider', () => {
   test('Scenario: Dragging an entire block over another block shows the drop position', async () => {
@@ -221,6 +241,53 @@ describe('DndProvider', () => {
   })
 })
 
+describe('DndProvider with a nested container', () => {
+  test('Scenario: Dragging a root block over a nested block shows the drop position on the nested block, not the container', async () => {
+    const {editor} = await renderEditorWithContainerProbes()
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: nestedCaretIn(),
+        block: 'end',
+      }),
+    )
+
+    await expectNestedDropPositions({container: 'none', nested: 'end'})
+  })
+
+  test('Scenario: Dragging a nested block over itself shows nothing', async () => {
+    const {editor} = await renderEditorWithContainerProbes()
+
+    // Seeds a real, non-'none' position at the nested block first: a
+    // suppressed dragover is a no-op, so starting from 'none' can't tell a
+    // genuine suppression from a guard that never ran and left 'none' alone.
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: nestedCaretIn(),
+        block: 'start',
+      }),
+    )
+    await expectNestedDropPositions({nested: 'start'})
+
+    editor.send(
+      dragover({
+        dragOrigin: nestedBlockSelection(),
+        over: nestedCaretIn(),
+        block: 'end',
+      }),
+    )
+
+    // A suppressed dragover is a no-op: nothing re-renders to confirm it
+    // ran, so there's no observable condition for `vi.waitFor` to poll on.
+    // Wait a tick for any (incorrect) update to land before reading.
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(page.getByTestId('probe-nested').element().textContent).toBe('start')
+  })
+})
+
 function getEditorElement(editor: Editor): HTMLElement {
   const element = editor.dom.getEditorElement()
 
@@ -241,6 +308,87 @@ function DropPositionProbe(props: {
   return (
     <div data-testid={`probe-${props.blockKey}`}>{dropPosition ?? 'none'}</div>
   )
+}
+
+const containerKey = 'callout0'
+const nestedKey = 'n0'
+const nestedSpanKey = 'n0-span'
+const containerPath: Path = [{_key: containerKey}]
+const nestedPath: Path = [{_key: containerKey}, 'content', {_key: nestedKey}]
+
+function PathDropPositionProbe(props: {label: string; path: Path}) {
+  const dropPosition = useDropPosition(props.path)
+  return (
+    <div data-testid={`probe-${props.label}`}>{dropPosition ?? 'none'}</div>
+  )
+}
+
+async function renderEditorWithContainerProbes() {
+  const {editor} = await createTestEditor({
+    schemaDefinition: containerSchemaDefinition,
+    initialValue: [
+      block('b0', 'first'),
+      {
+        _type: 'callout',
+        _key: containerKey,
+        content: [
+          {
+            _type: 'block',
+            _key: nestedKey,
+            children: [
+              {_type: 'span', _key: nestedSpanKey, text: 'nested', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      } as unknown as PortableTextBlock,
+    ],
+    children: (
+      <>
+        <NodePlugin nodes={[calloutContainer]} />
+        <DndProvider>
+          <PathDropPositionProbe label="container" path={containerPath} />
+          <PathDropPositionProbe label="nested" path={nestedPath} />
+        </DndProvider>
+      </>
+    ),
+  })
+
+  await vi.waitFor(() => {
+    expect(page.getByTestId('probe-nested').element().textContent).toBe('none')
+  })
+
+  return {editor}
+}
+
+async function expectNestedDropPositions(
+  expected: Record<string, string>,
+): Promise<void> {
+  await vi.waitFor(() => {
+    for (const [label, dropPosition] of Object.entries(expected)) {
+      expect(
+        page.getByTestId(`probe-${label}`).element().textContent,
+        `drop position of ${label}`,
+      ).toBe(dropPosition)
+    }
+  })
+}
+
+function nestedCaretIn(): NonNullable<EditorSelection> {
+  const path = [...nestedPath, 'children', {_key: nestedSpanKey}]
+  return {
+    anchor: {path, offset: 0},
+    focus: {path, offset: 0},
+  }
+}
+
+function nestedBlockSelection(): NonNullable<EditorSelection> {
+  const path = [...nestedPath, 'children', {_key: nestedSpanKey}]
+  return {
+    anchor: {path, offset: 0},
+    focus: {path, offset: 'nested'.length},
+  }
 }
 
 async function renderEditorWithProbes() {
