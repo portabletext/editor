@@ -4,9 +4,14 @@ import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-hist
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
 import {normalize} from '../engine/editor/normalize'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {pointEquals} from '../engine/point/point-equals'
+import {mapPointThroughSteps, type Step} from '../engine/point/step-mapper'
+import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {createApplyPatch} from '../internal-utils/applyPatch'
 import {debug} from '../internal-utils/debug'
+import {interpretTransaction} from '../internal-utils/interpret-transaction'
 import {safeStringify} from '../internal-utils/safe-json'
+import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
@@ -36,6 +41,11 @@ export function setupRemotePatches({
     bufferedPatches = []
     let changed = false
 
+    const preApplySelection = editor.snapshot.context.selection
+    const steps = preApplySelection
+      ? interpretTransaction(editor.snapshot.context.value, patches)
+      : null
+
     withRemoteChanges(editor, () => {
       withoutNormalizing(editor, () => {
         withoutPatching(editor, () => {
@@ -62,6 +72,11 @@ export function setupRemotePatches({
       })
       if (changed) {
         normalize(editor)
+
+        if (preApplySelection && steps) {
+          recoverSelection(editor, steps, preApplySelection)
+        }
+
         editor.onChange()
       }
     })
@@ -84,4 +99,45 @@ export function setupRemotePatches({
       subscription.unsubscribe()
     }
   })
+}
+
+/**
+ * Remote patches carry state deltas, not position mappings: a collaborator's
+ * span merge or block merge arrives as delete + insert, so the per-operation
+ * selection transforms collapse the local caret to a boundary instead of
+ * following the content. `interpretTransaction` recognizes those
+ * delete+insert pairs as moves, so mapping the pre-batch selection through
+ * its steps can recover a caret the per-operation transforms lost.
+ */
+function recoverSelection(
+  editor: PortableTextEditorEngine,
+  steps: Array<Step>,
+  preApplySelection: NonNullable<EditorSelection>,
+): void {
+  const mappedAnchor = mapPointThroughSteps(steps, preApplySelection.anchor)
+  const mappedFocus = mapPointThroughSteps(steps, preApplySelection.focus)
+
+  if (!mappedAnchor || !mappedFocus) {
+    return
+  }
+
+  const currentSelection = editor.snapshot.context.selection
+  const alreadyMatches =
+    currentSelection !== null &&
+    pointEquals(mappedAnchor, currentSelection.anchor) &&
+    pointEquals(mappedFocus, currentSelection.focus)
+
+  if (alreadyMatches) {
+    return
+  }
+
+  const resolved = resolveSelection(editor, {
+    anchor: mappedAnchor,
+    focus: mappedFocus,
+    backward: preApplySelection.backward,
+  })
+
+  if (resolved) {
+    applySelect(editor, resolved)
+  }
 }
