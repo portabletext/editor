@@ -1,0 +1,131 @@
+{
+  "scenario": "decorator-add-mid-span",
+  "schema": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ]
+  },
+  "seed": "B: foo ^bar| baz",
+  "actions": [
+    "select {offset 4..7 on the span}",
+    "send {type: 'decorator.add', decorator: 'strong'}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -4,8 +4,4 @@\n  bar\n- baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k4",
+          "_type": "span",
+          "marks": [],
+          "text": " baz"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,7 +1,4 @@\n foo \n-bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k5",
+          "_type": "span",
+          "marks": [],
+          "text": "bar"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k5"
+        },
+        "marks"
+      ],
+      "value": [
+        "strong"
+      ],
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo [strong:^bar|] baz"
+}

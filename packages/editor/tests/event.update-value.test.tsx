@@ -2317,6 +2317,95 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     })
   })
 
+  test('Scenario: replacing a whole value with the same block/span keys emits no patches', async () => {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    const patchesAtSettle = [...patches]
+    expect(patchesAtSettle).toEqual([])
+
+    // "No patches were emitted" can't be trusted on a silent listener, so
+    // prove the channel is live: a probe edit right after must still emit
+    // its own patch.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 4},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 4},
+      },
+    })
+    editor.send({type: 'insert.text', text: ' foo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo! foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo!', 'foo! foo'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Clearing synced value with an empty array', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),

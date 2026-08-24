@@ -1,0 +1,53 @@
+{
+  "scenario": "block-split",
+  "schema": {},
+  "seed": "B: foo |bar baz",
+  "actions": [
+    "select {caret at offset 4 on the span}",
+    "send {type: 'insert.break'}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,11 +1,4 @@\n foo \n-bar baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "block",
+          "_key": "k4",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k1",
+              "text": "bar baz",
+              "marks": []
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo \nB: |bar baz"
+}
