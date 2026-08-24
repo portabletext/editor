@@ -21,15 +21,15 @@ export type EditorContext = {
    *
    * Each entry is a {@link RegisteredContainer} carrying `type`,
    * the array `field` that holds the container's editable children,
-   * and (when present) the nested positional `of` registrations
-   * consulted by {@link resolveContainerAt}. The render callback is
-   * engine-internal and not surfaced here.
+   * and (when present) the nested positional `of` registrations the
+   * engine consults when it descends into the container. The render
+   * callback is engine-internal and not surfaced here.
    *
    * Only top-level registrations appear as flat entries. A `_type`
    * registered only inside a parent's `of` is reachable through that
-   * parent's `of`, not as a top-level entry. Use
-   * `resolveContainerAt(containers, value, path)` for position-aware
-   * resolution that handles both top-level and positional entries.
+   * parent's `of`, not as a top-level entry. For position-aware descent,
+   * walk the entries with `getContainerChildren` from
+   * `@portabletext/editor/traversal`.
    *
    * @public
    */
