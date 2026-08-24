@@ -1,0 +1,106 @@
+{
+  "scenario": "annotation-remove",
+  "schema": {
+    "annotations": [
+      {
+        "name": "link",
+        "fields": [
+          {
+            "name": "href",
+            "type": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "seed": "B: foo [@link href=\"https://example.com\":^bar|] baz",
+  "actions": [
+    "select {offset 0..3 on the span}",
+    "send {type: 'annotation.remove', annotation: {name: 'link'}}"
+  ],
+  "patches": [
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        },
+        "marks"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,7 @@\n foo \n+bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,7 +1,11 @@\n foo bar\n+ baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k4"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "markDefs"
+      ],
+      "value": [],
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo ^bar| baz"
+}

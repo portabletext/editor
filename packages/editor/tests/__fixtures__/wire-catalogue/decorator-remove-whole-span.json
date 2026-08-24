@@ -1,0 +1,89 @@
+{
+  "scenario": "decorator-remove-whole-span",
+  "schema": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ]
+  },
+  "seed": "B: foo [strong:^bar|] baz",
+  "actions": [
+    "select {offset 0..3 on the span}",
+    "send {type: 'decorator.remove', decorator: 'strong'}"
+  ],
+  "patches": [
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        },
+        "marks"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,7 @@\n foo \n+bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,7 +1,11 @@\n foo bar\n+ baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo ^bar| baz"
+}

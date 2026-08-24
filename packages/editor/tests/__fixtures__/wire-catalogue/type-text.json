@@ -1,0 +1,27 @@
+{
+  "scenario": "type-text",
+  "schema": {},
+  "seed": "B: foo bar baz|",
+  "actions": [
+    "select {caret at end of the span}",
+    "send {type: 'insert.text', text: ' foo'}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -4,8 +4,12 @@\n  bar baz\n+ foo\n",
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo bar baz foo|"
+}

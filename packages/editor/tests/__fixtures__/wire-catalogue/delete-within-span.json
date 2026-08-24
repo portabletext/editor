@@ -1,0 +1,26 @@
+{
+  "scenario": "delete-within-span",
+  "schema": {},
+  "seed": "B: foo ^bar| baz",
+  "actions": [
+    "send {type: 'delete', at: {offset 4..7 on the span}}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,11 +1,8 @@\n foo \n-bar\n  baz\n",
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo  baz"
+}

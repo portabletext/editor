@@ -1,0 +1,154 @@
+{
+  "scenario": "annotation-add-mid-span",
+  "schema": {
+    "annotations": [
+      {
+        "name": "link",
+        "fields": [
+          {
+            "name": "href",
+            "type": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "seed": "B: foo ^bar| baz",
+  "actions": [
+    "select {offset 4..7 on the span}",
+    "send {type: 'annotation.add', annotation: {name: 'link', value: {href: 'https://example.com'}}}"
+  ],
+  "patches": [
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "markDefs"
+      ],
+      "value": [
+        {
+          "_type": "link",
+          "_key": "k4",
+          "href": "https://example.com"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -4,8 +4,4 @@\n  bar\n- baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k5",
+          "_type": "span",
+          "marks": [],
+          "text": " baz"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,7 +1,4 @@\n foo \n-bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k6",
+          "_type": "span",
+          "marks": [],
+          "text": "bar"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k6"
+        },
+        "marks"
+      ],
+      "value": [
+        "k4"
+      ],
+      "origin": "local"
+    }
+  ],
+  "result": "B: foo [@link href=\"https://example.com\":^bar|] baz"
+}

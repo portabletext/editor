@@ -1,0 +1,81 @@
+{
+  "scenario": "span-merge-cosmetic",
+  "schema": {},
+  "seed": [
+    {
+      "_type": "block",
+      "_key": "k0",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "k1",
+          "text": "foo ",
+          "marks": []
+        },
+        {
+          "_type": "span",
+          "_key": "k2",
+          "text": "bar",
+          "marks": []
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "seedTerse": [
+    "foo ,bar"
+  ],
+  "actions": [
+    "select {caret at end of the second span}",
+    "send {type: 'insert.text', text: '!'}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +1,4 @@\n bar\n+!\n",
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,8 @@\n foo \n+bar!\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "resultTerse": [
+    "foo bar!"
+  ]
+}

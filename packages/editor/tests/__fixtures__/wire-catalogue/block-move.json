@@ -1,0 +1,46 @@
+{
+  "scenario": "block-move",
+  "schema": {},
+  "seed": "B: foo\nB: bar",
+  "actions": [
+    "send {type: 'move.block down', at: [{_key: block 1}]}"
+  ],
+  "patches": [
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "style": "normal",
+          "markDefs": [],
+          "_type": "block",
+          "_key": "k0",
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "text": "foo",
+              "marks": []
+            }
+          ]
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "result": "B: bar\nB: foo"
+}
