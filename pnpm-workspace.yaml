@@ -22,7 +22,7 @@ catalogMode: prefer
 
 catalogs:
   tooling:
-    "@portabletext/react": ^8.0.0
+    "@portabletext/react": ^8.0.1
     "@sanity/pkg-utils": ^12.3.0
     "@sanity/tsconfig": ^2.1.0
     "@tailwindcss/vite": ^4.3.3
