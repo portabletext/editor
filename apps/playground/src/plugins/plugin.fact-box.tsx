@@ -1,13 +1,20 @@
-import {defineContainer, defineTextBlock} from '@portabletext/editor'
+import {
+  defineContainer,
+  defineTextBlock,
+  type ContainerRenderProps,
+} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
+import {useContext} from 'react'
+import {EditorFeatureFlagsContext} from '../feature-flags'
+import {BlockDropIndicator} from './block-drop-indicator'
 import {DragHandle} from './drag-handle'
 import {ListItemBlock} from './list-item-block'
 
-const factBoxContainer = defineContainer({
-  type: 'fact-box',
-  arrayField: 'content',
-  render: ({attributes, children, readOnly, selected}) => (
+function FactBoxContainer(props: ContainerRenderProps): JSX.Element {
+  const {attributes, children, path, readOnly, selected} = props
+  const flags = useContext(EditorFeatureFlagsContext)
+  return (
     <section
       {...attributes}
       data-selected={selected ? '' : undefined}
@@ -17,8 +24,15 @@ const factBoxContainer = defineContainer({
         {children}
       </div>
       <DragHandle readOnly={readOnly} />
+      {flags.dndPlugin ? <BlockDropIndicator path={path} /> : null}
     </section>
-  ),
+  )
+}
+
+const factBoxContainer = defineContainer({
+  type: 'fact-box',
+  arrayField: 'content',
+  render: (props) => <FactBoxContainer {...props} />,
   of: [
     defineTextBlock({
       type: 'block',

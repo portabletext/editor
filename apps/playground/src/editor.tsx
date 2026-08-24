@@ -21,6 +21,7 @@ import {
 } from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import {portableTextToMarkdown} from '@portabletext/markdown'
+import {DndProvider} from '@portabletext/plugin-dnd'
 import {ListIndexProvider} from '@portabletext/plugin-list-index'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
@@ -46,7 +47,7 @@ import {
   TableIcon,
   XIcon,
 } from 'lucide-react'
-import {useContext, useEffect, useState, type JSX} from 'react'
+import {useContext, useEffect, useState, type JSX, type ReactNode} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {EditorSettingsPopover} from './editor-settings-popover'
@@ -65,6 +66,7 @@ import {
   LinkAnnotationSchema,
   playgroundSchemaDefinition,
 } from './playground-schema-definition'
+import {BlockDropIndicator} from './plugins/block-drop-indicator'
 import {ListItemBlock} from './plugins/list-item-block'
 import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
@@ -156,54 +158,63 @@ export function Editor(props: {
               </FullscreenAwareToolbarWrapper>
             ) : null}
             <ListIndexProvider>
-              <FullscreenAwareContainer>
-                <NodePlugin nodes={playgroundNodes} />
-                {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
-                {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
-                {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
-                {featureFlags.tablePlugin ? <TablePlugin /> : null}
-                <InlineObjectsPlugin />
-                {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
-                {featureFlags.mentionPickerPlugin ? (
-                  <MentionPickerPlugin />
-                ) : null}
-                {featureFlags.slashCommandPlugin ? (
-                  <SlashCommandPickerPlugin />
-                ) : null}
-                {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
-                {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
-                {featureFlags.imageDeserializerPlugin ? (
-                  <ImageDeserializerPlugin />
-                ) : null}
-                {featureFlags.htmlDeserializerPlugin ? (
-                  <HtmlDeserializerPlugin />
-                ) : null}
-                {featureFlags.textFileDeserializerPlugin ? (
-                  <TextFileDeserializerPlugin />
-                ) : null}
-                {featureFlags.markdownDeserializerPlugin ? (
-                  <MarkdownDeserializerPlugin />
-                ) : null}
-                {featureFlags.markdownPlugin ? (
-                  <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
-                ) : null}
-                {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
-                {featureFlags.typographyPlugin ? (
-                  <TypographyPlugin
-                    guard={createDecoratorGuard({
-                      decorators: ({context}) =>
-                        context.schema.decorators.flatMap((decorator) =>
-                          decorator.name === 'code' ? [] : [decorator.name],
-                        ),
-                    })}
+              <MaybeDndProvider enabled={featureFlags.dndPlugin}>
+                <FullscreenAwareContainer>
+                  <NodePlugin nodes={playgroundNodes} />
+                  {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
+                  {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
+                  {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
+                  {featureFlags.tablePlugin ? <TablePlugin /> : null}
+                  <InlineObjectsPlugin />
+                  {featureFlags.emojiPickerPlugin ? (
+                    <EmojiPickerPlugin />
+                  ) : null}
+                  {featureFlags.mentionPickerPlugin ? (
+                    <MentionPickerPlugin />
+                  ) : null}
+                  {featureFlags.slashCommandPlugin ? (
+                    <SlashCommandPickerPlugin />
+                  ) : null}
+                  {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
+                  {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
+                  {featureFlags.imageDeserializerPlugin ? (
+                    <ImageDeserializerPlugin />
+                  ) : null}
+                  {featureFlags.htmlDeserializerPlugin ? (
+                    <HtmlDeserializerPlugin />
+                  ) : null}
+                  {featureFlags.textFileDeserializerPlugin ? (
+                    <TextFileDeserializerPlugin />
+                  ) : null}
+                  {featureFlags.markdownDeserializerPlugin ? (
+                    <MarkdownDeserializerPlugin />
+                  ) : null}
+                  {featureFlags.markdownPlugin ? (
+                    <MarkdownShortcutsPlugin
+                      {...markdownShortcutsPluginProps}
+                    />
+                  ) : null}
+                  {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
+                  {featureFlags.typographyPlugin ? (
+                    <TypographyPlugin
+                      guard={createDecoratorGuard({
+                        decorators: ({context}) =>
+                          context.schema.decorators.flatMap((decorator) =>
+                            decorator.name === 'code' ? [] : [decorator.name],
+                          ),
+                      })}
+                    />
+                  ) : null}
+                  <FullscreenAwareEditable
+                    rangeDecorations={props.rangeDecorations}
+                    featureFlags={featureFlags}
                   />
-                ) : null}
-                <FullscreenAwareEditable
-                  rangeDecorations={props.rangeDecorations}
-                  featureFlags={featureFlags}
-                />
-                <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
-              </FullscreenAwareContainer>
+                  <EditorFooter
+                    editorRef={props.editorRef}
+                    readOnly={readOnly}
+                  />
+                </FullscreenAwareContainer>
+              </MaybeDndProvider>
             </ListIndexProvider>
           </EditorProvider>
         </FullscreenProvider>
@@ -240,6 +251,14 @@ function FullscreenAwareEditable(props: {
         </EditorFeatureFlagsContext.Provider>
       </ErrorBoundary>
     </div>
+  )
+}
+
+function MaybeDndProvider(props: {enabled: boolean; children: ReactNode}) {
+  return props.enabled ? (
+    <DndProvider>{props.children}</DndProvider>
+  ) : (
+    props.children
   )
 }
 
@@ -457,7 +476,7 @@ function TaskListCheckbox(props: {block: PortableTextBlock; path: BlockPath}) {
 }
 
 const renderPlaceholder: RenderPlaceholderFunction = () => (
-  <span className="text-gray-400 dark:text-gray-500 px-2">Type something</span>
+  <span className="text-gray-400 dark:text-gray-500">Type something</span>
 )
 
 const playgroundBlockObjectFallback = defineBlockObject({
@@ -466,7 +485,8 @@ const playgroundBlockObjectFallback = defineBlockObject({
 })
 
 function PlaygroundBlockObject(props: BlockObjectRenderProps) {
-  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
+  const flags = useContext(EditorFeatureFlagsContext)
+  const enableDragHandles = flags.dragHandles
 
   let content: JSX.Element
 
@@ -575,16 +595,19 @@ function PlaygroundBlockObject(props: BlockObjectRenderProps) {
     <div {...props.attributes}>
       {props.children}
       <div contentEditable={false} draggable={!props.readOnly}>
-        {enableDragHandles ? (
-          <div className="me-1 relative">
-            <div
-              contentEditable={false}
-              draggable={!props.readOnly}
-              className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
-            >
-              <span />
-            </div>
+        {enableDragHandles || flags.dndPlugin ? (
+          <div className={enableDragHandles ? 'me-1 relative' : 'relative'}>
+            {enableDragHandles ? (
+              <div
+                contentEditable={false}
+                draggable={!props.readOnly}
+                className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
+              >
+                <span />
+              </div>
+            ) : null}
             <div>{content}</div>
+            {flags.dndPlugin ? <BlockDropIndicator path={props.path} /> : null}
           </div>
         ) : (
           content
@@ -602,7 +625,8 @@ const playgroundTextBlock = defineTextBlock({
 const playgroundNodes = [playgroundTextBlock, playgroundBlockObjectFallback]
 
 function PlaygroundTextBlock(props: TextBlockRenderProps) {
-  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
+  const flags = useContext(EditorFeatureFlagsContext)
+  const enableDragHandles = flags.dragHandles
 
   if (props.path.length > 1) {
     // Inside a container the positional `of` registrations own the rich
@@ -628,7 +652,7 @@ function PlaygroundTextBlock(props: TextBlockRenderProps) {
         </span>
       )
     }
-    return (
+    const listItem = (
       <ListItemBlock
         attributes={props.attributes}
         node={props.node}
@@ -637,11 +661,26 @@ function PlaygroundTextBlock(props: TextBlockRenderProps) {
         {children}
       </ListItemBlock>
     )
+
+    return flags.dndPlugin ? (
+      <div className="relative">
+        {listItem}
+        <BlockDropIndicator path={props.path} />
+      </div>
+    ) : (
+      listItem
+    )
   }
 
-  if (enableDragHandles) {
-    return (
-      <div {...props.attributes} className="me-1 relative">
+  // The wrapper is unconditional: the engine's placeholder anchors
+  // `absolute` to the nearest positioned ancestor, so the anchoring must
+  // not change with feature flags.
+  return (
+    <div
+      {...props.attributes}
+      className={enableDragHandles ? 'me-1 relative' : 'relative'}
+    >
+      {enableDragHandles ? (
         <div
           contentEditable={false}
           draggable={!props.readOnly}
@@ -649,17 +688,10 @@ function PlaygroundTextBlock(props: TextBlockRenderProps) {
         >
           <span />
         </div>
-        <div>{style ? style({children: props.children}) : props.children}</div>
-      </div>
-    )
-  }
-
-  return style ? (
-    style({attributes: props.attributes, children: props.children})
-  ) : (
-    <p {...props.attributes} className="my-1">
-      {props.children}
-    </p>
+      ) : null}
+      <div>{style ? style({children: props.children}) : props.children}</div>
+      {flags.dndPlugin ? <BlockDropIndicator path={props.path} /> : null}
+    </div>
   )
 }
 
