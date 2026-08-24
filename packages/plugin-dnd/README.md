@@ -44,6 +44,7 @@ function DropIndicator({edge}: {edge: 'start' | 'end'}) {
     <div
       contentEditable={false}
       style={{
+        pointerEvents: 'none',
         position: 'absolute',
         left: 0,
         right: 0,
