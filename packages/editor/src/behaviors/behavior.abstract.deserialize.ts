@@ -11,6 +11,7 @@ import {fitBlocksToDestination} from './fit-blocks-to-destination'
 const mimeTypePriority: Array<MIMEType> = [
   'application/x-portable-text',
   'application/json',
+  'text/markdown',
   'text/html',
   'text/plain',
 ]
@@ -224,6 +225,26 @@ export const abstractDeserializeBehaviors = [
       ({event}, deserializeEvent) => [
         raise({
           ...deserializeEvent,
+          originEvent: event.originEvent,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'deserialize.data',
+    guard: ({snapshot, event}) => {
+      const converter = snapshot.context.converters.find(
+        (converter) => converter.mimeType === event.mimeType,
+      )
+
+      return !converter
+    },
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'deserialization.failure',
+          mimeType: event.mimeType,
+          reason: 'no converter or Behavior handled the mime type',
           originEvent: event.originEvent,
         }),
       ],

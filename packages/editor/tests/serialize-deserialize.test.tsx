@@ -6,6 +6,7 @@ import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {getSelectionText} from '../src/selectors/selector.get-selection-text'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -322,6 +323,318 @@ describe('Serialize/Deserialize', () => {
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
         'B: Overwritten HTML|',
+      )
+    })
+  })
+
+  test('Scenario: Unconfigured `text/markdown` paste falls forward to `text/plain`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+    })
+
+    await userEvent.click(locator)
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/markdown', '# heading')
+    dataTransfer.setData('text/plain', 'heading')
+
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    // No `text/markdown` converter or Behavior exists, so the paste falls
+    // forward to `text/plain` instead of dead-ending
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: heading|')
+    })
+
+    // The fall-forward recovers, so it's not a terminal failure worth
+    // warning about
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
+  })
+
+  test('Scenario: Consumer `deserialize.data` Behavior receives `text/markdown`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'deserialize.data',
+              guard: ({event}) => event.mimeType === 'text/markdown',
+              actions: [
+                ({event}) => [
+                  raise({
+                    type: 'deserialization.success',
+                    mimeType: 'text/markdown',
+                    data: [
+                      {
+                        _type: 'block',
+                        _key: blockKey,
+                        children: [
+                          {
+                            _type: 'span',
+                            _key: keyGenerator(),
+                            text: event.data,
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                    originEvent: event.originEvent,
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/markdown', '# heading')
+    dataTransfer.setData('text/plain', 'heading')
+
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    // The consumer Behavior received the raw `text/markdown` data, not the
+    // `text/plain` fallback
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: # heading|')
+    })
+  })
+
+  test('Scenario: Consumer `serialize.data` Behavior writes `text/markdown`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'serialize.data',
+              guard: ({event}) => event.mimeType === 'text/markdown',
+              actions: [
+                ({snapshot, event}) => [
+                  raise({
+                    type: 'serialization.success',
+                    mimeType: 'text/markdown',
+                    data: `md:${getSelectionText(snapshot).toUpperCase()}`,
+                    originEvent: event.originEvent,
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo bar baz',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+    })
+
+    const fooBarBazSelection = getTextSelection(
+      editor.getSnapshot().context,
+      'foo bar baz',
+    )
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: fooBarBazSelection,
+    })
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      expect(selection).toEqual({...fooBarBazSelection, backward: false})
+    })
+
+    const dataTransfer = new DataTransfer()
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {
+        selection: fooBarBazSelection!,
+      },
+    })
+
+    // The consumer Behavior's entry is additive: text/markdown carries the
+    // custom encoding while text/plain still carries the core converter's
+    // untouched output
+    expect(dataTransfer.getData('text/markdown')).toEqual('md:FOO BAR BAZ')
+    expect(dataTransfer.getData('text/plain')).toEqual('foo bar baz')
+  })
+
+  test('Scenario: Round-trip through consumer `text/markdown` Behaviors', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'serialize.data',
+              guard: ({event}) => event.mimeType === 'text/markdown',
+              actions: [
+                ({snapshot, event}) => [
+                  raise({
+                    type: 'serialization.success',
+                    mimeType: 'text/markdown',
+                    data: `md:${getSelectionText(snapshot).toUpperCase()}`,
+                    originEvent: event.originEvent,
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior({
+              on: 'deserialize.data',
+              guard: ({event}) => event.mimeType === 'text/markdown',
+              actions: [
+                ({snapshot, event}) => [
+                  raise({
+                    type: 'deserialization.success',
+                    mimeType: 'text/markdown',
+                    data: [
+                      {
+                        _type: 'block',
+                        _key: snapshot.context.keyGenerator(),
+                        children: [
+                          {
+                            _type: 'span',
+                            _key: snapshot.context.keyGenerator(),
+                            text: event.data.slice('md:'.length),
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                    originEvent: event.originEvent,
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo bar baz',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+    })
+
+    const fooBarBazSelection = getTextSelection(
+      editor.getSnapshot().context,
+      'foo bar baz',
+    )
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: fooBarBazSelection,
+    })
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      expect(selection).toEqual({...fooBarBazSelection, backward: false})
+    })
+
+    // Cutting clears the block, leaving an empty position to paste back into
+    const dataTransfer = new DataTransfer()
+    editor.send({
+      type: 'clipboard.cut',
+      originEvent: {dataTransfer},
+      position: {
+        selection: fooBarBazSelection!,
+      },
+    })
+
+    expect(dataTransfer.getData('text/markdown')).toEqual('md:FOO BAR BAZ')
+    expect(dataTransfer.getData('text/plain')).toEqual('foo bar baz')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+
+    // Pasting only text/markdown and text/plain isolates the contest
+    // between them; application/x-portable-text and application/json
+    // outrank both and would otherwise round-trip the original casing
+    // through the core editor-to-editor lane instead
+    const pasteDataTransfer = new DataTransfer()
+    pasteDataTransfer.setData(
+      'text/markdown',
+      dataTransfer.getData('text/markdown'),
+    )
+    pasteDataTransfer.setData('text/plain', dataTransfer.getData('text/plain'))
+
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer: pasteDataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    // The markdown lane won the paste priority over text/plain: the
+    // pasted text is uppercase, which the text/plain entry ("foo bar
+    // baz") could not have produced on its own
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: FOO BAR BAZ|',
       )
     })
   })
