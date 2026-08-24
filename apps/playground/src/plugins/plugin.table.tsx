@@ -13,7 +13,10 @@ import {
 } from '@portabletext/plugin-table/ui'
 import {useContext, type JSX} from 'react'
 import {EditorFeatureFlagsContext} from '../feature-flags'
-import {BlockDropIndicator} from './block-drop-indicator'
+import {
+  BlockDropIndicator,
+  WithBlockDropIndicator,
+} from './block-drop-indicator'
 import {ListItemBlock} from './list-item-block'
 import {calloutContainer} from './plugin.callout'
 import {cellImageLeaf} from './plugin.image'
@@ -37,14 +40,17 @@ export const table = defineTable({
       of: [
         defineTextBlock({
           type: 'block',
-          render: ({attributes, children, node, path}) =>
-            node.listItem !== undefined ? (
-              <ListItemBlock attributes={attributes} node={node} path={path}>
-                {children}
-              </ListItemBlock>
-            ) : (
-              <div {...attributes}>{children}</div>
-            ),
+          render: ({attributes, children, node, path}) => (
+            <WithBlockDropIndicator path={path}>
+              {node.listItem !== undefined ? (
+                <ListItemBlock attributes={attributes} node={node} path={path}>
+                  {children}
+                </ListItemBlock>
+              ) : (
+                <div {...attributes}>{children}</div>
+              )}
+            </WithBlockDropIndicator>
+          ),
           // Positional override demo: inside table cells only, the
           // `strong` decorator renders with a highlight and the `link`
           // annotation as a green dotted underline, while the top-level

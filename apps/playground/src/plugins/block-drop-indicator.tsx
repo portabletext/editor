@@ -1,6 +1,7 @@
 import type {Path} from '@portabletext/editor'
 import {useDropPosition} from '@portabletext/plugin-dnd'
-import type {JSX} from 'react'
+import {useContext, type JSX, type ReactNode} from 'react'
+import {EditorFeatureFlagsContext} from '../feature-flags'
 
 /**
  * `useDropPosition` throws below a missing `DndProvider`, so every caller
@@ -18,4 +19,23 @@ export function BlockDropIndicator(props: {path: Path}): JSX.Element | null {
       }`}
     />
   ) : null
+}
+
+/**
+ * Wraps a nested block render in the `relative` positioning context the
+ * indicator needs, or renders the children bare when the plugin is off.
+ */
+export function WithBlockDropIndicator(props: {
+  path: Path
+  children: ReactNode
+}): JSX.Element {
+  const flags = useContext(EditorFeatureFlagsContext)
+  return flags.dndPlugin ? (
+    <div className="relative">
+      {props.children}
+      <BlockDropIndicator path={props.path} />
+    </div>
+  ) : (
+    <>{props.children}</>
+  )
 }

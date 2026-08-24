@@ -633,7 +633,12 @@ function PlaygroundTextBlock(props: TextBlockRenderProps) {
     // rendering; this catch-all only mirrors the engine default so
     // containers without a positional text block (the code block's
     // lines) keep their plain shape.
-    return <div {...props.attributes}>{props.children}</div>
+    return (
+      <div {...props.attributes} className="relative">
+        {props.children}
+        {flags.dndPlugin ? <BlockDropIndicator path={props.path} /> : null}
+      </div>
+    )
   }
 
   const style = styleMap.get(props.node.style ?? 'normal')
