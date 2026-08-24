@@ -57,6 +57,9 @@
         "sharp"
       ]
     },
-    "examples/*": {}
+    "examples/*": {},
+    ".": {
+      "entry": ["bundle-stats.config.ts"]
+    }
   }
 }
