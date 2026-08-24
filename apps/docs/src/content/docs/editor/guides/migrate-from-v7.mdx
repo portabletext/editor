@@ -1,0 +1,182 @@
+---
+title: Migrate from v7 to v8
+description: Everything v8 of the Portable Text Editor removes or changes, and what to do about each.
+---
+
+v7 introduced [containers](/editor/concepts/containers/) and, alongside them, a new [rendering API](/editor/concepts/rendering/): node registrations. In v7 you rendered through one callback per node kind, switching on types inside it. With registrations, each node type is defined once, with its own `render`:
+
+```tsx
+// v7: a render prop on <PortableTextEditable>
+<PortableTextEditable
+  renderDecorator={(props) =>
+    props.value === 'strong' ? (
+      <strong>{props.children}</strong>
+    ) : (
+      props.children
+    )
+  }
+/>
+
+// v8: a node registration, mounted once inside <EditorProvider>
+const strong = defineDecorator({
+  type: 'strong',
+  render: ({children}) => <strong>{children}</strong>,
+})
+
+<NodePlugin nodes={[strong]} />
+```
+
+v8 makes registrations the only rendering API: the six render props on `<PortableTextEditable>`, one callback per node kind, are removed, along with the Slate-era `data-slate-*` attributes and the default CSS classes the old rendering emitted.
+
+:::tip[A third off the bundle]
+v8 is about a third smaller than v7: a full import of `@portabletext/editor` drops from 209 KB to 144 KB minified and gzipped (measured with esbuild, React externalized). Editors that never used Markdown paste also stop shipping `markdown-it`.
+
+:::
+
+Prepare on your latest v7 release first: move render props to node registrations and swap `data-slate-*` selectors for `data-pt-*`, both work on v7. Then bump the `@portabletext/*` packages together and sweep the rest of the checklist. This page covers every removal and rename of the editor's public surface, in upgrade order; if a piece of surface is not mentioned here, v8 does not remove or rename it.
+
+The breaking changes at a glance:
+
+- [Node 22.12 or later](#node-2212-or-later) is required.
+- [The six render props are removed](#render-props-become-node-registrations); rendering goes through node registrations.
+- [The `data-slate-*` attributes and the default CSS classes are gone](#style-and-query-on-data-pt-); style and query on `data-pt-*`.
+- [The built-in drop indicator is gone](#draw-your-own-drop-indicator); `@portabletext/plugin-dnd` tracks the drop position for your own.
+- [The built-in `text/markdown` clipboard converter is removed](#restore-the-textmarkdown-clipboard-behavior); a recipe restores it.
+- [The `loading`, `done loading`, and `error` events are removed](#removed-editor-events).
+- [Packages resolve through `exports` only](#packaging); the `main` and `module` fields are gone.
+- [`resolveContainerAt` is no longer exported](#resolvecontainerat-is-no-longer-exported).
+
+v8 also ships behavior improvements that need no migration work. Dropping a block object mid-paragraph now splits the paragraph at the drop point, where v7 snapped the drop to the nearest block edge. See the [changelog](https://github.com/portabletext/editor/releases) for the full list.
+
+## Node 22.12 or later
+
+Every package now requires Node 22.12 or later, since Node 20 reached end of life in April 2026. `@portabletext/to-html` and `@portabletext/toolkit` take a major for the same Node requirement.
+
+## Render props become node registrations
+
+If your editor mounts any of these six props on `<PortableTextEditable>`, each has a registration waiting for it:
+
+| Removed prop       | Removed types                                            | Replacement                                                                                                                          |
+| ------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `renderStyle`      | `RenderStyleFunction`, `BlockStyleRenderProps`           | `defineTextBlock`                                                                                                                    |
+| `renderListItem`   | `RenderListItemFunction`, `BlockListItemRenderProps`     | `defineTextBlock` + [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) |
+| `renderBlock`      | `RenderBlockFunction`, `BlockRenderProps`                | `defineTextBlock` (text blocks) / `defineBlockObject` (block objects)                                                                |
+| `renderChild`      | `RenderChildFunction`, `BlockChildRenderProps`           | `defineInlineObject` (inline objects) / `defineSpan` (spans)                                                                         |
+| `renderDecorator`  | `RenderDecoratorFunction`, `BlockDecoratorRenderProps`   | `defineDecorator`                                                                                                                    |
+| `renderAnnotation` | `RenderAnnotationFunction`, `BlockAnnotationRenderProps` | `defineAnnotation`                                                                                                                   |
+
+Registrations mount through `NodePlugin` and the engine dispatches per type (decorator name, annotation `_type`, block or object `_type`), so you can migrate one prop at a time on the latest v7 release, where both paths still work, and bump to v8 when the props are gone from your code. The [render props migration guide](/editor/guides/migrate-render-props/) has a worked example for each, and [Rendering](/editor/concepts/rendering/) covers the model they all share.
+
+Two props you might expect on the list are not on it. `renderPlaceholder` stays, the placeholder is empty-editor chrome with no type to register under, and `rangeDecorations` stays, it wraps a span's output from the outside.
+
+If your render callbacks read `schemaType` or `block` from their payload, both are derivable inside a registered render: `getPathSubSchema` and `getEnclosingBlock` from [`@portabletext/editor/traversal`](/editor/concepts/traversal/), called in a selector. The one field with no equivalent is `editorElementRef`, the engine's own DOM node; put a ref on your own rendered element instead, it reaches the same position in the DOM.
+
+## Style and query on `data-pt-*`
+
+The Slate-era `data-slate-*` attributes are gone from the engine's DOM. If you have CSS or DOM queries keyed on the editor's markup, this section is your checklist, and the surface to key on is the `data-pt-*` family, present on v7 too, so the selector swap below can land before you bump to v8:
+
+| Attribute            | Carried by                    | Value                             |
+| -------------------- | ----------------------------- | --------------------------------- |
+| `data-pt-editor`     | the root editable             | `true`                            |
+| `data-read-only`     | the root editable             | `true` or `false`, always present |
+| `data-pt-path`       | every rendered node           | the node's serialized path        |
+| `data-pt-block`      | block-level nodes             | `text`, `object`, or `container`  |
+| `data-pt-inline`     | inline nodes                  | `span` or `object`                |
+| `data-pt-marks`      | every leaf, marked or not     | `true`                            |
+| `data-pt-text`       | the text node wrapper         | `true`                            |
+| `data-pt-spacer`     | the engine's void spacers     | `true`                            |
+| `data-pt-zero-width` | zero-width fillers            | `true`                            |
+| `data-pt-line-break` | zero-width line-break fillers | `true`                            |
+
+Query read-only state with `[data-read-only="true"]`: React always emits the attribute, so a bare `[data-read-only]` selector matches whether the editor is read-only or not. Line breaks are zero-width fillers too, so they carry both `data-pt-zero-width` and `data-pt-line-break`.
+
+Selectors on the Slate-era aliases map row for row, but check match breadth before a mechanical find-and-replace: the bare `[data-pt-path]` matches more nodes than `[data-slate-node="element"]` did, since `data-pt-path` sits on every rendered node, not only elements.
+
+| Removed                     | Replacement                                                        |
+| --------------------------- | ------------------------------------------------------------------ |
+| `data-slate-editor`         | `data-pt-editor`                                                   |
+| `data-slate-node="element"` | `data-pt-path` (blocks also carry `data-pt-block`)                 |
+| `data-slate-node="text"`    | `data-pt-inline="span"`                                            |
+| `data-slate-leaf`           | `data-pt-marks`                                                    |
+| `data-slate-string`         | `data-pt-text`                                                     |
+| `data-slate-zero-width`     | `data-pt-zero-width` (line breaks also carry `data-pt-line-break`) |
+| `data-slate-void`           | `data-pt-block="object"` / `data-pt-inline="object"`               |
+| `data-slate-spacer`         | `data-pt-spacer`                                                   |
+
+The old default render's CSS classes and data attributes have no one-to-one replacements, because your registered render owns the markup now. Where you need a styling hook, emit your own attribute:
+
+- Classes: `pt-block`, `pt-text-block`, `pt-text-block-style-*`, `pt-list-item`, `pt-list-item-*`, `pt-list-item-level-*`, `pt-object-block`, `pt-inline-object`, and `pt-editable` on the root editable (a consumer-passed `className` still applies)
+- Data attributes: `data-block-key`, `data-block-name`, `data-block-type`, `data-child-key`, `data-child-name`, `data-child-type`, `data-style`, `data-list-item`, `data-level`, and `data-list-index` (re-emittable via [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index): wrap the editor in `ListIndexProvider` and read `useListIndex` in your render)
+
+That does mean this bucket depends on the previous section: you need a registered render before you can emit anything from it.
+
+## Draw your own drop indicator
+
+The engine no longer draws its own drop indicator during block drags. Block drag-and-drop itself keeps working: [`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the editor's public `drag.*` events, and your render draws whatever indicator your design wants.
+
+## Restore the `text/markdown` clipboard behavior
+
+The editor no longer ships a built-in `text/markdown` converter: pasting Markdown-formatted text no longer auto-parses it into Portable Text blocks, and copying no longer writes a `text/markdown` entry to the clipboard alongside `text/html` and `text/plain`. The built-in ran the markdown package's defaults with no way to configure renderers or type mappings, and markdown copy/paste is something most consumers want to configure for their own schema. `text/markdown` is also mostly a dead clipboard channel: almost nothing writes it, and markdown usually arrives as `text/plain`, so a converter keyed on `text/markdown` rarely saw a real paste. Now only apps that want markdown interop carry the dependency, configured their way; every other editor stops bundling `markdown-it` (about 145 KB minified).
+
+To keep markdown interop, add [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown) as your own dependency and register two Behaviors (via `BehaviorPlugin` or `editor.registerBehavior`). Both sides are a faithful restore: `text/markdown` goes back on the clipboard on copy, and `deserialize.data` for `text/markdown` parses it back into Portable Text blocks on paste. Since markdown usually arrives as `text/plain`, most consumers will want to widen the guard to accept that too.
+
+`text/markdown` keeps its place ahead of `text/html` and `text/plain` in the paste priority. With no converter and no Behavior answering `deserialize.data` for it, a paste doesn't dead-end: it falls through to the next available format on the clipboard.
+
+Table copies from [`@portabletext/plugin-table`](https://github.com/portabletext/editor/tree/main/packages/plugin-table) lose their `text/markdown` entry with the converter. Copying and pasting between two Portable Text Editors is unaffected: that round-trips through `application/x-portable-text`.
+
+```tsx
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {getFragment} from '@portabletext/editor/selectors'
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
+const deserializeMarkdown = defineBehavior({
+  on: 'deserialize.data',
+  guard: ({snapshot, event}) => {
+    if (event.mimeType !== 'text/markdown') {
+      return false
+    }
+    const blocks = markdownToPortableText(event.data, {
+      schema: snapshot.context.schema,
+      keyGenerator: snapshot.context.keyGenerator,
+    })
+    return blocks.length > 0 ? {blocks} : false
+  },
+  actions: [
+    ({event}, {blocks}) => [
+      raise({...event, type: 'deserialization.success', data: blocks}),
+    ],
+  ],
+})
+
+const serializeMarkdown = defineBehavior({
+  on: 'serialize.data',
+  guard: ({event}) => event.mimeType === 'text/markdown',
+  actions: [
+    ({snapshot, event}) => [
+      raise({
+        type: 'serialization.success',
+        mimeType: 'text/markdown',
+        data: portableTextToMarkdown(
+          getFragment(snapshot).map((entry) => entry.node),
+        ),
+        originEvent: event.originEvent,
+      }),
+    ],
+  ],
+})
+```
+
+## Removed editor events
+
+Three members leave `EditorEmittedEvent`: `loading`, `done loading`, and `error`. `error` was never emitted, so its listeners were dead code. `loading` and `done loading` were real: they fired around an async `onPaste` resolution. `onPaste` stays in v8, but nothing signals around it anymore; if you showed paste progress from these events, track it around your own `onPaste` promise instead. An exhaustive switch over `event.type` loses three cases.
+
+## Packaging
+
+Published packages resolve through `exports` only; the legacy `main` and `module` fields are gone. Tooling old enough to ignore `exports` predates the packages' Node requirement.
+
+## `resolveContainerAt` is no longer exported
+
+The `@alpha` API has been removed. If you use it, [`snapshot.context.containers`](/editor/concepts/containers/#read-the-registered-containers) exposes the registered container map, and [`getContainerChildren`](/editor/reference/traversal/) covers per-node descent; the full path walk builds from that primitive.

@@ -126,11 +126,17 @@ export default defineConfig({
               items: [
                 {slug: 'editor/guides', label: 'Overview'},
                 {slug: 'editor/guides/custom-rendering'},
-                {slug: 'editor/guides/migrate-render-props'},
                 {slug: 'editor/guides/customize-toolbar'},
                 {slug: 'editor/guides/create-behavior'},
                 {slug: 'editor/guides/behavior-cheat-sheet'},
                 {slug: 'editor/guides/testing-behaviors'},
+              ],
+            },
+            {
+              label: 'Migrate',
+              items: [
+                {slug: 'editor/guides/migrate-from-v7'},
+                {slug: 'editor/guides/migrate-render-props'},
               ],
             },
             {
