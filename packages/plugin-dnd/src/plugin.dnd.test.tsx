@@ -45,8 +45,19 @@ describe('DndProvider', () => {
     expect(renders).not.toContain('b1')
   })
 
-  test('Scenario: Dragging over the dragged block itself shows nothing', async () => {
+  test('Scenario: Dragging over the dragged block itself clears the indicator', async () => {
     const {editor} = await renderEditorWithProbes()
+
+    // Seeds a position on another block first, so the self-hover's clearing
+    // is observable rather than indistinguishable from a no-op.
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'end'})
 
     editor.send(
       dragover({
@@ -256,12 +267,12 @@ describe('DndProvider with a nested container', () => {
     await expectNestedDropPositions({container: 'none', nested: 'end'})
   })
 
-  test('Scenario: Dragging a nested block over itself shows nothing', async () => {
+  test('Scenario: Dragging a nested block over itself clears the indicator', async () => {
     const {editor} = await renderEditorWithContainerProbes()
 
-    // Seeds a real, non-'none' position at the nested block first: a
-    // suppressed dragover is a no-op, so starting from 'none' can't tell a
-    // genuine suppression from a guard that never ran and left 'none' alone.
+    // Seeds a real, non-'none' position at the nested block first, so the
+    // clearing is observable: core cancels a self-drop, and a position left
+    // over from the previous hover must not keep pointing at it.
     editor.send(
       dragover({
         dragOrigin: blockSelection('b0'),
@@ -279,12 +290,7 @@ describe('DndProvider with a nested container', () => {
       }),
     )
 
-    // A suppressed dragover is a no-op: nothing re-renders to confirm it
-    // ran, so there's no observable condition for `vi.waitFor` to poll on.
-    // Wait a tick for any (incorrect) update to land before reading.
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
-    expect(page.getByTestId('probe-nested').element().textContent).toBe('start')
+    await expectNestedDropPositions({nested: 'none'})
   })
 })
 

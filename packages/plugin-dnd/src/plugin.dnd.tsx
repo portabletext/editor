@@ -199,15 +199,18 @@ function createDropPositionBehaviors(
         // two catches a nested block dragged over itself too.
         const draggedFocusBlock = getFocusBlock(dragSnapshot)
 
-        if (
+        const selfDrop =
           draggedBlocks.some(
             (draggedBlock) =>
               draggedBlock.node._key === dropFocusBlock.node._key,
           ) ||
-          (draggedFocusBlock &&
+          (draggedFocusBlock !== undefined &&
             isEqualPaths(draggedFocusBlock.path, dropFocusBlock.path))
-        ) {
-          return false
+
+        if (selfDrop) {
+          // Core cancels the drop, so no position is valid here, including
+          // one left over from the previous hover.
+          return {dropFocusBlock, droppedInsideTextBlock: false, clear: true}
         }
 
         const draggingEntireBlocks = isSelectingEntireBlocks({
@@ -252,13 +255,13 @@ function createDropPositionBehaviors(
             }),
           )
 
-        return {dropFocusBlock, droppedInsideTextBlock}
+        return {dropFocusBlock, droppedInsideTextBlock, clear: false}
       },
       actions: [
-        ({event}, {dropFocusBlock, droppedInsideTextBlock}) => [
+        ({event}, {dropFocusBlock, droppedInsideTextBlock, clear}) => [
           effect(() => {
             setDropPosition(
-              droppedInsideTextBlock
+              clear || droppedInsideTextBlock
                 ? undefined
                 : {
                     path: dropFocusBlock.path,
