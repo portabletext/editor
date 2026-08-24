@@ -17,6 +17,7 @@ import {
   getBlockEndPoint,
   getBlockStartPoint,
   isEmptyTextBlock,
+  isEqualPaths,
   isEqualSelectionPoints,
   isKeyedSegment,
   isSelectionCollapsed,
@@ -181,20 +182,30 @@ function createDropPositionBehaviors(
           eventSelection: dragOrigin.selection,
           snapshot,
         })
-
-        const draggedBlocks = getSelectedBlocks({
+        const dragSnapshot = {
           ...snapshot,
           context: {
             ...snapshot.context,
             selection: dragSelection,
           },
-        })
+        }
+
+        const draggedBlocks = getSelectedBlocks(dragSnapshot)
+        // `getSelectedBlocks` only looks at root-level children, so a drag
+        // origin nested inside a container (a callout paragraph, a table
+        // cell) resolves to the container, not the nested block actually
+        // being dragged. `getFocusBlock` resolves the origin's own focus to
+        // the same depth `dropFocusBlock` was resolved to, so comparing the
+        // two catches a nested block dragged over itself too.
+        const draggedFocusBlock = getFocusBlock(dragSnapshot)
 
         if (
           draggedBlocks.some(
             (draggedBlock) =>
               draggedBlock.node._key === dropFocusBlock.node._key,
-          )
+          ) ||
+          (draggedFocusBlock &&
+            isEqualPaths(draggedFocusBlock.path, dropFocusBlock.path))
         ) {
           return false
         }
