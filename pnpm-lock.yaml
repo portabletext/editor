@@ -47,8 +47,8 @@ catalogs:
       version: 5.32.5
   tooling:
     '@portabletext/react':
-      specifier: ^8.0.0
-      version: 8.0.0
+      specifier: ^8.0.1
+      version: 8.0.1
     '@sanity/pkg-utils':
       specifier: ^12.3.0
       version: 12.3.0
@@ -206,7 +206,7 @@ importers:
         version: link:../../packages/plugin-typography
       '@portabletext/react':
         specifier: catalog:tooling
-        version: 8.0.0(react@19.2.8)
+        version: 8.0.1(react@19.2.8)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -342,7 +342,7 @@ importers:
         version: link:../../packages/plugin-typography
       '@portabletext/react':
         specifier: catalog:tooling
-        version: 8.0.0(react@19.2.8)
+        version: 8.0.1(react@19.2.8)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -3317,8 +3317,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@portabletext/react@8.0.0':
-    resolution: {integrity: sha512-xXWm0LvJrWPqv1BI2wR95q/+YNQW2hFl0wG26hoF0YUoQFhXz5jWZHlsvTtLx/IkFcPd+LCsfoYRgEHnLJslIQ==}
+  '@portabletext/react@8.0.1':
+    resolution: {integrity: sha512-Fy9UxVhppgEckEvczZytg4bBxiPcZIM49NrJ3sizEoz19aNzJWEYoUj7f3TI94907psEk0yfR145eoOgkedM2A==}
     engines: {node: '>=22.12'}
     peerDependencies:
       react: ^19
@@ -10992,7 +10992,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@portabletext/react@8.0.0(react@19.2.8)':
+  '@portabletext/react@8.0.1(react@19.2.8)':
     dependencies:
       '@portabletext/toolkit': 6.0.0
       '@portabletext/types': 4.0.2
@@ -12512,6 +12512,15 @@ snapshots:
   '@rolldown/binding-win32-x64-msvc@1.2.5':
     optional: true
 
+  '@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.28.4)(rolldown@1.2.2)(vite@8.2.0(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.8.3))':
+    dependencies:
+      '@babel/core': 7.29.7
+      picomatch: 4.0.5
+      rolldown: 1.2.2
+    optionalDependencies:
+      '@babel/runtime': 7.28.4
+      vite: 8.2.0(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.8.3)
+
   '@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.28.4)(rolldown@1.2.5)(vite@8.2.0(@types/node@20.19.25)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.8.3))':
     dependencies:
       '@babel/core': 7.29.7
@@ -12529,6 +12538,7 @@ snapshots:
     optionalDependencies:
       '@babel/runtime': 7.28.4
       vite: 8.2.0(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.8.3)
+    optional: true
 
   '@rolldown/pluginutils@1.0.0-rc.3': {}
 
@@ -12976,7 +12986,7 @@ snapshots:
       '@babel/core': 7.29.7
       '@microsoft/api-extractor': 7.58.12(@types/node@24.12.2)
       '@microsoft/tsdoc-config': 0.18.1
-      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.28.4)(rolldown@1.2.5)(vite@8.2.0(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.8.3))
+      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.28.4)(rolldown@1.2.2)(vite@8.2.0(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.8.3))
       '@sanity/browserslist-config': 1.0.5
       '@sanity/vanilla-extract-tsdown-plugin': 0.3.2(rolldown@1.2.5)(tsdown@0.22.14)
       '@typescript/typescript6': 6.0.2
