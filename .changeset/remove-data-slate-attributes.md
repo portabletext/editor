@@ -15,4 +15,4 @@ The editor DOM no longer carries the Slate-era `data-slate-*` attributes; it spe
 - `data-slate-void` → `data-pt-block="object"` / `data-pt-inline="object"`
 - `data-slate-spacer` → `data-pt-spacer`
 
-One behavioral consequence rides along: a node registered via `registerNode` (for example `defineInlineObject` or `defineSpan`) now receives the same clean `data-pt-*` attributes whether its parent text block renders through the legacy pipeline or the new one; previously the legacy pipeline mixed `data-slate-*` into the attributes passed to the registered render.
+One behavioral consequence rides along: an inline object or span registered via `registerNode` (for example `defineInlineObject` or `defineSpan`) could receive `data-slate-*` attributes mixed into the `attributes` prop passed to its `render` function when its parent text block was not registered. Every registered inline render now receives the same clean `data-pt-*` attributes regardless of whether the parent text block is registered.
