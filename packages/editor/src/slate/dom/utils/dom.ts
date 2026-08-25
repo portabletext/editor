@@ -310,8 +310,8 @@ export const closestShadowAware = (
 
     if (current.parentElement) {
       current = current.parentElement
-    } else if (current.parentNode && 'host' in current.parentNode) {
-      current = (current.parentNode as ShadowRoot).host as DOMElement
+    } else if (isShadowRoot(current.parentNode)) {
+      current = current.parentNode.host as DOMElement
     } else {
       return null
     }
@@ -344,8 +344,8 @@ export const containsShadowAware = (
     }
 
     if (current.parentNode) {
-      if ('host' in current.parentNode) {
-        current = (current.parentNode as ShadowRoot).host
+      if (isShadowRoot(current.parentNode)) {
+        current = current.parentNode.host
       } else {
         current = current.parentNode
       }
@@ -355,4 +355,22 @@ export const containsShadowAware = (
   }
 
   return false
+}
+
+/**
+ * Check if a DOM node is a shadow root.
+ *
+ * A `host` property alone does not identify one: `HTMLFormElement` exposes its own controls as named
+ * properties, so `'host' in form` is `true` for any form containing an element with `id="host"` or
+ * `name="host"`. Shadow roots are document fragments, so the node type separates the two.
+ *
+ * The node type is checked instead of `instanceof ShadowRoot` to keep working across realms and where
+ * the global is undefined.
+ */
+const isShadowRoot = (value: any): value is ShadowRoot => {
+  return (
+    isDOMNode(value) &&
+    value.nodeType === Node.DOCUMENT_FRAGMENT_NODE &&
+    'host' in value
+  )
 }
