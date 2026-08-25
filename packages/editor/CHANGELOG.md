@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.2
+
+### Patch Changes
+
+- [#3161](https://github.com/portabletext/editor/pull/3161) [`b5739d5`](https://github.com/portabletext/editor/commit/b5739d55389ed2b47546cb5309a237c353d8335c) Thanks [@christianhg](https://github.com/christianhg)! - fix: report `remote` origin in `onMoved` when remote operations move a range decoration
+
+  A range decoration's `onMoved` callback now reports `origin: 'remote'` when the edit that moved or removed the decoration came from a remote patch, matching the documented `RangeDecorationOnMovedDetails.origin` type. Previously `onMoved` always reported `'local'`, even for remote edits.
+
 ## 8.0.1
 
 ### Patch Changes
