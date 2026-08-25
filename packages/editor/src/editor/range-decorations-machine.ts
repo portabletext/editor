@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -54,7 +54,18 @@ const engineOperationCallback: CallbackLogicFunction<
   )
 }
 
-export type DecoratedRange = Range & {rangeDecoration: RangeDecoration}
+export type DecoratedRange = Range & {
+  rangeDecoration: RangeDecoration
+  merge: (leaf: PortableTextSpan, decoration: object) => void
+}
+
+function mergeRangeDecoration(
+  leaf: PortableTextSpan & {rangeDecorations?: Array<RangeDecoration>},
+  decoration: object,
+) {
+  const {rangeDecoration} = decoration as {rangeDecoration: RangeDecoration}
+  leaf.rangeDecorations = [...(leaf.rangeDecorations ?? []), rangeDecoration]
+}
 
 export const rangeDecorationsMachine = setup({
   types: {
@@ -116,6 +127,7 @@ export const rangeDecorationsMachine = setup({
 
         rangeDecorationState.push({
           rangeDecoration,
+          merge: mergeRangeDecoration,
           ...rangeDecoration.selection,
         })
       }
@@ -141,6 +153,7 @@ export const rangeDecorationsMachine = setup({
 
         rangeDecorationState.push({
           rangeDecoration,
+          merge: mergeRangeDecoration,
           ...rangeDecoration.selection,
         })
       }
@@ -191,6 +204,7 @@ export const rangeDecorationsMachine = setup({
               ...decoratedRange.rangeDecoration,
               selection: newRange || currentSelection,
             },
+            merge: mergeRangeDecoration,
           })
         }
       }

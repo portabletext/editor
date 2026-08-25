@@ -17,7 +17,7 @@ export function RenderLeaf(
   props: RenderLeafProps & {
     leaf: PortableTextSpan & {
       placeholder?: boolean
-      rangeDecoration?: RangeDecoration
+      rangeDecorations?: Array<RangeDecoration>
     }
     readOnly: boolean
     renderPlaceholder?: RenderPlaceholderFunction
@@ -47,10 +47,12 @@ export function RenderLeaf(
     )
   }
 
-  const rangeDecoration = props.leaf.rangeDecoration
+  const rangeDecorations = props.leaf.rangeDecorations
 
-  if (rangeDecoration) {
-    renderedSpan = rangeDecoration.component({children: renderedSpan})
+  if (rangeDecorations) {
+    for (const rangeDecoration of [...rangeDecorations].reverse()) {
+      renderedSpan = rangeDecoration.component({children: renderedSpan})
+    }
   }
 
   return renderedSpan
