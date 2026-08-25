@@ -294,6 +294,142 @@ describe('RangeDecorations', () => {
     )
   })
 
+  test('Scenario: Overlapping Range Decorations render nested, outer decoration first', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="decoration-a">{props.children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 2,
+          },
+        },
+      },
+      {
+        component: (props) => (
+          <span data-testid="decoration-b">{props.children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+        },
+      },
+    ]
+
+    await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations,
+      },
+    })
+
+    await vi.waitFor(() => {
+      const editorElement = document.querySelector('[data-pt-editor]')
+      expect(editorElement).not.toEqual(null)
+      expect(editorElement!.innerHTML).toEqual(
+        [
+          `<div data-pt-path="[_key==&quot;${blockKey}&quot;]" data-pt-block="text">`,
+          '<div>',
+          `<span data-pt-path="[_key==&quot;${blockKey}&quot;].children[_key==&quot;${spanKey}&quot;]" data-pt-inline="span">`,
+          '<span data-testid="decoration-a">',
+          '<span data-pt-marks="true"><span data-pt-text="true">f</span></span>',
+          '</span>',
+          '<span data-testid="decoration-a">',
+          '<span data-testid="decoration-b">',
+          '<span data-pt-marks="true"><span data-pt-text="true">o</span></span>',
+          '</span>',
+          '</span>',
+          '<span data-testid="decoration-b">',
+          '<span data-pt-marks="true"><span data-pt-text="true">o</span></span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          '</div>',
+        ].join(''),
+      )
+    })
+  })
+
+  test('Scenario: Three overlapping Range Decorations nest in array order', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const rangeDecorations: Array<RangeDecoration> = (
+      ['a', 'b', 'c'] as const
+    ).map((name) => ({
+      component: (props) => (
+        <span data-testid={`decoration-${name}`}>{props.children}</span>
+      ),
+      selection: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 3},
+      },
+    }))
+
+    await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations,
+      },
+    })
+
+    await vi.waitFor(() => {
+      const editorElement = document.querySelector('[data-pt-editor]')
+      expect(editorElement).not.toEqual(null)
+      expect(editorElement!.innerHTML).toEqual(
+        [
+          `<div data-pt-path="[_key==&quot;${blockKey}&quot;]" data-pt-block="text">`,
+          '<div>',
+          `<span data-pt-path="[_key==&quot;${blockKey}&quot;].children[_key==&quot;${spanKey}&quot;]" data-pt-inline="span">`,
+          '<span data-testid="decoration-a">',
+          '<span data-testid="decoration-b">',
+          '<span data-testid="decoration-c">',
+          '<span data-pt-marks="true"><span data-pt-text="true">foo</span></span>',
+          '</span>',
+          '</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          '</div>',
+        ].join(''),
+      )
+    })
+  })
+
   it('only render range decorations as necessary', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()

@@ -194,6 +194,12 @@ export interface RangeDecoration {
    * The component that renders the range decoration. It receives the
    * decorated text as its children.
    *
+   * The component can render more than once for one decoration: the range
+   * is split into segments at formatting boundaries and where it overlaps
+   * other decorations, and each segment gets its own wrapper. Where
+   * decorations overlap, their components nest, first in array order
+   * outermost.
+   *
    * @example
    * ```tsx
    * (rangeComponentProps: PropsWithChildren) => (
