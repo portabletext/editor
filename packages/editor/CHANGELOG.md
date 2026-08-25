@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.0.1
+
+### Patch Changes
+
+- [#3157](https://github.com/portabletext/editor/pull/3157) [`34717cf`](https://github.com/portabletext/editor/commit/34717cf511de9485b265ce53eec57be5eaf07d95) Thanks [@tillschweneker](https://github.com/tillschweneker)! - fix: identify shadow roots by node type instead of a `host` property
+
+  The shadow DOM-aware DOM traversals treated any parent node carrying a `host` property as a shadow root. A `<form>` exposes its own controls as named properties, so `'host' in form` is true for any form containing an element with `id="host"` or `name="host"` — the form was mistaken for a shadow root and the upward walk stepped from the form to that control and back forever, hanging the tab.
+
+  This surfaced in editors rendered inside a form that has a field named `host`: moving the selection between two editors locked the browser, because rewriting the DOM selection runs one of these traversals from a layout effect. Shadow roots are document fragments, so the node type now separates them from a form.
+
 ## 8.0.0
 
 ### Major Changes
