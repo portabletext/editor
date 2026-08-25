@@ -7,7 +7,10 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {subscribeToOperations} from '../engine/core/operation-channel'
+import {
+  subscribeToOperations,
+  type OperationOrigin,
+} from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
@@ -25,7 +28,11 @@ import type {EditorSchema} from './editor-schema'
 
 const engineOperationCallback: CallbackLogicFunction<
   AnyEventObject,
-  {type: 'engine operation'; operation: EngineOperation},
+  {
+    type: 'engine operation'
+    operation: EngineOperation
+    origin: OperationOrigin
+  },
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
   return subscribeToOperations(
@@ -36,7 +43,11 @@ const engineOperationCallback: CallbackLogicFunction<
         // synchronously and needs the pre-apply tree (removed nodes must
         // still be present to resolve document order) — hence the
         // `before` phase.
-        sendBack({type: 'engine operation', operation: event.operation})
+        sendBack({
+          type: 'engine operation',
+          operation: event.operation,
+          origin: event.origin,
+        })
       }
     },
     {phase: 'before'},
@@ -73,6 +84,7 @@ export const rangeDecorationsMachine = setup({
       | {
           type: 'engine operation'
           operation: EngineOperation
+          origin: OperationOrigin
         }
       | {
           type: 'update read only'
@@ -150,7 +162,7 @@ export const rangeDecorationsMachine = setup({
           decoratedRange.rangeDecoration.onMoved?.({
             newSelection: null,
             rangeDecoration: decoratedRange.rangeDecoration,
-            origin: 'local',
+            origin: event.origin === 'remote' ? 'remote' : 'local',
           })
           continue
         }
@@ -168,7 +180,7 @@ export const rangeDecorationsMachine = setup({
           decoratedRange.rangeDecoration.onMoved?.({
             newSelection: newRange,
             rangeDecoration: decoratedRange.rangeDecoration,
-            origin: 'local',
+            origin: event.origin === 'remote' ? 'remote' : 'local',
           })
         }
 

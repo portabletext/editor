@@ -1,3 +1,4 @@
+import {diffMatchPatch} from '@portabletext/patches'
 import {
   compileSchema,
   isSpan,
@@ -494,6 +495,193 @@ describe('RangeDecorations', () => {
         rangeDecorationIteration,
         'updated-with-different-payload',
       ]).toEqual([5, 'updated-with-different-payload'])
+    })
+  })
+
+  test('Scenario: A remote edit that moves a Range Decoration reports a remote origin', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ]
+
+    const onMoved = vi.fn()
+
+    const rangeDecoration: RangeDecoration = {
+      component: (props) => (
+        <span data-testid="range-decoration">{props.children}</span>
+      ),
+      onMoved,
+      selection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      editableProps: {
+        rangeDecorations: [rangeDecoration],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        diffMatchPatch('foo', 'barfoo', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(onMoved).toHaveBeenCalledTimes(1)
+    })
+
+    expect(onMoved.mock.calls[0]?.[0]).toEqual({
+      newSelection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 6,
+        },
+      },
+      rangeDecoration,
+      origin: 'remote',
+    })
+  })
+
+  test('Scenario: Undoing a local edit that moves a Range Decoration reports a local origin', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ]
+
+    const onMoved = vi.fn()
+
+    const rangeDecoration: RangeDecoration = {
+      component: (props) => (
+        <span data-testid="range-decoration">{props.children}</span>
+      ),
+      onMoved,
+      selection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      editableProps: {
+        rangeDecorations: [rangeDecoration],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    editor.send({
+      type: 'select',
+      at: getSelectionBeforeText(editor.getSnapshot().context, 'foo'),
+    })
+
+    await userEvent.type(locator, 'x')
+
+    await vi.waitFor(() => {
+      expect(onMoved).toHaveBeenCalledTimes(1)
+    })
+
+    expect(onMoved.mock.calls[0]?.[0]).toEqual({
+      newSelection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+      rangeDecoration,
+      origin: 'local',
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(onMoved).toHaveBeenCalledTimes(2)
+    })
+
+    expect(onMoved.mock.calls[1]?.[0]).toEqual({
+      newSelection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+      rangeDecoration: {
+        ...rangeDecoration,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 2,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 4,
+          },
+        },
+      },
+      origin: 'local',
     })
   })
 
