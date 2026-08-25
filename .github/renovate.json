@@ -94,6 +94,12 @@
       "semanticCommitType": "chore"
     },
     {
+      "description": "Reassert `chore` for vitest updates in the manifests and depTypes the published-packages rule titles `fix`: the vitest group rule alone did not hold for #3171 (a grouped bump of five vitest packages came out `fix(deps)` and scheduled a 23-package release), so this narrower, later rule wins regardless of how the group's config merge orders the constituent updates",
+      "matchPackageNames": ["/vitest/"],
+      "matchDepTypes": ["dependencies", "peerDependencies"],
+      "semanticCommitType": "chore"
+    },
+    {
       "description": "`@types/*` are devDependencies in every published package (they all bundle their own declarations), so a bump changes nothing a consumer can observe. Always `chore`: these are catalog-managed, and catalog updates edit `pnpm-workspace.yaml`, bypassing the `matchFileNames`+`matchDepTypes` rules above and inheriting the preset's `fix` default, which made the changeset bot cut empty patch releases",
       "matchPackageNames": ["@types/*"],
       "semanticCommitType": "chore"
