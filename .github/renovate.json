@@ -71,6 +71,12 @@
       "groupName": "xstate"
     },
     {
+      "description": "Group Changesets packages, majors included: `@changesets/changelog-github` only works with the `@changesets/cli` generation it was built for, so the toolchain moves as one",
+      "matchPackageNames": ["@changesets/*"],
+      "groupName": "changesets",
+      "separateMajorMinor": false
+    },
+    {
       "description": "Group Cucumber packages",
       "matchPackageNames": ["@cucumber/*"],
       "groupName": "cucumber",
