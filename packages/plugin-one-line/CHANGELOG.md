@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`e9063e5`](https://github.com/portabletext/editor/commit/e9063e56d8100fea82a3b1418562aea17ddb7732)]:
+  - @portabletext/editor@8.0.3
+
 ## 8.0.2
 
 ### Patch Changes

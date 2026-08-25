@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.0.1
+
+### Patch Changes
+
+- [#3171](https://github.com/portabletext/editor/pull/3171) [`e9063e5`](https://github.com/portabletext/editor/commit/e9063e56d8100fea82a3b1418562aea17ddb7732) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update vitest to ^4.1.11
+
+- Updated dependencies [[`e9063e5`](https://github.com/portabletext/editor/commit/e9063e56d8100fea82a3b1418562aea17ddb7732)]:
+  - @portabletext/html@2.0.1
+  - @portabletext/sanity-bridge@4.0.1
+  - @portabletext/schema@3.0.1
+
 ## 6.0.0
 
 ### Major Changes
