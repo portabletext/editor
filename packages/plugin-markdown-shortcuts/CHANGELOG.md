@@ -1,5 +1,24 @@
 # Changelog
 
+## 9.0.0
+
+### Major Changes
+
+- [#3110](https://github.com/portabletext/editor/pull/3110) [`09aa881`](https://github.com/portabletext/editor/commit/09aa8813211bc26d1a75f94a2ff619fae6e132cb) Thanks [@christianhg](https://github.com/christianhg)! - feat!: drop the legacy `main` and `module` fields
+
+  Every package now declares its entry points through the `exports` map only. Node, all maintained bundlers, and TypeScript (`moduleResolution: 'bundler'`, 'node16', or 'nodenext') resolve through `exports`; only tooling that predates `exports` support read `main` or `module` and can no longer resolve these packages.
+
+- [#3106](https://github.com/portabletext/editor/pull/3106) [`3ce5a1d`](https://github.com/portabletext/editor/commit/3ce5a1d00caec9593a4f8d240d05df90505ca655) Thanks [@christianhg](https://github.com/christianhg)! - feat!: require node 22.12 or later
+
+  Node.js 22.12 or later is now required. The previous range also allowed Node.js 20.19 and later; Node.js 20 reached end of life in April 2026 and is no longer supported. `@portabletext/editor` and `@portabletext/markdown` also move to `@portabletext/to-html` v6 and `@portabletext/toolkit` v6, which carry the same Node.js requirement.
+
+### Patch Changes
+
+- Updated dependencies [[`09aa881`](https://github.com/portabletext/editor/commit/09aa8813211bc26d1a75f94a2ff619fae6e132cb), [`7718cf0`](https://github.com/portabletext/editor/commit/7718cf049b96fd8d3461211bc1dabc7bbcbb81f8), [`bf3373a`](https://github.com/portabletext/editor/commit/bf3373ae78698ab0dd69f2705bde864732d03e18), [`59d71ca`](https://github.com/portabletext/editor/commit/59d71ca58eeb1289f0cef65b8fde3841bbcb99e0), [`7892af2`](https://github.com/portabletext/editor/commit/7892af22d1144f2ebe32fb6f857c671330c6ab6a), [`2db496d`](https://github.com/portabletext/editor/commit/2db496dc53c22b7961d1121009032145429b9653), [`e2d081e`](https://github.com/portabletext/editor/commit/e2d081e5b9a257ec09299d8e2f9f0b9389fdc7a6), [`09c5741`](https://github.com/portabletext/editor/commit/09c5741b4a8186f64fa5523e5324b751c051d1ad), [`83a0438`](https://github.com/portabletext/editor/commit/83a04382ed4f79bec3b4cf8e741e4478c68b7f6f), [`3ce5a1d`](https://github.com/portabletext/editor/commit/3ce5a1d00caec9593a4f8d240d05df90505ca655), [`73cf0e1`](https://github.com/portabletext/editor/commit/73cf0e1b48d35dbfc348d8556154a61a7890dde3), [`6fde634`](https://github.com/portabletext/editor/commit/6fde634789e87f97d42d428d823e1cbc4f060367), [`fe7de91`](https://github.com/portabletext/editor/commit/fe7de913129d807c0e05464c0df33dc6a189e0e2)]:
+  - @portabletext/editor@8.0.0
+  - @portabletext/plugin-character-pair-decorator@9.0.0
+  - @portabletext/plugin-input-rule@7.0.0
+
 ## 8.0.49
 
 ### Patch Changes
