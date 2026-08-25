@@ -115,7 +115,7 @@
     "@vitejs/plugin-react": "catalog:tooling",
     "@vitest/browser": "catalog:tooling",
     "@vitest/browser-playwright": "catalog:tooling",
-    "@vitest/coverage-istanbul": "^4.1.10",
+    "@vitest/coverage-istanbul": "^4.1.11",
     "jsdom": "catalog:tooling",
     "oxc-transform-react": "catalog:tooling",
     "racejar": "workspace:*",
