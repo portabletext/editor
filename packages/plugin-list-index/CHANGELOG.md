@@ -1,5 +1,7 @@
 # @portabletext/plugin-list-index
 
+## 2.0.3
+
 ## 2.0.2
 
 ### Patch Changes

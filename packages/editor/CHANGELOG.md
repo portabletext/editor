@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.0.3
+
+### Patch Changes
+
+- [#3182](https://github.com/portabletext/editor/pull/3182) [`ec6191e`](https://github.com/portabletext/editor/commit/ec6191eb024b3f9846a01fc9d391d54cc51c0178) Thanks [@christianhg](https://github.com/christianhg)! - fix: locate a renamed node by its new key when undoing a `_key` change
+
+  Undoing an edit that renamed a node's own `_key` (a collision-avoiding rename ahead of a block merge, for example) left the node stuck under its new key instead of restoring the old one: the undo step tried to find the node by the key it had before the rename, which no longer resolved to anything once the rename had applied. Undoing now locates the node by its current key first, so a rename reverts cleanly along with everything else in the same undo step.
+
+- [#3182](https://github.com/portabletext/editor/pull/3182) [`f910394`](https://github.com/portabletext/editor/commit/f910394080cc184aee5bb5b2af74448f7641e6d3) Thanks [@christianhg](https://github.com/christianhg)! - fix: re-point positions only at the renamed node's own path when a `_key` changes
+
+  Renaming a node's `_key` no longer drags carets, selections, or tracked ranges sitting on an unrelated node that happens to carry the same key (keys are only unique among siblings, so twins across blocks are legal). Positions on the renamed node itself follow the rename as before; everything else stays put.
+
+- [#3182](https://github.com/portabletext/editor/pull/3182) [`e653db5`](https://github.com/portabletext/editor/commit/e653db53b87e9c6791a7320c11f23cffb9e69d24) Thanks [@christianhg](https://github.com/christianhg)! - fix: rename colliding keys before a text block merge deletes the merging block
+
+  Merging a text block into its neighbor (backspace at its start, or forward delete at the end of the block before it) could silently mint fresh `_key`s for any child span or annotation whose key collided with one already in the destination block. On the wire this read as those nodes being destroyed and re-created rather than moved, so a collaborator applying the same patches lost their caret through the merge instead of following it. The merge now renames the colliding keys first, so the emitted patches express the rename followed by the move instead of a destroy-and-create.
+
 ## 8.0.2
 
 ### Patch Changes
