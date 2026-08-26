@@ -71,10 +71,9 @@
       "groupName": "xstate"
     },
     {
-      "description": "Group Changesets packages, majors included: `@changesets/changelog-github` only works with the `@changesets/cli` generation it was built for, so the toolchain moves as one",
+      "description": "Group Changesets packages. Majors stay separate: cli v3's supported pairing is changesets/action@v2, which hard-rejects cli v2 and would strand the v6/v7 release branches on the shared workflow, so we hold v3 and need the group to keep offering v2-line updates",
       "matchPackageNames": ["@changesets/*"],
-      "groupName": "changesets",
-      "separateMajorMinor": false
+      "groupName": "changesets"
     },
     {
       "description": "Group Cucumber packages",
