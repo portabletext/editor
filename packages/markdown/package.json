@@ -52,6 +52,7 @@
     "@mdit/plugin-alert": "^0.23.2",
     "@portabletext/schema": "workspace:^",
     "@portabletext/toolkit": "^6.0.0",
+    "linkify-it": "^5.0.2",
     "markdown-it": "^14.3.0"
   },
   "devDependencies": {
@@ -59,6 +60,7 @@
     "@portabletext/types": "^4.0.2",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
+    "@types/linkify-it": "^5.0.0",
     "@types/markdown-it": "^14.1.2",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",

@@ -88,11 +88,13 @@ const markdown = portableTextToMarkdown([
    [ref link][id]              ->  [ref link](https://example.com "title")
    ```
 
-2. The normalized Markdown is a fixpoint for the constructs in the [Supported features](#supported-features) table above: parsing it and serializing again reproduces it byte-for-byte, pinned by a full-document round-trip test. This doesn't yet extend to plain text that happens to contain literal Markdown punctuation: serialization doesn't escape it, so a second parse reads it back as markup instead of literal text.
+2. The normalized Markdown is a fixpoint for the constructs in the [Supported features](#supported-features) table above, and for plain text: parsing it and serializing again reproduces it byte-for-byte, pinned by a full-document round-trip test. Literal Markdown punctuation in plain text is backslash-escaped on serialization, so a second parse reads back the same characters instead of markup.
 
    ```
-   \*bar\*  ->  *bar*  (serialized unescaped; a second parse reads this as emphasis)
+   *bar*  ->  \*bar\*  (escaped on serialization; a second parse reads back the literal text)
    ```
+
+   Three exceptions. An explicit-scheme URL or an email is never escaped: text identity holds, but it gains a `link` mark on the next parse (autolinking is a parser feature, not a round-trip bug); fuzzy `www.` forms stay unescaped only while they contain no markdown-significant punctuation. A hard break inside a heading forces a structural split into a second block on reparse, since an ATX heading is single-line; the text itself still survives, split across the two blocks. And leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint claim.
 
 3. MD→PT survival is schema-driven. Constructs whose type the schema doesn't declare degrade predictably: they keep their content and drop the structure that named them. Marks drop formatting but keep the text (`**bar**` with no `strong` decorator in the schema becomes a plain span reading `bar`); tables flatten their cell content into top-level blocks; images fall back to their Markdown source as plain text; task-list checkboxes strip to plain list items.
 
