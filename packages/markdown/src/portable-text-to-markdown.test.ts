@@ -7,7 +7,9 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {
   isPortableTextBlock,
   isPortableTextListItemBlock,
+  isPortableTextSpan,
 } from '@portabletext/toolkit'
+import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
@@ -335,6 +337,57 @@ describe(portableTextToMarkdown.name, () => {
         'foo [b\\\\\\]ar](https://example.com) baz',
       )
     })
+
+    test('link label containing "](" round-trips instead of double-escaping into a lost label and destination', () => {
+      // The label's own `]` is already escaped once by
+      // `escapeLinkLabelBrackets`; the line-level `]`-before-`(` rule must
+      // skip it too, or the second backslash reopens the label early on
+      // reparse.
+      const inKeys = createTestKeyGenerator()
+      const linkKey = inKeys()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: inKeys(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: inKeys(), text: 'a](b', marks: [linkKey]},
+          ],
+          markDefs: [
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('[a\\](b](https://example.com)')
+
+      const outKeys = createTestKeyGenerator()
+      const outBlockKey = outKeys()
+      const outLinkKey = outKeys()
+      const outSpanKey = outKeys()
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      expect(reparsed).toEqual([
+        {
+          _type: 'block',
+          _key: outBlockKey,
+          style: 'normal',
+          markDefs: [
+            {_key: outLinkKey, _type: 'link', href: 'https://example.com'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: outSpanKey,
+              text: 'a](b',
+              marks: [outLinkKey],
+            },
+          ],
+        },
+      ])
+    })
   })
 
   describe('hard breaks', () => {
@@ -373,6 +426,77 @@ describe(portableTextToMarkdown.name, () => {
         },
       ]
       expect(portableTextToMarkdown(portableText)).toBe('foo  \nbar')
+    })
+
+    test('an emphasis run spanning a custom hard break with no newline of its own round-trips instead of turning into markup', () => {
+      // `<br />` carries no newline: the leaves on either side land on the
+      // same rendered line, so the two `_` can pair up into an `em` on
+      // reparse unless the plan walls the break off instead of treating it
+      // as a real line boundary.
+      const portableText = [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'a _\n_ b', marks: []}],
+          markDefs: [],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        hardBreak: () => '<br />',
+      })
+      expect(markdown).toBe('a \\_<br />\\_ b')
+
+      const reparsed = markdownToPortableText(markdown, {
+        html: {inline: 'text'},
+      })
+      const block = reparsed.at(0)
+      if (!block || !isPortableTextBlock(block)) {
+        throw new Error('Expected the first node to be a portable text block')
+      }
+      expect(
+        block.children
+          .filter(isPortableTextSpan)
+          .map((span) => span.text)
+          .join(''),
+      ).toBe('a _<br />_ b')
+    })
+
+    test('the same underscore shape stays unescaped and round-trips with the default hard break, unaffected by the sentinel fix', () => {
+      // markdown-it itself never pairs a delimiter run across a `hardbreak`
+      // token, so the default renderer (a real newline) never needed
+      // escaping here; the sentinel only changes behavior for a renderer
+      // whose hard-break output carries no newline.
+      const portableText = [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'a _\n_ b', marks: []}],
+          markDefs: [],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('a _  \n_ b')
+
+      const reparsed = markdownToPortableText(markdown)
+      const block = reparsed.at(0)
+      if (!block || !isPortableTextBlock(block)) {
+        throw new Error('Expected the first node to be a portable text block')
+      }
+      expect(
+        block.children
+          .filter(isPortableTextSpan)
+          .map((span) => span.text)
+          .join(''),
+      ).toBe('a _\n_ b')
+      expect(
+        block.children.every(
+          (child) => !isPortableTextSpan(child) || !child.marks?.includes('em'),
+        ),
+      ).toBe(true)
     })
 
     test('multiple hard breaks from explicit PT', () => {
@@ -642,6 +766,86 @@ describe(portableTextToMarkdown.name, () => {
         const markdown = ['- foo', '   - [x] bar'].join('\n')
         const portableText = markdownToPortableText(markdown)
         expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('a bullet item whose own content starts with a checkbox-shaped run after leading whitespace round-trips instead of losing it to a GFM task marker', () => {
+        // The parser's own checkbox pre-pass reads a list item's inline
+        // content *after* CommonMark's leading-whitespace trim, same as
+        // every other line-start hazard - so a checkbox-shaped run has to
+        // be found (and escaped) there too, not only at column 0.
+        const keyGenerator = createTestKeyGenerator()
+        const text = ' [x] y'
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            listItem: 'bullet',
+            level: 1,
+            markDefs: [],
+            children: [{_type: 'span', _key: keyGenerator(), text, marks: []}],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('-  \\[x] y')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        const block = reparsed.at(0)
+        if (!block || !isPortableTextBlock(block)) {
+          throw new Error('Expected the first node to be a portable text block')
+        }
+        expect(isPortableTextListItemBlock(block)).toBe(true)
+        expect(
+          block.children
+            .filter(isPortableTextSpan)
+            .map((span) => span.text)
+            .join(''),
+        ).toBe('[x] y')
+      })
+
+      test('a checkbox-shaped run at the start of a styled (non-normal) list item survives instead of being eaten as a checkbox', () => {
+        // A styled list item's first block is rendered through the same
+        // block-style renderer (`DefaultH1Renderer` here) as a non-list
+        // block, so it has to keep its list-item escaping context on that
+        // path too, not just for a `normal`-style item.
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'h1',
+            listItem: 'bullet',
+            level: 1,
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: '[ ] todo',
+                marks: [],
+              },
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('- # \\[ ] todo')
+
+        const reparsed = markdownToPortableText(markdown)
+        const combinedText = reparsed
+          .map((node) =>
+            isPortableTextBlock(node)
+              ? node.children
+                  .filter(isPortableTextSpan)
+                  .map((span) => span.text)
+                  .join('')
+              : '',
+          )
+          .join('')
+        expect(combinedText).toBe('[ ] todo')
       })
 
       test('renders unchecked task from explicit portable text', () => {
@@ -1094,10 +1298,16 @@ describe(portableTextToMarkdown.name, () => {
     })
 
     test('not supported by deserializer', () => {
+      // Unsupported by the schema, the image syntax survives as literal
+      // paragraph text instead of an image node, so it goes through the
+      // same leaf escaping as any other text and gains the same
+      // `]`-before-`(` protection a literal link pattern would.
       const portableText = markdownToPortableText(markdownIn, {
         schema: compileSchema(defineSchema({})),
       })
-      expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo\n\n![alt text\\](https://example.com/image.png)\n\nbar',
+      )
     })
 
     test('image with brackets in alt text', () => {
@@ -1286,10 +1496,11 @@ describe(portableTextToMarkdown.name, () => {
     })
 
     test('not supported by deserializer', () => {
+      // Same fallback-to-literal-text path as the block-image case above.
       const portableText = markdownToPortableText(markdown, {
         schema: compileSchema(defineSchema({})),
       })
-      const markdownOut = 'foo ![alt text](https://example.com/image.png) bar'
+      const markdownOut = 'foo ![alt text\\](https://example.com/image.png) bar'
       expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
     })
   })
@@ -2871,6 +3082,1030 @@ describe(portableTextToMarkdown.name, () => {
           '> ```',
         ].join('\n'),
       )
+    })
+  })
+
+  describe('plain text escaping', () => {
+    // Each string round-trips as the sole text of a single span in a
+    // `normal` block: PT -> MD -> PT should reproduce the same block, with
+    // the span text byte-identical to what went in.
+    const roundTripCorpus = [
+      '*bar*',
+      '_bar_',
+      '`code`',
+      '~~bar~~',
+      '<tag>foo</tag>',
+      '&amp;',
+      '\\*bar\\*',
+      '# heading',
+      '> quote',
+      '- item',
+      '1. item',
+      '1) item',
+      '---',
+      '```js',
+      '~~~',
+      '    indented',
+      '> [!NOTE]',
+      '-',
+      '+',
+      '*',
+      '\tx',
+      // Non-ASCII neighbors: markdown-it's emphasis-flanking rule classifies
+      // punctuation using Unicode's `P`/`S` categories, not ASCII alone, so
+      // a `_` run flanked by an emoji, an em dash, or a CJK character has to
+      // stay escaped exactly like one flanked by ASCII punctuation does.
+      '😀_a_😀',
+      '—_a_—',
+      '中_a_中',
+    ]
+
+    function normalBlock(blockKey: string, spanKey: string, text: string) {
+      return {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text, marks: []}],
+      }
+    }
+
+    // An unrendered, schema-less mark on every span but the last stands in
+    // for the annotation/decorator that splices the leaves together
+    // without introducing markup of its own.
+    function leavesBlock(
+      texts: Array<string>,
+      overrides: {style?: string; listItem?: string; level?: number} = {},
+    ) {
+      const keyGenerator = createTestKeyGenerator()
+      return {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: overrides.style ?? 'normal',
+        ...(overrides.listItem
+          ? {listItem: overrides.listItem, level: overrides.level ?? 1}
+          : {}),
+        markDefs: [],
+        children: texts.map((text, index) => ({
+          _type: 'span',
+          _key: keyGenerator(),
+          text,
+          marks: index < texts.length - 1 ? ['unrenderedAnnotation'] : [],
+        })),
+      }
+    }
+
+    function firstBlock(blocks: Array<PortableTextBlock | TypedObject>) {
+      const block = blocks.at(0)
+      if (block === undefined || !isPortableTextBlock(block)) {
+        throw new Error('Expected the first block to be a portable text block')
+      }
+      return block
+    }
+
+    function blockText(block: PortableTextBlock): string {
+      return block.children
+        .filter(isPortableTextSpan)
+        .map((span) => span.text)
+        .join('')
+    }
+
+    test.each(roundTripCorpus)('%s round-trips byte-identical', (text) => {
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const outKeys = createTestKeyGenerator()
+
+      expect(reparsed).toEqual([normalBlock(outKeys(), outKeys(), text)])
+    })
+
+    test('a link pattern in plain text round-trips, with the bare URL inside it gaining a link mark', () => {
+      const text = '[bar](https://example.com)'
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('[bar\\](https://example.com)')
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const outKeys = createTestKeyGenerator()
+      const blockKey = outKeys()
+      const firstSpanKey = outKeys()
+      const linkKey = outKeys()
+      expect(reparsed).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
+          ],
+          children: [
+            {_type: 'span', _key: firstSpanKey, text: '[bar](', marks: []},
+            {
+              _type: 'span',
+              _key: outKeys(),
+              text: 'https://example.com',
+              marks: [linkKey],
+            },
+            {_type: 'span', _key: outKeys(), text: ')', marks: []},
+          ],
+        },
+      ])
+      expect(blockText(firstBlock(reparsed))).toBe(text)
+    })
+
+    test('an autolink-shaped literal round-trips, with the bare URL inside it gaining a link mark', () => {
+      const text = '<https://example.com>'
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('\\<https://example.com>')
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      expect(blockText(firstBlock(reparsed))).toBe(text)
+    })
+
+    test('a link reference definition round-trips, with its bare URL gaining a link mark', () => {
+      const text = '[id]: https://example.com'
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('\\[id]: https://example.com')
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const outKeys = createTestKeyGenerator()
+      const blockKey = outKeys()
+      const firstSpanKey = outKeys()
+      const linkKey = outKeys()
+      expect(reparsed).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
+          ],
+          children: [
+            {_type: 'span', _key: firstSpanKey, text: '[id]: ', marks: []},
+            {
+              _type: 'span',
+              _key: outKeys(),
+              text: 'https://example.com',
+              marks: [linkKey],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a setext-underline-shaped line after a hard break round-trips instead of becoming a heading underline', () => {
+      const text = 'text\n==='
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('text  \n\\===')
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const outKeys = createTestKeyGenerator()
+      expect(reparsed).toEqual([normalBlock(outKeys(), outKeys(), text)])
+    })
+
+    test('a bare URL round-trips byte-identical and gains a link mark (linkify carve-out)', () => {
+      const text = 'https://example.com'
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe(text)
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const outKeys = createTestKeyGenerator()
+      const blockKey = outKeys()
+      const linkKey = outKeys()
+      const spanKey = outKeys()
+      expect(reparsed).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [{_key: linkKey, _type: 'link', href: text}],
+          children: [{_type: 'span', _key: spanKey, text, marks: [linkKey]}],
+        },
+      ])
+    })
+
+    describe('leading spaces before a block marker', () => {
+      // CommonMark allows up to 3 leading spaces before a block marker
+      // without affecting how the line is parsed.
+      test.each([
+        [' > q', ' \\> q', '> q'],
+        [' # head', ' \\# head', '# head'],
+        [' - item', ' \\- item', '- item'],
+        [' [x]: y', ' \\[x]: y', '[x]: y'],
+        [' ---', ' \\---', '---'],
+        ['  ***', '  \\***', '***'],
+        [' ===', ' \\===', '==='],
+        [' 1. item', ' 1\\. item', '1. item'],
+        ['  1) item', '  1\\) item', '1) item'],
+      ])(
+        '%s round-trips instead of losing its text to the block marker',
+        (text, expectedMarkdown, expectedBlockText) => {
+          const inKeys = createTestKeyGenerator()
+          const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+          const markdown = portableTextToMarkdown(portableText)
+          expect(markdown).toBe(expectedMarkdown)
+
+          const reparsed = markdownToPortableText(markdown, {
+            keyGenerator: createTestKeyGenerator(),
+          })
+          // The leading space is block indentation, which CommonMark's own
+          // paragraph parsing trims; it isn't part of the fixpoint claim.
+          expect(blockText(firstBlock(reparsed))).toBe(expectedBlockText)
+        },
+      )
+    })
+
+    describe('a heading ending in a space and a hash run', () => {
+      test("the trailing hash run round-trips instead of being read as the heading's closing sequence", () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'h1',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'x #', marks: []},
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('# x \\#')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        const outKeys = createTestKeyGenerator()
+        expect(reparsed).toEqual([
+          {
+            _type: 'block',
+            _key: outKeys(),
+            style: 'h1',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: outKeys(), text: 'x #', marks: []},
+            ],
+          },
+        ])
+      })
+    })
+
+    describe('a dash-underline-shaped line', () => {
+      test('after a hard break round-trips instead of becoming a setext h2 underline', () => {
+        const text = 'a\n--'
+        const inKeys = createTestKeyGenerator()
+        const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('a  \n\\--')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        const outKeys = createTestKeyGenerator()
+        expect(reparsed).toEqual([normalBlock(outKeys(), outKeys(), text)])
+      })
+
+      test('a single trailing dash with a space round-trips as plain text, not a bullet or an underline', () => {
+        const text = '- '
+        const inKeys = createTestKeyGenerator()
+        const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\- ')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        const block = firstBlock(reparsed)
+        expect(isPortableTextListItemBlock(block)).toBe(false)
+        // The trailing space is trimmed by CommonMark's own paragraph
+        // parsing; it isn't part of the fixpoint claim.
+        expect(blockText(block)).toBe('-')
+      })
+    })
+
+    describe('linkify mask boundaries', () => {
+      // markdown-it's linkify pass runs *after* inline tokenization and
+      // entity decoding, over whatever text and marks those steps already
+      // produced - not over this line's raw, undecoded source. A probe run
+      // against the raw text can claim a range the real reparse won't.
+
+      test('an entity reference immediately before an email-shaped run round-trips instead of leaking through the linkify claim', () => {
+        const text = '&amp;x@y.co'
+        const inKeys = createTestKeyGenerator()
+        const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\&amp;x@y.co')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        expect(blockText(firstBlock(reparsed))).toBe(text)
+      })
+
+      test('a backtick immediately after a URL-shaped run round-trips instead of losing text to a code span', () => {
+        const text = '//a.co`>x`'
+        const inKeys = createTestKeyGenerator()
+        const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('//a.co\\`>x\\`')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        expect(blockText(firstBlock(reparsed))).toBe(text)
+      })
+
+      test('a linkify claim spliced by a rendered mark boundary round-trips instead of masking the delimiters it would corrupt', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'www.exa', marks: []},
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'mple.co/a*b*c',
+                marks: ['strong'],
+              },
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('www.exa**mple.co/a\\*b\\*c**')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        expect(blockText(firstBlock(reparsed))).toBe('www.example.co/a*b*c')
+      })
+    })
+
+    describe('custom renderers', () => {
+      test("a synthetic text node from a custom type renderer does not steal a sibling leaf's escaped text", () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'a', marks: []},
+              {_type: 'inlineMarker', _key: keyGenerator()},
+              {_type: 'span', _key: keyGenerator(), text: '*bar*', marks: []},
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText, {
+          types: {
+            inlineMarker: ({renderNode}) =>
+              renderNode({
+                node: {_type: '@text', text: 'TICK'},
+                isInline: true,
+                index: 0,
+                renderNode,
+              }),
+          },
+        })
+
+        expect(markdown).toBe('aTICK\\*bar\\*')
+      })
+    })
+
+    describe('cross-leaf hazards', () => {
+      test('an unrendered annotation cannot splice a digit and ". item" into an ordered-list marker', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKey = keyGenerator()
+        const firstSpanKey = keyGenerator()
+        const secondSpanKey = keyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: firstSpanKey,
+                text: '1',
+                marks: ['unrenderedAnnotation'],
+              },
+              {_type: 'span', _key: secondSpanKey, text: '. item', marks: []},
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('1\\. item')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.style).toBe('normal')
+        expect(isPortableTextListItemBlock(block)).toBe(false)
+        expect(blockText(block)).toBe('1. item')
+      })
+
+      test('an unrendered annotation cannot splice "[foo]" and "(bar)" into a link', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKey = keyGenerator()
+        const firstSpanKey = keyGenerator()
+        const secondSpanKey = keyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: firstSpanKey,
+                text: '[foo]',
+                marks: ['unrenderedAnnotation'],
+              },
+              {_type: 'span', _key: secondSpanKey, text: '(bar)', marks: []},
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('[foo\\](bar)')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.markDefs).toEqual([])
+        expect(blockText(block)).toBe('[foo](bar)')
+      })
+
+      test('an unrendered annotation cannot splice "[x]" and ": y" into a link reference definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKey = keyGenerator()
+        const firstSpanKey = keyGenerator()
+        const secondSpanKey = keyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: firstSpanKey,
+                text: '[x]',
+                marks: ['unrenderedAnnotation'],
+              },
+              {_type: 'span', _key: secondSpanKey, text: ': y', marks: []},
+            ],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\[x]: y')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.markDefs).toEqual([])
+        expect(blockText(block)).toBe('[x]: y')
+      })
+
+      test('a ref-def label split anywhere before the colon round-trips (label and colon in one leaf)', () => {
+        const portableText = [leavesBlock(['[', 'x]: y'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\[x]: y')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.markDefs).toEqual([])
+        expect(blockText(block)).toBe('[x]: y')
+      })
+
+      test('a ref-def label split anywhere before the colon round-trips (colon and destination split again)', () => {
+        const portableText = [leavesBlock(['[', 'x]:', 'y'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\[x]:y')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.markDefs).toEqual([])
+        expect(blockText(block)).toBe('[x]:y')
+      })
+
+      test('a bullet marker split before its own space round-trips instead of becoming a list item', () => {
+        const portableText = [leavesBlock(['-', ' x'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\- x')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(isPortableTextListItemBlock(block)).toBe(false)
+        expect(blockText(block)).toBe('- x')
+      })
+
+      test('an entity reference split across leaves round-trips instead of decoding to the bare character', () => {
+        const portableText = [leavesBlock(['&', 'amp;'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\&amp;')
+
+        const reparsed = markdownToPortableText(markdown)
+        expect(blockText(firstBlock(reparsed))).toBe('&amp;')
+      })
+
+      test('an HTML/autolink-shaped `<` split across leaves round-trips instead of opening a tag', () => {
+        const portableText = [leavesBlock(['<', 'p'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\<p')
+
+        const reparsed = markdownToPortableText(markdown)
+        expect(blockText(firstBlock(reparsed))).toBe('<p')
+      })
+
+      test('a literal backslash split from the punctuation it precedes round-trips instead of escaping that punctuation', () => {
+        const portableText = [leavesBlock(['\\', '*'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+
+        const reparsed = markdownToPortableText(markdown)
+        expect(blockText(firstBlock(reparsed))).toBe('\\*')
+      })
+
+      test('an emphasis run split across leaves round-trips instead of turning into markup', () => {
+        const portableText = [leavesBlock(['*', 'm', '*'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\*m\\*')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.markDefs).toEqual([])
+        expect(blockText(block)).toBe('*m*')
+      })
+
+      test('a strikethrough run split across leaves round-trips instead of turning into markup', () => {
+        const portableText = [leavesBlock(['a~', '~b~', '~c'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('a\\~\\~b\\~\\~c')
+
+        const reparsed = markdownToPortableText(markdown)
+        expect(blockText(firstBlock(reparsed))).toBe('a~~b~~c')
+      })
+
+      test('a setext-underline run accumulated across a hard break and a second leaf round-trips instead of turning the preceding line into a heading', () => {
+        const portableText = [leavesBlock(['x\n=', '='])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('x  \n\\==')
+
+        const reparsed = markdownToPortableText(markdown)
+        const block = firstBlock(reparsed)
+        expect(block.style).toBe('normal')
+        expect(blockText(block)).toBe('x\n==')
+      })
+
+      test('a thematic-break run accumulated across leaves round-trips instead of becoming a thematic break', () => {
+        const portableText = [leavesBlock(['-', '--'])]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('\\---')
+
+        const reparsed = markdownToPortableText(markdown)
+        expect(blockText(firstBlock(reparsed))).toBe('---')
+      })
+    })
+
+    test.each(roundTripCorpus)(
+      '%s stays unescaped inside a widened code span',
+      (text) => {
+        const inKeys = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: inKeys(),
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: inKeys(), text, marks: ['code']}],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        const outKeys = createTestKeyGenerator()
+
+        expect(reparsed).toEqual([
+          {
+            _type: 'block',
+            _key: outKeys(),
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: outKeys(), text, marks: ['code']}],
+          },
+        ])
+      },
+    )
+
+    describe('code span padding', () => {
+      test('content padded with a space on both sides round-trips instead of losing one space per side', () => {
+        const text = '  x  '
+        const inKeys = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: inKeys(),
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: inKeys(), text, marks: ['code']}],
+          },
+        ]
+
+        const markdown = portableTextToMarkdown(portableText)
+        expect(markdown).toBe('`   x   `')
+
+        const reparsed = markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        })
+        const outKeys = createTestKeyGenerator()
+        expect(reparsed).toEqual([
+          {
+            _type: 'block',
+            _key: outKeys(),
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: outKeys(), text, marks: ['code']}],
+          },
+        ])
+      })
+    })
+
+    describe('canonical output bytes', () => {
+      test.each([
+        ['foo # bar', 'foo # bar'],
+        ['foo - bar', 'foo - bar'],
+        ['foo > bar', 'foo > bar'],
+        ['a * b', 'a * b'],
+      ])('%s stays bare', (text, expectedMarkdown) => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [normalBlock(keyGenerator(), keyGenerator(), text)]
+
+        expect(portableTextToMarkdown(portableText)).toBe(expectedMarkdown)
+      })
+    })
+
+    describe('single-span grammar fixes', () => {
+      describe('thematic breaks with interior spaces or tabs', () => {
+        test.each(['-- -', '_ _ _'])(
+          '%s round-trips instead of becoming a thematic break',
+          (text) => {
+            const portableText = [leavesBlock([text])]
+
+            const markdown = portableTextToMarkdown(portableText)
+            expect(markdown).toBe(`\\${text}`)
+
+            const reparsed = markdownToPortableText(markdown)
+            expect(blockText(firstBlock(reparsed))).toBe(text)
+          },
+        )
+      })
+
+      describe('a heading whose text is only a hash run', () => {
+        test.each(['#', '##'])(
+          '%s round-trips instead of reparsing as an empty heading',
+          (text) => {
+            const portableText = [leavesBlock([text], {style: 'h1'})]
+
+            const markdown = portableTextToMarkdown(portableText)
+            expect(markdown).toBe(`# \\${text}`)
+
+            const reparsed = markdownToPortableText(markdown)
+            const block = firstBlock(reparsed)
+            expect(block.style).toBe('h1')
+            expect(blockText(block)).toBe(text)
+          },
+        )
+
+        test('a hash immediately followed by other text is not over-escaped', () => {
+          const portableText = [leavesBlock(['#', 'x'], {style: 'h1'})]
+
+          const markdown = portableTextToMarkdown(portableText)
+          expect(markdown).toBe('# #x')
+
+          const reparsed = markdownToPortableText(markdown)
+          const block = firstBlock(reparsed)
+          expect(block.style).toBe('h1')
+          expect(blockText(block)).toBe('#x')
+        })
+
+        test('a hash run after real heading text and a space still round-trips', () => {
+          const portableText = [leavesBlock(['x  #'], {style: 'h1'})]
+
+          const markdown = portableTextToMarkdown(portableText)
+          expect(markdown).toBe('# x  \\#')
+
+          const reparsed = markdownToPortableText(markdown)
+          const block = firstBlock(reparsed)
+          expect(block.style).toBe('h1')
+          expect(blockText(block)).toBe('x  #')
+        })
+      })
+
+      describe('a heading with a hard break in its text', () => {
+        test("only the first line is inside the heading's `# ` prefix", () => {
+          const portableText = [leavesBlock(['a\n- b'], {style: 'h1'})]
+
+          const markdown = portableTextToMarkdown(portableText)
+          expect(markdown).toBe('# a  \n\\- b')
+
+          const reparsed = markdownToPortableText(markdown)
+          expect(reparsed).toHaveLength(2)
+          const [heading, continuation] = reparsed
+          if (
+            heading === undefined ||
+            continuation === undefined ||
+            !isPortableTextBlock(heading) ||
+            !isPortableTextBlock(continuation)
+          ) {
+            throw new Error('Expected two portable text blocks')
+          }
+          expect(heading.style).toBe('h1')
+          expect(blockText(heading)).toBe('a')
+          // The second raw line is no longer inside the heading's `# `
+          // prefix, so it's an ordinary line: it must not misparse as a
+          // bullet list item, and its text (the hard break's continuation)
+          // must survive.
+          expect(isPortableTextListItemBlock(continuation)).toBe(false)
+          expect(blockText(continuation)).toBe('- b')
+        })
+      })
+
+      describe('a GFM task-list checkbox at the start of list-item content', () => {
+        test.each(['[x] done', '[X] done', '[ ] done'])(
+          '%s round-trips instead of being consumed as a checkbox',
+          (text) => {
+            const portableText = [
+              leavesBlock([text], {listItem: 'bullet', level: 1}),
+            ]
+
+            const markdown = portableTextToMarkdown(portableText)
+            expect(markdown).toBe(`- \\${text}`)
+
+            const reparsed = markdownToPortableText(markdown)
+            const block = firstBlock(reparsed)
+            expect(block.listItem).toBe('bullet')
+            expect('checked' in block).toBe(false)
+            expect(blockText(block)).toBe(text)
+          },
+        )
+
+        test('a list item that already is a task keeps its own checkbox and its content bare', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const portableText = [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              listItem: 'task',
+              level: 1,
+              checked: true,
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'done', marks: []},
+              ],
+            },
+          ]
+
+          expect(portableTextToMarkdown(portableText)).toBe('- [x] done')
+        })
+      })
+    })
+
+    describe('linkify awareness', () => {
+      test.each([
+        ['www.a.com/a*b*c', 'www.a.com/a\\*b\\*c'],
+        ['www.a.com/_b_', 'www.a.com/\\_b\\_'],
+        ['www.a.com/~~x~~', 'www.a.com/\\~\\~x\\~\\~'],
+      ])(
+        'fuzzy claim %s escapes normally: emphasis beats fuzzy linkify on reparse, so masking would lose the characters',
+        (text, expectedMarkdown) => {
+          const portableText = [leavesBlock([text])]
+
+          const markdown = portableTextToMarkdown(portableText)
+          expect(markdown).toBe(expectedMarkdown)
+
+          const reparsed = markdownToPortableText(markdown)
+          expect(blockText(firstBlock(reparsed))).toBe(text)
+        },
+      )
+
+      test.each([
+        'https://e.co#~~',
+        'https://e.co#_',
+        'www.e.co/a_b',
+        'foo@e.co',
+      ])(
+        '%s round-trips byte-identical, not escaped inside the linkified range',
+        (text) => {
+          const portableText = [leavesBlock([text])]
+
+          const markdown = portableTextToMarkdown(portableText)
+          expect(markdown).toBe(text)
+
+          const reparsed = markdownToPortableText(markdown)
+          const block = firstBlock(reparsed)
+          expect(blockText(block)).toBe(text)
+          const linkSpan = block.children.find(isPortableTextSpan)
+          expect(linkSpan?.marks).toHaveLength(1)
+          const linkKey = linkSpan?.marks?.at(0)
+          const markDef = (block.markDefs ?? []).find(
+            (def) => def._key === linkKey,
+          )
+          expect(markDef?._type).toBe('link')
+        },
+      )
+    })
+
+    describe('context', () => {
+      test('heading', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'h1',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: '*bar*', marks: []},
+            ],
+          },
+        ]
+
+        expect(portableTextToMarkdown(portableText)).toBe('# \\*bar\\*')
+      })
+
+      test('list item', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            listItem: 'bullet',
+            level: 1,
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: '*bar*', marks: []},
+            ],
+          },
+        ]
+
+        expect(portableTextToMarkdown(portableText)).toBe('- \\*bar\\*')
+      })
+
+      test('blockquote', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'blockquote',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: '# heading text',
+                marks: [],
+              },
+            ],
+          },
+        ]
+
+        expect(portableTextToMarkdown(portableText)).toBe('> \\# heading text')
+      })
+
+      test('table cell, including a literal backslash before a pipe', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const cellBlock = (text: string) => ({
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keyGenerator(), text, marks: []}],
+        })
+        const table = {
+          _type: 'table',
+          _key: keyGenerator(),
+          headerRows: 0,
+          rows: [
+            {
+              _key: keyGenerator(),
+              _type: 'row',
+              cells: [
+                {
+                  _key: keyGenerator(),
+                  _type: 'cell',
+                  value: [cellBlock('*bar*')],
+                },
+              ],
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'row',
+              cells: [
+                {
+                  _key: keyGenerator(),
+                  _type: 'cell',
+                  value: [cellBlock('a\\|b')],
+                },
+              ],
+            },
+          ],
+        }
+
+        expect(portableTextToMarkdown([table])).toBe(
+          ['|  |', '| --- |', '| \\*bar\\* |', '| a\\\\\\|b |'].join('\n'),
+        )
+      })
+
+      test('callout', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const portableText = [
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: keyGenerator(),
+                    text: '*bar*',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ]
+
+        expect(portableTextToMarkdown(portableText)).toBe(
+          '> [!NOTE]\n> \\*bar\\*',
+        )
+      })
     })
   })
 

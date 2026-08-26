@@ -173,7 +173,9 @@ export interface PortableTextRendererOptions<T> {
   isInline: boolean
 
   /**
-   * Serialized Markdown of child nodes of this block/type
+   * Serialized Markdown of child nodes of this block/type: nested marks
+   * rendered, markdown-significant punctuation in plain text
+   * backslash-escaped. Safe to embed in markdown output as-is.
    */
   children?: string
 
@@ -209,7 +211,12 @@ export interface PortableTextMarkRendererOptions<
   value?: M
 
   /**
-   * Text content of this mark
+   * The raw text content of this mark: the span text exactly as stored in
+   * the Portable Text, unescaped, with no nested mark rendering. Read this
+   * when your renderer emits its own delimiters or non-markdown output
+   * (code fences, HTML tags), where backslash escapes would appear
+   * literally. The built-in `code` decorator renderer works from this
+   * field.
    */
   text: string
 
@@ -224,7 +231,11 @@ export interface PortableTextMarkRendererOptions<
   markType: string
 
   /**
-   * Serialized Markdown of child nodes of this mark
+   * Serialized Markdown of this mark's child nodes: nested marks are
+   * rendered and markdown-significant punctuation in plain text is
+   * backslash-escaped. Safe to embed in markdown output as-is; wrapping
+   * renderers (`**${children}**`) should always use this. For the raw,
+   * unescaped text, read `text` instead.
    */
   children: string
 

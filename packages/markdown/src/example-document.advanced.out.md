@@ -90,7 +90,7 @@ Here's a link to [a website](http://foo.bar), to a [local<br />
 doc](local-doc.html), and to a [section heading in the current<br />
 doc](#an-h2-header). Here's a footnote [^1].
 
-[^1]: Footnote text goes here.
+\[^1]: Footnote text goes here.
 
 Tables can look like this:
 
@@ -155,4 +155,4 @@ math should get its own line and be put in in double-dollarsigns:
 $$I = \int \rho R^{2} dV$$
 
 And note that you can backslash-escape any punctuation characters<br />
-which you wish to be displayed literally, ex.: `foo`, *bar*, etc.
+which you wish to be displayed literally, ex.: \`foo\`, \*bar\*, etc.

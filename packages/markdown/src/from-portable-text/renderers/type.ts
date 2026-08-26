@@ -1,10 +1,12 @@
 import {isTypedObject} from '@portabletext/schema'
+import {isPortableTextBlock} from '@portabletext/toolkit'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {
   escapeImageAndLinkText,
   escapeImageAndLinkTitle,
   escapeTableCell,
 } from '../../escape'
+import {markListItemFirstBlock} from '../list-item-first-block'
 import type {PortableTextTypeRenderer} from '../types'
 
 /**
@@ -387,15 +389,23 @@ export const DefaultListRenderer: PortableTextTypeRenderer<{
     const indentWidth = value.kind === 'task' ? 2 : marker.length
     const indent = ' '.repeat(indentWidth)
 
-    const renderedBlocks = item.content.map((block, blockIndex) => ({
-      isNestedList: (block as TypedObject)._type === 'list',
-      text: renderNode({
-        node: block as TypedObject,
-        index: blockIndex,
-        isInline: false,
-        renderNode,
-      }),
-    }))
+    const renderedBlocks = item.content.map((block, blockIndex) => {
+      // Only the first block shares its first line with the marker (and,
+      // for a task item, its GFM checkbox); later blocks render on their
+      // own indented lines.
+      if (blockIndex === 0 && isPortableTextBlock(block)) {
+        markListItemFirstBlock(block)
+      }
+      return {
+        isNestedList: (block as TypedObject)._type === 'list',
+        text: renderNode({
+          node: block as TypedObject,
+          index: blockIndex,
+          isInline: false,
+          renderNode,
+        }),
+      }
+    })
 
     const [first, ...rest] = renderedBlocks
     // Trim trailing whitespace from empty items so `- ` becomes `-`.
