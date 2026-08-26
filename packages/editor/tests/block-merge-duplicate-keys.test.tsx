@@ -288,6 +288,50 @@ describe('Feature: block merge renames colliding keys', () => {
     })
   })
 
+  test('Scenario: undoing the merge restores both original blocks, every `_key` included', async () => {
+    const {editor} = await mergeDuplicateKeyedBlocks()
+
+    const mergedValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: 'kA',
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {_type: 'span', _key: 's2', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 's3', text: ' bazfoo ', marks: []},
+          {_type: 'span', _key: 'k3', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k4', text: ' baz', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    expect(editor.getSnapshot().context.value).toEqual(mergedValue)
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        duplicateKeyedInitialValue(),
+      )
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        duplicateKeyedInitialValue(),
+      )
+    })
+  })
+
   test('Scenario: a colliding markDef is renamed and every mark referencing it is rewritten before the merge', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}],
