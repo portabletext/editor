@@ -47,7 +47,16 @@ function operationToSteps(op: EngineOperation): Step[] {
             ? op.inverse.value
             : undefined
 
-        return oldKey ? [{type: 'rekey', oldKey, newKey: op.value}] : []
+        return oldKey
+          ? [
+              {
+                type: 'rekey',
+                path: nodePath.slice(0, -1),
+                oldKey,
+                newKey: op.value,
+              },
+            ]
+          : []
       }
 
       if (propertyName === 'text') {

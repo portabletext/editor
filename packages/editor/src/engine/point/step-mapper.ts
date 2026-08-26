@@ -38,8 +38,19 @@ export type UnsetTextStep = {
   path: Path
 }
 
+/**
+ * `path` is the array holding the renamed node (its parent path, one
+ * segment shallower than the node itself): the node's own segment,
+ * `oldKey`, is only rewritten at that exact depth under that exact
+ * parent, never wherever the key value happens to recur. A rename only
+ * ever touches one node; matching by key value alone would also rewrite
+ * an unrelated point that merely walks through a same-keyed node
+ * elsewhere in the tree (a duplicate-key merge's destination block, most
+ * notably, since it starts out sharing every key the donor block does).
+ */
 export type RekeyStep = {
   type: 'rekey'
+  path: Path
   oldKey: string
   newKey: string
 }
@@ -145,20 +156,26 @@ export function mapPointThroughStep(
     }
 
     case 'rekey': {
-      let path: Path | undefined
-
-      for (let i = 0; i < point.path.length; i++) {
-        const segment = point.path[i]
-
-        if (isKeyedSegment(segment) && segment._key === step.oldKey) {
-          if (path === undefined) {
-            path = [...point.path]
-          }
-          path[i] = {_key: step.newKey}
-        }
+      if (
+        point.path.length <= step.path.length ||
+        !pathEquals(point.path.slice(0, step.path.length), step.path)
+      ) {
+        return point
       }
 
-      return path === undefined ? point : {path, offset: point.offset}
+      const segment = point.path[step.path.length]
+      if (!isKeyedSegment(segment) || segment._key !== step.oldKey) {
+        return point
+      }
+
+      return {
+        path: [
+          ...step.path,
+          {_key: step.newKey},
+          ...point.path.slice(step.path.length + 1),
+        ],
+        offset: point.offset,
+      }
     }
 
     case 'replace.children': {

@@ -292,6 +292,108 @@ describe(interpretTransaction.name, () => {
     ] satisfies Array<Step>)
   })
 
+  test('Scenario: block-merge-duplicate-keys recognizes each renamed, reinserted child as its own move', () => {
+    // Unlike block-merge-backspace, kept as full blocks (not a textspec
+    // seed): a duplicate `_key` across two blocks has no textspec notation.
+    const fixture = readFixture('block-merge-duplicate-keys')
+    const seed = fixture.seed as Array<PortableTextBlock>
+
+    const steps = interpretTransaction(seed, fixture.patches)
+
+    // The merge renames every colliding child of `kB` ahead of the merge,
+    // then unsets `kB` as a whole. Each renamed child reappears as its own
+    // `insert` under `kA`, so key-reappearance recognizes each one
+    // individually as a `move.node`, on top of (not instead of) the
+    // ordinary span-merge fold that then absorbs the first moved child
+    // (`k2`, holding "foo ") into `kA`'s own last span. `kB` itself never
+    // reappears anywhere, so its own `remove.node` survives the three
+    // moves that share its slot, relocated after the last of them: `kB`
+    // could have held more than what moved, and this is what invalidates
+    // whatever it didn't.
+    expect(steps).toEqual([
+      {
+        type: 'rekey',
+        path: [{_key: 'kB'}, 'children'],
+        oldKey: 's1',
+        newKey: 'k2',
+      },
+      {
+        type: 'rekey',
+        path: [{_key: 'kB'}, 'children'],
+        oldKey: 's2',
+        newKey: 'k3',
+      },
+      {
+        type: 'rekey',
+        path: [{_key: 'kB'}, 'children'],
+        oldKey: 's3',
+        newKey: 'k4',
+      },
+      {
+        type: 'move.node',
+        from: [{_key: 'kB'}, 'children', {_key: 'k2'}],
+        to: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+      },
+      {
+        type: 'move.node',
+        from: [{_key: 'kB'}, 'children', {_key: 'k3'}],
+        to: [{_key: 'kA'}, 'children', {_key: 'k3'}],
+      },
+      {
+        type: 'move.node',
+        from: [{_key: 'kB'}, 'children', {_key: 'k4'}],
+        to: [{_key: 'kA'}, 'children', {_key: 'k4'}],
+      },
+      {type: 'remove.node', path: [{_key: 'kB'}]},
+      {
+        type: 'move.text',
+        from: {
+          path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+          offset: 0,
+          length: 4,
+        },
+        to: {
+          path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+          offset: 4,
+        },
+      },
+      {type: 'remove.node', path: [{_key: 'kA'}, 'children', {_key: 'k2'}]},
+      {type: 'remove.node', path: [{_key: 'kA'}, 'children', {_key: 'k5'}]},
+    ] satisfies Array<Step>)
+
+    // The caret that sat in kB's third span (" baz") at offset 3 follows
+    // its rename to `k4`, then that span's move into `kA`, landing at the
+    // same offset: `k4` never folds into anything (its neighbor `k3`
+    // carries a different mark), so nothing shifts its text or offset
+    // along the way.
+    const mapped = mapPointThroughSteps(steps, {
+      path: [{_key: 'kB'}, 'children', {_key: 's3'}],
+      offset: 3,
+    })
+
+    expect(mapped).toEqual({
+      path: [{_key: 'kA'}, 'children', {_key: 'k4'}],
+      offset: 3,
+    })
+
+    // `kA` and `kB` start out sharing every child key (`s1`/`s2`/`s3`), so
+    // a `rekey` step rewriting by key value alone would also catch a
+    // caret sitting in `kA`'s own, untouched span of the same name and
+    // resolve it into the donor's twin after the merge. Each `rekey` step
+    // only touches the segment directly under `kB`'s own children path,
+    // so a caret already living under `kA` never matches and comes
+    // through every step unchanged.
+    for (const untouchedCaret of [
+      {path: [{_key: 'kA'}, 'children', {_key: 's1'}], offset: 2},
+      {path: [{_key: 'kA'}, 'children', {_key: 's2'}], offset: 1},
+      {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 2},
+    ]) {
+      expect(mapPointThroughSteps(steps, untouchedCaret)).toEqual(
+        untouchedCaret,
+      )
+    }
+  })
+
   test('Scenario: annotation-add-mid-span carves the span in three by moving both flanks', () => {
     const fixture = readFixture('annotation-add-mid-span')
     const seed = seedFromTextspec(
@@ -1132,6 +1234,150 @@ describe('interpretTransaction oracle: multi-span block splits (key-reappearance
 })
 
 describe('interpretTransaction: adversarial recognizer misfires', () => {
+  test('Probe rename-identity: a rename must never lend its lineage to an unrelated node that merely bears the same key value', () => {
+    const kP = 'kP'
+    const s1 = 's1'
+    const kQ = 'kQ'
+    const collidingKey = 'X'
+    const kR = 'kR'
+    const r1 = 'r1'
+    const seed = [
+      makeBlock(kP, s1, 'def'),
+      makeBlock(kQ, collidingKey, 'abc'),
+      makeBlock(kR, r1, 'zzz'),
+    ]
+
+    const patches: Array<Patch> = [
+      // Renames kP's own span to a key that happens to equal kQ's
+      // pre-existing, wholly unrelated span key.
+      {
+        type: 'set',
+        path: [{_key: kP}, 'children', {_key: s1}, '_key'],
+        value: collidingKey,
+        origin: 'local',
+      },
+      // Unrelated: kQ (holding its own, pre-existing 'X') is removed as a
+      // whole, nothing to do with kP's rename.
+      {type: 'unset', path: [{_key: kQ}], origin: 'local'},
+      // Unrelated: a brand-new span, coincidentally also keyed 'X',
+      // appears under kR.
+      {
+        type: 'insert',
+        path: [{_key: kR}, 'children', {_key: r1}],
+        position: 'after',
+        items: [{_type: 'span', _key: collidingKey, text: 'qqq', marks: []}],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    // A value-based rename lineage would see kQ's own 'X' descendant as
+    // "the same node kP renamed" (same key string) and pair it with the
+    // unrelated insert under kR, teleporting a caret from kQ's dead 'abc'
+    // into 'qqq'. Identity is checked by path, not key value alone: kQ's
+    // 'X' never sat where the rename recorded 'X' as living, so nothing
+    // pairs, and kQ's removal stays a plain `remove.node`.
+    expect(steps).toEqual([
+      {
+        type: 'rekey',
+        path: [{_key: kP}, 'children'],
+        oldKey: s1,
+        newKey: collidingKey,
+      },
+      {type: 'remove.node', path: [{_key: kQ}]},
+    ] satisfies Array<Step>)
+
+    const mapped = mapPointThroughSteps(steps, {
+      path: spanPath(kQ, collidingKey),
+      offset: 1,
+    })
+
+    expect(mapped).toBeNull()
+  })
+
+  test('Probe partial-collision merge: a container remove.node survives descendant moves and still invalidates the sibling it does not cover', () => {
+    const kA = 'kA'
+    const kB = 'kB'
+    const collidingKey = 's1'
+    const renamedKey = 'k2'
+    const untouchedSibling = 's9'
+    const seed = [
+      makeBlock(kA, collidingKey, 'foo '),
+      {
+        _type: 'block',
+        _key: kB,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: collidingKey, text: 'bar', marks: []},
+          {_type: 'span', _key: untouchedSibling, text: 'baz', marks: []},
+        ],
+      } satisfies PortableTextBlock,
+    ]
+
+    const patches: Array<Patch> = [
+      // Only `s1` collides with kA's own child, so only it is renamed;
+      // `s9` has no collision and keeps its key across the merge.
+      {
+        type: 'set',
+        path: [{_key: kB}, 'children', {_key: collidingKey}, '_key'],
+        value: renamedKey,
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: kB}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: kA}, 'children', {_key: collidingKey}],
+        position: 'after',
+        items: [{_type: 'span', _key: renamedKey, text: 'bar', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: kA}, 'children', {_key: renamedKey}],
+        position: 'after',
+        items: [
+          {_type: 'span', _key: untouchedSibling, text: 'baz', marks: []},
+        ],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    // The renamed child resolves as its own `move.node`; `kB`'s own key
+    // never reappears anywhere, so its `remove.node` survives (relocated
+    // after that move) rather than being dropped outright: `s9` reused
+    // its own key untouched, and nothing resolves that reappearance as a
+    // move of its own, so the container's surviving step is what has to
+    // invalidate it.
+    expect(steps).toEqual([
+      {
+        type: 'rekey',
+        path: [{_key: kB}, 'children'],
+        oldKey: collidingKey,
+        newKey: renamedKey,
+      },
+      {
+        type: 'move.node',
+        from: spanPath(kB, renamedKey),
+        to: spanPath(kA, renamedKey),
+      },
+      {type: 'remove.node', path: [{_key: kB}]},
+    ] satisfies Array<Step>)
+
+    // A caret that sat in the untouched sibling doesn't dangle on a path
+    // that no longer resolves to anything: the surviving `remove.node`
+    // nulls it cleanly instead.
+    const mapped = mapPointThroughSteps(steps, {
+      path: spanPath(kB, untouchedSibling),
+      offset: 2,
+    })
+
+    expect(mapped).toBeNull()
+  })
+
   test('Probe A: an unrelated identical delete and insert in different blocks never pairs', () => {
     const b1 = 'b1'
     const s1 = 's1'
@@ -1657,6 +1903,152 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
       path: spanPath(destination, destinationSpan),
       offset: 2,
     })
+  })
+
+  test('Probe chained rename: a descendant renamed twice in the same transaction still resolves its own move', () => {
+    const source = 'source'
+    const sibling = 'sibling'
+    const destination = 'destination'
+    const anchor = 'anchor'
+    const seed = [
+      {
+        _type: 'block',
+        _key: source,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'A', text: 'foo', marks: []},
+          {_type: 'span', _key: sibling, text: 'zzz', marks: []},
+        ],
+      } satisfies PortableTextBlock,
+      makeBlock(destination, anchor, 'bar'),
+    ]
+
+    const patches: Array<Patch> = [
+      {
+        type: 'set',
+        path: [{_key: source}, 'children', {_key: 'A'}, '_key'],
+        value: 'B',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: source}, 'children', {_key: 'B'}, '_key'],
+        value: 'C',
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: source}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: destination}, 'children', {_key: anchor}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'C', text: 'foo', marks: []}],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    // Each `set _key` in the chain records its own step; the second
+    // rename's lineage (recorded against `C`) is what the container's own
+    // unset resolves the descendant's reappearance against, so the two
+    // hops (A to B, B to C) compose instead of only the last one counting.
+    // `sibling` keeps its own key across the unset, with nothing to
+    // recognize its reappearance, so the container's own `remove.node`
+    // survives (relocated after the move) to invalidate it.
+    expect(steps).toEqual([
+      {
+        type: 'rekey',
+        path: [{_key: source}, 'children'],
+        oldKey: 'A',
+        newKey: 'B',
+      },
+      {
+        type: 'rekey',
+        path: [{_key: source}, 'children'],
+        oldKey: 'B',
+        newKey: 'C',
+      },
+      {
+        type: 'move.node',
+        from: [{_key: source}, 'children', {_key: 'C'}],
+        to: [{_key: destination}, 'children', {_key: 'C'}],
+      },
+      {type: 'remove.node', path: [{_key: source}]},
+    ] satisfies Array<Step>)
+
+    const mapped = mapPointThroughSteps(steps, {
+      path: [{_key: source}, 'children', {_key: 'A'}],
+      offset: 2,
+    })
+
+    expect(mapped).toEqual({
+      path: [{_key: destination}, 'children', {_key: 'C'}],
+      offset: 2,
+    })
+  })
+
+  test('Probe rename-then-container-hop: a rename recorded against a container identity that itself later changes pairs with nothing', () => {
+    const originalContainerKey = 'kB'
+    const renamedContainerKey = 'kC'
+    const seed = [makeBlock(originalContainerKey, 'A', 'foo')]
+
+    const patches: Array<Patch> = [
+      // The descendant is renamed while its container still answers to
+      // `kB`: the lineage this records lives at `kB/children/B`.
+      {
+        type: 'set',
+        path: [{_key: originalContainerKey}, 'children', {_key: 'A'}, '_key'],
+        value: 'B',
+        origin: 'local',
+      },
+      // The container itself is renamed next, the same shape a
+      // colliding-block rename ahead of a merge produces: the descendant's
+      // recorded lineage still reads `kB`, which the container no longer
+      // answers to.
+      {
+        type: 'set',
+        path: [{_key: originalContainerKey}, '_key'],
+        value: renamedContainerKey,
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: renamedContainerKey}], origin: 'local'},
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    // Neither rename resolves into a `move.node`: the container's own key
+    // (`kC`) never existed before this transaction, so it isn't a
+    // recognized container move either, and the descendant's stale
+    // lineage never reaches `resolveNodeMoves` at all. Both `rekey` steps
+    // stand, followed by a plain `remove.node` for the container.
+    expect(steps).toEqual([
+      {
+        type: 'rekey',
+        path: [{_key: originalContainerKey}, 'children'],
+        oldKey: 'A',
+        newKey: 'B',
+      },
+      {
+        type: 'rekey',
+        path: [],
+        oldKey: originalContainerKey,
+        newKey: renamedContainerKey,
+      },
+      {type: 'remove.node', path: [{_key: renamedContainerKey}]},
+    ] satisfies Array<Step>)
+
+    // A caret in the renamed descendant follows both renames (a `rekey`
+    // step matches by recorded path, not by whether the move it was part
+    // of ever got recognized), then lands inside the container's own
+    // removal and nulls: nothing carries it out to wherever the container
+    // went, because nothing recognized that it went anywhere.
+    const mapped = mapPointThroughSteps(steps, {
+      path: [{_key: originalContainerKey}, 'children', {_key: 'A'}],
+      offset: 2,
+    })
+
+    expect(mapped).toBeNull()
   })
 })
 

@@ -205,6 +205,67 @@ describe('wire catalogue', () => {
     })
   })
 
+  test('Scenario: merging two blocks whose children share keys renames before the merge', async () => {
+    // Duplicate `_key`s across the two blocks: textspec mints keys itself
+    // and can't express a collision, so this seed is hand-built. See the
+    // file header.
+    const keyGenerator = createTestKeyGenerator()
+    const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
+    const duplicateKeyedChildren = (): Array<PortableTextSpan> => [
+      {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+      {_type: 'span', _key: 's2', text: 'bar', marks: ['strong']},
+      {_type: 'span', _key: 's3', text: ' baz', marks: []},
+    ]
+    const seed: Array<PortableTextTextBlock<PortableTextSpan>> = [
+      {
+        _type: 'block',
+        _key: 'kA',
+        children: duplicateKeyedChildren(),
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'kB',
+        children: duplicateKeyedChildren(),
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, patches, schema, seedTerse} = await setupLegacyScenario({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: seed,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
+        focus: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
+      },
+    })
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value.length).toBe(1)
+    })
+
+    await writeCapture({
+      scenario: 'block-merge-duplicate-keys',
+      schema,
+      seed,
+      seedTerse,
+      actions: [
+        'select {caret at start of block 2}',
+        "send {type: 'delete.backward', unit: 'character'}",
+      ],
+      patches,
+      resultTerse: getTersePt(editor.getSnapshot().context),
+    })
+  })
+
   test('Scenario: adding a decorator mid-span', async () => {
     const keyGenerator = createTestKeyGenerator()
     const seed = 'B: foo ^bar| baz'
