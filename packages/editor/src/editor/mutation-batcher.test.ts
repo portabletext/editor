@@ -1,12 +1,18 @@
 import type {Patch} from '@portabletext/patches'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {
+  emitOperationEvent,
+  type OperationEvent,
+} from '../engine/core/operation-channel'
 import {createEditor} from '../engine/create-editor'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
 import {createRelay} from './relay'
 
 const FLUSH_INTERVAL = 500
+const TYPE_DEBOUNCE = 250
 
 function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const editorEngine = createEditor() as PortableTextEditorEngine
@@ -77,11 +83,47 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
     setReadOnly: (value: boolean) => {
       isReadOnly = value
     },
+    sendOperation: (operation: EngineOperation) => {
+      emitOperationEvent(
+        editorEngine.operationListeners.before,
+        createOperationEvent(operation),
+      )
+    },
   }
 }
 
 function createPatch(path: string): Patch {
   return {type: 'set', path: [{_key: path}], value: path, origin: 'local'}
+}
+
+function createOperationEvent(operation: EngineOperation): OperationEvent {
+  return {
+    operation,
+    beforeValue: [],
+    beforeSelection: null,
+    operationsInProgress: false,
+    isNormalizingNode: false,
+    isPatching: false,
+    isProcessingRemoteChanges: false,
+    isUndoing: false,
+    isRedoing: false,
+    withHistory: false,
+    undoStepId: undefined,
+    origin: 'local',
+  }
+}
+
+function createInsertTextOperation(text: string): EngineOperation {
+  return {
+    type: 'insert.text',
+    path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+    offset: 0,
+    text,
+  }
+}
+
+function createSetOperation(): EngineOperation {
+  return {type: 'set', path: [{_key: 'b1'}, 'style'], value: 'h1'}
 }
 
 describe('mutation batcher', () => {
@@ -165,5 +207,44 @@ describe('mutation batcher', () => {
 
     expect(harness.mutationSends).toEqual([{patches: [createPatch('a')]}])
     expect(harness.editorEngine.isDeferringMutations).toBe(false)
+  })
+
+  test('merges a typing burst into one mutation and flushes at the last op plus the type debounce', () => {
+    const harness = createTestHarness()
+
+    harness.sendOperation(createInsertTextOperation('a'))
+    harness.sendPatch(createPatch('a'), 'op-1')
+
+    vi.advanceTimersByTime(100)
+
+    harness.sendOperation(createInsertTextOperation('b'))
+    harness.sendPatch(createPatch('b'), 'op-1')
+
+    // The first op's debounce would have fired here had the second op not
+    // reset it: still nothing flushed, so the burst didn't split per-op.
+    vi.advanceTimersByTime(TYPE_DEBOUNCE - 100)
+    expect(harness.mutationSends).toHaveLength(0)
+
+    // The second op's own debounce fires 250ms after it, not the interval
+    // (500ms, not yet reached).
+    vi.advanceTimersByTime(100)
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a'), createPatch('b')]},
+    ])
+  })
+
+  test('a non-typing operation flushes eagerly, ending an in-progress typing session', () => {
+    const harness = createTestHarness()
+
+    harness.sendOperation(createInsertTextOperation('a'))
+    harness.sendPatch(createPatch('a'), 'op-1')
+
+    vi.advanceTimersByTime(50)
+
+    harness.sendOperation(createSetOperation())
+
+    // Flushed synchronously by the non-typing operation, well before the
+    // type debounce (250ms) or the flush interval (500ms) would fire.
+    expect(harness.mutationSends).toEqual([{patches: [createPatch('a')]}])
   })
 })

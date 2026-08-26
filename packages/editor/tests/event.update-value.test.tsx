@@ -2473,14 +2473,25 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo')
 
+    // On slow CI the typed burst can run slower than the flush interval
+    // and split across two mutations; wait for the latest one to carry
+    // the whole typed text before echoing it back.
     await vi.waitFor(() => {
-      expect(mutations.length).toBeGreaterThan(0)
+      expect(mutations.at(-1)?.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
 
     // The controlled-host flow: the host receives the mutation and echoes
     // the value back down. After the echo the machine holds a non-empty
     // synced value, so a later `[]` is a genuine remote clear.
-    editor.send({type: 'update value', value: mutations[0]!.value})
+    editor.send({type: 'update value', value: mutations.at(-1)!.value})
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
