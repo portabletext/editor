@@ -348,6 +348,68 @@ describe('Feature: block merge renames colliding keys', () => {
     })
   })
 
+  test("Scenario: a remote receiver's caret follows the renamed, reinserted child through the merge", async () => {
+    const {patches} = await mergeDuplicateKeyedBlocks()
+
+    // Editor 2 starts from the same duplicate-keyed document and receives
+    // editor 1's patches as if they came over the wire.
+    const {editor: editor2, locator: locator2} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: duplicateKeyMergeSchema,
+      initialValue: duplicateKeyedInitialValue(),
+    })
+
+    await userEvent.click(locator2)
+
+    editor2.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'kB'}, 'children', {_key: 's3'}], offset: 3},
+        focus: {path: [{_key: 'kB'}, 'children', {_key: 's3'}], offset: 3},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor2.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'kB'}, 'children', {_key: 's3'}], offset: 3},
+        focus: {path: [{_key: 'kB'}, 'children', {_key: 's3'}], offset: 3},
+        backward: false,
+      })
+    })
+
+    editor2.send({
+      type: 'patches',
+      patches: patches.map((patch) => ({...patch, origin: 'remote'})),
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor2.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'kA',
+          children: [
+            {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+            {_type: 'span', _key: 's2', text: 'bar', marks: ['strong']},
+            {_type: 'span', _key: 's3', text: ' bazfoo ', marks: []},
+            {_type: 'span', _key: 'k3', text: 'bar', marks: ['strong']},
+            {_type: 'span', _key: 'k4', text: ' baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(editor2.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'kA'}, 'children', {_key: 'k4'}], offset: 3},
+        focus: {path: [{_key: 'kA'}, 'children', {_key: 'k4'}], offset: 3},
+        backward: false,
+      })
+    })
+  })
+
   test('Scenario: a colliding markDef is renamed and every mark referencing it is rewritten before the merge', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}],

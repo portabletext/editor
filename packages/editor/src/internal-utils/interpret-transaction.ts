@@ -113,6 +113,16 @@ export function interpretTransaction(
     ),
   )
 
+  // A `set` on `_key` (a rename raised ahead of a merge to dodge a
+  // collision, say) gives a transaction-local key the same lineage back to
+  // a pre-existing node, but that lineage is only trusted for a
+  // container-walk match (see the `unset` case below) on the exact path
+  // the rename produced: the map records where the renamed node lives,
+  // not just the key value it now wears, so an unrelated pre-existing
+  // node that happens to bear the same key elsewhere is never mistaken
+  // for it.
+  const renamedKeyPaths = new Map<string, Path>()
+
   const pushStep = (step: Step): number => slots.push(step) - 1
   const pushSlot = (): number => slots.push(null) - 1
 
@@ -205,12 +215,17 @@ export function interpretTransaction(
         if (propertyName === '_key') {
           const oldKey = getValue(workingCopy, patch.path)
           if (typeof oldKey === 'string' && typeof patch.value === 'string') {
+            const containerPath = nodePath.slice(0, -1)
             pushStep({
               type: 'rekey',
-              path: nodePath.slice(0, -1),
+              path: containerPath,
               oldKey,
               newKey: patch.value,
             })
+            renamedKeyPaths.set(patch.value, [
+              ...containerPath,
+              {_key: patch.value},
+            ])
           }
         } else if (propertyName === 'text') {
           pushStep({
@@ -279,6 +294,31 @@ export function interpretTransaction(
               path: patch.path as Path,
               slotIndex,
             })
+          }
+
+          // A renamed descendant is independently trackable even though
+          // the removal here targets its container, not the descendant
+          // itself (a block merge unsets the whole donor block after
+          // renaming every colliding child ahead of it, say): each one
+          // reappearing elsewhere is its own move, worth recognizing on
+          // top of whatever the container's own key does. An ordinary
+          // (never-renamed) descendant stays untracked here: nothing
+          // resolves its own move.
+          for (const keyedNode of collectKeyedNodes(
+            sourceNode,
+            patch.path as Path,
+          )) {
+            if (keyedNode.key === lastSegment._key) {
+              continue
+            }
+            const renamedPath = renamedKeyPaths.get(keyedNode.key)
+            if (renamedPath && pathEquals(renamedPath, keyedNode.path)) {
+              nodeRemovals.push({
+                key: keyedNode.key,
+                path: keyedNode.path,
+                slotIndex,
+              })
+            }
           }
         } else if (lastSegment === 'text') {
           pushStep({type: 'unset.text', path: patch.path.slice(0, -1) as Path})
@@ -467,6 +507,23 @@ function assembleSteps(
 
   const supersededSlots = new Set<number>()
   const nodeMoveByInsertionSlot = new Map<number, NodeMove>()
+
+  // A container's `remove.node` step can end up shared, as a removal
+  // slot, by more than one recognized move: a block merge unsets the
+  // whole donor block in one step, and every renamed child it carried
+  // resolves its own move against that same slot. When the move IS the
+  // container itself (its `from` is exactly the removed step's own path,
+  // the block-move shape), the step is fully accounted for and dropped.
+  // When the move is a strict descendant of it instead (the merge shape),
+  // the container can still hold more than what moved, so its step
+  // survives, relocated after the last such descendant move so a point
+  // reaches every move before it can be nulled.
+  const wholeNodeConsumedSlots = new Set<number>()
+  const relocatedRemovalBySlot = new Map<
+    number,
+    {step: Step; afterInsertionSlot: number}
+  >()
+
   for (const move of nodeMoves) {
     supersededSlots.add(move.removalSlotIndex)
     nodeMoveByInsertionSlot.set(move.insertionSlotIndex, move)
@@ -477,6 +534,27 @@ function assembleSteps(
         supersededSlots.add(i)
       }
     }
+
+    const removalStep = slots[move.removalSlotIndex]
+    if (removalStep?.type === 'remove.node') {
+      if (pathEquals(removalStep.path, move.from)) {
+        wholeNodeConsumedSlots.add(move.removalSlotIndex)
+      } else {
+        const existing = relocatedRemovalBySlot.get(move.removalSlotIndex)
+        if (
+          !existing ||
+          move.insertionSlotIndex > existing.afterInsertionSlot
+        ) {
+          relocatedRemovalBySlot.set(move.removalSlotIndex, {
+            step: removalStep,
+            afterInsertionSlot: move.insertionSlotIndex,
+          })
+        }
+      }
+    }
+  }
+  for (const slotIndex of wholeNodeConsumedSlots) {
+    relocatedRemovalBySlot.delete(slotIndex)
   }
 
   const steps: Array<Step> = []
@@ -495,6 +573,12 @@ function assembleSteps(
     const nodeMove = nodeMoveByInsertionSlot.get(slotIndex)
     if (nodeMove) {
       steps.push({type: 'move.node', from: nodeMove.from, to: nodeMove.to})
+      const relocatedRemoval = relocatedRemovalBySlot.get(
+        nodeMove.removalSlotIndex,
+      )
+      if (relocatedRemoval?.afterInsertionSlot === slotIndex) {
+        steps.push(relocatedRemoval.step)
+      }
       continue
     }
 
