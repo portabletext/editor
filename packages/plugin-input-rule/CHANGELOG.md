@@ -1,5 +1,7 @@
 # @portabletext/plugin-input-rule
 
+## 7.0.3
+
 ## 7.0.2
 
 ### Patch Changes
