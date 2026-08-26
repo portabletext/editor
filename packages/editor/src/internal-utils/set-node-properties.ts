@@ -42,23 +42,33 @@ export function setNodeProperties(
     if (propsRecord[key] !== nodeRecord[key]) {
       if (propsRecord[key] != null) {
         const hadProperty = nodeRecord.hasOwnProperty(key)
+        const lastSegment = currentPath[currentPath.length - 1]
+
+        // Renaming the node's own `_key` moves how it resolves: from here
+        // on it's found by the new key, so the inverse (which runs after
+        // the rename) has to target that key too, or it can never find
+        // the node to restore.
+        const renamedPath =
+          key === '_key' &&
+          typeof propsRecord[key] === 'string' &&
+          isKeyedSegment(lastSegment)
+            ? [...currentPath.slice(0, -1), {_key: propsRecord[key] as string}]
+            : undefined
+        const inversePath = renamedPath
+          ? [...renamedPath, key]
+          : [...currentPath, key]
+
         editor.apply({
           type: 'set',
           path: [...currentPath, key],
           value: propsRecord[key],
           inverse: hadProperty
-            ? {type: 'set', path: [...currentPath, key], value: nodeRecord[key]}
-            : {type: 'unset', path: [...currentPath, key]},
+            ? {type: 'set', path: inversePath, value: nodeRecord[key]}
+            : {type: 'unset', path: inversePath},
         })
-        // After _key changes, update the path for subsequent operations
-        if (key === '_key' && typeof propsRecord[key] === 'string') {
-          const lastSegment = currentPath[currentPath.length - 1]
-          if (isKeyedSegment(lastSegment)) {
-            currentPath = [
-              ...currentPath.slice(0, -1),
-              {_key: propsRecord[key] as string},
-            ]
-          }
+
+        if (renamedPath) {
+          currentPath = renamedPath
         }
       } else if (nodeRecord.hasOwnProperty(key)) {
         // Value is null/undefined and property exists on node: unset it
