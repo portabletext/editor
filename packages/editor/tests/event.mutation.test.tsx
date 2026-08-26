@@ -4,7 +4,7 @@ import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {page, userEvent} from 'vitest/browser'
+import {page, userEvent, type Locator} from 'vitest/browser'
 import {
   EditorProvider,
   PortableTextEditable,
@@ -107,12 +107,16 @@ describe('event.mutation', () => {
       ),
     })
 
-    await userEvent.type(locator, 'foo')
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    await userEvent.type(locator, 'bar')
-    await new Promise((resolve) => setTimeout(resolve, 250))
+    await userEvent.click(locator)
 
-    expect(mutations).toHaveLength(2)
+    // Dispatched synchronously, back-to-back, one `insert.text` op per
+    // dispatched event: the burst can't straddle the flush interval
+    // because nothing yields the event loop between the ops.
+    insertTextSync(locator, 'foo')
+    await vi.waitFor(() => expect(mutations).toHaveLength(1))
+    insertTextSync(locator, 'bar')
+    await vi.waitFor(() => expect(mutations).toHaveLength(2))
+
     expect(mutations[0]!.value).toEqual([
       {
         _type: 'block',
@@ -257,3 +261,25 @@ describe('event.mutation', () => {
     })
   })
 })
+
+function insertTextSync(locator: Locator, text: string) {
+  const element = locator.element()
+  for (const character of text) {
+    element.dispatchEvent(
+      new InputEvent('beforeinput', {
+        inputType: 'insertText',
+        data: character,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    // A real keystroke's native default action fires `input` synchronously;
+    // a script-dispatched `beforeinput` is untrusted and the browser skips
+    // that default action, so the editable's deferred native-path insert
+    // (gated on `insertText` with a collapsed selection, a single `[a-z ]`
+    // character, and a nonzero anchor offset, see the `native` fast path
+    // in `src/slate/react/components/editable.tsx`) never flushes without
+    // this.
+    element.dispatchEvent(new InputEvent('input', {bubbles: true}))
+  }
+}
