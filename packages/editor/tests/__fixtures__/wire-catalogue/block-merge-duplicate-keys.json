@@ -1,0 +1,321 @@
+{
+  "scenario": "block-merge-duplicate-keys",
+  "schema": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ]
+  },
+  "seed": [
+    {
+      "_type": "block",
+      "_key": "kA",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "s1",
+          "text": "foo ",
+          "marks": []
+        },
+        {
+          "_type": "span",
+          "_key": "s2",
+          "text": "bar",
+          "marks": [
+            "strong"
+          ]
+        },
+        {
+          "_type": "span",
+          "_key": "s3",
+          "text": " baz",
+          "marks": []
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_type": "block",
+      "_key": "kB",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "s1",
+          "text": "foo ",
+          "marks": []
+        },
+        {
+          "_type": "span",
+          "_key": "s2",
+          "text": "bar",
+          "marks": [
+            "strong"
+          ]
+        },
+        {
+          "_type": "span",
+          "_key": "s3",
+          "text": " baz",
+          "marks": []
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "seedTerse": [
+    "foo ,bar, baz",
+    "foo ,bar, baz"
+  ],
+  "actions": [
+    "select {caret at start of block 2}",
+    "send {type: 'delete.backward', unit: 'character'}"
+  ],
+  "patches": [
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "s1"
+        },
+        "_key"
+      ],
+      "value": "k2",
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "s2"
+        },
+        "_key"
+      ],
+      "value": "k3",
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "s3"
+        },
+        "_key"
+      ],
+      "value": "k4",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "kB"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "markDefs"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "s3"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k5",
+          "marks": [],
+          "text": ""
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "s3"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k2",
+          "text": "foo ",
+          "marks": []
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k3",
+          "text": "bar",
+          "marks": [
+            "strong"
+          ]
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k4",
+          "text": " baz",
+          "marks": []
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "s3"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,8 @@\n  baz\n+foo \n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k5"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "resultTerse": [
+    "foo ,bar, bazfoo ,bar, baz"
+  ]
+}
