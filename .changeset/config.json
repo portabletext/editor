@@ -6,7 +6,7 @@
   ],
   "commit": false,
   "access": "public",
-  "baseBranch": "main",
+  "baseBranch": "editor-v7.x",
   "updateInternalDependencies": "patch",
   "ignore": ["docs", "playground", "example-basic", "racetrack"],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
