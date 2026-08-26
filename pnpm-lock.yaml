@@ -694,6 +694,9 @@ importers:
       '@portabletext/toolkit':
         specifier: ^6.0.0
         version: 6.0.0
+      linkify-it:
+        specifier: ^5.0.2
+        version: 5.0.2
       markdown-it:
         specifier: ^14.3.0
         version: 14.3.0
@@ -710,6 +713,9 @@ importers:
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
+      '@types/linkify-it':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@types/markdown-it':
         specifier: ^14.1.2
         version: 14.1.2
@@ -7118,9 +7124,6 @@ packages:
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
     engines: {node: '>=14'}
-
-  linkify-it@5.0.0:
-    resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
 
   linkify-it@5.0.2:
     resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
@@ -15445,10 +15448,6 @@ snapshots:
 
   lilconfig@3.1.3: {}
 
-  linkify-it@5.0.0:
-    dependencies:
-      uc.micro: 2.1.0
-
   linkify-it@5.0.2:
     dependencies:
       uc.micro: 2.1.0
@@ -15535,7 +15534,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
       entities: 4.5.0
-      linkify-it: 5.0.0
+      linkify-it: 5.0.2
       mdurl: 2.0.0
       punycode.js: 2.3.1
       uc.micro: 2.1.0

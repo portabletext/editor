@@ -77,6 +77,16 @@ describe(escapeTableCell.name, () => {
     expect(escapeTableCell('a \\| b')).toBe('a \\| b')
   })
 
+  test('escapes a pipe behind an even number of backslashes', () => {
+    // Two backslashes cancel out to a literal backslash, leaving the pipe
+    // live, the shape leaf escaping produces from a literal `\|` in a span.
+    expect(escapeTableCell('a\\\\| b')).toBe('a\\\\\\| b')
+  })
+
+  test('leaves a pipe behind an odd number of backslashes intact', () => {
+    expect(escapeTableCell('a\\\\\\| b')).toBe('a\\\\\\| b')
+  })
+
   test('leaves backslashes alone', () => {
     expect(escapeTableCell('a\\b')).toBe('a\\b')
   })

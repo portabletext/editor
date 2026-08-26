@@ -1,5 +1,5 @@
 import type {TypedObject} from '@portabletext/types'
-import {escapeImageAndLinkText, escapeImageAndLinkTitle} from '../../escape'
+import {escapeImageAndLinkTitle} from '../../escape'
 import type {PortableTextMarkRenderer} from '../types'
 
 /**
@@ -15,10 +15,38 @@ export const DefaultStrongRenderer: PortableTextMarkRenderer = ({children}) =>
   `**${children}**`
 
 /**
+ * Renders a `code` decorator from the raw span text, bypassing the escaped
+ * `children`: code content is verbatim, never markdown syntax. The
+ * backtick fence is widened past the longest run of backticks already in
+ * the text (CommonMark: the fence must be longer than any run it encloses).
+ *
+ * A space is padded on each side when the content starts or ends with a
+ * backtick, so the fence and the content's own backtick never merge into
+ * one run, and also when the content starts and ends with a space and
+ * isn't all whitespace (`text.trim() !== ''`; an all-space code span has
+ * nothing else for CommonMark's strip rule to leave behind, so padding it
+ * would only add visible spaces), because CommonMark itself would
+ * otherwise strip one such space per side on reparse; the padding
+ * pre-compensates for that strip.
+ *
  * @public
  */
-export const DefaultCodeRenderer: PortableTextMarkRenderer = ({children}) =>
-  `\`${children}\``
+export const DefaultCodeRenderer: PortableTextMarkRenderer = ({text}) => {
+  const fence = '`'.repeat(longestBacktickRun(text) + 1)
+  const touchesBacktick = text.startsWith('`') || text.endsWith('`')
+  const wouldBeStripped =
+    text.startsWith(' ') && text.endsWith(' ') && text.trim() !== ''
+  const padding = touchesBacktick || wouldBeStripped ? ' ' : ''
+  return `${fence}${padding}${text}${padding}${fence}`
+}
+
+function longestBacktickRun(text: string): number {
+  let longest = 0
+  for (const run of text.match(/`+/g) ?? []) {
+    longest = Math.max(longest, run.length)
+  }
+  return longest
+}
 
 /**
  * @public
@@ -61,11 +89,11 @@ export const DefaultLinkRenderer: PortableTextMarkRenderer<DefaultLink> = ({
       const encodedHref = href.replace(/["<>() ]/g, (char) => {
         return `%${char.charCodeAt(0).toString(16).toUpperCase()}`
       })
-      return `[${escapeImageAndLinkText(children)}](${encodedHref})`
+      return `[${children}](${encodedHref})`
     }
 
     // For normal URLs, don't encode parentheses - Markdown handles balanced parens fine
-    return `[${escapeImageAndLinkText(children)}](${href}${title ? ` "${escapeImageAndLinkTitle(title)}"` : ''})`
+    return `[${children}](${href}${title ? ` "${escapeImageAndLinkTitle(title)}"` : ''})`
   }
 
   // Return children without link when URL is unsafe

@@ -176,7 +176,7 @@ Check out these autolinks: [https://example.com](https://example.com) and [mailt
   <p>This is raw HTML that gets preserved</p>
 </div>
 
-Inline HTML like <span class="highlight">highlighted text</span> can be handled too.
+Inline HTML like \<span class="highlight">highlighted text\</span> can be handled too.
 
 ### Reference Links
 
