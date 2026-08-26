@@ -4,7 +4,7 @@ import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {page, userEvent} from 'vitest/browser'
+import {page, userEvent, type Locator} from 'vitest/browser'
 import {
   EditorProvider,
   PortableTextEditable,
@@ -109,15 +109,14 @@ describe('event.mutation', () => {
       ),
     })
 
-    // Each burst flushes into a single mutation: the keystrokes share one undo
-    // step (the key the batcher merges on) and a burst finishes well inside the
-    // batcher's `FLUSH_INTERVAL`, so the fixed flush cadence never fires
-    // mid-burst. Waiting on the settled count (rather than sleeping a fixed
-    // period) lets the first burst flush via its typing debounce before the
-    // second burst opens a fresh undo step.
-    await userEvent.type(locator, 'foo')
+    await userEvent.click(locator)
+
+    // Dispatched synchronously, back-to-back, one `insert.text` op per
+    // dispatched event: the burst can't straddle the batcher's flush
+    // cadence because nothing yields the event loop between the ops.
+    insertTextSync(locator, 'foo')
     await vi.waitFor(() => expect(mutations).toHaveLength(1))
-    await userEvent.type(locator, 'bar')
+    insertTextSync(locator, 'bar')
     await vi.waitFor(() => expect(mutations).toHaveLength(2))
 
     expect(mutations[0]!.value).toEqual([
@@ -264,3 +263,24 @@ describe('event.mutation', () => {
     })
   })
 })
+
+function insertTextSync(locator: Locator, text: string) {
+  const element = locator.element()
+  for (const character of text) {
+    element.dispatchEvent(
+      new InputEvent('beforeinput', {
+        inputType: 'insertText',
+        data: character,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    // A real keystroke's native default action fires `input` synchronously;
+    // a script-dispatched `beforeinput` is untrusted and the browser skips
+    // that default action, so the editable's deferred native-path insert
+    // (gated on `insertText` with a collapsed selection, a single `[a-z ]`
+    // character, and a nonzero anchor offset, see the `native` fast path
+    // in `editable.tsx`) never flushes without this.
+    element.dispatchEvent(new InputEvent('input', {bubbles: true}))
+  }
+}
