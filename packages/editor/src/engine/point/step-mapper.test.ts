@@ -300,25 +300,65 @@ describe(mapPointThroughStep.name, () => {
   })
 
   describe('rekey', () => {
-    test('substitutes the old key with the new key wherever it appears in the path', () => {
+    test('substitutes the old key with the new key at the segment directly under the step path', () => {
       const point = {
         path: [{_key: 'b1'}, 'children', {_key: 's1'}],
         offset: 3,
       }
-      const step: Step = {type: 'rekey', oldKey: 's1', newKey: 's2'}
+      const step: Step = {
+        type: 'rekey',
+        path: [{_key: 'b1'}, 'children'],
+        oldKey: 's1',
+        newKey: 's2',
+      }
       expect(mapPointThroughStep(step, point)).toEqual({
         path: [{_key: 'b1'}, 'children', {_key: 's2'}],
         offset: 3,
       })
     })
 
-    test('is a no-op when the old key is not in the path', () => {
+    test('is a no-op when the old key is not the segment under the step path', () => {
       const point = {
         path: [{_key: 'b1'}, 'children', {_key: 's1'}],
         offset: 3,
       }
-      const step: Step = {type: 'rekey', oldKey: 's9', newKey: 's2'}
+      const step: Step = {
+        type: 'rekey',
+        path: [{_key: 'b1'}, 'children'],
+        oldKey: 's9',
+        newKey: 's2',
+      }
       expect(mapPointThroughStep(step, point)).toBe(point)
+    })
+
+    test('is a no-op when the key matches but at a different depth than the step path', () => {
+      const point = {
+        path: [
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+      }
+      const step: Step = {
+        type: 'rekey',
+        path: [{_key: 'b1'}, 'children'],
+        oldKey: 's1',
+        newKey: 's2',
+      }
+
+      expect(mapPointThroughStep(step, point)).toEqual({
+        path: [
+          {_key: 'b1'},
+          'children',
+          {_key: 's2'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+      })
     })
   })
 
@@ -733,7 +773,12 @@ describe(mapPointThroughStep.name, () => {
         ],
         offset: 3,
       }
-      const step: Step = {type: 'rekey', oldKey: 'cell1', newKey: 'cell2'}
+      const step: Step = {
+        type: 'rekey',
+        path: [{_key: 'container1'}, 'rows', {_key: 'row1'}, 'cells'],
+        oldKey: 'cell1',
+        newKey: 'cell2',
+      }
       expect(mapPointThroughStep(step, point)).toEqual({
         path: [
           {_key: 'container1'},
@@ -808,7 +853,12 @@ describe(mapPointThroughSteps.name, () => {
         offset: 3,
         text: 'abc',
       },
-      {type: 'rekey', oldKey: 's1', newKey: 's2'},
+      {
+        type: 'rekey',
+        path: [{_key: 'b1'}, 'children'],
+        oldKey: 's1',
+        newKey: 's2',
+      },
     ]
     expect(mapPointThroughSteps(steps, point)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
@@ -823,7 +873,12 @@ describe(mapPointThroughSteps.name, () => {
     }
     const steps: Step[] = [
       {type: 'remove.node', path: [{_key: 'b1'}, 'children', {_key: 's1'}]},
-      {type: 'rekey', oldKey: 's1', newKey: 's2'},
+      {
+        type: 'rekey',
+        path: [{_key: 'b1'}, 'children'],
+        oldKey: 's1',
+        newKey: 's2',
+      },
     ]
     expect(mapPointThroughSteps(steps, point)).toEqual(null)
   })
@@ -837,7 +892,14 @@ describe(mapPointThroughSteps.name, () => {
   })
 
   test('a null point stays null through a batch', () => {
-    const steps: Step[] = [{type: 'rekey', oldKey: 's1', newKey: 's2'}]
+    const steps: Step[] = [
+      {
+        type: 'rekey',
+        path: [{_key: 'b1'}, 'children'],
+        oldKey: 's1',
+        newKey: 's2',
+      },
+    ]
     expect(mapPointThroughSteps(steps, null)).toEqual(null)
   })
 })
