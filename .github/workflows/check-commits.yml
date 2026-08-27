@@ -1,0 +1,29 @@
+name: check-commits
+
+on:
+  pull_request:
+    # `edited` covers base-branch retargets, which change the commit set
+    # without firing `synchronize`.
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check for unsquashed fixup/squash/amend commits
+        run: |
+          offenders=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate \
+            --jq '.[] | select(.commit.message | split("\n")[0] | test("^(fixup|squash|amend)!")) | "\(.sha[0:7]) \(.commit.message | split("\n")[0])"')
+
+          if [ -n "$offenders" ]; then
+            echo "Found unsquashed fixup/squash/amend commits:"
+            echo "$offenders"
+            echo "Squash them with 'git rebase -i --autosquash' before merge."
+            exit 1
+          fi
