@@ -139,6 +139,16 @@ export const relayMachine = setup({
           }),
         ],
       },
+      {
+        // Without an unguarded fallback, a deduped `selection` event falls
+        // through to the `'*'` wildcard below and gets emitted anyway,
+        // defeating the dedupe above.
+        actions: [
+          assign({
+            lastEventWasFocused: false,
+          }),
+        ],
+      },
     ],
     '*': {
       actions: [
