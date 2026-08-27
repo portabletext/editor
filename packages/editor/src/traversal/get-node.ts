@@ -33,8 +33,32 @@ export function getNode(
   snapshot: TraversalSnapshot,
   path: Path,
 ): {node: Node; path: Path} | undefined {
+  const result = resolveNode(snapshot, path)
+  return result.status === 'found' ? result.entry : undefined
+}
+
+/**
+ * Result of walking a path against a snapshot.
+ *
+ * `unreachable` is the one outcome that means "structurally impossible
+ * by design": the path digs past a sidecar field (e.g. `markDefs` on
+ * a text block) into a keyed/indexed segment, which `getNode` can
+ * never resolve (use `getAnnotation` for annotations). Every other
+ * negative outcome is `missing`; on those branches a caller bug and a
+ * benign race (the node removed by a concurrent edit) produce the
+ * same state, so they cannot be told apart.
+ */
+export type ResolveNodeResult =
+  | {status: 'found'; entry: {node: Node; path: Path}}
+  | {status: 'missing'}
+  | {status: 'unreachable'}
+
+export function resolveNode(
+  snapshot: TraversalSnapshot,
+  path: Path,
+): ResolveNodeResult {
   if (path.length === 0) {
-    return undefined
+    return {status: 'missing'}
   }
 
   const {context, blockIndexMap} = snapshot
@@ -55,7 +79,7 @@ export function getNode(
       // block, a primitive field on an object). If the input keeps
       // digging past it with more keyed/numeric segments, the caller
       // wanted a node inside the sidecar and `getNode` can't reach it
-      // (use `getAnnotation` for annotations); return undefined.
+      // (use `getAnnotation` for annotations); report unreachable.
       // Otherwise the rest is just trailing field names — let the loop
       // exit and the post-loop strip remove them.
       if (currentFieldName !== undefined && segment === currentFieldName) {
@@ -65,7 +89,7 @@ export function getNode(
       for (let j = i + 1; j < path.length; j++) {
         const s = path[j]
         if (isKeyedSegment(s) || typeof s === 'number') {
-          return undefined
+          return {status: 'unreachable'}
         }
       }
       break
@@ -96,11 +120,11 @@ export function getNode(
         resolvedPath.push({_key: node._key})
       }
     } else {
-      return undefined
+      return {status: 'missing'}
     }
 
     if (!node) {
-      return undefined
+      return {status: 'missing'}
     }
 
     let hasMoreSegments = false
@@ -116,7 +140,7 @@ export function getNode(
       const next = getNodeChildren(context, node, currentParent)
 
       if (!next) {
-        return undefined
+        return {status: 'missing'}
       }
 
       currentChildren = next.children
@@ -128,7 +152,7 @@ export function getNode(
   }
 
   if (!node) {
-    return undefined
+    return {status: 'missing'}
   }
 
   // Strip trailing field-name segments. The walker may have pushed
@@ -143,5 +167,5 @@ export function getNode(
     resolvedPath.pop()
   }
 
-  return {node, path: resolvedPath}
+  return {status: 'found', entry: {node, path: resolvedPath}}
 }
