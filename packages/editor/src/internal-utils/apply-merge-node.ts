@@ -1,5 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {InsertOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
@@ -224,22 +225,25 @@ export function applyMergeNode(
 
         for (let i = 0; i < node.children.length; i++) {
           const child = node.children[i]!
-          if (lastInsertedKey !== undefined) {
-            editor.apply({
-              type: 'insert',
-              path: [...prevPath, 'children', {_key: lastInsertedKey}],
-              node: child,
-              position: 'after',
-            })
-          } else {
-            editor.apply({
-              type: 'insert',
-              path: [...prevPath, 'children', 0],
-              node: child,
-              position: 'before',
-            })
-          }
-          lastInsertedKey = child._key
+          const operation: InsertOperation =
+            lastInsertedKey !== undefined
+              ? {
+                  type: 'insert',
+                  path: [...prevPath, 'children', {_key: lastInsertedKey}],
+                  node: child,
+                  position: 'after',
+                }
+              : {
+                  type: 'insert',
+                  path: [...prevPath, 'children', 0],
+                  node: child,
+                  position: 'before',
+                }
+          editor.apply(operation)
+          // The engine's collision backstop re-mints `operation.node._key`
+          // in place when it collides with an existing sibling, so the next
+          // anchor has to read the post-apply key, not `child._key`.
+          lastInsertedKey = operation.node._key
         }
         // Remove the now-empty element
         editor.apply({

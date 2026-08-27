@@ -25,11 +25,10 @@ import {toTextspec} from '../test-utils/to-textspec'
  * `seed` and `result` are textspec notation strings (see
  * `test-utils/from-textspec.ts`/`to-textspec.ts`): together with the
  * `schema` field and the deterministic `createTestKeyGenerator`, `seed` is
- * enough to replay the scenario. The one exception is
- * `span-merge-cosmetic.json`, which pins two spans that carry identical
- * (empty) marks — textspec has no notation for a span boundary that isn't
- * a mark boundary, so that fixture keeps the pre-textspec shape (`seed` as
- * full blocks, `seedTerse`/`resultTerse`).
+ * enough to replay the scenario. Scenarios textspec can't express, such as
+ * a span boundary that isn't a mark boundary or a duplicate `_key` across
+ * sibling blocks, keep the pre-textspec shape instead (`seed` as full
+ * blocks, `seedTerse`/`resultTerse`).
  */
 
 type Capture = {
@@ -354,6 +353,68 @@ describe('wire catalogue', () => {
       actions: [
         'select {caret at start of block 2}',
         "send {type: 'delete.backward', unit: 'character'}",
+      ],
+      patches,
+      resultTerse: getTersePt(editor.getSnapshot().context),
+    })
+  })
+
+  test('Scenario: a range delete spanning two blocks with duplicate keys renames before the merge', async () => {
+    // Both blocks share every child `_key`: textspec can't express that
+    // collision, so this seed is hand-built (see the file header). The
+    // range starts inside `kA`'s second span, which survives the delete as
+    // a trimmed empty span and is itself a collision source alongside
+    // `kB`'s children.
+    const keyGenerator = createTestKeyGenerator()
+    const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
+    const rangeDeleteMergeSharedKeyChildren = (): Array<PortableTextSpan> => [
+      {_type: 'span', _key: 'e0-k1', text: 'foo ', marks: []},
+      {_type: 'span', _key: 'e0-k2', text: 'bar', marks: ['strong']},
+    ]
+    const seed: Array<PortableTextTextBlock<PortableTextSpan>> = [
+      {
+        _type: 'block',
+        _key: 'kA',
+        children: rangeDeleteMergeSharedKeyChildren(),
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'kB',
+        children: rangeDeleteMergeSharedKeyChildren(),
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, patches, schema, seedTerse} = await setupLegacyScenario({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: seed,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'kA'}, 'children', {_key: 'e0-k2'}], offset: 0},
+        focus: {path: [{_key: 'kB'}, 'children', {_key: 'e0-k1'}], offset: 3},
+      },
+    })
+    editor.send({type: 'delete', direction: 'backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value.length).toBe(1)
+    })
+
+    await writeCapture({
+      scenario: 'range-delete-duplicate-keys',
+      schema,
+      seed,
+      seedTerse,
+      actions: [
+        'select {anchor at offset 0 on kA/e0-k2, focus at offset 3 on kB/e0-k1}',
+        "send {type: 'delete', direction: 'backward', unit: 'character'}",
       ],
       patches,
       resultTerse: getTersePt(editor.getSnapshot().context),
