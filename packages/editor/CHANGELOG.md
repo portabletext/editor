@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.6.9
+
+### Patch Changes
+
+- [#3188](https://github.com/portabletext/editor/pull/3188) [`e69d9e2`](https://github.com/portabletext/editor/commit/e69d9e2d446a3217d0111b18808d15e36c8bf7bd) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop deduped `'selection'` events from falling through to the relay wildcard
+
+  `'selection'` events no longer re-fire with an unchanged selection while the editor syncs an external value update. Installs resolving `xstate` 5.32.2 or later hit this regression regardless of editor version; in Sanity Studio v5 it closed the annotation-editing popover on the first keystroke in one of its fields.
+
 ## 6.6.8
 
 ### Patch Changes

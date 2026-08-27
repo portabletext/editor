@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.0.33
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-character-pair-decorator@7.0.33
+  - @portabletext/plugin-input-rule@4.0.32
+
 ## 7.0.32
 
 ### Patch Changes
