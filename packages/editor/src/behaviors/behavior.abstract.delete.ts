@@ -5,7 +5,7 @@ import {
   type Schema,
 } from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import {isEqualMarks} from '../internal-utils/equality'
+import {planMergeKeyRenames} from '../internal-utils/plan-merge-key-renames'
 import {getFocusChild} from '../selectors/selector.get-focus-child'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
@@ -89,7 +89,7 @@ export const abstractDeleteBehaviors = [
         block: previousBlock,
       })
 
-      const {renamedBlock, renameActions} = planMergeKeyRenames({
+      const {renamedBlock, renameActions} = planMergeKeyRenameActions({
         context: snapshot.context,
         mergingBlockPath: focusTextBlock.path,
         mergingBlock: focusTextBlock.node,
@@ -257,7 +257,7 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const {renamedBlock, renameActions} = planMergeKeyRenames({
+      const {renamedBlock, renameActions} = planMergeKeyRenameActions({
         context: snapshot.context,
         mergingBlockPath: nextSibling.path,
         mergingBlock: nextSibling.node,
@@ -368,19 +368,11 @@ export const abstractDeleteBehaviors = [
 ]
 
 /**
- * A block merge folds `mergingBlock`'s children (and markDefs) into
- * `destinationBlock` by key. Any key the merging block shares with the
- * destination has to be renamed before the merge, or `insert.block`'s own
- * collision handling mints a fresh key for it, which reads on the wire as
- * that node being destroyed and a new one created instead of moved.
- *
- * Renames are raised as `set`/`child.set` events against the still-living
- * `mergingBlock`, so they land on the wire before the merge's `unset`.
- * `renamedBlock` mirrors the same renames applied to the value the caller
- * already captured, since raising the rename events now doesn't change
- * that captured value.
+ * Raise the child/markDef renames `planMergeKeyRenames` computed as
+ * `set`/`child.set` events against the still-living `mergingBlock`, so
+ * they land on the wire before the merge's `unset`.
  */
-function planMergeKeyRenames(args: {
+function planMergeKeyRenameActions(args: {
   context: {schema: Schema; keyGenerator: () => string}
   mergingBlockPath: Path
   mergingBlock: PortableTextTextBlock
@@ -391,82 +383,33 @@ function planMergeKeyRenames(args: {
 } {
   const {context, mergingBlockPath, mergingBlock, destinationBlock} = args
 
-  const destinationChildKeys = new Set(
-    destinationBlock.children.map((child) => child._key),
-  )
-  const destinationMarkDefKeys = new Set(
-    (destinationBlock.markDefs ?? []).map((markDef) => markDef._key),
-  )
-
-  const markDefKeyMap = new Map<string, string>()
-  const renamedMarkDefs = mergingBlock.markDefs?.map((markDef) => {
-    if (!destinationMarkDefKeys.has(markDef._key)) {
-      return markDef
-    }
-
-    const newKey = context.keyGenerator()
-    markDefKeyMap.set(markDef._key, newKey)
-    return {...markDef, _key: newKey}
+  const {renamedBlock, childRenames, markDefRenames} = planMergeKeyRenames({
+    context,
+    mergingBlock,
+    destinationBlock,
   })
 
   const renameActions: Array<BehaviorAction> = []
 
-  for (const markDef of mergingBlock.markDefs ?? []) {
-    const newKey = markDefKeyMap.get(markDef._key)
-
-    if (newKey) {
-      renameActions.push(
-        raise({
-          type: 'set',
-          at: [...mergingBlockPath, 'markDefs', {_key: markDef._key}, '_key'],
-          value: newKey,
-        }),
-      )
-    }
+  for (const {markDefKey, newKey} of markDefRenames) {
+    renameActions.push(
+      raise({
+        type: 'set',
+        at: [...mergingBlockPath, 'markDefs', {_key: markDefKey}, '_key'],
+        value: newKey,
+      }),
+    )
   }
 
-  const renamedChildren = mergingBlock.children.map((child) => {
-    const currentMarks = isSpan(context, child) ? child.marks : undefined
-    const remappedMarks = currentMarks?.map(
-      (mark) => markDefKeyMap.get(mark) ?? mark,
+  for (const {childKey, props} of childRenames) {
+    renameActions.push(
+      raise({
+        type: 'child.set',
+        at: [...mergingBlockPath, 'children', {_key: childKey}],
+        props,
+      }),
     )
-    const marksChanged = Boolean(
-      remappedMarks && !isEqualMarks(remappedMarks, currentMarks),
-    )
-
-    const newKey = destinationChildKeys.has(child._key)
-      ? context.keyGenerator()
-      : child._key
-
-    const props: Record<string, unknown> = {}
-    if (newKey !== child._key) {
-      props['_key'] = newKey
-    }
-    if (marksChanged) {
-      props['marks'] = remappedMarks
-    }
-
-    if (Object.keys(props).length > 0) {
-      renameActions.push(
-        raise({
-          type: 'child.set',
-          at: [...mergingBlockPath, 'children', {_key: child._key}],
-          props,
-        }),
-      )
-    }
-
-    return marksChanged
-      ? {...child, _key: newKey, marks: remappedMarks}
-      : {...child, _key: newKey}
-  })
-
-  return {
-    renamedBlock: {
-      ...mergingBlock,
-      children: renamedChildren,
-      ...(mergingBlock.markDefs ? {markDefs: renamedMarkDefs} : {}),
-    },
-    renameActions,
   }
+
+  return {renamedBlock, renameActions}
 }
