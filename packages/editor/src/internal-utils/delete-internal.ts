@@ -766,12 +766,12 @@ function mergeBlock(
   // The span holding the range's start point survives as an empty span
   // until normalization runs, so it still occupies `startBlock`'s children
   // and is a genuine collision source the plan must include.
-  const {renamedBlock, childRenames, markDefRenames} = planMergeKeyRenames({
-    context: editor.snapshot.context,
-    mergingBlock: endBlock.node,
-    destinationBlock: startBlock.node,
-    dedupeEqualMarkDefs: true,
-  })
+  const {renamedBlock, childRenames, markDefRenames, dedupedMarkDefKeys} =
+    planMergeKeyRenames({
+      context: editor.snapshot.context,
+      mergingBlock: endBlock.node,
+      destinationBlock: startBlock.node,
+    })
 
   for (const {markDefKey, newKey} of markDefRenames) {
     // `getNode` can't resolve a keyed descent into `markDefs` (it's a
@@ -791,7 +791,9 @@ function mergeBlock(
     ])
   }
 
-  const endMarkDefs = renamedBlock.markDefs
+  const endMarkDefs = renamedBlock.markDefs?.filter(
+    (markDef) => !dedupedMarkDefKeys.includes(markDef._key),
+  )
   if (Array.isArray(endMarkDefs) && endMarkDefs.length > 0) {
     const oldDefs = startBlock.node.markDefs ?? []
     setNodeProperties(
