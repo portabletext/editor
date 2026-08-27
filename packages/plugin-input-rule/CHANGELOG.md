@@ -1,5 +1,7 @@
 # @portabletext/plugin-input-rule
 
+## 4.0.32
+
 ## 4.0.31
 
 ### Patch Changes

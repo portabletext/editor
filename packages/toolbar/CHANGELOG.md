@@ -1,5 +1,7 @@
 # Changelog
 
+## 7.0.32
+
 ## 7.0.31
 
 ### Patch Changes
