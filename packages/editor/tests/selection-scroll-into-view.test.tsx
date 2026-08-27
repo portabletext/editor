@@ -1,3 +1,4 @@
+import {insert} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -23,6 +24,14 @@ const paragraph = (index: number) => ({
   children: [
     {_type: 'span', _key: `s${index}`, text: `paragraph ${index}`, marks: []},
   ],
+})
+
+const fillerBlock = (key: string) => ({
+  _type: 'block',
+  _key: key,
+  style: 'normal',
+  markDefs: [],
+  children: [{_type: 'span', _key: `${key}s`, text: 'filler', marks: []}],
 })
 
 describe('Feature: Scrolling the Selection Into View', () => {
@@ -78,6 +87,100 @@ describe('Feature: Scrolling the Selection Into View', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
     })
+    expect(window.scrollY).toBe(0)
+  })
+
+  test('Scenario: pressing Enter at the start of a block scrolls it back into view as it moves below the fold', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: Array.from({length: 3}, (_, index) => paragraph(index)),
+    })
+    editor.send({type: 'focus'})
+    window.scrollTo(0, 0)
+
+    // A caret at the very start of a block that starts on-screen.
+    const point = {path: [{_key: 'p2'}, 'children', {_key: 's2'}], offset: 0}
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
+    })
+
+    for (let index = 0; index < 60; index++) {
+      editor.send({type: 'insert.break'})
+    }
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-pt-block="text"]').length).toBe(
+        63,
+      )
+    })
+
+    await vi.waitFor(() => {
+      const block = document.querySelector(
+        `[data-pt-path="${CSS.escape('[_key=="p2"]')}"]`,
+      )
+      if (!block) {
+        throw new Error('block not rendered')
+      }
+      const rect = block.getBoundingClientRect()
+      expect(rect.top).toBeGreaterThanOrEqual(0)
+      expect(rect.top).toBeLessThan(window.innerHeight)
+    })
+  })
+
+  test('Scenario: a remote content change around an unchanged selection does not scroll', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: Array.from({length: 3}, (_, index) => paragraph(index)),
+    })
+    editor.send({type: 'focus'})
+    window.scrollTo(0, 0)
+
+    const point = {path: [{_key: 'p2'}, 'children', {_key: 's2'}], offset: 0}
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
+    })
+
+    const insertedKeys = Array.from({length: 60}, () => keyGenerator())
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert(
+          insertedKeys.map((key) => fillerBlock(key)),
+          'before',
+          [{_key: 'p2'}],
+        ),
+      ],
+      snapshot: undefined,
+    })
+
+    const lastInsertedKey = insertedKeys[insertedKeys.length - 1]
+    await vi.waitFor(() => {
+      const block = document.querySelector(
+        `[data-pt-path="${CSS.escape(`[_key=="${lastInsertedKey}"]`)}"]`,
+      )
+      if (!block) {
+        throw new Error('block not rendered')
+      }
+    })
+
+    const block = document.querySelector(
+      `[data-pt-path="${CSS.escape('[_key=="p2"]')}"]`,
+    )
+    if (!block) {
+      throw new Error('block not rendered')
+    }
+    // Without this, a remote change that never affected the viewport would
+    // make the `scrollY` assertion below meaningless.
+    expect(block.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      window.innerHeight,
+    )
     expect(window.scrollY).toBe(0)
   })
 })
