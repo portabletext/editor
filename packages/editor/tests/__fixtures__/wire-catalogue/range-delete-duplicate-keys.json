@@ -1,0 +1,247 @@
+{
+  "scenario": "range-delete-duplicate-keys",
+  "schema": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ]
+  },
+  "seed": [
+    {
+      "_type": "block",
+      "_key": "kA",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "e0-k1",
+          "text": "foo ",
+          "marks": []
+        },
+        {
+          "_type": "span",
+          "_key": "e0-k2",
+          "text": "bar",
+          "marks": [
+            "strong"
+          ]
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_type": "block",
+      "_key": "kB",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "e0-k1",
+          "text": "foo ",
+          "marks": []
+        },
+        {
+          "_type": "span",
+          "_key": "e0-k2",
+          "text": "bar",
+          "marks": [
+            "strong"
+          ]
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "seedTerse": [
+    "foo ,bar",
+    "foo ,bar"
+  ],
+  "actions": [
+    "select {anchor at offset 0 on kA/e0-k2, focus at offset 3 on kB/e0-k1}",
+    "send {type: 'delete', direction: 'backward', unit: 'character'}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +0,0 @@\n-bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "e0-k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1 @@\n-foo\n  \n",
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "e0-k1"
+        },
+        "_key"
+      ],
+      "value": "k2",
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        },
+        "_key"
+      ],
+      "value": "k3",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k2",
+          "text": " ",
+          "marks": []
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k3",
+          "text": "bar",
+          "marks": [
+            "strong"
+          ]
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "kB"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,5 @@\n foo \n+ \n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "resultTerse": [
+    "foo  ,bar"
+  ]
+}

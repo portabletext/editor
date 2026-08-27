@@ -22,6 +22,7 @@ import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {applyMergeNode} from './apply-merge-node'
 import {createPlaceholderBlock} from './create-placeholder-block'
 import {getFullyCoveredContainers} from './get-fully-covered-container'
+import {planMergeKeyRenames} from './plan-merge-key-renames'
 import {setNodeProperties} from './set-node-properties'
 
 /**
@@ -762,15 +763,42 @@ function mergeBlock(
     return
   }
 
-  const endMarkDefs = endBlock.node.markDefs
+  // The span holding the range's start point survives as an empty span
+  // until normalization runs, so it still occupies `startBlock`'s children
+  // and is a genuine collision source the plan must include.
+  const {renamedBlock, childRenames, markDefRenames} = planMergeKeyRenames({
+    context: editor.snapshot.context,
+    mergingBlock: endBlock.node,
+    destinationBlock: startBlock.node,
+    dedupeEqualMarkDefs: true,
+  })
+
+  for (const {markDefKey, newKey} of markDefRenames) {
+    // `getNode` can't resolve a keyed descent into `markDefs` (it's a
+    // sidecar field, not part of the child tree), so `setNodeProperties`
+    // would silently no-op here. Apply the rename directly.
+    editor.apply({
+      type: 'set',
+      path: [...endBlockPath, 'markDefs', {_key: markDefKey}, '_key'],
+      value: newKey,
+    })
+  }
+  for (const {childKey, props} of childRenames) {
+    setNodeProperties(editor, props, [
+      ...endBlockPath,
+      'children',
+      {_key: childKey},
+    ])
+  }
+
+  const endMarkDefs = renamedBlock.markDefs
   if (Array.isArray(endMarkDefs) && endMarkDefs.length > 0) {
     const oldDefs = startBlock.node.markDefs ?? []
-    const newMarkDefs = [
-      ...new Map(
-        [...oldDefs, ...endMarkDefs].map((def) => [def._key, def]),
-      ).values(),
-    ]
-    setNodeProperties(editor, {markDefs: newMarkDefs}, startBlockPath)
+    setNodeProperties(
+      editor,
+      {markDefs: [...oldDefs, ...endMarkDefs]},
+      startBlockPath,
+    )
   }
   applyMergeNode(editor, endBlockPath, startBlock.node.children.length)
 }
