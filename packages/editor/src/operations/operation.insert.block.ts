@@ -20,7 +20,11 @@ import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {deleteRange} from '../internal-utils/delete-range'
-import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
+import {
+  isDeepEqual,
+  isEqualChildren,
+  isEqualMarks,
+} from '../internal-utils/equality'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toEngineBlock} from '../internal-utils/values'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
@@ -728,8 +732,12 @@ function resolveChildIndex(
 
 /**
  * Reassign keys on spans, inline objects and markDefs that collide with the
- * end block's existing keys. Returns the adjusted block and the adjusted
- * markDefs (to be merged into the end block).
+ * end block's existing keys. A colliding markDef that is deeply equal to
+ * the end block's is left out of the returned `adjustedMarkDefs` instead
+ * of renamed, since the end block already carries it; its key isn't
+ * remapped, so the fragment's marks keep pointing at it unchanged. The
+ * caller must merge the returned `adjustedMarkDefs` into the end block's
+ * own `markDefs`, or the deduped defs are lost.
  */
 function adjustFragmentKeys(args: {
   context: OperationSnapshot['context']
@@ -747,17 +755,24 @@ function adjustFragmentKeys(args: {
   }
 
   const endBlockChildKeys = endBlock.children.map((child) => child._key)
-  const endBlockMarkDefsKeys =
-    endBlock.markDefs?.map((markDef) => markDef._key) ?? []
+  const endBlockMarkDefsByKey = new Map(
+    (endBlock.markDefs ?? []).map((markDef) => [markDef._key, markDef]),
+  )
 
   const markDefKeyMap = new Map<string, string>()
-  const adjustedMarkDefs = block.markDefs?.map((markDef) => {
-    if (endBlockMarkDefsKeys.includes(markDef._key)) {
-      const newKey = context.keyGenerator()
-      markDefKeyMap.set(markDef._key, newKey)
-      return {...markDef, _key: newKey}
+  const adjustedMarkDefs = block.markDefs?.flatMap((markDef) => {
+    const endBlockMarkDef = endBlockMarkDefsByKey.get(markDef._key)
+    if (!endBlockMarkDef) {
+      return [markDef]
     }
-    return markDef
+
+    if (isDeepEqual(markDef, endBlockMarkDef)) {
+      return []
+    }
+
+    const newKey = context.keyGenerator()
+    markDefKeyMap.set(markDef._key, newKey)
+    return [{...markDef, _key: newKey}]
   })
 
   const adjustedChildren = block.children.map((child) => {
