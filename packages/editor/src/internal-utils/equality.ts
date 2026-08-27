@@ -264,7 +264,7 @@ function isEqualPortableTextObjects(
 /**
  * More or less copied from Remeda (https://github.com/remeda/remeda/blob/main/packages/remeda/src/isDeepEqual.ts)
  */
-export function isDeepEqual<A, B>(data: A, other: B) {
+export function isDeepEqual<A, B>(data: A, other: B): boolean {
   return isDeepEqualImplementation(data, other)
 }
 

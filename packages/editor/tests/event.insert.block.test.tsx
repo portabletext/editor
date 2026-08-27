@@ -1501,6 +1501,181 @@ describe('event.insert.block', () => {
     })
   })
 
+  test('Scenario: Inserting a text block whose span carries a byte-identical same-key markDef into a block that already has it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const patches: Array<Patch> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'bar', marks: ['link1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'baz', marks: ['link1']}],
+        markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'barbaz', marks: ['link1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+          style: 'normal',
+        },
+      ])
+    })
+
+    const markDefKeySetPatches = patches.filter(
+      (patch) =>
+        patch.type === 'set' &&
+        patch.path.at(-1) === '_key' &&
+        patch.path.at(-3) === 'markDefs',
+    )
+    expect(markDefKeySetPatches).toEqual([])
+  })
+
+  test('Scenario: Inserting a text block whose span carries a same-key but different-content markDef into a block that already has it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'bar', marks: ['link1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'baz', marks: ['link1']}],
+        markDefs: [{_type: 'link', _key: 'link1', href: 'https://b.example'}],
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'bar', marks: ['link1']},
+            {_type: 'span', _key: 'k5', text: 'baz', marks: ['k6']},
+          ],
+          markDefs: [
+            {_type: 'link', _key: 'link1', href: 'https://a.example'},
+            {_type: 'link', _key: 'k6', href: 'https://b.example'},
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Inserting block object with expanded selection in middle of block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
