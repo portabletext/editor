@@ -27,6 +27,7 @@ import type {PortableTextEditorEngine} from '../../../types/editor-engine'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
+import {subscribeToOperations} from '../../core/operation-channel'
 import {DOMEditor} from '../../dom/plugin/dom-editor'
 import {TRIPLE_CLICK} from '../../dom/utils/constants'
 import {
@@ -198,8 +199,25 @@ export const Editable = forwardRef(
       () => ({
         isUpdatingSelection: false,
         latestElement: null as DOMElement | null,
+        localContentChangePending: false,
       }),
       [],
+    )
+
+    // Consumed by the selection-sync layout effect below.
+    useEffect(
+      () =>
+        subscribeToOperations(editor, (event) => {
+          if (
+            event.operation.type !== 'set.selection' &&
+            (event.origin === 'local' ||
+              event.origin === 'undo' ||
+              event.origin === 'redo')
+          ) {
+            state.localContentChangePending = true
+          }
+        }),
+      [editor, state],
     )
 
     // The autoFocus TextareaHTMLAttribute doesn't do anything on a div, so it
@@ -373,6 +391,12 @@ export const Editable = forwardRef(
     })
 
     useIsomorphicLayoutEffect(() => {
+      // Consumed at most once per effect run: whichever render runs next
+      // after a local content change is the only one allowed to scroll
+      // for it, regardless of which early return below this point fires.
+      const hadPendingLocalContentChange = state.localContentChangePending
+      state.localContentChangePending = false
+
       // Update element-related editor maps with the DOM element ref.
       let window: Window | null = null
       // biome-ignore lint/suspicious/noAssignInExpressions: engine upstream pattern — assignment in condition
@@ -453,6 +477,20 @@ export const Editable = forwardRef(
           )
 
           if (editorSelection && rangeEquals(editorSelection, selection)) {
+            if (hadPendingLocalContentChange) {
+              // Content just moved around this selection without changing
+              // its points (inserting a block before the caret's own
+              // block, for example), so the DOM and model agree and
+              // nothing below rewrites the DOM selection or scrolls it
+              // into view; do that here instead.
+              try {
+                const domRange = DOMEditor.toDOMRange(editor, selection)
+                scrollSelectionIntoView(editor, domRange)
+              } catch (_e) {
+                // Ignore, dom and state might be out of sync
+              }
+            }
+
             return
           }
         }
