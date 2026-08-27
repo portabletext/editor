@@ -184,6 +184,26 @@ export interface RangeDecorationOnMovedDetails {
   newSelection: EditorSelection
   origin: 'remote' | 'local'
 }
+
+/**
+ * Props passed to a `RangeDecoration`'s or `RegistrableRangeDecoration`'s
+ * `component`.
+ * @public */
+export type RangeDecorationRenderProps = PropsWithChildren & {
+  /**
+   * `true` for the fragment that contains the decoration's start point.
+   * A collapsed decoration's single fragment is both `isFirst` and
+   * `isLast`.
+   */
+  isFirst: boolean
+  /**
+   * `true` for the fragment that contains the decoration's end point. A
+   * collapsed decoration's single fragment is both `isFirst` and
+   * `isLast`.
+   */
+  isLast: boolean
+}
+
 /**
  * A UI affordance that wraps a selection range in the editor with a custom
  * component, for example to highlight search results, mark validation
@@ -202,14 +222,14 @@ export interface RangeDecoration {
    *
    * @example
    * ```tsx
-   * (rangeComponentProps: PropsWithChildren) => (
+   * (rangeComponentProps: RangeDecorationRenderProps) => (
    *    <SearchResultHighlight>
    *      {rangeComponentProps.children}
    *    </SearchResultHighlight>
    *  )
    * ```
    */
-  component: (props: PropsWithChildren) => ReactElement<any>
+  component: (props: RangeDecorationRenderProps) => ReactElement<any>
   /**
    * The editor content selection range to decorate.
    */
@@ -224,4 +244,59 @@ export interface RangeDecoration {
    * A custom payload that can be set on the range decoration.
    */
   payload?: Record<string, unknown>
+}
+
+/**
+ * A range decoration registered through `editor.registerRangeDecorations`
+ * or `RangeDecorationsPlugin`, independent of any `PortableTextEditable`'s
+ * `rangeDecorations` prop.
+ * @beta */
+export interface RegistrableRangeDecoration {
+  /**
+   * Identity for reconciliation: an `update` call matches decorations to
+   * their previous state by `id`, not by array position. Unique within
+   * one registration (duplicates throw); the same `id` used across
+   * different registrations refers to different decorations. Unrelated
+   * to Portable Text's `_key`.
+   */
+  id: string
+  /**
+   * The editor content range to decorate. Feed a captured editor
+   * selection straight in, for example a peer's presence selection or
+   * the range a search match was found at. `null` marks the decoration
+   * as having no position (it renders nothing); an edit that destroys
+   * the underlying content moves a live decoration to `null` as well.
+   */
+  range: EditorSelection
+  /**
+   * The component that renders the range decoration. It receives the
+   * decorated text as its children.
+   *
+   * The component can render more than once for one decoration: the range
+   * is split into segments at formatting boundaries and where it overlaps
+   * other decorations, and each segment gets its own wrapper. Where
+   * decorations overlap, their components nest, first in array order
+   * outermost.
+   */
+  component: (props: RangeDecorationRenderProps) => ReactElement<any>
+}
+
+/**
+ * Emitted through the `on` handler of `registerRangeDecorations`, typed
+ * as a union so new event types can join it without a breaking change.
+ * @beta */
+export type RangeDecorationEvent = {
+  type: 'moved'
+  /**
+   * The decoration as registered: its `range` is the configured range,
+   * not the live position. Read `newRange` for where the decoration is
+   * now.
+   */
+  rangeDecoration: RegistrableRangeDecoration
+  /**
+   * The decoration's new range, or `null` when an edit destroyed the
+   * content it was anchored to.
+   */
+  newRange: EditorSelection
+  origin: 'remote' | 'local'
 }

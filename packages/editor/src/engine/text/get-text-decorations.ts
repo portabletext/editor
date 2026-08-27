@@ -14,6 +14,8 @@ export function getTextDecorations(
       anchor: _anchor,
       focus: _focus,
       merge: mergeDecoration,
+      isRangeStart,
+      isRangeEnd,
       ...rest
     } = dec
     const [start, end] =
@@ -25,6 +27,19 @@ export function getTextDecorations(
     const decorationStart = start.offset
     const decorationEnd = end.offset
     const merge = mergeDecoration ?? Object.assign
+    // `isRangeStart`/`isRangeEnd`/`decorationStart`/`decorationEnd` are
+    // `mergeRangeDecoration`'s own bookkeeping (resolved into the public
+    // `isFirst`/`isLast` below); the default `Object.assign` merge applies
+    // its payload directly onto the leaf, so it only ever gets `rest`.
+    const mergePayload = mergeDecoration
+      ? {
+          ...rest,
+          isRangeStart: Boolean(isRangeStart),
+          isRangeEnd: Boolean(isRangeEnd),
+          decorationStart,
+          decorationEnd,
+        }
+      : rest
 
     for (const {leaf} of leaves) {
       const {length} = leaf.text
@@ -32,7 +47,7 @@ export function getTextDecorations(
       leafEnd += length
 
       if (decorationStart <= leafStart && leafEnd <= decorationEnd) {
-        merge(leaf, rest)
+        merge(leaf, mergePayload)
         next.push({leaf})
         continue
       }
@@ -64,7 +79,7 @@ export function getTextDecorations(
         middle = {...middle, text: middle.text.slice(off)}
       }
 
-      merge(middle, rest)
+      merge(middle, mergePayload)
 
       if (before) {
         next.push(before)
@@ -80,12 +95,55 @@ export function getTextDecorations(
     leaves = next
   }
 
-  if (leaves.length > 1) {
-    let currentOffset = 0
-    for (const [index, item] of leaves.entries()) {
-      const start = currentOffset
-      const end = start + item.leaf.text.length
-      const position: LeafPosition = {start, end}
+  const getPending = (item: {leaf: PortableTextSpan}) =>
+    (
+      item.leaf as PortableTextSpan & {
+        rangeDecorations?: Array<{
+          rangeDecoration: unknown
+          isRangeStart: boolean
+          isRangeEnd: boolean
+          decorationStart: number
+          decorationEnd: number
+        }>
+      }
+    ).rangeDecorations
+
+  const fragmentBounds = leaves.map((item) => item.leaf.text.length)
+  for (let i = 1; i < fragmentBounds.length; i++) {
+    fragmentBounds[i]! += fragmentBounds[i - 1]!
+  }
+
+  // Splitting a leaf can leave an empty (zero-length) fragment exactly at a
+  // decoration's start/end offset, immediately next to a non-empty fragment
+  // starting/ending at that same offset - both would otherwise satisfy the
+  // start/end condition below. Resolved in document order per decoration:
+  // the first fragment claims `isFirst`, the last claims `isLast`.
+  const firstStartIndex = new Map<unknown, number>()
+  const lastEndIndex = new Map<unknown, number>()
+
+  for (const [index, item] of leaves.entries()) {
+    const fragmentStart = index === 0 ? 0 : fragmentBounds[index - 1]!
+    const fragmentEnd = fragmentBounds[index]!
+
+    for (const entry of getPending(item) ?? []) {
+      if (
+        entry.isRangeStart &&
+        fragmentStart === entry.decorationStart &&
+        !firstStartIndex.has(entry.rangeDecoration)
+      ) {
+        firstStartIndex.set(entry.rangeDecoration, index)
+      }
+      if (entry.isRangeEnd && fragmentEnd === entry.decorationEnd) {
+        lastEndIndex.set(entry.rangeDecoration, index)
+      }
+    }
+  }
+
+  for (const [index, item] of leaves.entries()) {
+    if (leaves.length > 1) {
+      const fragmentStart = index === 0 ? 0 : fragmentBounds[index - 1]!
+      const fragmentEnd = fragmentBounds[index]!
+      const position: LeafPosition = {start: fragmentStart, end: fragmentEnd}
 
       if (index === 0) {
         position.isFirst = true
@@ -95,7 +153,23 @@ export function getTextDecorations(
       }
 
       item.position = position
-      currentOffset = end
+    }
+
+    // `mergeRangeDecoration` (the only `merge` implementation that reads
+    // `decorationStart`/`decorationEnd`) leaves these pending entries on
+    // `leaf.rangeDecorations`; resolve them into the public
+    // `{rangeDecoration, isFirst, isLast}` shape now that every decoration
+    // has had its chance to split this leaf further.
+    const pending = getPending(item)
+
+    if (pending) {
+      ;(
+        item.leaf as PortableTextSpan & {rangeDecorations?: unknown}
+      ).rangeDecorations = pending.map((entry) => ({
+        rangeDecoration: entry.rangeDecoration,
+        isFirst: firstStartIndex.get(entry.rangeDecoration) === index,
+        isLast: lastEndIndex.get(entry.rangeDecoration) === index,
+      }))
     }
   }
 

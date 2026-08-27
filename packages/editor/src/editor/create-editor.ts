@@ -18,6 +18,10 @@ import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
 import {
+  rangeDecorationsMachine,
+  type RangeDecorationsActor,
+} from './range-decorations-machine'
+import {
   createRelay,
   type EditorEmittedEvent,
   type EditorEventListenerOptions,
@@ -26,9 +30,24 @@ import {
 import {subscribeCoalesced} from './subscribe-coalesced'
 import {syncMachine, type SyncActor} from './sync-machine'
 
+function assertUniqueRangeDecorationIds(rangeDecorations: Array<{id: string}>) {
+  const seen = new Set<string>()
+
+  for (const rangeDecoration of rangeDecorations) {
+    if (seen.has(rangeDecoration.id)) {
+      throw new Error(
+        `\`registerRangeDecorations\` was given more than one range decoration with the id "${rangeDecoration.id}". Each range decoration must have a unique \`id\`.`,
+      )
+    }
+
+    seen.add(rangeDecoration.id)
+  }
+}
+
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
+    rangeDecorationsActor: RangeDecorationsActor
     syncActor: SyncActor
   }
   relay: Relay
@@ -49,12 +68,22 @@ export function createInternalEditor(config: EditorConfig): {
     subscriptions,
   })
   const editable = createEditableAPI(editorEngine, editorActor)
+  const rangeDecorationsActor = createActor(rangeDecorationsMachine, {
+    input: {
+      readOnly: Boolean(config.readOnly),
+      schema: editorActor.getSnapshot().context.schema,
+      editorEngine,
+    },
+  })
   const {syncActor} = createActors({
     editorActor,
+    rangeDecorationsActor,
     relay,
     editorEngine,
     subscriptions,
   })
+
+  let registeredRangeDecorationsCount = 0
 
   const editor: Editor = {
     dom: createEditorDom((event) => editorActor.send(event), editorEngine),
@@ -94,6 +123,45 @@ export function createInternalEditor(config: EditorConfig): {
           type: 'unregister',
           node: nodeConfig.node,
         })
+      }
+    },
+    registerRangeDecorations: (rangeDecorationsConfig) => {
+      assertUniqueRangeDecorationIds(rangeDecorationsConfig.rangeDecorations)
+
+      const sourceKey = `registered-range-decorations-${registeredRangeDecorationsCount++}`
+      let unregistered = false
+
+      rangeDecorationsActor.send({
+        type: 'source updated',
+        sourceKey,
+        kind: 'registered',
+        rangeDecorations: rangeDecorationsConfig.rangeDecorations,
+        on: rangeDecorationsConfig.on,
+      })
+
+      return {
+        update: (rangeDecorations) => {
+          if (unregistered) {
+            return
+          }
+
+          assertUniqueRangeDecorationIds(rangeDecorations)
+
+          rangeDecorationsActor.send({
+            type: 'source updated',
+            sourceKey,
+            kind: 'registered',
+            rangeDecorations,
+          })
+        },
+        unregister: () => {
+          if (unregistered) {
+            return
+          }
+
+          unregistered = true
+          rangeDecorationsActor.send({type: 'source removed', sourceKey})
+        },
       }
     },
     send: (event) => {
@@ -174,6 +242,7 @@ export function createInternalEditor(config: EditorConfig): {
   return {
     actors: {
       editorActor,
+      rangeDecorationsActor,
       syncActor,
     },
     relay,
@@ -220,6 +289,7 @@ function isPublicOperation(operation: EngineOperation): operation is Operation {
 
 function createActors(config: {
   editorActor: EditorActor
+  rangeDecorationsActor: RangeDecorationsActor
   relay: Relay
   editorEngine: PortableTextEditorEngine
   subscriptions: Array<() => () => void>
@@ -293,11 +363,19 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = config.editorActor.subscribe((snapshot) => {
-      if (snapshot.matches({'edit mode': 'read only'})) {
-        syncActor.send({type: 'update readOnly', readOnly: true})
-      } else {
-        syncActor.send({type: 'update readOnly', readOnly: false})
-      }
+      const readOnly = snapshot.matches({'edit mode': 'read only'})
+      syncActor.send({type: 'update readOnly', readOnly})
+      config.rangeDecorationsActor.send({type: 'update read only', readOnly})
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  })
+
+  config.subscriptions.push(() => {
+    const subscription = config.editorActor.on('ready', () => {
+      config.rangeDecorationsActor.send({type: 'ready'})
     })
 
     return () => {

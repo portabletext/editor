@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useState,
   type ClipboardEvent,
@@ -38,7 +39,8 @@ import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
 import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
-import {rangeDecorationsMachine} from './range-decorations-machine'
+import {RangeDecorationsActorContext} from './range-decorations-actor-context'
+import type {LeafRangeDecoration} from './range-decorations-machine'
 import {RelayContext} from './relay-context'
 import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
@@ -129,32 +131,32 @@ export const PortableTextEditable = forwardRef<
     },
   })
 
-  const rangeDecorationsActor = useActorRef(rangeDecorationsMachine, {
-    input: {
-      rangeDecorations: rangeDecorations ?? [],
-      readOnly,
-      schema,
-      editorEngine,
-      skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
-    },
-  })
+  const rangeDecorationsActor = useContext(RangeDecorationsActorContext)
+  // The machine reconciles sources by `sourceKey`; a per-render value
+  // would remove and re-add the source on every render.
+  const rangeDecorationsSourceKey = useId()
   const decorate = useSelector(
     rangeDecorationsActor,
     (s) => s.context.decorate?.fn,
   )
-  useEffect(() => {
-    rangeDecorationsActor.send({
-      type: 'update read only',
-      readOnly,
-    })
-  }, [rangeDecorationsActor, readOnly])
 
   useEffect(() => {
     rangeDecorationsActor.send({
-      type: 'range decorations updated',
+      type: 'source updated',
+      sourceKey: rangeDecorationsSourceKey,
+      kind: 'prop',
       rangeDecorations: rangeDecorations ?? [],
     })
-  }, [rangeDecorationsActor, rangeDecorations])
+  }, [rangeDecorationsActor, rangeDecorationsSourceKey, rangeDecorations])
+
+  useEffect(() => {
+    return () => {
+      rangeDecorationsActor.send({
+        type: 'source removed',
+        sourceKey: rangeDecorationsSourceKey,
+      })
+    }
+  }, [rangeDecorationsActor, rangeDecorationsSourceKey])
 
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (
@@ -168,7 +170,7 @@ export const PortableTextEditable = forwardRef<
       leafProps: RenderLeafProps & {
         leaf: PortableTextSpan & {
           placeholder?: boolean
-          rangeDecorations?: Array<RangeDecoration>
+          rangeDecorations?: Array<LeafRangeDecoration>
         }
       },
     ) => (
@@ -216,10 +218,6 @@ export const PortableTextEditable = forwardRef<
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
     const onReady = editorActor.on('ready', () => {
-      rangeDecorationsActor.send({
-        type: 'ready',
-      })
-
       restoreSelectionFromProps()
     })
 
@@ -236,7 +234,7 @@ export const PortableTextEditable = forwardRef<
       onInvalidValue.unsubscribe()
       onValueChanged.unsubscribe()
     }
-  }, [rangeDecorationsActor, editorActor, restoreSelectionFromProps])
+  }, [editorActor, restoreSelectionFromProps])
 
   // Restore selection from props when it changes
   useEffect(() => {

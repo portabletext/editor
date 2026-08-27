@@ -6,6 +6,7 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {Range} from '../../interfaces/range'
 import type {DecoratedRange} from '../../interfaces/text'
+import {pointEquals} from '../../point/point-equals'
 import {rangeEdges} from '../../range/range-edges'
 import {rangeEquals} from '../../range/range-equals'
 import {rangeIntersection} from '../../range/range-intersection'
@@ -186,6 +187,13 @@ export const splitDecorationsByChild = (
     const startIndex = resolveChildIndex(startPoint) ?? 0
     const endIndex = resolveChildIndex(endPoint) ?? children.length - 1
 
+    // The decoration's own true edges, not `decorationRange`'s (which are
+    // already clipped to `ancestorRange`) - a multi-block decoration must
+    // only report `isRangeStart`/`isRangeEnd` for the child that holds its
+    // actual document-wide start/end, not for whichever child happens to
+    // sit at this block's own boundary.
+    const [trueStart, trueEnd] = rangeEdges(decoration, editor.snapshot.context)
+
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]
       if (!ds) {
@@ -208,6 +216,8 @@ export const splitDecorationsByChild = (
       ds.push({
         ...decoration,
         ...childDecorationRange,
+        isRangeStart: pointEquals(childDecorationRange.anchor, trueStart),
+        isRangeEnd: pointEquals(childDecorationRange.focus, trueEnd),
       })
     }
   }
