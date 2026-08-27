@@ -1,5 +1,7 @@
 # @portabletext/plugin-input-rule
 
+## 6.0.21
+
 ## 6.0.20
 
 ### Patch Changes

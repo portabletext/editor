@@ -1,5 +1,7 @@
 # Changelog
 
+## 8.0.52
+
 ## 8.0.51
 
 ### Patch Changes

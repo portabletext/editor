@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.12.3
+
+### Patch Changes
+
+- [#3191](https://github.com/portabletext/editor/pull/3191) [`4583a86`](https://github.com/portabletext/editor/commit/4583a86c0e7179b530dcaa3bdcc5db1ea451f268) Thanks [@christianhg](https://github.com/christianhg)! - fix: scroll the caret into view when a local edit moves content around an unchanged selection
+
+  Pressing Enter at the start of a block inserts a new empty block above it without moving the caret's own selection points. Repeating this pushed the caret's block further and further below the fold without the editor ever scrolling it back into view. The caret's block now scrolls back into view whenever a local edit, undo, or redo moves content around a selection that stayed put.
+
 ## 7.12.2
 
 ### Patch Changes
