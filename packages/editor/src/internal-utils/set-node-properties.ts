@@ -1,7 +1,8 @@
 import type {Path} from '../engine/interfaces/path'
-import {getNode} from '../traversal/get-node'
+import {resolveNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {safeStringify} from './safe-json'
 
 /**
  * Apply property changes at a known path using primitive `set` and `unset`
@@ -17,13 +18,19 @@ export function setNodeProperties(
   props: Record<string, unknown> | object,
   path: Path,
 ): void {
-  const nodeEntry = getNode(editor.snapshot, path)
+  const result = resolveNode(editor.snapshot, path)
 
-  if (!nodeEntry) {
+  if (result.status === 'unreachable') {
+    throw new Error(
+      `Unable to set properties at structurally unreachable path ${safeStringify(path)}`,
+    )
+  }
+
+  if (result.status === 'missing') {
     return
   }
 
-  const node = nodeEntry.node
+  const node = result.entry.node
   const nodeRecord = node as Record<string, unknown>
   const propsRecord = props as Record<string, unknown>
 
