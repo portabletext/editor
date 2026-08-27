@@ -387,10 +387,6 @@ function planMergeKeyRenameActions(args: {
     context,
     mergingBlock,
     destinationBlock,
-    // `renamedBlock` feeds `insert.block`, which parses the block
-    // standalone and strips any mark that doesn't resolve in its own
-    // `markDefs`, so a deduped def's spans would lose the annotation.
-    dedupeEqualMarkDefs: false,
   })
 
   const renameActions: Array<BehaviorAction> = []

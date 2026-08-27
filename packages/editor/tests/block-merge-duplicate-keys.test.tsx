@@ -459,16 +459,27 @@ describe('Feature: block merge renames colliding keys', () => {
     })
   })
 
-  test('Scenario: a byte-identical colliding markDef is still renamed on the collapsed merge path', async () => {
+  test('Scenario: a byte-identical colliding markDef is deduped instead of renamed on the collapsed merge path', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}],
       annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
     })
 
+    const patches: Array<Patch> = []
+
     const {editor, locator} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue: duplicateKeyedInitialValueWithSameLink(),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
     })
 
     await userEvent.click(locator)
@@ -501,16 +512,306 @@ describe('Feature: block merge renames colliding keys', () => {
               marks: ['strong', 'link1'],
             },
             {_type: 'span', _key: 's3', text: ' bazfoo ', marks: []},
-            {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong', 'k2']},
-            {_type: 'span', _key: 'k5', text: ' baz', marks: []},
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: 'bar',
+              marks: ['strong', 'link1'],
+            },
+            {_type: 'span', _key: 'k4', text: ' baz', marks: []},
           ],
-          markDefs: [
-            {_type: 'link', _key: 'link1', href: 'https://a.example'},
-            {_type: 'link', _key: 'k2', href: 'https://a.example'},
-          ],
+          markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
           style: 'normal',
         },
       ])
+    })
+
+    expect(patches).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's1'}, '_key'],
+        value: 'k2',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's2'}, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's3'}, '_key'],
+        value: 'k4',
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: 'kB'}], origin: 'local'},
+      {
+        type: 'set',
+        path: [{_key: 'kA'}, 'markDefs'],
+        value: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k5', marks: [], text: ''}],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k2', text: 'foo ', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+        position: 'after',
+        items: [
+          {_type: 'span', _key: 'k3', text: 'bar', marks: ['strong', 'link1']},
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 'k3'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k4', text: ' baz', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}, 'text'],
+        value: '@@ -1,4 +1,8 @@\n  baz\n+foo \n',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'kA'}, 'children', {_key: 'k5'}],
+        origin: 'local',
+      },
+    ])
+  })
+
+  test('Scenario: undoing a collapsed backspace merge with a byte-identical colliding markDef restores both original blocks, every `_key` included', async () => {
+    const schemaDefinition = defineSchema({
+      decorators: [{name: 'strong'}],
+      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+    })
+
+    const patches: Array<Patch> = []
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition,
+      initialValue: duplicateKeyedInitialValueWithSameLink(),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
+        focus: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).not.toBeNull()
+    })
+
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    const mergedValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: 'kA',
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'bar',
+            marks: ['strong', 'link1'],
+          },
+          {_type: 'span', _key: 's3', text: ' bazfoo ', marks: []},
+          {
+            _type: 'span',
+            _key: 'k3',
+            text: 'bar',
+            marks: ['strong', 'link1'],
+          },
+          {_type: 'span', _key: 'k4', text: ' baz', marks: []},
+        ],
+        markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+        style: 'normal',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
+    })
+
+    expect(patches).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's1'}, '_key'],
+        value: 'k2',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's2'}, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's3'}, '_key'],
+        value: 'k4',
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: 'kB'}], origin: 'local'},
+      {
+        type: 'set',
+        path: [{_key: 'kA'}, 'markDefs'],
+        value: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k5', marks: [], text: ''}],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k2', text: 'foo ', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+        position: 'after',
+        items: [
+          {_type: 'span', _key: 'k3', text: 'bar', marks: ['strong', 'link1']},
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 'k3'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k4', text: ' baz', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}, 'text'],
+        value: '@@ -1,4 +1,8 @@\n  baz\n+foo \n',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'kA'}, 'children', {_key: 'k5'}],
+        origin: 'local',
+      },
+    ])
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        duplicateKeyedInitialValueWithSameLink(),
+      )
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(
+        duplicateKeyedInitialValueWithSameLink(),
+      )
     })
   })
 })
@@ -888,13 +1189,76 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
     // Normalization merges the two adjacent `strong`+`link1` spans once
     // deduping keeps them both pointing at the same markDef key; that
     // merge is incidental to this scenario, not what it pins.
-    const markDefKeySetPatches = patches.filter(
-      (patch) =>
-        patch.type === 'set' &&
-        patch.path.at(-1) === '_key' &&
-        patch.path.at(-3) === 'markDefs',
-    )
-    expect(markDefKeySetPatches).toEqual([])
+    expect(patches).toEqual([
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}, 'text'],
+        value: '@@ -1,4 +0,0 @@\n- baz\n',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'kB'}, 'children', {_key: 's1'}],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's2'}, '_key'],
+        value: 'k2',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'kB'}, 'children', {_key: 's3'}, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+        position: 'after',
+        items: [
+          {_type: 'span', _key: 'k2', text: 'bar', marks: ['strong', 'link1']},
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'setIfMissing',
+        path: [{_key: 'kA'}, 'children'],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'k3', text: ' baz', marks: []}],
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: 'kB'}], origin: 'local'},
+      {
+        type: 'unset',
+        path: [{_key: 'kA'}, 'children', {_key: 's3'}],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'kA'}, 'children', {_key: 's2'}, 'text'],
+        value: '@@ -1,3 +1,6 @@\n bar\n+bar\n',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'kA'}, 'children', {_key: 'k2'}],
+        origin: 'local',
+      },
+    ])
   })
 
   test('Scenario: the range start survives as a trimmed empty span and is itself a collision source', async () => {

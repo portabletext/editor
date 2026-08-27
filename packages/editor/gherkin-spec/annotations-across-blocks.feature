@@ -109,9 +109,6 @@ Feature: Annotations Across Blocks
       B:  baz
       """
 
-  # Warning: Possible wrong behaviour
-  # "foo" and "bar" should rejoin as one link
-  # Fixing this is possibly a breaking change
   Scenario: Splitting and merging an annotation across blocks
     Given the editor state is "B: foobar"
     And a "link" "l1" around "foobar"
@@ -121,7 +118,7 @@ Feature: Annotations Across Blocks
     And "{Backspace}" is pressed
     Then the editor state is
       """
-      B: [@link _key="l1":foo][@link _key="l2":bar]
+      B: [@link _key="l1":foobar]
       """
 
   # Warning: Possible wrong behaviour

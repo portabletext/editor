@@ -27,11 +27,21 @@ export type MergeMarkDefRename = {
  * `destinationBlock` by key. Any child key the merging block shares with
  * the destination has to be renamed before the merge, or the engine's own
  * collision handling mints a fresh key for it, which reads on the wire as
- * that node being destroyed and a new one created instead of moved. There
- * is no such backstop for markDefs: an unrenamed collision either loses
- * one of the two defs to last-wins replacement, or, on the `insert.block`
- * path, gets silently re-minted by `adjustFragmentKeys` (see
- * `dedupeEqualMarkDefs` below).
+ * that node being destroyed and a new one created instead of moved.
+ *
+ * A colliding markDef that is deeply equal to the destination's is left
+ * unrenamed and reported in `dedupedMarkDefKeys` instead: the merge keeps
+ * a single copy under the original `_key` rather than duplicating
+ * identical content under two keys. A colliding markDef that differs gets
+ * renamed like a child would.
+ *
+ * `renamedBlock` keeps every deduped def in its own `markDefs`, even
+ * though the destination already carries it: `renamedBlock` feeds
+ * `insert.block` on some callers' paths, and that path parses the block
+ * standalone, stripping any mark that doesn't resolve in the block's own
+ * `markDefs`. A caller that appends `renamedBlock.markDefs` onto the
+ * destination's must skip the keys listed in `dedupedMarkDefKeys`, or the
+ * def duplicates.
  *
  * Pure: computes the renames and the block they produce without touching
  * an editor. Callers raise or apply the renames themselves, ahead of the
@@ -41,26 +51,13 @@ export function planMergeKeyRenames(args: {
   context: {schema: Schema; keyGenerator: () => string}
   mergingBlock: PortableTextTextBlock
   destinationBlock: PortableTextTextBlock
-  /**
-   * When a merging markDef collides with a destination markDef that is
-   * deeply equal to it, drop the merging markDef (from `renamedBlock` and
-   * from the emitted renames) instead of renaming it, so the merge keeps
-   * a single copy under the original `_key` rather than duplicating
-   * identical content under two keys.
-   *
-   * Must be `false` when `renamedBlock` feeds `insert.block`: that path
-   * parses the block standalone, and `parseBlock`/`parseSpan` strip any
-   * mark that doesn't resolve in the block's own `markDefs`, so a span
-   * whose annotation was deduped away would arrive with the mark gone
-   * rather than re-keyed.
-   */
-  dedupeEqualMarkDefs: boolean
 }): {
   renamedBlock: PortableTextTextBlock
   childRenames: Array<MergeChildRename>
   markDefRenames: Array<MergeMarkDefRename>
+  dedupedMarkDefKeys: Array<string>
 } {
-  const {context, mergingBlock, destinationBlock, dedupeEqualMarkDefs} = args
+  const {context, mergingBlock, destinationBlock} = args
 
   const destinationChildKeys = new Set(
     destinationBlock.children.map((child) => child._key),
@@ -70,14 +67,16 @@ export function planMergeKeyRenames(args: {
   )
 
   const markDefKeyMap = new Map<string, string>()
+  const dedupedMarkDefKeys: Array<string> = []
   const renamedMarkDefs = mergingBlock.markDefs?.flatMap((markDef) => {
     const destinationMarkDef = destinationMarkDefsByKey.get(markDef._key)
     if (!destinationMarkDef) {
       return [markDef]
     }
 
-    if (dedupeEqualMarkDefs && isDeepEqual(markDef, destinationMarkDef)) {
-      return []
+    if (isDeepEqual(markDef, destinationMarkDef)) {
+      dedupedMarkDefKeys.push(markDef._key)
+      return [markDef]
     }
 
     const newKey = context.keyGenerator()
@@ -132,5 +131,6 @@ export function planMergeKeyRenames(args: {
     },
     childRenames,
     markDefRenames,
+    dedupedMarkDefKeys,
   }
 }
