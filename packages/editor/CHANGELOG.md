@@ -1,5 +1,39 @@
 # Changelog
 
+## 8.1.0
+
+### Minor Changes
+
+- [#3197](https://github.com/portabletext/editor/pull/3197) [`f8f0c86`](https://github.com/portabletext/editor/commit/f8f0c86ea277234e4d9fcd5871d8b521632f597c) Thanks [@christianhg](https://github.com/christianhg)! - feat: report the origin on the `operation` event
+
+  Every `operation` event now carries an `origin` telling you where the change that produced it came from:
+
+  ```ts
+  editor.on('operation', (event) => {
+    console.log(event.operation, event.origin)
+  })
+  ```
+
+  `origin` is `'local'` for changes made in this editor (edits, undo/redo) and `'remote'` for changes a collaborator applied through `patches` or `update value`. A normalization fix (a repaired key, a merged span) reports the origin of the change that triggered it: a local edit's fallout reports `'local'`, a remote patch's fallout reports `'remote'`.
+
+  The field is required on the event object: code that constructs `operation` event values or asserts them wholesale (for example with `toEqual`) must add `origin` when upgrading.
+
+### Patch Changes
+
+- [#3170](https://github.com/portabletext/editor/pull/3170) [`ced8c32`](https://github.com/portabletext/editor/commit/ced8c3289f956798ec04352a588047a8d74230a4) Thanks [@christianhg](https://github.com/christianhg)! - fix: render every overlapping range decoration instead of only the last
+
+  Overlapping range decorations now all render, nested in array order with the first outermost. Previously only the last decoration in the array rendered on the text where they overlapped.
+
+  One consequence rides along: a decoration that overlaps others renders one wrapper per overlap segment, so its component can mount multiple times for one decoration. Components with per-mount side effects or seam-sensitive CSS (borders, rounded corners) should expect fragmentation.
+
+- [#3187](https://github.com/portabletext/editor/pull/3187) [`8c9b1a4`](https://github.com/portabletext/editor/commit/8c9b1a4c63b2c93aa37b771c389ff665685d42a2) Thanks [@christianhg](https://github.com/christianhg)! - fix: rename colliding keys before a range delete merges sibling blocks
+
+  A range delete spanning two sibling text blocks with a colliding child `_key` or `markDefs` key could reorder the merged text, replace the start block's markDef with the end block's def of the same key, and re-mint colliding keys silently, so receivers applying the resulting patches saw those children destroyed and recreated instead of moved. Colliding keys are now renamed before the merge, with `set` patches on the wire ahead of the merge's `unset`, so both markDefs survive and the merged text keeps its original order.
+
+- [#3189](https://github.com/portabletext/editor/pull/3189) [`9bdc56e`](https://github.com/portabletext/editor/commit/9bdc56e092cf6db79a48b87da8ce1dd502b0ba06) Thanks [@christianhg](https://github.com/christianhg)! - fix: scroll the caret into view when a local edit moves content around an unchanged selection
+
+  Pressing Enter at the start of a block inserts a new empty block above it without moving the caret's own selection points. Repeating this pushed the caret's block further and further below the fold without the editor ever scrolling it back into view. The caret's block now scrolls back into view whenever a local edit, undo, or redo moves content around a selection that stayed put.
+
 ## 8.0.3
 
 ### Patch Changes
