@@ -1,5 +1,13 @@
 # @portabletext/plugin-input-rule
 
+## 7.0.4
+
+### Patch Changes
+
+- [#3196](https://github.com/portabletext/editor/pull/3196) [`dbd46f9`](https://github.com/portabletext/editor/commit/dbd46f9307fdee65748addd9a340e4e7bf8cfcb4) Thanks [@christianhg](https://github.com/christianhg)! - fix: only smart-undo on Backspace when no edit landed since the input rule applied
+
+  Pressing Backspace right after an input rule fires still undoes the rule, including when a collaborator's changes arrive in between. Once any other local edit lands, Backspace acts normally again.
+
 ## 7.0.3
 
 ## 7.0.2
