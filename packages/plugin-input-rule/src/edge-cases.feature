@@ -252,3 +252,23 @@ Feature: Edge Cases
       | state | inserted text | new state         |
       | "B: " | "judeee yeah" | "B: judeee!new\|" |
       | "B: " | "judeee"      | "B: judeeenew\|"  |
+
+  Scenario: Backspace does not smart-undo after a competing behavior mutated the block
+    Given the editor state is "B: "
+    When the editor is focused
+    And "qqq" is typed
+    Then the editor state is "B: Q|"
+    When "{Backspace}" is pressed
+    Then the editor state is "B style=\"consumed\": Q|"
+    When "{Backspace}" is pressed
+    Then the editor state is "B style=\"consumed\": |"
+
+  Scenario: Backspace after two consecutive rule applications only undoes the second
+    Given the editor state is "B: "
+    When the editor is focused
+    And "!hi!" is inserted
+    Then the editor state is "B: WHOLE|"
+    When "!yo!" is inserted
+    Then the editor state is "B: WHOLEWHOLE|"
+    When "{Backspace}" is pressed
+    Then the editor state is "B: WHOLE!yo!|"
