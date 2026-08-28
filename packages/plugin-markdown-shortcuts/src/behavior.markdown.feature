@@ -99,6 +99,16 @@ Feature: Markdown Behaviors
       | "h5"  |
       | "h6"  |
 
+  Scenario: Backspace twice after an automatic heading does not resurface the heading
+    Given the editor state is "B: |"
+    When the editor is focused
+    And "# " is typed
+    Then the editor state is "B style=\"h1\": |"
+    When "{Backspace}" is pressed
+    Then the editor state is "B: |"
+    When "{Backspace}" is pressed
+    Then the editor state is "B: |"
+
   Scenario: Unordered list clear-on-enter works on second cycle
     Given the editor state is "B: -"
     When the editor is focused

@@ -1,4 +1,9 @@
-import {getPreviousInlineObject} from '@portabletext/editor/selectors'
+import {useEditor} from '@portabletext/editor'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {
+  getFocusTextBlock,
+  getPreviousInlineObject,
+} from '@portabletext/editor/selectors'
 import {parameterTypes} from '@portabletext/editor/test'
 import {
   createTestEditor,
@@ -8,6 +13,7 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
+import {useEffect} from 'react'
 import edgeCasesFeature from './edge-cases.feature?raw'
 import {InputRulePlugin} from './plugin.input-rule'
 import {defineTextTransformRule} from './text-transform-rule'
@@ -75,6 +81,53 @@ const multiplicationRule = defineTextTransformRule({
   transform: {operator: () => '×'},
 })
 
+const competingRule = defineTextTransformRule({
+  on: /qqq/,
+  transform: () => 'Q',
+})
+
+// Guarded to the `competingRule`'s own output so it never fires for the
+// file's other scenarios.
+const competingBackspaceBehavior = defineBehavior({
+  on: 'delete.backward',
+  guard: ({snapshot}) => {
+    const focusTextBlock = getFocusTextBlock(snapshot)
+
+    if (!focusTextBlock || focusTextBlock.node.style === 'consumed') {
+      return false
+    }
+
+    const text = focusTextBlock.node.children
+      .map((child) => ('text' in child ? child.text : ''))
+      .join('')
+
+    if (text !== 'Q') {
+      return false
+    }
+
+    return {focusTextBlock}
+  },
+  actions: [
+    (_, {focusTextBlock}) => [
+      raise({
+        type: 'block.set',
+        props: {style: 'consumed'},
+        at: focusTextBlock.path,
+      }),
+    ],
+  ],
+})
+
+function CompetingBackspaceBehaviorPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    return editor.registerBehavior({behavior: competingBackspaceBehavior})
+  }, [editor])
+
+  return null
+}
+
 Feature({
   hooks: [
     Before(async (context: Context) => {
@@ -92,12 +145,15 @@ Feature({
             <InputRulePlugin rules={[groupsWithoutReplaceRule]} />
             <InputRulePlugin rules={[optionalReplaceGroupRule]} />
             <InputRulePlugin rules={[multiplicationRule]} />
+            <InputRulePlugin rules={[competingRule]} />
+            <CompetingBackspaceBehaviorPlugin />
           </>
         ),
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
           inlineObjects: [{name: 'stock-ticker'}],
+          styles: [{name: 'consumed'}],
         }),
       })
 

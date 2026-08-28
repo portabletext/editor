@@ -313,6 +313,7 @@ type InputRuleMachineEvent =
       blockOffsets: {start: BlockOffset; end: BlockOffset} | undefined
       selection: EditorSelection
     }
+  | {type: 'operation observed'}
 
 const inputRuleListenerCallback: CallbackLogicFunction<
   AnyEventObject,
@@ -354,6 +355,22 @@ const deleteBackwardListenerCallback: CallbackLogicFunction<
       ],
     }),
   })
+}
+
+const operationListenerCallback: CallbackLogicFunction<
+  AnyEventObject,
+  InputRuleMachineEvent,
+  {editor: Editor}
+> = ({input, sendBack}) => {
+  const subscription = input.editor.on('operation', (event) => {
+    if (event.origin === 'remote') {
+      return
+    }
+
+    sendBack({type: 'operation observed'})
+  })
+
+  return () => subscription.unsubscribe()
 }
 
 const selectionListenerCallback: CallbackLogicFunction<
@@ -400,6 +417,7 @@ const inputRuleSetup = setup({
   actors: {
     'delete.backward listener': fromCallback(deleteBackwardListenerCallback),
     'input rule listener': fromCallback(inputRuleListenerCallback),
+    'operation listener': fromCallback(operationListenerCallback),
     'selection listener': fromCallback(selectionListenerCallback),
   },
   guards: {
@@ -485,6 +503,10 @@ const inputRuleMachine = inputRuleSetup.createMachine({
           input: ({context}) => ({editor: context.editor}),
         },
         {
+          src: 'operation listener',
+          input: ({context}) => ({editor: context.editor}),
+        },
+        {
           src: 'selection listener',
           input: ({context}) => ({editor: context.editor}),
         },
@@ -495,6 +517,9 @@ const inputRuleMachine = inputRuleSetup.createMachine({
           guard: 'selection changed',
         },
         'history.undo raised': {
+          target: 'idle',
+        },
+        'operation observed': {
           target: 'idle',
         },
       },
