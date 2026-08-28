@@ -54,4 +54,10 @@ describe('editor.on overloads', () => {
     // @ts-expect-error - unbatched delivery is a single event, not an array
     editor.on('operation', arrayListener)
   })
+
+  test('an operation event carries its origin', () => {
+    editor.on('operation', (event) => {
+      expectTypeOf(event.origin).toEqualTypeOf<'local' | 'remote'>()
+    })
+  })
 })

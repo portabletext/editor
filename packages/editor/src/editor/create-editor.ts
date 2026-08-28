@@ -260,7 +260,11 @@ function createActors(config: {
         return
       }
 
-      config.relay.send({type: 'operation', operation: event.operation})
+      config.relay.send({
+        type: 'operation',
+        operation: event.operation,
+        origin: event.origin === 'remote' ? 'remote' : 'local',
+      })
     })
   })
 

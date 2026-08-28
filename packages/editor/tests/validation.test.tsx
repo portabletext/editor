@@ -76,6 +76,7 @@ describe('Value validation', () => {
         {
           type: 'operation',
           operation: {type: 'unset', path: [{_key: 'k3'}]},
+          origin: 'remote',
         },
         {
           type: 'operation',
@@ -89,6 +90,7 @@ describe('Value validation', () => {
               children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
             },
           },
+          origin: 'remote',
         },
         {
           type: 'invalid value',
@@ -152,6 +154,7 @@ describe('Value validation', () => {
             offset: 3,
             text: '!',
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -161,6 +164,7 @@ describe('Value validation', () => {
             value: [],
             inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -170,6 +174,7 @@ describe('Value validation', () => {
             value: 'normal',
             inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
           },
+          origin: 'local',
         },
         {
           type: 'patch',
@@ -303,6 +308,7 @@ describe('Value validation', () => {
         {
           type: 'operation',
           operation: {type: 'unset', path: [{_key: 'k3'}]},
+          origin: 'remote',
         },
         {
           type: 'operation',
@@ -312,6 +318,7 @@ describe('Value validation', () => {
             position: 'before',
             node: syncedBlock,
           },
+          origin: 'remote',
         },
         {type: 'value changed', value: [syncedBlock]},
         {type: 'ready'},
@@ -425,6 +432,7 @@ describe('Value validation', () => {
             offset: 3,
             text: '!',
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -434,6 +442,7 @@ describe('Value validation', () => {
             value: [],
             inverse: {type: 'unset', path: [{_key: blockKey}, 'markDefs']},
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -443,6 +452,7 @@ describe('Value validation', () => {
             value: 'normal',
             inverse: {type: 'unset', path: [{_key: blockKey}, 'style']},
           },
+          origin: 'local',
         },
         {
           type: 'patch',
@@ -581,6 +591,7 @@ describe('Value validation', () => {
         {
           type: 'operation',
           operation: {type: 'unset', path: [{_key: 'k0'}]},
+          origin: 'remote',
         },
         {
           type: 'operation',
@@ -594,6 +605,7 @@ describe('Value validation', () => {
               children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
             },
           },
+          origin: 'remote',
         },
         {
           type: 'invalid value',
@@ -655,6 +667,7 @@ describe('Value validation', () => {
             offset: 3,
             text: '!',
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -664,6 +677,7 @@ describe('Value validation', () => {
             value: [],
             inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -673,6 +687,7 @@ describe('Value validation', () => {
             value: 'normal',
             inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
           },
+          origin: 'local',
         },
         {
           type: 'patch',

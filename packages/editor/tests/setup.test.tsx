@@ -69,6 +69,7 @@ describe('Setup', () => {
       {
         type: 'operation',
         operation: {type: 'unset', path: [{_key: 'k5'}]},
+        origin: 'remote',
       },
       {
         type: 'operation',
@@ -82,6 +83,7 @@ describe('Setup', () => {
             children: [{_type: 'span', _key: 'k1', text: 'foo'}],
           },
         },
+        origin: 'remote',
       },
       {
         type: 'invalid value',

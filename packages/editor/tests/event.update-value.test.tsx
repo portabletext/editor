@@ -560,6 +560,7 @@ describe('event.update value', () => {
         {
           type: 'operation',
           operation: {type: 'unset', path: [{_key: 'k0'}]},
+          origin: 'remote',
         },
         {
           type: 'operation',
@@ -573,6 +574,7 @@ describe('event.update value', () => {
               children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
             },
           },
+          origin: 'remote',
         },
         {
           type: 'invalid value',
@@ -639,6 +641,7 @@ describe('event.update value', () => {
             offset: 3,
             text: '!',
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -648,6 +651,7 @@ describe('event.update value', () => {
             value: [],
             inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
           },
+          origin: 'local',
         },
         {
           type: 'operation',
@@ -657,6 +661,7 @@ describe('event.update value', () => {
             value: 'normal',
             inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
           },
+          origin: 'local',
         },
         {
           type: 'patch',
@@ -957,6 +962,7 @@ describe('event.update value', () => {
       {
         type: 'operation',
         operation: {type: 'unset', path: [{_key: 'k1'}]},
+        origin: 'remote',
       },
       {
         type: 'operation',
@@ -970,6 +976,7 @@ describe('event.update value', () => {
             src: 'https://example.com/image.jpg',
           },
         },
+        origin: 'remote',
       },
       {
         type: 'value changed',
