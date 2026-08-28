@@ -47,6 +47,15 @@ export type EditorEmittedEvent =
        */
       type: 'operation'
       operation: Operation
+      /**
+       * Where the change that produced this operation came from:
+       * `'local'` for changes made in this editor (edits, undo/redo),
+       * `'remote'` for changes applied from the outside (`patches`,
+       * `update value`, and the initial value sync). A normalization fix
+       * (a repaired key, a merged span) reports the origin of the change
+       * that triggered it.
+       */
+      origin: 'local' | 'remote'
     }
   | PatchEvent
   | {

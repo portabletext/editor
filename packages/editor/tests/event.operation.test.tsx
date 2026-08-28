@@ -3,6 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {Editor, Operation} from '../src'
@@ -332,6 +333,178 @@ describe('event.operation', () => {
       ])
     })
   })
+
+  test('Scenario: A local edit reports origin `local`', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [block('b1', '')],
+    })
+    const origins = collectOperationOrigins(editor)
+
+    await userEvent.type(locator, 'fo')
+
+    await vi.waitFor(() => {
+      expect(origins).toEqual(['local', 'local'])
+    })
+  })
+
+  test('Scenario: A remote patch reports origin `remote`', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [block('b1', 'foo')],
+    })
+    const origins = collectOperationOrigins(editor)
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}, 'text'],
+          value: 'bar',
+          origin: 'remote',
+        },
+      ],
+      snapshot: [block('b1', 'bar')],
+    })
+
+    await vi.waitFor(() => {
+      expect(firstSpanText(editor)).toBe('bar')
+      expect(origins).toEqual(['remote'])
+    })
+  })
+
+  test('Scenario: Undo and redo report origin `local`', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [block('b1', 'foo')],
+    })
+    await userEvent.type(locator, 'bar')
+    await vi.waitFor(() => {
+      expect(firstSpanText(editor)).toBe('barfoo')
+    })
+
+    const origins = collectOperationOrigins(editor)
+
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(firstSpanText(editor)).toBe('foo')
+      expect(origins).toEqual(['local', 'local', 'local'])
+    })
+    origins.length = 0
+
+    editor.send({type: 'history.redo'})
+    await vi.waitFor(() => {
+      expect(firstSpanText(editor)).toBe('barfoo')
+      expect(origins).toEqual(['local', 'local', 'local'])
+    })
+  })
+
+  test('Scenario: Remote-fallout normalization reports origin `remote`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialBlock = {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [initialBlock],
+    })
+    const origins = collectOperationOrigins(editor)
+
+    // A remote insert lands a second span with the same key as the first.
+    // The engine's duplicate-key fix, unlike the same-mark-merge fix, isn't
+    // gated off during remote processing, so it fires here and its `set`
+    // rides the same remote batch as the triggering `insert`.
+    const duplicateSpan = {
+      _type: 'span',
+      _key: spanKey,
+      text: 'bar',
+      marks: ['strong'],
+    }
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [duplicateSpan],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [
+        {...initialBlock, children: [...initialBlock.children, duplicateSpan]},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...initialBlock,
+          children: [initialBlock.children[0], {...duplicateSpan, _key: 'k4'}],
+        },
+      ])
+      expect(origins).toEqual(['remote', 'remote'])
+    })
+  })
+
+  test('Scenario: Local-edit fallout normalization reports origin `local`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const spanBazKey = keyGenerator()
+    const initialBlock = {
+      _type: 'block',
+      _key: blockKey,
+      children: [
+        {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
+        {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: spanBazKey, text: 'baz', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [initialBlock],
+    })
+    const origins = collectOperationOrigins(editor)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    // The `insert.text` and the same-mark-merge fix it triggers both run
+    // inside the local edit, unlike the initial value sync (which is
+    // wrapped as a remote change).
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...initialBlock,
+          children: [
+            {...initialBlock.children[0], text: 'foobar'},
+            {...initialBlock.children[2], text: 'baz!'},
+          ],
+        },
+      ])
+      expect(origins).toEqual(['local', 'local', 'local'])
+    })
+  })
 })
 
 /**
@@ -343,6 +516,17 @@ function collectOperations(editor: Editor): Array<Operation> {
     operations.push(event.operation)
   })
   return operations
+}
+
+/**
+ * Collect the `origin` of every public operation event from this point on.
+ */
+function collectOperationOrigins(editor: Editor): Array<'local' | 'remote'> {
+  const origins: Array<'local' | 'remote'> = []
+  editor.on('operation', (event) => {
+    origins.push(event.origin)
+  })
+  return origins
 }
 
 function block(key: string, text: string): PortableTextBlock {
