@@ -1,0 +1,114 @@
+---
+title: Drag and drop
+description: How the editor turns native drag events into behavior events, what a drop does to the document, and who owns draggable markup and drop indicators.
+sidebar:
+  order: 5
+---
+
+Dragging runs through [behaviors](/editor/concepts/behavior/): the editor translates the browser's drag events into `drag.*` behavior events and owns what a drop does to the document. Two things are yours: the `draggable` markup that lets content be picked up, and any drop indicator you want to show, because the engine draws none.
+
+## Draggable blocks
+
+A block object's own non-editable chrome carries `draggable`, gated on `readOnly`:
+
+```tsx
+defineBlockObject({
+  type: 'image',
+  render: (props) =>
+    typeof props.node.src === 'string' ? (
+      <figure {...props.attributes}>
+        <div contentEditable={false} draggable={!props.readOnly}>
+          <img src={props.node.src} alt="" />
+        </div>
+        {props.children}
+      </figure>
+    ) : (
+      props.renderDefault(props)
+    ),
+})
+```
+
+Picking that chrome up drags the whole block. A text block gets a drag handle the same way, `draggable` on non-editable chrome inside its render, and when the user's selection spans several blocks and covers the handle, the drag carries them all.
+
+See [Containers](/editor/concepts/containers/) for the full `draggable={!readOnly}` contract, including the same wrapper on a container's own chrome, and [Rendering](/editor/concepts/rendering/#markup-ownership) for who owns which markup in general.
+
+## The `drag.*` events
+
+Seven events carry the native drag lifecycle into behaviors. Behaviors read three payload pieces off them, `originEvent`, `dragOrigin`, and `position`:
+
+- `originEvent` is a reduced object, not the browser `DragEvent`: `{clientX, clientY, dataTransfer}` on `dragstart`, `{dataTransfer}` on the rest. `dataTransfer` holds the data being dragged; the rest of the browser event is not exposed.
+- `dragOrigin` is the selection captured at `dragstart`. It's present only on `dragover` and `drop`, and only for a drag that started in this editor; its presence is what makes a drag internal (see [Internal and external drags](#internal-and-external-drags)).
+- `position` is the pointer's location translated into model terms. A full `position` carries four fields:
+  - `selection`, the model selection at the pointer.
+  - `block`, which side of the hovered block the pointer resolves to, `'start'` or `'end'`.
+  - `isEditor`, whether the pointer is over the editor's own root rather than a block inside it.
+  - `isContainer`, whether the pointer is over a [container](/editor/concepts/containers/)'s own chrome (a code block, a table cell) rather than a block inside it.
+
+| Event       | `dragOrigin`                | `position`       |
+| ----------- | --------------------------- | ---------------- |
+| `dragstart` | not present                 | `selection` only |
+| `drag`      | not present                 | not present      |
+| `dragend`   | not present                 | not present      |
+| `dragenter` | not present                 | full             |
+| `dragover`  | present on an internal drag | full             |
+| `drop`      | present on an internal drag | full             |
+| `dragleave` | not present                 | not present      |
+
+`dragstart` carries only `position.selection`: the drag hasn't moved yet, so the other fields aren't meaningful there.
+
+`drag.*` events are behavior events like any other: a behavior that handles one owns it, so an observer that wants the drag to keep working has to forward it. This observer tracks the position a drop would use, the first half of a drop-indicator implementation (the clearing half is described under [Drop indicators](#drop-indicators)):
+
+```tsx
+defineBehavior({
+  on: 'drag.dragover',
+  guard: ({event}) => ({
+    selection: event.position.selection,
+    side: event.position.block,
+  }),
+  actions: [
+    ({event}, dropPosition) => [
+      effect(() => {
+        onDropPositionChange(dropPosition)
+      }),
+      forward(event),
+    ],
+  ],
+})
+```
+
+Forgetting `forward(event)` doesn't just mute other observers: the editor's own dragover handling never runs and the drag breaks. The same ownership is also the veto: a behavior that handles `drag.drop` without forwarding it cancels the drop.
+
+## Internal and external drags
+
+Whether `dragOrigin` is present on `dragover` and `drop` is the whole distinction between an internal move and an external drop. Present, and the drop is a move: the editor deletes the dragged content from where it was and inserts it at the drop position. Absent, and the drop is external, text from another application, a file, a link, and the dropped data goes through the same deserialization pipeline as a paste, picking the richest format the drag carries. See [Clipboard](/editor/concepts/clipboard/) for that pipeline in full.
+
+`dragOrigin` lives per editor, so a drop into a different editor instance is external to that instance: the second editor never sees the first one's drag origin.
+
+Dragging content out of the editor writes the same formats a copy does, through the same `serialize` pipeline; see [Clipboard](/editor/concepts/clipboard/) for the format list. The drag ghost the browser shows under the pointer is built from the dragged content's own DOM.
+
+## What a drop does
+
+A drop inserts at the drop position; mid-text, that's wherever the native drag caret points. What shape the insert takes is decided by the drag's captured selection, not by what was under the pointer when it started.
+
+A captured selection that stops short of a block edge, and any external drop, inserts the way a paste would, including splitting a paragraph mid-text when the drop lands there.
+
+A captured selection that covers entire blocks, start to end, resolves to one of three outcomes:
+
+- **Split.** The drop splits the hovered text block. Every condition must hold:
+  - the drop position is collapsed and lands strictly inside a non-empty text block's own characters,
+  - it is not on an inline object and not at the block's start or end,
+  - and at least one of the dragged blocks fits the destination schema.
+- **Snap.** Otherwise, the dragged blocks snap before or after the hovered block, following `position.block`.
+- **No-op.** When none of the dragged blocks fit the destination schema, the drop does nothing and the source is left where it is.
+
+What "fits" means is the schema at the destination: the top-level schema, or a [container](/editor/concepts/containers/)'s sub-schema when the drop lands inside one. When only some of the dragged blocks fit, the drop goes ahead with just those; a container the destination rejects still contributes the children the destination does accept, without the container around them. The source is still cleared of the entire original drag selection, so the blocks that didn't fit are discarded, not left behind at the origin.
+
+A drop landing back on its own drag origin is cancelled outright. Hovering the origin shows no native drag caret either: the editor claims `dragover` over it without forwarding.
+
+An entire-block move is a single history step: one `history.undo` restores the document to what it was before the drop, delete and insert together.
+
+## Drop indicators
+
+The engine draws no drop-indicator chrome. A drop indicator is pointer-driven UI, not document structure, so drawing it is left to you.
+
+[`@portabletext/plugin-dnd`](https://github.com/portabletext/editor/tree/main/packages/plugin-dnd) tracks the drop position from the `drag.*` events above: mount its `DndProvider` inside `EditorProvider` and read the hovered edge, `'start'` or `'end'`, with `useDropPosition` from a component your block render returns. It resolves the position at the hovered block's own nesting depth, including blocks inside a container, and hides the native drag caret while an edge indicator is active, so you don't get both at once. It clears the tracked position on every drag event other than `dragover`, and on any `dragover` with nothing to indicate: hovering the dragged block itself, or a mid-text position where the native drag caret takes over. An implementation of your own clears on the same triggers. The plugin's README carries the mounting recipe and a reference `DropIndicator` implementation.

@@ -119,6 +119,7 @@ export default defineConfig({
                 {slug: 'editor/concepts/containers'},
                 {slug: 'editor/concepts/traversal'},
                 {slug: 'editor/concepts/clipboard'},
+                {slug: 'editor/concepts/dnd'},
               ],
             },
             {
