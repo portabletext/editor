@@ -10,10 +10,10 @@ import {isRange} from '../engine/range/is-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
@@ -109,7 +109,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       )
 
       if (existingMarkDef === undefined) {
-        setNodeProperties(
+        applyNodeProperties(
           editor,
           {
             markDefs: [
@@ -178,7 +178,11 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
         const marks = span.marks ?? []
 
-        setNodeProperties(editor, {marks: [...marks, annotationKey]}, spanPath)
+        applyNodeProperties(
+          editor,
+          {marks: [...marks, annotationKey]},
+          spanPath,
+        )
       }
 
       blockIndex++

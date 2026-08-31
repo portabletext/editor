@@ -6,10 +6,10 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import {withoutPatching} from '../../engine-plugins/engine-plugin.without-patching'
 import {applyInsertNodeAtPath} from '../../internal-utils/apply-insert-node'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
+import {applyNodeProperties} from '../../internal-utils/apply-node-properties'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
-import {setNodeProperties} from '../../internal-utils/set-node-properties'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
@@ -267,7 +267,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     !Array.isArray(node.markDefs)
   ) {
     debug.normalization('adding .markDefs to block node')
-    setNodeProperties(editor, {markDefs: []}, path)
+    applyNodeProperties(editor, {markDefs: []}, path)
     return
   }
 
@@ -284,7 +284,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     )?.name
     if (defaultStyle) {
       debug.normalization('adding .style to block node')
-      setNodeProperties(editor, {style: defaultStyle}, path)
+      applyNodeProperties(editor, {style: defaultStyle}, path)
       return
     }
   }
@@ -315,7 +315,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     !Array.isArray(node.marks)
   ) {
     debug.normalization('Adding .marks to span node')
-    setNodeProperties(editor, {marks: []}, path)
+    applyNodeProperties(editor, {marks: []}, path)
     return
   }
 
@@ -341,7 +341,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (node.text === '' && annotations && annotations.length > 0) {
       debug.normalization('removing annotations from empty span node')
-      setNodeProperties(
+      applyNodeProperties(
         editor,
         {marks: node.marks?.filter((mark) => !annotations.includes(mark))},
         path,
@@ -370,7 +370,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (markDefs.length !== newMarkDefs.length) {
       debug.normalization('removing duplicate markDefs')
-      setNodeProperties(editor, {markDefs: newMarkDefs}, path)
+      applyNodeProperties(editor, {markDefs: newMarkDefs}, path)
       return
     }
   }
@@ -394,7 +394,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
       debug.normalization('removing markDef not in use')
-      setNodeProperties(editor, {markDefs: newMarkDefs}, path)
+      applyNodeProperties(editor, {markDefs: newMarkDefs}, path)
       return
     }
   }
@@ -467,12 +467,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (needsField && childNode) {
           // Set the field with its initial child in a single operation
           // instead of two (set empty array + insert child).
-          setNodeProperties(editor, {[arrayField.name]: [childNode]}, path)
+          applyNodeProperties(editor, {[arrayField.name]: [childNode]}, path)
           return
         }
 
         if (needsField) {
-          setNodeProperties(editor, {[arrayField.name]: []}, path)
+          applyNodeProperties(editor, {[arrayField.name]: []}, path)
           return
         }
 

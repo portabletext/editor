@@ -20,10 +20,10 @@ import {isLeafObject} from '../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {applyMergeNode} from './apply-merge-node'
+import {applyNodeProperties} from './apply-node-properties'
 import {createPlaceholderBlock} from './create-placeholder-block'
 import {getFullyCoveredContainers} from './get-fully-covered-container'
 import {planMergeKeyRenames} from './plan-merge-key-renames'
-import {setNodeProperties} from './set-node-properties'
 
 /**
  * What to do with the editor selection once the delete completes.
@@ -775,7 +775,7 @@ function mergeBlock(
 
   for (const {markDefKey, newKey} of markDefRenames) {
     // `getNode` can't resolve a keyed descent into `markDefs` (it's a
-    // sidecar field, not part of the child tree), so `setNodeProperties`
+    // sidecar field, not part of the child tree), so `applyNodeProperties`
     // would silently no-op here. Apply the rename directly.
     editor.apply({
       type: 'set',
@@ -784,7 +784,7 @@ function mergeBlock(
     })
   }
   for (const {childKey, props} of childRenames) {
-    setNodeProperties(editor, props, [
+    applyNodeProperties(editor, props, [
       ...endBlockPath,
       'children',
       {_key: childKey},
@@ -796,7 +796,7 @@ function mergeBlock(
   )
   if (Array.isArray(endMarkDefs) && endMarkDefs.length > 0) {
     const oldDefs = startBlock.node.markDefs ?? []
-    setNodeProperties(
+    applyNodeProperties(
       editor,
       {markDefs: [...oldDefs, ...endMarkDefs]},
       startBlockPath,

@@ -13,8 +13,8 @@ import {
   resolveContainers,
   resolveContainersRich,
 } from '../schema/resolve-containers-batch'
+import {applyNodeProperties} from './apply-node-properties'
 import {buildIndexMaps} from './build-index-maps'
-import {setNodeProperties} from './set-node-properties'
 
 test('throws when the path is structurally unreachable', () => {
   const keyGenerator = createTestKeyGenerator()
@@ -44,12 +44,12 @@ test('throws when the path is structurally unreachable', () => {
   const editor = createBareEditor(schema, [], value)
 
   expect(() =>
-    setNodeProperties(editor, {_key: newKey}, [
+    applyNodeProperties(editor, {_key: newKey}, [
       {_key: blockKey},
       'markDefs',
       {_key: markDefKey},
     ]),
-  ).toThrow('Unable to set properties at structurally unreachable path')
+  ).toThrow('Unable to apply properties at structurally unreachable path')
 })
 
 test('skips silently when the node is missing', () => {
@@ -70,7 +70,7 @@ test('skips silently when the node is missing', () => {
   const editor = createBareEditor(schema, [], value)
 
   expect(() =>
-    setNodeProperties(editor, {level: 1}, [{_key: 'nonexistent'}]),
+    applyNodeProperties(editor, {level: 1}, [{_key: 'nonexistent'}]),
   ).not.toThrow()
   expect(editor.snapshot.context.value).toEqual([
     {
@@ -122,7 +122,7 @@ test('applies the change through a container whose array field is named markDefs
   ]
   const editor = createBareEditor(schema, publicContainers, value)
 
-  setNodeProperties(editor, {title: 'baz'}, [
+  applyNodeProperties(editor, {title: 'baz'}, [
     {_key: containerKey},
     'markDefs',
     {_key: childKey},

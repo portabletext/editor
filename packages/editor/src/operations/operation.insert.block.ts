@@ -17,6 +17,7 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
 import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {deleteRange} from '../internal-utils/delete-range'
@@ -25,7 +26,6 @@ import {
   isEqualChildren,
   isEqualMarks,
 } from '../internal-utils/equality'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toEngineBlock} from '../internal-utils/values'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getParent} from '../traversal/get-parent'
@@ -484,7 +484,7 @@ function mergeTextBlockFragment(args: {
     endBlock,
   })
 
-  setNodeProperties(
+  applyNodeProperties(
     editor,
     {
       markDefs: [...(endBlock.markDefs ?? []), ...(adjustedMarkDefs ?? [])],

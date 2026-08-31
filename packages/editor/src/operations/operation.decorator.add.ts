@@ -9,9 +9,9 @@ import {isExpandedRange} from '../engine/range/is-expanded-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
@@ -99,7 +99,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           ),
           mark,
         ]
-        setNodeProperties(editor, {marks}, spanPath)
+        applyNodeProperties(editor, {marks}, spanPath)
       }
     }) // end withoutNormalizing
   } else {
@@ -154,7 +154,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
             isSpan({schema: editor.snapshot.context.schema}, node),
         }),
       )) {
-        setNodeProperties(editor, {marks: newMarks}, spanPath)
+        applyNodeProperties(editor, {marks: newMarks}, spanPath)
       }
     } else {
       editor.snapshot.decoratorState[mark] = true

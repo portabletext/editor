@@ -1,7 +1,7 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getBlockObjectSchema} from '../schema/get-block-object-schema'
 import {getNode} from '../traversal/get-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
@@ -77,7 +77,7 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    setNodeProperties(operation.editor, filteredProps, blockEntry.path)
+    applyNodeProperties(operation.editor, filteredProps, blockEntry.path)
   } else {
     const schemaDefinition = getBlockObjectSchema(
       snapshot,
@@ -107,6 +107,6 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedEngineBlock = applyAll(engineBlock, patches)
 
-    setNodeProperties(operation.editor, updatedEngineBlock, blockEntry.path)
+    applyNodeProperties(operation.editor, updatedEngineBlock, blockEntry.path)
   }
 }

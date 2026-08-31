@@ -13,7 +13,7 @@ import {safeStringify} from './safe-json'
  * downstream patch consumers see the key change before any property
  * mutations that reference the new key.
  */
-export function setNodeProperties(
+export function applyNodeProperties(
   editor: PortableTextEditorEngine,
   props: Record<string, unknown> | object,
   path: Path,
@@ -22,7 +22,7 @@ export function setNodeProperties(
 
   if (result.status === 'unreachable') {
     throw new Error(
-      `Unable to set properties at structurally unreachable path ${safeStringify(path)}`,
+      `Unable to apply properties at structurally unreachable path ${safeStringify(path)}`,
     )
   }
 
