@@ -1,7 +1,8 @@
 import type {EditorContext} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
-import {getPathSubSchema} from '@portabletext/editor/traversal'
+import {getPathSubSchema, getSibling} from '@portabletext/editor/traversal'
+import {isEmptyTextBlock, isTextBlock} from '@portabletext/editor/utils'
 
 export type ObjectWithOptionalKey = {
   _type: string
@@ -112,6 +113,22 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         // sub-schema and calling the consumer's `defaultStyle` callback on
         // every other backspace is wasted work with a consumer-visible
         // call frequency.
+        return false
+      }
+
+      const previousSibling = getSibling(snapshot, focusTextBlock.path, {
+        direction: 'previous',
+      })
+
+      const previousSiblingHasTextContent =
+        previousSibling !== undefined &&
+        isTextBlock(snapshot.context, previousSibling.node) &&
+        !isEmptyTextBlock(snapshot.context, previousSibling.node)
+
+      if (previousSibling && !previousSiblingHasTextContent) {
+        // An empty or object previous block takes priority over clearing
+        // the style: falling through lets core's own Backspace handling
+        // (list clearing, block removal) run on it first.
         return false
       }
 

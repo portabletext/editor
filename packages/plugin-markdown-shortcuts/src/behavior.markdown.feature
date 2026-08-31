@@ -99,6 +99,50 @@ Feature: Markdown Behaviors
       | "h5"  |
       | "h6"  |
 
+  Scenario: Backspace removes an empty previous block instead of clearing style
+    Given the editor state is "B: ;;B style=\"h1\": foo"
+    When the editor is focused
+    And the selection is "B: ;;B style=\"h1\": |foo"
+    And "{Backspace}" is pressed
+    Then the editor state is "B style=\"h1\": |foo"
+
+  Scenario: Backspace removes an empty previous block instead of clearing style on an empty heading
+    Given the editor state is "B: ;;B style=\"h1\": "
+    When the editor is focused
+    And the selection is "B: ;;B style=\"h1\": |"
+    And "{Backspace}" is pressed
+    Then the editor state is "B style=\"h1\": |"
+
+  Scenario: Backspace removes an empty previous styled block instead of clearing style
+    Given the editor state is "B style=\"h2\": ;;B style=\"h1\": foo"
+    When the editor is focused
+    And the selection is "B style=\"h2\": ;;B style=\"h1\": |foo"
+    And "{Backspace}" is pressed
+    Then the editor state is "B style=\"h1\": |foo"
+
+  Scenario: Backspace removes a previous block object instead of clearing style
+    Given the editor state is "{IMAGE};;B style=\"h1\": foo"
+    When the editor is focused
+    And the selection is "{IMAGE};;B style=\"h1\": |foo"
+    And "{Backspace}" is pressed
+    Then the editor state is "B style=\"h1\": |foo"
+
+  Scenario: Clear style on Backspace still fires when the previous block has content
+    Given the editor state is "B: bar;;B style=\"h1\": foo"
+    When the editor is focused
+    And the selection is "B: bar;;B style=\"h1\": |foo"
+    And "{Backspace}" is pressed
+    Then the editor state is "B: bar;;B: |foo"
+
+  Scenario: Backspace on a styled list item clears the list before removing the empty previous block
+    Given the editor state is "B: ;;B style=\"h1\" listItem=\"bullet\": foo"
+    When the editor is focused
+    And the selection is "B: ;;B style=\"h1\" listItem=\"bullet\": |foo"
+    And "{Backspace}" is pressed
+    Then the editor state is "B: ;;B style=\"h1\": |foo"
+    When "{Backspace}" is pressed
+    Then the editor state is "B style=\"h1\": |foo"
+
   Scenario: Backspace twice after an automatic heading does not resurface the heading
     Given the editor state is "B: |"
     When the editor is focused
