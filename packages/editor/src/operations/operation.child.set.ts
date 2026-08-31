@@ -1,8 +1,8 @@
 import {isSpan} from '@portabletext/schema'
 import {parentPath} from '../engine/path/parent-path'
 import {siblingPath} from '../engine/path/sibling-path'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../traversal/get-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {isObject} from '../traversal/is-object'
@@ -22,7 +22,7 @@ export const childSetOperationImplementation: OperationImplementation<
   if (isSpan({schema: operation.editor.snapshot.context.schema}, child)) {
     const {_type, text, ...rest} = operation.props
 
-    setNodeProperties(
+    applyNodeProperties(
       operation.editor,
       {
         ...child,
@@ -78,7 +78,7 @@ export const childSetOperationImplementation: OperationImplementation<
       }
     }
 
-    setNodeProperties(
+    applyNodeProperties(
       operation.editor,
       {
         ...child,

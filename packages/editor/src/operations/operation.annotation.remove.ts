@@ -13,9 +13,9 @@ import {isRange} from '../engine/range/is-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
@@ -135,7 +135,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [selectedChild, selectedChildPath] satisfies [PortableTextSpan, Path],
       ...nextSpansWithSameAnnotation,
     ]) {
-      setNodeProperties(
+      applyNodeProperties(
         editor,
         {
           marks: child.marks?.filter((mark) => mark !== annotationToRemove),
@@ -222,7 +222,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           })
 
           if (marksWithoutAnnotation.length !== marks.length) {
-            setNodeProperties(
+            applyNodeProperties(
               editor,
               {marks: marksWithoutAnnotation},
               childPath,

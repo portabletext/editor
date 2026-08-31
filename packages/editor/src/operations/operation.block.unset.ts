@@ -1,6 +1,6 @@
 import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../traversal/get-node'
 import type {OperationImplementation} from './operation.types'
 
@@ -25,10 +25,10 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     for (const prop of propsToRemove) {
       unsetProps[prop] = null
     }
-    setNodeProperties(operation.editor, unsetProps, blockEntry.path)
+    applyNodeProperties(operation.editor, unsetProps, blockEntry.path)
 
     if (operation.props.includes('_key')) {
-      setNodeProperties(
+      applyNodeProperties(
         operation.editor,
         {_key: context.keyGenerator()},
         blockEntry.path,
@@ -49,5 +49,5 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       unsetProps[key] = null
     }
   }
-  setNodeProperties(operation.editor, unsetProps, blockEntry.path)
+  applyNodeProperties(operation.editor, unsetProps, blockEntry.path)
 }

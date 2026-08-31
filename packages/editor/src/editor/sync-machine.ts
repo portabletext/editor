@@ -19,6 +19,7 @@ import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
 import {start} from '../engine/editor/start'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {deleteRange} from '../internal-utils/delete-range'
@@ -28,7 +29,6 @@ import {
   isEqualValues,
 } from '../internal-utils/equality'
 import {safeStringify} from '../internal-utils/safe-json'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {validateValue} from '../internal-utils/validateValue'
 import {toEngineBlock} from '../internal-utils/values'
 import {hasNode} from '../traversal/has-node'
@@ -957,7 +957,7 @@ function updateBlock({
     unknown
   >
 
-  setNodeProperties(editorEngine, blockProps, [{_key: oldEngineBlock._key}])
+  applyNodeProperties(editorEngine, blockProps, [{_key: oldEngineBlock._key}])
 
   // Remove properties present on the old node but absent from the new block.
   // Skip children/text (structural, managed by dedicated operations).
@@ -976,7 +976,7 @@ function updateBlock({
   }
 
   if (Object.keys(removedProperties).length > 0) {
-    setNodeProperties(editorEngine, removedProperties, [
+    applyNodeProperties(editorEngine, removedProperties, [
       {_key: oldEngineBlock._key},
     ])
   }
@@ -1002,7 +1002,7 @@ function updateBlock({
 
     if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
       debug.syncValue('Replacing children via set')
-      setNodeProperties(editorEngine, {children: engineBlock.children}, [
+      applyNodeProperties(editorEngine, {children: engineBlock.children}, [
         {_key: oldEngineBlock._key},
       ])
       editorEngine.onChange()
@@ -1084,7 +1084,7 @@ function updateBlock({
               delete childProps['text']
             }
 
-            setNodeProperties(editorEngine, childProps, path)
+            applyNodeProperties(editorEngine, childProps, path)
 
             if (isSpanNode && isTextChanged) {
               if (oldBlockChild.text.length > 0) {

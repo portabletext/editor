@@ -10,9 +10,9 @@ import {isExpandedRange} from '../engine/range/is-expanded-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
+import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
-import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
@@ -80,7 +80,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
             isTextBlock({schema: editor.snapshot.context.schema}, block) &&
             block.children.includes(node)
           ) {
-            setNodeProperties(
+            applyNodeProperties(
               editor,
               {
                 marks: (Array.isArray(node.marks) ? node.marks : []).filter(
@@ -123,7 +123,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
             isSpan({schema: editor.snapshot.context.schema}, node),
         }),
       )) {
-        setNodeProperties(
+        applyNodeProperties(
           editor,
           {marks: existingMarksWithoutDecorator},
           spanPath,
