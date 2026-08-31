@@ -19,6 +19,7 @@ description: How to write commit messages in the Portable Text Editor monorepo. 
 ## Type selection
 
 - A commit that ships a **changeset is `fix:` or `feat:`**, never `refactor:`/`chore:`. The changeset is the tell: releasable change ⇒ fix/feat.
+- The tell runs both ways for bare types: a bare `fix:`/`feat:` **must ship (or amend) a changeset**. No changeset means it is not a fix/feat; retype it (`refactor:` for code changes with no releasable behavior change, even ones that alter internal behavior, `chore:`/`test:`/`docs:` otherwise). The two exemptions are scoped commits to unpublished targets (`fix(playground):`) and `fix(deps):`, where the changeset bot ships the release.
 - `chore(deps):` for dependency/config work with no published-code change (no changeset).
 - Renovate-adjacent nuance: `fix(deps)` cuts a patch release via the changeset bot; don't hand it to tooling-only bumps.
 
