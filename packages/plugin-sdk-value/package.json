@@ -73,7 +73,7 @@
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
-    "@sanity/sdk-react": "^2.19.0",
+    "@sanity/sdk-react": "^3.0.0",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/debug": "catalog:",
     "@types/react": "catalog:tooling",
@@ -92,7 +92,7 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
-    "@sanity/sdk-react": "^2.19.0",
+    "@sanity/sdk-react": "^2.19.0 || ^3",
     "react": "^19.2",
     "react-dom": "^19.2"
   },

@@ -3,7 +3,7 @@ import {
   type PortableTextEditableProps,
   type RangeDecoration,
 } from '@portabletext/editor'
-import type {DocumentHandle} from '@sanity/sdk-react'
+import type {DocumentHandle, DocumentResource} from '@sanity/sdk-react'
 import {useMemo} from 'react'
 import {
   SDKPresencePlugin,
@@ -12,6 +12,7 @@ import {
 } from './plugin.sdk-presence'
 import {SDKValuePlugin} from './plugin.sdk-value'
 import {renderDefaultCursor} from './presence-caret'
+import {normalizeDocumentHandle} from './sdk-document-handle'
 
 /**
  * Props for {@link SDKPortableTextEditable}.
@@ -24,6 +25,10 @@ export interface SDKPortableTextEditableProps
     // `resource` is both a document handle field and an RDFa HTML attribute, so
     // the handle wins. Dropping the attribute costs nothing in an editor.
     Omit<PortableTextEditableProps, keyof DocumentHandle> {
+  /**
+   * @deprecated Use `resource` instead.
+   */
+  source?: DocumentResource
   /**
    * The document path of the Portable Text field, for example `content`.
    */
@@ -115,6 +120,7 @@ export function SDKPortableTextEditable(props: SDKPortableTextEditableProps) {
 export function splitEditableProps(
   props: SDKPortableTextEditableProps,
 ): SplitEditableProps {
+  const normalizedProps = normalizeDocumentHandle(props)
   const {
     documentId,
     documentType,
@@ -122,14 +128,13 @@ export function splitEditableProps(
     dataset,
     resource,
     resourceName,
-    source,
     liveEdit,
     perspective,
     path,
     renderCursor,
     rangeDecorations,
     ...editableProps
-  } = props
+  } = normalizedProps
 
   return {
     // Only the fields the caller actually passed. The SDK resolves an ambient
@@ -142,9 +147,8 @@ export function splitEditableProps(
       documentType,
       ...('projectId' in props && {projectId}),
       ...('dataset' in props && {dataset}),
-      ...('resource' in props && {resource}),
+      ...('resource' in normalizedProps && {resource}),
       ...('resourceName' in props && {resourceName}),
-      ...('source' in props && {source}),
       ...('liveEdit' in props && {liveEdit}),
       ...('perspective' in props && {perspective}),
     },
