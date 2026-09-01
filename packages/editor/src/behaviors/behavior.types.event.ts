@@ -65,7 +65,7 @@ export type ExternalBehaviorEvent =
  * Synthetic events
  **************************************/
 
-const syntheticBehaviorEventTypes = [
+export const syntheticBehaviorEventTypes = [
   'annotation.add',
   'annotation.remove',
   'block.set',
@@ -348,7 +348,7 @@ export function isSyntheticBehaviorEvent(
  * Abstract events
  **************************************/
 
-const abstractBehaviorEventTypes = [
+export const abstractBehaviorEventTypes = [
   'annotation.set',
   'annotation.toggle',
   'decorator.toggle',
