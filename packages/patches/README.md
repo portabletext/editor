@@ -95,4 +95,4 @@ export function Editor() {
 }
 ```
 
-As the comment notes, this is redundant in a single app: the editor's `mutation` event already carries the finished `value`, so listen for that and use `event.value` instead. `applyAll` earns its place only when you have the patches but not the value, such as a server or secondary store replaying them onto its own copy.
+As the comment notes, this is redundant in a single app: the editor's `mutation` event already includes the finished `value`, so listen for that and use `event.value` instead. You only need `applyAll` when you have the patches but not the value, such as a server or secondary store replaying them onto its own copy.

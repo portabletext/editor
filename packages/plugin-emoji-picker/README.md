@@ -62,7 +62,7 @@ function EmojiPicker() {
 }
 ```
 
-**Tip:** For a comprehensive emoji library, you can install [`emojilib`](https://www.npmjs.com/package/emojilib) and use it directly:
+**Tip:** For a bigger emoji library, install [`emojilib`](https://www.npmjs.com/package/emojilib) and use it directly:
 
 ```tsx
 import emojilib from 'emojilib'

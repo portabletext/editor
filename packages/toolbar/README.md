@@ -1,15 +1,15 @@
 # `@portabletext/toolbar`
 
-Powered by [Behaviors](https://www.portabletext.org/editor/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of robust React hooks for building toolbars and related UI components
+Powered by [Behaviors](https://www.portabletext.org/editor/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of React hooks for building toolbars and related UI components
 for the Portable Text editor.
 
-Refer to the toolbar in the [Portable Text Playground](../../apps/playground/) for a comprehensive example.
+Refer to the toolbar in the [Portable Text Playground](../../apps/playground/) for a full example.
 
 ## Features
 
 - **Schema Extension**: Extend the editor's schema with default values, icons, shortcuts and more. This makes it easier to use the schema to render toolbars, forms and other UI components.
 - **Hooks**: Headless React hooks to help building UI components for toggle buttons, popovers and insert dialogs.
-- **Keyboard Shortcuts**: Seamless integration with `@portabletext/keyboard-shortcuts` for platform-aware shortcuts.
+- **Keyboard Shortcuts**: Integrates with `@portabletext/keyboard-shortcuts` for platform-aware shortcuts.
 
 ## Installation
 
