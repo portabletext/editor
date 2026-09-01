@@ -1,6 +1,11 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, isTextBlock, type Schema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {
+  createTestKeyGenerator,
+  fromTextspec,
+  getTersePt,
+  toTextspec,
+} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {
   defineSchema,
@@ -13,8 +18,6 @@ import {
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
-import {fromTextspec} from '../test-utils/from-textspec'
-import {toTextspec} from '../test-utils/to-textspec'
 
 /**
  * The wire catalogue: one scenario per test, each producing a committed
@@ -23,12 +26,13 @@ import {toTextspec} from '../test-utils/to-textspec'
  * markdown catalogue.
  *
  * `seed` and `result` are textspec notation strings (see
- * `test-utils/from-textspec.ts`/`to-textspec.ts`): together with the
- * `schema` field and the deterministic `createTestKeyGenerator`, `seed` is
- * enough to replay the scenario. Scenarios textspec can't express, such as
- * a span boundary that isn't a mark boundary or a duplicate `_key` across
- * sibling blocks, keep the pre-textspec shape instead (`seed` as full
- * blocks, `seedTerse`/`resultTerse`).
+ * `@portabletext/test`'s `fromTextspec`/`toTextspec`):
+ * together with the `schema` field and the deterministic
+ * `createTestKeyGenerator`, `seed` is enough to replay the scenario.
+ * Scenarios textspec can't express, such as a span boundary that isn't a
+ * mark boundary or a duplicate `_key` across sibling blocks, keep the
+ * pre-textspec shape instead (`seed` as full blocks,
+ * `seedTerse`/`resultTerse`).
  */
 
 type Capture = {

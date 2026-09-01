@@ -1,9 +1,8 @@
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.move.block regression', () => {
   test('Scenario: Moving a block down preserves selection on the moved block', async () => {

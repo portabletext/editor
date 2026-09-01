@@ -1,4 +1,7 @@
+import type {Path} from '@portabletext/patches'
 import type {
+  FieldDefinition,
+  OfDefinition,
   PortableTextBlock,
   PortableTextObject,
   PortableTextSpan,
@@ -14,22 +17,61 @@ import type {
   Block as TextspecBlock,
 } from '@textspec/notation'
 import {parse} from '@textspec/notation'
-import type {Containers} from '../src/schema/resolve-containers'
-import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
 /**
- * Parse a textspec notation string into PTE blocks and selection.
+ * A registered container: the schema-declared field holding its children,
+ * plus any positional child registrations that override the top-level
+ * registration when resolving a nested container.
+ * @public
+ */
+export type TextspecContainerRegistration = {
+  kind: 'container'
+  type: string
+  field: FieldDefinition & {type: 'array'; of: ReadonlyArray<OfDefinition>}
+  of?: ReadonlyArray<
+    | TextspecContainerRegistration
+    | {kind: 'span'; type: string}
+    | {kind: 'blockObject'; type: string}
+    | {kind: 'inlineObject'; type: string}
+  >
+}
+
+/**
+ * Map of registered containers, keyed by `_type`.
+ * @public
+ */
+export type TextspecContainers = ReadonlyMap<
+  string,
+  TextspecContainerRegistration
+>
+
+/** @public */
+export type TextspecSelectionPoint = {path: Path; offset: number}
+/** @public */
+export type TextspecSelection = {
+  anchor: TextspecSelectionPoint
+  focus: TextspecSelectionPoint
+  backward?: boolean
+} | null
+
+/**
+ * Parse textspec notation into Portable Text blocks and a selection,
+ * deterministic under the supplied key generator. Pass `containers` to
+ * resolve container schemas (block objects with array fields holding
+ * further blocks or container objects).
+ *
+ * @public
  */
 export function fromTextspec(
   context: {
     schema: Schema
     keyGenerator: () => string
-    containers?: Containers
+    containers?: TextspecContainers
   },
   textspec: string,
 ): {
   blocks: Array<PortableTextBlock>
-  selection: EditorSelection
+  selection: TextspecSelection
 } {
   // If no selection markers are present, add a cursor at the end
   // to satisfy the parser's requirement for a selection marker.
@@ -264,7 +306,7 @@ function flattenContainer(
  */
 function convertBlockToPTE(
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   block: Block,
   keyGenerator: () => string,
   parentType: string | undefined,
@@ -367,7 +409,7 @@ function isListContainer(type: string): boolean {
  * container fallback path.
  */
 function resolveContainerType(
-  containers: Containers,
+  containers: TextspecContainers,
   parentType: string | undefined,
   textspecType: string,
 ): string | undefined {
@@ -399,7 +441,7 @@ function resolveContainerType(
 
 function convertContainerToPTE(
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   container: ContainerBlock,
   keyGenerator: () => string,
   resolvedType: string,
@@ -440,14 +482,6 @@ function convertContainerToPTE(
  * the selection against an actual PTE value. Use this to apply a
  * textspec-defined selection to an editor that already has content.
  *
- * The pattern is a full textspec string (matching the editor's content)
- * with `|` marking caret position or `^...|` marking a range.
- */
-/**
- * Parse a textspec pattern (including its selection markers) and resolve
- * the selection against an actual PTE value. Use this to apply a
- * textspec-defined selection to an editor that already has content.
- *
  * The pattern must be a full textspec string matching the editor's content
  * (including blocks and marks), with `|` marking caret position or `^...|`
  * marking a range.
@@ -455,15 +489,17 @@ function convertContainerToPTE(
  * The pattern's mark structure may differ from the PTE value's flat spans.
  * We resolve by computing the character offset within each block from the
  * pattern, then walking the PTE value to find the span at that offset.
+ *
+ * @public
  */
 export function selectionFromTextspec(
   context: {
     schema: Schema
-    containers?: Containers
+    containers?: TextspecContainers
   },
   pattern: string,
   value: Array<PortableTextBlock>,
-): EditorSelection {
+): TextspecSelection {
   const state = parse(pattern)
 
   if (!state.selection) {
@@ -503,11 +539,11 @@ export function selectionFromTextspec(
  */
 function resolveIndexedPoint(
   schemaContext: {schema: Schema},
-  containers: Containers,
+  containers: TextspecContainers,
   patternBlocks: ReadonlyArray<TextspecBlock>,
   value: Array<PortableTextBlock>,
   point: {path: Array<number>; offset: number},
-): EditorSelectionPoint | undefined {
+): TextspecSelectionPoint | undefined {
   const [blockIndex, ...rest] = point.path
 
   if (typeof blockIndex !== 'number') {
@@ -644,7 +680,7 @@ function locateSpanAtOffset(
   blockKey: string,
   children: Array<Record<string, unknown>>,
   textOffset: number,
-): EditorSelectionPoint | undefined {
+): TextspecSelectionPoint | undefined {
   // Empty text block in PTE always has at least one placeholder span after
   // normalization. If there are no spans yet, the block is still being set
   // up — bail out so the caller can retry.
@@ -693,12 +729,12 @@ function locateSpanAtOffset(
  */
 function resolveContainerPoint(
   schemaContext: {schema: Schema},
-  containers: Containers,
+  containers: TextspecContainers,
   block: Record<string, unknown>,
   path: Array<number>,
   leafOffset: number,
-): EditorSelectionPoint | undefined {
-  const keyedPath: EditorSelectionPoint['path'] = []
+): TextspecSelectionPoint | undefined {
+  const keyedPath: TextspecSelectionPoint['path'] = []
   const blockKey = block['_key']
 
   if (typeof blockKey !== 'string') {
@@ -750,7 +786,7 @@ function resolveContainerPoint(
 
 function convertSelectionToPTE(
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   blocks: Array<PortableTextBlock>,
   state: {
     selection: {
@@ -758,7 +794,7 @@ function convertSelectionToPTE(
       focus: {path: Array<number>; offset: number}
     } | null
   },
-): EditorSelection {
+): TextspecSelection {
   if (!state.selection) {
     return null
   }
@@ -796,10 +832,10 @@ function convertSelectionToPTE(
 
 function resolvePointToPTE(
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   blocks: Array<PortableTextBlock>,
   point: {path: Array<number>; offset: number},
-): EditorSelectionPoint | undefined {
+): TextspecSelectionPoint | undefined {
   const keyedPath = indexedPathToKeyedPath(
     point.path,
     schema,
@@ -817,11 +853,11 @@ function resolvePointToPTE(
 function indexedPathToKeyedPath(
   indexedPath: Array<number>,
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   children: Array<Record<string, unknown>>,
-): EditorSelectionPoint['path'] | undefined {
+): TextspecSelectionPoint['path'] | undefined {
   const schemaContext = {schema}
-  const keyedPath: EditorSelectionPoint['path'] = []
+  const keyedPath: TextspecSelectionPoint['path'] = []
   let currentChildren = children
 
   for (const index of indexedPath) {

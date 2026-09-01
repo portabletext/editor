@@ -1,12 +1,11 @@
 import {diffMatchPatch, insert, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
 import {getSelectionAfterText} from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Selection adjustment after remote patches', () => {
   test('Scenario: Remote insert block before cursor', async () => {

@@ -8,12 +8,11 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.patch', () => {
   test('Scenario: Deleting empty block above non-empty text block', async () => {

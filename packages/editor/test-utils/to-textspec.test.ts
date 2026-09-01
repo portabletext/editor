@@ -3,12 +3,12 @@ import type {
   PortableTextBlock,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import {toTextspec} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {
   resolveContainers,
   type Containers,
 } from '../src/schema/resolve-containers'
-import {toTextspec} from './to-textspec'
 
 const schemaDefinition = defineSchema({
   annotations: [{name: 'comment'}, {name: 'link'}],

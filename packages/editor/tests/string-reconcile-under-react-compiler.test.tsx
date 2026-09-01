@@ -1,10 +1,9 @@
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 // `TextString` reconciles the DOM text node against the model on every render
 // via a dependency-less layout effect. React Compiler compiles `string.tsx`

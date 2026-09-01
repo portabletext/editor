@@ -72,6 +72,40 @@ const tersePt = getTersePt({
 // ['foo', 'bar']
 ```
 
+## Textspec
+
+[Textspec notation](https://github.com/textspec/textspec) is a richer sibling of Terse PT that also carries marks and selection markers (`|` caret, `^...|` range).
+
+### Parsing textspec notation
+
+```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator, fromTextspec} from '@portabletext/test'
+
+const {blocks, selection} = fromTextspec(
+  {
+    schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
+    keyGenerator: createTestKeyGenerator(),
+  },
+  'B: foo [strong:bar] b|az',
+)
+// blocks: one text block with spans 'foo ', 'bar' (strong), ' baz'
+// selection: caret between 'b' and 'az' in the last span
+```
+
+Pass an optional `containers` map (see `TextspecContainers`) to resolve container schemas. `selectionFromTextspec` resolves a pattern's selection markers against an existing Portable Text value, for placing a selection in an editor that already has content.
+
+### Producing textspec notation
+
+`toTextspec` is the inverse: serialize Portable Text blocks and a selection back into notation.
+
+```ts
+import {toTextspec} from '@portabletext/test'
+
+const notation = toTextspec({schema, value: blocks, selection})
+// 'B: foo [strong:bar] b|az'
+```
+
 ## Key generator
 
 Generate predictable keys for test fixtures:

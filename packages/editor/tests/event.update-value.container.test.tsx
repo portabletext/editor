@@ -1,11 +1,10 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 const schemaDefinition = defineSchema({
   blockObjects: [

@@ -107,7 +107,6 @@
     "@sanity/json-match": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
-    "@textspec/notation": "^1.0.2",
     "@types/debug": "catalog:",
     "@types/node": "catalog:tooling",
     "@types/react": "catalog:tooling",

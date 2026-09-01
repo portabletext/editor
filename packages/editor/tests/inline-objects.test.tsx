@@ -1,11 +1,10 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
 import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Inline Objects', () => {
   test('Scenario: Deleting inline object with Backspace', async () => {

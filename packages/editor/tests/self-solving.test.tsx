@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -15,7 +15,6 @@ import {
   getSelectionAfterText,
   getTextSelection,
 } from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Self-solving', () => {
   test('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {

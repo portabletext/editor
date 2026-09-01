@@ -1,5 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
@@ -9,7 +9,6 @@ import {isActiveAnnotation} from '../src/selectors/selector.is-active-annotation
 import {createTestEditor} from '../src/test/vitest'
 import {getTextMarks} from '../test-utils/text-marks'
 import {getTextSelection} from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 /**
  * By default, annotations of the same type cannot overlap.

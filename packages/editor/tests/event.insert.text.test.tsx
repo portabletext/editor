@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -10,7 +10,6 @@ import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.text', () => {
   test('Scenario: Consecutive `insert.text` events', async () => {

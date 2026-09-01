@@ -12,25 +12,27 @@ import type {
   EditorState,
   InlineNode,
   TextBlock,
-  Selection as TextspecSelection,
+  Selection as NotationSelection,
 } from '@textspec/notation'
 import type {
-  Containers,
-  RegisteredContainer,
-} from '../src/schema/resolve-containers'
-import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
+  TextspecContainerRegistration,
+  TextspecContainers,
+  TextspecSelection,
+  TextspecSelectionPoint,
+} from './from-textspec'
 
 /**
- * Serialize PTE state to a textspec notation string.
+ * Serialize Portable Text blocks and a selection back to textspec
+ * notation, the inverse of {@link fromTextspec}.
  *
- * @internal
+ * @public
  */
 export function toTextspec(
   context: {
     schema: Schema
     value: Array<PortableTextBlock>
-    selection: EditorSelection
-    containers?: Containers
+    selection: TextspecSelection
+    containers?: TextspecContainers
     annotationKeys?: Map<string, string>
   },
   options?: {singleLine?: boolean; keys?: boolean | Set<string>},
@@ -260,7 +262,7 @@ function convertTextBlock(
 function resolveSelectionPoint(
   schema: Schema,
   blocks: Array<PortableTextBlock>,
-  point: EditorSelectionPoint,
+  point: TextspecSelectionPoint,
 ): {path: Array<number>; offset: number} | undefined {
   const indexedPath = keyedPathToIndexedPath(
     point.path,
@@ -316,7 +318,7 @@ function getMarkDepth(
 }
 
 function keyedPathToIndexedPath(
-  keyedPath: EditorSelectionPoint['path'],
+  keyedPath: TextspecSelectionPoint['path'],
   children: Array<Record<string, unknown>>,
 ): Array<number> | undefined {
   const indexedPath: Array<number> = []
@@ -353,10 +355,10 @@ function keyedPathToIndexedPath(
 
 function convertBlockToTextspec(
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   annotationKeys: Map<string, string> | undefined,
   block: PortableTextBlock,
-  parent?: RegisteredContainer,
+  parent?: TextspecContainerRegistration,
 ): Block {
   if (isTextBlock({schema}, block)) {
     return convertTextBlock(schema, block, annotationKeys)
@@ -381,16 +383,16 @@ function convertBlockToTextspec(
 }
 
 /**
- * Resolve which {@link RegisteredContainer} applies to a child of type
- * `childType` under `parent`. Positional override (parent.of) wins;
+ * Resolve which {@link TextspecContainerRegistration} applies to a child
+ * of type `childType` under `parent`. Positional override (parent.of) wins;
  * otherwise fall back to the top-level `containers` map. Returns
  * undefined when the type is not registered at this position.
  */
 function resolveChildContainer(
-  containers: Containers,
-  parent: RegisteredContainer | undefined,
+  containers: TextspecContainers,
+  parent: TextspecContainerRegistration | undefined,
   childType: string,
-): RegisteredContainer | undefined {
+): TextspecContainerRegistration | undefined {
   if (parent?.of) {
     for (const entry of parent.of) {
       if (entry.type === childType && entry.kind === 'container') {
@@ -403,10 +405,10 @@ function resolveChildContainer(
 
 function convertContainerBlock(
   schema: Schema,
-  containers: Containers,
+  containers: TextspecContainers,
   annotationKeys: Map<string, string> | undefined,
   block: Record<string, unknown>,
-  parent: RegisteredContainer,
+  parent: TextspecContainerRegistration,
 ): ContainerBlock {
   const containerField = parent.field
 
@@ -463,8 +465,8 @@ function convertContainerBlock(
 function convertSelection(
   schema: Schema,
   blocks: Array<PortableTextBlock>,
-  selection: EditorSelection,
-): TextspecSelection | null {
+  selection: TextspecSelection,
+): NotationSelection | null {
   if (!selection) {
     return null
   }
@@ -527,7 +529,7 @@ function isEqualIndexedPaths(
  */
 function nodeAtKeyedPath(
   blocks: Array<PortableTextBlock>,
-  keyedPath: EditorSelectionPoint['path'],
+  keyedPath: TextspecSelectionPoint['path'],
 ):
   | {
       node: PortableTextBlock | PortableTextObject

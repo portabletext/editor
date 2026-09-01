@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
@@ -9,7 +9,6 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {getSelectionText} from '../src/selectors/selector.get-selection-text'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Serialize/Deserialize', () => {
   test('Scenario: Custom text/html deserializer', async () => {

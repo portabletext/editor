@@ -1,7 +1,7 @@
+import {toTextspec} from '@portabletext/test'
 import {expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 /**
  * Regression test for `createTestEditor`'s locator scoping.

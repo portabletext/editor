@@ -1,4 +1,5 @@
 import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
+import {toTextspec} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
@@ -7,7 +8,6 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.annotation', () => {
   test('.add/.remove', async () => {
