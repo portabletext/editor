@@ -1,5 +1,17 @@
 # Changelog
 
+## 9.0.5
+
+### Patch Changes
+
+- [#3202](https://github.com/portabletext/editor/pull/3202) [`910bf16`](https://github.com/portabletext/editor/commit/910bf163e7ee4d073a3c626ac78cb781dd5890f5) Thanks [@christianhg](https://github.com/christianhg)! - fix: only clear style on Backspace when nothing above the block can be removed
+
+  Backspace at the start of a heading below an empty line now removes the empty line and keeps the heading's style. If the heading is also a list item, the first press clears the list instead, per the editor's existing list behavior, and the empty line above only goes on a second press. Below an image or other block object, it follows the editor's own object-removal handling instead. Below a block with content, and at the top of the document, it still clears the style as before.
+
+- Updated dependencies []:
+  - @portabletext/plugin-character-pair-decorator@9.0.5
+  - @portabletext/plugin-input-rule@7.0.5
+
 ## 9.0.4
 
 ### Patch Changes
