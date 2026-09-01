@@ -824,7 +824,7 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    // The mark insert rides along so the new markDef is referenced; an
+    // The mark insert is included so the new markDef is referenced. An
     // unreferenced markDef is orphaned data the editor strips (both the
     // unused-markDefs normalization rule and `validateValue`'s
     // auto-resolution remove it).

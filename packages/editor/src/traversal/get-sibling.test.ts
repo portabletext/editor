@@ -307,7 +307,7 @@ describe(getSibling.name, () => {
 
   test('resolves the anchor when `blockIndexMap` misses', () => {
     // An unmaintained map (e.g. a bare engine) must not hide siblings
-    // the tree plainly has; mirrors the `getNode`/`getChildren`
+    // that exist in the tree. Mirrors the `getNode`/`getChildren`
     // fallback.
     const snapshot = {
       context: testbed.snapshot.context,

@@ -194,7 +194,7 @@ describe('event.mutation', () => {
     await userEvent.type(locator, 'foo')
 
     await vi.waitFor(() => {
-      // Ignoring the two initial patches as they merely set the editor up
+      // Skip the two initial patches that set the editor up
       expect(patches.slice(2)).toEqual([
         {
           origin: 'local',

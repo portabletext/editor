@@ -68,7 +68,7 @@ describe('mutually-embedding block objects', () => {
     // unmemoized walk does not finish in any practical amount of time.
     expect(durationMs).toBeLessThan(2_000)
 
-    // The emitted definition must be small AS A TREE, not merely cheap to
+    // The emitted definition must be small AS A TREE, not just cheap to
     // build. The memoized walk builds shared `OfDefinition` objects (a
     // DAG) in linear time, but before root block objects referenced by
     // name at every position, each type's single expansion inlined the
@@ -235,7 +235,7 @@ describe('mutually-embedding block objects', () => {
     // heap-bounded. The absolute time stays generous because the
     // output of n mutually-embedding types is inherently O(n^2)
     // entries: each of the n embedding positions carries its own `of`
-    // list, and those lists genuinely differ per position (a type's
+    // list, and those lists really do differ per position (a type's
     // self-reference is ancestor-cut at its own position and
     // memo-shared at others).
     const objectCount = 1_600

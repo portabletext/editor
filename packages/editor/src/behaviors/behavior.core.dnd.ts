@@ -24,9 +24,9 @@ import {fitBlocksToDestination} from './fit-blocks-to-destination'
  * drag origin in a way that would make the drop a no-op.
  *
  * Two expanded selections that only touch at a single endpoint are not treated
- * as a self-drop — the drop position covers an adjacent block (typical when
+ * as a self-drop: the drop position covers an adjacent block (typical when
  * dragging a block-object onto the next block via the expanded fallback in
- * `getEventPosition`), and the user genuinely wants the drop to happen.
+ * `getEventPosition`), so the drop should go through.
  *
  * Chrome drags emit a collapsed selection pointing AT the dragged container.
  * A drop position whose path descends into that container is dropping the

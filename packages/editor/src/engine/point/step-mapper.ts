@@ -44,7 +44,7 @@ export type UnsetTextStep = {
  * `oldKey`, is only rewritten at that exact depth under that exact
  * parent, never wherever the key value happens to recur. A rename only
  * ever touches one node; matching by key value alone would also rewrite
- * an unrelated point that merely walks through a same-keyed node
+ * an unrelated point that just walks through a same-keyed node
  * elsewhere in the tree (a duplicate-key merge's destination block, most
  * notably, since it starts out sharing every key the donor block does).
  */

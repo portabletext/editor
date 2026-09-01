@@ -55,7 +55,7 @@ export function resolveTestbedContainers(
 }
 
 /**
- * A comprehensive test fixture for node traversal tests.
+ * A shared fixture for node traversal tests.
  *
  * Structure:
  *

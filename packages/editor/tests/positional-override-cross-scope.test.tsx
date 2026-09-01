@@ -10,8 +10,8 @@ import {
 import {createTestEditor} from '../src/test/vitest'
 
 /**
- * Cross-scope behavior — the load-bearing properties of inline scoping
- * via `defineTextBlock.of`.
+ * Cross-scope behavior: what inline scoping via `defineTextBlock.of`
+ * must guarantee.
  *
  *   - Two text blocks side-by-side in the same container can scope
  *     their inline content INDEPENDENTLY.
