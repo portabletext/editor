@@ -374,10 +374,18 @@ export const editorMachine = setup({
 
       try {
         const currentSelection = editorEngine.snapshot.context.selection
+        const el = editorEngine.domElement
+        const alreadyFocused =
+          el !== null &&
+          DOMEditor.findDocumentOrShadowRoot(editorEngine).activeElement === el
 
         DOMEditor.focus(editorEngine)
 
-        if (currentSelection) {
+        // An editor that was already DOM-focused had nothing to move: the
+        // DOM selection may deliberately differ from the model (e.g. a
+        // native selection made for copying), and re-selecting here would
+        // overwrite it with the stale model selection.
+        if (currentSelection && !alreadyFocused) {
           editorEngine.select(currentSelection)
 
           // Tell the engine to use this selection for DOM sync
