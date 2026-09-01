@@ -1,4 +1,4 @@
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {raise} from '../src/behaviors/behavior.types.action'
@@ -6,7 +6,6 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('`text/plain` paste', () => {
   test('Scenario: Consumer behavior on `deserialize.data` can produce rich blocks from `text/plain`', async () => {

@@ -1,6 +1,6 @@
+import {toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {toTextspec} from '../../test-utils/to-textspec'
 import {createTestEditor} from '../test/vitest'
 import {validateSelectionMachine} from './validate-selection-machine'
 

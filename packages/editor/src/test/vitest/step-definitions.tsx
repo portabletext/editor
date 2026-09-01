@@ -1,14 +1,16 @@
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt, parseTersePt} from '@portabletext/test'
+import {
+  fromTextspec,
+  getTersePt,
+  parseTersePt,
+  selectionFromTextspec,
+  toTextspec,
+} from '@portabletext/test'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {boundaryEquivalentSelections} from '../../../test-utils/boundary-equivalent'
 import {getEditorSelection} from '../../../test-utils/editor-selection'
-import {
-  fromTextspec,
-  selectionFromTextspec,
-} from '../../../test-utils/from-textspec'
 import {getSelectionText} from '../../../test-utils/selection-text'
 import {getTextBlockKey} from '../../../test-utils/text-block-key'
 import {getTextMarks} from '../../../test-utils/text-marks'
@@ -17,7 +19,6 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../../../test-utils/text-selection'
-import {toTextspec} from '../../../test-utils/to-textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
 import {createTestSnapshot} from '../../internal-utils/build-index-maps'
 import {IS_MAC} from '../../internal-utils/is-hotkey'

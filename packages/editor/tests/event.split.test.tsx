@@ -1,11 +1,10 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionText} from '../test-utils/selection-text'
 import {getSelectionAfterText} from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.split', () => {
   test('Scenario: Splitting mid-block before inline object', async () => {

@@ -1,6 +1,6 @@
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {raise} from '../src/behaviors/behavior.types.action'
@@ -10,7 +10,6 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.clipboard.paste', () => {
   test('Scenario: Cut/paste block object', async () => {

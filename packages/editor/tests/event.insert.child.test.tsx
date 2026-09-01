@@ -1,13 +1,12 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {getFocusSpan, getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.child', () => {
   test('Scenario: Carrying over an annotation', async () => {

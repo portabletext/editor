@@ -1,5 +1,5 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {getTersePt, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditors} from '../src/test/vitest'
@@ -7,7 +7,6 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 function createInitialValue(text: string): Array<PortableTextBlock> {
   return [

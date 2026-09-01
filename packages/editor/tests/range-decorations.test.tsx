@@ -5,7 +5,7 @@ import {
   isTextBlock,
   type PortableTextBlock,
 } from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -33,7 +33,6 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',

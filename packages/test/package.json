@@ -48,8 +48,12 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest watch"
   },
-  "devDependencies": {
+  "dependencies": {
     "@portabletext/schema": "workspace:^",
+    "@textspec/notation": "^1.0.2"
+  },
+  "devDependencies": {
+    "@portabletext/patches": "workspace:^",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "typescript": "catalog:tooling",

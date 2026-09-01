@@ -1,5 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -7,7 +7,6 @@ import {defineBehavior, type InsertPlacement} from '../src/behaviors'
 import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextBlockText} from '../src/utils'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.blocks', () => {
   test('Scenario: Inserting text block with lonely inline object', async () => {

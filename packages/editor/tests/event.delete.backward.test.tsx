@@ -6,7 +6,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -21,7 +21,6 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../test-utils/text-selection'
-import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.delete.backward', () => {
   test('Scenario: Deleting lonely block object', async () => {
