@@ -151,7 +151,7 @@ A registered span owns the outer wrapper, and `children` arrive with the decorat
 Text blocks register as `type: 'block'`, which is the text block type at every nesting level, top level and inside containers alike. The registration's render owns the whole wrapper, so the three legacy callbacks fold into one function. Reproduce the engine's legacy composition order: style innermost, list item around it, block wrapper outermost.
 
 :::note[Why pass `type` at all?]
-If the text block is always `block` and the span is always `span`, the parameter looks redundant. It exists because registrations live in a type-keyed registry with two tiers: `'*'` is an optional catch-all, matching any type of that kind without a more specific registration, and positional overrides can register renamed types at that scope: block-level kinds through a container's `of`, inline kinds through a text block's `of`. `'block'` and `'span'` are simply those kinds' canonical names at the top level.
+If the text block is always `block` and the span is always `span`, the parameter looks redundant. It exists because registrations live in a type-keyed registry with two tiers: `'*'` is an optional catch-all, matching any type of that kind without a more specific registration, and positional overrides can register renamed types at that scope: block-level kinds through a container's `of`, inline kinds through a text block's `of`. `'block'` and `'span'` are those kinds' canonical names at the top level.
 :::
 
 Before:

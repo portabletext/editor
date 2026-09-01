@@ -70,7 +70,7 @@ Matchers control how Markdown elements map to schema types. The library includes
 |            | `html`           | HTML blocks           | `'html'`            |
 |            | `callout`        | `> [!NOTE]`, etc.     | `'callout'`         |
 
-Override a matcher when your schema uses a different name for a type (say, `'heading 1'` instead of `'h1'`): pass your own function under the matcher's group and name, resolve the type against `context.schema`, and return its name, or `undefined` to skip the element gracefully. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#configuring-matchers) has worked matcher recipes, including the structural `table`, `list`, and `blockquote` shapes.
+Override a matcher when your schema uses a different name for a type (say, `'heading 1'` instead of `'h1'`): pass your own function under the matcher's group and name, resolve the type against `context.schema`, and return its name, or `undefined` to skip the element. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#configuring-matchers) has worked matcher recipes, including the structural `table`, `list`, and `blockquote` shapes.
 
 ## Supported features
 

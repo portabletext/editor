@@ -13,14 +13,14 @@
 
 This library provides you with the building blocks to create a completely custom editor experience built on top of Portable Text. We recommend [checking out the official documentation](https://www.portabletext.org/). The following guide includes the basics to get your started.
 
-In order to set up an editor you'll need to:
+To set up an editor you need to:
 
 - Create a schema that defines the rich text and block content elements.
 - Create a toolbar to toggle and insert these elements.
 - Set up rendering for each element type in the editor, including text blocks and inline formatting.
 - Render the editor.
 
-Check out the [Portable Text Playground](../../apps/playground/) for a comprehensive example of the editor in action.
+The [Portable Text Playground](../../apps/playground/) is a complete editor built with this library. Use it as a reference.
 
 ### Add the library to your project
 
@@ -361,7 +361,7 @@ Extend the editor with [official plugins](../../#editor-plugins).
 
 ## End-user experience
 
-In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](./gherkin-spec/).
+A large E2E test suite, generated from a [human-readable Gherkin spec](./gherkin-spec/), guards the end-user experience: how selection, editing, and formatting behave under real keyboard and pointer input.
 
 ## Development
 

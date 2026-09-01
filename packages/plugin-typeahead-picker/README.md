@@ -361,7 +361,7 @@ The error is cleared when the picker returns to idle (e.g., via Escape or cursor
 
 ## onDismiss
 
-The optional `onDismiss` callback runs when the picker is dismissed (Escape, Enter/Tab with no matches, or programmatically). Without `onDismiss`, dismissing simply closes the picker and leaves the typed text in place.
+The optional `onDismiss` callback runs when the picker is dismissed (Escape, Enter/Tab with no matches, or programmatically). Without `onDismiss`, dismissing closes the picker and leaves the typed text in place.
 
 For most pickers, you should **not** use `onDismiss` to delete text. If a user types `@` and dismisses, they likely wanted to type a literal `@`.
 

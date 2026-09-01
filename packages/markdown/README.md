@@ -299,7 +299,7 @@ markdownToPortableText(markdown, {
 })
 ```
 
-> **Note:** Checking if the type exists in the schema isn't required, but it's good practice. Returning `undefined` gracefully skips unsupported types.
+> **Note:** Checking if the type exists in the schema isn't required, but it's good practice. Returning `undefined` skips unsupported types.
 
 **Table matcher:** GFM pipe tables convert by default (see [Default behavior](#default-behavior)). Provide your own matcher to map onto a differently-shaped `table` type:
 

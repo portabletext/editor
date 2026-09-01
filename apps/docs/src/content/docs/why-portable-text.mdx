@@ -95,7 +95,7 @@ More verbose? Yes. But now you can:
 
 - **Render anywhere.** Pass the same data to a React component, an HTML serializer, a PDF generator, or a Slack message formatter. Each renders what it can, ignores what it can't.
 - **Query the content.** "Find all blocks that contain a link to /docs" is a JSON query, not a regex over HTML.
-- **Extend without breaking.** Add a `callToAction` block type, a `footnote` annotation that carries citation data, or a `stockTicker` inline object with symbol and exchange fields inside a text paragraph. Renderers that don't know about them skip them gracefully. No parser changes needed.
+- **Extend without breaking.** Add a `callToAction` block type, a `footnote` annotation that carries citation data, or a `stockTicker` inline object with symbol and exchange fields inside a text paragraph. Renderers that don't know about them skip them. No parser changes needed.
 - **Validate the structure.** The schema is explicit. You know exactly what types of content exist, what data they carry, and where they can appear.
 
 ## What makes it portable

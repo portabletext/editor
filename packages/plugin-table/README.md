@@ -291,8 +291,8 @@ Who owns what:
   and, on the cell, its `of` (node definitions that only apply inside
   cells, like a compact image render).
 - The plugin owns the nesting. It grafts `table.of → row.of → cell`
-  itself, since the three-level shape is load-bearing for every behavior
-  and for the clipboard format. An `of` on the table or row definition
+  itself, since every behavior and the clipboard format depend on the
+  three-level shape. An `of` on the table or row definition
   logs a warning and is ignored.
 - Everything is optional. Omit a `render` and you get the bare built-in
   render for that role, omit a definition and you get the canonical one,
@@ -474,7 +474,7 @@ narrow to the `TableNode`, `RowNode`, and `CellNode` types.
 `<table>`/`<tr>`/`<td>` renders. Useful for tests and prototypes, or as
 the base for your own renders, with no `/ui` import and no stylesheet.
 
-If you need to own container registration outright, skip `table.Plugin`
+If you want to register the containers yourself, skip `table.Plugin`
 and mount `table.behaviors` in a `BehaviorPlugin` next to your own
 `NodePlugin` registration. Keeping that registration faithful to the
 nesting shape is then on you.
