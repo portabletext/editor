@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.1.1
+
+### Patch Changes
+
+- [#3195](https://github.com/portabletext/editor/pull/3195) [`bb2f507`](https://github.com/portabletext/editor/commit/bb2f50745a11c8652cd286412e3c2af75ba31c48) Thanks [@christianhg](https://github.com/christianhg)! - fix: dedupe identical same-key markDefs on every block merge
+
+  Splitting a block through the middle of an annotation and merging it back together rejoins the annotation into a single definition, instead of leaving two identical definitions under different keys. Backspace and forward delete at a block boundary get the same treatment: an annotation definition arriving in a block that already holds an identical one under the same `_key` keeps its key instead of being renamed, so anything tracking the annotation keeps following it.
+
+- [#3195](https://github.com/portabletext/editor/pull/3195) [`9afa4fc`](https://github.com/portabletext/editor/commit/9afa4fcc14c32e5842009c79b32037aa93915229) Thanks [@christianhg](https://github.com/christianhg)! - fix: treat identical same-key markDefs as non-conflicts when inserting text block fragments
+
+  Inserting a text block into another (pasting into a block, for example) no longer renames an annotation definition when the destination already carries an identical one under the same `_key`. The definition keeps its key, so anything tracking the annotation (comments, decorations) keeps following it.
+
 ## 8.1.0
 
 ### Minor Changes

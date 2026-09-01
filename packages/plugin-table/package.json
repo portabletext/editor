@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-table",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Tables as real Portable Text, edited with spreadsheet-grade selection",
   "keywords": [
     "plugin",
