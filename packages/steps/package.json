@@ -1,0 +1,68 @@
+{
+  "name": "@portabletext/steps",
+  "version": "1.0.0",
+  "description": "The step vocabulary: types, position mapping, and a wire-patch interpreter",
+  "keywords": [
+    "patches",
+    "portable-text",
+    "portable-text-editor"
+  ],
+  "homepage": "https://www.sanity.io/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/steps"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    },
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pkg-utils build --strict --check",
+    "check:types": "tsc --noEmit --pretty",
+    "check:types:watch": "tsc --noEmit --pretty --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "test": "vitest --run",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:^",
+    "@sanity/diff-match-patch": "catalog:"
+  },
+  "devDependencies": {
+    "@portabletext/test": "workspace:^",
+    "@sanity/pkg-utils": "catalog:tooling",
+    "@sanity/tsconfig": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
+    "vitest": "catalog:tooling"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
