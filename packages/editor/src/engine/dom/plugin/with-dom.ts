@@ -31,6 +31,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.pendingDiffs = []
   e.pendingAction = null
   e.pendingSelection = null
+  e.pendingFocusRetry = null
   e.forceRender = null
 
   subscribeToOperations(
