@@ -45,7 +45,7 @@ description: How to write pull request descriptions for the Portable Text Editor
 - **Lead with motivation**: the consumer pain that makes the change
   necessary, before the API or mechanism. The description stands on its own;
   explain the problem in terms of the code, not the PR graph, and reference
-  another PR only when load-bearing.
+  another PR only when the reader cannot follow the description without it.
 - **Prose over bullets.** Each design decision gets a paragraph carrying its
   own reasoning; bullets flatten the why out. A short bullet list is
   acceptable only for genuinely parallel items (e.g. "things I was careful
@@ -58,7 +58,7 @@ description: How to write pull request descriptions for the Portable Text Editor
   pins it.
 - Fenced code examples when introducing API.
 - Stacked or extracted PRs state why they are separate and what depends on
-  them, referencing the other PR only when load-bearing (#2777: "Extracted
+  them, referencing the other PR only when the reader needs it (#2777: "Extracted
   from #2772 because it changes behavior for all existing `editor.on`
   events ... #2772 stacks on this").
 - No generated-by footers, no emoji banners.
