@@ -33,7 +33,7 @@ JSDoc on exported symbols (especially `@public`) is rendered by typedoc onto por
 - The why-only rule does not apply. Describe behavior at the surface the consumer sees, not internal mechanism.
 - Deleting or trimming it changes the published docs, so removal is an API-documentation decision, never comment cleanup. When it is wrong, improve it.
 - `@example` blocks are valuable; keep and fix them rather than remove.
-- `@deprecated` tags and their migration pointers are load-bearing API surface: consumers and tooling act on them. Keep them accurate.
+- `@deprecated` tags and their migration pointers are API surface: consumers and tooling act on them. Keep them accurate.
 
 ## Not comments: machine-read directives
 
