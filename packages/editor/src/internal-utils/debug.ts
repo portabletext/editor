@@ -12,6 +12,7 @@ function createDebugger(name: string): rawDebug.Debugger {
 
 export const debug = {
   behaviors: createDebugger('behaviors'),
+  focus: createDebugger('focus'),
   history: createDebugger('history'),
   mutation: createDebugger('mutation'),
   normalization: createDebugger('normalization'),

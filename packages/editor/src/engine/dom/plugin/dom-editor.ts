@@ -1,5 +1,6 @@
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
+import {debug} from '../../../internal-utils/debug'
 import {safeStringify} from '../../../internal-utils/safe-json'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
@@ -68,6 +69,7 @@ export interface DOMEditor extends BaseEditor {
   pendingDiffs: TextDiff[]
   pendingAction: Action | null
   pendingSelection: Range | null
+  pendingFocusRetry: ReturnType<typeof setTimeout> | null
   forceRender: (() => void) | null
 }
 
@@ -82,7 +84,17 @@ interface DOMEditorInterface {
   findDocumentOrShadowRoot: (editor: Editor) => Document | ShadowRoot
 
   /**
-   * Focus the editor.
+   * Focus the editor. Makes one verified attempt: calls the DOM `focus()`
+   * and checks whether the browser actually moved focus onto the editable.
+   * Something else (a focus trap, an `inert` ancestor) can claim it back
+   * before or after that call; when it does, the request gives up quietly
+   * instead of fighting for it. The outcome reports through `editor.focused`
+   * and the emitted `focused`/`blurred` event; the function itself returns
+   * void.
+   *
+   * `options.retries` only bounds retries while the editor has pending
+   * operations, since the DOM (and its selection) is unstable until those
+   * settle; it is not a contest over who holds focus.
    */
   focus: (editor: Editor, options?: {retries: number}) => void
 
@@ -179,6 +191,11 @@ interface DOMEditorInterface {
 // eslint-disable-next-line no-redeclare
 export const DOMEditor: DOMEditorInterface = {
   blur: (editor) => {
+    if (editor.pendingFocusRetry !== null) {
+      clearTimeout(editor.pendingFocusRetry)
+      editor.pendingFocusRetry = null
+    }
+
     const el = getDomNode(editor, [])
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
     editor.focused = false
@@ -205,29 +222,17 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   focus: (editor, options = {retries: 5}) => {
-    // Return if already focused
-    if (editor.focused) {
-      return
+    // A new focus request supersedes any retry chain still in flight;
+    // cancel it before any early return, or a stale timer could outlive
+    // this call and refocus the editor later.
+    if (editor.pendingFocusRetry !== null) {
+      clearTimeout(editor.pendingFocusRetry)
+      editor.pendingFocusRetry = null
     }
 
-    // Return if no dom node is associated with the editor, which means the editor is not yet mounted
-    // or has been unmounted. This can happen especially, while retrying to focus the editor.
+    // `findDocumentOrShadowRoot` throws once the editor is unmounted, so the
+    // mounted check has to run before resolving the root or DOM node.
     if (!editor.domElement) {
-      return
-    }
-
-    // Retry setting focus if the editor has pending operations.
-    // The DOM (selection) is unstable while changes are applied.
-    // Retry until retries are exhausted or editor is focused.
-    if (options.retries <= 0) {
-      throw new Error(
-        'Could not set focus, editor seems stuck with pending operations',
-      )
-    }
-    if (editor.operations.length > 0) {
-      setTimeout(() => {
-        DOMEditor.focus(editor, {retries: options.retries - 1})
-      }, 10)
       return
     }
 
@@ -238,39 +243,84 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
-    if (root.activeElement !== el) {
-      // Ensure that the DOM selection state is set to the editor's selection
-      if (editor.snapshot.context.selection && root instanceof Document) {
-        const domSelection = getSelection(root)
-        const domRange = DOMEditor.toDOMRange(
-          editor,
-          editor.snapshot.context.selection,
-        )
-        domSelection?.removeAllRanges()
-        domSelection?.addRange(domRange)
-      }
-      // Create a new selection in the top of the document if missing
-      if (!editor.snapshot.context.selection) {
-        editor.select(editorStart(editor, []))
-      }
-      // IS_FOCUSED should be set before calling el.focus() to ensure that
-      // FocusedContext is updated to the correct value
-      editor.focused = true
-      el.focus({preventScroll: true})
 
-      // Re-apply the DOM selection after focus. Some browsers (notably WebKit)
-      // reset the selection when el.focus() is called, which can cause the
-      // selection to shift away from the intended position (e.g., away from
-      // an inline object to an adjacent empty span).
-      if (editor.snapshot.context.selection && root instanceof Document) {
-        const domSelection = getSelection(root)
-        const domRange = DOMEditor.toDOMRange(
-          editor,
-          editor.snapshot.context.selection,
-        )
-        domSelection?.removeAllRanges()
-        domSelection?.addRange(domRange)
-      }
+    if (root.activeElement === el) {
+      // The DOM selection may deliberately differ from the model (e.g. a
+      // native selection made for copying); only the flag needs healing.
+      editor.focused = true
+      return
+    }
+
+    const giveUp = (reason: string) => {
+      editor.focused = false
+      debug.focus(reason)
+    }
+
+    if (options.retries <= 0) {
+      giveUp(
+        'Could not verify DOM focus after exhausting retries, giving up silently',
+      )
+      return
+    }
+
+    const retry = (remainingRetries: number) => {
+      editor.pendingFocusRetry = setTimeout(() => {
+        editor.pendingFocusRetry = null
+        try {
+          DOMEditor.focus(editor, {retries: remainingRetries})
+        } catch (error) {
+          giveUp(
+            `Focus retry raised before it could verify focus, giving up silently: ${error}`,
+          )
+        }
+      }, 10)
+    }
+
+    // Retry setting focus if the editor has pending operations.
+    // The DOM (selection) is unstable while changes are applied.
+    if (editor.operations.length > 0) {
+      retry(options.retries - 1)
+      return
+    }
+
+    // Ensure that the DOM selection state is set to the editor's selection
+    if (editor.snapshot.context.selection && root instanceof Document) {
+      const domSelection = getSelection(root)
+      const domRange = DOMEditor.toDOMRange(
+        editor,
+        editor.snapshot.context.selection,
+      )
+      domSelection?.removeAllRanges()
+      domSelection?.addRange(domRange)
+    }
+    // Create a new selection in the top of the document if missing
+    if (!editor.snapshot.context.selection) {
+      editor.select(editorStart(editor, []))
+    }
+    // IS_FOCUSED should be set before calling el.focus() to ensure that
+    // FocusedContext is updated to the correct value
+    editor.focused = true
+    el.focus({preventScroll: true})
+
+    if (root.activeElement !== el) {
+      // Something else (a focus trap, an `inert` ancestor) claimed focus
+      // back; report it honestly instead of fighting for it.
+      giveUp('Could not verify DOM focus: something else claimed it')
+      return
+    }
+
+    // Re-apply the DOM selection after focus. Some browsers (notably WebKit)
+    // reset the selection when el.focus() is called, which can cause the
+    // selection to shift away from the intended position (e.g., away from
+    // an inline object to an adjacent empty span).
+    if (editor.snapshot.context.selection && root instanceof Document) {
+      const domSelection = getSelection(root)
+      const domRange = DOMEditor.toDOMRange(
+        editor,
+        editor.snapshot.context.selection,
+      )
+      domSelection?.removeAllRanges()
+      domSelection?.addRange(domRange)
     }
   },
 
