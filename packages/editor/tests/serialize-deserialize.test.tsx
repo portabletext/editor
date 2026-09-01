@@ -709,7 +709,7 @@ describe('Serialize/Deserialize', () => {
               actions: [({event}) => [forward(event)]],
             }),
             // This Behavior *will* receive the `deserialize.data` event
-            // since the Behavior above (with higher priority) merely
+            // since the Behavior above (with higher priority) only
             // forwards the `deserialize` event.
             defineBehavior({
               on: 'deserialize.data',

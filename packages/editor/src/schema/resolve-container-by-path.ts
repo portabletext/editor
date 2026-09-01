@@ -182,7 +182,7 @@ function richDescentToParent(
  * 3. **Global fallback with position-validity.** Falls back to the
  *    top-level rich `containers` map keyed by `_type`. Activates only
  *    when schema-at-position permits the registered `arrayField`
- *    (for containers) or simply declares `_type` (for leaves).
+ *    (for containers) or declares `_type` (for leaves).
  *    Registration is type-keyed; activation is position-gated.
  */
 export function resolveContainerByPath(

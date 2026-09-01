@@ -391,7 +391,7 @@ function createDecorate(
     }
 
     return editorEngine.decoratedRanges.filter((decoratedRange) => {
-      // Special case in order to only return one decoration for collapsed ranges
+      // Special case so a collapsed range gets only one decoration
       if (isCollapsedRange(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level.
         const anchorBlock = getEnclosingBlock(

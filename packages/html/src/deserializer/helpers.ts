@@ -126,7 +126,7 @@ export function hasMonospaceFontFamily(el: Node): boolean {
 /**
  * Returns true when the element's inline `style` declares a whitespace-
  * preserving `white-space`. Google Docs sets `white-space:pre-wrap` on its
- * spans; sources that merely use a monospace font without it (e.g. Word's
+ * spans. Sources that set a monospace font but no `white-space` (e.g. Word's
  * `font-family:"Roboto Mono"` spans) wrap their HTML source freely, so
  * their intra-span whitespace is formatting, not content.
  */

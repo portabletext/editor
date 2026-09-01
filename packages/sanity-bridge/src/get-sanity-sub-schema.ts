@@ -180,7 +180,7 @@ function findChildArrayField(
  * Read the `of` array off a Sanity `SchemaType` if it carries one.
  * Mirrors the local helper in `sanity-schema-to-portable-text-schema.ts`.
  * Sanity schema getters can throw on partially-compiled types; the
- * try/catch keeps the walk robust at edges.
+ * try/catch lets the walk continue past a throwing getter.
  */
 function safeGetOf(
   schemaType: SchemaType,

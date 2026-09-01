@@ -195,7 +195,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     // neither a scan nor a cache entry: re-checking it is already O(1). This
     // is the common shape for container fields (a row's single cell, a
     // cell's single content block) and single-span text blocks, so only
-    // genuinely multi-child groups ever cost a serialized id.
+    // groups with two or more children ever cost a serialized id.
     if (siblingNodes.length > 1) {
       // Identify the group by its serialized path (the root group is `''`).
       // The verdict survives edits elsewhere in the tree: it is dropped only

@@ -60,7 +60,7 @@ const schemaDefinition = defineSchema({
 /**
  * Rendered with real `<table>` DOM plus a non-editable chrome sibling, the
  * shape of any real-world table render with selection chrome. The chrome
- * sibling is the load-bearing part: it puts a non-editable element at the
+ * sibling is the part that matters: it puts a non-editable element at the
  * document's content edge, which is what collapses chromium's native
  * select-all.
  */

@@ -116,7 +116,8 @@ describe('splitEditableProps', () => {
   it('forwards an explicitly undefined perspective, matching a direct hook call', () => {
     // Passing `perspective={maybeUndefined}` here has to behave exactly as
     // passing it straight to the SDK hook does: the key is present, so it wins
-    // over the context. Switching this to a value check would quietly diverge.
+    // over the context. A value check would let the wrapper drift from the
+    // direct hook call without this test noticing.
     const {handle} = splitEditableProps({
       documentId: 'doc-1',
       documentType: 'post',

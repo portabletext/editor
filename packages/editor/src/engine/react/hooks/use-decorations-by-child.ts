@@ -11,10 +11,10 @@ import type {DecoratedRange} from '../../interfaces/text'
 // Pure stabilization: returns previous when contents are per-index equal, else
 // builds a new outer array reusing previous per-index references where
 // unchanged. Outer-array identity is preserved when nothing changed; per-index
-// identity is preserved at every unchanged index. Both invariants are
-// load-bearing for the wrapper `React.memo` equalities on
-// `prev.decorations === next.decorations` and the per-index
-// `isElementDecorationsEqual` short-circuit downstream.
+// identity is preserved at every unchanged index. Downstream, the wrapper
+// `React.memo` equality on `prev.decorations === next.decorations` and the
+// per-index `isElementDecorationsEqual` short-circuit both rely on these
+// invariants.
 const stabilizeDecorationsByChild = (
   previous: DecoratedRange[][],
   next: DecoratedRange[][],
