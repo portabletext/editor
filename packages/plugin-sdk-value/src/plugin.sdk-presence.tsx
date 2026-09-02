@@ -3,11 +3,13 @@ import {
   usePresenceForDocument,
   useReportPresence,
   type DocumentHandle,
+  type DocumentResource,
   type UseReportPresenceOptions,
 } from '@sanity/sdk-react'
 import {useMemo, type PropsWithChildren, type ReactElement} from 'react'
 import {useLocalSelection, useRemoteCursors} from './plugin.presence-sync'
 import {arrayifyPath} from './plugin.sdk-value'
+import {normalizeDocumentHandle} from './sdk-document-handle'
 
 /**
  * `@sanity/sdk-react` exports the presence hooks and their option types but not
@@ -55,6 +57,10 @@ export interface SDKRemoteCursor {
  */
 export interface SDKPresencePluginProps extends DocumentHandle {
   /**
+   * @deprecated Use `resource` instead.
+   */
+  source?: DocumentResource
+  /**
    * The document path of the Portable Text field, for example `content`. The
    * same form `SDKValuePlugin` takes.
    */
@@ -67,6 +73,10 @@ export interface SDKPresencePluginProps extends DocumentHandle {
  * @public
  */
 export interface UseSDKPresenceCursorsOptions extends DocumentHandle {
+  /**
+   * @deprecated Use `resource` instead.
+   */
+  source?: DocumentResource
   path: string
   renderCursor: RenderCursorFunction
 }
@@ -86,7 +96,7 @@ export interface UseSDKPresenceCursorsOptions extends DocumentHandle {
  * @public
  */
 export function SDKPresencePlugin(props: SDKPresencePluginProps) {
-  const {path, ...handle} = props
+  const {path, ...handle} = normalizeDocumentHandle(props)
   const selection = useLocalSelection()
   const fieldPath = useFieldPath(path)
 
@@ -112,7 +122,7 @@ export function SDKPresencePlugin(props: SDKPresencePluginProps) {
 export function useSDKPresenceCursors(
   options: UseSDKPresenceCursorsOptions,
 ): RangeDecoration[] {
-  const {path, renderCursor, ...handle} = options
+  const {path, renderCursor, ...handle} = normalizeDocumentHandle(options)
   const fieldPath = useFieldPath(path)
   // Exact id matching: a caret reported while editing a draft must not be drawn
   // in a release version of the same document, where the text differs.

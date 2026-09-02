@@ -27,12 +27,14 @@ import {
   useEditDocument,
   useSanityInstance,
   type DocumentHandle,
+  type DocumentResource,
   type EditDocumentAction,
 } from '@sanity/sdk-react'
 import {useActorRef} from '@xstate/react'
 import {useCallback} from 'react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {debug} from './debug'
+import {normalizeDocumentHandle} from './sdk-document-handle'
 
 type InsertPatch = Required<Pick<SanityPatchOperations, 'insert'>>
 
@@ -1084,6 +1086,7 @@ const valueSyncMachine = setup({
 })
 
 interface SDKValuePluginProps extends DocumentHandle {
+  source?: DocumentResource
   path: string
 }
 
@@ -1122,9 +1125,10 @@ function getPublishedDocumentId(id: string): string {
  * @public
  */
 export function SDKValuePlugin(props: SDKValuePluginProps) {
-  const {documentId, documentType, path} = props
-  const setSdkValue = useEditDocument(props)
-  const instance = useSanityInstance(props)
+  const normalizedProps = normalizeDocumentHandle(props)
+  const {documentId, documentType, path} = normalizedProps
+  const setSdkValue = useEditDocument(normalizedProps)
+  const instance = useSanityInstance()
   const applyActions = useApplyDocumentActions()
 
   const handle = {documentId, documentType, path}

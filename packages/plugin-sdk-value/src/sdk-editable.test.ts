@@ -48,7 +48,6 @@ describe('splitEditableProps', () => {
       projectId: true,
       resource: true,
       resourceName: true,
-      source: true,
     } satisfies {[Key in keyof DocumentHandle]-?: true}
 
     // Every handle key has to be present in the input, or a field the component
@@ -96,6 +95,28 @@ describe('splitEditableProps', () => {
     expect(handle.projectId).toBe('project-1')
     expect(handle.dataset).toBe('production')
     expect(handle.resourceName).toBe('resource-1')
+  })
+
+  it('maps the removed source alias to resource without forwarding it', () => {
+    const source: SDKPortableTextEditableProps['source'] = {
+      projectId: 'source-project',
+      dataset: 'source-dataset',
+    }
+    const legacyProps = {
+      'documentId': 'doc-1',
+      'documentType': 'post',
+      'path': 'content',
+      'source': source,
+      'data-testid': 'editable',
+    }
+    const {handle, editableProps} = splitEditableProps(legacyProps)
+
+    expect(handle).toEqual({
+      documentId: 'doc-1',
+      documentType: 'post',
+      resource: {projectId: 'source-project', dataset: 'source-dataset'},
+    })
+    expect(editableProps).toEqual({'data-testid': 'editable'})
   })
 
   it('omits handle fields the caller never passed', () => {
