@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.6
+
+### Patch Changes
+
+- [#3212](https://github.com/portabletext/editor/pull/3212) [`f5feeea`](https://github.com/portabletext/editor/commit/f5feeea73c9f105760ddb6c8a41ce91fcfc6c74a) Thanks [@rexxars](https://github.com/rexxars)! - fix: support `@sanity/sdk-react` 3 with normalized document handles
+
+  `@portabletext/plugin-sdk-value` now supports `@sanity/sdk-react` 3 in addition to 2.19 and later. The removed `source` document-handle alias is translated to `resource`, so existing integrations do not need code changes.
+
 ## 8.0.5
 
 ## 8.0.4
