@@ -62,6 +62,23 @@ export type ReplaceChildrenStep = {
   newChildren: Array<unknown>
 }
 
+/**
+ * `from` is both-ends inclusive: an offset landing exactly on the start or
+ * the end of the moved range still maps through to `to`, the same as
+ * `remove.text` treats its own start boundary.
+ */
+export type MoveTextStep = {
+  type: 'move.text'
+  from: {path: Path; offset: number; length: number}
+  to: {path: Path; offset: number}
+}
+
+export type MoveNodeStep = {
+  type: 'move.node'
+  from: Path
+  to: Path
+}
+
 export type Step =
   | InsertTextStep
   | RemoveTextStep
@@ -70,6 +87,8 @@ export type Step =
   | UnsetTextStep
   | RekeyStep
   | ReplaceChildrenStep
+  | MoveTextStep
+  | MoveNodeStep
 
 /**
  * Map a point through one step. Returns the same `point` reference when the
@@ -173,6 +192,32 @@ export function mapPointThroughStep(
     case 'unset.text': {
       if (pathEquals(step.path, point.path) && point.offset !== 0) {
         return {path: point.path, offset: 0}
+      }
+
+      return point
+    }
+
+    case 'move.text': {
+      if (
+        pathEquals(step.from.path, point.path) &&
+        step.from.offset <= point.offset &&
+        point.offset <= step.from.offset + step.from.length
+      ) {
+        return {
+          path: step.to.path,
+          offset: step.to.offset + (point.offset - step.from.offset),
+        }
+      }
+
+      return point
+    }
+
+    case 'move.node': {
+      if (pathContains(step.from, point.path)) {
+        return {
+          path: [...step.to, ...point.path.slice(step.from.length)],
+          offset: point.offset,
+        }
       }
 
       return point
