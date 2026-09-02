@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-sdk-value",
-  "version": "8.0.5",
+  "version": "8.0.6",
   "description": "Connect a Portable Text Editor with a Sanity document using the SDK",
   "keywords": [
     "@sanity/sdk",
