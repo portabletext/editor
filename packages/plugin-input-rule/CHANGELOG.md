@@ -2,7 +2,15 @@
 
 ## 7.0.6
 
+### Patch Changes
+
+- chore: lockstep release, no changes
+
 ## 7.0.5
+
+### Patch Changes
+
+- chore: lockstep release, no changes
 
 ## 7.0.4
 
@@ -13,6 +21,10 @@
   Pressing Backspace right after an input rule fires still undoes the rule, including when a collaborator's changes arrive in between. Once any other local edit lands, Backspace acts normally again.
 
 ## 7.0.3
+
+### Patch Changes
+
+- chore: lockstep release, no changes
 
 ## 7.0.2
 
