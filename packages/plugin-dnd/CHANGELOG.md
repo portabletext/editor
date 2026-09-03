@@ -1,5 +1,17 @@
 # @portabletext/plugin-dnd
 
+## 2.0.8
+
+### Patch Changes
+
+- [#3218](https://github.com/portabletext/editor/pull/3218) [`8a71561`](https://github.com/portabletext/editor/commit/8a715616bdb49ca1e57b950979859f3eb35232e0) Thanks [@christianhg](https://github.com/christianhg)! - fix: derive the dragged-block facts once per drag instead of per `dragover`
+
+  The `dragover` guard no longer re-derives which blocks are being dragged (the drag selection, the dragged block keys, and the entire-blocks check, all of which scan the document) on every pointer move. These facts are now computed once per drag and reused, so dragging over large documents does less work per `dragover`. They are recomputed when the document changes mid-drag, for example when a remote edit lands, so the indicator keeps reflecting the current document.
+
+- [#3218](https://github.com/portabletext/editor/pull/3218) [`a448def`](https://github.com/portabletext/editor/commit/a448def18dfd1471c7cbf615d1616cf3b5bc6146) Thanks [@christianhg](https://github.com/christianhg)! - fix: stop clearing the drop position on `dragenter`
+
+  Crossing a block boundary during a drag no longer clears and re-sets the drop position. `dragenter` precedes every `dragover` on a crossing, so clearing on it toggled the indicator and wrote the editor's caret color twice per crossing; on large pages each style write costs a layout reflow. The caret color and the indicator now only change when the drop position genuinely transitions, and the drop position still clears on `dragstart`, `dragend`, `dragleave`, and `drop`.
+
 ## 2.0.7
 
 ## 2.0.6
