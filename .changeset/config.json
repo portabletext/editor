@@ -1,8 +1,10 @@
 {
   "$schema": "https://unpkg.com/@changesets/config/schema.json",
   "changelog": [
-    "@changesets/changelog-github",
-    {"repo": "portabletext/editor"}
+    "./changelog.cjs",
+    {
+      "repo": "portabletext/editor"
+    }
   ],
   "commit": false,
   "access": "public",
