@@ -275,7 +275,14 @@ function createDropPositionBehaviors(
     }),
     defineBehavior({
       on: 'drag.*',
-      guard: ({event}) => event.type !== 'drag.dragover',
+      guard: ({event}) =>
+        // `drag.drag` fires continuously on the drag source between
+        // `dragover`s. Clearing on it would toggle the drop position (and
+        // the caret-color write on the editor root) on every pointer move,
+        // and each write invalidates layout for the whole page right before
+        // the next drag event reads element rects: a forced reflow per move,
+        // scaling with page size.
+        event.type !== 'drag.dragover' && event.type !== 'drag.drag',
       actions: [
         ({event}) => [
           effect(() => {
