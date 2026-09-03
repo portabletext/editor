@@ -1,4 +1,9 @@
-import {useEditor, type Path} from '@portabletext/editor'
+import {
+  useEditor,
+  type EditorSelection,
+  type EditorSnapshot,
+  type Path,
+} from '@portabletext/editor'
 import {
   defineBehavior,
   effect,
@@ -19,6 +24,7 @@ import {
   isEmptyTextBlock,
   isEqualPaths,
   isEqualSelectionPoints,
+  isEqualSelections,
   isKeyedSegment,
   isSelectionCollapsed,
 } from '@portabletext/editor/utils'
@@ -153,9 +159,74 @@ function createDropPositionStore(
  * drag itself. (The editor's internal drop-position tracking gets away
  * without forwarding because it registers below core priority.)
  */
+type DragOriginState = {
+  value: EditorSnapshot['context']['value']
+  dragOriginSelection: NonNullable<EditorSelection>
+  draggedBlockKeys: Set<string>
+  draggedFocusBlockPath: Path | undefined
+  draggingEntireBlocks: boolean
+}
+
 function createDropPositionBehaviors(
   setDropPosition: (next: DropPosition | undefined) => void,
 ): Array<Behavior> {
+  // `dragover` fires at pointer frequency, but this derived state only changes with
+  // the drag origin (a new drag) or the document value (a remote patch
+  // landing mid-drag), so it is derived once per (value, origin) pair
+  // instead of per event. The value key compares by identity (the value
+  // array is replaced on every applied operation); the origin key compares
+  // by selection equality, because the origin object's identity does not
+  // survive the event pipeline.
+  let dragOriginState: DragOriginState | undefined
+
+  function getDragOriginState(
+    snapshot: EditorSnapshot,
+    dragOriginSelection: NonNullable<EditorSelection>,
+  ): DragOriginState {
+    if (
+      dragOriginState &&
+      dragOriginState.value === snapshot.context.value &&
+      isEqualSelections(
+        dragOriginState.dragOriginSelection,
+        dragOriginSelection,
+      )
+    ) {
+      return dragOriginState
+    }
+
+    const dragSelection = getDragSelection({
+      eventSelection: dragOriginSelection,
+      snapshot,
+    })
+    const dragSnapshot = {
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: dragSelection,
+      },
+    }
+    const draggedBlocks = getSelectedBlocks(dragSnapshot)
+    // `getSelectedBlocks` only looks at root-level children, so a drag
+    // origin nested inside a container (a callout paragraph, a table
+    // cell) resolves to the container, not the nested block actually
+    // being dragged. `getFocusBlock` resolves the origin's own focus to
+    // the same depth drop focus blocks are resolved to, so comparing the
+    // two catches a nested block dragged over itself too.
+    const draggedFocusBlock = getFocusBlock(dragSnapshot)
+
+    dragOriginState = {
+      value: snapshot.context.value,
+      dragOriginSelection,
+      draggedBlockKeys: new Set(
+        draggedBlocks.map((draggedBlock) => draggedBlock.node._key),
+      ),
+      draggedFocusBlockPath: draggedFocusBlock?.path,
+      draggingEntireBlocks: isSelectingEntireBlocks(dragSnapshot),
+    }
+
+    return dragOriginState
+  }
+
   return [
     defineBehavior({
       on: 'drag.dragover',
@@ -178,48 +249,19 @@ function createDropPositionBehaviors(
           return false
         }
 
-        const dragSelection = getDragSelection({
-          eventSelection: dragOrigin.selection,
-          snapshot,
-        })
-        const dragSnapshot = {
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: dragSelection,
-          },
-        }
-
-        const draggedBlocks = getSelectedBlocks(dragSnapshot)
-        // `getSelectedBlocks` only looks at root-level children, so a drag
-        // origin nested inside a container (a callout paragraph, a table
-        // cell) resolves to the container, not the nested block actually
-        // being dragged. `getFocusBlock` resolves the origin's own focus to
-        // the same depth `dropFocusBlock` was resolved to, so comparing the
-        // two catches a nested block dragged over itself too.
-        const draggedFocusBlock = getFocusBlock(dragSnapshot)
+        const {draggedBlockKeys, draggedFocusBlockPath, draggingEntireBlocks} =
+          getDragOriginState(snapshot, dragOrigin.selection)
 
         const selfDrop =
-          draggedBlocks.some(
-            (draggedBlock) =>
-              draggedBlock.node._key === dropFocusBlock.node._key,
-          ) ||
-          (draggedFocusBlock !== undefined &&
-            isEqualPaths(draggedFocusBlock.path, dropFocusBlock.path))
+          draggedBlockKeys.has(dropFocusBlock.node._key) ||
+          (draggedFocusBlockPath !== undefined &&
+            isEqualPaths(draggedFocusBlockPath, dropFocusBlock.path))
 
         if (selfDrop) {
           // Core cancels the drop, so no position is valid here, including
           // one left over from the previous hover.
           return {dropFocusBlock, droppedInsideTextBlock: false, clear: true}
         }
-
-        const draggingEntireBlocks = isSelectingEntireBlocks({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: dragSelection,
-          },
-        })
 
         if (!draggingEntireBlocks) {
           return false
