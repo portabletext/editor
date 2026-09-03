@@ -687,13 +687,14 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      const position = getEventPosition({
-        editorActor,
-        editorEngine,
-        event: event.nativeEvent,
-      })
-
-      if (!position) {
+      // The forwarded `drag.drag` event carries no position, so resolving
+      // one (a caret hit-test plus block rect reads) is wasted work on an
+      // event the browser fires continuously on the drag source. A
+      // containment check is all the guard needs.
+      if (
+        editorActor.getSnapshot().matches({setup: 'setting up'}) ||
+        !DOMEditor.hasTarget(editorEngine, event.target)
+      ) {
         return
       }
 
@@ -860,13 +861,13 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      const position = getEventPosition({
-        editorActor,
-        editorEngine,
-        event: event.nativeEvent,
-      })
-
-      if (!position) {
+      // The forwarded `drag.dragleave` event carries no position either;
+      // the same cheap guard as `drag.drag` applies. `dragleave` fires on
+      // every element boundary inside the editor during a drag.
+      if (
+        editorActor.getSnapshot().matches({setup: 'setting up'}) ||
+        !DOMEditor.hasTarget(editorEngine, event.target)
+      ) {
         return
       }
 
