@@ -2,11 +2,27 @@
 
 ## 9.0.6
 
+### Patch Changes
+
+- chore: lockstep release, no changes
+
 ## 9.0.5
+
+### Patch Changes
+
+- chore: lockstep release, no changes
 
 ## 9.0.4
 
+### Patch Changes
+
+- chore: lockstep release, no changes
+
 ## 9.0.3
+
+### Patch Changes
+
+- chore: lockstep release, no changes
 
 ## 9.0.2
 

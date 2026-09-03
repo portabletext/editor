@@ -2,11 +2,27 @@
 
 ## 2.0.6
 
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.1.2`
+
 ## 2.0.5
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.1.1`
 
 ## 2.0.4
 
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.1.0`
+
 ## 2.0.3
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.0.3`
 
 ## 2.0.2
 
