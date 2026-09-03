@@ -76,7 +76,7 @@
     "vitest": "catalog:tooling"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^8.0.2",
+    "@portabletext/editor": "workspace:^",
     "react": "^19.2"
   },
   "engines": {
