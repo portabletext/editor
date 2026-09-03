@@ -2594,4 +2594,268 @@ describe('event.drag.drop', () => {
       ])
     })
   })
+
+  // The drop payload travels through `dataTransfer`, serialized at
+  // `dragstart`, while the source deletion re-resolves against the document
+  // at drop time. A remote edit landing mid-drag falls in that gap: the
+  // scenarios below assert that the drop reflects the post-edit document.
+  // Both are `test.fails`: today the drop re-inserts the dragstart-era
+  // payload, resurrecting the remotely deleted block and overwriting the
+  // remote edit.
+  test.fails('Scenario: a remotely deleted block does not reappear when its drag is dropped', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+    editor.send({type: 'select', at: imageSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    editor.send({
+      type: 'patches',
+      patches: [{type: 'unset', path: [{_key: imageKey}], origin: 'remote'}],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test.fails('Scenario: dropping a multi-block drag keeps remote deletions and edits made mid-drag', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const quxBlockKey = keyGenerator()
+    const quxSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: barBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+        },
+        {
+          _key: bazBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+        },
+        {
+          _key: quxBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: quxSpanKey, _type: 'span', text: 'qux', marks: []}],
+        },
+      ],
+    })
+
+    const dragSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+        offset: 3,
+      },
+    }
+    editor.send({type: 'select', at: dragSelection})
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {type: 'serialize', originEvent: 'drag.dragstart'},
+    })
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    // Mid-drag, a remote peer deletes `bar` and types into `foo`.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', path: [{_key: barBlockKey}], origin: 'remote'},
+        {
+          type: 'set',
+          path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}, 'text'],
+          value: 'foox',
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: fooSpanKey, _type: 'span', text: 'foox', marks: []},
+          ],
+        },
+        {
+          _key: bazBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+        },
+        {
+          _key: quxBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: quxSpanKey, _type: 'span', text: 'qux', marks: []}],
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {selection: dragSelection},
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: quxBlockKey}, 'children', {_key: quxSpanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: quxBlockKey}, 'children', {_key: quxSpanKey}],
+            offset: 3,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: quxBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: quxSpanKey, _type: 'span', text: 'qux', marks: []}],
+        },
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: fooSpanKey, _type: 'span', text: 'foox', marks: []},
+          ],
+        },
+        {
+          _key: bazBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+        },
+      ])
+    })
+  })
 })
