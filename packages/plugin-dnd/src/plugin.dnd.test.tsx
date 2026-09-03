@@ -199,6 +199,51 @@ describe('DndProvider', () => {
     await expectDropPositions({b0: 'none', b1: 'none', b2: 'end'})
   })
 
+  test('Scenario: A mid-drag document change recomputes the derived drag state', async () => {
+    const {editor} = await renderEditorWithProbes()
+
+    // The same origin selection is used across the whole drag, like the
+    // editor's own drag tracking does, so only the document change can
+    // invalidate the derived state. It covers `b0`'s text minus the last
+    // character, so the drag starts as a partial text drag.
+    const origin: NonNullable<EditorSelection> = {
+      anchor: {path: spanPath('b0'), offset: 0},
+      focus: {path: spanPath('b0'), offset: 'first'.length - 1},
+    }
+
+    editor.send(
+      dragover({
+        dragOrigin: origin,
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+    // A partial text drag shows nothing.
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'none'})
+
+    // Shrink `b0` so the same origin selection now spans the whole block:
+    // the drag becomes an entire-blocks drag.
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: spanPath('b0'), offset: 'first'.length - 1},
+        focus: {path: spanPath('b0'), offset: 'first'.length},
+      },
+    })
+
+    editor.send(
+      dragover({
+        dragOrigin: origin,
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+
+    // Only a recomputed drag selection can show the indicator here; state
+    // cached against the pre-delete document keeps it hidden.
+    await expectDropPositions({b2: 'end'})
+  })
+
   test('Scenario: Ending the drag clears the drop position', async () => {
     const {editor} = await renderEditorWithProbes()
 
