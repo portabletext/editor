@@ -276,13 +276,17 @@ function createDropPositionBehaviors(
     defineBehavior({
       on: 'drag.*',
       guard: ({event}) =>
-        // `drag.drag` fires continuously on the drag source between
-        // `dragover`s. Clearing on it would toggle the drop position (and
-        // the caret-color write on the editor root) on every pointer move,
-        // and each write invalidates layout for the whole page right before
-        // the next drag event reads element rects: a forced reflow per move,
-        // scaling with page size.
-        event.type !== 'drag.dragover' && event.type !== 'drag.drag',
+        // `drag.drag` (continuous on the drag source) and `drag.dragenter`
+        // (preceding every `dragover` on a boundary crossing) are carrier
+        // events, not end-of-interaction signals. Clearing on them would
+        // toggle the drop position (and the caret-color write on the editor
+        // root) per pointer move or per crossing, and each style write
+        // invalidates layout for the whole page right before the next drag
+        // event reads element rects: a forced reflow, scaling with page
+        // size. `dragleave` still clears every genuine departure.
+        event.type !== 'drag.dragover' &&
+        event.type !== 'drag.drag' &&
+        event.type !== 'drag.dragenter',
       actions: [
         ({event}) => [
           effect(() => {

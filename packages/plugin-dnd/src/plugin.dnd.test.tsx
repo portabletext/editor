@@ -168,6 +168,37 @@ describe('DndProvider', () => {
     await expectDropPositions({b0: 'none', b1: 'none', b2: 'end'})
   })
 
+  test('Scenario: A `dragenter` on a boundary crossing does not clear the drop position', async () => {
+    const {editor} = await renderEditorWithProbes()
+    const editorElement = getEditorElement(editor)
+
+    editor.send(
+      dragover({
+        dragOrigin: blockSelection('b0'),
+        over: caretIn('b2'),
+        block: 'end',
+      }),
+    )
+    await expectDropPositions({b2: 'end'})
+    expect(editorElement.style.caretColor).toBe('transparent')
+
+    editor.send({
+      type: 'drag.dragenter',
+      originEvent: {dataTransfer: new DataTransfer()},
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: caretIn('b1'),
+      },
+    })
+
+    // The caret-color write happens synchronously in the store, so a clear
+    // would already have restored it here.
+    expect(editorElement.style.caretColor).toBe('transparent')
+    await expectDropPositions({b0: 'none', b1: 'none', b2: 'end'})
+  })
+
   test('Scenario: Ending the drag clears the drop position', async () => {
     const {editor} = await renderEditorWithProbes()
 
