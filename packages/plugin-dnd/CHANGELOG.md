@@ -1,5 +1,7 @@
 # @portabletext/plugin-dnd
 
+## 2.0.7
+
 ## 2.0.6
 
 ### Patch Changes

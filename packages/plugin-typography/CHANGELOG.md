@@ -1,5 +1,12 @@
 # @portabletext/plugin-typography
 
+## 9.0.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.6
+
 ## 9.0.5
 
 ### Patch Changes
