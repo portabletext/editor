@@ -17,6 +17,7 @@
     "build:sanity-bridge": "turbo build --filter=@portabletext/sanity-bridge...",
     "build:schema": "turbo build --filter=@portabletext/schema...",
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
+    "changeset:version": "changeset version && node .changeset/annotate-lockstep-releases.mjs",
     "check:format": "oxfmt --check . && prettier --check \"**/*.{astro,feature}\"",
     "check:knip": "knip",
     "check:lint": "oxlint",
@@ -42,7 +43,7 @@
     "test:browser:chromium": "turbo test:browser:chromium",
     "test:browser:firefox": "turbo test:browser:firefox",
     "test:browser:webkit": "turbo test:browser:webkit",
-    "test:unit": "turbo test:unit",
+    "test:unit": "turbo test:unit && node --test .changeset/annotate-lockstep-releases.test.mjs",
     "test:unit:watch": "turbo test:unit:watch",
     "test:watch": "turbo test:watch"
   },

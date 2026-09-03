@@ -22,4 +22,5 @@ jobs:
       id-token: write # to enable use of OIDC for npm provenance
     with:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+      version: pnpm changeset:version
     secrets: inherit
