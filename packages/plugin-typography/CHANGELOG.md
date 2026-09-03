@@ -1,5 +1,16 @@
 # @portabletext/plugin-typography
 
+## 9.0.7
+
+### Patch Changes
+
+- [#3223](https://github.com/portabletext/editor/pull/3223) [`076205f`](https://github.com/portabletext/editor/commit/076205fb4f71d78032f71d4ab68b4c5597ddfb39) Thanks [@christianhg](https://github.com/christianhg)! - fix(deps): replace pinned `workspace:^8.0.2` peer ranges with `workspace:^`
+
+  These five packages again require the `@portabletext/editor` version released alongside them. Their published peer range had been frozen at `^8.0.2`: the release tooling used to rewrite the pinned range on every release and stopped doing so in late August, leaving the pin as a fossil. With the bare `workspace:^` range, pnpm substitutes the co-released editor version at publish time, matching the other packages in the monorepo.
+
+- Updated dependencies [[`076205f`](https://github.com/portabletext/editor/commit/076205fb4f71d78032f71d4ab68b4c5597ddfb39)]:
+  - @portabletext/plugin-input-rule@7.0.7
+
 ## 9.0.6
 
 ### Patch Changes
