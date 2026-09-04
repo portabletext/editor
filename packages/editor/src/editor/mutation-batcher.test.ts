@@ -110,6 +110,7 @@ function createOperationEvent(operation: EngineOperation): OperationEvent {
     withHistory: false,
     undoStepId: undefined,
     origin: 'local',
+    context: [],
   }
 }
 

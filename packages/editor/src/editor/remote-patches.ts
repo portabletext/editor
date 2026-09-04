@@ -36,7 +36,7 @@ export function setupRemotePatches({
     bufferedPatches = []
     let changed = false
 
-    withRemoteChanges(editor, () => {
+    withRemoteChanges(editor, 'patches', () => {
       withoutNormalizing(editor, () => {
         withoutPatching(editor, () => {
           pluginWithoutHistory(editor, () => {

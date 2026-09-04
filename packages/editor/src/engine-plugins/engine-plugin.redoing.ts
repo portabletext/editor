@@ -7,10 +7,12 @@ export function pluginRedoing(
   const prev = editor.isRedoing
 
   editor.isRedoing = true
+  editor.applyContext.push(Object.freeze({kind: 'redo'}))
 
   try {
     fn()
   } finally {
+    editor.applyContext.pop()
     editor.isRedoing = prev
   }
 }

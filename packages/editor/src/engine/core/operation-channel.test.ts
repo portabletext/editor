@@ -10,6 +10,14 @@ import {withRemoteChanges} from '../../engine-plugins/engine-plugin.remote-chang
 import {pluginUndoing} from '../../engine-plugins/engine-plugin.undoing'
 import {pluginWithoutHistory} from '../../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../../engine-plugins/engine-plugin.without-patching'
+import {buildIndexMaps} from '../../internal-utils/build-index-maps'
+import {selectOperationImplementation} from '../../operations/operation.select'
+import {defineContainer, type Container} from '../../renderers/renderer.types'
+import {
+  resolveContainers,
+  resolveContainersRich,
+} from '../../schema/resolve-containers-batch'
+import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import {createEditor} from '../create-editor'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
@@ -301,13 +309,13 @@ describe('operation channel', () => {
 
     editor.apply(insertTextOperation)
 
-    editor.isProcessingRemoteChanges = true
-    editor.apply({...insertTextOperation, offset: 0})
-    editor.isProcessingRemoteChanges = false
+    withRemoteChanges(editor, 'patches', () => {
+      editor.apply({...insertTextOperation, offset: 0})
+    })
 
-    editor.isUndoing = true
-    editor.apply({...insertTextOperation, offset: 0})
-    editor.isUndoing = false
+    pluginUndoing(editor, () => {
+      editor.apply({...insertTextOperation, offset: 0})
+    })
 
     expect(origins).toEqual(['local', 'remote', 'undo'])
   })
@@ -351,6 +359,204 @@ describe('operation channel', () => {
     ])
   })
 
+  test('a normalization bracket nested inside a consumer `normalizeNode` override does not clobber the outer bracket', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const events: Array<{
+      origin: OperationEvent['origin']
+      isNormalizingNode: boolean
+    }> = []
+
+    let fixApplied = false
+    editor.normalizeNode = () => {
+      if (fixApplied) {
+        return
+      }
+      fixApplied = true
+
+      // Mirrors the inner bracket `operation.select`'s container repair
+      // establishes around its own `normalizeNode` call, nested inside
+      // this (outer) bracket.
+      const prev = editor.isNormalizingNode
+      editor.isNormalizingNode = true
+      editor.applyContext.push({kind: 'normalization'})
+      try {
+        // The inner bracket's own `normalizeNode` call.
+      } finally {
+        editor.applyContext.pop()
+        editor.isNormalizingNode = prev
+      }
+
+      editor.apply(insertTextOperation)
+    }
+
+    subscribeToOperations(editor, (event) => {
+      events.push({
+        origin: event.origin,
+        isNormalizingNode: event.isNormalizingNode,
+      })
+    })
+
+    editor.apply({
+      type: 'set',
+      path: [{_key: 'b1'}, 'style'],
+      value: 'h1',
+    })
+
+    expect(events).toEqual([
+      {origin: 'normalization', isNormalizingNode: true},
+      {origin: 'local', isNormalizingNode: false},
+    ])
+  })
+
+  test('an `operation.select` container-repair bracket nested inside a consumer `normalizeNode` override does not clobber the outer bracket', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'sidebar',
+            fields: [
+              {
+                name: 'markDefs',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'note',
+                    fields: [{name: 'title', type: 'string'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const publicContainers: Array<Container> = [
+      defineContainer({type: 'sidebar', arrayField: 'markDefs'}),
+    ]
+    const value: Array<PortableTextBlock> = [
+      ...createDefaultValue(),
+      {_key: 'c1', _type: 'sidebar', markDefs: []},
+    ]
+    const editor = createBareEditor(value)
+    const containers = resolveContainers(schema, publicContainers)
+    buildIndexMaps(
+      {schema, containers, value},
+      {blockIndexMap: editor.blockIndexMap},
+    )
+    editor.containers = resolveContainersRich(schema, publicContainers)
+    editor.snapshot.context.schema = schema
+    editor.snapshot.context.containers = containers
+
+    const events: Array<{
+      operationType: string
+      origin: OperationEvent['origin']
+      isNormalizingNode: boolean
+    }> = []
+    subscribeToOperations(editor, (event) => {
+      events.push({
+        operationType: event.operation.type,
+        origin: event.origin,
+        isNormalizingNode: event.isNormalizingNode,
+      })
+    })
+
+    const containerPoint = {path: [{_key: 'c1'}], offset: 0}
+    let outerFired = false
+    editor.normalizeNode = () => {
+      if (outerFired) {
+        // The nested call `operation.select`'s repair issues for the
+        // empty container; nothing to fix.
+        return
+      }
+      outerFired = true
+
+      // Selecting the empty container lands the point on the container
+      // itself (it has no children to descend into), which is exactly
+      // the scenario `operation.select`'s container-repair bracket
+      // guards: it re-enters `editor.normalizeNode` nested inside this
+      // (outer) normalization bracket.
+      selectOperationImplementation({
+        snapshot: editor.snapshot,
+        operation: {
+          type: 'select',
+          editor: editor as unknown as PortableTextEditorEngine,
+          at: {anchor: containerPoint, focus: containerPoint},
+        },
+      })
+
+      editor.apply(insertTextOperation)
+    }
+
+    editor.apply({
+      type: 'set',
+      path: [{_key: 'b1'}, 'style'],
+      value: 'h1',
+    })
+
+    const insertTextEvent = events.find(
+      (event) => event.operationType === 'insert.text',
+    )
+    expect(insertTextEvent).toEqual({
+      operationType: 'insert.text',
+      origin: 'normalization',
+      isNormalizingNode: true,
+    })
+  })
+
+  test('`context` carries the frame stack `origin` derives from, across nested attribution brackets', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const events: Array<{
+      origin: OperationEvent['origin']
+      context: OperationEvent['context']
+    }> = []
+
+    let fixApplied = false
+    editor.normalizeNode = () => {
+      if (!fixApplied) {
+        fixApplied = true
+        editor.apply(insertTextOperation)
+      }
+    }
+
+    subscribeToOperations(editor, (event) => {
+      events.push({origin: event.origin, context: event.context})
+    })
+
+    const setStyle = (value: string) => ({
+      type: 'set' as const,
+      path: [{_key: 'b1'}, 'style'],
+      value,
+    })
+
+    editor.apply(setStyle('h1'))
+
+    fixApplied = false
+    withRemoteChanges(editor, 'patches', () => {
+      editor.apply(setStyle('normal'))
+    })
+
+    fixApplied = false
+    pluginUndoing(editor, () => {
+      editor.apply(setStyle('h1'))
+    })
+
+    expect(events).toEqual([
+      {origin: 'normalization', context: [{kind: 'normalization'}]},
+      {origin: 'local', context: []},
+      {
+        origin: 'remote',
+        context: [{kind: 'remote', source: 'patches'}, {kind: 'normalization'}],
+      },
+      {origin: 'remote', context: [{kind: 'remote', source: 'patches'}]},
+      {
+        origin: 'undo',
+        context: [{kind: 'undo'}, {kind: 'normalization'}],
+      },
+      {origin: 'undo', context: [{kind: 'undo'}]},
+    ])
+  })
+
   test('a throw inside `withRemoteChanges` does not stick `isProcessingRemoteChanges`', () => {
     const editor = createBareEditor(createDefaultValue())
     editor.isProcessingRemoteChanges = false
@@ -361,12 +567,13 @@ describe('operation channel', () => {
     })
 
     expect(() =>
-      withRemoteChanges(editor, () => {
+      withRemoteChanges(editor, 'patches', () => {
         throw new Error('boom')
       }),
     ).toThrow('boom')
 
     expect(editor.isProcessingRemoteChanges).toEqual(false)
+    expect(editor.applyContext).toEqual([])
 
     editor.apply(insertTextOperation)
 
@@ -427,5 +634,24 @@ describe('operation channel', () => {
     }).toThrow('boom')
 
     expect(editor.isUndoing).toEqual(false)
+  })
+
+  test('a throw inside a normalization bracket leaves `isNormalizingNode` restored and `applyContext` balanced', () => {
+    const editor = createBareEditor(createDefaultValue())
+    editor.isNormalizingNode = false
+    editor.normalizeNode = () => {
+      throw new Error('boom')
+    }
+
+    expect(() =>
+      editor.apply({
+        type: 'set',
+        path: [{_key: 'b1'}, 'style'],
+        value: 'h1',
+      }),
+    ).toThrow('boom')
+
+    expect(editor.isNormalizingNode).toEqual(false)
+    expect(editor.applyContext).toEqual([])
   })
 })

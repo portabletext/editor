@@ -16,6 +16,7 @@ import {
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
+import type {ApplyContextFrame} from '../engine/core/apply-context'
 import {start} from '../engine/editor/start'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
@@ -84,6 +85,8 @@ const syncValueCallback: CallbackLogicFunction<
 const syncValueLogic = fromCallback(syncValueCallback)
 
 export type SyncActor = ActorRefFrom<typeof syncMachine>
+
+type RemoteSyncSource = Extract<ApplyContextFrame, {kind: 'remote'}>['source']
 
 /**
  * Sync value with the editor state
@@ -451,11 +454,19 @@ async function updateValue({
   let isValid = true
 
   const hadSelection = !!editorEngine.snapshot.context.selection
+  // `streamBlocks` is true only for a fresh editor's first value sync
+  // (`initialValueSynced` never flips back); an editor created without an
+  // initial value never runs that sync, so its first real value is tagged
+  // `update-value` instead of `initial-sync`.
+  const remoteSource: RemoteSyncSource = streamBlocks
+    ? 'initial-sync'
+    : 'update-value'
 
   if (!value || value.length === 0) {
     clearEditor({
       editorEngine,
       doneSyncing,
+      remoteSource,
     })
 
     isChanged = true
@@ -472,6 +483,7 @@ async function updateValue({
         isChanged = removeExtraBlocks({
           editorEngine,
           value,
+          remoteSource,
         })
 
         const processBlocks = async () => {
@@ -488,6 +500,7 @@ async function updateValue({
               index: currentBlockIndex,
               editorEngine,
               value,
+              remoteSource,
             })
 
             isChanged = blockChanged || isChanged
@@ -511,6 +524,7 @@ async function updateValue({
       isChanged = removeExtraBlocks({
         editorEngine,
         value,
+        remoteSource,
       })
 
       let index = 0
@@ -523,6 +537,7 @@ async function updateValue({
           index,
           editorEngine,
           value,
+          remoteSource,
         })
 
         isChanged = blockChanged || isChanged
@@ -604,11 +619,13 @@ async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
 function clearEditor({
   editorEngine,
   doneSyncing,
+  remoteSource,
 }: {
   editorEngine: PortableTextEditorEngine
   doneSyncing: boolean
+  remoteSource: RemoteSyncSource
 }) {
-  withRemoteChanges(editorEngine, () => {
+  withRemoteChanges(editorEngine, remoteSource, () => {
     withoutNormalizing(editorEngine, () => {
       pluginWithoutHistory(editorEngine, () => {
         withoutPatching(editorEngine, () => {
@@ -642,13 +659,15 @@ function clearEditor({
 function removeExtraBlocks({
   editorEngine,
   value,
+  remoteSource,
 }: {
   editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
+  remoteSource: RemoteSyncSource
 }) {
   let isChanged = false
 
-  withRemoteChanges(editorEngine, () => {
+  withRemoteChanges(editorEngine, remoteSource, () => {
     withoutNormalizing(editorEngine, () => {
       withoutPatching(editorEngine, () => {
         const childrenLength = editorEngine.snapshot.context.value.length
@@ -681,6 +700,7 @@ function syncBlock({
   index,
   editorEngine,
   value,
+  remoteSource,
 }: {
   context: {
     keyGenerator: () => string
@@ -693,6 +713,7 @@ function syncBlock({
   index: number
   editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
+  remoteSource: RemoteSyncSource
 }) {
   const oldEngineBlock = editorEngine.snapshot.context.value.at(index)
   const oldBlock = editorEngine.snapshot.context.value.at(index)
@@ -715,7 +736,7 @@ function syncBlock({
         schemaTypes: context.schema,
       })
 
-      withRemoteChanges(editorEngine, () => {
+      withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
           withoutPatching(editorEngine, () => {
             editorEngine.apply({
@@ -800,7 +821,7 @@ function syncBlock({
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
       debug.syncValue('Updating block', oldBlock, repairedBlock)
 
-      withRemoteChanges(editorEngine, () => {
+      withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
           withoutPatching(editorEngine, () => {
             updateBlock({
@@ -816,7 +837,7 @@ function syncBlock({
     } else {
       debug.syncValue('Replacing block', oldBlock, repairedBlock)
 
-      withRemoteChanges(editorEngine, () => {
+      withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
           withoutPatching(editorEngine, () => {
             replaceBlock({
