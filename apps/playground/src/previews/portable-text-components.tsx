@@ -60,7 +60,7 @@ export const portableTextComponents: Partial<PortableTextReactComponents> = {
         {children}
       </a>
     ),
-    'comment': ({
+    'footnote': ({
       value,
       children,
     }: {
@@ -69,7 +69,7 @@ export const portableTextComponents: Partial<PortableTextReactComponents> = {
     }) => (
       <mark
         title={value?.text}
-        className="bg-yellow-200 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-200 px-0.5 rounded cursor-help"
+        className="bg-purple-200 dark:bg-purple-900/50 text-purple-900 dark:text-purple-200 px-0.5 rounded cursor-help"
       >
         {children}
       </mark>

@@ -42,8 +42,8 @@ export const playgroundSchemaDefinition = defineSchema({
       fields: [{name: 'href', title: 'HREF', type: 'string'}],
     },
     {
-      title: 'Comment',
-      name: 'comment',
+      title: 'Footnote',
+      name: 'footnote',
       fields: [{name: 'text', title: 'Text', type: 'string'}],
     },
   ],
@@ -163,8 +163,8 @@ export const playgroundSchemaDefinition = defineSchema({
                   fields: [{name: 'href', title: 'HREF', type: 'string'}],
                 },
                 {
-                  title: 'Comment',
-                  name: 'comment',
+                  title: 'Footnote',
+                  name: 'footnote',
                   fields: [{name: 'text', title: 'Text', type: 'string'}],
                 },
               ],
@@ -241,8 +241,8 @@ export const playgroundSchemaDefinition = defineSchema({
                       ],
                       annotations: [
                         {
-                          title: 'Comment',
-                          name: 'comment',
+                          title: 'Footnote',
+                          name: 'footnote',
                           fields: [
                             {name: 'text', title: 'Text', type: 'string'},
                           ],
@@ -302,7 +302,7 @@ export const playgroundSchemaDefinition = defineSchema({
       ],
     },
     // ARCHETYPE 3 - selective subsets: ONE-OF in every dimension.
-    // Decorators: only strong. Annotations: only comment.
+    // Decorators: only strong. Annotations: only footnote.
     // Styles: normal + h1 + h2 + h3 + blockquote.
     // Lists: bullet + number (narrowing still exercised by the nested
     // callouts below, which stay bullet-only / empty).
@@ -333,8 +333,8 @@ export const playgroundSchemaDefinition = defineSchema({
               ],
               annotations: [
                 {
-                  title: 'Comment',
-                  name: 'comment',
+                  title: 'Footnote',
+                  name: 'footnote',
                   fields: [{name: 'text', title: 'Text', type: 'string'}],
                 },
               ],
@@ -476,8 +476,8 @@ export const playgroundSchemaDefinition = defineSchema({
                                       ],
                                       annotations: [
                                         {
-                                          title: 'Comment',
-                                          name: 'comment',
+                                          title: 'Footnote',
+                                          name: 'footnote',
                                           fields: [
                                             {
                                               name: 'text',
@@ -549,9 +549,9 @@ export const playgroundSchemaDefinition = defineSchema({
   ],
 })
 
-export const CommentAnnotationSchema = z.object({
+export const FootnoteAnnotationSchema = z.object({
   schemaType: z.object({
-    name: z.literal('comment'),
+    name: z.literal('footnote'),
   }),
   value: z.object({
     text: z.string(),
