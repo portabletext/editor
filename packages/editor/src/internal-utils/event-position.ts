@@ -239,43 +239,45 @@ function getEventPositionBlock({
   editorEngine: PortableTextEditorEngine
   event: DragEvent | MouseEvent
 }): EventPositionBlock | undefined {
-  const firstBlockEntry = getNode(editorEngine.snapshot, [0])
+  if (nodePath.length === 0) {
+    // Over a block, the pointer sits inside that block's band, between the
+    // first block's top and the last block's bottom, so these boundary
+    // checks can only decide anything when the event targets the editor's
+    // own surface.
+    const firstBlockEntry = getNode(editorEngine.snapshot, [0])
 
-  if (!firstBlockEntry) {
-    return undefined
-  }
+    if (!firstBlockEntry) {
+      return undefined
+    }
 
-  const firstBlockElement = getDomNode(editorEngine, firstBlockEntry.path)
+    const firstBlockElement = getDomNode(editorEngine, firstBlockEntry.path)
 
-  if (!firstBlockElement) {
-    return undefined
-  }
+    if (!firstBlockElement) {
+      return undefined
+    }
 
-  const firstBlockRect = firstBlockElement.getBoundingClientRect()
+    if (event.clientY < firstBlockElement.getBoundingClientRect().top) {
+      return 'start'
+    }
 
-  if (event.pageY < firstBlockRect.top) {
-    return 'start'
-  }
+    const lastBlock = editorEngine.snapshot.context.value.at(-1)
+    const lastBlockEntry = lastBlock
+      ? getNode(editorEngine.snapshot, [{_key: lastBlock._key}])
+      : undefined
 
-  const lastBlock = editorEngine.snapshot.context.value.at(-1)
-  const lastBlockEntry = lastBlock
-    ? getNode(editorEngine.snapshot, [{_key: lastBlock._key}])
-    : undefined
+    if (!lastBlockEntry) {
+      return undefined
+    }
 
-  if (!lastBlockEntry) {
-    return undefined
-  }
+    const lastBlockElement = getDomNode(editorEngine, lastBlockEntry.path)
 
-  const lastBlockElement = getDomNode(editorEngine, lastBlockEntry.path)
+    if (!lastBlockElement) {
+      return undefined
+    }
 
-  if (!lastBlockElement) {
-    return undefined
-  }
-
-  const lastBlockRef = lastBlockElement.getBoundingClientRect()
-
-  if (event.pageY > lastBlockRef.bottom) {
-    return 'end'
+    if (event.clientY > lastBlockElement.getBoundingClientRect().bottom) {
+      return 'end'
+    }
   }
 
   const element = getDomNode(editorEngine, nodePath)
@@ -287,7 +289,7 @@ function getEventPositionBlock({
   const elementRect = element.getBoundingClientRect()
   const top = elementRect.top
   const height = elementRect.height
-  const location = Math.abs(top - event.pageY)
+  const location = Math.abs(top - event.clientY)
 
   return location < height / 2 ? 'start' : 'end'
 }
