@@ -5,7 +5,13 @@ import type {
   PortableTextObject,
   TypedObject,
 } from '@portabletext/schema'
-import type {ClipboardEvent, JSX, PropsWithChildren, ReactElement} from 'react'
+import type {
+  ClipboardEvent,
+  JSX,
+  PropsWithChildren,
+  ReactElement,
+  ReactNode,
+} from 'react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
@@ -184,6 +190,27 @@ export interface RangeDecorationOnMovedDetails {
   newSelection: EditorSelection
   origin: 'remote' | 'local'
 }
+
+/**
+ * Props passed to a `RegistrableRangeDecoration`'s `render`.
+ * @beta
+ */
+export interface RangeDecorationRenderProps {
+  children: ReactNode
+  /**
+   * `true` for the fragment that contains the decoration's start point.
+   * A collapsed decoration's single fragment is both `isFirst` and
+   * `isLast`. Unique per decoration, so one-time chrome renders once.
+   */
+  isFirst: boolean
+  /**
+   * `true` for the fragment that contains the decoration's end point. A
+   * collapsed decoration's single fragment is both `isFirst` and
+   * `isLast`. Unique per decoration, so one-time chrome renders once.
+   */
+  isLast: boolean
+}
+
 /**
  * A UI affordance that wraps a selection range in the editor with a custom
  * component, for example to highlight search results, mark validation
@@ -224,4 +251,83 @@ export interface RangeDecoration {
    * A custom payload that can be set on the range decoration.
    */
   payload?: Record<string, unknown>
+}
+
+/**
+ * A range decoration registered through `editor.registerRangeDecorations`
+ * (or the `@portabletext/plugin-range-decorations` toolkit built on it),
+ * independent of any `PortableTextEditable`'s `rangeDecorations` prop.
+ * @beta
+ */
+export interface RegistrableRangeDecoration {
+  /**
+   * Identity for reconciliation: an `update` call matches decorations to
+   * their previous state by `id`, not by array position. Unique within
+   * one registration (duplicates throw); the same `id` used across
+   * different registrations refers to different decorations. Unrelated
+   * to Portable Text's `_key`.
+   */
+  id: string
+  /**
+   * The editor content range to decorate. Feed a captured editor
+   * selection straight in, for example a peer's presence selection or
+   * the range a search match was found at. An edit that destroys the
+   * underlying content kills the decoration (a mapping with
+   * `newRange: null`); "no position" is omission from the array, not a
+   * nullable `range`.
+   */
+  range: NonNullable<EditorSelection>
+  /**
+   * Plain-called factory returning an element tree. No hooks in the
+   * body; state lives in components the tree mounts. Ignoring
+   * `children` is legal (widget decorations).
+   *
+   * Chrome that carries no document text must be CSS generated content
+   * or a `contentEditable={false}` element (`RangeDecorationWidget` in
+   * `@portabletext/plugin-range-decorations` is the safe shape): bare
+   * text or editable elements injected into the
+   * tree desync the caret from the document (arrow keys jump or stick
+   * around the decorated range).
+   *
+   * The tree can render more than once for one decoration: the range is
+   * split into segments at formatting boundaries and where it overlaps
+   * other decorations, and each segment gets its own wrapper. Where
+   * decorations overlap, they nest, first in array order outermost.
+   */
+  render: (props: RangeDecorationRenderProps) => ReactElement
+}
+
+/**
+ * What one engine operation did to one registered decoration's range.
+ * `newRange: null` means the operation destroyed the decoration.
+ * `previousRange` is the range object the decoration held before the
+ * operation; when the operation did not move it, `newRange` is the same
+ * reference.
+ * @beta
+ */
+export type RangeDecorationMapping = {
+  id: string
+  previousRange: NonNullable<EditorSelection>
+  newRange: NonNullable<EditorSelection> | null
+  contentTouched: boolean
+  origin: 'local' | 'remote'
+}
+
+/**
+ * The handle returned by `editor.registerRangeDecorations`.
+ * @beta
+ */
+export interface RangeDecorationRegistration {
+  /** Full-set replacement, reconciled by `id`. */
+  update(rangeDecorations: Array<RegistrableRangeDecoration>): void
+  /** A no-op if already unregistered. */
+  unregister(): void
+  /**
+   * Live decorations at call time: id + edit-adjusted range. Dead,
+   * tombstoned, removed ids absent. Fresh array per call; no reference
+   * stability, no change cadence. Reflects a completed `update()`
+   * immediately and a burst of `onMapped` calls as of the latest one.
+   * Empty before the editor's `ready` event.
+   */
+  getDecorations(): Array<{id: string; range: NonNullable<EditorSelection>}>
 }

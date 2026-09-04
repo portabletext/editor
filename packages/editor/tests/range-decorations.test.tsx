@@ -15,10 +15,12 @@ import {
   defineSchema,
   EditorProvider,
   PortableTextEditable,
+  useEditor,
   type Editor,
   type MutationEvent,
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
+  type RegistrableRangeDecoration,
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {EventListenerPlugin, NodePlugin} from '../src/plugins'
@@ -1023,5 +1025,259 @@ describe('RangeDecorations inside editable containers', () => {
         .element(locator.getByTestId('range-decoration'))
         .toBeInTheDocument(),
     )
+  })
+})
+
+describe('RangeDecorations: multiple PortableTextEditables under one provider', () => {
+  test('Scenario: two PortableTextEditables under one provider each contribute decorations without stomping each other', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    const initialValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: spanAKey, text: 'foo', marks: []}],
+        markDefs: [],
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: spanBKey, text: 'bar', marks: []}],
+        markDefs: [],
+      },
+    ]
+
+    const rangeDecorationsA: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="decoration-first">{props.children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+            offset: 3,
+          },
+        },
+      },
+    ]
+
+    const rangeDecorationsB: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="decoration-second">{props.children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+            offset: 3,
+          },
+        },
+      },
+    ]
+
+    const extraDecorationForA: RangeDecoration = {
+      component: (props) => (
+        <span data-testid="decoration-first-extra">{props.children}</span>
+      ),
+      selection: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 1,
+        },
+      },
+    }
+
+    function App(props: {rangeDecorationsA: Array<RangeDecoration>}) {
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator,
+            schemaDefinition: defineSchema({}),
+            initialValue,
+          }}
+        >
+          <PortableTextEditable
+            data-testid="editable-first"
+            rangeDecorations={props.rangeDecorationsA}
+          />
+          <PortableTextEditable
+            data-testid="editable-second"
+            rangeDecorations={rangeDecorationsB}
+          />
+        </EditorProvider>
+      )
+    }
+
+    // `createTestEditor` renders a single `PortableTextEditable`; this
+    // scenario needs two under one provider, so it hand-rolls the render.
+    const {rerender} = await render(
+      <App rangeDecorationsA={rangeDecorationsA} />,
+    )
+
+    await vi.waitFor(() => {
+      expect(
+        document.querySelector('[data-testid="decoration-first"]'),
+      ).not.toEqual(null)
+      expect(
+        document.querySelector('[data-testid="decoration-second"]'),
+      ).not.toEqual(null)
+    })
+
+    await rerender(
+      <App rangeDecorationsA={[...rangeDecorationsA, extraDecorationForA]} />,
+    )
+
+    await vi.waitFor(() => {
+      expect(
+        document.querySelector('[data-testid="decoration-first-extra"]'),
+      ).not.toEqual(null)
+    })
+
+    expect(
+      document.querySelector('[data-testid="decoration-second"]'),
+    ).not.toEqual(null)
+  })
+
+  test('Scenario: unmounting an editable removes its prop decorations but leaves a registered layer alone', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    const initialValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: spanAKey, text: 'foo', marks: []}],
+        markDefs: [],
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: spanBKey, text: 'bar', marks: []}],
+        markDefs: [],
+      },
+    ]
+
+    const propDecoration: RangeDecoration = {
+      component: (props) => (
+        <span data-testid="prop-decoration">{props.children}</span>
+      ),
+      selection: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 3,
+        },
+      },
+    }
+
+    const registered: Array<RegistrableRangeDecoration> = [
+      {
+        id: 'registered',
+        render: (props) => (
+          <span data-testid="registered-decoration">{props.children}</span>
+        ),
+        range: {
+          anchor: {
+            path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+            offset: 3,
+          },
+        },
+      },
+    ]
+
+    function RegisteredRangeDecorationsProbe(props: {
+      rangeDecorations: Array<RegistrableRangeDecoration>
+    }) {
+      const editor = useEditor()
+      useState(() =>
+        editor.registerRangeDecorations({
+          rangeDecorations: props.rangeDecorations,
+        }),
+      )
+      return null
+    }
+
+    function App(props: {showFirstEditable: boolean}) {
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator,
+            schemaDefinition: defineSchema({}),
+            initialValue,
+          }}
+        >
+          <RegisteredRangeDecorationsProbe rangeDecorations={registered} />
+          {props.showFirstEditable ? (
+            <PortableTextEditable
+              data-testid="editable-first"
+              rangeDecorations={[propDecoration]}
+            />
+          ) : null}
+          <PortableTextEditable data-testid="editable-second" />
+        </EditorProvider>
+      )
+    }
+
+    // `createTestEditor` renders a single `PortableTextEditable`; this
+    // scenario needs two under one provider, so it hand-rolls the render.
+    const {rerender} = await render(<App showFirstEditable />)
+
+    await vi.waitFor(() => {
+      expect(
+        document.querySelectorAll('[data-testid="prop-decoration"]').length,
+      ).toEqual(2)
+      expect(
+        document.querySelectorAll('[data-testid="registered-decoration"]')
+          .length,
+      ).toEqual(2)
+    })
+
+    await rerender(<App showFirstEditable={false} />)
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-testid="editable-first"]')).toEqual(
+        null,
+      )
+    })
+
+    expect(
+      document.querySelectorAll('[data-testid="prop-decoration"]').length,
+    ).toEqual(0)
+
+    const survivingEditable = document.querySelector(
+      '[data-testid="editable-second"]',
+    )
+    expect(survivingEditable).not.toEqual(null)
+    expect(
+      survivingEditable!.querySelectorAll(
+        '[data-testid="registered-decoration"]',
+      ).length,
+    ).toEqual(1)
   })
 })
