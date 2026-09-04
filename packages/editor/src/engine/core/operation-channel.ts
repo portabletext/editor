@@ -2,6 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelection} from '../../types/editor'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
+import {getOrigin, type ApplyContextFrame} from './apply-context'
 
 /**
  * The operation channel is the single place to observe every `EngineOperation` the
@@ -56,9 +57,14 @@ export type OperationEvent = {
   withHistory: boolean
   undoStepId: string | undefined
   /**
-   * Derived from the engine flags above, for declarative filtering.
+   * Derived from `applyContext`, for declarative filtering.
    */
   origin: OperationOrigin
+  /**
+   * A frozen snapshot of `editor.applyContext` at apply entry: the frame
+   * stack `origin` was derived from.
+   */
+  context: ReadonlyArray<ApplyContextFrame>
 }
 
 export type OperationListener = (event: OperationEvent) => void
@@ -122,15 +128,8 @@ export function createOperationEvent(
     isRedoing,
     withHistory: Boolean(editor.withHistory),
     undoStepId: editor.undoStepId,
-    origin: isProcessingRemoteChanges
-      ? 'remote'
-      : isUndoing
-        ? 'undo'
-        : isRedoing
-          ? 'redo'
-          : isNormalizingNode
-            ? 'normalization'
-            : 'local',
+    origin: getOrigin(editor.applyContext),
+    context: Object.freeze([...editor.applyContext]),
   }
 }
 

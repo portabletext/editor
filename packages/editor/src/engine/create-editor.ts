@@ -19,6 +19,7 @@ export const createEditor = (): Editor => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const e: any = {
     [EDITOR_BRAND]: true,
+    applyContext: [],
     operations: [],
     operationListeners: {before: [], after: []},
     marks: null,

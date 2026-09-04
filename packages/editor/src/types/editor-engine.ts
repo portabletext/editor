@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {ApplyContextFrame} from '../engine/core/apply-context'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {
@@ -34,6 +35,14 @@ export type RemotePatch = {
 export interface PortableTextEditorEngine extends DOMEditor {
   _key: 'editor'
   _type: 'editor'
+
+  /**
+   * The attribution bracket stack: pushed on entry and popped in `finally`
+   * by `withRemoteChanges`, `pluginUndoing`, `pluginRedoing`, and the
+   * normalization brackets. `getOrigin` (`engine/core/apply-context.ts`)
+   * reduces it to an `OperationOrigin`.
+   */
+  applyContext: Array<ApplyContextFrame>
 
   containers: ResolvedContainers
   annotations: Map<string, AnnotationConfig>
