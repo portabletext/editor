@@ -28,20 +28,21 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 
 ## Editor plugins
 
-| Package                                                                                        | Description                                                               |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [`@portabletext/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/) | Automatically match a pair of characters and decorate the text in between |
-| [`@portabletext/plugin-dnd`](./packages/plugin-dnd/)                                           | Track the drop position during drag and drop for custom drop indicators   |
-| [`@portabletext/plugin-emoji-picker`](./packages/plugin-emoji-picker/)                         | Easily configure an Emoji Picker for the Portable Text Editor             |
-| [`@portabletext/plugin-input-rule`](./packages/plugin-input-rule/)                             | Easily configure Input Rules in the Portable Text Editor                  |
-| [`@portabletext/plugin-list-index`](./packages/plugin-list-index/)                             | Compute the list index of each list item for custom list rendering        |
-| [`@portabletext/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)             | Add helpful Markdown shortcuts to the editor                              |
-| [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restrict the Portable Text Editor to a single line                        |
-| [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allow pasting links in the Portable Text Editor                           |
-| [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connect a Portable Text Editor with a Sanity document using the SDK       |
-| [`@portabletext/plugin-table`](./packages/plugin-table/)                                       | Tables as real Portable Text, edited with spreadsheet-grade selection     |
-| [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Build typeahead pickers (emoji, mentions, slash commands)                 |
-| [`@portabletext/plugin-typography`](./packages/plugin-typography/)                             | Automatically transform text to typographic variants                      |
+| Package                                                                                        | Description                                                                  |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`@portabletext/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/) | Automatically match a pair of characters and decorate the text in between    |
+| [`@portabletext/plugin-dnd`](./packages/plugin-dnd/)                                           | Track the drop position during drag and drop for custom drop indicators      |
+| [`@portabletext/plugin-emoji-picker`](./packages/plugin-emoji-picker/)                         | Easily configure an Emoji Picker for the Portable Text Editor                |
+| [`@portabletext/plugin-input-rule`](./packages/plugin-input-rule/)                             | Easily configure Input Rules in the Portable Text Editor                     |
+| [`@portabletext/plugin-list-index`](./packages/plugin-list-index/)                             | Compute the list index of each list item for custom list rendering           |
+| [`@portabletext/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)             | Add helpful Markdown shortcuts to the editor                                 |
+| [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restrict the Portable Text Editor to a single line                           |
+| [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allow pasting links in the Portable Text Editor                              |
+| [`@portabletext/plugin-range-decorations`](./packages/plugin-range-decorations/)               | Compose independent range-decoration layers (highlights, comments, presence) |
+| [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connect a Portable Text Editor with a Sanity document using the SDK          |
+| [`@portabletext/plugin-table`](./packages/plugin-table/)                                       | Tables as real Portable Text, edited with spreadsheet-grade selection        |
+| [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Build typeahead pickers (emoji, mentions, slash commands)                    |
+| [`@portabletext/plugin-typography`](./packages/plugin-typography/)                             | Automatically transform text to typographic variants                         |
 
 ## Other libraries
 
