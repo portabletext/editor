@@ -7,6 +7,7 @@ import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {PortableTextEditor} from './PortableTextEditor'
+import {RangeDecorationsActorContext} from './range-decorations-actor-context'
 import {RelayContext} from './relay-context'
 import {PortableTextEditorContext} from './usePortableTextEditor'
 
@@ -50,6 +51,10 @@ export function EditorProvider(props: EditorProviderProps) {
   useEffect(() => {
     const unsubscribers: Array<() => void> = []
 
+    // Doesn't need to start before `editorActor`: xstate buffers events
+    // sent to an actor before `.start()` and delivers them once it starts.
+    internalEditor.actors.rangeDecorationsActor.start()
+
     for (const subscription of internalEditor.subscriptions) {
       unsubscribers.push(subscription())
     }
@@ -70,19 +75,24 @@ export function EditorProvider(props: EditorProviderProps) {
       stopActor(internalEditor.actors.editorActor)
       internalEditor.relay.stop()
       stopActor(internalEditor.actors.syncActor)
+      stopActor(internalEditor.actors.rangeDecorationsActor)
     }
   }, [internalEditor])
 
   return (
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
-        <RelayContext.Provider value={internalEditor.relay}>
-          <Engine editor={internalEditor.editorEngine}>
-            <PortableTextEditorContext.Provider value={portableTextEditor}>
-              {props.children}
-            </PortableTextEditorContext.Provider>
-          </Engine>
-        </RelayContext.Provider>
+        <RangeDecorationsActorContext.Provider
+          value={internalEditor.actors.rangeDecorationsActor}
+        >
+          <RelayContext.Provider value={internalEditor.relay}>
+            <Engine editor={internalEditor.editorEngine}>
+              <PortableTextEditorContext.Provider value={portableTextEditor}>
+                {props.children}
+              </PortableTextEditorContext.Provider>
+            </Engine>
+          </RelayContext.Provider>
+        </RangeDecorationsActorContext.Provider>
       </EditorActorContext.Provider>
     </EditorContext.Provider>
   )
