@@ -6,6 +6,10 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import {withRemoteChanges} from '../../engine-plugins/engine-plugin.remote-changes'
+import {pluginUndoing} from '../../engine-plugins/engine-plugin.undoing'
+import {pluginWithoutHistory} from '../../engine-plugins/engine-plugin.without-history'
+import {withoutPatching} from '../../engine-plugins/engine-plugin.without-patching'
 import {createEditor} from '../create-editor'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
@@ -345,5 +349,83 @@ describe('operation channel', () => {
       'after:insert.text:normalization',
       'after:set:local',
     ])
+  })
+
+  test('a throw inside `withRemoteChanges` does not stick `isProcessingRemoteChanges`', () => {
+    const editor = createBareEditor(createDefaultValue())
+    editor.isProcessingRemoteChanges = false
+    const origins: Array<OperationEvent['origin']> = []
+
+    subscribeToOperations(editor, (event) => {
+      origins.push(event.origin)
+    })
+
+    expect(() =>
+      withRemoteChanges(editor, () => {
+        throw new Error('boom')
+      }),
+    ).toThrow('boom')
+
+    expect(editor.isProcessingRemoteChanges).toEqual(false)
+
+    editor.apply(insertTextOperation)
+
+    expect(origins).toEqual(['local'])
+  })
+
+  test('a throw inside `withoutPatching` does not stick `isPatching`', () => {
+    const editor = createBareEditor(createDefaultValue())
+    editor.isPatching = true
+    const isPatchingFlags: Array<boolean> = []
+
+    subscribeToOperations(editor, (event) => {
+      isPatchingFlags.push(event.isPatching)
+    })
+
+    expect(() =>
+      withoutPatching(editor, () => {
+        throw new Error('boom')
+      }),
+    ).toThrow('boom')
+
+    expect(editor.isPatching).toEqual(true)
+
+    editor.apply(insertTextOperation)
+
+    expect(isPatchingFlags).toEqual([true])
+  })
+
+  test('a throw inside `pluginWithoutHistory` does not stick `withHistory`', () => {
+    const editor = createBareEditor(createDefaultValue())
+    editor.withHistory = true
+    const withHistoryFlags: Array<boolean> = []
+
+    subscribeToOperations(editor, (event) => {
+      withHistoryFlags.push(event.withHistory)
+    })
+
+    expect(() =>
+      pluginWithoutHistory(editor, () => {
+        throw new Error('boom')
+      }),
+    ).toThrow('boom')
+
+    expect(editor.withHistory).toEqual(true)
+
+    editor.apply(insertTextOperation)
+
+    expect(withHistoryFlags).toEqual([true])
+  })
+  test('a throw inside `pluginUndoing` does not stick `isUndoing`', () => {
+    const editor = createBareEditor(createDefaultValue())
+    editor.isUndoing = false
+
+    expect(() => {
+      pluginUndoing(editor, () => {
+        throw new Error('boom')
+      })
+    }).toThrow('boom')
+
+    expect(editor.isUndoing).toEqual(false)
   })
 })

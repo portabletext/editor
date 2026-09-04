@@ -8,7 +8,9 @@ export function pluginUndoing(
 
   editor.isUndoing = true
 
-  fn()
-
-  editor.isUndoing = prev
+  try {
+    fn()
+  } finally {
+    editor.isUndoing = prev
+  }
 }
