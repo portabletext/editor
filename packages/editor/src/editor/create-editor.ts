@@ -18,6 +18,14 @@ import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
 import {
+  rangeDecorationsMachine,
+  type RangeDecorationsActor,
+} from './range-decorations-machine'
+import {
+  assertUniqueRangeDecorationIds,
+  createRangeDecorationsRegistration,
+} from './range-decorations-registration'
+import {
   createRelay,
   type EditorEmittedEvent,
   type EditorEventListenerOptions,
@@ -29,6 +37,7 @@ import {syncMachine, type SyncActor} from './sync-machine'
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
+    rangeDecorationsActor: RangeDecorationsActor
     syncActor: SyncActor
   }
   relay: Relay
@@ -49,12 +58,22 @@ export function createInternalEditor(config: EditorConfig): {
     subscriptions,
   })
   const editable = createEditableAPI(editorEngine, editorActor)
+  const rangeDecorationsActor = createActor(rangeDecorationsMachine, {
+    input: {
+      readOnly: Boolean(config.readOnly),
+      schema: editorActor.getSnapshot().context.schema,
+      editorEngine,
+    },
+  })
   const {syncActor} = createActors({
     editorActor,
+    rangeDecorationsActor,
     relay,
     editorEngine,
     subscriptions,
   })
+
+  let registeredRangeDecorationsCount = 0
 
   const editor: Editor = {
     dom: createEditorDom((event) => editorActor.send(event), editorEngine),
@@ -95,6 +114,18 @@ export function createInternalEditor(config: EditorConfig): {
           node: nodeConfig.node,
         })
       }
+    },
+    registerRangeDecorations: (rangeDecorationsConfig) => {
+      assertUniqueRangeDecorationIds(rangeDecorationsConfig.rangeDecorations)
+
+      const sourceKey = `registered-range-decorations-${registeredRangeDecorationsCount++}`
+
+      return createRangeDecorationsRegistration({
+        rangeDecorationsActor,
+        sourceKey,
+        rangeDecorations: rangeDecorationsConfig.rangeDecorations,
+        onMapped: rangeDecorationsConfig.onMapped,
+      })
     },
     send: (event) => {
       switch (event.type) {
@@ -174,6 +205,7 @@ export function createInternalEditor(config: EditorConfig): {
   return {
     actors: {
       editorActor,
+      rangeDecorationsActor,
       syncActor,
     },
     relay,
@@ -220,6 +252,7 @@ function isPublicOperation(operation: EngineOperation): operation is Operation {
 
 function createActors(config: {
   editorActor: EditorActor
+  rangeDecorationsActor: RangeDecorationsActor
   relay: Relay
   editorEngine: PortableTextEditorEngine
   subscriptions: Array<() => () => void>
@@ -297,11 +330,19 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = config.editorActor.subscribe((snapshot) => {
-      if (snapshot.matches({'edit mode': 'read only'})) {
-        syncActor.send({type: 'update readOnly', readOnly: true})
-      } else {
-        syncActor.send({type: 'update readOnly', readOnly: false})
-      }
+      const readOnly = snapshot.matches({'edit mode': 'read only'})
+      syncActor.send({type: 'update readOnly', readOnly})
+      config.rangeDecorationsActor.send({type: 'update read only', readOnly})
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  })
+
+  config.subscriptions.push(() => {
+    const subscription = config.editorActor.on('ready', () => {
+      config.rangeDecorationsActor.send({type: 'ready'})
     })
 
     return () => {

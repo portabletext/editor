@@ -1,8 +1,9 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import type {CSSProperties} from 'react'
 import type {RenderLeafProps} from '../engine/react/components/editable'
-import type {RangeDecoration, RenderPlaceholderFunction} from '../types/editor'
+import type {RenderPlaceholderFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import type {LeafRangeDecoration} from './range-decorations-machine'
 import {RenderSpan} from './render.span'
 
 const PLACEHOLDER_STYLE: CSSProperties = {
@@ -17,7 +18,7 @@ export function RenderLeaf(
   props: RenderLeafProps & {
     leaf: PortableTextSpan & {
       placeholder?: boolean
-      rangeDecorations?: Array<RangeDecoration>
+      rangeDecorations?: Array<LeafRangeDecoration>
     }
     readOnly: boolean
     renderPlaceholder?: RenderPlaceholderFunction
@@ -50,8 +51,16 @@ export function RenderLeaf(
   const rangeDecorations = props.leaf.rangeDecorations
 
   if (rangeDecorations) {
-    for (const rangeDecoration of [...rangeDecorations].reverse()) {
-      renderedSpan = rangeDecoration.component({children: renderedSpan})
+    for (const entry of [...rangeDecorations].reverse()) {
+      if (entry.kind === 'registered') {
+        renderedSpan = entry.rangeDecoration.render({
+          children: renderedSpan,
+          isFirst: entry.isFirst,
+          isLast: entry.isLast,
+        })
+      } else {
+        renderedSpan = entry.rangeDecoration.component({children: renderedSpan})
+      }
     }
   }
 
