@@ -24,6 +24,7 @@
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",
     "@portabletext/plugin-one-line": "workspace:*",
     "@portabletext/plugin-paste-link": "workspace:*",
+    "@portabletext/plugin-range-decorations": "workspace:*",
     "@portabletext/plugin-table": "workspace:*",
     "@portabletext/plugin-typeahead-picker": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",

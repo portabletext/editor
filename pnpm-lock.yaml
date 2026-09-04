@@ -346,6 +346,9 @@ importers:
       '@portabletext/plugin-paste-link':
         specifier: workspace:*
         version: link:../../packages/plugin-paste-link
+      '@portabletext/plugin-range-decorations':
+        specifier: workspace:*
+        version: link:../../packages/plugin-range-decorations
       '@portabletext/plugin-table':
         specifier: workspace:*
         version: link:../../packages/plugin-table
