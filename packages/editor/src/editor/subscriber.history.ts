@@ -4,6 +4,7 @@
  */
 
 import type {PortableTextBlock} from '@portabletext/schema'
+import {isInNormalization} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
@@ -69,13 +70,13 @@ export function subscribeHistory({
       return
     }
 
-    if (event.isProcessingRemoteChanges) {
+    if (event.origin === 'remote') {
       // We don't want to run any side effects when the editor is processing
       // remote changes.
       return
     }
 
-    if (event.isUndoing || event.isRedoing) {
+    if (event.origin === 'undo' || event.origin === 'redo') {
       // We don't want to run any side effects when the editor is undoing or
       // redoing operations.
       return
@@ -117,7 +118,7 @@ export function subscribeHistory({
       currentUndoStepId,
       previousUndoStepId,
       operationsInProgress: event.operationsInProgress,
-      isNormalizingNode: event.isNormalizingNode,
+      isInNormalization: isInNormalization(event.context),
       selectionBeforeApply: event.beforeSelection,
     })
 

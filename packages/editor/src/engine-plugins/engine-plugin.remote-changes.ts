@@ -6,13 +6,10 @@ export function withRemoteChanges(
   source: Extract<ApplyContextFrame, {kind: 'remote'}>['source'],
   fn: () => void,
 ): void {
-  const prev = editor.isProcessingRemoteChanges
-  editor.isProcessingRemoteChanges = true
   editor.applyContext.push(Object.freeze({kind: 'remote', source}))
   try {
     fn()
   } finally {
     editor.applyContext.pop()
-    editor.isProcessingRemoteChanges = prev
   }
 }

@@ -49,11 +49,7 @@ export type OperationEvent = {
    * entry.
    */
   operationsInProgress: boolean
-  isNormalizingNode: boolean
   isPatching: boolean
-  isProcessingRemoteChanges: boolean
-  isUndoing: boolean
-  isRedoing: boolean
   withHistory: boolean
   undoStepId: string | undefined
   /**
@@ -111,21 +107,12 @@ export function createOperationEvent(
   editor: Editor,
   operation: EngineOperation,
 ): OperationEvent {
-  const isNormalizingNode = Boolean(editor.isNormalizingNode)
-  const isProcessingRemoteChanges = Boolean(editor.isProcessingRemoteChanges)
-  const isUndoing = Boolean(editor.isUndoing)
-  const isRedoing = Boolean(editor.isRedoing)
-
   return {
     operation,
     beforeValue: editor.snapshot.context.value,
     beforeSelection: editor.snapshot.context.selection,
     operationsInProgress: editor.operations.length > 0,
-    isNormalizingNode,
     isPatching: Boolean(editor.isPatching),
-    isProcessingRemoteChanges,
-    isUndoing,
-    isRedoing,
     withHistory: Boolean(editor.withHistory),
     undoStepId: editor.undoStepId,
     origin: getOrigin(editor.applyContext),

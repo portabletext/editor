@@ -21,6 +21,7 @@ import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import {createEditor} from '../create-editor'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
+import {isInNormalization} from './apply-context'
 import {subscribeToOperations, type OperationEvent} from './operation-channel'
 
 const schema = compileSchema(defineSchema({}))
@@ -363,7 +364,7 @@ describe('operation channel', () => {
     const editor = createBareEditor(createDefaultValue())
     const events: Array<{
       origin: OperationEvent['origin']
-      isNormalizingNode: boolean
+      isInNormalization: boolean
     }> = []
 
     let fixApplied = false
@@ -376,14 +377,11 @@ describe('operation channel', () => {
       // Mirrors the inner bracket `operation.select`'s container repair
       // establishes around its own `normalizeNode` call, nested inside
       // this (outer) bracket.
-      const prev = editor.isNormalizingNode
-      editor.isNormalizingNode = true
       editor.applyContext.push({kind: 'normalization'})
       try {
         // The inner bracket's own `normalizeNode` call.
       } finally {
         editor.applyContext.pop()
-        editor.isNormalizingNode = prev
       }
 
       editor.apply(insertTextOperation)
@@ -392,7 +390,7 @@ describe('operation channel', () => {
     subscribeToOperations(editor, (event) => {
       events.push({
         origin: event.origin,
-        isNormalizingNode: event.isNormalizingNode,
+        isInNormalization: isInNormalization(event.context),
       })
     })
 
@@ -403,8 +401,8 @@ describe('operation channel', () => {
     })
 
     expect(events).toEqual([
-      {origin: 'normalization', isNormalizingNode: true},
-      {origin: 'local', isNormalizingNode: false},
+      {origin: 'normalization', isInNormalization: true},
+      {origin: 'local', isInNormalization: false},
     ])
   })
 
@@ -451,13 +449,13 @@ describe('operation channel', () => {
     const events: Array<{
       operationType: string
       origin: OperationEvent['origin']
-      isNormalizingNode: boolean
+      isInNormalization: boolean
     }> = []
     subscribeToOperations(editor, (event) => {
       events.push({
         operationType: event.operation.type,
         origin: event.origin,
-        isNormalizingNode: event.isNormalizingNode,
+        isInNormalization: isInNormalization(event.context),
       })
     })
 
@@ -500,7 +498,7 @@ describe('operation channel', () => {
     expect(insertTextEvent).toEqual({
       operationType: 'insert.text',
       origin: 'normalization',
-      isNormalizingNode: true,
+      isInNormalization: true,
     })
   })
 
@@ -557,9 +555,8 @@ describe('operation channel', () => {
     ])
   })
 
-  test('a throw inside `withRemoteChanges` does not stick `isProcessingRemoteChanges`', () => {
+  test('a throw inside `withRemoteChanges` does not leave a stuck `remote` frame', () => {
     const editor = createBareEditor(createDefaultValue())
-    editor.isProcessingRemoteChanges = false
     const origins: Array<OperationEvent['origin']> = []
 
     subscribeToOperations(editor, (event) => {
@@ -572,7 +569,6 @@ describe('operation channel', () => {
       }),
     ).toThrow('boom')
 
-    expect(editor.isProcessingRemoteChanges).toEqual(false)
     expect(editor.applyContext).toEqual([])
 
     editor.apply(insertTextOperation)
@@ -623,9 +619,8 @@ describe('operation channel', () => {
 
     expect(withHistoryFlags).toEqual([true])
   })
-  test('a throw inside `pluginUndoing` does not stick `isUndoing`', () => {
+  test('a throw inside `pluginUndoing` does not leave a stuck `undo` frame', () => {
     const editor = createBareEditor(createDefaultValue())
-    editor.isUndoing = false
 
     expect(() => {
       pluginUndoing(editor, () => {
@@ -633,12 +628,11 @@ describe('operation channel', () => {
       })
     }).toThrow('boom')
 
-    expect(editor.isUndoing).toEqual(false)
+    expect(editor.applyContext).toEqual([])
   })
 
-  test('a throw inside a normalization bracket leaves `isNormalizingNode` restored and `applyContext` balanced', () => {
+  test('a throw inside a normalization bracket leaves `applyContext` balanced', () => {
     const editor = createBareEditor(createDefaultValue())
-    editor.isNormalizingNode = false
     editor.normalizeNode = () => {
       throw new Error('boom')
     }
@@ -651,7 +645,6 @@ describe('operation channel', () => {
       }),
     ).toThrow('boom')
 
-    expect(editor.isNormalizingNode).toEqual(false)
     expect(editor.applyContext).toEqual([])
   })
 })

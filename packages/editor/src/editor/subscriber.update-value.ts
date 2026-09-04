@@ -1,3 +1,4 @@
+import {isInNormalization} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Node} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
@@ -175,7 +176,7 @@ export function subscribeUpdateValue(
     ? subscribeToOperations(
         editor,
         (event) => {
-          if (event.isNormalizingNode) {
+          if (isInNormalization(event.context)) {
             debug.normalization(
               `((engine operation))\n${safeStringify(event.operation, 2)}`,
             )

@@ -16,6 +16,7 @@ import type {
   ExternalBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
+import {isInNormalization} from '../engine/core/apply-context'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {normalize} from '../engine/editor/normalize'
 import {debug} from '../internal-utils/debug'
@@ -457,7 +458,7 @@ export const editorMachine = setup({
         return false
       }
 
-      return context.editorEngine.isNormalizingNode
+      return isInNormalization(context.editorEngine.applyContext)
     },
   },
 }).createMachine({

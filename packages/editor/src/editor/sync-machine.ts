@@ -16,7 +16,10 @@ import {
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
-import type {ApplyContextFrame} from '../engine/core/apply-context'
+import {
+  hasRemoteFrame,
+  type ApplyContextFrame,
+} from '../engine/core/apply-context'
 import {start} from '../engine/editor/start'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
@@ -179,14 +182,13 @@ export const syncMachine = setup({
     'is busy': ({context}) => {
       const isBusy =
         context.editorEngine.isDeferringMutations ||
-        context.editorEngine.isProcessingRemoteChanges
+        hasRemoteFrame(context.editorEngine.applyContext)
 
       debug.syncValue(
         safeStringify({
           isBusy,
           isDeferringMutations: context.editorEngine.isDeferringMutations,
-          isProcessingRemoteChanges:
-            context.editorEngine.isProcessingRemoteChanges,
+          hasRemoteFrame: hasRemoteFrame(context.editorEngine.applyContext),
         }),
       )
 

@@ -85,22 +85,8 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * to it is persisted content, not the local placeholder.
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
-  isNormalizingNode: boolean
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
-  /**
-   * True while the editor applies content that arrived from outside:
-   * remote `patches` and value sync.
-   *
-   * Normalization reads this flag to leave adopted content alone. While
-   * it is set, only repairs of invalid structure run (missing `_key` or
-   * `text`, empty blocks). Optional fix-ups (merging same-mark spans,
-   * filling in `style`/`marks`/`markDefs` defaults) wait until a local
-   * edit touches the block and then emit as part of that edit.
-   */
-  isProcessingRemoteChanges: boolean
-  isRedoing: boolean
-  isUndoing: boolean
   withHistory: boolean
 
   /**

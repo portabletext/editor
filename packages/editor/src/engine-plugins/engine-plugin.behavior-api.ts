@@ -1,4 +1,5 @@
 import type {EditorActor} from '../editor/editor-machine'
+import {isInNormalization} from '../engine/core/apply-context'
 import {range as editorRange} from '../engine/editor/range'
 import type {Editor} from '../engine/interfaces/editor'
 import {pointEquals} from '../engine/point/point-equals'
@@ -9,7 +10,10 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     const {select, setSelection} = editor
 
     editor.select = (location) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
+      if (
+        isInNormalization(editor.applyContext) ||
+        editor.isPerformingBehaviorOperation
+      ) {
         select(location)
         return
       }
@@ -37,7 +41,10 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.setSelection = (partialRange) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
+      if (
+        isInNormalization(editor.applyContext) ||
+        editor.isPerformingBehaviorOperation
+      ) {
         setSelection(partialRange)
         return
       }
