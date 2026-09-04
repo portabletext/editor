@@ -3,13 +3,12 @@ import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {subscribeToOperations} from '../engine/core/operation-channel'
-import type {EngineOperation} from '../engine/interfaces/operation'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
-import type {Operation} from '../types/operation'
+import {isPublicOperation} from '../types/operation'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
 import {createEditorEngine} from './create-editor-engine'
@@ -142,6 +141,7 @@ export function createInternalEditor(config: EditorConfig): {
       return relay.on(type, (event) => {
         switch (event.type) {
           case 'blurred':
+          case 'change':
           case 'editable':
           case 'focused':
           case 'invalid value':
@@ -196,28 +196,6 @@ function editorConfigToMachineInput(config: EditorConfig) {
   } as const
 }
 
-/**
- * The public operation types. The `Record` keying makes completeness
- * compile-checked: adding a variant to the public `Operation` union in
- * `types/operation.ts` (which carries the tripwire that fires when the
- * engine vocabulary grows) errors here until the allowlist catches up.
- */
-const publicOperationTypeRecord: Record<Operation['type'], true> = {
-  'insert': true,
-  'insert.text': true,
-  'remove.text': true,
-  'set': true,
-  'unset': true,
-}
-
-const publicOperationTypes: ReadonlySet<string> = new Set(
-  Object.keys(publicOperationTypeRecord),
-)
-
-function isPublicOperation(operation: EngineOperation): operation is Operation {
-  return publicOperationTypes.has(operation.type)
-}
-
 function createActors(config: {
   editorActor: EditorActor
   relay: Relay
@@ -233,6 +211,12 @@ function createActors(config: {
     editorEngine: config.editorEngine,
     relay: config.relay,
   })
+
+  // `withRemoteChanges` brackets every remote application; this is its
+  // only path to the relay.
+  config.editorEngine.onRemoteChange = (operations) => {
+    config.relay.send({type: 'change', operations, origin: 'remote'})
+  }
 
   const syncActor = createActor(syncMachine, {
     input: {
@@ -312,8 +296,23 @@ function createActors(config: {
   config.subscriptions.push(() => {
     const subscription = config.editorActor.on('*', (event) => {
       switch (event.type) {
+        case 'mutation': {
+          // Internal fields stripped: they never widen the public
+          // `MutationEvent`.
+          const {operations, ...mutationEvent} = event
+          config.relay.send(mutationEvent)
+          // A flush with no operations (a repair-only or auto-resolution
+          // `mutation`) emits no `change`.
+          if (operations.length > 0) {
+            config.relay.send({
+              type: 'change',
+              operations: [...operations],
+              origin: 'local',
+            })
+          }
+          break
+        }
         case 'editable':
-        case 'mutation':
         case 'ready':
         case 'read only':
         case 'selection':

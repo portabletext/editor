@@ -80,6 +80,7 @@ export function createEditorEngine(
   editor.isPatching = true
   editor.isPerformingBehaviorOperation = false
   editor.withHistory = true
+  editor.onRemoteChange = () => {}
 
   const editorEngine = plugins(withDOM(editor), {
     editorActor: config.editorActor,

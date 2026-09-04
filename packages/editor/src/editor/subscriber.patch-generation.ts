@@ -5,6 +5,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
+import {hasRemoteFrame} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {isEqualValues} from '../internal-utils/equality'
 import {
@@ -13,6 +14,7 @@ import {
 } from '../internal-utils/operation-to-patches'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import {isPublicOperation} from '../types/operation'
 import type {EditorActor} from './editor-machine'
 
 /**
@@ -113,14 +115,23 @@ export function subscribePatchGeneration({
 
     // Emit all patches
     if (patches.length > 0) {
-      for (const patch of patches) {
+      // Once per operation (first patch only): the batcher bulks
+      // operations, not patches. Absent for remote-bracket repairs, whose
+      // operations the remote `change` already reports.
+      const operation =
+        !hasRemoteFrame(event.context) && isPublicOperation(event.operation)
+          ? event.operation
+          : undefined
+
+      patches.forEach((patch, index) => {
         editorActor.send({
           type: 'internal.patch',
           patch: {...patch, origin: 'local'},
           operationId: event.undoStepId,
           value: editor.snapshot.context.value,
+          operation: index === 0 ? operation : undefined,
         })
-      }
+      })
     }
   })
 }

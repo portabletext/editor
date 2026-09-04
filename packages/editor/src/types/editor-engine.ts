@@ -14,6 +14,7 @@ import type {
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import type {ResolvedContainers} from '../schema/resolve-containers'
+import type {Operation} from './operation'
 
 type HistoryItem = {
   operations: EngineOperation[]
@@ -88,6 +89,13 @@ export interface PortableTextEditorEngine extends DOMEditor {
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
   withHistory: boolean
+
+  /**
+   * Called by `withRemoteChanges` once per bracket, with the operations
+   * applied inside it (`set.selection` excluded). Never called with an
+   * empty `operations` array. Wired to the relay at editor setup.
+   */
+  onRemoteChange: (operations: Array<Operation>) => void
 
   /**
    * The current {@link EditorSnapshot}. Reassigned (new object reference)

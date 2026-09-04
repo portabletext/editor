@@ -12,6 +12,7 @@ export type EditorEmittedEvent =
       type: 'blurred'
       event: FocusEvent<HTMLDivElement, Element>
     }
+  | ChangeEvent
   | {
       type: 'editable'
     }
@@ -72,6 +73,61 @@ export type EditorEmittedEvent =
       type: 'value changed'
       value: Array<PortableTextBlock> | undefined
     }
+
+/**
+ * @beta
+ * The document's change ledger: what was applied, from any origin, in
+ * order. The `mutation` event is the outbox (local patches to persist);
+ * `change` is the ledger, so a local edit appears in both, each serving
+ * its own consumers. Subscribe to `mutation` to persist, to `change` to
+ * track what happened to the document.
+ *
+ * `operations` are the same {@link Operation} vocabulary the `operation`
+ * event carries (`set.selection` excluded), at full available fidelity:
+ * no patch conversion, no `diffMatchPatch` round trip. They are what was
+ * applied to the document, never the received inputs: a local edit's
+ * operations are the engine's own local edit operations; a remote
+ * change's operations are whatever the engine actually applied to reach
+ * the fed patches, the `update value` reconciliation, or the initial
+ * value sync, not the fed patches or value themselves. Never emitted
+ * with an empty `operations` array.
+ *
+ * The `operations` array is the consumer's own copy, safe to hold onto
+ * past the listener call. The operation objects inside it are the
+ * engine's own, passed by reference, the same as on the `operation`
+ * event: treat them as read-only and copy any object you retain.
+ *
+ * A remote update emits one or more `change` events, in application
+ * order: the sync machine applies a changed value block by block, and
+ * each applied block's operations arrive as their own event. Fold the
+ * events in delivery order to reproduce the full set of applied changes;
+ * never coalesce them yourself, the streamed sync path can interleave a
+ * local flush's own `change` between two remote ones, and coalescing
+ * would misorder that interleaving.
+ *
+ * The initial value sync emits its own remote `change`, taking the
+ * editor's seed document to the configured initial value: a consumer
+ * folding stored positions onto live changes starts at the `ready`
+ * event (skip everything before it) to avoid applying that sync as a
+ * spurious delta.
+ *
+ * A local bulk's `operations` holds the operations whose application
+ * produced an outgoing patch, matching the outbox: an applied operation
+ * whose patch conversion yields nothing is absent. A remote bulk's
+ * `operations` holds every applied public operation. Editor-structural
+ * bookkeeping is neither patched nor reported: the placeholder block the
+ * engine inserts when the document empties is uninhabitable by any
+ * position, and its creation appears on no channel. An operation that
+ * later removes or replaces that placeholder (real content arriving) does
+ * appear, as part of the update that applied it: it folds as a no-op
+ * against a stored value, an `unset`/remove of a key the stored value
+ * never had.
+ */
+export type ChangeEvent = {
+  type: 'change'
+  operations: Array<Operation>
+  origin: 'local' | 'remote'
+}
 
 /**
  * @public

@@ -12,6 +12,7 @@ export type ApplyContextFrame =
   | {kind: 'undo'}
   | {kind: 'redo'}
   | {kind: 'normalization'}
+  | {kind: 'placeholder'}
 
 /**
  * Reduces the frame stack to an `OperationOrigin` by fixed precedence
