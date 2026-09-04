@@ -35,3 +35,27 @@ export function getOrigin(
   }
   return 'local'
 }
+
+/**
+ * True while the frame stack carries a `remote` frame at any depth: the
+ * editor is applying content that arrived from outside (remote `patches`
+ * or value sync), possibly nested inside a normalization fix.
+ * `normalize-node`'s readers gate optional fix-ups on it to leave adopted
+ * content alone; `apply-operation` skips inverse population; the sync
+ * machine treats it as busy.
+ */
+export function hasRemoteFrame(
+  frames: ReadonlyArray<ApplyContextFrame>,
+): boolean {
+  return frames.some((frame) => frame.kind === 'remote')
+}
+
+/**
+ * Precedence-blind: true whenever a `normalization` frame is on the stack,
+ * even when a `remote` or `undo` frame outranks it in `getOrigin`.
+ */
+export function isInNormalization(
+  frames: ReadonlyArray<ApplyContextFrame>,
+): boolean {
+  return frames.some((frame) => frame.kind === 'normalization')
+}

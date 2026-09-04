@@ -37,8 +37,6 @@ export const selectOperationImplementation: OperationImplementation<
     if (containers.length > 0) {
       withoutNormalizing(operation.editor, () => {
         for (const entry of containers) {
-          const prev = operation.editor.isNormalizingNode
-          operation.editor.isNormalizingNode = true
           operation.editor.applyContext.push(
             Object.freeze({kind: 'normalization'}),
           )
@@ -46,7 +44,6 @@ export const selectOperationImplementation: OperationImplementation<
             operation.editor.normalizeNode([entry.node, entry.path])
           } finally {
             operation.editor.applyContext.pop()
-            operation.editor.isNormalizingNode = prev
           }
         }
       })

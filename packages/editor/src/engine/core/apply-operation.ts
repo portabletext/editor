@@ -35,6 +35,7 @@ import {
   modifyLeaf,
   removeChildren,
 } from '../utils/modify'
+import {hasRemoteFrame} from './apply-context'
 
 export function applyOperation(editor: Editor, op: EngineOperation): void {
   let transformSelection = false
@@ -67,9 +68,12 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       modifyChildren(editor, parentPath(path), (children) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
         if (
-          !editor.isProcessingRemoteChanges &&
-          !editor.isUndoing &&
-          !editor.isRedoing &&
+          !editor.applyContext.some(
+            (frame) =>
+              frame.kind === 'remote' ||
+              frame.kind === 'undo' ||
+              frame.kind === 'redo',
+          ) &&
           node._key !== undefined &&
           children.some((sibling) => sibling._key === node._key)
         ) {
@@ -107,7 +111,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           )
         }
 
-        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+        if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
           op.inverse = {
             type: 'unset',
             path:
@@ -167,7 +171,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
     case 'set': {
       const {path, value} = op
 
-      if (!op.inverse && !editor.isProcessingRemoteChanges) {
+      if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
         const previousValue = getValue(editor.snapshot.context.value, path)
         const lastSegment = path[path.length - 1]
 
@@ -283,7 +287,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
 
       // Root-level unset: remove all children
       if (path.length === 0) {
-        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+        if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
           op.inverse = {
             type: 'set',
             path,
@@ -307,7 +311,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         // `span.marks[0]` or `block.markDefs[_key==...]`) rather than a
         // structural child. Removing it never affects the selection, so
         // apply it as a plain data patch on the root block.
-        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+        if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
           const arrayValue = getValue(
             editor.snapshot.context.value,
             path.slice(0, -1),
@@ -402,7 +406,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
             )
           }
 
-          if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
             const previousSibling = index > 0 ? children[index - 1] : undefined
             if (previousSibling?._key) {
               op.inverse = {
@@ -435,7 +439,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      if (!op.inverse && !editor.isProcessingRemoteChanges) {
+      if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
         const previousValue = getValue(editor.snapshot.context.value, path)
         if (previousValue === undefined) {
           break

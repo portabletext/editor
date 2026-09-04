@@ -76,14 +76,11 @@ export function normalize(
           isTextBlock({schema: editor.snapshot.context.schema}, entryNode) &&
           entryNode.children.length === 0
         ) {
-          const prev = editor.isNormalizingNode
-          editor.isNormalizingNode = true
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
             editor.normalizeNode([entry.node, entry.path], {operation})
           } finally {
             editor.applyContext.pop()
-            editor.isNormalizingNode = prev
           }
         }
       }
@@ -109,26 +106,20 @@ export function normalize(
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
       if (dirtyPath.length === 0) {
-        const prev = editor.isNormalizingNode
-        editor.isNormalizingNode = true
         editor.applyContext.push(Object.freeze({kind: 'normalization'}))
         try {
           editor.normalizeNode([editor, dirtyPath], {operation})
         } finally {
           editor.applyContext.pop()
-          editor.isNormalizingNode = prev
         }
       } else if (hasNode(editor.snapshot, dirtyPath)) {
         const entry = getNode(editor.snapshot, dirtyPath)
         if (entry) {
-          const prev = editor.isNormalizingNode
-          editor.isNormalizingNode = true
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
             editor.normalizeNode([entry.node, entry.path], {operation})
           } finally {
             editor.applyContext.pop()
-            editor.isNormalizingNode = prev
           }
         }
       }

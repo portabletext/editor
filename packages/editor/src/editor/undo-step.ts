@@ -13,7 +13,7 @@ export function createUndoSteps({
   currentUndoStepId,
   previousUndoStepId,
   operationsInProgress,
-  isNormalizingNode,
+  isInNormalization,
   selectionBeforeApply,
 }: {
   steps: Array<UndoStep>
@@ -22,7 +22,7 @@ export function createUndoSteps({
   previousUndoStepId: string | undefined
   /** Snapshots of pre-apply editor state — volatile during apply. */
   operationsInProgress: boolean
-  isNormalizingNode: boolean
+  isInNormalization: boolean
   selectionBeforeApply: Range | null
 }): Array<UndoStep> {
   const lastStep = steps.at(-1)
@@ -34,7 +34,7 @@ export function createUndoSteps({
   if (operationsInProgress) {
     // The editor had operations in progress when apply started.
 
-    if (currentUndoStepId === previousUndoStepId || isNormalizingNode) {
+    if (currentUndoStepId === previousUndoStepId || isInNormalization) {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 

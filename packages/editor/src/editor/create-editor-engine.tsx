@@ -77,12 +77,8 @@ export function createEditorEngine(
 
   editor.isDeferringMutations = false
   editor.lastSyncedValue = undefined
-  editor.isNormalizingNode = false
   editor.isPatching = true
   editor.isPerformingBehaviorOperation = false
-  editor.isProcessingRemoteChanges = false
-  editor.isRedoing = false
-  editor.isUndoing = false
   editor.withHistory = true
 
   const editorEngine = plugins(withDOM(editor), {

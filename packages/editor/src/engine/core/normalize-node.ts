@@ -30,6 +30,7 @@ import {isTextBlockNode} from '../node/is-text-block-node'
 import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
+import {hasRemoteFrame} from './apply-context'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
@@ -56,7 +57,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Merge spans with same set of .marks
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isTextBlock({schema: editor.snapshot.context.schema}, node)
   ) {
     const children = getChildren(editor.snapshot, path)
@@ -262,7 +263,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .markDefs to text block nodes
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     !Array.isArray(node.markDefs)
   ) {
@@ -275,7 +276,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .style to text block nodes
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
     typeof node.style === 'undefined'
   ) {
@@ -310,7 +311,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .marks to span nodes
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isSpan({schema: editor.snapshot.context.schema}, node) &&
     !Array.isArray(node.marks)
   ) {
@@ -323,7 +324,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Remove annotations from empty spans
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isSpan({schema: editor.snapshot.context.schema}, node)
   ) {
     const blockPath = parentPath(path)
@@ -354,7 +355,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Remove duplicate markDefs
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isTextBlock({schema: editor.snapshot.context.schema}, node)
   ) {
     const markDefs = node.markDefs ?? []
@@ -379,7 +380,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Remove markDefs not in use
    */
   if (
-    !editor.isProcessingRemoteChanges &&
+    !hasRemoteFrame(editor.applyContext) &&
     isTextBlock({schema: editor.snapshot.context.schema}, node)
   ) {
     const newMarkDefs = (node.markDefs || []).filter((def) => {
@@ -580,7 +581,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           isSpan({schema: editor.snapshot.context.schema}, prev) &&
           // Only this merge/empty-drop arm defers; the inline-object
           // bracketing below is a repair and keeps running.
-          !editor.isProcessingRemoteChanges
+          !hasRemoteFrame(editor.applyContext)
         ) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
