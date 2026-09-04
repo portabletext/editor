@@ -42,8 +42,6 @@ export const historyRedoOperationImplementation: OperationImplementation<
         editor.remotePatches.splice(0, editor.remotePatches.length)
         applyDeselect(editor)
         editor.history = {undos: [], redos: []}
-        editor.withHistory = true
-        editor.isRedoing = false
         editor.onChange()
         return
       }

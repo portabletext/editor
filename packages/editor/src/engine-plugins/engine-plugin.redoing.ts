@@ -8,7 +8,9 @@ export function pluginRedoing(
 
   editor.isRedoing = true
 
-  fn()
-
-  editor.isRedoing = prev
+  try {
+    fn()
+  } finally {
+    editor.isRedoing = prev
+  }
 }

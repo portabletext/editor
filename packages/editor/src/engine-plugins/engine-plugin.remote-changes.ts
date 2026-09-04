@@ -6,6 +6,9 @@ export function withRemoteChanges(
 ): void {
   const prev = editor.isProcessingRemoteChanges
   editor.isProcessingRemoteChanges = true
-  fn()
-  editor.isProcessingRemoteChanges = prev
+  try {
+    fn()
+  } finally {
+    editor.isProcessingRemoteChanges = prev
+  }
 }

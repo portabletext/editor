@@ -6,6 +6,9 @@ export function withoutPatching(
 ): void {
   const prev = editor.isPatching
   editor.isPatching = false
-  fn()
-  editor.isPatching = prev
+  try {
+    fn()
+  } finally {
+    editor.isPatching = prev
+  }
 }

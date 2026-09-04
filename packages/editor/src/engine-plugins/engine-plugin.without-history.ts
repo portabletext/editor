@@ -8,7 +8,9 @@ export function pluginWithoutHistory(
 
   editor.withHistory = false
 
-  fn()
-
-  editor.withHistory = prev
+  try {
+    fn()
+  } finally {
+    editor.withHistory = prev
+  }
 }
