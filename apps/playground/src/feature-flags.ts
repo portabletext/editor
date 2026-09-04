@@ -30,6 +30,8 @@ export type EditorFeatureFlags = {
   oneLinePlugin: boolean
   markdownPlugin: boolean
   typographyPlugin: boolean
+  commentsPlugin: boolean
+  presencePlugin: boolean
 }
 
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
@@ -51,6 +53,8 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   oneLinePlugin: false,
   markdownPlugin: true,
   typographyPlugin: true,
+  commentsPlugin: true,
+  presencePlugin: true,
 }
 
 export const EditorFeatureFlagsContext = createContext<EditorFeatureFlags>({

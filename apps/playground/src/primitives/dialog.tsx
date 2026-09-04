@@ -1,4 +1,5 @@
 import {XIcon} from 'lucide-react'
+import {useEffect, useRef} from 'react'
 import {
   DialogTrigger,
   Heading,
@@ -44,6 +45,12 @@ export function Dialog(props: {
   trigger: React.ReactNode
   children: (props: {close: () => void}) => React.ReactNode
   onOpenChange?: (isOpen: boolean) => void
+  /**
+   * Receives focus when the dialog closes, instead of the trigger.
+   * react-aria has no supported restore-target option
+   * (react-spectrum#9876); remove the sentinel shim when it ships one.
+   */
+  focusOnClose?: () => void
 }) {
   return (
     <DialogTrigger onOpenChange={props.onOpenChange} isOpen={props.isOpen}>
@@ -69,6 +76,9 @@ export function Dialog(props: {
                   </TooltipTrigger>
                 </div>
                 {props.children({close})}
+                {props.focusOnClose ? (
+                  <FocusOnCloseSentinel focusOnClose={props.focusOnClose} />
+                ) : null}
               </Container>
             )}
           </RACDialog>
@@ -76,4 +86,38 @@ export function Dialog(props: {
       </ModalOverlay>
     </DialogTrigger>
   )
+}
+
+function FocusOnCloseSentinel(props: {focusOnClose: () => void}) {
+  const focusOnCloseRef = useRef(props.focusOnClose)
+  const pendingFrameRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    focusOnCloseRef.current = props.focusOnClose
+  })
+
+  useEffect(() => {
+    if (pendingFrameRef.current !== null) {
+      // StrictMode rehearses mount-unmount-mount on open: the remount runs
+      // before the cleanup's first frame renders, so cancelling here keeps
+      // the rehearsal from stealing focus from the just-opened dialog. A
+      // real close has no remount and the hand-off fires.
+      cancelAnimationFrame(pendingFrameRef.current)
+      pendingFrameRef.current = null
+    }
+    return () => {
+      // The dialog's focus scope restores focus to the trigger in a
+      // `requestAnimationFrame` queued during its own cleanup, which runs
+      // after this child cleanup; a single frame would fire before the
+      // restore and lose to it. The second frame lands after it.
+      pendingFrameRef.current = requestAnimationFrame(() => {
+        pendingFrameRef.current = requestAnimationFrame(() => {
+          pendingFrameRef.current = null
+          focusOnCloseRef.current()
+        })
+      })
+    }
+  }, [])
+
+  return null
 }

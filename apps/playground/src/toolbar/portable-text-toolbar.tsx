@@ -25,6 +25,7 @@ import {
 } from '@portabletext/toolbar'
 import {
   ActivityIcon,
+  AsteriskIcon,
   AtSignIcon,
   BoldIcon,
   BoxIcon,
@@ -42,7 +43,6 @@ import {
   ListIcon,
   ListOrderedIcon,
   ListTodoIcon,
-  MessageSquareTextIcon,
   PilcrowIcon,
   SeparatorHorizontalIcon,
   StrikethroughIcon,
@@ -140,14 +140,14 @@ const extendAnnotation: ExtendAnnotationSchemaType = (annotation) => {
     }
   }
 
-  if (annotation.name === 'comment') {
+  if (annotation.name === 'footnote') {
     return {
       ...annotation,
-      icon: MessageSquareTextIcon,
+      icon: AsteriskIcon,
       defaultValues: {
-        text: 'Consider rewriting this',
+        text: 'See appendix A',
       },
-      // Deliberately empty: comments are exclusive with nothing, not
+      // Deliberately empty: footnotes are exclusive with nothing, not
       // even themselves, so they may overlap.
       mutuallyExclusive: [],
     }

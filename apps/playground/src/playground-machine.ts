@@ -1,13 +1,13 @@
 import {
   keyGenerator,
+  type EditorSelection,
   type MutationEvent,
   type PatchesEvent,
   type PortableTextBlock,
-  type RangeDecoration,
-  type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
 import {portableTextToMarkdown} from '@portabletext/markdown'
 import {applyAll, type Patch} from '@portabletext/patches'
+import type {RangeDecorationLayer} from '@portabletext/plugin-range-decorations'
 import {
   assertEvent,
   assign,
@@ -39,6 +39,26 @@ const copyToTextClipboardActor = fromPromise(
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 
+/**
+ * A comment anchored to an editor range, stored on the playground machine
+ * so every editor actor reads and writes the same shared list, the way a
+ * real backend would.
+ */
+type RangeComment = {
+  id: string
+  text: string
+  range: NonNullable<EditorSelection>
+  status: 'active' | 'orphaned'
+  snapshotText?: string
+  currentText?: string
+}
+
+/**
+ * The range-decoration layers the playground's own plugins register,
+ * keyed by editor id for the Inspector's Decorations tab.
+ */
+export type RangeDecorationLayerKind = 'comments' | 'presence'
+
 const editorMachine = setup({
   types: {
     context: {} as {
@@ -63,9 +83,7 @@ const editorMachine = setup({
       | {type: 'toggle patches preview'}
       | {type: 'toggle selection preview'}
       | {type: 'toggle value preview'}
-      | {type: 'toggle feature flag'; flag: keyof EditorFeatureFlags}
-      | {type: 'add range decoration'; rangeDecoration: RangeDecoration}
-      | {type: 'move range decoration'; details: RangeDecorationOnMovedDetails},
+      | {type: 'toggle feature flag'; flag: keyof EditorFeatureFlags},
     emitted: {} as PatchesEvent,
     input: {} as {
       value: Array<PortableTextBlock> | undefined
@@ -136,22 +154,7 @@ const editorMachine = setup({
     'clear stored patches': {
       actions: ['remove patches from context'],
     },
-    'add range decoration': {
-      actions: [
-        sendParent(({event}) => ({
-          type: 'editor.add range decoration',
-          rangeDecoration: event.rangeDecoration,
-        })),
-      ],
-    },
-    'move range decoration': {
-      actions: [
-        sendParent(({event}) => ({
-          type: 'editor.move range decoration',
-          details: event.details,
-        })),
-      ],
-    },
+
     'toggle feature flag': {
       actions: assign({
         featureFlags: ({context, event}) => ({
@@ -262,8 +265,13 @@ export const playgroundMachine = setup({
       featureFlags: PlaygroundFeatureFlags
       value: Array<PortableTextBlock> | undefined
       patchDerivedValue: Array<PortableTextBlock> | undefined
-      rangeDecorations: Array<RangeDecoration>
       patchFeed: Array<GlobalPatchEntry>
+      comments: Array<RangeComment>
+      selections: Record<EditorActorRef['id'], EditorSelection>
+      layers: Record<
+        EditorActorRef['id'],
+        Partial<Record<RangeDecorationLayerKind, RangeDecorationLayer>>
+      >
     },
     events: {} as
       | {type: 'add editor'}
@@ -279,10 +287,40 @@ export const playgroundMachine = setup({
       | {type: 'copy value'}
       | {type: 'copy patches'}
       | {type: 'copy markdown'}
-      | {type: 'editor.add range decoration'; rangeDecoration: RangeDecoration}
       | {
-          type: 'editor.move range decoration'
-          details: RangeDecorationOnMovedDetails
+          type: 'add comment'
+          text: string
+          range: NonNullable<EditorSelection>
+          snapshotText?: string
+        }
+      | {
+          type: 'update comment range'
+          id: string
+          range: NonNullable<EditorSelection>
+        }
+      | {
+          type: 'refresh comment text'
+          id: string
+          text: string | undefined
+        }
+      | {type: 'orphan comment'; id: string}
+      | {type: 'reactivate comment'; id: string}
+      | {type: 'remove comment'; id: string}
+      | {
+          type: 'update selection'
+          editorId: EditorActorRef['id']
+          selection: EditorSelection
+        }
+      | {
+          type: 'register layer'
+          editorId: EditorActorRef['id']
+          kind: RangeDecorationLayerKind
+          layer: RangeDecorationLayer
+        }
+      | {
+          type: 'unregister layer'
+          editorId: EditorActorRef['id']
+          kind: RangeDecorationLayerKind
         }
       | {
           type: 'toggle feature flag'
@@ -372,44 +410,110 @@ export const playgroundMachine = setup({
         return context.editors.filter((editor) => editor.id !== event.editorId)
       },
     }),
-    'add range decoration': assign({
-      rangeDecorations: ({context, event}) => {
-        assertEvent(event, 'editor.add range decoration')
-
+    'remove selection from context': assign({
+      selections: ({context, event}) => {
+        assertEvent(event, 'editor.remove')
+        const {[event.editorId]: removedSelection, ...remainingSelections} =
+          context.selections
+        return remainingSelections
+      },
+    }),
+    'remove layers from context': assign({
+      layers: ({context, event}) => {
+        assertEvent(event, 'editor.remove')
+        const {[event.editorId]: removedLayers, ...remainingLayers} =
+          context.layers
+        return remainingLayers
+      },
+    }),
+    'register layer': assign({
+      layers: ({context, event}) => {
+        assertEvent(event, 'register layer')
+        return {
+          ...context.layers,
+          [event.editorId]: {
+            ...context.layers[event.editorId],
+            [event.kind]: event.layer,
+          },
+        }
+      },
+    }),
+    'unregister layer': assign({
+      layers: ({context, event}) => {
+        assertEvent(event, 'unregister layer')
+        const remainingLayers = {...context.layers[event.editorId]}
+        delete remainingLayers[event.kind]
+        return {...context.layers, [event.editorId]: remainingLayers}
+      },
+    }),
+    'add comment': assign({
+      comments: ({context, event}) => {
+        assertEvent(event, 'add comment')
         return [
-          ...context.rangeDecorations,
+          ...context.comments,
           {
-            ...event.rangeDecoration,
-            payload: {...event.rangeDecoration.payload, id: keyGenerator()},
+            id: keyGenerator(),
+            text: event.text,
+            range: event.range,
+            status: 'active' as const,
+            snapshotText: event.snapshotText,
+            currentText: event.snapshotText,
           },
         ]
       },
     }),
-    'move range decoration': assign({
-      rangeDecorations: ({context, event}) => {
-        assertEvent(event, 'editor.move range decoration')
-
-        return context.rangeDecorations.flatMap((rangeDecoration) => {
-          if (
-            rangeDecoration.payload?.id ===
-            event.details.rangeDecoration.payload?.id
-          ) {
-            if (!event.details.newSelection) {
-              return []
-            }
-
-            return [
-              {
-                selection: event.details.newSelection,
-                payload: rangeDecoration.payload,
-                onMoved: rangeDecoration.onMoved,
-                component: rangeDecoration.component,
-              },
-            ]
-          }
-
-          return [rangeDecoration]
-        })
+    'update comment range': assign({
+      comments: ({context, event}) => {
+        assertEvent(event, 'update comment range')
+        return context.comments.map((comment) =>
+          comment.id === event.id ? {...comment, range: event.range} : comment,
+        )
+      },
+    }),
+    'refresh comment text': assign({
+      comments: ({context, event}) => {
+        assertEvent(event, 'refresh comment text')
+        return context.comments.map((comment) =>
+          comment.id === event.id
+            ? {...comment, currentText: event.text}
+            : comment,
+        )
+      },
+    }),
+    'orphan comment': assign({
+      comments: ({context, event}) => {
+        assertEvent(event, 'orphan comment')
+        return context.comments.map((comment) =>
+          comment.id === event.id
+            ? {...comment, status: 'orphaned' as const}
+            : comment,
+        )
+      },
+    }),
+    'reactivate comment': assign({
+      comments: ({context, event}) => {
+        assertEvent(event, 'reactivate comment')
+        return context.comments.map((comment) =>
+          comment.id === event.id && comment.status === 'orphaned'
+            ? {
+                ...comment,
+                status: 'active' as const,
+                currentText: comment.snapshotText,
+              }
+            : comment,
+        )
+      },
+    }),
+    'remove comment': assign({
+      comments: ({context, event}) => {
+        assertEvent(event, 'remove comment')
+        return context.comments.filter((comment) => comment.id !== event.id)
+      },
+    }),
+    'update selection': assign({
+      selections: ({context, event}) => {
+        assertEvent(event, 'update selection')
+        return {...context.selections, [event.editorId]: event.selection}
       },
     }),
   },
@@ -424,16 +528,23 @@ export const playgroundMachine = setup({
     featureFlags: defaultPlaygroundFeatureFlags,
     value: undefined,
     patchDerivedValue: undefined,
-    rangeDecorations: [],
     editors: [],
     patchFeed: [],
+    comments: [],
+    selections: {},
+    layers: {},
   }),
   on: {
     'add editor': {
       actions: ['add editor to context'],
     },
     'editor.remove': {
-      actions: ['stop editor', 'remove editor from context'],
+      actions: [
+        'stop editor',
+        'remove editor from context',
+        'remove selection from context',
+        'remove layers from context',
+      ],
     },
     'editor.mutation': {
       actions: [
@@ -447,11 +558,33 @@ export const playgroundMachine = setup({
     'clear patches': {
       actions: ['clear patch feed'],
     },
-    'editor.add range decoration': {
-      actions: ['add range decoration'],
+
+    'add comment': {
+      actions: ['add comment'],
     },
-    'editor.move range decoration': {
-      actions: ['move range decoration'],
+    'update comment range': {
+      actions: ['update comment range'],
+    },
+    'refresh comment text': {
+      actions: ['refresh comment text'],
+    },
+    'orphan comment': {
+      actions: ['orphan comment'],
+    },
+    'reactivate comment': {
+      actions: ['reactivate comment'],
+    },
+    'remove comment': {
+      actions: ['remove comment'],
+    },
+    'update selection': {
+      actions: ['update selection'],
+    },
+    'register layer': {
+      actions: ['register layer'],
+    },
+    'unregister layer': {
+      actions: ['unregister layer'],
     },
     'toggle feature flag': {
       actions: assign({

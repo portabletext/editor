@@ -105,6 +105,22 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
 
           <Separator orientation="horizontal" />
 
+          {/* Collaboration */}
+          <Section title="Collaboration">
+            <FeatureSwitch
+              label="Comments"
+              isSelected={featureFlags.commentsPlugin}
+              onChange={() => toggleFlag('commentsPlugin')}
+            />
+            <FeatureSwitch
+              label="Presence"
+              isSelected={featureFlags.presencePlugin}
+              onChange={() => toggleFlag('presencePlugin')}
+            />
+          </Section>
+
+          <Separator orientation="horizontal" />
+
           {/* Deserializers */}
           <Section title="Paste Handlers">
             <FeatureSwitch
