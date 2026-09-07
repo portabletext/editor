@@ -81,34 +81,28 @@ const markdown = portableTextToMarkdown([
 
 ## Round-trip behavior
 
-1. Translation preserves semantics, not source spelling. The first MD→PT→MD pass normalizes Markdown to one canonical spelling: autolinks and reference links become inline links, indented code becomes fenced code, soft-wrapped lines join into one, and emphasis, headings, lists, and tables each get one canonical form.
+Converting Markdown to Portable Text and back isn't a lossless mirror:
 
-   ```
-   <https://portabletext.org>  ->  [https://portabletext.org](https://portabletext.org)
-   [ref link][id]              ->  [ref link](https://example.com "title")
-   ```
+1. Translation preserves semantics, not source spelling: the first MD→PT→MD pass normalizes Markdown to one canonical spelling (autolinks become inline links, indented code becomes fenced code, soft-wrapped lines join into one, and so on).
+2. The normalized Markdown is a fixpoint for plain text and the [Supported features](#supported-features) table: parsing it and serializing again reproduces it byte-for-byte.
+3. MD→PT survival is schema-driven: a construct whose type the schema doesn't declare keeps its content and drops the structure that named it.
+4. PT structures with no Markdown form degrade predictably on PT→MD (extra table header rows flatten into the body, deep or level-skipping lists collapse to relative nesting, unknown types render as a fenced JSON block).
+5. Identity does not round-trip: keys are regenerated on every parse, and adjacent spans with identical marks merge into one.
+6. A hard break and a `\n` in a span's text are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
-2. The normalized Markdown is a fixpoint for the constructs in the [Supported features](#supported-features) table above, and for plain text: parsing it and serializing again reproduces it byte-for-byte, pinned by a full-document round-trip test. Literal Markdown punctuation in plain text is backslash-escaped on serialization, so a second parse reads back the same characters instead of markup.
+Three exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; and leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint.
 
-   ```
-   *bar*  ->  \*bar\*  (escaped on serialization; a second parse reads back the literal text)
-   ```
-
-   Three exceptions. An explicit-scheme URL or an email is never escaped: text identity holds, but it gains a `link` mark on the next parse (autolinking is a parser feature, not a round-trip bug); fuzzy `www.` forms stay unescaped only while they contain no markdown-significant punctuation. A hard break inside a heading forces a structural split into a second block on reparse, since an ATX heading is single-line; the text itself still survives, split across the two blocks. And leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint claim.
-
-3. MD→PT survival is schema-driven. Constructs whose type the schema doesn't declare degrade predictably: they keep their content and drop the structure that named them. Marks drop formatting but keep the text (`**bar**` with no `strong` decorator in the schema becomes a plain span reading `bar`); tables flatten their cell content into top-level blocks; images fall back to their Markdown source as plain text; task-list checkboxes strip to plain list items.
-
-4. PT structures with no Markdown form degrade predictably on PT→MD. GFM tables have one header row, so header rows beyond the first flatten into the body. Deep or level-skipping lists collapse to relative nesting. A list's first item renders at the top level whatever its `level`, and each deeper jump between items indents one step, however many levels it skips. Multi-block table cells join their blocks with spaces. Unknown object types render as a fenced JSON block; unknown marks pass their text through unformatted.
-
-5. Identity does not round-trip. Keys are regenerated on every parse, and adjacent spans with identical marks merge into one.
+See [Markdown round-tripping](https://www.portabletext.org/conversion/markdown-round-tripping/) on the docs site for the full contract and worked examples.
 
 ## Usage
 
-<!-- The schema table, matcher table, supported-features table, and
-     round-trip section have condensed twins on the docs site
+<!-- The schema table, matcher table, and supported-features table have
+     condensed twins on the docs site
      (apps/docs/src/content/docs/conversion/markdown-to-portable-text.mdx).
      Keep them in sync: a claim corrected in one place is stale in the
-     other. -->
+     other. The Round-trip behavior section above is a summary of
+     apps/docs/src/content/docs/conversion/markdown-round-tripping.mdx,
+     which is canonical; keep the two in sync the same way. -->
 
 ### `markdownToPortableText`
 

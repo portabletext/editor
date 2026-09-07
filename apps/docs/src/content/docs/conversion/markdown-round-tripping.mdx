@@ -1,0 +1,269 @@
+---
+title: Markdown round-tripping
+description: What a Markdown → Portable Text → Markdown round trip preserves, normalizes, and degrades with @portabletext/markdown.
+---
+
+{/* This page is the canonical source for round-trip behavior. packages/markdown/README.md and apps/docs/src/content/docs/conversion/markdown-to-portable-text.mdx (Round-trip behavior section) both carry condensed summaries; keep all three in sync, a claim corrected here is stale there. */}
+
+Converting Markdown to Portable Text and back with `markdownToPortableText` and `portableTextToMarkdown` isn't a lossless mirror. It's a contract with six guarantees and a short list of named exceptions. This page is for anyone evaluating a Markdown-based pipeline, an AI agent that reads or writes Markdown, an import/export tool, a migration from a Markdown-first CMS, who needs to know exactly what a round trip preserves, normalizes, or degrades.
+
+## The contract
+
+### 1. Translation preserves semantics, not source spelling
+
+The first Markdown → Portable Text → Markdown pass normalizes Markdown to one canonical spelling: autolinks and reference links become inline links, indented code becomes fenced code, soft-wrapped lines join into one, and emphasis, headings, lists, and tables each get one canonical form.
+
+```md
+<https://portabletext.org>
+```
+
+parses and serializes back as:
+
+```md
+[https://portabletext.org](https://portabletext.org)
+```
+
+### 2. The normalized Markdown is a fixpoint
+
+The normalized Markdown is a fixpoint for plain text and for every construct in the [Supported features](/conversion/markdown-to-portable-text/#supported-features) table: parsing it and serializing again reproduces it byte-for-byte. Literal Markdown punctuation in a span's text is backslash-escaped when it serializes, so a second parse reads back the same characters instead of new markup.
+
+```ts
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    style: 'normal',
+    children: [{_type: 'span', text: '*bar*', marks: []}],
+    markDefs: [],
+  },
+])
+// -> '\*bar\*'
+
+markdownToPortableText('\\*bar\\*')
+// -> span text back to '*bar*'
+```
+
+### 3. MD → PT survival is schema-driven
+
+Constructs whose type the schema doesn't declare degrade predictably: they keep their content and drop the structure that named them. A mark, list, or task checkbox whose type isn't in the schema keeps its text and drops the formatting.
+
+```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
+const schema = compileSchema(defineSchema({})) // no 'strong' decorator declared
+
+markdownToPortableText('**bar**', {schema})
+// -> [{..., children: [{text: 'bar', marks: []}]}]
+```
+
+### 4. PT → MD degradation is predictable
+
+Portable Text structures with no Markdown form degrade predictably going back out. GFM tables have one header row, so header rows beyond the first flatten into the body.
+
+```ts
+portableTextToMarkdown([
+  {
+    _type: 'table',
+    headerRows: 2,
+    rows: [
+      {
+        _type: 'row',
+        cells: [
+          {
+            _type: 'cell',
+            value: [
+              /* 'H1a' */
+            ],
+          },
+        ],
+      },
+      {
+        _type: 'row',
+        cells: [
+          {
+            _type: 'cell',
+            value: [
+              /* 'H1b' */
+            ],
+          },
+        ],
+      },
+      {
+        _type: 'row',
+        cells: [
+          {
+            _type: 'cell',
+            value: [
+              /* 'data' */
+            ],
+          },
+        ],
+      },
+    ],
+  },
+])
+```
+
+```md
+| H1a  |
+| ---- |
+| H1b  |
+| data |
+```
+
+Deep or level-skipping list levels collapse to relative nesting: a list's first item renders at the top level whatever its `level`, and each deeper jump between items indents one step, however many levels it skips.
+
+```ts
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    listItem: 'bullet',
+    level: 1,
+    children: [{_type: 'span', text: 'foo', marks: []}],
+  },
+  {
+    _type: 'block',
+    listItem: 'bullet',
+    level: 4,
+    children: [{_type: 'span', text: 'bar', marks: []}],
+  },
+  {
+    _type: 'block',
+    listItem: 'bullet',
+    level: 1,
+    children: [{_type: 'span', text: 'baz', marks: []}],
+  },
+])
+// -> '- foo\n   - bar\n- baz'
+```
+
+An unknown object type renders as a fenced JSON block. That block is not a stopgap spelling of the original type: on reparse it comes back as a `code` object, not the type that went out. Round-tripping an unrecognized type through Markdown is destructive.
+
+````ts
+portableTextToMarkdown([{_type: 'widget', _key: 'w1', color: 'blue'}])
+// -> '```json\n{\n  "_type": "widget",\n  "_key": "w1",\n  "color": "blue"\n}\n```'
+
+markdownToPortableText(/* the fenced block above */)
+// -> [{_type: 'code', language: 'json', code: '{\n  "_type": "widget",\n  "_key": "w1",\n  "color": "blue"\n}'}]
+// (a 'code' object, not the original 'widget' type)
+````
+
+### 5. Identity does not round-trip
+
+Keys are regenerated on every parse, and adjacent spans with identical marks merge into one.
+
+```ts
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    children: [
+      {_type: 'span', text: 'foo', marks: ['strong']},
+      {_type: 'span', text: 'bar', marks: ['strong']},
+    ],
+  },
+])
+// -> '**foobar**'
+
+markdownToPortableText('**foobar**')
+// -> one span, a new key, text: 'foobar', marks: ['strong']
+// (the two original spans and their keys are gone)
+```
+
+### 6. Hard breaks round-trip through a dedicated channel
+
+A `\n` inside a span's text and hard-break syntax (two or more trailing spaces, or a backslash, before the newline) are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
+
+```ts
+markdownToPortableText('line one\nline two')
+// -> one span, text: 'line one line two' (soft wrap, joined with a space)
+
+markdownToPortableText('line one  \nline two')
+// -> one span, text: 'line one\nline two' (hard break, kept as \n)
+
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    children: [{_type: 'span', text: 'line one\nline two', marks: []}],
+  },
+])
+// -> 'line one  \nline two' (hard-break syntax)
+```
+
+## Exceptions
+
+Three named exceptions qualify the fixpoint claim in guarantee 2 above.
+
+**Linkified substrings.** An explicit-scheme URL or an email address in a span's text is never escaped: the text stays byte-identical, but it gains a `link` mark on the next parse (autolinking is a parser feature, not a round-trip bug).
+
+```ts
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    children: [
+      {_type: 'span', text: 'Visit https://example.com now', marks: []},
+    ],
+  },
+])
+// -> 'Visit https://example.com now'
+
+markdownToPortableText('Visit https://example.com now')
+// -> three spans: 'Visit ' (no marks), 'https://example.com' (marks: ['<generated link key>']),
+//    ' now' (no marks); a 'link' markDef with href 'https://example.com'
+
+portableTextToMarkdown(/* the three-span result above */)
+// -> 'Visit [https://example.com](https://example.com) now'
+```
+
+The next serialization renders the now-marked span as the explicit inline link `[https://example.com](https://example.com)`, which is the stable form from that point on: reparsing and serializing again reproduces the same markdown byte-for-byte. The loop converges after one cycle, it never oscillates between the bare and linked spellings.
+
+Fuzzy `www.` forms follow the same unescaped-and-linkified path only while they carry no markdown-significant punctuation. Once one does, the punctuation takes normal escaping instead, the same as it would anywhere else in a span's text:
+
+```ts
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    children: [
+      {_type: 'span', text: 'see www.example.com/*x* today', marks: []},
+    ],
+  },
+])
+// -> 'see www.example.com/\*x\* today'
+
+markdownToPortableText('see www.example.com/\\*x\\* today')
+// -> text back to 'see www.example.com/*x* today' (byte-identical), split across three spans:
+//    'see ' (no marks), 'www.example.com/' (marks: ['<generated link key>']), '*x* today' (no marks)
+```
+
+**Heading hard-break structural split.** A hard break inside a heading forces a structural split into a second block on reparse, since an ATX heading is single-line. The text itself still survives, split across the two blocks.
+
+```ts
+portableTextToMarkdown([
+  {
+    _type: 'block',
+    style: 'h1',
+    children: [{_type: 'span', text: 'foo\nbar', marks: []}],
+  },
+])
+// -> '# foo  \nbar' (hard-break syntax: two trailing spaces before the newline)
+
+markdownToPortableText('# foo  \nbar')
+// -> two blocks: {style: 'h1', children: [{text: 'foo'}]}, {style: 'normal', children: [{text: 'bar'}]}
+// (the span text survives, split across the two blocks; block identity doesn't)
+```
+
+**CommonMark-inherent whitespace trimming.** Leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint claim.
+
+```ts
+markdownToPortableText('  hello world  ')
+// -> span text: 'hello world' (no leading or trailing spaces)
+```
+
+## Further reading
+
+- [Markdown to Portable Text](/conversion/markdown-to-portable-text/) for parsing Markdown into PT blocks
+- [Markdown rendering](/rendering/markdown/) for rendering PT blocks as Markdown
+- [`@portabletext/markdown` on GitHub](https://github.com/portabletext/editor/tree/main/packages/markdown) for full API documentation and changelog

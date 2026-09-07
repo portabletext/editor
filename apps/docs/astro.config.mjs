@@ -204,6 +204,7 @@ export default defineConfig({
           items: [
             {slug: 'conversion/html-to-portable-text'},
             {slug: 'conversion/markdown-to-portable-text'},
+            {slug: 'conversion/markdown-round-tripping'},
           ],
         },
         {slug: 'why-portable-text'},
