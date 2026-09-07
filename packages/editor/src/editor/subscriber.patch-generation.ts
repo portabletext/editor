@@ -5,6 +5,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
+import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {isEqualValues} from '../internal-utils/equality'
 import {
@@ -119,6 +120,8 @@ export function subscribePatchGeneration({
           patch: {...patch, origin: 'local'},
           operationId: event.undoStepId,
           value: editor.snapshot.context.value,
+          isExternalRepair:
+            isInNormalization(event.context) && hasRemoteFrame(event.context),
         })
       }
     }

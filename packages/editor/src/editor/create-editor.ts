@@ -283,6 +283,10 @@ function createActors(config: {
             ...event,
             type: 'internal.patch',
             value: config.editorEngine.snapshot.context.value,
+            // The sync machine's own repair patches keep publishing
+            // immediately until that channel is deleted; parking covers
+            // the normalization-executed repairs only.
+            isExternalRepair: false,
           })
           break
 

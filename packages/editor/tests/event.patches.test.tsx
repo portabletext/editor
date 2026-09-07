@@ -4345,20 +4345,7 @@ describe('event.patches', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        setIfMissing([], [{_key: blockKey}, 'children']),
-        insert([{_type: 'span', _key: 'k3', text: '', marks: []}], 'before', [
-          {_key: blockKey},
-          'children',
-          {_key: inlineKey},
-        ]),
-        setIfMissing([], [{_key: blockKey}, 'children']),
-        insert([{_type: 'span', _key: 'k4', text: '', marks: []}], 'after', [
-          {_key: blockKey},
-          'children',
-          {_key: inlineKey},
-        ]),
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -4419,10 +4406,7 @@ describe('event.patches', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        set('', [{_key: blockKey}, 'children', {_key: spanKey}, 'text']),
-        unset([]),
-      ])
+      expect(patches).toEqual([])
     })
   })
 

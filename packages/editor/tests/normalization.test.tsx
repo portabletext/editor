@@ -1,5 +1,7 @@
-import type {Patch} from '@portabletext/patches'
+import {applyAll, type Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
@@ -187,24 +189,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: 'new-block'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'setIfMissing',
-          path: [{_key: 'new-block'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          path: [{_key: 'new-block'}, 'children', 0],
-          position: 'before',
-          items: [{_type: 'span', _key: 'k2', text: '', marks: []}],
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -272,19 +257,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'setIfMissing',
-          path: [{_key: 'new-block'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          path: [{_key: 'new-block'}, 'children', 0],
-          position: 'before',
-          items: [{_type: 'span', _key: 'k2', text: '', marks: []}],
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -345,13 +318,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: 'k0'}, 'children', 1, '_key'],
-          value: 'k4',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -412,18 +379,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', 1, '_key'],
-          value: 'k4',
-        },
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', 0, '_key'],
-          value: 'k5',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -502,28 +458,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [1, 'children', 0, '_key'],
-          value: 'k4',
-        },
-        {
-          type: 'set',
-          path: [1, '_key'],
-          value: 'k5',
-        },
-        {
-          type: 'set',
-          path: [0, 'children', 0, '_key'],
-          value: 'k6',
-        },
-        {
-          type: 'set',
-          path: [0, '_key'],
-          value: 'k7',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -589,18 +524,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', 1, '_key'],
-          value: 'k4',
-        },
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', 0, '_key'],
-          value: 'k5',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -670,18 +594,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [1, 'children', 0, '_key'],
-          value: 'k4',
-        },
-        {
-          type: 'set',
-          path: [1, '_key'],
-          value: 'k5',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -746,13 +659,7 @@ describe('normalization', () => {
           src: '/photo.jpg',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [1, '_key'],
-          value: 'k4',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -821,13 +728,7 @@ describe('normalization', () => {
         },
       ])
 
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockBKey}, 'children', {_key: spanBKey}, 'text'],
-          value: '',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -1070,13 +971,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [1, '_key'],
-          value: 'k4',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -1130,13 +1025,7 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, '_type'],
-          value: 'block',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
@@ -1190,13 +1079,263 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
+      expect(patches).toEqual([])
+    })
+  })
+
+  test('Scenario: parked repairs flush ahead of the first local edit', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const keylessSpan = {_type: 'span', text: 'bar', marks: ['strong']}
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [keylessSpan],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([])
+    })
+
+    // The edit addresses the repaired span by its minted key, so the
+    // repair must reach the document first or the edit's patch targets a
+    // key the document does not have.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: blockKey}, 'children', {_key: 'k4'}], offset: 3},
+        focus: {path: [{_key: blockKey}, 'children', {_key: 'k4'}], offset: 3},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'a'})
+
+    await vi.waitFor(() => {
       expect(patches).toEqual([
         {
           type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_type'],
-          value: 'span',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          value: 'k4',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'bara'))),
         },
       ])
+    })
+
+    // The document, replaying what it received (the remote insert, then
+    // the emitted patches), ends up with the engine's value.
+    const documentValue = applyAll(
+      applyAll(initialValue, [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [keylessSpan],
+          origin: 'remote',
+        },
+      ]),
+      patches,
+    ) as Array<PortableTextBlock>
+    expect(documentValue).toEqual(editor.getSnapshot().context.value)
+  })
+
+  test('Scenario: a value sync discards parked repairs', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [{_type: 'span', text: 'bar', marks: ['strong']}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value?.[0]?.children).toHaveLength(2)
+    })
+
+    // The host sends a fresh snapshot that already carries proper keys:
+    // the parked repair now describes a node the document never had, so
+    // it must die with the sync instead of publishing later.
+    const syncedValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+          {_type: 'span', _key: 'remote-key', text: 'bar', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    editor.send({type: 'update value', value: syncedValue})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(syncedValue)
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: 'remote-key'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: 'remote-key'}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: 'a'})
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: 'remote-key'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'bara'))),
+        },
+      ])
+    })
+  })
+
+  test('Scenario: toggling read-only to editable publishes no parked repairs', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update readOnly', readOnly: true})
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [{_type: 'span', text: 'bar', marks: ['strong']}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value?.[0]?.children).toHaveLength(2)
+    })
+
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([])
     })
   })
 })

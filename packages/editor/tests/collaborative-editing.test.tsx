@@ -1,6 +1,7 @@
 import {applyAll, diffMatchPatch, type Patch} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
@@ -1592,6 +1593,161 @@ describe('Collaborative editing', () => {
           style: 'normal',
         },
       ])
+    })
+  })
+
+  describe('Parked repair convergence', () => {
+    test('Scenario: Two clients repairing the same keyless node converge on the editing client\u2019s key', async () => {
+      const sharedKeyGenerator = createTestKeyGenerator()
+      const blockKey = sharedKeyGenerator()
+      const spanKey = sharedKeyGenerator()
+      const initialValue = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ] satisfies Array<PortableTextBlock>
+
+      const patchesA: Array<Patch> = []
+      const patchesB: Array<Patch> = []
+
+      const {editor: editorA} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator('ea-'),
+        initialValue,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patchesA.push(patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      const {editor: editorB} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator('eb-'),
+        initialValue,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patchesB.push(patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      // Both clients receive the same keyless span; each parks its own
+      // competing mint.
+      const keylessInsert: Patch = {
+        type: 'insert',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        position: 'after',
+        items: [{_type: 'span', text: 'bar', marks: ['strong']}],
+        origin: 'remote',
+      }
+      editorA.send({
+        type: 'patches',
+        patches: [keylessInsert],
+        snapshot: undefined,
+      })
+      editorB.send({
+        type: 'patches',
+        patches: [keylessInsert],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editorA.getSnapshot().context.value?.[0]?.children).toHaveLength(
+          2,
+        )
+        expect(editorB.getSnapshot().context.value?.[0]?.children).toHaveLength(
+          2,
+        )
+        expect(patchesA).toEqual([])
+        expect(patchesB).toEqual([])
+      })
+
+      // Client A edits: its parked mint flushes ahead of the edit.
+      editorA.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: 'ea-k2'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: 'ea-k2'}],
+            offset: 3,
+          },
+        },
+      })
+      editorA.send({type: 'insert.text', text: 'a'})
+
+      await vi.waitFor(() => {
+        expect(patchesA).toEqual([
+          {
+            type: 'set',
+            path: [{_key: blockKey}, 'children', 1, '_key'],
+            value: 'ea-k2',
+          },
+          {
+            type: 'diffMatchPatch',
+            path: [{_key: blockKey}, 'children', {_key: 'ea-k2'}, 'text'],
+            value: stringifyPatches(makePatches(makeDiff('bar', 'bara'))),
+          },
+        ])
+      })
+
+      // Client B receives A's patches: the mint rekeys B's copy, and B's
+      // own parked competitor dies with the conflict.
+      editorB.send({
+        type: 'patches',
+        patches: patchesA.map((patch) => ({...patch, origin: 'remote'})),
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editorB.getSnapshot().context.value).toEqual(
+          editorA.getSnapshot().context.value,
+        )
+      })
+
+      // B edits the converged span: only the edit publishes, no stale
+      // competing mint.
+      editorB.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: 'ea-k2'}],
+            offset: 4,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: 'ea-k2'}],
+            offset: 4,
+          },
+        },
+      })
+      editorB.send({type: 'insert.text', text: 'b'})
+
+      await vi.waitFor(() => {
+        expect(patchesB).toEqual([
+          {
+            type: 'diffMatchPatch',
+            path: [{_key: blockKey}, 'children', {_key: 'ea-k2'}, 'text'],
+            value: stringifyPatches(makePatches(makeDiff('bara', 'barab'))),
+          },
+        ])
+      })
     })
   })
 

@@ -58,6 +58,16 @@ export type ExternalEditorEvent =
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
   operationId?: string
   value: Array<PortableTextBlock>
+  /**
+   * Captured from the operation event that produced the patch: the
+   * operation was executed by normalization while external content
+   * (remote patches or a value sync) was being applied. Such repair
+   * patches park while the editor is pristine and flush ahead of the
+   * first local edit, so the document learns a repair (e.g. a minted
+   * `_key`) before any edit references it, and an editor nobody
+   * touches never writes to the document.
+   */
+  isExternalRepair: boolean
 }
 
 /**
@@ -460,6 +470,10 @@ export const editorMachine = setup({
 
       return isInNormalization(context.editorEngine.applyContext)
     },
+    'patch is external repair': ({event}) => {
+      assertEvent(event, 'internal.patch')
+      return event.isExternalRepair
+    },
   },
 }).createMachine({
   id: 'editor',
@@ -811,7 +825,7 @@ export const editorMachine = setup({
                       on: {
                         'internal.patch': [
                           {
-                            guard: 'engine is normalizing node',
+                            guard: 'patch is external repair',
                             actions: 'defer event',
                           },
                           {

@@ -1419,18 +1419,7 @@ describe('container normalization', () => {
           ],
         },
       ])
-      expect(patches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: calloutKey}, 'content', 0, 'children', 0, '_key'],
-          value: 'k5',
-        },
-        {
-          type: 'set',
-          path: [{_key: calloutKey}, 'content', 0, '_key'],
-          value: 'k6',
-        },
-      ])
+      expect(patches).toEqual([])
     })
   })
 
