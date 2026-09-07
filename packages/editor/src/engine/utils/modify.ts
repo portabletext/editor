@@ -4,7 +4,6 @@ import {
   type PortableTextBlock,
   type PortableTextSpan,
 } from '@portabletext/schema'
-import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {getNodeChildren} from '../../traversal/get-children'
 import {getNode} from '../../traversal/get-node'
@@ -37,20 +36,6 @@ function replaceChildren<T>(
 export const removeChildren = replaceChildren
 
 /**
- * Find the index of a node in an array by its _key.
- */
-function findIndexByKey(children: Array<Node>, key: string): number {
-  return children.findIndex((child) => child._key === key)
-}
-
-/**
- * Extract the keyed segments from a path (skipping field name strings).
- */
-function getKeyedSegments(path: Path): Array<{_key: string}> {
-  return path.filter(isKeyedSegment)
-}
-
-/**
  * Replace a descendant with a new node, replacing all ancestors
  */
 export const modifyDescendant = <N extends Node>(
@@ -70,135 +55,91 @@ export const modifyDescendant = <N extends Node>(
   if (!nodeEntry) {
     return
   }
-  const node = nodeEntry.node
-  let modifiedNode: Node = f(node as N)
 
-  // Walk down from the root to collect the child field name at each level.
-  // This is needed to rebuild ancestors using the correct field (e.g. 'rows',
-  // 'cells', 'content') instead of always assuming 'children'.
-  // Use the resolved path from getNode which converts numeric segments to keyed.
-  // Also track original numeric indices for segments that were numeric in the input path,
-  // since keyed lookup is ambiguous for duplicate keys.
-  const keyedSegments = getKeyedSegments(nodeEntry.path)
-  const numericIndices = new Map<number, number>()
-  {
-    let keyedIdx = 0
-    for (const segment of path) {
-      if (typeof segment === 'number') {
-        numericIndices.set(keyedIdx, segment)
-        keyedIdx++
-      } else if (isKeyedSegment(segment)) {
-        keyedIdx++
-      }
-    }
+  // One ordered node-segment list per path: keyed segments identify
+  // siblings by `_key`, numeric segments by index (resolved paths carry
+  // numbers for nodes normalization has not keyed yet). The input path's
+  // numeric segments win over resolved keyed lookups: with duplicate
+  // keys, a keyed lookup finds the first match regardless of which
+  // sibling the caller addressed.
+  const resolvedNodeSegments = nodeEntry.path.filter(
+    (segment) => typeof segment !== 'string',
+  )
+  const inputNodeSegments = path.filter(
+    (segment) => typeof segment !== 'string',
+  )
+
+  // Walk down once, capturing at each level the parent's child array,
+  // its field name, and the child's concrete index. The captures are
+  // everything the bottom-up rebuild needs; no re-resolution against a
+  // value that is about to change.
+  const levels: Array<{
+    parentNode: Node | {value: Array<Node>}
+    fieldName: string
+    children: Array<Node>
+    index: number
+  }> = []
+  let currentNode: Node | {value: Array<Node>} = {
+    value: editor.snapshot.context.value,
   }
-  const fieldNames: string[] = []
-  {
-    let currentNode: Node | {value: Array<Node>} = {
-      value: editor.snapshot.context.value,
-    }
-    let currentParent:
-      | import('../../schema/resolve-containers').RegisteredContainer
-      | undefined
+  let currentParent:
+    | import('../../schema/resolve-containers').RegisteredContainer
+    | undefined
 
-    for (let i = 0; i < keyedSegments.length; i++) {
-      const result = getNodeChildren(context, currentNode, currentParent)
-      if (!result) {
-        return
-      }
-      fieldNames.push(result.fieldName)
-      // Use numeric index when available (handles duplicate keys where
-      // keyed lookup would find the wrong sibling).
-      const numericIndex = numericIndices.get(i)
-      const child =
-        numericIndex !== undefined
-          ? result.children[numericIndex]
-          : result.children.find((c) => c._key === keyedSegments[i]!._key)
-      if (!child) {
-        return
-      }
-      currentNode = child
-      currentParent = result.parent
-    }
-  }
-
-  // Rebuild ancestors from the target node back up to the root.
-  // keyedSegments[0] is the top-level block, keyedSegments[last] is the target.
-  // We walk backwards, replacing each ancestor's child with the modified node.
-  for (let level = keyedSegments.length - 2; level >= 0; level--) {
-    const childKey = keyedSegments[level + 1]!._key
-    const fieldName = fieldNames[level + 1]!
-
-    // Build ancestor path from the original path by finding the segment
-    // at the given keyed level. We count non-string segments to map from
-    // keyed level to original path index.
-    let ancestorPathEnd = -1
-    let keyedCount = 0
-    for (let pi = 0; pi < path.length; pi++) {
-      if (typeof path[pi] !== 'string') {
-        if (keyedCount === level) {
-          ancestorPathEnd = pi + 1
-          break
-        }
-        keyedCount++
-      }
-    }
-    const ancestorPath =
-      ancestorPathEnd > 0 ? path.slice(0, ancestorPathEnd) : []
-
-    const ancestorEntry = getNode(editor.snapshot, ancestorPath)
-    if (!ancestorEntry) {
-      return
-    }
-    const ancestorNode = ancestorEntry.node
-    const ancestorRecord = ancestorNode as Record<string, unknown>
-    const currentChildren = Array.isArray(ancestorRecord[fieldName])
-      ? (ancestorRecord[fieldName] as Node[])
-      : []
-
-    // Use numeric index if the original path had a number at this level,
-    // since keyed lookup is ambiguous for duplicate keys.
-    const originalNumericIndex = numericIndices.get(level + 1)
-    const childIndex =
-      originalNumericIndex !== undefined
-        ? originalNumericIndex
-        : findIndexByKey(currentChildren, childKey)
-    if (childIndex === -1) {
+  for (let i = 0; i < resolvedNodeSegments.length; i++) {
+    const result = getNodeChildren(context, currentNode, currentParent)
+    if (!result) {
       return
     }
 
-    modifiedNode = {
-      ...ancestorNode,
-      [fieldName]: replaceChildren(
-        currentChildren,
-        childIndex,
-        1,
-        modifiedNode,
-      ),
+    const inputSegment = inputNodeSegments[i]
+    const resolvedSegment = resolvedNodeSegments[i]!
+    let index: number
+    if (typeof inputSegment === 'number') {
+      index = inputSegment
+    } else if (typeof resolvedSegment === 'number') {
+      index = resolvedSegment
+    } else if (isKeyedSegment(resolvedSegment)) {
+      index = result.children.findIndex(
+        (child) => child._key === resolvedSegment._key,
+      )
+    } else {
+      return
     }
+
+    const child = result.children[index]
+    if (!child) {
+      return
+    }
+
+    levels.push({
+      parentNode: currentNode,
+      fieldName: result.fieldName,
+      children: result.children,
+      index,
+    })
+    currentNode = child
+    currentParent = result.parent
   }
 
-  let rootIndex: number
-  const rootNumericIndex = numericIndices.get(0)
-  if (rootNumericIndex !== undefined) {
-    rootIndex = rootNumericIndex
-  } else if (keyedSegments.length > 0) {
-    const rootSegment = keyedSegments[0]!
-    const mapIndex = editor.blockIndexMap.get(serializePath([rootSegment]))
-    rootIndex =
-      mapIndex !== undefined
-        ? mapIndex
-        : findIndexByKey(editor.snapshot.context.value, rootSegment._key)
-  } else {
-    const firstSegment = path[0]
-    rootIndex = typeof firstSegment === 'number' ? firstSegment : -1
-  }
-  if (rootIndex === -1 || rootIndex >= editor.snapshot.context.value.length) {
+  const deepestLevel = levels.length - 1
+  if (deepestLevel < 0) {
     return
   }
+
+  let modifiedNode: Node = f(currentNode as N)
+
+  for (let level = deepestLevel; level >= 1; level--) {
+    const {parentNode, fieldName, children, index} = levels[level]!
+    modifiedNode = {
+      ...(parentNode as Node),
+      [fieldName]: replaceChildren(children, index, 1, modifiedNode),
+    }
+  }
+
   editor.snapshot.context.value = replaceChildren(
     editor.snapshot.context.value,
-    rootIndex,
+    levels[0]!.index,
     1,
     modifiedNode,
   ) as PortableTextBlock[]
