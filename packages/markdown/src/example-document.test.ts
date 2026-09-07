@@ -10,11 +10,10 @@ const exampleDocumentMarkdown = fs.readFileSync(
   path.resolve(__dirname, 'example-document.md'),
   'utf-8',
 )
-const exampleDocumentMarkdownOut = fs
-  .readFileSync(path.resolve(__dirname, 'example-document.out.md'), 'utf-8')
-  // Account for hard break spaces that may be stripped by editors/tools
-  .replace('hard break\nthat continues', 'hard break  \nthat continues')
-  .replace('with a break\nand more', 'with a break  \nand more')
+const exampleDocumentMarkdownOut = fs.readFileSync(
+  path.resolve(__dirname, 'example-document.out.md'),
+  'utf-8',
+)
 const exampleDocumentTersePt = JSON.parse(
   fs.readFileSync(
     path.resolve(__dirname, 'example-document.terse-pt.json'),

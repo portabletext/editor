@@ -81,7 +81,7 @@ const markdown = portableTextToMarkdown([
 
 ## Round-trip behavior
 
-1. Translation preserves semantics, not source spelling. The first MD→PT→MD pass normalizes Markdown to one canonical spelling: autolinks and reference links become inline links, indented code becomes fenced code, and emphasis, headings, lists, and tables each get one canonical form.
+1. Translation preserves semantics, not source spelling. The first MD→PT→MD pass normalizes Markdown to one canonical spelling: autolinks and reference links become inline links, indented code becomes fenced code, soft-wrapped lines join into one, and emphasis, headings, lists, and tables each get one canonical form.
 
    ```
    <https://portabletext.org>  ->  [https://portabletext.org](https://portabletext.org)
@@ -271,6 +271,8 @@ The default image matcher requires the schema type to have a `'src'` field. If y
 The default code block matcher requires the schema type to have a `'code'` field. If your `'code'` type doesn't include this field, the matcher returns `undefined`.
 
 **Links** support optional titles using `[text](url "title")` syntax. The title is captured in the `'title'` field of the `'link'` annotation.
+
+**Line breaks**: soft-wrapped lines within a paragraph join with a single space; a hard break (two or more trailing spaces, or a backslash, before the newline) becomes a line break within the block.
 
 **Nested lists** are handled automatically. Each list item block includes a `level` property indicating its nesting depth (1 for top-level, 2 for nested, etc.).
 

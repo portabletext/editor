@@ -1475,6 +1475,8 @@ export function markdownToPortableText(
               addSpan(childToken.content)
               break
             case 'softbreak':
+              addSpan(' ')
+              break
             case 'hardbreak':
               addSpan('\n')
               break

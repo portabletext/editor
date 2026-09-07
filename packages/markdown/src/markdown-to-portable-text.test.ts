@@ -6,6 +6,7 @@ import {
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from './default-schema'
+import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 import {buildObjectMatcher} from './to-portable-text/matchers'
 
@@ -152,7 +153,7 @@ describe(markdownToPortableText.name, () => {
               _type: 'block',
               _key: 'k2',
               children: [
-                {_type: 'span', _key: 'k3', text: 'bar\nbaz', marks: []},
+                {_type: 'span', _key: 'k3', text: 'bar baz', marks: []},
               ],
               markDefs: [],
               style: 'blockquote',
@@ -182,7 +183,7 @@ describe(markdownToPortableText.name, () => {
               _type: 'block',
               _key: 'k2',
               children: [
-                {_type: 'span', _key: 'k3', text: 'bar\nbaz', marks: []},
+                {_type: 'span', _key: 'k3', text: 'bar baz', marks: []},
               ],
               markDefs: [],
               style: 'quote',
@@ -209,7 +210,7 @@ describe(markdownToPortableText.name, () => {
               _type: 'block',
               _key: 'k2',
               children: [
-                {_type: 'span', _key: 'k3', text: 'bar\nbaz', marks: []},
+                {_type: 'span', _key: 'k3', text: 'bar baz', marks: []},
               ],
               markDefs: [],
               style: 'normal',
@@ -415,6 +416,131 @@ describe(markdownToPortableText.name, () => {
           level: 1,
         },
       ])
+    })
+  })
+
+  describe('soft breaks', () => {
+    test('produces a single space', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('foo\nbar', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('a single trailing space before the newline does not produce a double space', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('foo \nbar', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('an indented continuation line collapses to a single space', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('foo\n   bar', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('soft break inside a blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['> foo', '> bar'].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+          markDefs: [],
+          style: 'blockquote',
+        },
+      ])
+    })
+
+    test('soft break inside a list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('- foo\n  bar', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+        },
+      ])
+    })
+
+    test('a soft break inside marked text keeps the mark across the joined span', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('*foo\nbar*', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo bar', marks: ['em']},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('a two-space hard break still produces a literal newline, not a space', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('foo  \nbar', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('a backslash hard break still produces a literal newline, not a space', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(markdownToPortableText('foo\\\nbar', {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('round-trips through portableTextToMarkdown as a fixpoint', () => {
+      const blocks = markdownToPortableText('foo\nbar', {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const markdown = portableTextToMarkdown(blocks)
+
+      expect(markdown).toBe('foo bar')
+
+      const blocksAgain = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      expect(portableTextToMarkdown(blocksAgain)).toBe(markdown)
     })
   })
 
@@ -1625,7 +1751,7 @@ describe(markdownToPortableText.name, () => {
               {
                 _key: 'k1',
                 _type: 'span',
-                text: 'Dump everything in the pot and follow\nthis algorithm:',
+                text: 'Dump everything in the pot and follow this algorithm:',
                 marks: [],
               },
             ],
@@ -1673,7 +1799,7 @@ describe(markdownToPortableText.name, () => {
               {
                 _key: 'k1',
                 _type: 'span',
-                text: 'Dump everything in the pot and follow\nthis algorithm:',
+                text: 'Dump everything in the pot and follow this algorithm:',
                 marks: [],
               },
             ],
