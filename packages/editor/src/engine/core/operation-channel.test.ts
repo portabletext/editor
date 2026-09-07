@@ -543,7 +543,7 @@ describe('operation channel', () => {
       {origin: 'normalization', context: [{kind: 'normalization'}]},
       {origin: 'local', context: []},
       {
-        origin: 'remote',
+        origin: 'normalization',
         context: [{kind: 'remote', source: 'patches'}, {kind: 'normalization'}],
       },
       {origin: 'remote', context: [{kind: 'remote', source: 'patches'}]},

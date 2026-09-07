@@ -2,6 +2,7 @@ import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
+import {hasRemoteFrame} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import {debug} from '../internal-utils/debug'
@@ -263,7 +264,7 @@ function createActors(config: {
       config.relay.send({
         type: 'operation',
         operation: event.operation,
-        origin: event.origin === 'remote' ? 'remote' : 'local',
+        origin: hasRemoteFrame(event.context) ? 'remote' : 'local',
       })
     })
   })

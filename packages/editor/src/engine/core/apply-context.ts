@@ -15,15 +15,16 @@ export type ApplyContextFrame =
 
 /**
  * Reduces the frame stack to an `OperationOrigin` by fixed precedence
- * (remote > undo > redo > normalization > local), regardless of nesting
- * order.
+ * (undo > redo > normalization > remote > local), regardless of nesting
+ * order. Normalization outranks remote so a fix that runs while replaying
+ * a remote patch is attributed to the fix, not laundered into looking like
+ * an ordinary remote write; `hasRemoteFrame` is the precedence-blind read
+ * for callers that need the externally-triggered fact regardless of
+ * whether a fix ran on top of it.
  */
 export function getOrigin(
   frames: ReadonlyArray<ApplyContextFrame>,
 ): OperationOrigin {
-  if (frames.some((frame) => frame.kind === 'remote')) {
-    return 'remote'
-  }
   if (frames.some((frame) => frame.kind === 'undo')) {
     return 'undo'
   }
@@ -32,6 +33,9 @@ export function getOrigin(
   }
   if (frames.some((frame) => frame.kind === 'normalization')) {
     return 'normalization'
+  }
+  if (frames.some((frame) => frame.kind === 'remote')) {
+    return 'remote'
   }
   return 'local'
 }
@@ -52,7 +56,7 @@ export function hasRemoteFrame(
 
 /**
  * Precedence-blind: true whenever a `normalization` frame is on the stack,
- * even when a `remote` or `undo` frame outranks it in `getOrigin`.
+ * even when an `undo` or `redo` frame outranks it in `getOrigin`.
  */
 export function isInNormalization(
   frames: ReadonlyArray<ApplyContextFrame>,

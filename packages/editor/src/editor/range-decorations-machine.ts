@@ -7,10 +7,8 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {
-  subscribeToOperations,
-  type OperationOrigin,
-} from '../engine/core/operation-channel'
+import {hasRemoteFrame} from '../engine/core/apply-context'
+import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
@@ -31,7 +29,7 @@ const engineOperationCallback: CallbackLogicFunction<
   {
     type: 'engine operation'
     operation: EngineOperation
-    origin: OperationOrigin
+    origin: 'local' | 'remote'
   },
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
@@ -46,7 +44,7 @@ const engineOperationCallback: CallbackLogicFunction<
         sendBack({
           type: 'engine operation',
           operation: event.operation,
-          origin: event.origin,
+          origin: hasRemoteFrame(event.context) ? 'remote' : 'local',
         })
       }
     },
@@ -95,7 +93,7 @@ export const rangeDecorationsMachine = setup({
       | {
           type: 'engine operation'
           operation: EngineOperation
-          origin: OperationOrigin
+          origin: 'local' | 'remote'
         }
       | {
           type: 'update read only'
@@ -175,7 +173,7 @@ export const rangeDecorationsMachine = setup({
           decoratedRange.rangeDecoration.onMoved?.({
             newSelection: null,
             rangeDecoration: decoratedRange.rangeDecoration,
-            origin: event.origin === 'remote' ? 'remote' : 'local',
+            origin: event.origin,
           })
           continue
         }
@@ -193,7 +191,7 @@ export const rangeDecorationsMachine = setup({
           decoratedRange.rangeDecoration.onMoved?.({
             newSelection: newRange,
             rangeDecoration: decoratedRange.rangeDecoration,
-            origin: event.origin === 'remote' ? 'remote' : 'local',
+            origin: event.origin,
           })
         }
 

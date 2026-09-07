@@ -713,6 +713,94 @@ describe('RangeDecorations', () => {
     })
   })
 
+  test('Scenario: A repair triggered by a remote patch reports a remote origin', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ]
+
+    const onMoved = vi.fn()
+
+    const rangeDecoration: RangeDecoration = {
+      component: (props) => (
+        <span data-testid="range-decoration">{props.children}</span>
+      ),
+      onMoved,
+      selection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      editableProps: {
+        rangeDecorations: [rangeDecoration],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    // The remote insert lands a second span with the same key as the
+    // first, so the engine's duplicate-key fix re-mints the duplicate.
+    // That repair is what moves the decoration, and it must report the
+    // origin of the change that triggered it: `remote`, not the repair's
+    // own executor.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [
+            {_type: 'span', _key: spanKey, text: 'bar', marks: ['strong']},
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(onMoved).toHaveBeenCalledTimes(1)
+    })
+
+    expect(onMoved.mock.calls[0]?.[0]).toEqual({
+      newSelection: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}],
+          offset: 3,
+        },
+      },
+      rangeDecoration,
+      origin: 'remote',
+    })
+  })
+
   test('Scenario: Undoing a local edit that moves a Range Decoration reports a local origin', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
