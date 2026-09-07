@@ -215,6 +215,40 @@ describe(getDirtyPaths.name, () => {
       ])
     })
 
+    test('root-level value replacement with keyless children dirties them by numeric index', () => {
+      const newValue: Array<Node> = [
+        {
+          _type: 'block',
+          _key: undefined as unknown as string,
+          children: [{_type: 'span', _key: 's1', text: 'foo'}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: '',
+          children: [{_type: 'span', _key: 's2', text: 'bar'}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: emptyContainers,
+            value: [],
+          },
+          {
+            type: 'set',
+            path: [],
+            value: newValue,
+          },
+        ),
+      ).toEqual([[], [0], [0, 'children', 0], [1], [1, 'children', 0]])
+    })
+
     test('single property set dirties node path levels', () => {
       expect(
         getDirtyPaths(
@@ -315,6 +349,46 @@ describe(getDirtyPaths.name, () => {
         [{_key: 'b1'}],
         [{_key: 'b1'}, 'children', {_key: 'new-s1'}],
         [{_key: 'b1'}, 'children', {_key: 'new-s2'}],
+      ])
+    })
+
+    test('child array field replacement with keyless children dirties them by numeric index', () => {
+      const blockNode: Node = {
+        _type: 'block',
+        _key: 'b1',
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello'},
+          {_type: 'span', _key: 's2', text: 'world'},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: emptyContainers,
+            value: [blockNode],
+          },
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children'],
+            value: [
+              {
+                _type: 'span',
+                _key: undefined as unknown as string,
+                text: 'foo',
+              },
+              {_type: 'span', _key: '', text: 'bar'},
+            ],
+          },
+        ),
+      ).toEqual([
+        [],
+        [{_key: 'b1'}],
+        [{_key: 'b1'}, 'children', 0],
+        [{_key: 'b1'}, 'children', 1],
       ])
     })
 
