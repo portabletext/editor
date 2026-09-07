@@ -101,16 +101,17 @@ export function getDirtyPaths(
         if (Array.isArray(op.value)) {
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
-            if (
-              typeof child !== 'object' ||
-              child === null ||
-              !('_key' in child) ||
-              typeof child._key !== 'string'
-            ) {
+            if (typeof child !== 'object' || child === null) {
               continue
             }
             const childNode = child as Node
-            const childPath: Path = [{_key: childNode._key}]
+            const hasUsableKey =
+              '_key' in child &&
+              typeof child._key === 'string' &&
+              child._key !== ''
+            const childPath: Path = hasUsableKey
+              ? [{_key: childNode._key}]
+              : [i]
             levels.push(childPath)
             // Seed the walker with the child's own registration so it
             // can recurse into the child's container fields. At root,
@@ -198,16 +199,14 @@ export function getDirtyPaths(
               continue
             }
 
-            if (!('_key' in child) || typeof child._key !== 'string') {
-              continue
-            }
-
             const childNode = child as Node
-            const childPath: Path = [
-              ...nodePath,
-              propertyName,
-              {_key: childNode._key},
-            ]
+            const hasUsableKey =
+              '_key' in child &&
+              typeof child._key === 'string' &&
+              child._key !== ''
+            const childPath: Path = hasUsableKey
+              ? [...nodePath, propertyName, {_key: childNode._key}]
+              : [...nodePath, propertyName, i]
             levels.push(childPath)
             collectDescendantPaths(context, childNode, childPath, levels, seed)
           }
