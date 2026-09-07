@@ -966,4 +966,66 @@ describe('event.history.undo', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
   })
+
+  test('Scenario: Remote-fallout normalization is not undoable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialBlock = {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [initialBlock],
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+    })
+
+    // A remote insert lands a second span with the same key as the first,
+    // firing the engine's duplicate-key fix during remote processing. The
+    // fix reports `origin: 'normalization'`, not `'remote'`, so the
+    // history subscriber must skip it by the remote frame on the operation
+    // event, or the remote-triggered `set` becomes a local undo step.
+    const duplicateSpan = {
+      _type: 'span',
+      _key: spanKey,
+      text: 'bar',
+      marks: ['strong'],
+    }
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [duplicateSpan],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [
+        {...initialBlock, children: [...initialBlock.children, duplicateSpan]},
+      ],
+    })
+
+    const repairedValue = [
+      {
+        ...initialBlock,
+        children: [initialBlock.children[0], {...duplicateSpan, _key: 'k4'}],
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(repairedValue)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(repairedValue)
+    })
+  })
 })

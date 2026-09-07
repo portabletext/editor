@@ -4,7 +4,7 @@
  */
 
 import type {PortableTextBlock} from '@portabletext/schema'
-import {isInNormalization} from '../engine/core/apply-context'
+import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
@@ -70,9 +70,7 @@ export function subscribeHistory({
       return
     }
 
-    if (event.origin === 'remote') {
-      // We don't want to run any side effects when the editor is processing
-      // remote changes.
+    if (hasRemoteFrame(event.context)) {
       return
     }
 
