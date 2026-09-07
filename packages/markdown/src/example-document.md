@@ -158,10 +158,10 @@ Here's a [**bold link**](https://example.com) and an [_italic link_](https://exa
 
 ### Line Breaks
 
-This is a line with a hard break
+This is a line with a hard break\
 that continues on the next line but stays in the same paragraph.
 
-Another paragraph with a break
+Another paragraph with a break\
 and more content.
 
 ### Autolinks

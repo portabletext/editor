@@ -31,6 +31,8 @@ const blocks = markdownToPortableText('# Hello **world**')
 
 Standard Markdown elements (headings, paragraphs, bold, italic, links, lists, blockquotes, inline code) are handled automatically using the default schema.
 
+Soft-wrapped lines within a paragraph join with a single space; a hard break (two or more trailing spaces, or a backslash, before the newline) becomes a line break within the block.
+
 ## Schema configuration
 
 The conversion is schema-driven. The library only outputs types that exist in the schema, so the output always matches your content model.
