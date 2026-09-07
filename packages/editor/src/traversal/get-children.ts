@@ -2,6 +2,7 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {
   Containers,
@@ -53,9 +54,10 @@ export function getChildren(
       return []
     }
 
+    const nodeIndex = currentChildren.indexOf(node)
     currentPath = isRoot
-      ? [{_key: node._key}]
-      : [...currentPath, currentFieldName, {_key: node._key}]
+      ? [nodeSegment(node, nodeIndex)]
+      : [...currentPath, currentFieldName, nodeSegment(node, nodeIndex)]
     isRoot = false
 
     const next = getNodeChildren(snapshot.context, node, currentParent)
@@ -69,11 +71,11 @@ export function getChildren(
     currentParent = next.parent
   }
 
-  return currentChildren.map((child) => ({
+  return currentChildren.map((child, childIndex) => ({
     node: child,
     path: isRoot
-      ? [{_key: child._key}]
-      : [...currentPath, currentFieldName, {_key: child._key}],
+      ? [nodeSegment(child, childIndex)]
+      : [...currentPath, currentFieldName, nodeSegment(child, childIndex)],
   }))
 }
 

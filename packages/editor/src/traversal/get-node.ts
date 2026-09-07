@@ -1,5 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -14,11 +15,14 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * field name strings name a structural descent into the previous
  * node's children, and numbers are resolved by index.
  *
- * The returned `path` always identifies the returned node: it's fully
- * keyed (numeric indices are converted to `KeyedSegment`s) and any
- * trailing segments in the input that point outside the value tree —
- * e.g. an object node's primitive field, or an annotation reached via
- * `'markDefs'` on a text block — are stripped so that
+ * The returned `path` always identifies the returned node: segments
+ * are keyed wherever the node has a usable `_key` (numeric indices are
+ * converted to `KeyedSegment`s), and stay numeric for nodes
+ * normalization has not keyed yet (a `{_key: undefined}` segment would
+ * not distinguish keyless siblings). Any trailing segments in the
+ * input that point outside the value tree — e.g. an object node's
+ * primitive field, or an annotation reached via `'markDefs'` on a text
+ * block — are stripped so that
  * `getNode(snapshot, entry.path).node === entry.node`.
  *
  * The walk stops when a string segment names a field that isn't the
@@ -109,15 +113,18 @@ export function resolveNode(
         // disagree with the traversed value (snapshots that pair the live
         // map with a pre-apply value, e.g. `textPatch`). Fall back to a
         // linear scan in both cases.
-        node = currentChildren.find((child) => child._key === segment._key)
-        if (node && node._key !== undefined) {
-          resolvedPath[resolvedPath.length - 1] = {_key: node._key}
+        const scanIndex = currentChildren.findIndex(
+          (child) => child._key === segment._key,
+        )
+        node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
+        if (node) {
+          resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
         }
       }
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
       if (node) {
-        resolvedPath.push({_key: node._key})
+        resolvedPath.push(nodeSegment(node, segment))
       }
     } else {
       return {status: 'missing'}

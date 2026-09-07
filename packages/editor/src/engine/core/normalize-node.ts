@@ -11,6 +11,7 @@ import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-bl
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {getChildFieldName} from '../../paths/get-child-field-name'
+import {hasUsableKey} from '../../paths/node-segment'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
@@ -19,7 +20,6 @@ import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
 import {isObject} from '../../traversal/is-object'
-import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
@@ -109,88 +109,19 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  // Set missing _key on any non-editor node.
-  // Uses numeric index in the path because the node has no _key to
-  // address it by. Any ancestor segments with undefined _key are also
-  // resolved to numeric indices.
+  // Set missing _key on any non-editor node. The resolved path already
+  // identifies the node: keyed segments where keys exist, numeric
+  // indices where they don't (see `nodeSegment`), so the `set` applies
+  // to it as-is.
   if (!hasUsableKey(nodeRecord['_key']) && path.length > 0) {
     const newKey = editor.snapshot.context.keyGenerator()
     debug.normalization('Setting missing key on node')
 
-    // Build a fully resolved path by walking the tree from the root,
-    // replacing any undefined keyed segments with numeric indices.
-    const numericPath: Path = []
-    let currentNode: Node | undefined
-
-    for (let segmentIndex = 0; segmentIndex < path.length; segmentIndex++) {
-      const segment = path[segmentIndex]
-      const isLastSegment = segmentIndex === path.length - 1
-
-      if (typeof segment === 'string') {
-        // Field name: descend into the field
-        if (currentNode) {
-          numericPath.push(segment)
-        }
-        continue
-      }
-
-      // Determine the siblings array at this level
-      const siblings: ArrayLike<Node> = currentNode
-        ? (((currentNode as Record<string, unknown>)[
-            numericPath[numericPath.length - 1] as string
-          ] as ArrayLike<Node>) ?? [])
-        : editor.snapshot.context.value
-
-      if (isKeyedSegment(segment) && hasUsableKey(segment._key)) {
-        numericPath.push(segment)
-        currentNode = Array.prototype.find.call(
-          siblings,
-          (child: Node) => child._key === segment._key,
-        )
-      } else {
-        // Unusable _key or numeric: resolve to numeric index.
-        // `getNode` canonicalizes every resolved segment to `{_key}`, so
-        // several keyless siblings all arrive here as the same
-        // indistinguishable segment. The last segment addresses `node`
-        // itself and resolves by reference; an ancestor segment resolves
-        // to the sibling whose subtree holds `node`. Only when neither
-        // identifies a sibling does the first-keyless scan apply.
-        let index = typeof segment === 'number' ? segment : -1
-        if (index === -1 && isLastSegment) {
-          index = Array.prototype.indexOf.call(siblings, node)
-        }
-        if (index === -1 && !isLastSegment) {
-          for (let i = 0; i < siblings.length; i++) {
-            const sibling = siblings[i] as Node
-            if (
-              !hasUsableKey(sibling._key) &&
-              subtreeContainsNode(sibling, node)
-            ) {
-              index = i
-              break
-            }
-          }
-        }
-        if (index === -1) {
-          for (let i = 0; i < siblings.length; i++) {
-            if (!hasUsableKey((siblings[i] as Node)._key)) {
-              index = i
-              break
-            }
-          }
-        }
-        if (index !== -1) {
-          numericPath.push(index)
-          currentNode = siblings[index] as Node
-        }
-      }
-    }
-
     editor.apply({
       type: 'set',
-      path: [...numericPath, '_key'],
+      path: [...path, '_key'],
       value: newKey,
-      inverse: {type: 'unset', path: [...numericPath, '_key']},
+      inverse: {type: 'unset', path: [...path, '_key']},
     })
     return
   }
@@ -674,36 +605,4 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     return
   }
-}
-
-/**
- * A key only addresses a node when it's a non-empty string; sync payloads
- * and hand-authored content can carry `undefined`, `null`, or `''`.
- */
-function hasUsableKey(key: unknown): key is string {
-  return typeof key === 'string' && key !== ''
-}
-
-function subtreeContainsNode(candidate: object, node: object): boolean {
-  if (candidate === node) {
-    return true
-  }
-
-  for (const value of Object.values(candidate)) {
-    if (!Array.isArray(value)) {
-      continue
-    }
-
-    for (const child of value) {
-      if (
-        typeof child === 'object' &&
-        child !== null &&
-        subtreeContainsNode(child, node)
-      ) {
-        return true
-      }
-    }
-  }
-
-  return false
 }

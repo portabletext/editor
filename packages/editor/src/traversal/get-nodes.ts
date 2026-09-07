@@ -2,6 +2,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {
   Containers,
@@ -80,10 +81,11 @@ function* walkStandalone(
     return
   }
 
-  for (const child of next.children) {
+  for (let childIndex = 0; childIndex < next.children.length; childIndex++) {
+    const child = next.children[childIndex]!
     const childPath: Path = isRoot
-      ? [{_key: child._key}]
-      : [...path, next.fieldName, {_key: child._key}]
+      ? [nodeSegment(child, childIndex)]
+      : [...path, next.fieldName, nodeSegment(child, childIndex)]
     yield {node: child, path: childPath}
     yield* walkStandalone(context, child, childPath, false, next.parent)
   }

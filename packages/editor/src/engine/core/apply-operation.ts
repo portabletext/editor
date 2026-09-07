@@ -670,11 +670,12 @@ function resolveChildIndex(
 }
 
 /**
- * Extract the block key from the first segment of a path.
+ * Extract the root block reference from the first segment of a path:
+ * keyed, or a numeric index for a node normalization has not keyed yet.
  */
-function findBlockSegment(path: Path): KeyedSegment | undefined {
+function findBlockSegment(path: Path): KeyedSegment | number | undefined {
   const firstSegment = path[0]
-  if (isKeyedSegment(firstSegment)) {
+  if (isKeyedSegment(firstSegment) || typeof firstSegment === 'number') {
     return firstSegment
   }
   return undefined
@@ -684,8 +685,14 @@ function findBlockSegment(path: Path): KeyedSegment | undefined {
  * Resolve a root block's index via `blockIndexMap`, falling back to a
  * linear scan when the map misses or disagrees with the tree.
  */
-function resolveBlockIndex(editor: Editor, segment: KeyedSegment): number {
+function resolveBlockIndex(
+  editor: Editor,
+  segment: KeyedSegment | number,
+): number {
   const value = editor.snapshot.context.value
+  if (typeof segment === 'number') {
+    return segment < value.length ? segment : -1
+  }
   const index = editor.blockIndexMap.get(serializePath([segment]))
   if (index !== undefined && value[index]?._key === segment._key) {
     return index

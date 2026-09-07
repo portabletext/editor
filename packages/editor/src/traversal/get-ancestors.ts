@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -27,15 +28,16 @@ export function getAncestors(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: PortableTextBlock; path: Path}> {
-  // Collect keyed-segment indices to know where each ancestor's path ends.
+  // Collect node-segment indices (keyed or numeric) to know where each
+  // ancestor's path ends.
   const keyedIndices: Array<number> = []
   for (let i = 0; i < path.length; i++) {
-    if (isKeyedSegment(path[i])) {
+    if (isKeyedSegment(path[i]) || typeof path[i] === 'number') {
       keyedIndices.push(i)
     }
   }
 
-  // Need at least 2 keyed segments to have an ancestor (the last is self).
+  // Need at least 2 node segments to have an ancestor (the last is self).
   if (keyedIndices.length <= 1) {
     return []
   }
@@ -76,15 +78,18 @@ export function getAncestors(
         // disagree with the traversed value (snapshots that pair the live
         // map with a pre-apply value, e.g. `textPatch`). Fall back to a
         // linear scan in both cases.
-        node = currentChildren.find((child) => child._key === segment._key)
-        if (node && node._key !== undefined) {
-          resolvedPath[resolvedPath.length - 1] = {_key: node._key}
+        const scanIndex = currentChildren.findIndex(
+          (child) => child._key === segment._key,
+        )
+        node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
+        if (node) {
+          resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
         }
       }
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
       if (node) {
-        resolvedPath.push({_key: node._key})
+        resolvedPath.push(nodeSegment(node, segment))
       }
     } else {
       return []
