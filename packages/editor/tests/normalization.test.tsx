@@ -355,6 +355,255 @@ describe('normalization', () => {
     })
   })
 
+  test('Scenario: keyless siblings from a wholesale children set each get a distinct minted key', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'span', text: 'bar', marks: []},
+            {_type: 'span', text: 'baz', marks: []},
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k5', text: 'bar', marks: []},
+            {_type: 'span', _key: 'k4', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          value: 'k4',
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 0, '_key'],
+          value: 'k5',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: keyless blocks with keyless children each get distinct minted keys', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    // A root-level set delivers two keyless blocks, each holding a keyless
+    // span. The block segment of each span's dirty path is itself keyless,
+    // so resolving it by "first sibling without a key" would send both
+    // spans' mints into the first block.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              children: [{_type: 'span', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              children: [{_type: 'span', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k7',
+          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'k5',
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [1, 'children', 0, '_key'],
+          value: 'k4',
+        },
+        {
+          type: 'set',
+          path: [1, '_key'],
+          value: 'k5',
+        },
+        {
+          type: 'set',
+          path: [0, 'children', 0, '_key'],
+          value: 'k6',
+        },
+        {
+          type: 'set',
+          path: [0, '_key'],
+          value: 'k7',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: siblings with an empty-string or non-string `_key` each get a distinct minted key', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'span', _key: '', text: 'bar', marks: []},
+            {
+              _type: 'span',
+              _key: 42 as unknown as string,
+              text: 'baz',
+              marks: [],
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k5', text: 'bar', marks: []},
+            {_type: 'span', _key: 'k4', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          value: 'k4',
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 0, '_key'],
+          value: 'k5',
+        },
+      ])
+    })
+  })
+
   test('Scenario: block with no `_key` gets a key via numeric index', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()

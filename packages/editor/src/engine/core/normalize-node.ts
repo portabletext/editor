@@ -113,7 +113,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Uses numeric index in the path because the node has no _key to
   // address it by. Any ancestor segments with undefined _key are also
   // resolved to numeric indices.
-  if (nodeRecord['_key'] === undefined && path.length > 0) {
+  if (!hasUsableKey(nodeRecord['_key']) && path.length > 0) {
     const newKey = editor.snapshot.context.keyGenerator()
     debug.normalization('Setting missing key on node')
 
@@ -122,7 +122,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     const numericPath: Path = []
     let currentNode: Node | undefined
 
-    for (const segment of path) {
+    for (let segmentIndex = 0; segmentIndex < path.length; segmentIndex++) {
+      const segment = path[segmentIndex]
+      const isLastSegment = segmentIndex === path.length - 1
+
       if (typeof segment === 'string') {
         // Field name: descend into the field
         if (currentNode) {
@@ -138,18 +141,39 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           ] as ArrayLike<Node>) ?? [])
         : editor.snapshot.context.value
 
-      if (isKeyedSegment(segment) && segment._key !== undefined) {
+      if (isKeyedSegment(segment) && hasUsableKey(segment._key)) {
         numericPath.push(segment)
         currentNode = Array.prototype.find.call(
           siblings,
           (child: Node) => child._key === segment._key,
         )
       } else {
-        // Undefined _key or numeric: resolve to numeric index
+        // Unusable _key or numeric: resolve to numeric index.
+        // `getNode` canonicalizes every resolved segment to `{_key}`, so
+        // several keyless siblings all arrive here as the same
+        // indistinguishable segment. The last segment addresses `node`
+        // itself and resolves by reference; an ancestor segment resolves
+        // to the sibling whose subtree holds `node`. Only when neither
+        // identifies a sibling does the first-keyless scan apply.
         let index = typeof segment === 'number' ? segment : -1
+        if (index === -1 && isLastSegment) {
+          index = Array.prototype.indexOf.call(siblings, node)
+        }
+        if (index === -1 && !isLastSegment) {
+          for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i] as Node
+            if (
+              !hasUsableKey(sibling._key) &&
+              subtreeContainsNode(sibling, node)
+            ) {
+              index = i
+              break
+            }
+          }
+        }
         if (index === -1) {
           for (let i = 0; i < siblings.length; i++) {
-            if ((siblings[i] as Node)._key === undefined) {
+            if (!hasUsableKey((siblings[i] as Node)._key)) {
               index = i
               break
             }
@@ -650,4 +674,36 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     return
   }
+}
+
+/**
+ * A key only addresses a node when it's a non-empty string; sync payloads
+ * and hand-authored content can carry `undefined`, `null`, or `''`.
+ */
+function hasUsableKey(key: unknown): key is string {
+  return typeof key === 'string' && key !== ''
+}
+
+function subtreeContainsNode(candidate: object, node: object): boolean {
+  if (candidate === node) {
+    return true
+  }
+
+  for (const value of Object.values(candidate)) {
+    if (!Array.isArray(value)) {
+      continue
+    }
+
+    for (const child of value) {
+      if (
+        typeof child === 'object' &&
+        child !== null &&
+        subtreeContainsNode(child, node)
+      ) {
+        return true
+      }
+    }
+  }
+
+  return false
 }
