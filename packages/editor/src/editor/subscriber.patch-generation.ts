@@ -47,7 +47,13 @@ export function subscribePatchGeneration({
     const editorWasEmpty =
       previousValue.length === 1 &&
       isEqualToEmptyEditor(initialValue, previousValue, schema) &&
-      !isEqualValues({schema}, editor.lastSyncedValue, previousValue)
+      // After this editor emits `unset([])`, its own stream must
+      // re-materialize the field before targeting it again, no matter what
+      // value sync recorded in between: a mirroring host's stale echo of
+      // the cleared state syncs as a genuine write and would otherwise
+      // pass the placeholder off as persisted content.
+      (editor.valueUnsetEmitted ||
+        !isEqualValues({schema}, editor.lastSyncedValue, previousValue))
 
     const editorIsEmpty =
       editor.snapshot.context.value.length === 1 &&
@@ -104,11 +110,19 @@ export function subscribePatchGeneration({
       ['set', 'unset', 'remove.text'].includes(operation.type)
     ) {
       patches = [...patches, unset([])]
+      editor.valueUnsetEmitted = true
     }
 
     // Prepend patches with setIfMissing if going from empty editor to something involving a patch.
     if (editorWasEmpty && patches.length > 0) {
       patches = [setIfMissing([], []), ...patches]
+      editor.valueUnsetEmitted = false
+      if (isEqualValues({schema}, editor.lastSyncedValue, previousValue)) {
+        // Rebuilding right over the recorded value proves the recording
+        // was a stale echo of the cleared state; keeping it would make the
+        // next became-empty transition skip its `unset([])`.
+        editor.lastSyncedValue = undefined
+      }
     }
 
     // Emit all patches

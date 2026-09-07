@@ -55,6 +55,7 @@ type SyncValueEvent =
   | {
       type: 'done syncing'
       value: Array<PortableTextBlock> | undefined
+      changed: boolean
     }
 
 const syncValueCallback: CallbackLogicFunction<
@@ -162,7 +163,11 @@ export const syncMachine = setup({
     }),
     'record synced value on engine': ({context, event}) => {
       assertEvent(event, 'done syncing')
-      context.editorEngine.lastSyncedValue = event.value
+      if (event.changed) {
+        // A sync that wrote nothing is not a host persistence claim; see
+        // `lastSyncedValue`.
+        context.editorEngine.lastSyncedValue = event.value
+      }
     },
     'emit done syncing value': emit({
       type: 'done syncing value',
@@ -542,7 +547,7 @@ async function updateValue({
 
     doneSyncing = true
 
-    sendBack({type: 'done syncing', value})
+    sendBack({type: 'done syncing', value, changed: isChanged})
 
     return
   }
@@ -563,7 +568,7 @@ async function updateValue({
 
       doneSyncing = true
 
-      sendBack({type: 'done syncing', value})
+      sendBack({type: 'done syncing', value, changed: isChanged})
 
       return
     }
@@ -584,7 +589,7 @@ async function updateValue({
 
   doneSyncing = true
 
-  sendBack({type: 'done syncing', value})
+  sendBack({type: 'done syncing', value, changed: isChanged})
 }
 
 async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
