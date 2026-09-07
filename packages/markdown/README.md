@@ -415,6 +415,39 @@ markdownToPortableText(markdown, {
 })
 ```
 
+#### Reporting degradation
+
+Every construct the schema can't represent (a decorator not in the schema, a table with no `table` block object, a task checkbox with no `task` list, and so on) degrades to a lossier shape rather than throwing. A ` ```json:object ` fence or tagged code span that fails to reconstruct (invalid JSON, or no string `_type`) reports too, as `object-carrier-invalid`, even on a schema that would otherwise accept everything: it's the payload that's unusable, not the schema. `onDegradation` observes both, one callback covering all uses. Left unset, the conversion stays silent and returns the lossiest representation it can build, since a library shouldn't log on its own initiative. Passed a function, observe the losses: it's called once, after the whole document has been walked, only when at least one construct degraded, with a report object holding every `Degradation` in encounter order and a canonical grouped `message`. Enforce against lossy output by throwing your own error from inside that callback; the throw propagates out of `markdownToPortableText`.
+
+```ts
+markdownToPortableText(markdown, {
+  onDegradation: ({degradations, message}) => {
+    // degradations: every Degradation, in encounter order
+    // message: the same degradations grouped, snippeted, and sorted by line
+    logger.warn(message)
+  },
+})
+```
+
+Each `Degradation` carries `type`, a human-readable `message`, `line` when a source line is available, and `snippet` (the offending construct's text, truncated to 40 characters) when there's a specific piece of source text to quote. Match on `type`, not `message`: the type is the stable contract, the message can change between releases.
+
+Enforcing means throwing your own error from inside the callback:
+
+```ts
+markdownToPortableText('# heading\n\n**bold**', {
+  schema: compileSchema(defineSchema({})),
+  onDegradation: ({message}) => {
+    throw new Error(message)
+  },
+})
+// throws Error:
+// Markdown could not be converted without loss:
+// - line 1: `#` heading became a normal paragraph: the schema has no `h1` style ("heading")
+// - line 3: Removed bold formatting, kept the text: the schema has no `strong` decorator ("bold")
+```
+
+Repeated declines of the same kind (the same missing decorator on three spans, say) collapse into one line of `message` instead of repeating the sentence: `- Removed bold formatting, kept the text: the schema has no \`strong\` decorator (3×: "a", "b", "c")`. `degradations` stays ungrouped, one entry per occurrence.
+
 ### `portableTextToMarkdown`
 
 ```ts

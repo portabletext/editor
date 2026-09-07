@@ -45,6 +45,7 @@ export type {
   PortableTextTypeRendererOptions,
 } from './from-portable-text/types'
 export {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
+export type {Degradation} from './to-portable-text/markdown-to-portable-text'
 export type {
   AnnotationMatcher,
   DecoratorMatcher,

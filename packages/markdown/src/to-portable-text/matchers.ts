@@ -5,6 +5,73 @@ import type {
 } from '@portabletext/schema'
 
 /**
+ * Fields a default object/annotation matcher (`buildObjectMatcher`,
+ * `buildAnnotationMatcher`) silently dropped while filtering a converted
+ * value down to the schema's declared fields: the keys the conversion
+ * supplied that the schema's field list doesn't declare, so they never made
+ * it into the built object. Tagged onto the matcher's return value; read it
+ * back with `readDroppedFields`. A consumer-supplied matcher's return value
+ * never carries this: its own filtering, if any, is not this module's
+ * business.
+ */
+export type DroppedFields = {
+  construct: string
+  keys: Array<string>
+}
+
+const droppedFieldsTag = Symbol('droppedFields')
+
+export function readDroppedFields(
+  object: PortableTextObject | undefined,
+): DroppedFields | undefined {
+  if (!object) {
+    return undefined
+  }
+  return (object as unknown as Record<symbol, unknown>)[droppedFieldsTag] as
+    | DroppedFields
+    | undefined
+}
+
+function buildFilteredObject(
+  schemaDefinition: {name: string; fields: ReadonlyArray<{name: string}>},
+  value: Record<string, unknown>,
+  keyGenerator: () => string,
+): PortableTextObject {
+  const filteredValue = schemaDefinition.fields.reduce<Record<string, unknown>>(
+    (filteredValue, field) => {
+      const fieldValue = value[field.name]
+
+      if (fieldValue !== undefined) {
+        filteredValue[field.name] = fieldValue
+      }
+
+      return filteredValue
+    },
+    {},
+  )
+
+  const object = {
+    _key: keyGenerator(),
+    _type: schemaDefinition.name,
+    ...filteredValue,
+  }
+
+  const suppliedKeys = Object.entries(value)
+    .filter(([, fieldValue]) => fieldValue !== undefined)
+    .map(([key]) => key)
+  const droppedKeys = suppliedKeys.filter((key) => !(key in filteredValue))
+
+  if (droppedKeys.length > 0) {
+    Object.defineProperty(object, droppedFieldsTag, {
+      value: {construct: schemaDefinition.name, keys: droppedKeys},
+      enumerable: false,
+    })
+  }
+
+  return object
+}
+
+/**
  * Matcher function for mapping markdown elements to Portable Text block styles.
  *
  * @public
@@ -112,23 +179,7 @@ export function buildAnnotationMatcher<TDefinition extends {name: string}>(
       return undefined
     }
 
-    const filteredValue = schemaDefinition.fields.reduce<
-      Record<string, unknown>
-    >((filteredValue, field) => {
-      const fieldValue = value[field.name as keyof typeof value]
-
-      if (fieldValue !== undefined) {
-        filteredValue[field.name] = fieldValue
-      }
-
-      return filteredValue
-    }, {})
-
-    return {
-      _key: context.keyGenerator(),
-      _type: schemaDefinition.name,
-      ...filteredValue,
-    }
+    return buildFilteredObject(schemaDefinition, value, context.keyGenerator)
   }
 }
 
@@ -165,23 +216,7 @@ export function buildObjectMatcher<TDefinition extends {name: string}>(
       return undefined
     }
 
-    const filteredValue = schemaDefinition.fields.reduce<
-      Record<string, unknown>
-    >((filteredValue, field) => {
-      const fieldValue = value[field.name as keyof typeof value]
-
-      if (fieldValue !== undefined) {
-        filteredValue[field.name] = fieldValue
-      }
-
-      return filteredValue
-    }, {})
-
-    return {
-      _key: context.keyGenerator(),
-      _type: schemaDefinition.name,
-      ...filteredValue,
-    }
+    return buildFilteredObject(schemaDefinition, value, context.keyGenerator)
   }
 }
 
