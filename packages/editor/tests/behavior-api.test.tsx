@@ -370,6 +370,57 @@ describe('Behavior API', () => {
     })
   })
 
+  test('Scenario: A swallowed character never reaches the DOM', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'x',
+              actions: [],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+    await userEvent.keyboard('x')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+    expect(locator.element().textContent).toEqual('foo')
+  })
+
   test('Scenario: `forward` forwards an event to succeeding Behaviors', async () => {
     const {editor, locator} = await createTestEditor({
       children: (

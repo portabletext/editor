@@ -40,7 +40,6 @@ import {
   isPlainTextOnlyPaste,
   type DOMElement,
   type DOMRange,
-  type DOMText,
 } from '../../dom/utils/dom'
 import {
   CAN_USE_DOM,
@@ -80,8 +79,6 @@ import {useTrackUserInput} from '../hooks/use-track-user-input'
 import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
-
-type DeferredOperation = () => void
 
 const Children = (props: Parameters<typeof useChildren>[0]) => {
   const children = useChildren(props)
@@ -179,7 +176,6 @@ export const Editable = forwardRef(
     // Rerender editor when composition status changed
 
     const ref = useRef<HTMLDivElement | null>(null)
-    const deferredOperations = useRef<DeferredOperation[]>([])
     const processing = useRef(false)
 
     const {onUserInput, receivedUserInput} = useTrackUserInput()
@@ -681,76 +677,6 @@ export const Editable = forwardRef(
             return
           }
 
-          let native = false
-          if (
-            type === 'insertText' &&
-            selection &&
-            isCollapsedRange(selection) &&
-            // Only use native character insertion for single characters a-z or space for now.
-            // Long-press events (hold a + press 4 = ä) to choose a special character otherwise
-            // causes duplicate inserts.
-            event.data &&
-            event.data.length === 1 &&
-            /[a-z ]/i.test(event.data) &&
-            // Chrome has issues correctly editing the start of nodes: https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
-            // When there is an inline element, e.g. a link, and you select
-            // right after it (the start of the next node).
-            selection.anchor.offset !== 0
-          ) {
-            native = true
-
-            // If the NODE_MAP is dirty, we can't trust the selection anchor (eg DOMEditor.toDOMPoint)
-            if (!editor.isNodeMapDirty) {
-              // Chrome also has issues correctly editing the end of anchor elements: https://bugs.chromium.org/p/chromium/issues/detail?id=1259100
-              // Therefore we don't allow native events to insert text at the end of anchor nodes.
-              const {anchor} = selection
-
-              const [node, offset] = DOMEditor.toDOMPoint(editor, anchor)
-              const anchorNode = node.parentElement?.closest('a')
-
-              const window = DOMEditor.getWindow(editor)
-
-              if (
-                native &&
-                anchorNode &&
-                DOMEditor.hasDOMNode(editor, anchorNode)
-              ) {
-                // Find the last text node inside the anchor.
-                const lastText = window?.document
-                  .createTreeWalker(anchorNode, NodeFilter.SHOW_TEXT)
-                  .lastChild() as DOMText | null
-
-                if (
-                  lastText === node &&
-                  lastText.textContent?.length === offset
-                ) {
-                  native = false
-                }
-              }
-
-              // Chrome has issues with the presence of tab characters inside elements with whiteSpace = 'pre'
-              // causing abnormal insert behavior: https://bugs.chromium.org/p/chromium/issues/detail?id=1219139
-              if (
-                native &&
-                node.parentElement &&
-                window?.getComputedStyle(node.parentElement)?.whiteSpace ===
-                  'pre'
-              ) {
-                const block = getParent(editor.snapshot, anchor.path, {
-                  match: (node) =>
-                    isTextBlock({schema: editor.snapshot.context.schema}, node),
-                })
-
-                if (block) {
-                  const blockText = getText(editor.snapshot, block.path)
-
-                  if (blockText?.includes('\t')) {
-                    native = false
-                  }
-                }
-              }
-            }
-          }
           // COMPAT: For the deleting forward/backward input types we don't want
           // to change the selection because it is the range that will be deleted,
           // and those commands determine that for themselves.
@@ -788,8 +714,6 @@ export const Editable = forwardRef(
               })
 
               if (range && (!selection || !rangeEquals(selection, range))) {
-                native = false
-
                 const selectionRef =
                   !isCompositionChange &&
                   editor.snapshot.context.selection &&
@@ -810,9 +734,7 @@ export const Editable = forwardRef(
             return
           }
 
-          if (!native) {
-            event.preventDefault()
-          }
+          event.preventDefault()
 
           // COMPAT: If the selection is expanded, even if the command seems like
           // a delete forward/backward command it should delete the selection.
@@ -976,23 +898,11 @@ export const Editable = forwardRef(
                   editor,
                 })
               } else if (typeof data === 'string') {
-                // Only insertText operations use the native functionality, for now.
-                // Potentially expand to single character deletes, as well.
-                if (native) {
-                  deferredOperations.current.push(() =>
-                    editorActor.send({
-                      type: 'behavior event',
-                      behaviorEvent: {type: 'insert.text', text: data},
-                      editor,
-                    }),
-                  )
-                } else {
-                  editorActor.send({
-                    type: 'behavior event',
-                    behaviorEvent: {type: 'insert.text', text: data},
-                    editor,
-                  })
-                }
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent: {type: 'insert.text', text: data},
+                  editor,
+                })
               }
 
               break
@@ -1177,15 +1087,6 @@ export const Editable = forwardRef(
                     androidInputManagerRef.current.handleInput()
                     return
                   }
-
-                  // Flush native operations, as native events will have propogated
-                  // and we can correctly compare DOM text values in components
-                  // to stop rendering, so that browser functions like autocorrect
-                  // and spellcheck work as expected.
-                  for (const op of deferredOperations.current) {
-                    op()
-                  }
-                  deferredOperations.current = []
 
                   // COMPAT: Since `beforeinput` doesn't fully `preventDefault`,
                   // there's a chance that content might be placed in the browser's undo stack.
