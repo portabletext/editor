@@ -8,7 +8,9 @@ export function withPerformingBehaviorOperation(
 
   editor.isPerformingBehaviorOperation = true
 
-  fn()
-
-  editor.isPerformingBehaviorOperation = prev
+  try {
+    fn()
+  } finally {
+    editor.isPerformingBehaviorOperation = prev
+  }
 }
