@@ -80,6 +80,7 @@ export function createEditorEngine(
   editor.isDeferringMutations = false
   editor.lastSyncedValue = undefined
   editor.isNormalizingNode = false
+  editor.valueUnsetEmitted = false
   editor.isPatching = true
   editor.isPerformingBehaviorOperation = false
   editor.isProcessingRemoteChanges = false

@@ -84,11 +84,23 @@ export interface PortableTextEditorEngine extends DOMEditor {
 
   isDeferringMutations: boolean
   /**
-   * The last host value written in by value sync. A pristine block equal
-   * to it is persisted content, not the local placeholder.
+   * The last host value recorded by a value sync that changed the engine. A
+   * pristine block equal to it is persisted content, not the local
+   * placeholder. Syncs that write nothing are not recorded: hosts mirror
+   * `mutation.value` back as `update value`, and such an echo of the
+   * editor's own state (its placeholder included) is not a claim that the
+   * value is persisted.
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
   isNormalizingNode: boolean
+  /**
+   * True after patch generation emits a became-empty `unset([])`, until it
+   * emits the field's rebuild (`setIfMissing` plus the block `insert`).
+   * While true, the emitted stream has destroyed the field, so the next
+   * content-producing local edit must re-materialize it even if a synced
+   * value makes the placeholder look persisted.
+   */
+  valueUnsetEmitted: boolean
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
   /**
