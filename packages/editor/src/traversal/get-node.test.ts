@@ -370,3 +370,56 @@ describe(`${getNode.name} strips trailing field-name segments`, () => {
     expect(entry?.path).toEqual([{_key: 'b0'}, 'markDefs', {_key: 'm0'}])
   })
 })
+
+describe(`${getNode.name} keeps numeric segments for keyless nodes`, () => {
+  const testbed = createNodeTraversalTestbed()
+  const keylessSpan1 = {_type: 'span', text: 'foo', marks: []}
+  const keylessSpan2 = {_type: 'span', text: 'bar', marks: []}
+  const keylessBlock1 = {
+    _type: 'block',
+    children: [keylessSpan1],
+    markDefs: [],
+  }
+  const keylessBlock2 = {
+    _type: 'block',
+    children: [keylessSpan2],
+    markDefs: [],
+  }
+  const snapshot = {
+    context: {
+      ...testbed.snapshot.context,
+      value: [keylessBlock1, keylessBlock2] as never,
+    },
+    blockIndexMap: new Map<string, number>(),
+  }
+
+  test('numeric input resolves and stays numeric', () => {
+    const entry = getNode(snapshot, [1, 'children', 0])
+    expect(entry?.node).toBe(keylessSpan2)
+    expect(entry?.path).toEqual([1, 'children', 0])
+  })
+
+  test('a `{_key: undefined}` segment resolves to the sibling index', () => {
+    const entry = getNode(snapshot, [
+      {_key: undefined as unknown as string},
+      'children',
+      {_key: undefined as unknown as string},
+    ])
+    expect(entry?.node).toBe(keylessSpan1)
+    expect(entry?.path).toEqual([0, 'children', 0])
+  })
+
+  test('keyed segments stay keyed below a keyless ancestor', () => {
+    const keyedSpan = {_key: 'k100', _type: 'span', text: 'baz', marks: []}
+    const mixedSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [{_type: 'block', children: [keyedSpan], markDefs: []}] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    const entry = getNode(mixedSnapshot, [0, 'children', {_key: 'k100'}])
+    expect(entry?.node).toBe(keyedSpan)
+    expect(entry?.path).toEqual([0, 'children', {_key: 'k100'}])
+  })
+})

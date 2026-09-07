@@ -12,6 +12,7 @@ import type {
 } from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
+import {nodeSegment} from './node-segment'
 
 /**
  * Recursively collect descendant paths using numeric indices.
@@ -105,13 +106,7 @@ export function getDirtyPaths(
               continue
             }
             const childNode = child as Node
-            const hasUsableKey =
-              '_key' in child &&
-              typeof child._key === 'string' &&
-              child._key !== ''
-            const childPath: Path = hasUsableKey
-              ? [{_key: childNode._key}]
-              : [i]
+            const childPath: Path = [nodeSegment(childNode, i)]
             levels.push(childPath)
             // Seed the walker with the child's own registration so it
             // can recurse into the child's container fields. At root,
@@ -200,13 +195,11 @@ export function getDirtyPaths(
             }
 
             const childNode = child as Node
-            const hasUsableKey =
-              '_key' in child &&
-              typeof child._key === 'string' &&
-              child._key !== ''
-            const childPath: Path = hasUsableKey
-              ? [...nodePath, propertyName, {_key: childNode._key}]
-              : [...nodePath, propertyName, i]
+            const childPath: Path = [
+              ...nodePath,
+              propertyName,
+              nodeSegment(childNode, i),
+            ]
             levels.push(childPath)
             collectDescendantPaths(context, childNode, childPath, levels, seed)
           }
