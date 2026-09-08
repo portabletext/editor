@@ -2303,4 +2303,74 @@ describe('event.insert.blocks', () => {
       )
     })
   })
+
+  test('Scenario: inheriting list level and listItem for keyless inserted blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}, {name: 'number'}],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          style: 'normal',
+          listItem: 'bullet',
+          level: 2,
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: [],
+            },
+          ],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'insert.blocks',
+      placement: 'after',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        backward: false,
+      },
+      blocks: [
+        {
+          _type: 'block',
+          style: 'normal',
+          children: [{_type: 'span', text: 'bar'}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          children: [{_type: 'span', text: 'baz'}],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B level=2 listItem="bullet": foo',
+          'B: bar',
+          'B level=2 listItem="bullet": baz|',
+        ].join('\n'),
+      )
+    })
+  })
 })
