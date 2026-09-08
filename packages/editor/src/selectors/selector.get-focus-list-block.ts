@@ -1,7 +1,7 @@
 import type {PortableTextListBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
-import {isListBlock} from '../utils/parse-blocks'
+import {isListBlock} from '../utils/util.is-list-block'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**
