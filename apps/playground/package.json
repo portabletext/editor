@@ -29,6 +29,7 @@
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/react": "catalog:tooling",
     "@portabletext/toolbar": "workspace:*",
+    "@tanstack/react-router": "^1.170.32",
     "@xstate/react": "catalog:",
     "emojilib": "^4.0.2",
     "fuse.js": "^7.1.0",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:tooling",
+    "@tanstack/router-plugin": "1.168.35",
     "@types/react": "catalog:tooling",
     "@types/react-dom": "catalog:tooling",
     "@types/react-is": "^19.2.0",

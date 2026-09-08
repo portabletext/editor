@@ -10,6 +10,7 @@ import {
   WrenchIcon,
 } from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
+import {PageNav} from './page-nav'
 import type {PlaygroundActorRef} from './playground-machine'
 import {Button, LinkButton} from './primitives/button'
 import {Separator} from './primitives/separator'
@@ -97,6 +98,8 @@ export function Header(props: {playgroundRef: PlaygroundActorRef}) {
       </div>
 
       <nav className="flex items-center gap-2">
+        <PageNav />
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <div className="flex items-center gap-2">
           <Switch
             isSelected={playgroundFeatureFlags.toolbar}

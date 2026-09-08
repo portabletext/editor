@@ -1,5 +1,6 @@
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
+import {tanstackRouter} from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import {defineConfig} from 'vite'
 import {COMPILED_SOURCES} from '../../packages/editor/react-compiler-sources.ts'
@@ -7,6 +8,7 @@ import {COMPILED_SOURCES} from '../../packages/editor/react-compiler-sources.ts'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    tanstackRouter({target: 'react', autoCodeSplitting: true}),
     react({
       compiler: {
         target: '19',
