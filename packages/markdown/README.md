@@ -56,6 +56,18 @@ const markdown = portableTextToMarkdown([
 # Hello **world**
 ```
 
+**Edit through Markdown without losing keys**
+
+```ts
+import {applyMarkdownEdit, portableTextToMarkdown} from '@portabletext/markdown'
+
+const markdown = portableTextToMarkdown(stored)
+const editedMarkdown = markdown.replace('tomorow', 'tomorrow')
+const edited = applyMarkdownEdit(stored, editedMarkdown)
+// same content as parsing editedMarkdown, with the stored `_key`s
+// kept the way the same edit in an editor would have kept them
+```
+
 ## Supported features
 
 | Feature          | Markdown → Portable Text | Portable Text → Markdown |
@@ -87,7 +99,7 @@ Converting Markdown to Portable Text and back isn't a lossless mirror:
 2. The normalized Markdown is a fixpoint for plain text and the [Supported features](#supported-features) table: parsing it and serializing again reproduces it byte-for-byte.
 3. MD→PT survival is schema-driven: a construct whose type the schema doesn't declare keeps its content and drops the structure that named it.
 4. PT structures with no Markdown form degrade predictably on PT→MD (extra table header rows flatten into the body, deep or level-skipping lists collapse to relative nesting, unknown marks pass their text through unformatted). Unknown object types round-trip instead: block-level as a ` ```json:object ` fence, inline as a `json:object`-tagged code span, both carrying the value as JSON. A fence or span whose body isn't a JSON object with a `_type` is ordinary code.
-5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`.
+5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`. [`applyMarkdownEdit`](#applymarkdownedit) restores stored keys after an edit.
 6. A hard break and a `\n` in a span's text are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
 The named exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint; a `code` object with the reserved language `json:object` loses that language on serialization; and span text ending in `json:object` directly before a code-marked span holding a typed JSON object binds into an inline object on reparse.
@@ -730,6 +742,61 @@ portableTextToMarkdown(blocks, {
   },
 })
 ```
+
+### `applyMarkdownEdit`
+
+Parsing markdown mints fresh `_key`s for text blocks (see [Round-trip behavior](#round-trip-behavior)), so converting a document to markdown, editing one word, and converting back returns what looks like a full rewrite: comment anchors detach, history churns, and granular patching is impossible. `applyMarkdownEdit` converts edited markdown back to Portable Text and restores stored `_key`s the way the same edit in an editor would have kept them:
+
+```ts
+import {applyMarkdownEdit, portableTextToMarkdown} from '@portabletext/markdown'
+
+const stored = [
+  {
+    _type: 'block',
+    _key: 'b1',
+    style: 'normal',
+    children: [{_type: 'span', _key: 's1', text: 'Ships tomorow.', marks: []}],
+    markDefs: [],
+  },
+]
+
+const markdown = portableTextToMarkdown(stored)
+// markdown === 'Ships tomorow.'; an agent (or anything else) fixes the typo
+const edited = applyMarkdownEdit(stored, 'Ships tomorrow.')
+```
+
+`edited`:
+
+```json
+[
+  {
+    "_type": "block",
+    "_key": "b1",
+    "style": "normal",
+    "children": [
+      {"_type": "span", "_key": "s1", "text": "Ships tomorrow.", "marks": []}
+    ],
+    "markDefs": []
+  }
+]
+```
+
+Keys follow the edit the way they would in an editor:
+
+- Unchanged and moved blocks keep their keys, and repeated content pairs in order.
+- Rewriting a block in place keeps its key, like typing over it. Style changes count as rewrites, and an edited table cell keeps the whole table's keys.
+- Splitting a block keeps the key on the first non-empty fragment, like pressing enter; merging keeps the first block's key, like pressing backspace. A soft-wrap join is a merge.
+- A typo fix lands as a text change on the same span, and editing a link's URL keeps its annotation key.
+- When an insertion or deletion makes the match ambiguous, a block keeps its key only on clear evidence; everything else gets a new key.
+- `json:object` payloads keep the `_key` they carry, unless the payload matches stored content, which keeps the stored key: editing markdown cannot re-key existing content.
+
+Output keys are always unique among siblings, the inputs are never mutated, and the result is a value, not patches.
+
+The options bag mirrors the two converters, plus a top-level `schema`: `deserialize` takes the rest of `markdownToPortableText`'s options and `serialize` takes the rest of `portableTextToMarkdown`'s. `schema` is taken once and governs both directions; restoring keys depends on the two serializations agreeing, and a mismatched dialect between them would otherwise reset keys document-wide. Pass the same `serialize` options that produced the markdown that was edited. The `deserialize` options apply to the stored value as well as the edited markdown, with two exceptions: new keys come from `deserialize.keyGenerator` (or the built-in generator), and `onDegradation` reports only on the edited markdown.
+
+Some edits are indistinguishable without an operation log, and the function trades accordingly: replacing a block with unrelated content in the same position keeps its key (the end state is the same as a rewrite), and a whole-document rewrite that keeps the block count pairs blocks in order. When evidence runs out, keys reset instead: short blocks next to insertions or deletions get fresh keys, and on very large ambiguous edits evidence gathering is size- and time-capped, degrading to fresh keys rather than waiting (so near the caps, which keys survive can vary with machine speed).
+
+`applyMarkdownEdit` restores identity, it does not merge concurrent edits. Reconcile against the exact value that produced the markdown, and before writing the result back, check that the stored field still equals that value. If it changed while the markdown was being edited, the edit describes a document that no longer exists, and writing it would silently overwrite the newer changes, restored keys included: serialize the current value and redo the edit instead.
 
 ## License
 

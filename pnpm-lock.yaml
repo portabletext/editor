@@ -694,6 +694,9 @@ importers:
       '@portabletext/toolkit':
         specifier: ^6.0.0
         version: 6.0.0
+      '@sanity/diff-match-patch':
+        specifier: 'catalog:'
+        version: 3.2.0
       linkify-it:
         specifier: ^5.0.2
         version: 5.0.2
