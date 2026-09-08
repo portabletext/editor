@@ -56,6 +56,18 @@ const markdown = portableTextToMarkdown([
 # Hello **world**
 ```
 
+**Edit through Markdown without losing keys**
+
+```ts
+import {applyMarkdownEdit, portableTextToMarkdown} from '@portabletext/markdown'
+
+const markdown = portableTextToMarkdown(stored)
+const editedMarkdown = markdown.replace('tomorow', 'tomorrow')
+const edited = applyMarkdownEdit(stored, editedMarkdown)
+// same content as parsing editedMarkdown, with the stored `_key`s
+// kept the way the same edit in an editor would have kept them
+```
+
 ## Supported features
 
 | Feature          | Markdown → Portable Text | Portable Text → Markdown |
@@ -87,7 +99,7 @@ Converting Markdown to Portable Text and back isn't a lossless mirror:
 2. The normalized Markdown is a fixpoint for plain text and the [Supported features](#supported-features) table: parsing it and serializing again reproduces it byte-for-byte.
 3. MD→PT survival is schema-driven: a construct whose type the schema doesn't declare keeps its content and drops the structure that named it.
 4. PT structures with no Markdown form degrade predictably on PT→MD (extra table header rows flatten into the body, deep or level-skipping lists collapse to relative nesting, unknown marks pass their text through unformatted). Unknown object types round-trip instead: block-level as a ` ```json:object ` fence, inline as a `json:object`-tagged code span, both carrying the value as JSON. A fence or span whose body isn't a JSON object with a `_type` is ordinary code.
-5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`.
+5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`. [`applyMarkdownEdit`](#applymarkdownedit) restores stored keys after an edit.
 6. A hard break and a `\n` in a span's text are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
 The named exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint; a `code` object with the reserved language `json:object` loses that language on serialization; and span text ending in `json:object` directly before a code-marked span holding a typed JSON object binds into an inline object on reparse.
@@ -696,7 +708,7 @@ A default renderer (`callout`, `code`, `horizontal-rule`, `html`, `image`, `tabl
 
 The gate reads type names, never field values: declaring a type doesn't validate anything, and a value's fields play no part in which renderer runs. Fields matter on the parse side instead: `markdownToPortableText` filters a construct down to its declared fields, so declare each type with the fields its values carry, or the markdown forms this gate lets through come back rebuilt without them.
 
-An undeclared type falls back to `unknownType`, whose default output is the same `json:object` fence or tagged code span described above, so it round-trips at block and inline positions. Inside a table cell the carrier uses its inline form (a GFM cell is one line), so an undeclared object in a cell survives too; declared types whose markdown form spans multiple lines (a code block in a cell) still flatten on reparse. Renderers you register in `types` bypass the gate entirely, whether or not the schema declares them.
+An undeclared type falls back to `unknownType`, whose default output is the same `json:object` fence or tagged code span described above, so it round-trips at block and inline positions. Inside a table cell the `json:object` form is the inline code span (a GFM cell is one line, and a fence would be squashed), so an undeclared object in a cell survives too; declared types whose markdown form spans multiple lines (a code block in a cell) still flatten on reparse. Renderers you register in `types` bypass the gate entirely, whether or not the schema declares them.
 
 Without a `schema`, every default renderer stays active.
 
@@ -730,6 +742,77 @@ portableTextToMarkdown(blocks, {
   },
 })
 ```
+
+### `applyMarkdownEdit`
+
+Parsing markdown mints fresh `_key`s for text blocks (see [Round-trip behavior](#round-trip-behavior)), so converting a document to markdown, editing one word, and converting back returns what looks like a full rewrite: comment anchors detach, history churns, and granular patching is impossible. `applyMarkdownEdit` converts edited markdown back to Portable Text and restores stored `_key`s the way the same edit in an editor would have kept them:
+
+```ts
+import {applyMarkdownEdit, portableTextToMarkdown} from '@portabletext/markdown'
+
+const stored = [
+  {
+    _type: 'block',
+    _key: 'b1',
+    style: 'normal',
+    children: [{_type: 'span', _key: 's1', text: 'Ships tomorow.', marks: []}],
+    markDefs: [],
+  },
+]
+
+const markdown = portableTextToMarkdown(stored)
+// markdown === 'Ships tomorow.'; an agent (or anything else) fixes the typo
+const edited = applyMarkdownEdit(stored, 'Ships tomorrow.')
+```
+
+`edited`:
+
+```json
+[
+  {
+    "_type": "block",
+    "_key": "b1",
+    "style": "normal",
+    "children": [
+      {"_type": "span", "_key": "s1", "text": "Ships tomorrow.", "marks": []}
+    ],
+    "markDefs": []
+  }
+]
+```
+
+Keys follow the edit the way they would in an editor, and when the evidence is unclear, a block gets a fresh key rather than a wrong one. The result is a value, not patches; output keys are always unique among siblings; the inputs are never mutated.
+
+#### What keeps its key
+
+- Unchanged and moved blocks. Repeated content pairs in order.
+- A block rewritten in place, like typing over it. Style changes count as rewrites, and an edited table cell keeps the whole table's keys.
+- A split keeps the key on the first non-empty fragment, like pressing enter; a merge keeps the first block's key, like pressing backspace. A soft-wrap join is a merge.
+- A typo fix lands as a text change on the same span, and editing a link's URL keeps its annotation key. Two identical annotations in one block (the same link twice, say) pair in order, like any repeated content.
+- A `json:object` payload keeps the `_key` it carries, unless the payload matches stored content, which keeps the stored key: editing markdown cannot re-key existing content.
+
+#### What gets restored
+
+Markdown cannot carry everything a block stores, so an adopted block gets back what the edit could not have touched:
+
+- A field the dialect cannot express, like a text block's `alignment`, including a whole custom object-array field the dialect drops. A field markdown does express, like `language` on a code block, follows the edit.
+- A custom style, list kind, or decorator markdown has no syntax for.
+- An empty or whitespace-only paragraph, which has no markdown form at all (blank lines are the block separator): it is restored next to its surviving neighbor, and deleted along with that neighbor if the neighbor goes. This covers top-level blocks; an empty paragraph nested inside a table cell or callout content is not restored. An empty heading or list item has a visible markdown form (`## `, `- `) and round-trips like any other block.
+
+#### When keys reset
+
+- Ambiguity: when an insertion or deletion makes a match unclear, a block keeps its key only on clear evidence; everything else gets a new key, and short blocks near the change are the usual casualties.
+- Indistinguishable edits: replacing a block with unrelated content in the same position keeps its key (the end state is identical to a rewrite), and a whole-document rewrite that keeps the block count pairs blocks in order. That last one is deliberate: a translation keeps every anchor by position, which is the behavior translate flows need. The cost is that a reorder-plus-edit with balanced counts mispairs the same way, block-level and sibling-level alike.
+- Caps: on very large ambiguous edits, evidence gathering is size- and time-capped and degrades to fresh keys rather than waiting, so near the caps, which keys survive can vary with machine speed.
+- Refusal: a stored value that cannot survive its own serialize→parse round trip resets the whole document to the plain conversion, every key fresh except the ones `json:object` payloads carry.
+
+#### Options
+
+The options bag mirrors the two converters, plus a top-level `schema`: `deserialize` takes the rest of `markdownToPortableText`'s options and `serialize` takes the rest of `portableTextToMarkdown`'s. `schema` is taken once and governs both directions, because restoring keys depends on the two serializations agreeing. Pass the same `serialize` options that produced the markdown that was edited. The `deserialize` options apply to the stored value as well as the edited markdown, with two exceptions: new keys come from `deserialize.keyGenerator` (or the built-in generator), and `onDegradation` reports only on the edited markdown.
+
+#### Concurrent edits
+
+Reconciling an unchanged serialization returns the stored value for round-trip-stable content; a non-canonical stored value, like adjacent same-mark spans, comes back canonicalized with its keys, so the guarantee is idempotence, not byte identity. `applyMarkdownEdit` does not merge concurrent edits: reconcile against the exact value that produced the markdown, and before writing the result back, check that the stored field still equals that value. If it changed while the markdown was being edited, the edit describes a document that no longer exists, and writing it would silently overwrite the newer changes: serialize the current value and redo the edit instead.
 
 ## License
 

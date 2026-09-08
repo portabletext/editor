@@ -34,7 +34,7 @@ import {
   normalStyleDefinition,
 } from '../default-schema'
 import {unescapeImageAndLinkText} from '../escape'
-import {defaultKeyGenerator} from '../key-generator'
+import {defaultKeyGenerator, uniqueKeyGenerator} from '../key-generator'
 import {degradationMessage} from './degradation-messages'
 import {
   buildAnnotationMatcher,
@@ -539,7 +539,9 @@ export function markdownToPortableText(
 ): Array<PortableTextBlock> {
   const consolidatedOptions = {
     schema: options?.schema ?? defaultSchema,
-    keyGenerator: options?.keyGenerator ?? defaultKeyGenerator,
+    keyGenerator: uniqueKeyGenerator(
+      options?.keyGenerator ?? defaultKeyGenerator,
+    ),
     html: {
       inline: options?.html?.inline ?? 'skip',
     },
