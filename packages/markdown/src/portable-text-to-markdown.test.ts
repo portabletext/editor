@@ -1225,9 +1225,11 @@ describe(portableTextToMarkdown.name, () => {
 
       const jsonLines = JSON.stringify(malformedCode, null, 2).split('\n')
       expect(portableTextToMarkdown([value], outOpts)).toBe(
-        ['> ```json', ...jsonLines.map((line) => `> ${line}`), '> ```'].join(
-          '\n',
-        ),
+        [
+          '> ```json:object',
+          ...jsonLines.map((line) => `> ${line}`),
+          '> ```',
+        ].join('\n'),
       )
     })
 
@@ -1391,7 +1393,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'image', _key: keyGenerator(), alt: 'foo'}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
@@ -1404,7 +1406,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'image', _key: keyGenerator(), ...image}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
@@ -1590,7 +1592,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'code', _key: keyGenerator(), language: 'js'}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
@@ -1599,7 +1601,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'code', _key: keyGenerator(), code: 42}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
@@ -1665,7 +1667,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'html', _key: keyGenerator()}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
@@ -1674,7 +1676,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'html', _key: keyGenerator(), html: 42}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
   })
@@ -1721,7 +1723,7 @@ describe(portableTextToMarkdown.name, () => {
 
       test('`types: {table: undefined}` opts out and falls back to fenced JSON', () => {
         const markdownOut = [
-          '```json',
+          '```json:object',
           JSON.stringify(portableText.at(0), null, 2),
           '```',
         ].join('\n')
@@ -2930,7 +2932,7 @@ describe(portableTextToMarkdown.name, () => {
         const value = {_type: 'table', _key: keyGenerator(), headerRows: 1}
 
         expect(portableTextToMarkdown([value])).toBe(
-          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+          ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
         )
       })
 
@@ -2944,7 +2946,7 @@ describe(portableTextToMarkdown.name, () => {
         const value = {_type: 'table', _key: keyGenerator(), ...table}
 
         expect(portableTextToMarkdown([value])).toBe(
-          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+          ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
         )
       })
 
@@ -3040,7 +3042,7 @@ describe(portableTextToMarkdown.name, () => {
       const value = {_type: 'callout', _key: keyGenerator(), content: []}
 
       expect(portableTextToMarkdown([value])).toBe(
-        ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
@@ -3058,7 +3060,7 @@ describe(portableTextToMarkdown.name, () => {
         const value = {_type: 'callout', _key: keyGenerator(), ...callout}
 
         expect(portableTextToMarkdown([value])).toBe(
-          ['```json', JSON.stringify(value, null, 2), '```'].join('\n'),
+          ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
         )
       },
     )
@@ -3077,7 +3079,7 @@ describe(portableTextToMarkdown.name, () => {
       expect(portableTextToMarkdown([value])).toBe(
         [
           '> [!NOTE]',
-          '> ```json',
+          '> ```json:object',
           ...jsonLines.map((line) => `> ${line}`),
           '> ```',
         ].join('\n'),
@@ -4133,6 +4135,219 @@ describe(portableTextToMarkdown.name, () => {
       })
 
       expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+  })
+  describe('unknown block object (`json:object` fence)', () => {
+    test('serializes as a `json:object` fence with the value as pretty JSON', () => {
+      const value = {
+        _type: 'product',
+        _key: 'product-key',
+        sku: 'abc-123',
+      }
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('round-trips back to the same object, `_key` included', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'product',
+        _key: 'product-key',
+        sku: 'abc-123',
+        nested: {_type: 'variant', _key: 'variant-key', size: 'L'},
+      }
+      expect(
+        markdownToPortableText(portableTextToMarkdown([value]), {
+          keyGenerator,
+        }),
+      ).toEqual([value])
+    })
+
+    test('the serialized fence is a markdown fixpoint', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = portableTextToMarkdown([
+        {_type: 'product', _key: 'product-key', sku: 'abc-123'},
+      ])
+      expect(
+        portableTextToMarkdown(
+          markdownToPortableText(markdown, {keyGenerator}),
+        ),
+      ).toBe(markdown)
+    })
+
+    test('an inline unknown object serializes as a tagged code span in the line', () => {
+      const value = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 's1', text: 'before ', marks: []},
+            {_type: 'stockTicker', _key: 't1', symbol: 'AAPL'},
+            {_type: 'span', _key: 's2', text: ' after', marks: []},
+          ],
+        },
+      ]
+      expect(portableTextToMarkdown(value)).toBe(
+        'before json:object`{"_type":"stockTicker","_key":"t1","symbol":"AAPL"}` after',
+      )
+    })
+
+    test('an inline payload containing backticks widens the code span', () => {
+      const value = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 's1', text: 'x ', marks: []},
+            {_type: 'snippet', _key: 't1', code: 'a `b` c'},
+          ],
+        },
+      ]
+      expect(portableTextToMarkdown(value)).toBe(
+        'x json:object``{"_type":"snippet","_key":"t1","code":"a `b` c"}``',
+      )
+    })
+
+    test('an inline unknown object round-trips in place, `_key` included', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 's1', text: 'AAPL is at ', marks: []},
+            {_type: 'stockTicker', _key: 't1', symbol: 'AAPL'},
+            {_type: 'span', _key: 's2', text: ' right now.', marks: []},
+          ],
+        },
+      ]
+      expect(
+        markdownToPortableText(portableTextToMarkdown(value), {keyGenerator}),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'AAPL is at ', marks: []},
+            {_type: 'stockTicker', _key: 't1', symbol: 'AAPL'},
+            {_type: 'span', _key: 'k2', text: ' right now.', marks: []},
+          ],
+        },
+      ])
+    })
+
+    test('a code block whose `language` is `json:object` drops the language instead of becoming an object', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = [
+        {
+          _type: 'code',
+          _key: 'c1',
+          language: 'json:object',
+          code: '{"_type": "x", "a": 1}',
+        },
+      ]
+      expect(portableTextToMarkdown(value)).toBe(
+        ['```', '{"_type": "x", "a": 1}', '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(portableTextToMarkdown(value), {keyGenerator}),
+      ).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          code: '{"_type": "x", "a": 1}',
+        },
+      ])
+    })
+
+    test('an inline object inside a table cell round-trips, pipes in the payload included', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = [
+        {
+          _type: 'table',
+          _key: 'tbl1',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'c1',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'b1',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 's1', text: 'sym ', marks: []},
+                        {_type: 'stockTicker', _key: 't1', symbol: 'A|B'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+      const roundTripped = markdownToPortableText(
+        portableTextToMarkdown(value),
+        {keyGenerator},
+      )
+      expect(roundTripped).toEqual([
+        {
+          _type: 'table',
+          _key: 'k4',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k3',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'sym ', marks: []},
+                        {_type: 'stockTicker', _key: 't1', symbol: 'A|B'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('the serialized inline form is a markdown fixpoint', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown =
+        'AAPL is at json:object`{"_type":"stockTicker","_key":"t1","symbol":"AAPL"}` right now.'
+      expect(
+        portableTextToMarkdown(
+          markdownToPortableText(markdown, {keyGenerator}),
+        ),
+      ).toBe(markdown)
     })
   })
 })

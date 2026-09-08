@@ -8,6 +8,7 @@ import {
 } from '../../escape'
 import {markListItemFirstBlock} from '../list-item-first-block'
 import type {PortableTextTypeRenderer} from '../types'
+import {wrapInCodeSpan} from './marks'
 
 /**
  * @public
@@ -36,6 +37,13 @@ function isCodeShaped(value: unknown): value is {code: string} {
  */
 function normalizeLanguage(language: unknown): string {
   if (typeof language !== 'string' || language.includes('\n')) {
+    return ''
+  }
+  if (language === 'json:object') {
+    // `json:object` is reserved as the object carrier: a code block
+    // emitting it as its info string would re-parse as the embedded
+    // object whenever its content happens to be typed JSON, destroying
+    // the code block. The language degrades to absent instead.
     return ''
   }
   return language
@@ -453,7 +461,11 @@ export const DefaultUnknownTypeRenderer: PortableTextTypeRenderer = ({
   value,
   isInline,
 }) => {
-  const json = `\`\`\`json\n${JSON.stringify(value, null, 2)}\n\`\`\``
-  // For inline unknown types, add newlines to break them out of the text flow
-  return isInline ? `\n${json}\n` : json
+  if (isInline) {
+    // Single-line JSON: code spans turn newlines into spaces on
+    // reparse, so a pretty-printed payload would still reconstruct but
+    // would not survive byte-identically, breaking the fixpoint.
+    return `json:object${wrapInCodeSpan(JSON.stringify(value))}`
+  }
+  return `\`\`\`json:object\n${JSON.stringify(value, null, 2)}\n\`\`\``
 }
