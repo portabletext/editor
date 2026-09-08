@@ -54,11 +54,7 @@ export const converterTextHtml = defineConverter({
       const parsedBlock = parseBlock({
         keyGenerator: snapshot.context.keyGenerator,
         block,
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: false,
-        },
+        profile: 'lenient',
         schema: snapshot.context.schema,
       })
       return parsedBlock ? [parsedBlock] : []

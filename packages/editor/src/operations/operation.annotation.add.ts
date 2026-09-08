@@ -46,7 +46,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     },
     schema: annotationSchema,
     keyGenerator: context.keyGenerator,
-    options: {validateFields: true},
+    profile: 'strict',
   })
 
   if (!parsedAnnotation) {

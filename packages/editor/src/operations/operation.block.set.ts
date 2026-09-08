@@ -65,7 +65,7 @@ export const blockSetOperationImplementation: OperationImplementation<
         const {markDefs} = parseMarkDefs({
           keyGenerator: context.keyGenerator,
           markDefs: operation.props[key],
-          options: {validateFields: true},
+          profile: 'strict',
           schema: getPathSubSchema(snapshot, blockEntry.path),
         })
         filteredProps[key] = markDefs

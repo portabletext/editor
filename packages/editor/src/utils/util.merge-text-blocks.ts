@@ -17,11 +17,7 @@ export function mergeTextBlocks({
   const parsedIncomingBlock = parseBlock({
     keyGenerator: context.keyGenerator,
     block: incomingBlock,
-    options: {
-      normalize: false,
-      removeUnusedMarkDefs: true,
-      validateFields: false,
-    },
+    profile: 'lenient',
     schema: context.schema,
   })
 

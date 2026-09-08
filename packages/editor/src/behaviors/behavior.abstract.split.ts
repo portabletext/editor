@@ -133,11 +133,7 @@ export const abstractSplitBehaviors = [
           endPoint: blockEndPoint,
         }),
         keyGenerator: snapshot.context.keyGenerator,
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: false,
-        },
+        profile: 'lenient',
         schema: getPathSubSchema(snapshot, focusTextBlock.path),
       })
 

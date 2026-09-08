@@ -169,11 +169,7 @@ export function sliceBlocks({
         parseBlock({
           keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
           block,
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: false,
-          },
+          profile: 'lenient',
           schema: context.schema,
         }) ?? block,
       )
@@ -184,11 +180,7 @@ export function sliceBlocks({
     ? parseBlock({
         keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         block: startBlock,
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: false,
-        },
+        profile: 'lenient',
         schema: context.schema,
       })
     : undefined
@@ -197,11 +189,7 @@ export function sliceBlocks({
     ? parseBlock({
         keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         block: endBlock,
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: false,
-        },
+        profile: 'lenient',
         schema: context.schema,
       })
     : undefined

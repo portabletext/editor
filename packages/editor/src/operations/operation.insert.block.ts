@@ -103,11 +103,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
   const parsedBlock = parseBlock({
     block: operation.block,
     keyGenerator: context.keyGenerator,
-    options: {
-      normalize: true,
-      removeUnusedMarkDefs: true,
-      validateFields: true,
-    },
+    profile: 'strict',
     schema,
   })
 

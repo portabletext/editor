@@ -14,11 +14,7 @@ describe(parseBlock.name, () => {
       parseBlock({
         block: null,
         keyGenerator: createTestKeyGenerator(),
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: true,
-        },
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
@@ -29,11 +25,7 @@ describe(parseBlock.name, () => {
       parseBlock({
         block: undefined,
         keyGenerator: createTestKeyGenerator(),
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: true,
-        },
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
@@ -45,11 +37,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(defineSchema({})),
         }),
       ).toBe(undefined)
@@ -60,11 +48,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {_key: 'k0'},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({blockObjects: [{name: 'image'}]}),
           ),
@@ -77,11 +61,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {_type: 'image'},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({blockObjects: [{name: 'image'}]}),
           ),
@@ -99,11 +79,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {_type: 'block'},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(defineSchema({})),
         }),
       ).toEqual({
@@ -126,11 +102,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {_type: 'text'},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: {
             ...schema,
             block: {...schema.block, name: 'text'},
@@ -164,11 +136,7 @@ describe(parseBlock.name, () => {
             ],
           },
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(defineSchema({})),
         }),
       ).toBe(undefined)
@@ -201,11 +169,7 @@ describe(parseBlock.name, () => {
             ],
           },
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({
               inlineObjects: [{name: 'stock-ticker'}],
@@ -260,11 +224,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {_type: 'block', listItem: 'bullet'},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
         }),
       ).toEqual({
@@ -287,11 +247,7 @@ describe(parseBlock.name, () => {
         parseBlock({
           block: {_type: 'block', listItem: 'number'},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
         }),
       ).toEqual({
@@ -314,11 +270,7 @@ describe(parseBlock.name, () => {
           parseBlock({
             block: {_type: 'block', map: {}},
             keyGenerator: createTestKeyGenerator(),
-            options: {
-              normalize: false,
-              removeUnusedMarkDefs: true,
-              validateFields: true,
-            },
+            profile: 'strict',
             schema: compileSchema(defineSchema({})),
           }),
         ).toEqual({
@@ -340,11 +292,7 @@ describe(parseBlock.name, () => {
           parseBlock({
             block: {_type: 'block', map: {}},
             keyGenerator: createTestKeyGenerator(),
-            options: {
-              normalize: false,
-              removeUnusedMarkDefs: true,
-              validateFields: true,
-            },
+            profile: 'strict',
             schema: compileSchema(
               defineSchema({
                 block: {fields: [{name: 'map', type: 'object'}]},
@@ -371,11 +319,7 @@ describe(parseBlock.name, () => {
           parseBlock({
             block: {_type: 'block', foo: {}},
             keyGenerator: createTestKeyGenerator(),
-            options: {
-              normalize: false,
-              removeUnusedMarkDefs: true,
-              validateFields: true,
-            },
+            profile: 'strict',
             schema: compileSchema(
               defineSchema({
                 block: {fields: [{name: 'map', type: 'object'}]},
@@ -396,6 +340,47 @@ describe(parseBlock.name, () => {
         })
       })
     })
+
+    test('lenient profile trusts custom fields, style, and children shape', () => {
+      expect(
+        parseBlock({
+          block: {
+            _type: 'block',
+            style: 'unknownStyle',
+            markDefs: [
+              {_type: 'link', _key: 'usedMark', href: 'https://example.com'},
+              {_type: 'link', _key: 'unusedMark', href: 'https://example.com'},
+            ],
+            customField: 'foo',
+            children: [
+              {_type: 'image', _key: 'k-image'},
+              {_type: 'span', _key: 'k-span', text: 'bar', marks: ['usedMark']},
+            ],
+          },
+          keyGenerator: createTestKeyGenerator(),
+          profile: 'lenient',
+          schema: compileSchema(
+            defineSchema({
+              annotations: [
+                {name: 'link', fields: [{name: 'href', type: 'string'}]},
+              ],
+              inlineObjects: [{name: 'image'}],
+            }),
+          ),
+        }),
+      ).toEqual({
+        _key: 'k0',
+        _type: 'block',
+        customField: 'foo',
+        markDefs: [
+          {_key: 'usedMark', _type: 'link', href: 'https://example.com'},
+        ],
+        children: [
+          {_key: 'k-image', _type: 'image'},
+          {_key: 'k-span', _type: 'span', text: 'bar', marks: ['usedMark']},
+        ],
+      })
+    })
   })
 })
 
@@ -405,8 +390,8 @@ describe(parseSpan.name, () => {
       parseSpan({
         span: undefined,
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
@@ -417,8 +402,8 @@ describe(parseSpan.name, () => {
       parseSpan({
         span: null,
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
@@ -429,8 +414,8 @@ describe(parseSpan.name, () => {
       parseSpan({
         span: {},
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
@@ -441,8 +426,8 @@ describe(parseSpan.name, () => {
       parseSpan({
         span: {_type: 'stock-ticker'},
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
@@ -453,8 +438,8 @@ describe(parseSpan.name, () => {
       parseSpan({
         span: {_type: 'span'},
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toEqual({
@@ -470,8 +455,8 @@ describe(parseSpan.name, () => {
       parseSpan({
         span: {_type: 'span', foo: 'bar'},
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toEqual({
@@ -490,8 +475,8 @@ describe(parseSpan.name, () => {
           marks: 42,
         },
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({})),
       }),
     ).toEqual({
@@ -510,8 +495,8 @@ describe(parseSpan.name, () => {
           marks: [null, undefined, 'foo', 42, {foo: 'bar'}, 'strong'],
         },
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
       }),
     ).toEqual({
@@ -530,8 +515,8 @@ describe(parseSpan.name, () => {
           marks: ['strong', 'em'],
         },
         keyGenerator: createTestKeyGenerator(),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
       }),
     ).toEqual({
@@ -549,7 +534,7 @@ describe(parseInlineObject.name, () => {
       parseInlineObject({
         inlineObject: undefined,
         keyGenerator: createTestKeyGenerator(),
-        options: {validateFields: true},
+        profile: 'strict',
         schema: compileSchema(
           defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
         ),
@@ -562,7 +547,7 @@ describe(parseInlineObject.name, () => {
       parseInlineObject({
         inlineObject: null,
         keyGenerator: createTestKeyGenerator(),
-        options: {validateFields: true},
+        profile: 'strict',
         schema: compileSchema(
           defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
         ),
@@ -575,7 +560,7 @@ describe(parseInlineObject.name, () => {
       parseInlineObject({
         inlineObject: {},
         keyGenerator: createTestKeyGenerator(),
-        options: {validateFields: true},
+        profile: 'strict',
         schema: compileSchema(
           defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
         ),
@@ -588,7 +573,7 @@ describe(parseInlineObject.name, () => {
       parseInlineObject({
         inlineObject: {_type: 'image'},
         keyGenerator: createTestKeyGenerator(),
-        options: {validateFields: true},
+        profile: 'strict',
         schema: compileSchema(
           defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
         ),
@@ -601,7 +586,7 @@ describe(parseInlineObject.name, () => {
       parseInlineObject({
         inlineObject: {_type: 'stock-ticker'},
         keyGenerator: createTestKeyGenerator(),
-        options: {validateFields: true},
+        profile: 'strict',
         schema: compileSchema(
           defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
         ),
@@ -618,7 +603,7 @@ describe(parseInlineObject.name, () => {
         parseInlineObject({
           inlineObject: {_type: 'stock-ticker', text: 'foo'},
           keyGenerator: createTestKeyGenerator(),
-          options: {validateFields: true},
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
           ),
@@ -631,7 +616,7 @@ describe(parseInlineObject.name, () => {
         parseInlineObject({
           inlineObject: {_type: 'image', text: 'foo'},
           keyGenerator: createTestKeyGenerator(),
-          options: {validateFields: true},
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
           ),
@@ -642,12 +627,12 @@ describe(parseInlineObject.name, () => {
 
   describe('custom props', () => {
     describe('unknown prop', () => {
-      test('validateFields: true', () => {
+      test('strict', () => {
         expect(
           parseInlineObject({
             inlineObject: {_type: 'stock-ticker', foo: 'bar'},
             keyGenerator: createTestKeyGenerator(),
-            options: {validateFields: true},
+            profile: 'strict',
             schema: compileSchema(
               defineSchema({
                 inlineObjects: [{name: 'stock-ticker'}],
@@ -660,12 +645,12 @@ describe(parseInlineObject.name, () => {
         })
       })
 
-      test('validateFields: false', () => {
+      test('lenient', () => {
         expect(
           parseInlineObject({
             inlineObject: {_type: 'stock-ticker', foo: 'bar'},
             keyGenerator: createTestKeyGenerator(),
-            options: {validateFields: false},
+            profile: 'lenient',
             schema: compileSchema(
               defineSchema({
                 inlineObjects: [{name: 'stock-ticker'}],
@@ -681,12 +666,12 @@ describe(parseInlineObject.name, () => {
     })
 
     describe('known prop', () => {
-      test('validateFields: true', () => {
+      test('strict', () => {
         expect(
           parseInlineObject({
             inlineObject: {_type: 'stock-ticker', foo: 'bar'},
             keyGenerator: createTestKeyGenerator(),
-            options: {validateFields: true},
+            profile: 'strict',
             schema: compileSchema(
               defineSchema({
                 inlineObjects: [
@@ -706,12 +691,12 @@ describe(parseInlineObject.name, () => {
       })
     })
 
-    test('validateFields: false', () => {
+    test('lenient', () => {
       expect(
         parseInlineObject({
           inlineObject: {_type: 'stock-ticker', foo: 'bar'},
           keyGenerator: createTestKeyGenerator(),
-          options: {validateFields: false},
+          profile: 'lenient',
           schema: compileSchema(
             defineSchema({
               inlineObjects: [
@@ -731,11 +716,11 @@ describe(parseInlineObject.name, () => {
     })
 
     describe('known prop set to undefined', () => {
-      test('validateFields: true on inline object strips the field', () => {
+      test('strict on inline object strips the field', () => {
         const result = parseInlineObject({
           inlineObject: {_type: 'stock-ticker', foo: undefined},
           keyGenerator: createTestKeyGenerator(),
-          options: {validateFields: true},
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({
               inlineObjects: [
@@ -751,15 +736,11 @@ describe(parseInlineObject.name, () => {
         expect(result).not.toHaveProperty('foo')
       })
 
-      test('validateFields: true on block object strips the field', () => {
+      test('strict on block object strips the field', () => {
         const result = parseBlock({
           block: {_type: 'image', _key: 'k0', alt: undefined},
           keyGenerator: createTestKeyGenerator(),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: true,
-          },
+          profile: 'strict',
           schema: compileSchema(
             defineSchema({
               blockObjects: [
@@ -782,8 +763,8 @@ describe(parseChild.name, () => {
         expect(
           parseChild({
             keyGenerator: createTestKeyGenerator(),
-            markDefKeyMap: new Map(),
-            options: {validateFields: true},
+            markDefKeys: new Set(),
+            profile: 'strict',
             child: {_type: 'stock-ticker', text: 'foo'},
             schema: compileSchema(
               defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
@@ -796,8 +777,8 @@ describe(parseChild.name, () => {
         expect(
           parseChild({
             keyGenerator: createTestKeyGenerator(),
-            markDefKeyMap: new Map(),
-            options: {validateFields: true},
+            markDefKeys: new Set(),
+            profile: 'strict',
             child: {_type: 'image', text: 'foo'},
             schema: compileSchema(
               defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
@@ -858,11 +839,7 @@ describe('container-aware parsing', () => {
         ],
       },
       keyGenerator: createTestKeyGenerator(),
-      options: {
-        normalize: false,
-        removeUnusedMarkDefs: false,
-        validateFields: true,
-      },
+      profile: 'strict',
       schema,
     })
 
@@ -906,11 +883,7 @@ describe('container-aware parsing', () => {
         ],
       },
       keyGenerator: createTestKeyGenerator(),
-      options: {
-        normalize: false,
-        removeUnusedMarkDefs: false,
-        validateFields: true,
-      },
+      profile: 'strict',
       schema,
     })
 
@@ -949,11 +922,7 @@ describe('container-aware parsing', () => {
         ],
       },
       keyGenerator: createTestKeyGenerator(),
-      options: {
-        normalize: false,
-        removeUnusedMarkDefs: false,
-        validateFields: true,
-      },
+      profile: 'strict',
       schema,
     })
 
@@ -1045,11 +1014,7 @@ describe('container-aware parsing (nested containers)', () => {
         ],
       },
       keyGenerator: createTestKeyGenerator(),
-      options: {
-        normalize: false,
-        removeUnusedMarkDefs: false,
-        validateFields: true,
-      },
+      profile: 'strict',
       schema,
     })
 

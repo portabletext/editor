@@ -316,11 +316,7 @@ export const stepDefinitions = [
           schema: context.editor.getSnapshot().context.schema,
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           blocks: safeParse(blocks),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: false,
-            validateFields: true,
-          },
+          profile: 'strict',
         }),
         placement,
       })
@@ -335,14 +331,14 @@ export const stepDefinitions = [
       parseSpan({
         keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         span: safeParse(child),
-        markDefKeyMap: new Map(),
-        options: {validateFields: true},
+        markDefKeys: new Set(),
+        profile: 'strict',
         schema: context.editor.getSnapshot().context.schema,
       }) ??
       parseInlineObject({
         keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         inlineObject: safeParse(child),
-        options: {validateFields: true},
+        profile: 'strict',
         schema: context.editor.getSnapshot().context.schema,
       })
 
@@ -764,11 +760,7 @@ export const stepDefinitions = [
           schema: context.editor.getSnapshot().context.schema,
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           blocks: safeParse(blocks),
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: false,
-            validateFields: true,
-          },
+          profile: 'strict',
         }),
         placement,
         select: selectPosition,
