@@ -3,7 +3,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {raise} from '../src/behaviors/behavior.types.action'
+import {effect, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {safeParse} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
@@ -501,6 +501,200 @@ describe('event.clipboard.paste', () => {
               _type: 'stock-ticker',
               symbol: 'AAPL',
             },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Custom onPaste prop receives raw blocks in the insert.blocks event', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const existingBlockKey = keyGenerator()
+    const existingSpanKey = keyGenerator()
+    const capturedEventBlocks: Array<unknown> = []
+
+    const pastedBlocks = [
+      {
+        _type: 'block',
+        markDefs: [
+          {_type: 'link', _key: 'unusedLink', href: 'https://example.com'},
+        ],
+        children: [{_type: 'span', _key: 'fooSpan', text: 'foo', marks: []}],
+        style: 'normal',
+      },
+      {
+        _type: 'unknown-widget',
+        _key: 'unknownKey',
+        text: 'bar',
+      },
+    ]
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: existingBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: existingSpanKey, _type: 'span', text: 'baz', marks: []},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      editableProps: {
+        onPaste: () => ({insert: pastedBlocks}),
+      },
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.blocks',
+              actions: [
+                ({event}) => [
+                  effect(() => {
+                    capturedEventBlocks.push(event.blocks)
+                  }),
+                  forward(event),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    const selectionAtEnd = {
+      anchor: {
+        path: [{_key: existingBlockKey}, 'children', {_key: existingSpanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: existingBlockKey}, 'children', {_key: existingSpanKey}],
+        offset: 3,
+      },
+    }
+    editor.send({type: 'select', at: selectionAtEnd})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...selectionAtEnd,
+        backward: false,
+      })
+    })
+
+    locator
+      .element()
+      .dispatchEvent(
+        new ClipboardEvent('paste', {bubbles: true, cancelable: true}),
+      )
+
+    await vi.waitFor(() => {
+      expect(capturedEventBlocks.length).toBeGreaterThan(0)
+    })
+
+    expect(capturedEventBlocks).toEqual([
+      [
+        {
+          _type: 'block',
+          markDefs: [
+            {_type: 'link', _key: 'unusedLink', href: 'https://example.com'},
+          ],
+          children: [{_type: 'span', _key: 'fooSpan', text: 'foo', marks: []}],
+          style: 'normal',
+        },
+        {
+          _type: 'unknown-widget',
+          _key: 'unknownKey',
+          text: 'bar',
+        },
+      ],
+    ])
+  })
+
+  test("Scenario: Custom onPaste prop's raw blocks are still validated downstream", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const existingBlockKey = keyGenerator()
+    const existingSpanKey = keyGenerator()
+
+    const pastedBlocks = [
+      {
+        _type: 'block',
+        markDefs: [
+          {_type: 'link', _key: 'unusedLink', href: 'https://example.com'},
+        ],
+        children: [{_type: 'span', _key: 'fooSpan', text: 'foo', marks: []}],
+        style: 'normal',
+      },
+      {
+        _type: 'unknown-widget',
+        _key: 'unknownKey',
+        text: 'bar',
+      },
+    ]
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: existingBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: existingSpanKey, _type: 'span', text: 'baz', marks: []},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      editableProps: {
+        onPaste: () => ({insert: pastedBlocks}),
+      },
+    })
+
+    await userEvent.click(locator)
+
+    const selectionAtEnd = {
+      anchor: {
+        path: [{_key: existingBlockKey}, 'children', {_key: existingSpanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: existingBlockKey}, 'children', {_key: existingSpanKey}],
+        offset: 3,
+      },
+    }
+    editor.send({type: 'select', at: selectionAtEnd})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...selectionAtEnd,
+        backward: false,
+      })
+    })
+
+    locator
+      .element()
+      .dispatchEvent(
+        new ClipboardEvent('paste', {bubbles: true, cancelable: true}),
+      )
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: existingBlockKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: existingSpanKey, _type: 'span', text: 'bazfoo', marks: []},
           ],
         },
       ])
