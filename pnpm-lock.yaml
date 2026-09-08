@@ -352,6 +352,9 @@ importers:
       '@portabletext/react':
         specifier: catalog:tooling
         version: 8.0.1(react@19.2.8)
+      '@portabletext/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar

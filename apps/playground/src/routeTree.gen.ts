@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarkdownRouteImport } from './routes/markdown'
 import { Route as MinimalRouteImport } from './routes/minimal'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarkdownRoute = MarkdownRouteImport.update({
+  id: '/markdown',
+  path: '/markdown',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MinimalRoute = MinimalRouteImport.update({
@@ -25,27 +31,31 @@ const MinimalRoute = MinimalRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/markdown': typeof MarkdownRoute
   '/minimal': typeof MinimalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/markdown': typeof MarkdownRoute
   '/minimal': typeof MinimalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/markdown': typeof MarkdownRoute
   '/minimal': typeof MinimalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/minimal'
+  fullPaths: '/' | '/markdown' | '/minimal'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/minimal'
-  id: '__root__' | '/' | '/minimal'
+  to: '/' | '/markdown' | '/minimal'
+  id: '__root__' | '/' | '/markdown' | '/minimal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MarkdownRoute: typeof MarkdownRoute
   MinimalRoute: typeof MinimalRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/markdown': {
+      id: '/markdown'
+      path: '/markdown'
+      fullPath: '/markdown'
+      preLoaderRoute: typeof MarkdownRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/minimal': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MarkdownRoute: MarkdownRoute,
   MinimalRoute: MinimalRoute,
 }
 export const routeTree = rootRouteImport

@@ -23,6 +23,15 @@ export function PageNav() {
       >
         Minimal
       </Link>
+      <Link
+        to="/markdown"
+        inactiveProps={{className: button({variant: 'ghost', size: 'sm'})}}
+        activeProps={{
+          className: button({variant: 'ghost', size: 'sm', isSelected: true}),
+        }}
+      >
+        Markdown
+      </Link>
     </nav>
   )
 }
