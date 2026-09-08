@@ -131,6 +131,10 @@ export type InvalidValueResolution = {
 /** @beta */
 export type OnPasteResult =
   | {
+      /**
+       * Delivered as-is to the `insert.blocks` Behavior event and validated
+       * against the schema when inserted.
+       */
       insert?: TypedObject[]
       path?: Path
     }

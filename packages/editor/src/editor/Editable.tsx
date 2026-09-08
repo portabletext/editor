@@ -35,7 +35,6 @@ import type {
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
 import {isEmptyTextBlock} from '../utils'
-import {parseBlocks} from '../utils/parse-blocks'
 import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
@@ -384,16 +383,7 @@ export const PortableTextEditable = forwardRef<
                 type: 'behavior event',
                 behaviorEvent: {
                   type: 'insert.blocks',
-                  blocks: parseBlocks({
-                    keyGenerator: editorEngine.snapshot.context.keyGenerator,
-                    schema: editorEngine.snapshot.context.schema,
-                    blocks: result.insert,
-                    options: {
-                      normalize: false,
-                      removeUnusedMarkDefs: true,
-                      validateFields: false,
-                    },
-                  }),
+                  blocks: result.insert,
                   placement: 'auto',
                 },
                 editor: editorEngine,
