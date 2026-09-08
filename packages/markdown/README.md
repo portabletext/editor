@@ -86,11 +86,11 @@ Converting Markdown to Portable Text and back isn't a lossless mirror:
 1. Translation preserves semantics, not source spelling: the first MD→PT→MD pass normalizes Markdown to one canonical spelling (autolinks become inline links, indented code becomes fenced code, soft-wrapped lines join into one, and so on).
 2. The normalized Markdown is a fixpoint for plain text and the [Supported features](#supported-features) table: parsing it and serializing again reproduces it byte-for-byte.
 3. MD→PT survival is schema-driven: a construct whose type the schema doesn't declare keeps its content and drops the structure that named it.
-4. PT structures with no Markdown form degrade predictably on PT→MD (extra table header rows flatten into the body, deep or level-skipping lists collapse to relative nesting, unknown types render as a fenced JSON block).
-5. Identity does not round-trip: keys are regenerated on every parse, and adjacent spans with identical marks merge into one.
+4. PT structures with no Markdown form degrade predictably on PT→MD (extra table header rows flatten into the body, deep or level-skipping lists collapse to relative nesting, unknown marks pass their text through unformatted). Unknown object types round-trip instead: block-level as a ` ```json:object ` fence, inline as a `json:object`-tagged code span, both carrying the value as JSON. A fence or span whose body isn't a JSON object with a `_type` is ordinary code.
+5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`.
 6. A hard break and a `\n` in a span's text are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
-Three exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; and leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint.
+The named exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint; a `code` object with the reserved language `json:object` loses that language on serialization; and span text ending in `json:object` directly before a code-marked span holding a typed JSON object binds into an inline object on reparse.
 
 See [Markdown round-tripping](https://www.portabletext.org/conversion/markdown-round-tripping/) on the docs site for the full contract and worked examples.
 
@@ -633,7 +633,7 @@ portableTextToMarkdown(blocks, {
 })
 ```
 
-By default, unknown types render as JSON code blocks, and unknown marks/styles pass through their children unchanged.
+By default, unknown types render as `json:object` fences or tagged code spans that round-trip (see [Round-trip behavior](#round-trip-behavior)), and unknown marks/styles pass through their children unchanged.
 
 You can also customize hard break rendering:
 

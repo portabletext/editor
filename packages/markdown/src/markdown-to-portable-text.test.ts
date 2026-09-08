@@ -6458,4 +6458,228 @@ describe(markdownToPortableText.name, () => {
       ])
     })
   })
+  describe('json:object fence', () => {
+    test('reconstructs the object, `_key` included', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '```json:object',
+        '{"_type": "product", "_key": "product-key", "sku": "abc-123"}',
+        '```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'product',
+          _key: 'product-key',
+          sku: 'abc-123',
+        },
+      ])
+    })
+
+    test('reconstructs regardless of the schema', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '```json:object',
+        '{"_type": "product", "sku": "abc-123"}',
+        '```',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(defineSchema({})),
+        }),
+      ).toEqual([
+        {
+          _type: 'product',
+          sku: 'abc-123',
+        },
+      ])
+    })
+
+    test('a payload without a `_key` stays keyless', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '```json:object',
+        '{"_type": "product", "sku": "abc-123"}',
+        '```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'product',
+          sku: 'abc-123',
+        },
+      ])
+    })
+
+    test('malformed JSON degrades to a code block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['```json:object', '{"_type": "product",', '```'].join(
+        '\n',
+      )
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          code: '{"_type": "product",',
+          language: 'json:object',
+        },
+      ])
+    })
+
+    test('JSON without a string `_type` degrades to a code block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['```json:object', '{"sku": "abc-123"}', '```'].join(
+        '\n',
+      )
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          code: '{"sku": "abc-123"}',
+          language: 'json:object',
+        },
+      ])
+    })
+
+    test('a tagged inline code span reconstructs an inline object in place', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown =
+        'AAPL is at json:object`{"_type":"stockTicker","_key":"t1","symbol":"AAPL"}` right now.'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'AAPL is at ', marks: []},
+            {_type: 'stockTicker', _key: 't1', symbol: 'AAPL'},
+            {_type: 'span', _key: 'k2', text: ' right now.', marks: []},
+          ],
+        },
+      ])
+    })
+
+    test('an inline payload without a `_key` stays keyless', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = 'json:object`{"_type":"stockTicker","symbol":"AAPL"}`'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'stockTicker', symbol: 'AAPL'}],
+        },
+      ])
+    })
+
+    test('a space between the tag and the code span prevents binding', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = 'json:object `{"_type":"stockTicker"}`'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'json:object ', marks: []},
+            {
+              _type: 'span',
+              _key: 'k2',
+              text: '{"_type":"stockTicker"}',
+              marks: ['code'],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a tagged code span without a string `_type` stays a code span', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = 'json:object`{"symbol":"AAPL"}`'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'json:object', marks: []},
+            {
+              _type: 'span',
+              _key: 'k2',
+              text: '{"symbol":"AAPL"}',
+              marks: ['code'],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a pretty-printed payload in a tagged span still reconstructs', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown =
+        'json:object`{\n  "_type": "stockTicker",\n  "_key": "t1",\n  "symbol": "AAPL"\n}`'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'stockTicker', _key: 't1', symbol: 'AAPL'}],
+        },
+      ])
+    })
+
+    test('a fence inside a blockquote reconstructs inside the quote content', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '> quoted',
+        '>',
+        '> ```json:object',
+        '> {"_type": "product", "_key": "p1", "sku": "abc-123"}',
+        '> ```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'blockquote',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'quoted', marks: []}],
+        },
+        {_type: 'product', _key: 'p1', sku: 'abc-123'},
+      ])
+    })
+
+    test('emphasis around a tagged span binds the object and drops the emphasis', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = '*json:object`{"_type":"stockTicker","_key":"t1"}`*'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'stockTicker', _key: 't1'}],
+        },
+      ])
+    })
+
+    test('a JSON array degrades to a code block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['```json:object', '[{"_type": "product"}]', '```'].join(
+        '\n',
+      )
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          code: '[{"_type": "product"}]',
+          language: 'json:object',
+        },
+      ])
+    })
+  })
 })

@@ -1011,6 +1011,15 @@ export function markdownToPortableText(
         // Remove trailing newline from code content
         const code = token.content.replace(/\n$/, '')
 
+        if (language === 'json:object') {
+          const objectValue = parseJsonObjectFence(code)
+
+          if (objectValue) {
+            pushBlock(objectValue as PortableTextObject)
+            break
+          }
+        }
+
         const codeObject = consolidatedOptions.types.code({
           context: {
             schema: consolidatedOptions.schema,
@@ -1469,11 +1478,52 @@ export function markdownToPortableText(
         }
 
         // Walk its children for text/marks/links
-        for (const childToken of token.children ?? []) {
+        const inlineChildren = token.children ?? []
+        for (
+          let childIndex = 0;
+          childIndex < inlineChildren.length;
+          childIndex++
+        ) {
+          const childToken = inlineChildren[childIndex]
+
+          if (!childToken) {
+            continue
+          }
+
           switch (childToken.type) {
-            case 'text':
+            case 'text': {
+              const nextToken = inlineChildren[childIndex + 1]
+
+              if (
+                childToken.content.endsWith('json:object') &&
+                nextToken?.type === 'code_inline' &&
+                currentBlock &&
+                'children' in currentBlock
+              ) {
+                const objectValue = parseJsonObjectFence(nextToken.content)
+
+                if (objectValue) {
+                  const prefix = childToken.content.slice(
+                    0,
+                    -'json:object'.length,
+                  )
+
+                  if (prefix.length > 0) {
+                    addSpan(prefix)
+                  }
+
+                  ;(currentBlock as PortableTextTextBlock).children.push(
+                    objectValue as PortableTextObject,
+                  )
+
+                  childIndex++
+                  break
+                }
+              }
+
               addSpan(childToken.content)
               break
+            }
             case 'softbreak':
               addSpan(' ')
               break
@@ -1812,4 +1862,38 @@ export function markdownToPortableText(
   flushBlock()
 
   return portableText
+}
+
+/**
+ * A `json:object` fence always reconstructs its object, schema or no
+ * schema: the fence carries its own `_type`, and degrading it to a code
+ * block would reintroduce the loss the syntax exists to remove. Returns
+ * `undefined` instead of throwing, so an unusable fence falls through to
+ * the regular code path.
+ */
+function parseJsonObjectFence(
+  code: string,
+): (Record<string, unknown> & {_type: string}) | undefined {
+  let parsed: unknown
+
+  try {
+    parsed = JSON.parse(code)
+  } catch {
+    return undefined
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return undefined
+  }
+
+  const objectValue = parsed as Record<string, unknown>
+
+  if (
+    typeof objectValue['_type'] !== 'string' ||
+    objectValue['_type'].length === 0
+  ) {
+    return undefined
+  }
+
+  return objectValue as Record<string, unknown> & {_type: string}
 }

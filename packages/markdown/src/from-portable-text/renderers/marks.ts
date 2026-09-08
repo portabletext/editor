@@ -31,7 +31,10 @@ export const DefaultStrongRenderer: PortableTextMarkRenderer = ({children}) =>
  *
  * @public
  */
-export const DefaultCodeRenderer: PortableTextMarkRenderer = ({text}) => {
+export const DefaultCodeRenderer: PortableTextMarkRenderer = ({text}) =>
+  wrapInCodeSpan(text)
+
+export function wrapInCodeSpan(text: string): string {
   const fence = '`'.repeat(longestBacktickRun(text) + 1)
   const touchesBacktick = text.startsWith('`') || text.endsWith('`')
   const wouldBeStripped =
