@@ -1,5 +1,37 @@
 # Changelog
 
+## 8.1.3
+
+### Patch Changes
+
+- [#3236](https://github.com/portabletext/editor/pull/3236) [`adb3e46`](https://github.com/portabletext/editor/commit/adb3e464f6def0e56ac2e65c7df9349d7030c025) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit reliable patches after clearing the editor
+
+  Deleting all content makes the editor emit an `unset` patch that removes the entire value. Typing again then emitted patches that assumed the value still existed. Applying those patches dropped the typed text, or threw `Cannot apply deep operations on primitive values`.
+
+  The editor now first emits patches that create the value again: `setIfMissing`, an `insert` of the block, then the text changes. Deleting all content again emits `unset` again.
+
+- [#3245](https://github.com/portabletext/editor/pull/3245) [`85fc2d7`](https://github.com/portabletext/editor/commit/85fc2d798e205abafff3ef511b3e2cc40090ee78) Thanks [@christianhg](https://github.com/christianhg)! - fix: match the inserted list block by identity when inheriting list properties
+
+  Inserting keyless blocks into a list via an `insert.blocks` event now inherits the surrounding list's `level` and `listItem` as intended. Previously the inserted list block kept whatever `level` and `listItem` it arrived with, and with more than one keyless block in the event the insertion could abort entirely after hitting the event-chain depth limit.
+
+- [#3235](https://github.com/portabletext/editor/pull/3235) [`53f24a9`](https://github.com/portabletext/editor/commit/53f24a9256dfa6a48adde302e67213afe03b5cfb) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep numeric path segments for keyless nodes in resolved paths
+
+  Paths returned by `getNode`, `getChildren`, and `getAncestors` now carry the numeric sibling index for a node without a usable `_key`, instead of a fabricated `{_key: undefined}` segment that cannot distinguish keyless siblings. Repairs and edits addressing keyless nodes now always target the right node, including keyless children nested under keyless parents, and the patches they emit address the same numeric position.
+
+- [#3232](https://github.com/portabletext/editor/pull/3232) [`73dd0e3`](https://github.com/portabletext/editor/commit/73dd0e3f5b97b06ea95aa77be914e908d8504a75) Thanks [@christianhg](https://github.com/christianhg)! - fix: mint keys for empty-string and non-string `_key` values, not just `undefined`
+
+  A child carrying `_key: ''` or a non-string `_key` now gets a fresh key minted by normalization, the same repair a child with no `_key` at all already received. Previously such keys were kept as-is, leaving nodes the editor could not reliably address. When several keyless siblings arrive at once, each now receives its own distinct key instead of the first sibling absorbing every mint.
+
+- [#3245](https://github.com/portabletext/editor/pull/3245) [`81a6f77`](https://github.com/portabletext/editor/commit/81a6f77e87862c5e5c6500d7a93b783111be7af4) Thanks [@christianhg](https://github.com/christianhg)! - fix: pass blocks returned from `onPaste` unparsed to the `insert.blocks` event
+
+  Blocks returned from a custom `onPaste` (the `insert` result) now reach the `insert.blocks` behavior event exactly as returned: keys are no longer generated, unused `markDefs` no longer stripped, and unknown block types no longer dropped before behaviors see them. The blocks are still validated against the schema when inserted, so nothing invalid reaches the document.
+
+  One narrow behavioral delta rides along: when the returned array puts an unknown-type block before a text block, the text block now inserts as its own block instead of merging into the block at the cursor, matching what a direct `insert.blocks` event already did.
+
+- [#3232](https://github.com/portabletext/editor/pull/3232) [`f80ab9f`](https://github.com/portabletext/editor/commit/f80ab9fe59c817b8b54e2d54478056e52c24cdfd) Thanks [@christianhg](https://github.com/christianhg)! - fix: schedule keyless children from a wholesale set for key-mint normalization
+
+  Blocks or children that arrive without a `_key` through a whole-array `set` patch are now repaired: normalization mints a key for every keyless child and emits the corresponding `set` patches. Previously such children were skipped when collecting normalization work, so they stayed keyless in the editor and any edit addressing them could not target the document.
+
 ## 8.1.2
 
 ### Patch Changes

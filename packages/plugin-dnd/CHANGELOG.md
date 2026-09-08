@@ -1,5 +1,11 @@
 # @portabletext/plugin-dnd
 
+## 2.0.9
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.1.3`
+
 ## 2.0.8
 
 ### Patch Changes

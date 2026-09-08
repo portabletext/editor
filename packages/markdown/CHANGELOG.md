@@ -1,5 +1,113 @@
 # @portabletext/markdown
 
+## 2.1.0
+
+### Minor Changes
+
+- [#3240](https://github.com/portabletext/editor/pull/3240) [`bf560b9`](https://github.com/portabletext/editor/commit/bf560b99999ef3a0abbd032cb4d548b37f18e254) Thanks [@christianhg](https://github.com/christianhg)! - feat: round-trip unknown objects through `json:object` fences and code spans
+
+  Custom objects now survive Markdown conversion in both directions. `portableTextToMarkdown` renders a block-level object as a ` ```json:object ` fence and an inline object as a `json:object`-tagged code span, and `markdownToPortableText` turns both back into the original objects, `_key` included, no schema required. Previously these objects came back as `code` blocks, and inline objects also split the block around them, so converting to Markdown and back destroyed them.
+
+  ````md
+  ```json:object
+  {"_type": "product", "_key": "k1", "sku": "abc-123"}
+  ```
+
+  AAPL is at json:object`{"_type": "stockTicker", "_key": "k2", "symbol": "AAPL"}` right now.
+  ````
+
+  Both forms parse back to the objects in the payloads, with the surrounding text intact.
+
+  What changes in existing output and parsing:
+
+  - Markdown output changes for unknown objects: ` ```json ` fences become ` ```json:object `, and inline objects stay inside their line instead of breaking out.
+  - The `json:object` language is reserved. A `code` block with exactly that language keeps its code but loses the language when serialized.
+  - A ` ```json:object ` fence or tagged code span that doesn't contain a JSON object with a `_type` parses as ordinary code.
+
+- [#3239](https://github.com/portabletext/editor/pull/3239) [`58d1541`](https://github.com/portabletext/editor/commit/58d1541ecb42c77085c3f890dfb6befb30b2a845) Thanks [@christianhg](https://github.com/christianhg)! - feat: report degraded constructs during markdown parsing
+
+  `markdownToPortableText` now takes an `onDegradation` option for constructs the schema can't represent (an undeclared decorator, a table with no `table` block object, a task checkbox with no `task` list, and so on). One callback, called at most once, after the whole document has been walked, only when at least one construct degraded: a `report` object holding `degradations`, every `Degradation` in encounter order (`{type: string, message: string, line?: number, snippet?: string}`, exported as `Degradation`, with `type` a literal union that grows as new degradation sites report; `snippet` is the offending construct's text, truncated to 40 characters, present whenever there's a specific piece of source text to quote), and `message`, the same degradations grouped, snippeted, and sorted by line into one human-readable string.
+
+  ```ts
+  const blocks = markdownToPortableText('**a**', {
+    schema: compileSchema(defineSchema({})),
+    onDegradation: (report) => console.log(report),
+  })
+  // blocks: a plain span reading `a`, the `strong` formatting dropped
+  // report: {
+  //   degradations: [{type: 'decorator-dropped', message: 'Removed bold formatting, kept the text: the schema has no `strong` decorator', line: 1, snippet: 'a'}],
+  //   message: 'Markdown could not be converted without loss:\n- line 1: Removed bold formatting, kept the text: the schema has no `strong` decorator ("a")',
+  // }
+  ```
+
+  Enforce against lossy output by throwing your own error from inside the callback; the throw propagates out of `markdownToPortableText`:
+
+  ```ts
+  markdownToPortableText('**a**\n\n**b**\n\n| x |\n| - |\n| y |', {
+    schema: compileSchema(defineSchema({})),
+    onDegradation: ({message}) => {
+      throw new Error(message)
+    },
+  })
+  // throws Error:
+  // Markdown could not be converted without loss:
+  // - Removed bold formatting, kept the text: the schema has no `strong` decorator (2×: "a", "b")
+  // - line 5: Table became plain text blocks, rows and columns lost: the schema has no `table` block object
+  ```
+
+  Repeated declines of the same kind collapse into one line of `message` instead of repeating the sentence once per occurrence; `degradations` stays ungrouped, one entry per occurrence. Match on `type`: `message` is human-readable and may change between releases.
+
+  With `onDegradation` unset, conversion still degrades silently: a library shouldn't log on its own initiative. This removes the previous behavior of a handful of style-fallback paths calling `console.warn` on their own; pass a function to `onDegradation` to observe those losses instead.
+
+### Patch Changes
+
+- [#3183](https://github.com/portabletext/editor/pull/3183) [`0da0721`](https://github.com/portabletext/editor/commit/0da07219dc83b0cb7b545a45519b2c62c7b70737) Thanks [@christianhg](https://github.com/christianhg)! - fix: escape markdown syntax in plain span text during serialization
+
+  If your Portable Text contains text that happens to look like markdown, converting it to markdown and back used to corrupt it: the punctuation was read as formatting instead of text. `portableTextToMarkdown` now backslash-escapes such text, so it comes back as exactly the text it was.
+
+  ```ts
+  // span text        markdown (before)   markdown (now)      re-parses as
+  '*bar*' // *bar*               \*bar\*             the text `*bar*` (was: an emphasized span reading `bar`)
+  '# heading' // # heading           \# heading          the text `# heading` (was: an `h1` block)
+  '[x]: y' // [x]: y              \[x]: y             the text `[x]: y` (was: nothing, the line vanished)
+  ```
+
+  This works wherever the text sits (headings, blockquotes, list items, table cells) and also when the risky characters are split across neighboring spans. The visible change in your output: markdown for text containing such punctuation gains backslashes it didn't have before. It pastes and parses like any hand-written markdown.
+
+  Text with the `code` decorator is never backslash-escaped. Its backtick delimiters widen instead, so the content survives verbatim even when it contains backticks:
+
+  ```ts
+  // span text with the `code` decorator   markdown (before)   markdown (now)
+  'a`b' // `a`b`  (broken)     ``a`b``
+  '`a' // ``a`   (broken)     `` `a ``
+  ```
+
+  If you supply custom mark or block renderers: `children` now arrives pre-escaped. When you need the original text, read the `text` argument instead (the built-in `code` renderer does exactly that).
+
+  Two things stay as they were. A URL with an explicit scheme (`https://…`) or an email address is not escaped: it keeps its text and simply becomes a link on the next parse. A `www.`-style address is only left alone while it contains no markdown punctuation; with it, it gets escaped like ordinary text, and the round trip keeps every character either way. And leading or trailing whitespace that markdown itself trims still trims, same as before this change.
+
+- [#3234](https://github.com/portabletext/editor/pull/3234) [`452fdbe`](https://github.com/portabletext/editor/commit/452fdbea5dfd8a04ced66a8e297e50b5c8c8260c) Thanks [@christianhg](https://github.com/christianhg)! - fix: parse markdown soft breaks as spaces, not line breaks
+
+  Markdown written across several source lines, the way editors and prose tools wrap text, is one paragraph that reflows. `markdownToPortableText` used to bake each of those wraps into the text as a literal newline, exactly as if you had written a hard break, and converting back to markdown then produced real hard breaks that weren't in your document.
+
+  Wrapped source like this:
+
+  ```md
+  This paragraph is written
+  across two source lines.
+  ```
+
+  used to parse to the span text `'This paragraph is written\nacross two source lines.'` (a fixed line break in the content) and now parses to `'This paragraph is written across two source lines.'` (one reflowing line, which is how markdown renders it).
+
+  Real hard breaks are unchanged: end a line with two or more spaces, or a backslash, and the span text still gets a `\n`:
+
+  ```md
+  Line one\
+  Line two
+  ```
+
+  still parses to `'Line one\nLine two'`.
+
 ## 2.0.0
 
 ### Major Changes
