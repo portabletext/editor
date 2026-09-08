@@ -141,20 +141,22 @@ portableTextToMarkdown([
 // -> '- foo\n   - bar\n- baz'
 ```
 
-An unknown object type renders as a fenced JSON block. That block is not a stopgap spelling of the original type: on reparse it comes back as a `code` object, not the type that went out. Round-tripping an unrecognized type through Markdown is destructive.
+Unknown object types are the exception: they round-trip. A block-level object renders as a fence with a `json:object` info string holding the value as JSON, and an inline object as a `json:object`-tagged inline code span. The parser turns both back into the objects they came from, whatever the schema declares.
 
 ````ts
 portableTextToMarkdown([{_type: 'widget', _key: 'w1', color: 'blue'}])
-// -> '```json\n{\n  "_type": "widget",\n  "_key": "w1",\n  "color": "blue"\n}\n```'
+// -> '```json:object\n{\n  "_type": "widget",\n  "_key": "w1",\n  "color": "blue"\n}\n```'
 
 markdownToPortableText(/* the fenced block above */)
-// -> [{_type: 'code', language: 'json', code: '{\n  "_type": "widget",\n  "_key": "w1",\n  "color": "blue"\n}'}]
-// (a 'code' object, not the original 'widget' type)
+// -> [{_type: 'widget', _key: 'w1', color: 'blue'}]
+// (the original object, `_key` included)
 ````
 
-### 5. Identity does not round-trip
+A `json:object` fence or tagged span whose body is not a JSON object with a non-empty string `_type` is ordinary code: it never throws, and it degrades like any other code the schema does or does not declare.
 
-Keys are regenerated on every parse, and adjacent spans with identical marks merge into one.
+### 5. Identity does not round-trip for text blocks
+
+Text block and span keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key` through the round trip, since it travels inside the JSON payload.
 
 ```ts
 portableTextToMarkdown([
@@ -195,7 +197,11 @@ portableTextToMarkdown([
 
 ## Exceptions
 
-Three named exceptions qualify the fixpoint claim in guarantee 2 above.
+Five named exceptions qualify the fixpoint claim in guarantee 2 above.
+
+**The reserved `json:object` info string.** A `code` object whose `language` is literally `json:object` loses that language on serialization: emitting it would make the code block re-parse as an embedded object whenever its content happens to be typed JSON. The code itself survives.
+
+**Tagged-span adjacency.** Span text ending in `json:object` directly before a code-marked span holding a JSON object with a string `_type` binds into an inline object on reparse. Escapes cannot prevent it: they resolve before the binding runs.
 
 **Linkified substrings.** An explicit-scheme URL or an email address in a span's text is never escaped: the text stays byte-identical, but it gains a `link` mark on the next parse (autolinking is a parser feature, not a round-trip bug).
 
