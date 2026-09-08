@@ -1,18 +1,15 @@
 import {
   getSubSchema,
   isSpan,
-  isTextBlock,
   type FieldDefinition,
   type OfDefinition,
   type PortableTextBlock,
-  type PortableTextListBlock,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
   type Schema,
   type TypedObject,
 } from '@portabletext/schema'
-import type {EditorContext} from '../editor/editor-snapshot'
 import {isRecord, isTypedObject} from './asserters'
 
 export function parseBlocks({
@@ -189,17 +186,6 @@ function parseBlockObject({
     schemaType,
     options,
   })
-}
-
-export function isListBlock(
-  context: Pick<EditorContext, 'schema'>,
-  block: unknown,
-): block is PortableTextListBlock {
-  return (
-    isTextBlock(context, block) &&
-    block.level !== undefined &&
-    block.listItem !== undefined
-  )
 }
 
 function parseTextBlock({
