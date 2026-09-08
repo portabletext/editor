@@ -29,7 +29,7 @@ const markdown = portableTextToMarkdown(blocks)
 
 ## Custom type renderers
 
-`callout`, `code`, `horizontal-rule`, `html`, `image`, and `table` block objects render as Markdown out of the box. `callout`, `code`, `html`, `image`, and `table` fall back to a fenced JSON block when a value doesn't match the shape its renderer expects (a consumer's own differently-shaped `code` type, say); `horizontal-rule` always renders `---`. Register a renderer for other custom types you use, or to override one of the defaults.
+`callout`, `code`, `horizontal-rule`, `html`, `image`, and `table` block objects render as Markdown out of the box. `callout`, `code`, `html`, `image`, and `table` fall back to a `json:object` fence when a value doesn't match the shape its renderer expects (a consumer's own differently-shaped `code` type, say), which [round-trips back into the same object](/conversion/markdown-round-tripping/); `horizontal-rule` always renders `---`. Register a renderer for other custom types you use, or to override one of the defaults.
 
 ```ts
 portableTextToMarkdown(blocks, {
