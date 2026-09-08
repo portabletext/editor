@@ -74,6 +74,7 @@ export function validateValue(
       // Test that every block has a _key prop
       if (!blk._key || typeof blk._key !== 'string') {
         resolution = {
+          autoResolve: true,
           patches: [set({...blk, _key: keyGenerator()}, [index])],
           description: `Block at index ${index} is missing required _key.`,
           action: 'Set the block with a random _key value',

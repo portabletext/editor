@@ -720,6 +720,7 @@ function syncBlock({
       context,
       sendBack,
       value,
+      index,
       key: block._key,
     })
 
@@ -789,6 +790,7 @@ function syncBlock({
     context,
     sendBack,
     value,
+    index,
     key: blockToValidate._key,
   })
 
@@ -850,17 +852,27 @@ function syncBlock({
   }
 }
 
+/**
+ * Reports an auto-resolved repair's patches to the host, addressed by the
+ * block's real position in the incoming value: `validateValue` validates
+ * one block at a time, so a resolution's block-level numeric path
+ * segments (minting a missing block `_key`) are always local `0` and need
+ * rebasing; resolutions already anchored on the block's own `_key` are
+ * position-independent and pass through unchanged.
+ */
 function reportAutoResolution({
   validation,
   context,
   sendBack,
   value,
+  index,
   key,
 }: {
   validation: ReturnType<typeof validateValue>
   context: {previousValue: Array<PortableTextBlock> | undefined}
   sendBack: (event: SyncValueEvent) => void
   value: Array<PortableTextBlock>
+  index: number
   key: string | undefined
 }) {
   if (
@@ -871,17 +883,32 @@ function reportAutoResolution({
     if (context.previousValue !== value) {
       // A re-run against an unchanged value would mint and report a fresh
       // repair for the same defect.
+      // `validateValue` ran on `[block]`, so its description can only name
+      // index 0; point the message at the block's real position.
+      const description = validation.resolution.description.replace(
+        'index 0',
+        `index ${index}`,
+      )
+      const location =
+        key !== undefined
+          ? `block with _key '${key}'`
+          : `block at index ${index}`
       console.warn(
-        `${validation.resolution.action} for block with _key '${key}'. ${validation.resolution.description}`,
+        `${validation.resolution.action} for ${location}. ${description}`,
       )
       validation.resolution.patches.forEach((patch) => {
         sendBack({
           type: 'patch',
-          patch: {...patch, origin: 'local'},
+          patch: {...rebaseBlockPatchPath(patch, index), origin: 'local'},
         })
       })
     }
   }
+}
+
+function rebaseBlockPatchPath(patch: Patch, index: number): Patch {
+  const [head, ...rest] = patch.path
+  return typeof head === 'number' ? {...patch, path: [index, ...rest]} : patch
 }
 
 /**

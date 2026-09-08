@@ -1,4 +1,5 @@
 import {applyAll} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
@@ -2533,6 +2534,94 @@ describe('event.update value: auto-resolved invalid blocks', () => {
         markDefs: [],
         style: 'normal',
       },
+    ])
+  })
+
+  test("Scenario: a startup value with a keyless second block emits the repair patch addressed by that block's index, not the first block's", async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          children: [{_key: 's1', _type: 'span', text: 'world', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        } as unknown as PortableTextBlock,
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    const repairedBlock1 = {
+      _key: 'k2',
+      _type: 'block',
+      children: [{_key: 's1', _type: 'span', text: 'world', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const repairPatch = {
+      type: 'set',
+      path: [1],
+      value: repairedBlock1,
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        repairedBlock1,
+      ])
+    })
+
+    const initialValue: Array<PortableTextBlock> = [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        children: [{_key: 's1', _type: 'span', text: 'world', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      } as unknown as PortableTextBlock,
+    ]
+
+    expect(applyAll(initialValue, patches)).toEqual([
+      initialValue[0],
+      repairedBlock1,
     ])
   })
 
