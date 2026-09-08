@@ -1,6 +1,6 @@
 ---
 name: pr-descriptions
-description: How to write pull request descriptions for the Portable Text Editor monorepo. Use whenever opening or editing a PR here. Covers the narrative shape (problem, diagnosis, fix), when to use headings, honesty about semantic deltas, and length that scales with the diff's blast radius, with real merged exemplars.
+description: How to write pull request descriptions for the Portable Text Editor monorepo. Use whenever opening or editing a PR here. Covers the changeset-led body (the changeset's prose opens the description), the narrative shape for what follows, honesty about semantic deltas, and length that scales with the diff's blast radius, with real merged exemplars.
 ---
 
 # Writing PTE PR descriptions
@@ -39,11 +39,22 @@ description: How to write pull request descriptions for the Portable Text Editor
 
 ## Shape
 
-- **Fix/refactor PRs: heading-free narrative prose.** Problem → diagnosis in
-  code terms → fix → what was verified. Larger feature PRs may use `## What`
-  / `## Design notes`.
-- **Lead with motivation**: the consumer pain that makes the change
-  necessary, before the API or mechanism. The description stands on its own;
+- **User-facing PRs open with the changeset's prose, verbatim.** The
+  changeset is the calibrated consumer sentence (see the `changesets`
+  skill), and it is what the reviewer actually reads; a body that buries it
+  under paragraphs gets skipped whole. After it, the body adds only what
+  changesets ban: a concrete example of the failure, one sentence naming
+  the fix mechanism, any semantic delta or honest caveat. When the
+  changeset alone carries the change, it is the whole body. This mirrors
+  the changeset's _prose_; body sentences _about_ the changeset ("a
+  changeset rides along") remain banned.
+- **Fix/refactor PRs: heading-free narrative prose.** After the changeset
+  opening: diagnosis in code terms → fix → what was verified, compressed
+  into the paragraph the budget below allows. Larger feature PRs may use
+  `## What` / `## Design notes`.
+- **Lead with motivation** (internal-only PRs, which have no changeset to
+  open with): the pain that makes the change necessary, before the
+  mechanism. The description stands on its own;
   explain the problem in terms of the code, not the PR graph, and reference
   another PR only when the reader cannot follow the description without it.
 - **Prose over bullets.** Each design decision gets a paragraph carrying its
@@ -78,10 +89,11 @@ description: How to write pull request descriptions for the Portable Text Editor
 ## Length: the budget
 
 - **The body scales with the diff's blast radius, not the investigation's
-  length.** Default for a fix PR: 3-4 short paragraphs, ~200 words: the
-  failure, the design, the blast radius with its pin, one honest caveat.
-  That ceiling is earned only by PRs with a genuinely large blast radius; it
-  is not the template.
+  length.** Default for a fix PR: the changeset's prose plus at most one
+  short paragraph (~100 words): the concrete example, the mechanism, one
+  honest caveat. The 3-4 paragraph, ~200-word shape (failure, design,
+  blast radius with its pin, caveat) is earned only by PRs with a
+  genuinely large blast radius; it is not the template.
 - **A trivial diff earns two sentences**: a verdict, and a rider naming
   anything else the diff also does. Zero citations, zero mechanics.
 - **Everything cut must already live somewhere**: mechanism in the commit
@@ -98,6 +110,10 @@ description: How to write pull request descriptions for the Portable Text Editor
   why, and what to scrutinize. If not, cut until they do.
 
 ## Exemplar: fix PR, heading-free narrative (#2774, merged)
+
+This is the earned-length exception (a factorial blow-up in a public
+conversion path), not the default fix-PR shape; the default is the
+changeset-led body above.
 
 > **fix(sanity-bridge): avoid combinatorial blow-up converting mutually-embedding types**
 >
