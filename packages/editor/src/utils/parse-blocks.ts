@@ -12,24 +12,47 @@ import {
 } from '@portabletext/schema'
 import {isRecord, isTypedObject} from './asserters'
 
+/**
+ * `strict` validates and normalizes against the schema; use it at the
+ * operation gate. `lenient` trusts the shape and defers validation to that
+ * gate; use it at deserialization boundaries (converters, splitting,
+ * slicing, merging).
+ */
+export type ParseProfile = 'strict' | 'lenient'
+
+const blockProfiles: Record<
+  ParseProfile,
+  {normalize: boolean; removeUnusedMarkDefs: boolean; validateFields: boolean}
+> = {
+  strict: {normalize: true, removeUnusedMarkDefs: true, validateFields: true},
+  lenient: {
+    normalize: false,
+    removeUnusedMarkDefs: true,
+    validateFields: false,
+  },
+}
+
+const fieldProfiles: Record<ParseProfile, {validateFields: boolean}> = {
+  strict: {validateFields: true},
+  lenient: {validateFields: false},
+}
+
 export function parseBlocks({
   schema,
   keyGenerator,
   blocks,
-  options,
+  profile,
 }: {
   schema: Schema
   keyGenerator: () => string
   blocks: unknown
-  options: {
-    normalize: boolean
-    removeUnusedMarkDefs: boolean
-    validateFields: boolean
-  }
+  profile: ParseProfile
 }): Array<PortableTextBlock> {
   if (!Array.isArray(blocks)) {
     return []
   }
+
+  const options = blockProfiles[profile]
 
   return blocks.flatMap((block) => {
     const parsedBlock = parseBlockInternal({
@@ -47,52 +70,59 @@ export function parseBlock({
   schema,
   keyGenerator,
   block,
-  options,
+  profile,
 }: {
   schema: Schema
   keyGenerator: () => string
   block: unknown
-  options: {
-    normalize: boolean
-    removeUnusedMarkDefs: boolean
-    validateFields: boolean
-  }
+  profile: ParseProfile
 }): PortableTextBlock | undefined {
-  return parseBlockInternal({schema, keyGenerator, block, options})
+  return parseBlockInternal({
+    schema,
+    keyGenerator,
+    block,
+    options: blockProfiles[profile],
+  })
 }
 
 export function parseSpan({
   span,
   schema,
   keyGenerator,
-  markDefKeyMap,
-  options,
+  markDefKeys,
+  profile,
 }: {
   span: unknown
   schema: Schema
   keyGenerator: () => string
-  markDefKeyMap: Map<string, string>
-  options: {validateFields: boolean}
+  markDefKeys: Set<string>
+  profile: ParseProfile
 }): PortableTextSpan | undefined {
-  return parseSpanInternal({span, schema, keyGenerator, markDefKeyMap, options})
+  return parseSpanInternal({
+    span,
+    schema,
+    keyGenerator,
+    markDefKeys,
+    options: fieldProfiles[profile],
+  })
 }
 
 export function parseInlineObject({
   inlineObject,
   schema,
   keyGenerator,
-  options,
+  profile,
 }: {
   inlineObject: unknown
   schema: Schema
   keyGenerator: () => string
-  options: {validateFields: boolean}
+  profile: ParseProfile
 }): PortableTextObject | undefined {
   return parseInlineObjectInternal({
     inlineObject,
     schema,
     keyGenerator,
-    options,
+    options: fieldProfiles[profile],
   })
 }
 
@@ -100,21 +130,21 @@ export function parseChild({
   child,
   schema,
   keyGenerator,
-  markDefKeyMap,
-  options,
+  markDefKeys,
+  profile,
 }: {
   child: unknown
   schema: Schema
   keyGenerator: () => string
-  markDefKeyMap: Map<string, string>
-  options: {validateFields: boolean}
+  markDefKeys: Set<string>
+  profile: ParseProfile
 }): PortableTextSpan | PortableTextObject | undefined {
   return parseChildInternal({
     child,
     schema,
     keyGenerator,
-    markDefKeyMap,
-    options,
+    markDefKeys,
+    options: fieldProfiles[profile],
   })
 }
 
@@ -122,17 +152,22 @@ export function parseMarkDefs({
   schema,
   keyGenerator,
   markDefs,
-  options,
+  profile,
 }: {
   schema: Schema
   keyGenerator: () => string
   markDefs: unknown
-  options: {validateFields: boolean}
+  profile: ParseProfile
 }): {
   markDefs: Array<PortableTextObject>
-  markDefKeyMap: Map<string, string>
+  markDefKeys: Set<string>
 } {
-  return parseMarkDefsInternal({schema, keyGenerator, markDefs, options})
+  return parseMarkDefsInternal({
+    schema,
+    keyGenerator,
+    markDefs,
+    options: fieldProfiles[profile],
+  })
 }
 
 function parseBlockInternal({
@@ -238,7 +273,7 @@ function parseTextBlock({
   const _key =
     typeof block['_key'] === 'string' ? block['_key'] : keyGenerator()
 
-  const {markDefs, markDefKeyMap} = parseMarkDefsInternal({
+  const {markDefs, markDefKeys} = parseMarkDefsInternal({
     schema,
     keyGenerator,
     markDefs: block['markDefs'],
@@ -251,7 +286,7 @@ function parseTextBlock({
 
   const parsedChildren = unparsedChildren
     .map((child) =>
-      parseChildInternal({child, schema, keyGenerator, markDefKeyMap, options}),
+      parseChildInternal({child, schema, keyGenerator, markDefKeys, options}),
     )
     .filter((child) => child !== undefined)
   const marks = parsedChildren.flatMap((child) => child.marks ?? [])
@@ -269,7 +304,7 @@ function parseTextBlock({
         ]
 
   const normalizedChildren = options.normalize
-    ? // Ensure that inline objects re surrounded by spans
+    ? // Ensure that inline objects are surrounded by spans
       children.reduce<Array<PortableTextObject | PortableTextSpan>>(
         (normalizedChildren, child, index) => {
           if (isSpan({schema}, child)) {
@@ -353,12 +388,12 @@ function parseMarkDefsInternal({
   options: {validateFields: boolean}
 }): {
   markDefs: Array<PortableTextObject>
-  markDefKeyMap: Map<string, string>
+  markDefKeys: Set<string>
 } {
   const unparsedMarkDefs: Array<unknown> = Array.isArray(markDefs)
     ? markDefs
     : []
-  const markDefKeyMap = new Map<string, string>()
+  const markDefKeys = new Set<string>()
 
   const parsedMarkDefs = unparsedMarkDefs.flatMap((markDef) => {
     if (!isTypedObject(markDef)) {
@@ -387,18 +422,14 @@ function parseMarkDefsInternal({
       options,
     })
 
-    if (!parsedAnnotation) {
-      return []
-    }
-
-    markDefKeyMap.set(markDef['_key'], parsedAnnotation._key)
+    markDefKeys.add(markDef['_key'])
 
     return [parsedAnnotation]
   })
 
   return {
     markDefs: parsedMarkDefs,
-    markDefKeyMap,
+    markDefKeys,
   }
 }
 
@@ -406,13 +437,13 @@ function parseChildInternal({
   child,
   schema,
   keyGenerator,
-  markDefKeyMap,
+  markDefKeys,
   options,
 }: {
   child: unknown
   schema: Schema
   keyGenerator: () => string
-  markDefKeyMap: Map<string, string>
+  markDefKeys: Set<string>
   options: {validateFields: boolean}
 }): PortableTextSpan | PortableTextObject | undefined {
   return (
@@ -420,7 +451,7 @@ function parseChildInternal({
       span: child,
       schema,
       keyGenerator,
-      markDefKeyMap,
+      markDefKeys,
       options,
     }) ??
     parseInlineObjectInternal({
@@ -436,13 +467,13 @@ function parseSpanInternal({
   span,
   schema,
   keyGenerator,
-  markDefKeyMap,
+  markDefKeys,
   options,
 }: {
   span: unknown
   schema: Schema
   keyGenerator: () => string
-  markDefKeyMap: Map<string, string>
+  markDefKeys: Set<string>
   options: {validateFields: boolean}
 }): PortableTextSpan | undefined {
   if (!isRecord(span)) {
@@ -470,10 +501,8 @@ function parseSpanInternal({
       return []
     }
 
-    const markDefKey = markDefKeyMap.get(mark)
-
-    if (markDefKey !== undefined) {
-      return [markDefKey]
+    if (markDefKeys.has(mark)) {
+      return [mark]
     }
 
     if (schema.decorators.some((decorator) => decorator.name === mark)) {
@@ -546,12 +575,12 @@ export function parseAnnotation({
   annotation,
   schema,
   keyGenerator,
-  options,
+  profile,
 }: {
   annotation: TypedObject
   schema: Schema
   keyGenerator: () => string
-  options: {validateFields: boolean}
+  profile: ParseProfile
 }): PortableTextObject | undefined {
   if (!isTypedObject(annotation)) {
     return undefined
@@ -564,6 +593,8 @@ export function parseAnnotation({
   if (!schemaType) {
     return undefined
   }
+
+  const options = fieldProfiles[profile]
 
   return parseObject({
     object: annotation,
@@ -722,7 +753,7 @@ function parseContainerFieldValue({
   of: ReadonlyArray<OfDefinition>
   value: ReadonlyArray<unknown>
   ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>
-  options: {validateFields: boolean; normalize?: boolean}
+  options: {validateFields: boolean}
 }): Array<unknown> {
   const hasBlockMember = of.some((member) => member.type === 'block')
   const childBlockSubSchema = hasBlockMember

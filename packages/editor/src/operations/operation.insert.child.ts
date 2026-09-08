@@ -50,18 +50,15 @@ export const insertChildOperationImplementation: OperationImplementation<
   ]
 
   const markDefs = focusBlock.markDefs ?? []
-  const markDefKeyMap = new Map<string, string>()
-  for (const markDef of markDefs) {
-    markDefKeyMap.set(markDef._key, markDef._key)
-  }
+  const markDefKeys = new Set(markDefs.map((markDef) => markDef._key))
 
   const schema = getPathSubSchema(snapshot, focusBlockEntry.path)
 
   const span = parseSpan({
     span: operation.child,
     keyGenerator: context.keyGenerator,
-    markDefKeyMap,
-    options: {validateFields: true},
+    markDefKeys,
+    profile: 'strict',
     schema,
   })
 
@@ -109,7 +106,7 @@ export const insertChildOperationImplementation: OperationImplementation<
   const inlineObject = parseInlineObject({
     inlineObject: operation.child,
     keyGenerator: context.keyGenerator,
-    options: {validateFields: true},
+    profile: 'strict',
     schema,
   })
 
