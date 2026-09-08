@@ -22,6 +22,7 @@ import type {Context} from './step-context'
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
   keyGenerator?: () => string
+  readOnly?: boolean
   schemaDefinition?: SchemaDefinition
   children?: React.ReactNode
   editableProps?: PortableTextEditableProps
@@ -45,6 +46,7 @@ export async function createTestEditor(
         keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
+        readOnly: options.readOnly,
       }}
     >
       <EditorRefPlugin ref={editorRef} />
@@ -83,7 +85,16 @@ export async function createTestEditor(
         ))
   }
 
-  const locator = renderResult.locator.getByRole('textbox')
+  // A read-only editable carries no ARIA `textbox` role (see
+  // `editable.tsx`), so `getByRole` never resolves; the always-present
+  // `data-pt-editor` marker locates it instead.
+  const locator = options.readOnly
+    ? await vi.waitFor(() => {
+        const element = renderResult.container.querySelector('[data-pt-editor]')
+        expect(element).not.toBeNull()
+        return page.elementLocator(element!)
+      })
+    : renderResult.locator.getByRole('textbox')
 
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 

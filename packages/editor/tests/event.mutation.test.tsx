@@ -16,7 +16,7 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.mutation', () => {
-  test('Scenario: Deferring mutation events when read-only', async () => {
+  test('Scenario: mutation events emit immediately, even right after the editor turns read-only', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
     let resolveFooMutation: () => void
@@ -51,27 +51,6 @@ describe('event.mutation', () => {
     editor.send({type: 'insert.text', text: 'bar'})
 
     editor.send({type: 'update readOnly', readOnly: true})
-
-    await new Promise((resolve) => setTimeout(resolve, 250))
-
-    expect(onEvent).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'mutation',
-        value: [
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }),
-    )
-
-    editor.send({type: 'update readOnly', readOnly: false})
-
-    await new Promise((resolve) => setTimeout(resolve, 250))
 
     await vi.waitFor(() => {
       expect(onEvent).toHaveBeenCalledWith(

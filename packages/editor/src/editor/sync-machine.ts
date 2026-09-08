@@ -69,7 +69,6 @@ const syncValueCallback: CallbackLogicFunction<
     context: {
       keyGenerator: () => string
       previousValue: Array<PortableTextBlock> | undefined
-      readOnly: boolean
       schema: EditorSchema
     }
     editorEngine: PortableTextEditorEngine
@@ -111,7 +110,6 @@ export const syncMachine = setup({
       initialValueSynced: boolean
       keyGenerator: () => string
       schema: EditorSchema
-      readOnly: boolean
       editorEngine: PortableTextEditorEngine
       pendingValue: Array<PortableTextBlock> | undefined
       previousValue: Array<PortableTextBlock> | undefined
@@ -120,17 +118,12 @@ export const syncMachine = setup({
       initialValue: Array<PortableTextBlock> | undefined
       keyGenerator: () => string
       schema: EditorSchema
-      readOnly: boolean
       editorEngine: PortableTextEditorEngine
     },
     events: {} as
       | {
           type: 'update value'
           value: Array<PortableTextBlock> | undefined
-        }
-      | {
-          type: 'update readOnly'
-          readOnly: boolean
         }
       | SyncValueEvent,
     emitted: {} as
@@ -145,12 +138,6 @@ export const syncMachine = setup({
   actions: {
     'assign initial value synced': assign({
       initialValueSynced: true,
-    }),
-    'assign readOnly': assign({
-      readOnly: ({event}) => {
-        assertEvent(event, 'update readOnly')
-        return event.readOnly
-      },
     }),
     'assign pending value': assign({
       pendingValue: ({event}) => {
@@ -257,7 +244,6 @@ export const syncMachine = setup({
     initialValueSynced: false,
     keyGenerator: input.keyGenerator,
     schema: input.schema,
-    readOnly: input.readOnly,
     editorEngine: input.editorEngine,
     pendingValue: undefined,
     previousValue: undefined,
@@ -267,11 +253,6 @@ export const syncMachine = setup({
       return {type: 'update value', value: context.initialValue}
     }),
   ],
-  on: {
-    'update readOnly': {
-      actions: ['assign readOnly'],
-    },
-  },
   initial: 'idle',
   states: {
     idle: {
@@ -389,7 +370,6 @@ export const syncMachine = setup({
             context: {
               keyGenerator: context.keyGenerator,
               previousValue: context.previousValue,
-              readOnly: context.readOnly,
               schema: context.schema,
             },
             editorEngine: context.editorEngine,
@@ -448,7 +428,6 @@ async function updateValue({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
@@ -712,7 +691,6 @@ function syncBlock({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
@@ -736,6 +714,14 @@ function syncBlock({
       'Validating and inserting new block in the end of the value',
       block,
     )
+
+    reportAutoResolution({
+      validation,
+      context,
+      sendBack,
+      value,
+      key: block._key,
+    })
 
     if (validation.valid || validation.resolution?.autoResolve) {
       const repairedBlock = applyAutoResolution(validation, [block], block)
@@ -798,25 +784,13 @@ function syncBlock({
   )
 
   // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-  if (
-    !validation.valid &&
-    validation.resolution?.autoResolve &&
-    validation.resolution?.patches.length > 0
-  ) {
-    // Only apply auto resolution if the value has been populated before and is different from the last one.
-    if (
-      !context.readOnly &&
-      context.previousValue &&
-      context.previousValue !== value
-    ) {
-      console.warn(
-        `${validation.resolution.action} for block with _key '${blockToValidate._key}'. ${validation.resolution?.description}`,
-      )
-      validation.resolution.patches.forEach((patch) => {
-        sendBack({type: 'patch', patch})
-      })
-    }
-  }
+  reportAutoResolution({
+    validation,
+    context,
+    sendBack,
+    value,
+    key: blockToValidate._key,
+  })
 
   if (validation.valid || validation.resolution?.autoResolve) {
     const repairedBlock = applyAutoResolution(
@@ -876,6 +850,40 @@ function syncBlock({
   }
 }
 
+function reportAutoResolution({
+  validation,
+  context,
+  sendBack,
+  value,
+  key,
+}: {
+  validation: ReturnType<typeof validateValue>
+  context: {previousValue: Array<PortableTextBlock> | undefined}
+  sendBack: (event: SyncValueEvent) => void
+  value: Array<PortableTextBlock>
+  key: string | undefined
+}) {
+  if (
+    !validation.valid &&
+    validation.resolution?.autoResolve &&
+    validation.resolution?.patches.length > 0
+  ) {
+    if (context.previousValue !== value) {
+      // A re-run against an unchanged value would mint and report a fresh
+      // repair for the same defect.
+      console.warn(
+        `${validation.resolution.action} for block with _key '${key}'. ${validation.resolution.description}`,
+      )
+      validation.resolution.patches.forEach((patch) => {
+        sendBack({
+          type: 'patch',
+          patch: {...patch, origin: 'local'},
+        })
+      })
+    }
+  }
+}
+
 /**
  * `validateValue` auto-resolutions must reach the engine as state, not
  * only the document as patches. Applying them only outbound forks the
@@ -905,7 +913,6 @@ function replaceBlock({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   editorEngine: PortableTextEditorEngine
@@ -967,7 +974,6 @@ function updateBlock({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   editorEngine: PortableTextEditorEngine

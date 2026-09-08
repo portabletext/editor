@@ -287,11 +287,11 @@ export function validateValue(
             }
 
             if (!child._key || typeof child._key !== 'string') {
-              const newChild = {...child, _key: keyGenerator()}
+              const newKey = keyGenerator()
               resolution = {
                 autoResolve: true,
                 patches: [
-                  set(newChild, [{_key: blk._key}, 'children', cIndex]),
+                  set(newKey, [{_key: blk._key}, 'children', cIndex, '_key']),
                 ],
                 description: `Child at index ${cIndex} is missing required _key in block with _key ${blk._key}.`,
                 action: 'Set a new random _key on the object',

@@ -74,7 +74,7 @@ describe('event.operation', () => {
     })
   })
 
-  test('Scenario: Operations from value sync are observed while patches are gated', async () => {
+  test('Scenario: Operations from value sync are observed alongside patches', async () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)
     const patches: Array<unknown> = []
@@ -101,8 +101,8 @@ describe('event.operation', () => {
       ])
     })
 
-    // `patch`/`mutation` are gated while the editor is pristine; the
-    // operation stream is not.
+    // The synced block is already valid, so there is nothing to repair
+    // and nothing for `patch` to carry.
     expect(patches).toEqual([])
   })
 

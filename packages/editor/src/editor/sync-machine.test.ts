@@ -65,7 +65,6 @@ describe('sync machine', () => {
         initialValue: undefined,
         keyGenerator,
         schema,
-        readOnly: false,
         editorEngine: editor,
       },
     })

@@ -14,11 +14,10 @@ import {createRelay} from './relay'
 const FLUSH_INTERVAL = 500
 const TYPE_DEBOUNCE = 250
 
-function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
+function createTestHarness() {
   const editorEngine = createEditor() as PortableTextEditorEngine
   editorEngine.isDeferringMutations = false
 
-  let isReadOnly = readOnly
   let patchListener:
     | ((event: {
         patch: Patch
@@ -29,23 +28,6 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const mutationSends: Array<{patches: Array<Patch>}> = []
 
   const editorActor = {
-    getSnapshot: () => ({
-      matches: (stateValue: unknown) => {
-        const isReadOnlySelector =
-          typeof stateValue === 'object' &&
-          stateValue !== null &&
-          'edit mode' in stateValue &&
-          (stateValue as Record<string, unknown>)['edit mode'] === 'read only'
-
-        if (!isReadOnlySelector) {
-          // Only answer for the selector the batcher is expected to read,
-          // so a change to the batcher's read-only lookup fails these
-          // tests.
-          throw new Error('Unexpected state selector passed to `matches`')
-        }
-        return isReadOnly
-      },
-    }),
     on: (
       _type: 'internal.patch',
       listener: (event: {
@@ -79,9 +61,6 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
     unsubscribe,
     sendPatch: (patch: Patch, operationId?: string) => {
       patchListener?.({patch, operationId, value: []})
-    },
-    setReadOnly: (value: boolean) => {
-      isReadOnly = value
     },
     sendOperation: (operation: EngineOperation) => {
       emitOperationEvent(
@@ -158,25 +137,6 @@ describe('mutation batcher', () => {
 
     expect(harness.relayedPatches).toEqual([createPatch('a')])
     expect(harness.mutationSends).toHaveLength(0)
-  })
-
-  test('defers patch events and mutations while read-only, flushing once editable', () => {
-    const harness = createTestHarness({readOnly: true})
-
-    harness.sendPatch(createPatch('a'), 'op-1')
-
-    expect(harness.relayedPatches).toEqual([])
-
-    vi.advanceTimersByTime(FLUSH_INTERVAL * 3)
-
-    expect(harness.relayedPatches).toEqual([])
-    expect(harness.mutationSends).toHaveLength(0)
-
-    harness.setReadOnly(false)
-    vi.advanceTimersByTime(FLUSH_INTERVAL)
-
-    expect(harness.relayedPatches).toEqual([createPatch('a')])
-    expect(harness.mutationSends).toEqual([{patches: [createPatch('a')]}])
   })
 
   test('flushes pending mutations on unsubscribe', () => {

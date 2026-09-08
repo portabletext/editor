@@ -1,3 +1,4 @@
+import {applyAll} from '@portabletext/patches'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
@@ -2102,13 +2103,9 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       expect(patches).toEqual([
         {
           type: 'set',
-          path: [{_key: 'b0'}, 'children', 0],
-          value: {
-            _type: 'span',
-            _key: 'k2',
-            text: 'hello changed',
-            marks: [],
-          },
+          path: [{_key: 'b0'}, 'children', 0, '_key'],
+          value: 'k2',
+          origin: 'local',
         },
       ])
       expect(editor.getSnapshot().context.value).toEqual([
@@ -2205,6 +2202,7 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     const unsetPatch = {
       type: 'unset',
       path: [{_key: 'b0'}, 'markDefs', {_key: 'm1'}],
+      origin: 'local',
     }
 
     // The auto-resolution is emitted as a patch AND applied to the block
@@ -2224,11 +2222,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       ])
     })
 
-    // Causal sentinel: one local edit, then assert the full emission
-    // history. Before the fix the engine received the block with the def
-    // still present, its own normalizer pruned it and parked a whole-array
-    // `set` on the pristine editor, and that parked patch flushed here,
-    // ahead of the sentinel's.
+    // The repair already published on `update value`; a further local
+    // edit's patches append to the same stream.
     editor.send({
       type: 'select',
       at: {
@@ -2253,7 +2248,7 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     })
   })
 
-  test('Scenario: a startup value with a keyless child is repaired in the engine without emitting patches', async () => {
+  test('Scenario: a startup value with a keyless child emits the repair patch immediately, before any local edit', async () => {
     const patches: Array<Patch> = []
     const mutations: Array<MutationEvent> = []
     const {editor} = await createTestEditor({
@@ -2282,7 +2277,18 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       ),
     })
 
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: 'b0'}, 'children', 0, '_key'],
+      value: 'k2',
+      origin: 'local',
+    }
+
     await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'b0',
@@ -2294,11 +2300,6 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       ])
     })
 
-    // No mutation leaves a pristine editor on open. "Nothing was emitted"
-    // can't be awaited directly, so prove it with a causal sentinel: make
-    // one local edit and assert its patches are the only ones ever
-    // collected. Event ordering guarantees a would-be repair emission had
-    // flushed before the sentinel's.
     editor.send({
       type: 'select',
       at: {
@@ -2315,12 +2316,224 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       origin: 'local',
     }
 
+    // The repair already published on open: the local edit's flush carries
+    // only its own patch.
     await vi.waitFor(() => {
-      expect(patches).toEqual([sentinelPatch])
+      expect(patches).toEqual([repairPatch, sentinelPatch])
       expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
         [sentinelPatch],
       ])
     })
+  })
+
+  test('Scenario: a read-only startup value with a keyless child emits the repair patch without ever becoming editable', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      readOnly: true,
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: 'b0'}, 'children', 0, '_key'],
+      value: 'k2',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.readOnly).toBe(true)
+    })
+  })
+
+  test('Scenario: a startup value with a duplicate sibling _key emits the re-mint patch immediately, before any local edit', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello', marks: []},
+            {_key: 's0', _type: 'span', text: ' world', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: 'b0'}, 'children', 1, '_key'],
+      value: 'k2',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello', marks: []},
+            {_key: 'k2', _type: 'span', text: ' world', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a startup value with a keyless child in the second block emits the repair patch addressed to that block', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [{_type: 'span', text: 'world', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'children', 0, '_key'],
+      value: 'k2',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: 'world', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    const initialValue = [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: 'b1',
+        _type: 'block',
+        children: [{_type: 'span', text: 'world', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    expect(applyAll(initialValue, patches)).toEqual([
+      initialValue[0],
+      {
+        _key: 'b1',
+        _type: 'block',
+        children: [{_key: 'k2', _type: 'span', text: 'world', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 
   test('Scenario: replacing a whole value with the same block/span keys emits no patches', async () => {
