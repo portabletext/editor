@@ -291,7 +291,7 @@ describe(createPlaceholderBlock.name, () => {
         {
           type: 'insert',
           path: [{_key: 'k0'}, 'children', 0],
-          position: 'after',
+          position: 'before',
           items: [{_key: 'k2', _type: 'span', marks: [], text: ''}],
         },
       ]

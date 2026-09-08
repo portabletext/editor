@@ -275,13 +275,6 @@ function createActors(config: {
         case 'value changed':
           config.relay.send(event)
           break
-        case 'patch':
-          config.editorActor.send({
-            ...event,
-            type: 'internal.patch',
-            value: config.editorEngine.snapshot.context.value,
-          })
-          break
 
         default:
           config.editorActor.send(event)

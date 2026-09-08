@@ -335,7 +335,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
 
     const onChange = vi.fn()
 
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       children: (
         <>
           <EventListenerPlugin on={onChange} />
@@ -364,6 +364,55 @@ describe('when PTE would display warnings, instead it self solves', () => {
                 _key: 'def',
                 _type: 'span',
                 text: 'Hello',
+                marks: [],
+              },
+            ],
+            // Focusing does not dirty the block, so the orphaned markDef
+            // stays exactly as the document has it until a local edit.
+            markDefs: [
+              {
+                _key: 'ghi',
+                _type: 'link',
+                href: 'https://sanity.io',
+              },
+            ],
+            style: 'normal',
+          },
+        ])
+      }
+    })
+
+    // Provoke the self-solving: a local edit touching the block removes
+    // the orphan as part of that edit.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'abc'}, 'children', {_key: 'def'}], offset: 5},
+        focus: {path: [{_key: 'abc'}, 'children', {_key: 'def'}], offset: 5},
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'patch',
+        patch: {
+          type: 'set',
+          path: [{_key: 'abc'}, 'markDefs'],
+          value: [],
+          origin: 'local',
+        },
+      })
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'abc',
+            _type: 'block',
+            children: [
+              {
+                _key: 'def',
+                _type: 'span',
+                text: 'Hello!',
                 marks: [],
               },
             ],

@@ -110,9 +110,9 @@ describe('event.operation', () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)
 
-    // A text block with no children is auto-resolved by `validateValue` at
-    // sync ingress: the placeholder span is part of the inserted node
-    // itself, not a separate normalization fix operation.
+    // Validation passes a text block with no children through untouched;
+    // engine normalization repairs it afterward, inserting the placeholder
+    // span as its own operation, adjacent to the block's own insert.
     editor.send({type: 'update value', value: [emptyBlock('b1')]})
 
     await vi.waitFor(() => {
@@ -125,10 +125,13 @@ describe('event.operation', () => {
           type: 'insert',
           path: [0],
           position: 'before',
-          node: {
-            ...emptyBlock('b1'),
-            children: [{_type: 'span', _key: 'k2', text: '', marks: []}],
-          },
+          node: emptyBlock('b1'),
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}, 'children', 0],
+          position: 'before',
+          node: {_type: 'span', _key: 'k2', text: '', marks: []},
         },
       ])
     })

@@ -1,4 +1,3 @@
-import {applyAll, type Patch} from '@portabletext/patches'
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
@@ -43,10 +42,6 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
 type SyncValueEvent =
-  | {
-      type: 'patch'
-      patch: Patch
-    }
   | {
       type: 'invalid value'
       resolution: InvalidValueResolution | null
@@ -127,11 +122,7 @@ export const syncMachine = setup({
         }
       | SyncValueEvent,
     emitted: {} as
-      | PickFromUnion<
-          SyncValueEvent,
-          'type',
-          'invalid value' | 'patch' | 'value changed'
-        >
+      | PickFromUnion<SyncValueEvent, 'type', 'invalid value' | 'value changed'>
       | {type: 'done syncing value'}
       | {type: 'syncing value'},
   },
@@ -382,9 +373,6 @@ export const syncMachine = setup({
         'update value': {
           guard: 'is new value',
           actions: ['assign pending value'],
-        },
-        'patch': {
-          actions: [emit(({event}) => event)],
         },
         'invalid value': {
           actions: [emit(({event}) => event)],
@@ -704,29 +692,15 @@ function syncBlock({
   const oldBlock = editorEngine.snapshot.context.value.at(index)
 
   if (!oldEngineBlock || !oldBlock) {
-    const validation = validateValue(
-      [block],
-      context.schema,
-      context.keyGenerator,
-    )
+    const validation = validateValue([block], context.schema)
 
     debug.syncValue(
       'Validating and inserting new block in the end of the value',
       block,
     )
 
-    reportAutoResolution({
-      validation,
-      context,
-      sendBack,
-      value,
-      index,
-      key: block._key,
-    })
-
-    if (validation.valid || validation.resolution?.autoResolve) {
-      const repairedBlock = applyAutoResolution(validation, [block], block)
-      const engineBlock = toEngineBlock(repairedBlock, {
+    if (validation.valid) {
+      const engineBlock = toEngineBlock(block, {
         schemaTypes: context.schema,
       })
 
@@ -778,31 +752,11 @@ function syncBlock({
     }
   }
   const validationValue = [blockToValidate]
-  const validation = validateValue(
-    validationValue,
-    context.schema,
-    context.keyGenerator,
-  )
+  const validation = validateValue(validationValue, context.schema)
 
-  // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-  reportAutoResolution({
-    validation,
-    context,
-    sendBack,
-    value,
-    index,
-    key: blockToValidate._key,
-  })
-
-  if (validation.valid || validation.resolution?.autoResolve) {
-    const repairedBlock = applyAutoResolution(
-      validation,
-      validationValue,
-      block,
-    )
-
+  if (validation.valid) {
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
-      debug.syncValue('Updating block', oldBlock, repairedBlock)
+      debug.syncValue('Updating block', oldBlock, block)
 
       withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
@@ -811,14 +765,14 @@ function syncBlock({
               context,
               editorEngine,
               oldEngineBlock,
-              block: repairedBlock,
+              block,
               index,
             })
           })
         })
       })
     } else {
-      debug.syncValue('Replacing block', oldBlock, repairedBlock)
+      debug.syncValue('Replacing block', oldBlock, block)
 
       withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
@@ -826,7 +780,7 @@ function syncBlock({
             replaceBlock({
               context,
               editorEngine,
-              block: repairedBlock,
+              block,
               index,
             })
           })
@@ -850,85 +804,6 @@ function syncBlock({
       blockValid: false,
     }
   }
-}
-
-/**
- * Reports an auto-resolved repair's patches to the host, addressed by the
- * block's real position in the incoming value: `validateValue` validates
- * one block at a time, so a resolution's block-level numeric path
- * segments (minting a missing block `_key`) are always local `0` and need
- * rebasing; resolutions already anchored on the block's own `_key` are
- * position-independent and pass through unchanged.
- */
-function reportAutoResolution({
-  validation,
-  context,
-  sendBack,
-  value,
-  index,
-  key,
-}: {
-  validation: ReturnType<typeof validateValue>
-  context: {previousValue: Array<PortableTextBlock> | undefined}
-  sendBack: (event: SyncValueEvent) => void
-  value: Array<PortableTextBlock>
-  index: number
-  key: string | undefined
-}) {
-  if (
-    !validation.valid &&
-    validation.resolution?.autoResolve &&
-    validation.resolution?.patches.length > 0
-  ) {
-    if (context.previousValue !== value) {
-      // A re-run against an unchanged value would mint and report a fresh
-      // repair for the same defect.
-      // `validateValue` ran on `[block]`, so its description can only name
-      // index 0; point the message at the block's real position.
-      const description = validation.resolution.description.replace(
-        'index 0',
-        `index ${index}`,
-      )
-      const location =
-        key !== undefined
-          ? `block with _key '${key}'`
-          : `block at index ${index}`
-      console.warn(
-        `${validation.resolution.action} for ${location}. ${description}`,
-      )
-      validation.resolution.patches.forEach((patch) => {
-        sendBack({
-          type: 'patch',
-          patch: {...rebaseBlockPatchPath(patch, index), origin: 'local'},
-        })
-      })
-    }
-  }
-}
-
-function rebaseBlockPatchPath(patch: Patch, index: number): Patch {
-  const [head, ...rest] = patch.path
-  return typeof head === 'number' ? {...patch, path: [index, ...rest]} : patch
-}
-
-/**
- * `validateValue` auto-resolutions must reach the engine as state, not
- * only the document as patches. Applying them only outbound forks the
- * repair: the document receives the resolution (e.g. a minted child
- * `_key`) while the engine holds the un-repaired shape its addressing
- * model cannot represent, and normalization then mints a different key
- * for the same node. The resolution patches were built from
- * `validationValue` itself, so they always apply; the fallback only
- * covers the impossible empty result.
- */
-function applyAutoResolution(
-  validation: ReturnType<typeof validateValue>,
-  validationValue: Array<PortableTextBlock>,
-  block: PortableTextBlock,
-): PortableTextBlock {
-  return !validation.valid && validation.resolution?.autoResolve
-    ? (applyAll(validationValue, validation.resolution.patches).at(0) ?? block)
-    : block
 }
 
 function replaceBlock({
@@ -991,7 +866,7 @@ function replaceBlock({
   }
 }
 
-function updateBlock({
+export function updateBlock({
   context,
   editorEngine,
   oldEngineBlock,
@@ -1060,8 +935,19 @@ function updateBlock({
       oldKeySet.size === oldKeys.length &&
       oldKeys.some((key, i) => key !== newKeys[i]) &&
       newKeys.every((key) => oldKeySet.has(key))
+    // Keyed reconciliation below builds `{_key: child._key}` path segments
+    // from `engineBlock.children`; a keyless child would produce
+    // `{_key: undefined}`, so route those cases through the wholesale set.
+    const hasKeylessChild = engineBlock.children.some(
+      (child) => typeof child._key !== 'string' || child._key === '',
+    )
 
-    if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
+    if (
+      isPureReorder ||
+      (newKeys.length > 0 && !hasSharedKeys) ||
+      engineBlock.children.length === 0 ||
+      hasKeylessChild
+    ) {
       debug.syncValue('Replacing children via set')
       applyNodeProperties(editorEngine, {children: engineBlock.children}, [
         {_key: oldEngineBlock._key},

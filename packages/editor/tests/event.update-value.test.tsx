@@ -2200,16 +2200,10 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       ],
     })
 
-    const unsetPatch = {
-      type: 'unset',
-      path: [{_key: 'b0'}, 'markDefs', {_key: 'm1'}],
-      origin: 'local',
-    }
-
-    // The auto-resolution is emitted as a patch AND applied to the block
-    // the engine receives: the def is gone on both sides.
+    // Intake passes the raw block through untouched: the orphan survives
+    // until something else marks the block dirty.
     await vi.waitFor(() => {
-      expect(patches).toEqual([unsetPatch])
+      expect(patches).toEqual([])
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'b0',
@@ -2217,14 +2211,15 @@ describe('event.update value: auto-resolved invalid blocks', () => {
           children: [
             {_key: 's0', _type: 'span', text: 'hello changed', marks: []},
           ],
-          markDefs: [],
+          markDefs: [{_key: 'm1', _type: 'link', href: 'https://example.com'}],
           style: 'normal',
         },
       ])
     })
 
-    // The repair already published on `update value`; a further local
-    // edit's patches append to the same stream.
+    // The first local edit marks the block dirty: normalization removes
+    // the orphan in the same pass, emitting its wholesale `set` alongside
+    // the edit's own patch.
     editor.send({
       type: 'select',
       at: {
@@ -2236,7 +2231,6 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     await vi.waitFor(() => {
       expect(patches).toEqual([
-        unsetPatch,
         {
           type: 'diffMatchPatch',
           path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
@@ -2244,6 +2238,23 @@ describe('event.update value: auto-resolved invalid blocks', () => {
             makePatches(makeDiff('hello changed', 'hello changed!')),
           ),
           origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'markDefs'],
+          value: [],
+          origin: 'local',
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello changed!', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
         },
       ])
     })
@@ -2581,8 +2592,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     }
     const repairPatch = {
       type: 'set',
-      path: [1],
-      value: repairedBlock1,
+      path: [1, '_key'],
+      value: 'k2',
       origin: 'local',
     }
 
