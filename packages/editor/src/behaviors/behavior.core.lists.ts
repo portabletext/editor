@@ -506,7 +506,7 @@ const inheritListLevel = defineBehavior({
         raise({
           ...event,
           blocks: event.blocks.map((block) => {
-            if (block._key === insertedListBlock._key) {
+            if (block === insertedListBlock) {
               listStartBlockFound = true
             }
 
@@ -596,7 +596,7 @@ const inheritListItem = defineBehavior({
         raise({
           ...event,
           blocks: event.blocks.map((block) => {
-            if (block._key === insertedListBlock._key) {
+            if (block === insertedListBlock) {
               listStartBlockFound = true
             }
 
