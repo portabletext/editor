@@ -587,6 +587,181 @@ describe('event.delete', () => {
     })
   })
 
+  test('Scenario: Deleting collapsed selection with unit block deletes the block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'Block A', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [
+            {_type: 'span', _key: spanBKey, text: 'Block B', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+          offset: 7,
+        },
+      },
+      unit: 'block',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'Block A', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Deleting all blocks with unit block leaves a placeholder block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'Block A', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [
+            {_type: 'span', _key: spanBKey, text: 'Block B', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+          offset: 7,
+        },
+      },
+      unit: 'block',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k6',
+          children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Deleting a range spanning two blocks leaves the remainder in a single block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'Block A', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [
+            {_type: 'span', _key: spanBKey, text: 'Block B', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+          offset: 5,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: spanBKey, text: ' B', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Deleting without selection', async () => {
     const {editor} = await createTestEditor({
       initialValue: [
@@ -851,6 +1026,73 @@ describe('event.delete', () => {
         await vi.waitFor(() => {
           expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
         })
+      })
+    })
+
+    test('Scenario: Deleting a partial range with unit child removes the whole span, leaving a placeholder span', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockAKey = keyGenerator()
+      const spanAKey = keyGenerator()
+      const blockBKey = keyGenerator()
+      const spanBKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockAKey,
+            children: [
+              {_type: 'span', _key: spanAKey, text: 'Block A', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: blockBKey,
+            children: [
+              {_type: 'span', _key: spanBKey, text: 'Block B', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {
+            path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+            offset: 5,
+          },
+          focus: {
+            path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+            offset: 7,
+          },
+        },
+        unit: 'child',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: blockAKey,
+            children: [
+              {_type: 'span', _key: spanAKey, text: 'Block A', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: blockBKey,
+            children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
       })
     })
 

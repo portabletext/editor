@@ -1,10 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {createRef, type RefObject} from 'react'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {EditorSelection} from '../src'
-import {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {EventListenerPlugin} from '../src/plugins'
-import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 
 const helloBlock: PortableTextBlock = {
@@ -17,39 +14,26 @@ const helloBlock: PortableTextBlock = {
 const renderPlaceholder = () => 'Jot something down here'
 
 describe('initialization', () => {
-  it('receives initial onChange events and has custom placeholder', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+  test('Scenario: mounting emits `ready` and shows a custom placeholder', async () => {
     const onChange = vi.fn()
 
     const {locator} = await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+      children: <EventListenerPlugin on={onChange} />,
       editableProps: {renderPlaceholder},
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current).not.toBe(null)
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       expect(locator.getByText('Jot something down here')).toBeInTheDocument()
     })
   })
 
-  it('takes value from props and confirms it by emitting value change event', async () => {
+  test('Scenario: adoption keeps `initialValue` unchanged, and a local edit fills in the missing `style`', async () => {
     const initialValue = [helloBlock]
     const onChange = vi.fn()
-    const editorRef = createRef<PortableTextEditor>()
 
     const {editor} = await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+      children: <EventListenerPlugin on={onChange} />,
       initialValue,
     })
 
@@ -61,11 +45,7 @@ describe('initialization', () => {
         value: initialValue,
       })
     })
-    if (editorRef.current) {
-      expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual([
-        ...initialValue,
-      ])
-    }
+    expect(editor.getSnapshot().context.value).toStrictEqual([...initialValue])
 
     // A local edit touching the block fills in and emits the missing
     // `style` as part of that edit, and the editor's own document agrees.
@@ -88,21 +68,19 @@ describe('initialization', () => {
           origin: 'local',
         },
       })
-      if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual([
-          {
-            _key: '123',
-            _type: 'block',
-            markDefs: [],
-            children: [{_key: '567', _type: 'span', text: 'Hello!', marks: []}],
-            style: 'normal',
-          },
-        ])
-      }
+      expect(editor.getSnapshot().context.value).toStrictEqual([
+        {
+          _key: '123',
+          _type: 'block',
+          markDefs: [],
+          children: [{_key: '567', _type: 'span', text: 'Hello!', marks: []}],
+          style: 'normal',
+        },
+      ])
     })
   })
 
-  it('keeps untouched blocks byte-identical: an edit elsewhere emits none of their default fills', async () => {
+  test('Scenario: an edit on one block emits none of the default fills for a block it leaves untouched', async () => {
     const completeBlock: PortableTextBlock = {
       _key: 'aaa',
       _type: 'block',
@@ -118,15 +96,9 @@ describe('initialization', () => {
       children: [{_key: 'b1', _type: 'span', text: 'Beta'}],
     }
     const onChange = vi.fn()
-    const editorRef = createRef<PortableTextEditor>()
 
     const {editor} = await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+      children: <EventListenerPlugin on={onChange} />,
       initialValue: [completeBlock, bareBlock],
     })
 
@@ -147,20 +119,15 @@ describe('initialization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual([
-          {
-            ...completeBlock,
-            children: [{_key: 'a1', _type: 'span', text: 'Alpha!', marks: []}],
-          },
-          bareBlock,
-        ])
-      }
+      expect(editor.getSnapshot().context.value).toStrictEqual([
+        {
+          ...completeBlock,
+          children: [{_key: 'a1', _type: 'span', text: 'Alpha!', marks: []}],
+        },
+        bareBlock,
+      ])
     })
 
-    // The parked-wave regression shape: before defaults were deferred to
-    // local edits, the first keystroke flushed fills for blocks the user
-    // never touched.
     expect(onChange).not.toHaveBeenCalledWith({
       type: 'patch',
       patch: {
@@ -190,8 +157,7 @@ describe('initialization', () => {
     })
   })
 
-  it('takes initial selection from props', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+  test('Scenario: an initial selection from props is adopted', async () => {
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -200,39 +166,30 @@ describe('initialization', () => {
     }
     const onChange = vi.fn()
 
-    await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+    const {editor} = await createTestEditor({
+      children: <EventListenerPlugin on={onChange} />,
       initialValue,
       editableProps: {selection: initialSelection},
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value changed',
-          value: initialValue,
-        })
-        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
-      }
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value changed',
+        value: initialValue,
+      })
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
+    editor.send({type: 'focus'})
+
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        PortableTextEditor.focus(editorRef.current)
-        expect(
-          PortableTextEditor.getSelection(editorRef.current),
-        ).toStrictEqual(initialSelection)
-      }
+      expect(editor.getSnapshot().context.selection).toStrictEqual(
+        initialSelection,
+      )
     })
   })
 
-  it('updates editor selection from new prop and keeps object equality in editor.getSelection()', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+  test('Scenario: the selection object keeps referential identity across reads when it has not changed', async () => {
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
@@ -241,44 +198,31 @@ describe('initialization', () => {
     }
     const onChange = vi.fn()
 
-    await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+    const {editor} = await createTestEditor({
+      children: <EventListenerPlugin on={onChange} />,
       initialValue,
       editableProps: {selection: initialSelection},
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value changed',
-          value: initialValue,
-        })
-        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
-      }
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value changed',
+        value: initialValue,
+      })
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
-    await vi.waitFor(() => {
-      if (editorRef.current) {
-        const sel = PortableTextEditor.getSelection(editorRef.current)
-        PortableTextEditor.focus(editorRef.current)
+    const sel = editor.getSnapshot().context.selection
+    editor.send({type: 'focus'})
 
-        // Test for object equality here!
-        const anotherSel = PortableTextEditor.getSelection(editorRef.current)
-        expect(
-          PortableTextEditor.getSelection(editorRef.current),
-        ).toStrictEqual(initialSelection)
-        expect(sel).toBe(anotherSel)
-      }
+    await vi.waitFor(() => {
+      const anotherSel = editor.getSnapshot().context.selection
+      expect(anotherSel).toStrictEqual(initialSelection)
+      expect(sel).toBe(anotherSel)
     })
   })
 
-  it('handles empty array value', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+  test('Scenario: an empty array `initialValue` is adopted without an invalid value event', async () => {
     const initialValue: PortableTextBlock[] = []
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -287,44 +231,37 @@ describe('initialization', () => {
     const onChange = vi.fn()
 
     await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+      children: <EventListenerPlugin on={onChange} />,
       initialValue,
       editableProps: {selection: initialSelection},
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).not.toHaveBeenCalledWith({
-          type: 'invalid value',
-          value: initialValue,
-          resolution: {
-            action: 'Unset the value',
-            description:
-              'Editor value must be an array of Portable Text blocks, or undefined.',
-            item: initialValue,
-            patches: [
-              {
-                path: [],
-                type: 'unset',
-              },
-            ],
-          },
-        })
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value changed',
-          value: initialValue,
-        })
-        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
-      }
+      expect(onChange).not.toHaveBeenCalledWith({
+        type: 'invalid value',
+        value: initialValue,
+        resolution: {
+          action: 'Unset the value',
+          description:
+            'Editor value must be an array of Portable Text blocks, or undefined.',
+          item: initialValue,
+          patches: [
+            {
+              path: [],
+              type: 'unset',
+            },
+          ],
+        },
+      })
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value changed',
+        value: initialValue,
+      })
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
   })
 
-  it('validates a non-initial value', async () => {
+  test('Scenario: updating to a value with an invalid block type emits an invalid value event', async () => {
     let value: PortableTextBlock[] = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -332,11 +269,7 @@ describe('initialization', () => {
     }
     const onChange = vi.fn()
     const {editor} = await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-        </>
-      ),
+      children: <EventListenerPlugin on={onChange} />,
       initialValue: value,
       editableProps: {selection: initialSelection},
     })
@@ -392,8 +325,7 @@ describe('initialization', () => {
     })
   })
 
-  it("doesn't crash when containing a invalid block somewhere inside the content", async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+  test('Scenario: an invalid child in `initialValue` emits invalid value instead of value changed', async () => {
     const initialValue: PortableTextBlock[] = [
       helloBlock,
       {
@@ -410,70 +342,63 @@ describe('initialization', () => {
     const onChange = vi.fn()
 
     await createTestEditor({
-      children: (
-        <>
-          <EventListenerPlugin on={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
+      children: <EventListenerPlugin on={onChange} />,
       initialValue,
       editableProps: {selection: initialSelection},
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'invalid value',
-          value: initialValue,
-          resolution: {
-            action: 'Write an empty text property to the object',
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'invalid value',
+        value: initialValue,
+        resolution: {
+          action: 'Write an empty text property to the object',
+          description:
+            "Child with _key 'def' in block with key 'abc' has missing or invalid text property!",
+          i18n: {
+            action:
+              'inputs.portable-text.invalid-value.invalid-span-text.action',
             description:
-              "Child with _key 'def' in block with key 'abc' has missing or invalid text property!",
-            i18n: {
-              action:
-                'inputs.portable-text.invalid-value.invalid-span-text.action',
-              description:
-                'inputs.portable-text.invalid-value.invalid-span-text.description',
-              values: {
-                key: 'abc',
-                childKey: 'def',
-              },
+              'inputs.portable-text.invalid-value.invalid-span-text.description',
+            values: {
+              key: 'abc',
+              childKey: 'def',
             },
-            item: {
-              _key: 'abc',
-              _type: 'block',
-              children: [
-                {
-                  _key: 'def',
-                  _type: 'span',
-                  marks: [],
-                },
-              ],
-              markDefs: [],
-            },
-            patches: [
+          },
+          item: {
+            _key: 'abc',
+            _type: 'block',
+            children: [
               {
-                path: [
-                  {
-                    _key: 'abc',
-                  },
-                  'children',
-                  {
-                    _key: 'def',
-                  },
-                ],
-                type: 'set',
-                value: {
-                  _key: 'def',
-                  _type: 'span',
-                  marks: [],
-                  text: '',
-                },
+                _key: 'def',
+                _type: 'span',
+                marks: [],
               },
             ],
+            markDefs: [],
           },
-        })
-      }
+          patches: [
+            {
+              path: [
+                {
+                  _key: 'abc',
+                },
+                'children',
+                {
+                  _key: 'def',
+                },
+              ],
+              type: 'set',
+              value: {
+                _key: 'def',
+                _type: 'span',
+                marks: [],
+                text: '',
+              },
+            },
+          ],
+        },
+      })
     })
     expect(onChange).not.toHaveBeenCalledWith({
       type: 'value changed',

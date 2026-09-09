@@ -884,4 +884,74 @@ describe('event.select', () => {
       ])
     })
   })
+
+  test('Scenario: Selecting backward across blocks reports `backward: true`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockAKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanAKey,
+              _type: 'span',
+              marks: [],
+              text: "It's a beautiful day on planet earth",
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: blockBKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanBKey,
+              _type: 'span',
+              marks: [],
+              text: 'The birds are singing',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+          offset: 9,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 7,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+          offset: 9,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 7,
+        },
+        backward: true,
+      })
+    })
+  })
 })

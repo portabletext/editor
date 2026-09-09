@@ -3282,4 +3282,452 @@ describe('event.insert.block', () => {
       ])
     })
   })
+
+  test('Scenario: inserting a block with placement=auto into a lone empty text block replaces it instead of leaving a blank block behind', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', marks: [], text: ''}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image', src: 'https://example.com/image.jpg'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k4', _type: 'image', src: 'https://example.com/image.jpg'},
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto after a non-empty text block appends it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', marks: [], text: 'Block A'}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 7,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image', src: 'https://example.com/image.jpg'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        ...initialValue,
+        {_key: 'k4', _type: 'image', src: 'https://example.com/image.jpg'},
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto and focus at the start of a block inserts before it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', marks: [], text: 'Block A'}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image', src: 'https://example.com/image.jpg'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k4', _type: 'image', src: 'https://example.com/image.jpg'},
+        ...initialValue,
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto at a non-text block appends it rather than replacing that block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const value = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', marks: [], text: 'Block A'}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: imageKey,
+        _type: 'image',
+        src: 'https://example.com/image.jpg',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: value,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image', src: 'https://example.com/image2.jpg'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        ...value,
+        {_key: 'k5', _type: 'image', src: 'https://example.com/image2.jpg'},
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto between two blocks inserts it there without a blank block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const value = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', marks: [], text: 'Block A'}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: imageKey,
+        _type: 'image',
+        src: 'https://example.com/image.jpg',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: value,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 7,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image', src: 'https://example.com/image2.jpg'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        value[0],
+        {_key: 'k5', _type: 'image', src: 'https://example.com/image2.jpg'},
+        value[1],
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto into an empty text block that follows other content replaces just that block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const emptyBlockKey = keyGenerator()
+    const emptySpanKey = keyGenerator()
+    const value = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', marks: [], text: 'Block A'}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: emptyBlockKey,
+        _type: 'block',
+        children: [{_key: emptySpanKey, _type: 'span', marks: [], text: ''}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: value,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: emptyBlockKey}, 'children', {_key: emptySpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: emptyBlockKey}, 'children', {_key: emptySpanKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image', src: 'https://example.com/image.jpg'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        value[0],
+        {_key: 'k6', _type: 'image', src: 'https://example.com/image.jpg'},
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto and no selection into a lone empty text block replaces it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', marks: [], text: ''}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    expect(editor.getSnapshot().context.selection).toBeNull()
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k4', _type: 'image'},
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto and no selection after a non-empty text block appends it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const value = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', marks: [], text: 'foo'}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: value,
+    })
+
+    expect(editor.getSnapshot().context.selection).toBeNull()
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        value[0],
+        {_key: 'k4', _type: 'image'},
+      ])
+    })
+  })
+
+  test('Scenario: inserting a block with placement=auto into a selected empty text block that precedes other content replaces just that block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const emptyBlockKey = keyGenerator()
+    const emptySpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: emptyBlockKey,
+          _type: 'block',
+          children: [{_key: emptySpanKey, _type: 'span', marks: [], text: ''}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {_key: imageKey, _type: 'image'},
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: emptyBlockKey}, 'children', {_key: emptySpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: emptyBlockKey}, 'children', {_key: emptySpanKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k5', _type: 'image'},
+        {_key: imageKey, _type: 'image'},
+      ])
+    })
+  })
 })
