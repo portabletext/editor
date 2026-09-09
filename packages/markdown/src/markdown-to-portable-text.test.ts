@@ -7551,7 +7551,7 @@ describe(markdownToPortableText.name, () => {
       expect(onDegradation).not.toHaveBeenCalled()
     })
 
-    test('image lifted back to block: standalone image inside a table cell, schema has no block-level `image`', () => {
+    test('image stays inline: standalone image inside a table cell, schema has no block-level `image`', () => {
       const keyGenerator = createTestKeyGenerator()
       const onDegradation = vi.fn<(report: DegradationReport) => void>()
       // `image` only exists as an inline object, so the standalone-image
@@ -7607,7 +7607,20 @@ describe(markdownToPortableText.name, () => {
                   _type: 'cell',
                   _key: 'k6',
                   value: [
-                    {_key: 'k5', _type: 'image', src: 'src.png', alt: 'alt'},
+                    {
+                      _type: 'block',
+                      style: 'normal',
+                      children: [
+                        {
+                          _key: 'k5',
+                          _type: 'image',
+                          src: 'src.png',
+                          alt: 'alt',
+                        },
+                      ],
+                      _key: 'k4',
+                      markDefs: [],
+                    },
                   ],
                 },
               ],
@@ -7616,10 +7629,19 @@ describe(markdownToPortableText.name, () => {
         },
       ])
 
-      // The cell holds nothing but the image, so `td_close`'s sole-image
-      // lift recovers the canonical block-level shape: reporting the
-      // intermediate inline demotion would be a false positive.
-      expect(onDegradation).not.toHaveBeenCalled()
+      // `image` is declared inline-only, which is a legal inline home, so
+      // `td_close`'s sole-object lift declines and the image stays put as
+      // the cell's inline child.
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'image-block-to-inline',
+          message:
+            'The image became inline: the schema has no block-level `image`',
+          line: 1,
+          snippet: 'alt',
+        },
+      ])
     })
 
     test('image demoted, not lifted: mixed cell content, schema has no block-level `image`', () => {

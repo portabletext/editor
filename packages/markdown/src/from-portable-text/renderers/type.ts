@@ -201,14 +201,33 @@ function renderTable(
   // Helper to extract text from cell blocks
   const getCellText = (cellBlocks: Array<TypedObject>): string => {
     return cellBlocks
-      .map((block, index) =>
-        renderNode({
+      .map((block, index) => {
+        const rendered = renderNode({
           node: block,
           index,
           isInline: false,
           renderNode,
-        }),
-      )
+        })
+        const rendererOptions = {
+          value: block,
+          isInline: false,
+          index,
+          renderNode,
+        }
+        if (rendered === DefaultUnknownTypeRenderer(rendererOptions)) {
+          // A GFM cell is one line, so the multi-line fence carrier
+          // would squash into `<br>` soup that reparses as plain text;
+          // the inline carrier is single-line and reparses to the same
+          // value. Exact-matched against the default carrier's output,
+          // so declared markdown forms and custom `unknownType` output
+          // pass through untouched.
+          return DefaultUnknownTypeRenderer({
+            ...rendererOptions,
+            isInline: true,
+          })
+        }
+        return rendered
+      })
       .join(' ')
       .trim()
   }
