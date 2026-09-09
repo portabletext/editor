@@ -151,11 +151,15 @@ function insertPatch(
       editor.snapshot.context.value,
       context.schema,
     ) &&
-    !isEqualValues(
-      {schema: context.schema},
-      editor.lastSyncedValue,
-      editor.snapshot.context.value,
-    )
+    (editor.valueUnsetEmitted ||
+      // Mirrors `editorWasEmpty` in `subscriber.patch-generation.ts`: once
+      // this editor's stream has unset the field, a value-equal recording
+      // is not proof of persistence.
+      !isEqualValues(
+        {schema: context.schema},
+        editor.lastSyncedValue,
+        editor.snapshot.context.value,
+      ))
 
   const arrayFieldPath = patch.path.slice(0, -1)
 

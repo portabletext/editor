@@ -93,9 +93,9 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * True while this editor's own emitted patch stream has destroyed the
    * field (a root `unset([])` went out) and not yet re-materialized it (a
    * root `setIfMissing` or `set` went out since). While true, patch
-   * generation rebuilds the field before targeting it again and treats a
-   * placeholder equal to `lastSyncedValue` as unpersisted rather than as
-   * proof the field survived.
+   * generation rebuilds the field before targeting it again, and both it
+   * and remote root inserts treat a placeholder equal to `lastSyncedValue`
+   * as unpersisted rather than as proof the field survived.
    */
   valueUnsetEmitted: boolean
   isPatching: boolean
