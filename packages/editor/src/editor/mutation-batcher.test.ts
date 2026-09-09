@@ -17,6 +17,7 @@ const TYPE_DEBOUNCE = 250
 function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const editorEngine = createEditor() as PortableTextEditorEngine
   editorEngine.isDeferringMutations = false
+  editorEngine.emittedValues = []
 
   let isReadOnly = readOnly
   let patchListener:

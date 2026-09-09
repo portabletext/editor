@@ -7,6 +7,7 @@ import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {createApplyPatch} from '../internal-utils/applyPatch'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
+import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
@@ -24,7 +25,8 @@ export function setupRemotePatches({
   subscriptions: Array<() => () => void>
   editor: PortableTextEditorEngine
 }): void {
-  const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
+  const context = editorActor.getSnapshot().context
+  const applyPatch = createApplyPatch(context)
 
   let bufferedPatches: Patch[] = []
 
@@ -34,7 +36,17 @@ export function setupRemotePatches({
     }
     const patches = bufferedPatches
     bufferedPatches = []
-    let changed = false
+    let batchChanged = false
+    let rootMaterializingPatchApplied = false
+
+    const engineWasEmptyOrPlaceholder =
+      editor.snapshot.context.value.length === 0 ||
+      (editor.snapshot.context.value.length === 1 &&
+        isEqualToEmptyEditor(
+          context.initialValue,
+          editor.snapshot.context.value,
+          context.schema,
+        ))
 
     withRemoteChanges(editor, 'patches', () => {
       withoutNormalizing(editor, () => {
@@ -42,10 +54,28 @@ export function setupRemotePatches({
           pluginWithoutHistory(editor, () => {
             for (const patch of patches) {
               try {
-                changed = applyPatch(editor, patch)
+                const patchChanged = applyPatch(editor, patch)
+
+                if (patchChanged) {
+                  batchChanged = true
+
+                  // A `setIfMissing` never counts on its own: it can leave
+                  // the editor holding only its normalization-minted
+                  // placeholder, and recording that would claim the host
+                  // persists a block it does not have.
+                  if (
+                    (patch.type === 'insert' && patch.path.length === 1) ||
+                    (patch.type === 'set' &&
+                      patch.path.length === 0 &&
+                      Array.isArray(patch.value) &&
+                      patch.value.length > 0)
+                  ) {
+                    rootMaterializingPatchApplied = true
+                  }
+                }
 
                 if (debug.syncPatch.enabled) {
-                  if (changed) {
+                  if (patchChanged) {
                     debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
                   } else {
                     debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
@@ -60,9 +90,14 @@ export function setupRemotePatches({
           })
         })
       })
-      if (changed) {
+      if (batchChanged) {
         normalize(editor)
         editor.onChange()
+
+        if (engineWasEmptyOrPlaceholder && rootMaterializingPatchApplied) {
+          editor.lastSyncedValue = editor.snapshot.context.value
+          editor.valueUnsetEmitted = false
+        }
       }
     })
   }

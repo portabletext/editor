@@ -5537,10 +5537,11 @@ describe('event.patches', () => {
 
     // Unlike the single-flush clear above, a character-by-character clear
     // spreads across flushes, so the mirrored echoes race the ongoing
-    // edits: a stale echo differs from the engine by then, syncs as a
-    // genuine write, and records the placeholder as the last synced
-    // value. The editor's own `unset([])` emission must override that:
-    // its stream destroyed the field, so the retype must rebuild it.
+    // edits: a stale echo differs from the engine by then, but the ledger
+    // still recognizes it as this editor's own emitted state and skips
+    // recording it. The retype below survives on `valueUnsetEmitted`
+    // alone, armed by the editor's own `unset([])` emission and never
+    // touched by these echoes.
     editor.on('mutation', (event) => {
       editor.send({type: 'update value', value: event.value})
     })
@@ -5575,8 +5576,8 @@ describe('event.patches', () => {
 
     // The echo cascade settles when a stale echo has written into the
     // engine (a remote-origin operation) and the last write restored the
-    // placeholder. Only then has the poisoned value been recorded, which
-    // is the state the retype below must survive.
+    // placeholder. Only then has every echo been absorbed by the ledger,
+    // which is the state the retype below must survive.
     await vi.waitFor(() => {
       expect(remoteOperations).toBeGreaterThan(0)
       expect(editor.getSnapshot().context.value).toEqual([
@@ -5679,7 +5680,7 @@ describe('event.patches', () => {
     })
   })
 
-  test('Scenario: A remote root `insert` after a self-emitted `unset` removes even a recorded placeholder', async () => {
+  test('Scenario: A remote root `insert` after a self-emitted `unset` removes the placeholder', async () => {
     const remoteBazBlock = {
       _type: 'block',
       _key: 'c0',
@@ -5702,12 +5703,12 @@ describe('event.patches', () => {
       ),
     })
 
-    // Build the same poisoned recording as 'Retyping after a
-    // character-by-character clear when the host mirrors values': a
-    // stale mirrored echo lands after the editor's own `unset([])` and
-    // records the placeholder as the last synced value. A remote root
-    // `insert` must override that recording the same way the local
-    // retype does.
+    // Build the same echo race as 'Retyping after a character-by-character
+    // clear when the host mirrors values': a stale mirrored echo lands
+    // after the editor's own `unset([])`, but the ledger recognizes it and
+    // skips recording it. A remote root `insert` must still rebuild the
+    // field the same way the local retype does, relying on
+    // `valueUnsetEmitted` alone.
     editor.on('mutation', (event) => {
       editor.send({type: 'update value', value: event.value})
     })
@@ -6251,6 +6252,411 @@ describe('event.patches', () => {
           value: stringifyPatches(makePatches(makeDiff('', 'a'))),
           origin: 'local',
         },
+      ])
+    })
+  })
+
+  test('Scenario: Typing after a local clear into a genuine pristine block synced in via `update value`', async () => {
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      },
+    })
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(patches.at(-1)).toEqual({
+        type: 'unset',
+        path: [],
+        origin: 'local',
+      })
+    })
+
+    const patchCountAfterClear = patches.length
+
+    const pristineForeignBlock: PortableTextBlock = {
+      _key: 'c0',
+      _type: 'block',
+      children: [{_key: 'c1', _type: 'span', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'update value', value: [pristineForeignBlock]})
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          pristineForeignBlock,
+        ])
+      },
+      {timeout: 5000},
+    )
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'y')
+
+    await vi.waitFor(() => {
+      expect(patches.slice(patchCountAfterClear)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'c0'}, 'children', {_key: 'c1'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'y'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Typing into a genuine pristine block synced in via `update value` after intervening non-pristine content', async () => {
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      },
+    })
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(patches.at(-1)).toEqual({
+        type: 'unset',
+        path: [],
+        origin: 'local',
+      })
+    })
+
+    const nonPristineForeignBlock: PortableTextBlock = {
+      _key: 'c0',
+      _type: 'block',
+      children: [{_key: 'c1', _type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'update value', value: [nonPristineForeignBlock]})
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          nonPristineForeignBlock,
+        ])
+      },
+      {timeout: 5000},
+    )
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'c0'}, 'children', {_key: 'c1'}], offset: 3},
+        focus: {path: [{_key: 'c0'}, 'children', {_key: 'c1'}], offset: 3},
+      },
+    })
+    await userEvent.type(locator, 'z')
+
+    await vi.waitFor(() => {
+      expect(patches.at(-1)).toEqual({
+        type: 'diffMatchPatch',
+        path: [{_key: 'c0'}, 'children', {_key: 'c1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('bar', 'barz'))),
+        origin: 'local',
+      })
+    })
+
+    const patchCountAfterDetourEdit = patches.length
+
+    const pristineForeignBlock: PortableTextBlock = {
+      _key: 'c2',
+      _type: 'block',
+      children: [{_key: 'c3', _type: 'span', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'update value', value: [pristineForeignBlock]})
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          pristineForeignBlock,
+        ])
+      },
+      {timeout: 5000},
+    )
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'y')
+
+    await vi.waitFor(() => {
+      expect(patches.slice(patchCountAfterDetourEdit)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'c2'}, 'children', {_key: 'c3'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'y'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Typing into a pristine block created by remote `patches`', async () => {
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const pristineForeignBlock = {
+      _key: 'c0',
+      _type: 'block',
+      children: [{_key: 'c1', _type: 'span', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'setIfMissing', path: [], value: [], origin: 'remote'},
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [pristineForeignBlock],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [pristineForeignBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([pristineForeignBlock])
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'y')
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'c0'}, 'children', {_key: 'c1'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'y'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Typing after a remote root `setIfMissing` on an empty editor still rebuilds the field', async () => {
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    // The `unset` genuinely empties the root for the moment it takes
+    // `setIfMissing` to reassert it: only then does `setIfMissing` apply
+    // (against a placeholder-holding root it always bails) and only then
+    // does normalization mint a fresh placeholder for it to leave behind.
+    // Neither patch qualifies as a root materialization on its own, so the
+    // retype below must still rebuild the field exactly as it would have
+    // before the recording was narrowed.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', path: [], origin: 'remote'},
+        {type: 'setIfMissing', path: [], value: [], origin: 'remote'},
+      ],
+      snapshot: [],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+        },
+      ])
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'y')
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'y'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: A remote root `insert` before a genuine pristine block synced in via `update value` keeps both blocks', async () => {
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      },
+    })
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(patches.at(-1)).toEqual({
+        type: 'unset',
+        path: [],
+        origin: 'local',
+      })
+    })
+
+    const pristineForeignBlock: PortableTextBlock = {
+      _key: 'p0',
+      _type: 'block',
+      children: [{_key: 'p1', _type: 'span', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'update value', value: [pristineForeignBlock]})
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          pristineForeignBlock,
+        ])
+      },
+      {timeout: 5000},
+    )
+
+    const contentBlock = {
+      _type: 'block',
+      _key: 'c0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'c1', text: 'baz', marks: []}],
+    }
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [contentBlock],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [contentBlock, pristineForeignBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        contentBlock,
+        pristineForeignBlock,
       ])
     })
   })

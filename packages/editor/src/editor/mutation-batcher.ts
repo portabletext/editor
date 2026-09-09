@@ -14,6 +14,13 @@ type PendingMutation = {
 
 const TYPE_DEBOUNCE = 250
 
+// Bounds `editorEngine.emittedValues`. Entries cannot pile up while
+// `valueUnsetEmitted` is armed: only content-producing local edits flush
+// mutations, and any such edit disarms the flag via its own rebuild. The
+// cap instead bounds memory and the false-echo horizon for hosts that
+// round-trip values old enough to no longer reflect this editor's state.
+const EMITTED_VALUES_LIMIT = 50
+
 // A typed burst splits into two mutations mid-word if this fixed flush cadence
 // fires before the burst finishes typing, so in test mode the interval has to
 // be comfortably longer than a real burst takes to type. It also can't be too
@@ -122,6 +129,16 @@ export function createMutationBatcher({
     editorEngine.isDeferringMutations = false
 
     for (const bulk of mutations) {
+      if (bulk.value !== undefined) {
+        editorEngine.emittedValues.push(bulk.value)
+        if (editorEngine.emittedValues.length > EMITTED_VALUES_LIMIT) {
+          editorEngine.emittedValues.splice(
+            0,
+            editorEngine.emittedValues.length - EMITTED_VALUES_LIMIT,
+          )
+        }
+      }
+
       // The editor machine still gates mutations through its setup states
       // and re-emits them to the relay.
       editorActor.send({

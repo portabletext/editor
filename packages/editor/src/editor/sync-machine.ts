@@ -169,11 +169,24 @@ export const syncMachine = setup({
     }),
     'record synced value on engine': ({context, event}) => {
       assertEvent(event, 'done syncing')
-      if (event.changed) {
+      if (!event.changed) {
         // A sync that wrote nothing is not a host persistence claim; see
         // `lastSyncedValue`.
-        context.editorEngine.lastSyncedValue = event.value
+        return
       }
+
+      const {emittedValues} = context.editorEngine
+      const echoIndex = emittedValues.findIndex((value) =>
+        isEqualValues({schema: context.schema}, value, event.value),
+      )
+
+      if (echoIndex !== -1) {
+        emittedValues.splice(0, echoIndex + 1)
+        return
+      }
+
+      context.editorEngine.lastSyncedValue = event.value
+      context.editorEngine.valueUnsetEmitted = false
     },
     'emit done syncing value': emit({
       type: 'done syncing value',
