@@ -5679,6 +5679,108 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: A remote root `insert` after a self-emitted `unset` removes even a recorded placeholder', async () => {
+    const remoteBazBlock = {
+      _type: 'block',
+      _key: 'c0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'c1', text: 'baz', marks: []}],
+    }
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    // Build the same poisoned recording as 'Retyping after a
+    // character-by-character clear when the host mirrors values': a
+    // stale mirrored echo lands after the editor's own `unset([])` and
+    // records the placeholder as the last synced value. A remote root
+    // `insert` must override that recording the same way the local
+    // retype does.
+    editor.on('mutation', (event) => {
+      editor.send({type: 'update value', value: event.value})
+    })
+    let remoteOperations = 0
+    editor.on('operation', (event) => {
+      if (event.origin === 'remote') {
+        remoteOperations++
+      }
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(patches.at(-1)).toEqual({
+        type: 'diffMatchPatch',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
+        origin: 'local',
+      })
+    })
+
+    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(patches.at(-1)).toEqual({
+        type: 'unset',
+        path: [],
+        origin: 'local',
+      })
+    })
+
+    await vi.waitFor(() => {
+      expect(remoteOperations).toBeGreaterThan(0)
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'setIfMissing', path: [], value: [], origin: 'remote'},
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [remoteBazBlock],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [remoteBazBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'c0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'c1', text: 'baz', marks: []}],
+        },
+      ])
+    })
+  })
+
   test('Scenario: a behavior raising root `unset` then `insert.block` in one action set emits an applicable patch stream', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
