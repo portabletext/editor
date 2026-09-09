@@ -25,7 +25,7 @@ Read the skill, then audit the artifact against it:
   `fixup!` discipline once in review.
 - **Changesets** → `changesets`: present iff the change is user-facing;
   first line mirrors the commit subject verbatim; consumer-observable
-  prose; rides-along deltas named explicitly.
+  prose; secondary behavioral changes named explicitly.
 - **Test files** → `writing-tests`: canonical suite placement; every
   integration test is its own `Scenario:`; deterministic keys; full-value
   `toEqual`; no sleeps; no summarizer indirection; comments held to the
@@ -34,7 +34,7 @@ Read the skill, then audit the artifact against it:
   why-only; nothing diff-relative; if the commit body already tells it,
   the comment is a duplicate and goes.
 - **PR body** → `pr-descriptions`: draft state, narrative shape, no
-  internal context, semantic deltas volunteered, body sized to the diff.
+  internal context, behavioral changes volunteered, body sized to the diff.
 
 ## Verify claims empirically
 
@@ -47,7 +47,7 @@ evidence or produce it:
 - Run the gates the diff touches: `check:types`, `check:lint`,
   `check:format`, `check:knip`, and the affected package's test suites.
 - Spot-check "full value" assertions for smuggled partial matchers.
-- A named behavioral delta must have a test proving the _new_ behavior;
+- A named behavioral change must have a test proving the _new_ behavior;
   an unnamed one found in the diff is a blocker, not a nit.
 
 ## Report

@@ -29,7 +29,7 @@ Dense technical prose, wrapped at ~72 columns, structured as:
 
 1. **Old mechanism and why it was wrong**, with the precise failure sequence, name the functions, the inputs, and what the wrong output was.
 2. **The new mechanism.**
-3. **Explicitly scoped behavioral deltas**: "Net behavior unchanged", "Emitted patches only change in the narrow case of...", "One narrow behavioral fix rides along: ...".
+3. **Explicitly scoped behavioral changes** (never the words "delta" or "rides along"): "Net behavior unchanged", "Emitted patches only change in the narrow case of...", "One additional change: ...".
 
 Trivial commits get **no body**. One logical change per commit: tests pinning a contract get their own `test:` commit; refactors are split from fixes.
 
@@ -62,7 +62,7 @@ paths with trailing primitive fields, and a round-trip assertion.
 
 Why it's good: names the function and its contract, gives a concrete input, states the downstream blast radius, then the fix as an invariant ("feeding `entry.path` back...").
 
-### fix with a precise failure sequence + scoped delta (`46593d537`)
+### fix with a precise failure sequence + scoped behavioral change (`46593d537`)
 
 ```
 fix: write a `text`-named field on an inline object during value sync
