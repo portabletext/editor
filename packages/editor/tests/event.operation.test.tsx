@@ -74,7 +74,7 @@ describe('event.operation', () => {
     })
   })
 
-  test('Scenario: Operations from value sync are observed while patches are gated', async () => {
+  test('Scenario: Operations from value sync are observed alongside patches', async () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)
     const patches: Array<unknown> = []
@@ -101,8 +101,8 @@ describe('event.operation', () => {
       ])
     })
 
-    // `patch`/`mutation` are gated while the editor is pristine; the
-    // operation stream is not.
+    // The synced block is already valid, so there is nothing to repair
+    // and nothing for `patch` to carry.
     expect(patches).toEqual([])
   })
 
@@ -110,9 +110,9 @@ describe('event.operation', () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)
 
-    // A text block with no children is auto-resolved by `validateValue` at
-    // sync ingress: the placeholder span is part of the inserted node
-    // itself, not a separate normalization fix operation.
+    // Validation passes a text block with no children through untouched;
+    // engine normalization repairs it afterward, inserting the placeholder
+    // span as its own operation, adjacent to the block's own insert.
     editor.send({type: 'update value', value: [emptyBlock('b1')]})
 
     await vi.waitFor(() => {
@@ -125,10 +125,13 @@ describe('event.operation', () => {
           type: 'insert',
           path: [0],
           position: 'before',
-          node: {
-            ...emptyBlock('b1'),
-            children: [{_type: 'span', _key: 'k2', text: '', marks: []}],
-          },
+          node: emptyBlock('b1'),
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}, 'children', 0],
+          position: 'before',
+          node: {_type: 'span', _key: 'k2', text: '', marks: []},
         },
       ])
     })

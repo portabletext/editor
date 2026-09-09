@@ -160,27 +160,34 @@ describe('mutation batcher', () => {
     expect(harness.mutationSends).toHaveLength(0)
   })
 
-  test('defers patch events and mutations while read-only, flushing once editable', () => {
+  test('relays patch events immediately even while read-only, holding the mutation until editable', () => {
     const harness = createTestHarness({readOnly: true})
 
     harness.sendPatch(createPatch('a'), 'op-1')
 
-    expect(harness.relayedPatches).toEqual([])
+    expect(harness.relayedPatches).toEqual([createPatch('a')])
 
     vi.advanceTimersByTime(FLUSH_INTERVAL * 3)
 
-    expect(harness.relayedPatches).toEqual([])
     expect(harness.mutationSends).toHaveLength(0)
 
     harness.setReadOnly(false)
     vi.advanceTimersByTime(FLUSH_INTERVAL)
 
-    expect(harness.relayedPatches).toEqual([createPatch('a')])
     expect(harness.mutationSends).toEqual([{patches: [createPatch('a')]}])
   })
 
   test('flushes pending mutations on unsubscribe', () => {
     const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    harness.unsubscribe()
+
+    expect(harness.mutationSends).toEqual([{patches: [createPatch('a')]}])
+  })
+
+  test('flushes pending mutations on unsubscribe even while read-only', () => {
+    const harness = createTestHarness({readOnly: true})
 
     harness.sendPatch(createPatch('a'), 'op-1')
     harness.unsubscribe()

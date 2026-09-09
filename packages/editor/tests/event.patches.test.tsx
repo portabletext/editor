@@ -11,7 +11,7 @@ import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema, type EditorEmittedEvent} from '../src'
+import {defineSchema, type EditorEmittedEvent, type MutationEvent} from '../src'
 import {raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
@@ -1849,6 +1849,73 @@ describe('event.patches', () => {
             {_type: 'span', _key: newInlineKey, text: ''},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a pristine editor emits a remote-fallout repair immediately, before any local edit', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_key'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: blockKey}, 'children', 0, '_key'],
+      value: 'k4',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: 'k4', _type: 'span', text: 'hello', marks: []}],
           markDefs: [],
           style: 'normal',
         },

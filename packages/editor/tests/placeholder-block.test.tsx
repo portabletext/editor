@@ -282,6 +282,24 @@ describe(createPlaceholderBlock.name, () => {
         ),
       })
 
+      const intakeRepairPatches = [
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'k0'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'k0'}, 'children', 0],
+          position: 'before',
+          items: [{_key: 'k2', _type: 'span', marks: [], text: ''}],
+        },
+      ]
+
+      await vi.waitFor(() => {
+        expect(patches).toEqual(intakeRepairPatches)
+      })
+
       editor.send({
         type: 'patches',
         patches: [
@@ -304,7 +322,7 @@ describe(createPlaceholderBlock.name, () => {
             style: 'normal',
           },
         ])
-        expect(patches).toEqual([])
+        expect(patches).toEqual(intakeRepairPatches)
       })
 
       editor.send({
@@ -321,7 +339,7 @@ describe(createPlaceholderBlock.name, () => {
             style: 'normal',
           },
         ])
-        expect(patches).toEqual([])
+        expect(patches).toEqual(intakeRepairPatches)
       })
     })
   })

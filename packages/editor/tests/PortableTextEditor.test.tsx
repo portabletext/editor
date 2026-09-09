@@ -428,7 +428,7 @@ describe('initialization', () => {
           resolution: {
             action: 'Write an empty text property to the object',
             description:
-              "Child with _key 'def' in block with key 'abc' has missing or invalid text property!",
+              "Child with _key 'def' in block with _key 'abc' has missing or invalid text property!",
             i18n: {
               action:
                 'inputs.portable-text.invalid-value.invalid-span-text.action',

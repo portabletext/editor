@@ -41,12 +41,16 @@ describe('Collaborative editing', () => {
       /**
        * This test mimics the following scenario:
        * 1. Editor A loads with initial value missing `marks` on a span
-       * 2. Editor A normalizes and adds marks: [], but defers the patch until the editor is dirty
+       * 2. The initial sync runs in a remote frame, and the `marks`-default
+       *    normalization is gated off in that frame, so the span stays
+       *    without `marks`
        * 3. Editor B (simulated) also normalizes, then makes "foo" bold
        * 4. Editor B emits: set marks to [], then set marks to ['strong']
        * 5. Editor A receives these patches and applies them - "foo" becomes bold
        * 6. Editor A user starts typing
-       * 7. Editor A does not emit the deferred patch (would overwrite the bold)
+       * 7. By now `marks` is already the remote-set array, so the
+       *    `marks`-default normalization has nothing left to add and never
+       *    fires (it would otherwise have overwritten the bold)
        */
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()

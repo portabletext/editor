@@ -31,9 +31,11 @@ export type EditorEmittedEvent =
        * Emitted synchronously for every document-changing operation the
        * engine applies (`set.selection` is excluded; the `selection` event
        * serves selection observers), including operations from initial
-       * value sync and normalization, unlike `patch` and `mutation`
-       * events, which are held back until the editor is dirty. Do not
-       * dispatch editor events from a listener; read current state via
+       * value sync and normalization. `patch` and `mutation` events cover
+       * these operations too, including repairs of invalid structures on
+       * value intake: `patch` emits as each patch is produced, `mutation`
+       * batches patches on a debounced flush. Do not dispatch editor
+       * events from a listener; read current state via
        * `editor.getSnapshot()`.
        *
        * The `operation` object is the engine's own, passed by reference:
@@ -75,6 +77,10 @@ export type EditorEmittedEvent =
 
 /**
  * @public
+ *
+ * Emitted at each debounced flush, carrying the patches (including intake
+ * repairs) produced since the previous flush; patches from one user action
+ * and its normalization fallout arrive in the same event.
  */
 export type MutationEvent = {
   type: 'mutation'
@@ -82,6 +88,10 @@ export type MutationEvent = {
   value: Array<PortableTextBlock> | undefined
 }
 
+/**
+ * Emitted synchronously as each patch (including intake repairs) is
+ * produced, ahead of the `mutation` event that later batches it.
+ */
 export type PatchEvent = {
   type: 'patch'
   patch: Patch

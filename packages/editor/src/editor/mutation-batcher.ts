@@ -10,6 +10,18 @@ type PendingMutation = {
   operationId?: string
   value: Array<PortableTextBlock> | undefined
   patches: Array<Patch>
+  // Whether any patch in this bulk arrived while the editor was editable.
+  // Local edits are impossible while read-only, so a bulk accumulated
+  // entirely during read-only holds only repairs the engine re-derives
+  // from whatever value arrives next; it needs no snapshot protection.
+  accumulatedWhileEditable: boolean
+  // The cull generation current when this bulk was created. `cull` drops
+  // a non-editable bulk once its generation falls behind the current one,
+  // proving some later inbound state applied after this bulk stopped
+  // accumulating. A bulk tagged with the current generation is what the
+  // application that just triggered `cull` itself produced, so it's
+  // exempt regardless of `accumulatedWhileEditable`.
+  generation: number
 }
 
 const TYPE_DEBOUNCE = 250
@@ -28,17 +40,35 @@ const FLUSH_INTERVAL =
 /**
  * Batches `internal.patch` events into debounced `mutation` events.
  *
- * Individual `patch` events relay to consumers immediately (deferred while
- * the editor is read-only); the patches themselves accumulate into bulks
- * keyed by `operationId` and flush as `mutation` events on an interval, or
- * eagerly when typing stops or a non-typing operation applies.
+ * Individual `patch` events relay to consumers immediately, including
+ * while the editor is read-only. The patches themselves accumulate into
+ * bulks keyed by `operationId` and flush as `mutation` events on an
+ * interval, or eagerly when typing stops or a non-typing operation
+ * applies, except while the editor is read-only: hosts following the
+ * documented `onChange` contract reject mutations against a read-only
+ * document, so bulks hold and flush on the first tick after the editor
+ * becomes editable again.
+ *
+ * `editorEngine.isDeferringMutations` reflects only bulks that hold at
+ * least one patch accumulated while the editor was editable: that's the
+ * unflushed user work a remote snapshot must not clobber. A bulk made
+ * entirely of patches accumulated while read-only (a repair the engine
+ * emitted on intake, since local edits are impossible while read-only)
+ * carries nothing worth protecting, so it never sets the flag.
+ *
+ * `editorEngine.notifyInboundStateApplied` runs this batcher's cull: once
+ * an inbound value sync or applied remote-patches batch has settled, a
+ * held bulk with no editable-time patch is superseded (its repair no
+ * longer describes the state the document just settled on; if that state
+ * is still broken, normalization has already re-emitted a fresh repair
+ * bulk, which the cull leaves alone) and is dropped instead of flushing.
  *
  * The flush interval keeps running when a flush bails on its guard and is
- * only cleared once pending work has actually drained. Both guard branches
- * rely on this: read-only-deferred mutations flush on the first tick after
- * the editor becomes editable, and work arriving while normalization is
- * suppressed flushes on the first tick after the `withoutNormalizing`
- * block exits.
+ * only cleared once pending work has actually drained. Both guard
+ * branches rely on this: read-only-held mutations flush on the first
+ * tick after the editor becomes editable, and work arriving while
+ * normalization is suppressed flushes on the first tick after the
+ * `withoutNormalizing` block exits.
  */
 export function createMutationBatcher({
   editorActor,
@@ -54,10 +84,15 @@ export function createMutationBatcher({
   // Closure state lives outside `subscribe` so pending work survives a
   // StrictMode unmount/remount, like the persisted actor snapshot did.
   let pendingMutations: Array<PendingMutation> = []
-  let pendingPatchEvents: Array<Patch> = []
   let flushInterval: ReturnType<typeof setInterval> | undefined
   let typeDebounce: ReturnType<typeof setTimeout> | undefined
   let isTyping = false
+  // Bumped once per `cull` call, after the drop it performs. A bulk only
+  // ever carries the generation current at its own creation, so a bulk
+  // left behind by an older generation (one that has since had its own
+  // `cull` call) is unambiguously stale, and `handlePatch` below refuses
+  // to extend it with a newer generation's patch.
+  let currentGeneration = 0
 
   function isReadOnly() {
     return editorActor.getSnapshot().matches({'edit mode': 'read only'})
@@ -68,46 +103,73 @@ export function createMutationBatcher({
     operationId?: string
     value: Array<PortableTextBlock>
   }) {
-    editorEngine.isDeferringMutations = true
+    const arrivedWhileEditable = !isReadOnly()
 
-    if (isReadOnly()) {
-      pendingPatchEvents.push(event.patch)
-    } else {
-      relay.send({type: 'patch', patch: event.patch})
-    }
+    relay.send({type: 'patch', patch: event.patch})
 
     const lastBulk = pendingMutations.at(-1)
 
-    if (lastBulk && lastBulk.operationId === event.operationId) {
+    if (
+      lastBulk &&
+      lastBulk.operationId === event.operationId &&
+      lastBulk.generation === currentGeneration
+    ) {
       lastBulk.value = event.value
       lastBulk.patches.push(event.patch)
+      lastBulk.accumulatedWhileEditable ||= arrivedWhileEditable
     } else {
       pendingMutations.push({
         operationId: event.operationId,
         value: event.value,
         patches: [event.patch],
+        accumulatedWhileEditable: arrivedWhileEditable,
+        generation: currentGeneration,
       })
     }
+
+    updateIsDeferringMutations()
 
     if (flushInterval === undefined) {
       flushInterval = setInterval(flush, FLUSH_INTERVAL)
     }
   }
 
-  function flush() {
-    if (isReadOnly() || !isNormalizing(editorEngine)) {
-      // Leave the interval running: read-only-deferred mutations flush on
-      // the first tick after the editor becomes editable again.
+  function updateIsDeferringMutations() {
+    editorEngine.isDeferringMutations = pendingMutations.some(
+      (bulk) => bulk.accumulatedWhileEditable,
+    )
+  }
+
+  // Called once an inbound value sync or applied remote-patches batch has
+  // settled, whether or not it changed anything: a bulk still tagged with
+  // an older generation held nothing but a repair the engine re-derives
+  // from the state that just settled, so it's dropped; the generation
+  // bump after the drop closes this pass off, so a later patch sharing
+  // this pass's `operationId` (both `undefined` is common outside a
+  // behavior) starts a fresh bulk instead of extending a survivor.
+  function cull() {
+    pendingMutations = pendingMutations.filter(
+      (bulk) =>
+        bulk.accumulatedWhileEditable || bulk.generation === currentGeneration,
+    )
+    updateIsDeferringMutations()
+    currentGeneration++
+  }
+
+  editorEngine.notifyInboundStateApplied = cull
+
+  function flush({ignoreReadOnly = false}: {ignoreReadOnly?: boolean} = {}) {
+    if ((isReadOnly() && !ignoreReadOnly) || !isNormalizing(editorEngine)) {
+      // Leave the interval running: read-only-held mutations flush on the
+      // first tick after the editor becomes editable again.
       return
     }
 
-    if (pendingPatchEvents.length === 0 && pendingMutations.length === 0) {
+    if (pendingMutations.length === 0) {
       return
     }
 
-    const patchEvents = pendingPatchEvents
     const mutations = pendingMutations
-    pendingPatchEvents = []
     pendingMutations = []
 
     if (flushInterval !== undefined) {
@@ -115,15 +177,9 @@ export function createMutationBatcher({
       flushInterval = undefined
     }
 
-    for (const patch of patchEvents) {
-      relay.send({type: 'patch', patch})
-    }
-
-    editorEngine.isDeferringMutations = false
+    updateIsDeferringMutations()
 
     for (const bulk of mutations) {
-      // The editor machine still gates mutations through its setup states
-      // and re-emits them to the relay.
       editorActor.send({
         type: 'mutation',
         patches: bulk.patches,
@@ -173,20 +229,21 @@ export function createMutationBatcher({
       )
 
       if (pendingMutations.length > 0 && flushInterval === undefined) {
-        // Re-mounted with work deferred from before the unmount (e.g. a
-        // read-only editor): resume the flush cadence.
+        // Re-mounted with pending mutations from before the unmount:
+        // resume the flush cadence.
         flushInterval = setInterval(flush, FLUSH_INTERVAL)
       }
 
       return () => {
-        // Flush pending patches and mutations before unmounting, while the
-        // editor-actor-to-relay routing is still subscribed. A read-only
-        // editor's deferred work intentionally stays unemitted here —
-        // read-only deferral holds through teardown. The normalizing
-        // branch of the guard cannot bail at this point: `normalizing` is
-        // only ever `false` inside a synchronous `withoutNormalizing`
-        // block, which no effect cleanup can interleave with.
-        flush()
+        // Flush pending mutations before unmounting, while the
+        // editor-actor-to-relay routing is still subscribed, ignoring the
+        // read-only guard: a host tearing down a read-only editor (e.g. on
+        // disconnect) must still receive work typed just before the
+        // flip, or it's lost for good. The normalizing branch of the guard
+        // cannot bail at this point: `normalizing` is only ever `false`
+        // inside a synchronous `withoutNormalizing` block, which no effect
+        // cleanup can interleave with.
+        flush({ignoreReadOnly: true})
 
         patchSubscription.unsubscribe()
         unsubscribeFromOperations()

@@ -62,9 +62,21 @@ export function setupRemotePatches({
       })
       if (changed) {
         normalize(editor)
-        editor.onChange()
       }
     })
+
+    // The mutation batcher's held-repair cull: called once this batch has
+    // fully settled, changed or not, so a held bulk any fresh repair above
+    // already replaced is dropped instead of flushing a superseded repair.
+    // Runs before `onChange`: a host that reacts to it by synchronously
+    // syncing a new value re-enters this module's own machinery, and its
+    // reentrant pass must see its own fresh repair protected by a cull that
+    // already ran, not superseded by a trailing cull that runs after.
+    editor.notifyInboundStateApplied?.()
+
+    if (changed) {
+      editor.onChange()
+    }
   }
 
   const handlePatches = ({patches}: {patches: Patch[]}) => {
