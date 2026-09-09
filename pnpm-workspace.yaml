@@ -24,8 +24,6 @@ catalog:
   react-dom: ^19.2.8
   xstate: ^5.32.5
 
-catalogMode: prefer
-
 catalogs:
   tooling:
     "@portabletext/react": ^8.0.1
