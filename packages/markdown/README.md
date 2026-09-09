@@ -696,7 +696,7 @@ A default renderer (`callout`, `code`, `horizontal-rule`, `html`, `image`, `tabl
 
 The gate reads type names, never field values: declaring a type doesn't validate anything, and a value's fields play no part in which renderer runs. Fields matter on the parse side instead: `markdownToPortableText` filters a construct down to its declared fields, so declare each type with the fields its values carry, or the markdown forms this gate lets through come back rebuilt without them.
 
-An undeclared type falls back to `unknownType`, whose default output is the same `json:object` fence or tagged code span described above, so it round-trips at block and inline positions. Content inside GFM table cells is inline-only, so block-level cell content (fences included) flattens on reparse. Renderers you register in `types` bypass the gate entirely, whether or not the schema declares them.
+An undeclared type falls back to `unknownType`, whose default output is the same `json:object` fence or tagged code span described above, so it round-trips at block and inline positions. Inside a table cell the carrier uses its inline form (a GFM cell is one line), so an undeclared object in a cell survives too; declared types whose markdown form spans multiple lines (a code block in a cell) still flatten on reparse. Renderers you register in `types` bypass the gate entirely, whether or not the schema declares them.
 
 Without a `schema`, every default renderer stays active.
 

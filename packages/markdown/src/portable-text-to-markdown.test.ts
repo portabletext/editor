@@ -4399,6 +4399,78 @@ describe(portableTextToMarkdown.name, () => {
       })
     })
 
+    test('a gated type inside a table cell uses the inline carrier and survives', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const cellImageTable = [
+        {
+          _type: 'table',
+          _key: 't1',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'c1',
+                  value: [
+                    {
+                      _type: 'image',
+                      _key: 'i1',
+                      src: 'https://example.com/a.png',
+                      alt: 'pic',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(cellImageTable, {
+        schema: schemaWithTable,
+      })
+      expect(markdown).toEqual(
+        [
+          '| json:object`{"_type":"image","_key":"i1","src":"https://example.com/a.png","alt":"pic"}` |',
+          '| --- |',
+        ].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          schema: schemaWithTable,
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k3',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k2',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k1',
+                  value: [
+                    {
+                      _type: 'image',
+                      _key: 'i1',
+                      src: 'https://example.com/a.png',
+                      alt: 'pic',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
     test('a declaration without fields keeps the default renderer', () => {
       const schemaTableNameOnly = compileSchema(
         defineSchema({blockObjects: [{name: 'table'}]}),
@@ -4610,6 +4682,136 @@ describe(portableTextToMarkdown.name, () => {
           _type: 'code',
           _key: 'k0',
           code: '{"_type": "x", "a": 1}',
+        },
+      ])
+    })
+
+    test('an unknown block object inside a table cell uses the inline carrier and survives', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const cellProductTable = [
+        {
+          _type: 'table',
+          _key: 't1',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'c1',
+                  value: [{_type: 'product', _key: 'p1', sku: 'abc'}],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(cellProductTable)
+      expect(markdown).toEqual(
+        [
+          '| json:object`{"_type":"product","_key":"p1","sku":"abc"}` |',
+          '| --- |',
+        ].join('\n'),
+      )
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'table',
+          _key: 'k3',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k2',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k1',
+                  value: [{_type: 'product', _key: 'p1', sku: 'abc'}],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a declared inline-only object inside a table cell stays inline through the cell round trip', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const schema = compileSchema(
+        defineSchema({
+          blockObjects: [defaultTableObjectDefinition],
+          inlineObjects: [
+            {name: 'stockTicker', fields: [{name: 'symbol', type: 'string'}]},
+          ],
+        }),
+      )
+      const cellStockTickerTable = [
+        {
+          _type: 'table',
+          _key: 't1',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'c1',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'b1',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'stockTicker', _key: 'st1', symbol: 'AAPL'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(cellStockTickerTable, {schema})
+      expect(markdown).toEqual(
+        [
+          '| json:object`{"_type":"stockTicker","_key":"st1","symbol":"AAPL"}` |',
+          '| --- |',
+        ].join('\n'),
+      )
+      expect(markdownToPortableText(markdown, {schema, keyGenerator})).toEqual([
+        {
+          _type: 'table',
+          _key: 'k3',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k2',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k1',
+                  value: [
+                    {
+                      _type: 'block',
+                      style: 'normal',
+                      children: [
+                        {_type: 'stockTicker', _key: 'st1', symbol: 'AAPL'},
+                      ],
+                      _key: 'k0',
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ])
     })

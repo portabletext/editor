@@ -1992,10 +1992,15 @@ export function markdownToPortableText(
           }
         }
 
-        // Check if the cell contains a single block with a single image child
-        // If so, extract the image as a block-level image
+        // A cell holding one block whose only child is an object (not a
+        // span) lifts that object to block position, unless the schema
+        // declares the type inline-only: that type has a legal inline home,
+        // so the block reading would manufacture a placement the schema
+        // forbids. Everything else (declared block, declared both, or
+        // undeclared) reads as block, matching PT's table model where
+        // `cell.value` is an array of blocks.
         const firstBlock = cellBlocks[0]
-        let liftedImage: PortableTextObject | undefined
+        let liftedObject: PortableTextObject | undefined
         if (
           cellBlocks.length === 1 &&
           firstBlock &&
@@ -2005,17 +2010,23 @@ export function markdownToPortableText(
           firstBlock.children.length === 1
         ) {
           const onlyChild = firstBlock.children[0]
-          // Check if it's an image object (not a span)
           if (
             typeof onlyChild === 'object' &&
             onlyChild !== null &&
             '_type' in onlyChild &&
-            onlyChild._type !== consolidatedOptions.schema.span.name &&
-            onlyChild._type === 'image'
+            onlyChild._type !== consolidatedOptions.schema.span.name
           ) {
-            // Replace the block with just the image
-            cellBlocks[0] = onlyChild as PortableTextBlock
-            liftedImage = onlyChild as PortableTextObject
+            const declaredInline =
+              consolidatedOptions.schema.inlineObjects.some(
+                (inlineObject) => inlineObject.name === onlyChild._type,
+              )
+            const declaredBlock = consolidatedOptions.schema.blockObjects.some(
+              (blockObject) => blockObject.name === onlyChild._type,
+            )
+            if (!(declaredInline && !declaredBlock)) {
+              cellBlocks[0] = onlyChild as PortableTextBlock
+              liftedObject = onlyChild as PortableTextObject
+            }
           }
         }
 
@@ -2023,7 +2034,7 @@ export function markdownToPortableText(
         // child of the cell's text block: report it now that the verdict is
         // known, instead of at demotion time.
         for (const demotedImage of demotedInlineImages) {
-          if (demotedImage !== liftedImage) {
+          if (demotedImage !== liftedObject) {
             const {alt, src} = demotedImage as {alt?: string; src?: string}
             report({
               type: 'image-block-to-inline',
