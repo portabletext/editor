@@ -1,6 +1,6 @@
 ---
 name: pr-descriptions
-description: How to write pull request descriptions for the Portable Text Editor monorepo. Use whenever opening or editing a PR here. Covers the changeset-led body (the changeset's prose opens the description), the narrative shape for what follows, honesty about semantic deltas, and length that scales with the diff's blast radius, with real merged exemplars.
+description: How to write pull request descriptions for the Portable Text Editor monorepo. Use whenever opening or editing a PR here. Covers the changeset-led body (the changeset's prose opens the description), the narrative shape for what follows, honesty about behavioral changes, and length that scales with the diff's blast radius, with real merged exemplars.
 ---
 
 # Writing PTE PR descriptions
@@ -44,7 +44,7 @@ description: How to write pull request descriptions for the Portable Text Editor
   skill), and it is what the reviewer actually reads; a body that buries it
   under paragraphs gets skipped whole. After it, the body adds only what
   changesets ban: a concrete example of the failure, one sentence naming
-  the fix mechanism, any semantic delta or honest caveat. When the
+  the fix mechanism, any behavioral change or honest caveat. When the
   changeset alone carries the change, it is the whole body. This mirrors
   the changeset's _prose_; body sentences _about_ the changeset ("a
   changeset rides along") remain banned.
@@ -76,7 +76,7 @@ description: How to write pull request descriptions for the Portable Text Editor
 
 ## Honesty
 
-- Volunteer semantic deltas: a behavioral change nobody would catch in
+- Volunteer behavioral changes: one nobody would catch in
   review gets its own sentence, even a narrow one.
 - Say what is _not_ covered: an untested path, a case deliberately left out
   of scope.
@@ -140,7 +140,7 @@ Why it's canonical: opens with the lived symptom, diagnoses with the actual
 growth mechanism, states the fix as an insight about the platform
 (`Schema.compile` canonical instances), the careful-abouts each pair a
 decision with the test guarding it, numbers have before/after + methodology,
-and it **volunteers a semantic delta nobody would have caught in review**.
+and it **volunteers a behavioral change nobody would have caught in review**.
 
 ## Exemplar: feature PR with headings (#2772, merged)
 
@@ -172,6 +172,8 @@ the full text):
 - Claiming coverage the tests didn't actually run; say what was and wasn't
   exercised.
 - Self-assessments that restate the diff; generated-by footers.
+- The words "delta" (write "change") and "rides along"/"ride along" (write
+  "One additional change:") anywhere in artifact prose.
 - The investigation narrative leaking into the body: how the bug was found
   belongs wherever the work is tracked; the body describes the change.
 - Appending paragraphs as the PR evolves instead of rewriting the body.
