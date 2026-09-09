@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-typography",
-  "version": "8.0.52",
+  "version": "8.0.53",
   "description": "Automatically transform text to typographic variants",
   "keywords": [
     "plugin",

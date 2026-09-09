@@ -1,5 +1,7 @@
 # @portabletext/plugin-paste-link
 
+## 4.0.52
+
 ## 4.0.51
 
 ## 4.0.50
