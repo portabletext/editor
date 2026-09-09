@@ -386,6 +386,13 @@ describe('Feature: Self-solving', () => {
       ),
     })
 
+    const rekeyPatch = {
+      origin: 'local',
+      path: [{_key: blockKey}, 'children', 1, '_key'],
+      type: 'set',
+      value: 'k4',
+    }
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
@@ -400,7 +407,7 @@ describe('Feature: Self-solving', () => {
         },
       ])
 
-      expect(patches).toEqual([])
+      expect(patches).toEqual([rekeyPatch])
     })
 
     await userEvent.click(locator)
@@ -427,12 +434,7 @@ describe('Feature: Self-solving', () => {
       )
 
       expect(patches).toEqual([
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', 1, '_key'],
-          type: 'set',
-          value: 'k4',
-        },
+        rekeyPatch,
         {
           origin: 'local',
           path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'text'],
@@ -604,13 +606,28 @@ describe('Feature: Self-solving', () => {
       ),
     })
 
+    const rekeyPatches = [
+      {
+        origin: 'local',
+        type: 'set',
+        path: [1, '_key'],
+        value: 'k5',
+      },
+      {
+        origin: 'local',
+        type: 'set',
+        path: [2, '_key'],
+        value: 'k6',
+      },
+    ]
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         block0,
         {...block1, _key: 'k5'},
         {...image, _key: 'k6'},
       ])
-      expect(patches).toEqual([])
+      expect(patches).toEqual(rekeyPatches)
     })
 
     await userEvent.click(locator)
@@ -650,18 +667,7 @@ describe('Feature: Self-solving', () => {
         },
       ])
       expect(patches).toEqual([
-        {
-          origin: 'local',
-          type: 'set',
-          path: [1, '_key'],
-          value: 'k5',
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [2, '_key'],
-          value: 'k6',
-        },
+        ...rekeyPatches,
         {
           origin: 'local',
           type: 'diffMatchPatch',
