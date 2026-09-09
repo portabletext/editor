@@ -90,11 +90,12 @@ export interface PortableTextEditorEngine extends DOMEditor {
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
   /**
-   * True after patch generation emits a became-empty `unset([])`, until it
-   * emits the field's rebuild (`setIfMissing` plus the block `insert`).
-   * While true, the emitted stream has destroyed the field, so the next
-   * content-producing local edit must re-materialize it even if a synced
-   * value makes the placeholder look persisted.
+   * True while this editor's own emitted patch stream has destroyed the
+   * field (a root `unset([])` went out) and not yet re-materialized it (a
+   * root `setIfMissing` or `set` went out since). While true, patch
+   * generation rebuilds the field before targeting it again and treats a
+   * placeholder equal to `lastSyncedValue` as unpersisted rather than as
+   * proof the field survived.
    */
   valueUnsetEmitted: boolean
   isPatching: boolean
