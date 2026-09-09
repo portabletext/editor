@@ -668,7 +668,41 @@ portableTextToMarkdown(blocks, {
 
 By default, unknown types render as `json:object` fences or tagged code spans that round-trip (see [Round-trip behavior](#round-trip-behavior)), and unknown marks/styles pass through their children unchanged.
 
-You can also customize hard break rendering:
+#### Gating default renderers on a schema
+
+Going to convert the markdown back with `markdownToPortableText`? Pass the same `schema` to both, and nothing the schema can't rebuild becomes markdown that gets destroyed on the way back: undeclared types travel as `json:object` fences that reparse to the same value.
+
+```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
+const schema = compileSchema(
+  defineSchema({
+    blockObjects: [
+      {
+        name: 'code',
+        fields: [
+          {name: 'code', type: 'string'},
+          {name: 'language', type: 'string'},
+        ],
+      },
+    ],
+  }),
+)
+
+portableTextToMarkdown(blocks, {schema})
+```
+
+A default renderer (`callout`, `code`, `horizontal-rule`, `html`, `image`, `table`) runs only when the schema declares that type at the position the node appears in: `blockObjects` for a block, `inlineObjects` for an inline object. An `image` declared in only one of the two still falls back to `unknownType` at the other position.
+
+The gate reads type names, never field values: declaring a type doesn't validate anything, and a value's fields play no part in which renderer runs. Fields matter on the parse side instead: `markdownToPortableText` filters a construct down to its declared fields, so declare each type with the fields its values carry, or the markdown forms this gate lets through come back rebuilt without them.
+
+An undeclared type falls back to `unknownType`, whose default output is the same `json:object` fence or tagged code span described above, so it round-trips at block and inline positions. Content inside GFM table cells is inline-only, so block-level cell content (fences included) flattens on reparse. Renderers you register in `types` bypass the gate entirely, whether or not the schema declares them.
+
+Without a `schema`, every default renderer stays active.
+
+#### Hard breaks
+
+Customize how a hard break (a `\n` inside a span's text) renders:
 
 ```ts
 portableTextToMarkdown(blocks, {

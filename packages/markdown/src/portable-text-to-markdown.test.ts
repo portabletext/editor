@@ -11,7 +11,15 @@ import {
 } from '@portabletext/toolkit'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {describe, expect, test} from 'vitest'
-import {defaultSchema} from './default-schema'
+import {
+  defaultCalloutObjectDefinition,
+  defaultCodeObjectDefinition,
+  defaultHorizontalRuleObjectDefinition,
+  defaultHtmlObjectDefinition,
+  defaultImageObjectDefinition,
+  defaultSchema,
+  defaultTableObjectDefinition,
+} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
@@ -4137,6 +4145,343 @@ describe(portableTextToMarkdown.name, () => {
       expect(portableTextToMarkdown(portableText)).toBe(markdown)
     })
   })
+  describe('schema-gated default renderers', () => {
+    const emptySchema = compileSchema(defineSchema({}))
+    const schemaWithTable = compileSchema(
+      defineSchema({
+        blockObjects: [defaultTableObjectDefinition],
+      }),
+    )
+    const schemaImageInlineOnly = compileSchema(
+      defineSchema({
+        inlineObjects: [defaultImageObjectDefinition],
+      }),
+    )
+    const schemaImageBlockOnly = compileSchema(
+      defineSchema({
+        blockObjects: [defaultImageObjectDefinition],
+      }),
+    )
+    const schemaWithAll = compileSchema(
+      defineSchema({
+        blockObjects: [
+          defaultCalloutObjectDefinition,
+          defaultCodeObjectDefinition,
+          defaultHorizontalRuleObjectDefinition,
+          defaultHtmlObjectDefinition,
+          defaultImageObjectDefinition,
+          defaultTableObjectDefinition,
+        ],
+      }),
+    )
+
+    const codeValue = {
+      _type: 'code',
+      _key: 'code1',
+      code: "const foo = 'bar'",
+      language: 'js',
+    }
+    const horizontalRuleValue = {_type: 'horizontal-rule', _key: 'hr1'}
+    const htmlValue = {
+      _type: 'html',
+      _key: 'html1',
+      html: '<div class="note">hello</div>',
+    }
+    const calloutValue = {
+      _type: 'callout',
+      _key: 'callout1',
+      tone: 'note',
+      content: [
+        {
+          _type: 'block',
+          _key: 'cb1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'cs1', text: 'Content', marks: []}],
+        },
+      ],
+    }
+
+    const imageValue = {
+      _type: 'image',
+      _key: 'img1',
+      src: 'https://example.com/image.png',
+      alt: 'alt text',
+    }
+
+    const tableValue = {
+      _type: 'table',
+      _key: 'table1',
+      headerRows: 1,
+      rows: [
+        {
+          _type: 'row',
+          _key: 'row1',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'cell1',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'block1',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'span1', text: 'Header 1', marks: []},
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'cell',
+              _key: 'cell2',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'block2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'span2', text: 'Header 2', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          _type: 'row',
+          _key: 'row2',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'cell3',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'block3',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'span3', text: 'Cell 1', marks: []},
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'cell',
+              _key: 'cell4',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'block4',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'span4', text: 'Cell 2', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    const tableMarkdown = [
+      '| Header 1 | Header 2 |',
+      '| --- | --- |',
+      '| Cell 1 | Cell 2 |',
+    ].join('\n')
+
+    describe('a type not declared in the schema falls back to the fence', () => {
+      test('code', () => {
+        expect(
+          portableTextToMarkdown([codeValue], {schema: emptySchema}),
+        ).toEqual(
+          ['```json:object', JSON.stringify(codeValue, null, 2), '```'].join(
+            '\n',
+          ),
+        )
+      })
+
+      test('horizontal-rule', () => {
+        expect(
+          portableTextToMarkdown([horizontalRuleValue], {schema: emptySchema}),
+        ).toEqual(
+          [
+            '```json:object',
+            JSON.stringify(horizontalRuleValue, null, 2),
+            '```',
+          ].join('\n'),
+        )
+      })
+
+      test('html', () => {
+        expect(
+          portableTextToMarkdown([htmlValue], {schema: emptySchema}),
+        ).toEqual(
+          ['```json:object', JSON.stringify(htmlValue, null, 2), '```'].join(
+            '\n',
+          ),
+        )
+      })
+
+      test('image', () => {
+        expect(
+          portableTextToMarkdown([imageValue], {schema: emptySchema}),
+        ).toEqual(
+          ['```json:object', JSON.stringify(imageValue, null, 2), '```'].join(
+            '\n',
+          ),
+        )
+      })
+
+      test('callout', () => {
+        expect(
+          portableTextToMarkdown([calloutValue], {schema: emptySchema}),
+        ).toEqual(
+          ['```json:object', JSON.stringify(calloutValue, null, 2), '```'].join(
+            '\n',
+          ),
+        )
+      })
+
+      test('table', () => {
+        expect(
+          portableTextToMarkdown([tableValue], {schema: emptySchema}),
+        ).toEqual(
+          ['```json:object', JSON.stringify(tableValue, null, 2), '```'].join(
+            '\n',
+          ),
+        )
+      })
+    })
+
+    describe('a type declared in the schema renders through its default renderer', () => {
+      test('code', () => {
+        expect(
+          portableTextToMarkdown([codeValue], {schema: schemaWithAll}),
+        ).toEqual(['```js', "const foo = 'bar'", '```'].join('\n'))
+      })
+
+      test('horizontal-rule', () => {
+        expect(
+          portableTextToMarkdown([horizontalRuleValue], {
+            schema: schemaWithAll,
+          }),
+        ).toEqual('---')
+      })
+
+      test('html', () => {
+        expect(
+          portableTextToMarkdown([htmlValue], {schema: schemaWithAll}),
+        ).toEqual('<div class="note">hello</div>')
+      })
+
+      test('image', () => {
+        expect(
+          portableTextToMarkdown([imageValue], {schema: schemaWithAll}),
+        ).toEqual('![alt text](https://example.com/image.png)')
+      })
+
+      test('callout', () => {
+        expect(
+          portableTextToMarkdown([calloutValue], {schema: schemaWithAll}),
+        ).toEqual('> [!NOTE]\n> Content')
+      })
+
+      test('table', () => {
+        expect(
+          portableTextToMarkdown([tableValue], {schema: schemaWithTable}),
+        ).toEqual(tableMarkdown)
+      })
+    })
+
+    test('a declaration without fields keeps the default renderer', () => {
+      const schemaTableNameOnly = compileSchema(
+        defineSchema({blockObjects: [{name: 'table'}]}),
+      )
+      expect(
+        portableTextToMarkdown([tableValue], {schema: schemaTableNameOnly}),
+      ).toEqual(tableMarkdown)
+    })
+
+    test('an inline `image` declared only in `blockObjects` falls back to the tagged code span', () => {
+      const inlineImageValue = {
+        _type: 'image',
+        _key: 'img2',
+        src: 'https://example.com/icon.png',
+        alt: 'icon',
+      }
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'block',
+              _key: 'b1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 's1', text: 'before ', marks: []},
+                inlineImageValue,
+                {_type: 'span', _key: 's2', text: ' after', marks: []},
+              ],
+            },
+          ],
+          {schema: schemaImageBlockOnly},
+        ),
+      ).toEqual(
+        `before json:object\`${JSON.stringify(inlineImageValue)}\` after`,
+      )
+    })
+
+    test('a block-position `image` declared only in `inlineObjects` falls back to the fence', () => {
+      expect(
+        portableTextToMarkdown([imageValue], {
+          schema: schemaImageInlineOnly,
+        }),
+      ).toEqual(
+        ['```json:object', JSON.stringify(imageValue, null, 2), '```'].join(
+          '\n',
+        ),
+      )
+    })
+
+    test('an explicit `types` renderer overrides the gate', () => {
+      expect(
+        portableTextToMarkdown([tableValue], {
+          schema: emptySchema,
+          types: {table: DefaultTableRenderer},
+        }),
+      ).toEqual(tableMarkdown)
+    })
+
+    test('a custom `unknownType` renderer receives the gated node', () => {
+      expect(
+        portableTextToMarkdown([tableValue], {
+          schema: emptySchema,
+          unknownType: ({value}) => `custom:${value._type}`,
+        }),
+      ).toEqual('custom:table')
+    })
+
+    test('without a `schema`, the default renderer still applies', () => {
+      expect(portableTextToMarkdown([tableValue])).toEqual(tableMarkdown)
+    })
+
+    test('the fence round-trips back to the original value under the same schema', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = portableTextToMarkdown([tableValue], {
+        schema: emptySchema,
+      })
+      expect(
+        markdownToPortableText(markdown, {schema: emptySchema, keyGenerator}),
+      ).toEqual([tableValue])
+    })
+  })
+
   describe('unknown block object (`json:object` fence)', () => {
     test('serializes as a `json:object` fence with the value as pretty JSON', () => {
       const value = {

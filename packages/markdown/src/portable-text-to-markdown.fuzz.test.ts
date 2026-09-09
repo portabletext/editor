@@ -1,7 +1,20 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextBlock, TypedObject} from '@portabletext/types'
+import type {
+  ArbitraryTypedObject,
+  PortableTextBlock,
+  TypedObject,
+} from '@portabletext/types'
 import {describe, expect, test} from 'vitest'
+import {
+  defaultCalloutObjectDefinition,
+  defaultCodeObjectDefinition,
+  defaultHorizontalRuleObjectDefinition,
+  defaultHtmlObjectDefinition,
+  defaultImageObjectDefinition,
+  defaultTableObjectDefinition,
+} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 
@@ -429,6 +442,277 @@ describe('portableTextToMarkdown fuzz (seeded, deterministic)', () => {
           .join('\n')
         expect.fail(
           `${failures.length} of ${attempted} fuzz cases failed text identity:\n${sample}`,
+        )
+      }
+    },
+  )
+})
+
+const GATED_TYPE_DEFINITIONS = {
+  'callout': defaultCalloutObjectDefinition,
+  'code': defaultCodeObjectDefinition,
+  'horizontal-rule': defaultHorizontalRuleObjectDefinition,
+  'html': defaultHtmlObjectDefinition,
+  'image': defaultImageObjectDefinition,
+  'table': defaultTableObjectDefinition,
+} as const
+const GATED_TYPE_NAMES = Object.keys(GATED_TYPE_DEFINITIONS) as Array<
+  keyof typeof GATED_TYPE_DEFINITIONS
+>
+
+const GATED_SEEDS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+const GATED_CASES_PER_SEED = 100
+
+function buildGatedValue(
+  type: keyof typeof GATED_TYPE_DEFINITIONS,
+  keyGenerator: () => string,
+): ArbitraryTypedObject {
+  switch (type) {
+    case 'code':
+      return {
+        _type: 'code',
+        _key: keyGenerator(),
+        code: "const foo = 'bar'",
+        language: 'js',
+      }
+    case 'horizontal-rule':
+      return {_type: 'horizontal-rule', _key: keyGenerator()}
+    case 'html':
+      return {
+        _type: 'html',
+        _key: keyGenerator(),
+        html: '<div class="note">hello</div>',
+      }
+    case 'image':
+      return {
+        _type: 'image',
+        _key: keyGenerator(),
+        src: 'https://example.com/image.png',
+        alt: 'alt text',
+      }
+    case 'callout':
+      return {
+        _type: 'callout',
+        _key: keyGenerator(),
+        tone: 'note',
+        content: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'hello',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      }
+    case 'table':
+      return {
+        _type: 'table',
+        _key: keyGenerator(),
+        headerRows: 1,
+        rows: [
+          {
+            _type: 'row',
+            _key: keyGenerator(),
+            cells: [
+              {
+                _type: 'cell',
+                _key: keyGenerator(),
+                value: [
+                  {
+                    _type: 'block',
+                    _key: keyGenerator(),
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: keyGenerator(),
+                        text: 'Header',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            _type: 'row',
+            _key: keyGenerator(),
+            cells: [
+              {
+                _type: 'cell',
+                _key: keyGenerator(),
+                value: [
+                  {
+                    _type: 'block',
+                    _key: keyGenerator(),
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: keyGenerator(),
+                        text: 'Cell',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+  }
+}
+
+function buildGatedPlainTextBlock(
+  random: () => number,
+  keyGenerator: () => string,
+): PortableTextBlock {
+  const length = randomInt(random, 1, 6)
+  let text = ''
+  for (let i = 0; i < length; i++) {
+    text += pick(random, OPAQUE_SAFE_ALPHABET)
+  }
+  return {
+    _type: 'block',
+    _key: keyGenerator(),
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: keyGenerator(), text, marks: []}],
+  }
+}
+
+interface GeneratedGatedCase {
+  declaredNames: Array<keyof typeof GATED_TYPE_DEFINITIONS>
+  document: Array<ArbitraryTypedObject>
+}
+
+function generateGatedCase(
+  random: () => number,
+  keyGenerator: () => string,
+): GeneratedGatedCase {
+  const declaredNames = GATED_TYPE_NAMES.filter(() => random() < 0.5)
+  const nodeCount = randomInt(random, 1, 3)
+  const document: Array<ArbitraryTypedObject> = []
+  for (let i = 0; i < nodeCount; i++) {
+    if (random() < 0.4) {
+      document.push(buildGatedPlainTextBlock(random, keyGenerator))
+    } else {
+      document.push(
+        buildGatedValue(pick(random, GATED_TYPE_NAMES), keyGenerator),
+      )
+    }
+  }
+  return {declaredNames, document}
+}
+
+/**
+ * Recursively drops `_key`: a declared type's default renderer doesn't
+ * encode keys in markdown, so `markdownToPortableText` assigns fresh ones
+ * on reparse. Comparing gated round trips for content identity means
+ * comparing with keys erased; the two dedicated contract tests already pin
+ * exact key preservation for the fence path.
+ */
+function stripKeys(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(stripKeys)
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => key !== '_key')
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, nested]) => [key, stripKeys(nested)]),
+    )
+  }
+  return value
+}
+
+describe('portableTextToMarkdown schema-gated fuzz (seeded, deterministic)', () => {
+  test(
+    'PT -> MD -> PT content identity under a schema, modulo keys',
+    {timeout: 30_000},
+    () => {
+      const failures: Array<{
+        seed: number
+        caseIndex: number
+        generated: GeneratedGatedCase
+        markdown: string
+        actual: unknown
+      }> = []
+
+      for (const seed of GATED_SEEDS) {
+        const random = mulberry32(seed)
+        for (let caseIndex = 0; caseIndex < GATED_CASES_PER_SEED; caseIndex++) {
+          const buildKeyGenerator = createTestKeyGenerator()
+          const generated = generateGatedCase(random, buildKeyGenerator)
+          const schema = compileSchema(
+            defineSchema({
+              blockObjects: generated.declaredNames.map(
+                (name) => GATED_TYPE_DEFINITIONS[name],
+              ),
+            }),
+          )
+
+          let markdown: string
+          try {
+            markdown = portableTextToMarkdown(generated.document, {schema})
+          } catch (error) {
+            failures.push({
+              seed,
+              caseIndex,
+              generated,
+              markdown: `<threw: ${String(error)}>`,
+              actual: '<n/a>',
+            })
+            continue
+          }
+
+          let actual: unknown
+          try {
+            actual = markdownToPortableText(markdown, {
+              schema,
+              keyGenerator: createTestKeyGenerator(),
+            })
+          } catch (error) {
+            failures.push({
+              seed,
+              caseIndex,
+              generated,
+              markdown,
+              actual: `<threw: ${String(error)}>`,
+            })
+            continue
+          }
+
+          const expected = stripKeys(generated.document)
+          if (JSON.stringify(stripKeys(actual)) !== JSON.stringify(expected)) {
+            failures.push({seed, caseIndex, generated, markdown, actual})
+          }
+        }
+      }
+
+      if (failures.length > 0) {
+        const sample = failures
+          .slice(0, 5)
+          .map(
+            (failure) =>
+              `seed ${failure.seed} case ${failure.caseIndex}: declared ${JSON.stringify(failure.generated.declaredNames)}, document ${JSON.stringify(failure.generated.document)} -> markdown ${JSON.stringify(failure.markdown)} -> got ${JSON.stringify(failure.actual)}`,
+          )
+          .join('\n')
+        expect.fail(
+          `${failures.length} of ${GATED_SEEDS.length * GATED_CASES_PER_SEED} gated fuzz cases failed content identity:\n${sample}`,
         )
       }
     },

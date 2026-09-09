@@ -107,6 +107,11 @@ export type Degradation = {
 }
 
 type Options = {
+  /**
+   * Compiled schema deciding which Portable Text constructs the
+   * conversion may build; pairs with the same option on
+   * `portableTextToMarkdown` to keep the round trip consistent.
+   */
   schema?: Schema
   keyGenerator?: () => string
   /**
