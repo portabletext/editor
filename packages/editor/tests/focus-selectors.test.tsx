@@ -1,17 +1,12 @@
 import {defineSchema} from '@portabletext/schema'
-import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {getFocusBlock, getFocusChild} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 
-describe('focusBlock', () => {
-  test('Returns the text block at the focus point', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    const {locator} = await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+describe('the focus block', () => {
+  test('Scenario: clicking into a text block returns it as the focus block', async () => {
+    const {editor, locator} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -26,7 +21,7 @@ describe('focusBlock', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusBlock(editorRef.current!)).toEqual({
+      expect(getFocusBlock(editor.getSnapshot())?.node).toEqual({
         _type: 'block',
         _key: 'b1',
         children: [{_type: 'span', _key: 's1', text: 'foo', marks: []}],
@@ -36,11 +31,8 @@ describe('focusBlock', () => {
     })
   })
 
-  test('Returns the block object at the focus point', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    const {locator} = await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+  test('Scenario: clicking a block object returns it as the focus block', async () => {
+    const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
       }),
@@ -67,18 +59,15 @@ describe('focusBlock', () => {
     await userEvent.click(imageElement!)
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusBlock(editorRef.current!)).toEqual({
+      expect(getFocusBlock(editor.getSnapshot())?.node).toEqual({
         _type: 'image',
         _key: 'img1',
       })
     })
   })
 
-  test('Returns undefined when no selection', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+  test('Scenario: no selection means no focus block', async () => {
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -91,17 +80,14 @@ describe('focusBlock', () => {
     })
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusBlock(editorRef.current!)).toBeUndefined()
+      expect(getFocusBlock(editor.getSnapshot())?.node).toBeUndefined()
     })
   })
 })
 
-describe('focusChild', () => {
-  test('Returns the span at the focus point', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    const {locator} = await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+describe('the focus child', () => {
+  test('Scenario: clicking into a span returns it as the focus child', async () => {
+    const {editor, locator} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -116,7 +102,7 @@ describe('focusChild', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusChild(editorRef.current!)).toEqual({
+      expect(getFocusChild(editor.getSnapshot())?.node).toEqual({
         _type: 'span',
         _key: 's1',
         text: 'foo',
@@ -125,11 +111,8 @@ describe('focusChild', () => {
     })
   })
 
-  test('Returns the inline object at the focus point', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    const {locator} = await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+  test('Scenario: clicking an inline object returns it as the focus child', async () => {
+    const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],
       }),
@@ -156,18 +139,15 @@ describe('focusChild', () => {
     await userEvent.click(stockTickerElement!)
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusChild(editorRef.current!)).toEqual({
+      expect(getFocusChild(editor.getSnapshot())?.node).toEqual({
         _type: 'stock-ticker',
         _key: 'st1',
       })
     })
   })
 
-  test('Returns undefined for block objects', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    const {locator} = await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+  test('Scenario: clicking a block object returns no focus child', async () => {
+    const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
       }),
@@ -194,15 +174,12 @@ describe('focusChild', () => {
     await userEvent.click(imageElement!)
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusChild(editorRef.current!)).toBeUndefined()
+      expect(getFocusChild(editor.getSnapshot())?.node).toBeUndefined()
     })
   })
 
-  test('Returns undefined when no selection', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-
-    await createTestEditor({
-      children: <InternalPortableTextEditorRefPlugin ref={editorRef} />,
+  test('Scenario: no selection means no focus child', async () => {
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -215,7 +192,7 @@ describe('focusChild', () => {
     })
 
     await vi.waitFor(() => {
-      expect(PortableTextEditor.focusChild(editorRef.current!)).toBeUndefined()
+      expect(getFocusChild(editor.getSnapshot())?.node).toBeUndefined()
     })
   })
 })

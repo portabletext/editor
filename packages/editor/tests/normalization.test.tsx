@@ -208,6 +208,49 @@ describe('normalization', () => {
     })
   })
 
+  test('Scenario: a block with missing `.children` in `initialValue` gets a placeholder span at adoption', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue = [
+      {
+        _key: 'abc',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+      },
+      {
+        _key: 'def',
+        _type: 'block',
+        style: 'normal',
+        children: [],
+        markDefs: [],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'abc',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'def',
+          _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: text blocks with empty `children` get placeholder children', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
@@ -283,6 +326,207 @@ describe('normalization', () => {
           path: [{_key: 'new-block'}, 'children', 0],
           position: 'before',
           items: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a mark with no resolvable decorator or annotation is preserved', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _key: spanKey,
+            _type: 'span',
+            marks: ['ghi'],
+            text: 'Hello',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    editor.send({type: 'focus'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'Hello',
+              marks: ['ghi'],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: an orphaned markDef with no referencing span is removed', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const markDefKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        style: 'normal',
+        markDefs: [
+          {
+            _key: markDefKey,
+            _type: 'link',
+            href: 'https://sanity.io',
+          },
+        ],
+        children: [
+          {
+            _key: spanKey,
+            _type: 'span',
+            marks: [],
+            text: 'Hello',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    editor.send({type: 'focus'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'Hello',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: an undefined value adopts a placeholder block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+    })
+
+    editor.send({type: 'focus'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', marks: [], text: ''}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: an empty array of blocks adopts a placeholder block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [],
+    })
+
+    editor.send({type: 'focus'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', marks: [], text: ''}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a keyless child in a keyed block gets a minted key at adoption', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue = [
+      {
+        _key: 'abc',
+        _type: 'block',
+        children: [
+          {
+            _type: 'span',
+            marks: [],
+            text: 'Hello with a new key',
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const onEvent = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      children: <EventListenerPlugin on={onEvent} />,
+    })
+
+    await vi.waitFor(() => {
+      expect(onEvent).toHaveBeenCalledWith({
+        type: 'value changed',
+        value: initialValue,
+      })
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'abc',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k2',
+              _type: 'span',
+              text: 'Hello with a new key',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
         },
       ])
     })

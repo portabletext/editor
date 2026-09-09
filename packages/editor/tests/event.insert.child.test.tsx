@@ -342,4 +342,92 @@ describe('event.insert.child', () => {
       ])
     })
   })
+
+  test('Scenario: Inserting an inline object at the block end appends a trailing empty span, and inserting a span at that caret replaces it instead of stacking spans', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', marks: [], text: 'Block A'},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'someObject', fields: [{name: 'color', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 7,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.child',
+      child: {_type: 'someObject', color: 'red'},
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', marks: [], text: 'Block A'},
+            {_key: 'k4', _type: 'someObject', color: 'red'},
+            {_key: 'k5', _type: 'span', marks: [], text: ''},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'insert.child',
+      child: {_type: 'span', text: ' '},
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', marks: [], text: 'Block A'},
+            {_key: 'k4', _type: 'someObject', color: 'red'},
+            {_key: 'k6', _type: 'span', marks: [], text: ' '},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: blockKey}, 'children', {_key: 'k6'}], offset: 1},
+        focus: {path: [{_key: blockKey}, 'children', {_key: 'k6'}], offset: 1},
+        backward: false,
+      })
+    })
+  })
 })
