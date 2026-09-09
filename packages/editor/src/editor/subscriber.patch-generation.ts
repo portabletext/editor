@@ -110,18 +110,49 @@ export function subscribePatchGeneration({
       ['set', 'unset', 'remove.text'].includes(operation.type)
     ) {
       patches = [...patches, unset([])]
-      editor.valueUnsetEmitted = true
     }
 
     // Prepend patches with setIfMissing if going from empty editor to something involving a patch.
     if (editorWasEmpty && patches.length > 0) {
       patches = [setIfMissing([], []), ...patches]
-      editor.valueUnsetEmitted = false
       if (isEqualValues({schema}, editor.lastSyncedValue, previousValue)) {
         // Rebuilding right over the recorded value proves the recording
         // was a stale echo of the cleared state; keeping it would make the
         // next became-empty transition skip its `unset([])`.
         editor.lastSyncedValue = undefined
+      }
+    }
+
+    // Prepend patches with setIfMissing when a root `unset` earlier in this
+    // editor's emitted stream destroyed the field: the store cannot apply
+    // patches into a destroyed field until something rebuilds it, and these
+    // patches are neither the destroy nor the rebuild themselves.
+    const [firstPatch] = patches
+    if (
+      previousValue.length === 0 &&
+      editor.valueUnsetEmitted &&
+      firstPatch &&
+      !(
+        (firstPatch.type === 'unset' && firstPatch.path.length === 0) ||
+        ((firstPatch.type === 'setIfMissing' || firstPatch.type === 'set') &&
+          firstPatch.path.length === 0)
+      )
+    ) {
+      patches = [setIfMissing([], []), ...patches]
+    }
+
+    // The stream's own truth about whether the field is currently
+    // destroyed, derived after every prepend/append above has had its say:
+    // a root `unset` destroys it, a root `setIfMissing` or `set` rebuilds
+    // it, and nothing else changes the verdict.
+    for (const patch of patches) {
+      if (patch.type === 'unset' && patch.path.length === 0) {
+        editor.valueUnsetEmitted = true
+      } else if (
+        (patch.type === 'setIfMissing' || patch.type === 'set') &&
+        patch.path.length === 0
+      ) {
+        editor.valueUnsetEmitted = false
       }
     }
 
