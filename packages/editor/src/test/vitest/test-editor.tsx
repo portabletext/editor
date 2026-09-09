@@ -22,6 +22,7 @@ import type {Context} from './step-context'
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
   keyGenerator?: () => string
+  readOnly?: boolean
   schemaDefinition?: SchemaDefinition
   children?: React.ReactNode
   editableProps?: PortableTextEditableProps
@@ -45,6 +46,7 @@ export async function createTestEditor(
         keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
+        readOnly: options.readOnly,
       }}
     >
       <EditorRefPlugin ref={editorRef} />
@@ -83,7 +85,18 @@ export async function createTestEditor(
         ))
   }
 
-  const locator = renderResult.locator.getByRole('textbox')
+  // A read-only editable carries no ARIA `textbox` role (see
+  // `editable.tsx`), so `getByRole` never resolves; the always-present
+  // `data-pt-editor` marker locates it instead.
+  const locator = options.readOnly
+    ? await vi.waitFor(() => {
+        const element = renderResult.container.querySelector('[data-pt-editor]')
+        if (element === null) {
+          throw new Error('Expected to find an element with `data-pt-editor`')
+        }
+        return page.elementLocator(element)
+      })
+    : renderResult.locator.getByRole('textbox')
 
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
@@ -91,6 +104,43 @@ export async function createTestEditor(
     editor: editorRef.current!,
     locator,
     rerender,
+  }
+}
+
+/**
+ * Relays a `mutation` event's patches to `target` immediately, and its
+ * `value` once the whole synchronous flush batch that produced the event
+ * has finished. A single `flush()` call can emit several `mutation`
+ * events back to back (one per pending bulk), all stamped with the same
+ * current-at-flush-time `value` (see `MutationEvent.value`); sending that
+ * value on the first of them would jump `target` straight past the
+ * others' own patches before they get relayed, so those patches would
+ * find nothing left to apply against.
+ */
+function relayMutationsTo(target: React.RefObject<Editor | null>) {
+  let pendingValue: Array<PortableTextBlock> | undefined
+  let valueSyncScheduled = false
+
+  return (event: EditorEmittedEvent) => {
+    if (event.type !== 'mutation') {
+      return
+    }
+    target.current?.send({
+      type: 'patches',
+      patches: event.patches.map((patch) => ({
+        ...patch,
+        origin: 'remote',
+      })),
+      snapshot: event.value,
+    })
+    pendingValue = event.value
+    if (!valueSyncScheduled) {
+      valueSyncScheduled = true
+      queueMicrotask(() => {
+        valueSyncScheduled = false
+        target.current?.send({type: 'update value', value: pendingValue})
+      })
+    }
   }
 }
 
@@ -112,6 +162,8 @@ export async function createTestEditors(
   const keyGeneratorB = options.keyGenerator ?? createTestKeyGenerator('eb-')
   const onEditorEvent = vi.fn<(event: EditorEmittedEvent) => void>()
   const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+  const relayToB = relayMutationsTo(editorBRef)
+  const relayToA = relayMutationsTo(editorRef)
 
   render(
     <>
@@ -130,20 +182,7 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorEvent(event)
-            if (event.type === 'mutation') {
-              editorBRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: event.value,
-              })
-              editorBRef.current?.send({
-                type: 'update value',
-                value: event.value,
-              })
-            }
+            relayToB(event)
           }}
         />
         {options.children}
@@ -163,20 +202,7 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorBEvent(event)
-            if (event.type === 'mutation') {
-              editorRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: event.value,
-              })
-              editorRef.current?.send({
-                type: 'update value',
-                value: event.value,
-              })
-            }
+            relayToA(event)
           }}
         />
         {options.children}

@@ -212,8 +212,9 @@ describe('container normalization', () => {
       ])
     })
 
-    // Normalization patches are deferred during setup. Trigger the dirty
-    // state so deferred patches get emitted.
+    // Setup-deferred patches already flushed at ready; this edit is a
+    // causal sentinel, giving `vi.waitFor` something to catch once its own
+    // patch (and everything ahead of it) has landed.
     editor.send({
       type: 'select',
       at: {

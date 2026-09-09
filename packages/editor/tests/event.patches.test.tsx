@@ -11,7 +11,7 @@ import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema, type EditorEmittedEvent} from '../src'
+import {defineSchema, type EditorEmittedEvent, type MutationEvent} from '../src'
 import {raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
@@ -181,6 +181,7 @@ describe('event.patches', () => {
           path: [],
           value: [],
         },
+        intakeRepair: false,
       })
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
@@ -199,6 +200,7 @@ describe('event.patches', () => {
             },
           ],
         },
+        intakeRepair: false,
       })
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
@@ -208,6 +210,7 @@ describe('event.patches', () => {
           path: [{_key: 'ea-k0'}, 'children', {_key: 'ea-k1'}, 'text'],
           value: '@@ -0,0 +1 @@\n+f\n',
         },
+        intakeRepair: false,
       })
     })
 
@@ -248,6 +251,7 @@ describe('event.patches', () => {
           path: [],
           value: [],
         },
+        intakeRepair: false,
       })
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
@@ -266,6 +270,7 @@ describe('event.patches', () => {
             },
           ],
         },
+        intakeRepair: false,
       })
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
@@ -284,6 +289,7 @@ describe('event.patches', () => {
             },
           ],
         },
+        intakeRepair: false,
       })
     })
 
@@ -338,6 +344,7 @@ describe('event.patches', () => {
           path: [],
           value: [],
         },
+        intakeRepair: false,
       })
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
@@ -356,6 +363,7 @@ describe('event.patches', () => {
             },
           ],
         },
+        intakeRepair: false,
       })
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
@@ -374,6 +382,7 @@ describe('event.patches', () => {
             },
           ],
         },
+        intakeRepair: false,
       })
     })
 
@@ -1849,6 +1858,73 @@ describe('event.patches', () => {
             {_type: 'span', _key: newInlineKey, text: ''},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a pristine editor emits a remote-fallout repair immediately, before any local edit', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_key'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: blockKey}, 'children', 0, '_key'],
+      value: 'k4',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: 'k4', _type: 'span', text: 'hello', marks: []}],
           markDefs: [],
           style: 'normal',
         },
@@ -5535,14 +5611,20 @@ describe('event.patches', () => {
       ),
     })
 
-    // Unlike the single-flush clear above, a character-by-character clear
-    // spreads across flushes, so the mirrored echoes race the ongoing
-    // edits: a stale echo differs from the engine by then, syncs as a
-    // genuine write, and records the placeholder as the last synced
-    // value. The editor's own `unset([])` emission must override that:
-    // its stream destroyed the field, so the retype must rebuild it.
+    // A character-by-character clear spreads across flushes, and each
+    // mutation's `value` reflects the engine at that flush, not at some
+    // earlier moment, so a mirror sent as its own mutation lands can
+    // never itself be stale: a real host's round trip is what actually
+    // makes an echo land describing content the editor has since moved
+    // past. Capturing the 'foo' flush's value and delivering it only
+    // after the clear's own flush has landed reproduces that: the echo
+    // is guaranteed stale by the time it arrives, syncs as a genuine
+    // write, and records the placeholder as the last synced value. The
+    // editor's own `unset([])` emission must override that: its stream
+    // destroyed the field, so the retype must rebuild it.
+    const mutations: Array<MutationEvent> = []
     editor.on('mutation', (event) => {
-      editor.send({type: 'update value', value: event.value})
+      mutations.push(event)
     })
     let remoteOperations = 0
     editor.on('operation', (event) => {
@@ -5563,6 +5645,21 @@ describe('event.patches', () => {
       })
     })
 
+    // Waits for the 'foo' mutation's own flush (not just its patch relay)
+    // so the clear below flushes separately, and captures the value that
+    // flush carries: the pre-clear content a host's echo would mirror
+    // back.
+    await vi.waitFor(() => {
+      expect(mutations.at(-1)?.patches.at(-1)).toEqual({
+        type: 'diffMatchPatch',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
+        origin: 'local',
+      })
+    })
+    const preClearValue = mutations.at(-1)?.value
+    const mutationCountBeforeClear = mutations.length
+
     await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
 
     await vi.waitFor(() => {
@@ -5573,10 +5670,25 @@ describe('event.patches', () => {
       })
     })
 
-    // The echo cascade settles when a stale echo has written into the
-    // engine (a remote-origin operation) and the last write restored the
-    // placeholder. Only then has the poisoned value been recorded, which
-    // is the state the retype below must survive.
+    // Waits for the clear's own flush to land before delivering either
+    // echo: only then is the captured 'foo' value guaranteed stale
+    // (superseded by the clear), and only then does the clear's own
+    // settled value exist to mirror back.
+    await vi.waitFor(() => {
+      expect(mutations.length).toBeGreaterThan(mutationCountBeforeClear)
+    })
+    const postClearValue = mutations.at(-1)?.value
+
+    // Delivers the stale 'foo' echo first (it diverges from the current,
+    // cleared engine state, so it syncs as a genuine remote write), then
+    // the clear's own echo (which overwrites that divergence back down to
+    // the placeholder), reproducing a host's round trip landing after a
+    // more recent one settled: the placeholder ends up recorded as the
+    // last synced value, which is the poisoned state the retype below
+    // must survive.
+    editor.send({type: 'update value', value: preClearValue})
+    editor.send({type: 'update value', value: postClearValue})
+
     await vi.waitFor(() => {
       expect(remoteOperations).toBeGreaterThan(0)
       expect(editor.getSnapshot().context.value).toEqual([
@@ -5703,13 +5815,15 @@ describe('event.patches', () => {
     })
 
     // Build the same poisoned recording as 'Retyping after a
-    // character-by-character clear when the host mirrors values': a
-    // stale mirrored echo lands after the editor's own `unset([])` and
-    // records the placeholder as the last synced value. A remote root
-    // `insert` must override that recording the same way the local
-    // retype does.
+    // character-by-character clear when the host mirrors values' (see its
+    // capture-and-deliver comments for why both the pre-clear capture and
+    // the flush-separating wait matter here too): a stale mirrored echo
+    // lands after the editor's own `unset([])` and records the
+    // placeholder as the last synced value. A remote root `insert` must
+    // override that recording the same way the local retype does.
+    const mutations: Array<MutationEvent> = []
     editor.on('mutation', (event) => {
-      editor.send({type: 'update value', value: event.value})
+      mutations.push(event)
     })
     let remoteOperations = 0
     editor.on('operation', (event) => {
@@ -5730,6 +5844,21 @@ describe('event.patches', () => {
       })
     })
 
+    // Waits for the 'foo' mutation's own flush (not just its patch relay)
+    // so the clear below flushes separately, and captures the value that
+    // flush carries: the pre-clear content a host's echo would mirror
+    // back.
+    await vi.waitFor(() => {
+      expect(mutations.at(-1)?.patches.at(-1)).toEqual({
+        type: 'diffMatchPatch',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
+        origin: 'local',
+      })
+    })
+    const preClearValue = mutations.at(-1)?.value
+    const mutationCountBeforeClear = mutations.length
+
     await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
 
     await vi.waitFor(() => {
@@ -5739,6 +5868,25 @@ describe('event.patches', () => {
         origin: 'local',
       })
     })
+
+    // Waits for the clear's own flush to land before delivering either
+    // echo: only then is the captured 'foo' value guaranteed stale
+    // (superseded by the clear), and only then does the clear's own
+    // settled value exist to mirror back.
+    await vi.waitFor(() => {
+      expect(mutations.length).toBeGreaterThan(mutationCountBeforeClear)
+    })
+    const postClearValue = mutations.at(-1)?.value
+
+    // Delivers the stale 'foo' echo first (it diverges from the current,
+    // cleared engine state, so it syncs as a genuine remote write), then
+    // the clear's own echo (which overwrites that divergence back down to
+    // the placeholder), reproducing a host's round trip landing after a
+    // more recent one settled: the placeholder ends up recorded as the
+    // last synced value, which is the poisoned state the remote insert
+    // below must survive.
+    editor.send({type: 'update value', value: preClearValue})
+    editor.send({type: 'update value', value: postClearValue})
 
     await vi.waitFor(() => {
       expect(remoteOperations).toBeGreaterThan(0)
