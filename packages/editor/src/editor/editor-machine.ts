@@ -16,14 +16,12 @@ import type {
   ExternalBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
-import {isInNormalization} from '../engine/core/apply-context'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {normalize} from '../engine/editor/normalize'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {RegistrableNode} from '../renderers/renderer.types'
-import {pathContains} from '../traversal/path-contains'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -312,30 +310,6 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
-    'discard conflicting pending patches': assign({
-      pendingEvents: ({context, event}) => {
-        if (event.type !== 'patches') {
-          return context.pendingEvents
-        }
-
-        const incomingPaths = event.patches.map((patch) => patch.path)
-
-        return context.pendingEvents.filter((pendingEvent) => {
-          if (pendingEvent.type !== 'internal.patch') {
-            return true
-          }
-
-          return !incomingPaths.some(
-            (incomingPath) =>
-              pathContains(pendingEvent.patch.path, incomingPath) ||
-              pathContains(incomingPath, pendingEvent.patch.path),
-          )
-        })
-      },
-    }),
-    'discard all pending events': assign({
-      pendingEvents: [],
-    }),
     'defer incoming patches': assign({
       pendingIncomingPatchesEvents: ({context, event}) => {
         return event.type === 'patches'
@@ -452,13 +426,6 @@ export const editorMachine = setup({
       }
 
       return context.editorEngine.operations.length > 0
-    },
-    'engine is normalizing node': ({context}) => {
-      if (!context.editorEngine) {
-        return false
-      }
-
-      return isInNormalization(context.editorEngine.applyContext)
     },
   },
 }).createMachine({
@@ -717,6 +684,8 @@ export const editorMachine = setup({
             'emit ready',
             'emit pending incoming patches',
             'clear pending incoming patches',
+            'emit pending events',
+            'clear pending events',
           ],
           on: {
             'internal.patch': {
@@ -788,78 +757,12 @@ export const editorMachine = setup({
               },
             },
             'writing': {
-              initial: 'pristine',
-              states: {
-                pristine: {
-                  initial: 'idle',
-                  states: {
-                    idle: {
-                      entry: [
-                        () => {
-                          debug.state(
-                            'entry: setup->set up->writing->pristine->idle',
-                          )
-                        },
-                      ],
-                      exit: [
-                        () => {
-                          debug.state(
-                            'exit: setup->set up->writing->pristine->idle',
-                          )
-                        },
-                      ],
-                      on: {
-                        'internal.patch': [
-                          {
-                            guard: 'engine is normalizing node',
-                            actions: 'defer event',
-                          },
-                          {
-                            actions: 'defer event',
-                            target: '#editor.setup.set up.writing.dirty',
-                          },
-                        ],
-                        'mutation': [
-                          {
-                            guard: 'engine is normalizing node',
-                            actions: 'defer event',
-                          },
-                          {
-                            actions: 'defer event',
-                            target: '#editor.setup.set up.writing.dirty',
-                          },
-                        ],
-                        'patches': {
-                          actions: 'discard conflicting pending patches',
-                        },
-                        'syncing value': {
-                          actions: 'discard all pending events',
-                        },
-                      },
-                    },
-                  },
+              on: {
+                'internal.patch': {
+                  actions: 'emit patch event',
                 },
-                dirty: {
-                  entry: [
-                    () => {
-                      debug.state('entry: setup->set up->writing->dirty')
-                    },
-                    'emit pending events',
-                    'clear pending events',
-                  ],
-                  exit: [
-                    () => {
-                      debug.state('exit: setup->set up->writing->dirty')
-                    },
-                  ],
-                  on: {
-                    'internal.patch': {
-                      actions: 'emit patch event',
-                    },
-                    'mutation': {
-                      actions: 'emit mutation event',
-                    },
-                  },
+                'mutation': {
+                  actions: 'emit mutation event',
                 },
               },
             },

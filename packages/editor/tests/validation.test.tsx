@@ -1,4 +1,4 @@
-import {defineSchema} from '@portabletext/schema'
+import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
@@ -96,7 +96,7 @@ describe('Value validation', () => {
           resolution: {
             action: 'Remove the item',
             description:
-              "Child at index '0' in block with key 'k2' is not an object.",
+              "Child at index '0' in block with _key 'k2' is not an object.",
             i18n: {
               action:
                 'inputs.portable-text.invalid-value.non-object-child.action',
@@ -348,7 +348,7 @@ describe('Value validation', () => {
           type: 'invalid value',
           resolution: {
             action: 'Remove the item',
-            description: `Child at index '1' in block with key '${blockKey}' is not an object.`,
+            description: `Child at index '1' in block with _key '${blockKey}' is not an object.`,
             i18n: {
               action:
                 'inputs.portable-text.invalid-value.non-object-child.action',
@@ -611,7 +611,7 @@ describe('Value validation', () => {
           resolution: {
             action: 'Remove the item',
             description:
-              "Child at index '0' in block with key 'k4' is not an object.",
+              "Child at index '0' in block with _key 'k4' is not an object.",
             i18n: {
               action:
                 'inputs.portable-text.invalid-value.non-object-child.action',
@@ -768,5 +768,93 @@ describe('Value validation', () => {
         style: 'normal',
       },
     ])
+  })
+
+  test("Scenario: a startup value with a keyless second block with a disallowed _type anchors the resolution patch on its index, not the first block's", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const events: Array<EditorEmittedEvent> = []
+    await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+        },
+        {
+          _type: 'image',
+          children: [{_type: 'span', text: 'bar', marks: []}],
+        } as unknown as PortableTextBlock,
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            events.push(event)
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        // Value sync removes the editor's seed block and inserts the valid
+        // first block, then stops at the second block: keyless, so the
+        // resolution's patches and description must anchor on its index
+        // (`1`) in the synced value, not on the sliced validation call's
+        // own index (`0`).
+        {
+          type: 'operation',
+          operation: {type: 'unset', path: [{_key: 'k2'}]},
+          origin: 'remote',
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            node: {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+          },
+          origin: 'remote',
+        },
+        {
+          type: 'invalid value',
+          resolution: {
+            action: 'Remove the block',
+            description: "Block at index '1' has invalid _type 'image'",
+            i18n: {
+              action:
+                'inputs.portable-text.invalid-value.disallowed-type.action',
+              description:
+                'inputs.portable-text.invalid-value.disallowed-type.description',
+              values: {key: undefined, typeName: 'image'},
+            },
+            item: {
+              _type: 'image',
+              children: [{_type: 'span', text: 'bar', marks: []}],
+            },
+            patches: [{type: 'unset', path: [1]}],
+          },
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'image',
+              children: [{_type: 'span', text: 'bar', marks: []}],
+            },
+          ],
+        },
+        {type: 'ready'},
+      ])
+    })
   })
 })

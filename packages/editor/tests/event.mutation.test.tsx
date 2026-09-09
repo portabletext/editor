@@ -1,22 +1,176 @@
+import {insert, setIfMissing} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {useState} from 'react'
+import {createRef, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {
   EditorProvider,
   PortableTextEditable,
+  type Editor,
   type EditorEmittedEvent,
   type MutationEvent,
   type Patch,
 } from '../src'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.mutation', () => {
-  test('Scenario: Deferring mutation events when read-only', async () => {
+  test('Scenario: a mutation batched before a read-only flip survives a host that rejects mutations while read-only', async () => {
+    let readOnly = false
+    const mutations: Array<MutationEvent> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type !== 'mutation') {
+              return
+            }
+
+            if (readOnly) {
+              // Mirrors Studio's and Canvas' `onChange`: both throw when
+              // asked to patch a read-only document.
+              throw new Error('Attempted to patch a read-only document')
+            }
+
+            mutations.push(event)
+          }}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'foo')
+
+    readOnly = true
+    editor.send({type: 'update readOnly', readOnly: true})
+
+    // The batcher's typing debounce (250ms) and flush interval (500ms in
+    // test mode) both fire well within this window: waiting past it, still
+    // read-only, proves the held mutation survives an attempted flush
+    // rather than merely a flip that outran the cadence.
+    await new Promise((resolve) => setTimeout(resolve, 600))
+
+    readOnly = false
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    await vi.waitFor(() => {
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        typedFooPatches(),
+      ])
+    })
+  })
+
+  test('Scenario: an edit batched before a read-only flip still blocks snapshot clobbering until delivered', async () => {
+    const mutations: Array<MutationEvent> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'foo')
+
+    editor.send({type: 'update readOnly', readOnly: true})
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    // The batcher's typing debounce (250ms) and flush interval (500ms in
+    // test mode) both fire well within this window: waiting past it, the
+    // typed text is still the editor's local value, proving the busy guard
+    // parked the incoming remote value instead of letting it clobber the
+    // unflushed edit.
+    await new Promise((resolve) => setTimeout(resolve, 600))
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
+    expect(mutations).toEqual([])
+
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    await vi.waitFor(() => {
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        typedFooPatches(),
+      ])
+    })
+
+    // Only once the edit is delivered does the sync machine leave `busy`
+    // and reconcile the parked remote value.
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      // The sync machine parks in `busy` and re-checks on a 1s timer, so
+      // this can land a beat over a second after the edit is delivered.
+      {timeout: 5000},
+    )
+  })
+
+  test('Scenario: pending mutations are handed over on unmount even while read-only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = createRef<Editor>()
+    const mutations: Array<MutationEvent> = []
+
+    const renderResult = await render(
+      <EditorProvider
+        initialConfig={{keyGenerator, schemaDefinition: defineSchema({})}}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    editorRef.current!.send({type: 'update readOnly', readOnly: true})
+
+    renderResult.unmount()
+
+    expect(mutations.map((mutation) => mutation.patches)).toEqual([
+      typedFooPatches(),
+    ])
+  })
+
+  test('Scenario: mutations flush once the editor becomes editable again, even for edits made while still read-only', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
     let resolveFooMutation: () => void
@@ -52,44 +206,30 @@ describe('event.mutation', () => {
 
     editor.send({type: 'update readOnly', readOnly: true})
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
+    const foobarMutation = expect.objectContaining({
+      type: 'mutation',
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
 
-    expect(onEvent).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'mutation',
-        value: [
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }),
-    )
+    // The batcher's typing debounce (250ms) and flush interval (500ms in
+    // test mode) both fire well within this window: waiting past it, still
+    // read-only, proves the "bar" mutation is held, not just late.
+    await new Promise((resolve) => setTimeout(resolve, 600))
+
+    expect(onEvent).not.toHaveBeenCalledWith(foobarMutation)
 
     editor.send({type: 'update readOnly', readOnly: false})
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
-
     await vi.waitFor(() => {
-      expect(onEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'mutation',
-          value: [
-            {
-              _type: 'block',
-              _key: 'k0',
-              children: [
-                {_type: 'span', _key: 'k1', text: 'foobar', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        }),
-      )
+      expect(onEvent).toHaveBeenCalledWith(foobarMutation)
     })
   })
 
@@ -262,6 +402,46 @@ describe('event.mutation', () => {
     })
   })
 })
+
+function typedFooPatches(): Array<Patch> {
+  return [
+    {...setIfMissing([], []), origin: 'local'},
+    {
+      ...insert(
+        [
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        'before',
+        [0],
+      ),
+      origin: 'local',
+    },
+    {
+      origin: 'local',
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('', 'f'))),
+    },
+    {
+      origin: 'local',
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('f', 'fo'))),
+    },
+    {
+      origin: 'local',
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
+    },
+  ]
+}
 
 function insertTextSync(locator: Locator, text: string) {
   const element = locator.element()

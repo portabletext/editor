@@ -33,9 +33,10 @@ export type EditorEvent =
        * if the editor's content has since diverged from it through local
        * edits.
        *
-       * Reconciliation is not an edit: it emits no `patch` or `mutation`
-       * events and adds no history step. While local changes are in
-       * flight, it is deferred until they have flushed. `undefined` and
+       * Reconciliation itself is not an edit and adds no history step.
+       * Repairs of structurally invalid content that it triggers do emit
+       * `patch` and `mutation` events. While local changes are in flight,
+       * it is deferred until they have flushed. `undefined` and
        * `[]` are the same empty snapshot: sending either when the previous
        * snapshot was also empty is a no-op and never clears locally typed
        * content.
