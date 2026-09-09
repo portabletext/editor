@@ -1,4 +1,3 @@
-import {applyAll, type Patch} from '@portabletext/patches'
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
@@ -26,6 +25,7 @@ import type {Node} from '../engine/interfaces/node'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
+import {deepEqualJson} from '../internal-utils/deep-equal-json'
 import {deleteRange} from '../internal-utils/delete-range'
 import {
   isEqualBlocks,
@@ -44,10 +44,6 @@ import type {EditorSchema} from './editor-schema'
 
 type SyncValueEvent =
   | {
-      type: 'patch'
-      patch: Patch
-    }
-  | {
       type: 'invalid value'
       resolution: InvalidValueResolution | null
       value: Array<PortableTextBlock> | undefined
@@ -60,6 +56,7 @@ type SyncValueEvent =
       type: 'done syncing'
       value: Array<PortableTextBlock> | undefined
       changed: boolean
+      echoedBlockKeys: Set<string>
     }
 
 const syncValueCallback: CallbackLogicFunction<
@@ -69,7 +66,6 @@ const syncValueCallback: CallbackLogicFunction<
     context: {
       keyGenerator: () => string
       previousValue: Array<PortableTextBlock> | undefined
-      readOnly: boolean
       schema: EditorSchema
     }
     editorEngine: PortableTextEditorEngine
@@ -111,7 +107,6 @@ export const syncMachine = setup({
       initialValueSynced: boolean
       keyGenerator: () => string
       schema: EditorSchema
-      readOnly: boolean
       editorEngine: PortableTextEditorEngine
       pendingValue: Array<PortableTextBlock> | undefined
       previousValue: Array<PortableTextBlock> | undefined
@@ -120,7 +115,6 @@ export const syncMachine = setup({
       initialValue: Array<PortableTextBlock> | undefined
       keyGenerator: () => string
       schema: EditorSchema
-      readOnly: boolean
       editorEngine: PortableTextEditorEngine
     },
     events: {} as
@@ -128,29 +122,17 @@ export const syncMachine = setup({
           type: 'update value'
           value: Array<PortableTextBlock> | undefined
         }
-      | {
-          type: 'update readOnly'
-          readOnly: boolean
-        }
       | SyncValueEvent,
     emitted: {} as
-      | PickFromUnion<
-          SyncValueEvent,
-          'type',
-          'invalid value' | 'patch' | 'value changed'
-        >
+      | PickFromUnion<SyncValueEvent, 'type', 'invalid value' | 'value changed'>
       | {type: 'done syncing value'}
-      | {type: 'syncing value'},
+      | {type: 'syncing value'}
+      | {type: 'inbound sync started'}
+      | {type: 'inbound state applied'; echoedBlockKeys: Set<string>},
   },
   actions: {
     'assign initial value synced': assign({
       initialValueSynced: true,
-    }),
-    'assign readOnly': assign({
-      readOnly: ({event}) => {
-        assertEvent(event, 'update readOnly')
-        return event.readOnly
-      },
     }),
     'assign pending value': assign({
       pendingValue: ({event}) => {
@@ -180,6 +162,40 @@ export const syncMachine = setup({
     }),
     'emit syncing value': emit({
       type: 'syncing value',
+    }),
+    // `emit`, not a plain action, so XState defers delivery behind `emit
+    // done syncing value`'s own synchronous fallout (the editor machine
+    // relaying this pass's patches to the mutation batcher), landing only
+    // once that fallout settles. A fresh editor's first sync holds those
+    // patches behind the editor machine's `setting up` state until that
+    // relay runs, so firing this any earlier would drop superseded
+    // repairs before they arrive and misattribute them to whichever pass
+    // drops them next.
+    //
+    // Fires on every settle, carrying the pass's echoed-block-keys set: a
+    // block in that set still echoes its pre-repair shape (the engine's
+    // repair journal matched it against a `beforeShape` while the engine
+    // still holds the `afterShape`), so the mutation batcher's
+    // `dropSupersededRepairs` keeps that block's held repair instead of
+    // dropping it as superseded when nothing has actually superseded it.
+    'emit inbound state applied': emit(({event}) => {
+      assertEvent(event, 'done syncing')
+      return {
+        type: 'inbound state applied' as const,
+        echoedBlockKeys: event.echoedBlockKeys,
+      }
+    }),
+    // Bumps the mutation batcher's generation before this pass's own
+    // invoked `sync value` actor can mint anything: XState resolves a
+    // state's `entry` actions before spawning its `invoke`d actors (both
+    // run as part of entering the state, entry first), so this emission
+    // is guaranteed to land before the pass's first repair. A repair
+    // minted between passes (remote-patch fallout, outside any settling
+    // pass) still carries the generation from before this bump, which is
+    // what lets the next pass's `dropSupersededRepairs` tell it apart
+    // from that pass's own mints.
+    'emit inbound sync started': emit({
+      type: 'inbound sync started' as const,
     }),
   },
   guards: {
@@ -257,7 +273,6 @@ export const syncMachine = setup({
     initialValueSynced: false,
     keyGenerator: input.keyGenerator,
     schema: input.schema,
-    readOnly: input.readOnly,
     editorEngine: input.editorEngine,
     pendingValue: undefined,
     previousValue: undefined,
@@ -267,11 +282,6 @@ export const syncMachine = setup({
       return {type: 'update value', value: context.initialValue}
     }),
   ],
-  on: {
-    'update readOnly': {
-      actions: ['assign readOnly'],
-    },
-  },
   initial: 'idle',
   states: {
     idle: {
@@ -374,6 +384,7 @@ export const syncMachine = setup({
           debug.syncValue('entry: syncing->syncing')
         },
         'emit syncing value',
+        'emit inbound sync started',
       ],
       exit: [
         () => {
@@ -389,7 +400,6 @@ export const syncMachine = setup({
             context: {
               keyGenerator: context.keyGenerator,
               previousValue: context.previousValue,
-              readOnly: context.readOnly,
               schema: context.schema,
             },
             editorEngine: context.editorEngine,
@@ -402,9 +412,6 @@ export const syncMachine = setup({
         'update value': {
           guard: 'is new value',
           actions: ['assign pending value'],
-        },
-        'patch': {
-          actions: [emit(({event}) => event)],
         },
         'invalid value': {
           actions: [emit(({event}) => event)],
@@ -419,6 +426,7 @@ export const syncMachine = setup({
               'assign previous value',
               'record synced value on engine',
               'assign initial value synced',
+              'emit inbound state applied',
             ],
             target: 'syncing',
             reenter: true,
@@ -430,6 +438,7 @@ export const syncMachine = setup({
               'assign previous value',
               'record synced value on engine',
               'assign initial value synced',
+              'emit inbound state applied',
             ],
           },
         ],
@@ -448,7 +457,6 @@ async function updateValue({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
@@ -459,6 +467,17 @@ async function updateValue({
   let doneSyncing = false
   let isChanged = false
   let isValid = true
+  const echoedBlockKeys = new Set<string>()
+
+  const finishSyncing = () => {
+    doneSyncing = true
+    sendBack({
+      type: 'done syncing',
+      value,
+      changed: isChanged,
+      echoedBlockKeys,
+    })
+  }
 
   const hadSelection = !!editorEngine.snapshot.context.selection
   // `streamBlocks` is true only for a fresh editor's first value sync
@@ -500,7 +519,7 @@ async function updateValue({
           ] of getStreamedBlocks({
             value,
           })) {
-            const {blockChanged, blockValid} = syncBlock({
+            const {blockChanged, blockValid, echoedBlockKey} = syncBlock({
               context,
               sendBack,
               block: currentBlock,
@@ -512,6 +531,9 @@ async function updateValue({
 
             isChanged = blockChanged || isChanged
             isValid = isValid && blockValid
+            if (echoedBlockKey !== undefined) {
+              echoedBlockKeys.add(echoedBlockKey)
+            }
 
             if (!isValid) {
               break
@@ -537,7 +559,7 @@ async function updateValue({
       let index = 0
 
       for (const block of value) {
-        const {blockChanged, blockValid} = syncBlock({
+        const {blockChanged, blockValid, echoedBlockKey} = syncBlock({
           context,
           sendBack,
           block,
@@ -549,6 +571,9 @@ async function updateValue({
 
         isChanged = blockChanged || isChanged
         isValid = isValid && blockValid
+        if (echoedBlockKey !== undefined) {
+          echoedBlockKeys.add(echoedBlockKey)
+        }
 
         if (!blockValid) {
           break
@@ -562,9 +587,7 @@ async function updateValue({
   if (!isValid) {
     debug.syncValue('Invalid value, returning')
 
-    doneSyncing = true
-
-    sendBack({type: 'done syncing', value, changed: isChanged})
+    finishSyncing()
 
     return
   }
@@ -583,9 +606,7 @@ async function updateValue({
         value,
       })
 
-      doneSyncing = true
-
-      sendBack({type: 'done syncing', value, changed: isChanged})
+      finishSyncing()
 
       return
     }
@@ -604,9 +625,7 @@ async function updateValue({
     debug.syncValue('remote value and local value are equal, no need to sync')
   }
 
-  doneSyncing = true
-
-  sendBack({type: 'done syncing', value, changed: isChanged})
+  finishSyncing()
 }
 
 async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
@@ -712,7 +731,6 @@ function syncBlock({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
@@ -721,25 +739,24 @@ function syncBlock({
   editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
   remoteSource: RemoteSyncSource
-}) {
+}): {
+  blockChanged: boolean
+  blockValid: boolean
+  echoedBlockKey?: string
+} {
   const oldEngineBlock = editorEngine.snapshot.context.value.at(index)
   const oldBlock = editorEngine.snapshot.context.value.at(index)
 
   if (!oldEngineBlock || !oldBlock) {
-    const validation = validateValue(
-      [block],
-      context.schema,
-      context.keyGenerator,
-    )
+    const validation = validateValue([block], context.schema, index)
 
     debug.syncValue(
       'Validating and inserting new block in the end of the value',
       block,
     )
 
-    if (validation.valid || validation.resolution?.autoResolve) {
-      const repairedBlock = applyAutoResolution(validation, [block], block)
-      const engineBlock = toEngineBlock(repairedBlock, {
+    if (validation.valid) {
+      const engineBlock = toEngineBlock(block, {
         schemaTypes: context.schema,
       })
 
@@ -776,6 +793,36 @@ function syncBlock({
     }
   }
 
+  const journalEntry = editorEngine.repairJournal.get(oldBlock._key)
+
+  if (journalEntry) {
+    const inboundEngineBlock = toEngineBlock(block, {
+      schemaTypes: context.schema,
+    })
+
+    if (deepEqualJson(inboundEngineBlock, journalEntry.afterShape)) {
+      // The host has learned the repair: fall through to the ordinary
+      // diff, which will find nothing left to sync.
+      editorEngine.repairJournal.delete(oldBlock._key)
+    } else if (
+      deepEqualJson(inboundEngineBlock, journalEntry.beforeShape) &&
+      deepEqualJson(oldBlock, journalEntry.afterShape)
+    ) {
+      // The snapshot still echoes the pre-repair shape while the engine
+      // holds exactly what the repair produced: a stale echo, not a
+      // genuine edit. Leave the entry in place for the next echo.
+      return {
+        blockChanged: false,
+        blockValid: true,
+        echoedBlockKey: oldBlock._key,
+      }
+    } else {
+      // Neither an ack nor an echo: something else changed the block.
+      // The journaled verdict no longer describes it.
+      editorEngine.repairJournal.delete(oldBlock._key)
+    }
+  }
+
   if (isEqualBlocks(context, block, oldBlock)) {
     return {
       blockChanged: false,
@@ -791,42 +838,11 @@ function syncBlock({
     }
   }
   const validationValue = [blockToValidate]
-  const validation = validateValue(
-    validationValue,
-    context.schema,
-    context.keyGenerator,
-  )
+  const validation = validateValue(validationValue, context.schema, index)
 
-  // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-  if (
-    !validation.valid &&
-    validation.resolution?.autoResolve &&
-    validation.resolution?.patches.length > 0
-  ) {
-    // Only apply auto resolution if the value has been populated before and is different from the last one.
-    if (
-      !context.readOnly &&
-      context.previousValue &&
-      context.previousValue !== value
-    ) {
-      console.warn(
-        `${validation.resolution.action} for block with _key '${blockToValidate._key}'. ${validation.resolution?.description}`,
-      )
-      validation.resolution.patches.forEach((patch) => {
-        sendBack({type: 'patch', patch})
-      })
-    }
-  }
-
-  if (validation.valid || validation.resolution?.autoResolve) {
-    const repairedBlock = applyAutoResolution(
-      validation,
-      validationValue,
-      block,
-    )
-
+  if (validation.valid) {
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
-      debug.syncValue('Updating block', oldBlock, repairedBlock)
+      debug.syncValue('Updating block', oldBlock, block)
 
       withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
@@ -835,14 +851,14 @@ function syncBlock({
               context,
               editorEngine,
               oldEngineBlock,
-              block: repairedBlock,
+              block,
               index,
             })
           })
         })
       })
     } else {
-      debug.syncValue('Replacing block', oldBlock, repairedBlock)
+      debug.syncValue('Replacing block', oldBlock, block)
 
       withRemoteChanges(editorEngine, remoteSource, () => {
         withoutNormalizing(editorEngine, () => {
@@ -850,7 +866,7 @@ function syncBlock({
             replaceBlock({
               context,
               editorEngine,
-              block: repairedBlock,
+              block,
               index,
             })
           })
@@ -876,26 +892,6 @@ function syncBlock({
   }
 }
 
-/**
- * `validateValue` auto-resolutions must reach the engine as state, not
- * only the document as patches. Applying them only outbound forks the
- * repair: the document receives the resolution (e.g. a minted child
- * `_key`) while the engine holds the un-repaired shape its addressing
- * model cannot represent, and normalization then mints a different key
- * for the same node. The resolution patches were built from
- * `validationValue` itself, so they always apply; the fallback only
- * covers the impossible empty result.
- */
-function applyAutoResolution(
-  validation: ReturnType<typeof validateValue>,
-  validationValue: Array<PortableTextBlock>,
-  block: PortableTextBlock,
-): PortableTextBlock {
-  return !validation.valid && validation.resolution?.autoResolve
-    ? (applyAll(validationValue, validation.resolution.patches).at(0) ?? block)
-    : block
-}
-
 function replaceBlock({
   context,
   editorEngine,
@@ -905,7 +901,6 @@ function replaceBlock({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   editorEngine: PortableTextEditorEngine
@@ -957,7 +952,7 @@ function replaceBlock({
   }
 }
 
-function updateBlock({
+export function updateBlock({
   context,
   editorEngine,
   oldEngineBlock,
@@ -967,7 +962,6 @@ function updateBlock({
   context: {
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
     schema: EditorSchema
   }
   editorEngine: PortableTextEditorEngine
@@ -1027,8 +1021,19 @@ function updateBlock({
       oldKeySet.size === oldKeys.length &&
       oldKeys.some((key, i) => key !== newKeys[i]) &&
       newKeys.every((key) => oldKeySet.has(key))
+    // Keyed reconciliation below builds `{_key: child._key}` path segments
+    // from `engineBlock.children`; a keyless child would produce
+    // `{_key: undefined}`, so route those cases through the wholesale set.
+    const hasKeylessChild = engineBlock.children.some(
+      (child) => typeof child._key !== 'string' || child._key === '',
+    )
 
-    if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
+    if (
+      isPureReorder ||
+      (newKeys.length > 0 && !hasSharedKeys) ||
+      engineBlock.children.length === 0 ||
+      hasKeylessChild
+    ) {
       debug.syncValue('Replacing children via set')
       applyNodeProperties(editorEngine, {children: engineBlock.children}, [
         {_key: oldEngineBlock._key},

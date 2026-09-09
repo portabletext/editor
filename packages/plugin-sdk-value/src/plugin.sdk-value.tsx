@@ -824,9 +824,10 @@ function applySync({
 const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
   ({sendBack, input}) => {
     const patchSubscription = input.editor.on('patch', () => {
-      // Every 'patch' event is a local edit (remote application suppresses
-      // patch generation), so the store now lags the editor until the next
-      // mutation flush.
+      // Every `patch` event marks a change the editor produced on its own,
+      // a user edit or an intake/normalization repair, never a remote
+      // application bouncing its own patches back; either way, the store
+      // now lags the editor until the next mutation flush.
       unflushedEdits.set(input.editor, true)
       sendBack({type: 'patch emitted'})
     })

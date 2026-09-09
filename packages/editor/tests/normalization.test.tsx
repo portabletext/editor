@@ -379,7 +379,7 @@ describe('normalization', () => {
     })
   })
 
-  test('Scenario: an orphaned markDef with no referencing span is removed', async () => {
+  test('Scenario: an orphaned markDef is pruned when a local edit touches the block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const markDefKey = keyGenerator()
@@ -406,8 +406,10 @@ describe('normalization', () => {
         ],
       },
     ]
+    const onChange = vi.fn()
 
     const {editor} = await createTestEditor({
+      children: <EventListenerPlugin on={onChange} />,
       keyGenerator,
       initialValue,
     })
@@ -415,6 +417,9 @@ describe('normalization', () => {
     editor.send({type: 'focus'})
 
     await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      // Focusing does not dirty the block, so the orphaned markDef
+      // stays exactly as the document has it until a local edit.
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
@@ -424,6 +429,55 @@ describe('normalization', () => {
               _key: spanKey,
               _type: 'span',
               text: 'Hello',
+              marks: [],
+            },
+          ],
+          markDefs: [
+            {
+              _key: markDefKey,
+              _type: 'link',
+              href: 'https://sanity.io',
+            },
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'patch',
+        patch: {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+          origin: 'local',
+        },
+      })
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'Hello!',
               marks: [],
             },
           ],
