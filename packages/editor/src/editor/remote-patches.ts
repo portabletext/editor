@@ -42,10 +42,11 @@ export function setupRemotePatches({
           pluginWithoutHistory(editor, () => {
             for (const patch of patches) {
               try {
-                changed = applyPatch(editor, patch)
+                const patchChanged = applyPatch(editor, patch)
+                changed ||= patchChanged
 
                 if (debug.syncPatch.enabled) {
-                  if (changed) {
+                  if (patchChanged) {
                     debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
                   } else {
                     debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
@@ -62,9 +63,19 @@ export function setupRemotePatches({
       })
       if (changed) {
         normalize(editor)
-        editor.onChange()
       }
     })
+
+    if (changed) {
+      // No superseded-repair drop here, unlike a value sync: patches are
+      // deltas, not full snapshots, so a batch can change engine state
+      // without superseding a held repair, and the engine's own tree is
+      // already repaired, so normalization re-mints nothing. Dropping here
+      // orphans the store's only copy of the fix. A batch that genuinely
+      // supersedes a held repair (another client's key mint) leaves it to
+      // flush anyway, converging by last write like any concurrent mint.
+      editor.onChange()
+    }
   }
 
   const handlePatches = ({patches}: {patches: Patch[]}) => {

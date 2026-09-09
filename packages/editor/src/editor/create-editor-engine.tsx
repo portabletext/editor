@@ -10,6 +10,7 @@ import type {EditorActor} from './editor-machine'
 import {setupRemotePatches} from './remote-patches'
 import {subscribeHistory} from './subscriber.history'
 import {subscribePatchGeneration} from './subscriber.patch-generation'
+import {subscribeRepairJournal} from './subscriber.repair-journal'
 import {subscribeUpdateValue} from './subscriber.update-value'
 
 type EditorEngineConfig = {
@@ -72,10 +73,13 @@ export function createEditorEngine(
 
   editor.selectorChannelsPending = {registrations: false}
   editor.verifiedUniqueChildGroups = new Set<string>()
+  editor.repairJournal = new Map()
   editor.remotePatches = []
   editor.undoStepId = undefined
 
   editor.isDeferringMutations = false
+  editor.notifyInboundSyncStarted = null
+  editor.notifyInboundStateApplied = null
   editor.lastSyncedValue = undefined
   editor.valueUnsetEmitted = false
   editor.isPatching = true
@@ -87,6 +91,7 @@ export function createEditorEngine(
   })
 
   subscribeUpdateValue(context, editorEngine)
+  subscribeRepairJournal(editorEngine)
   subscribePatchGeneration({
     editorActor: config.editorActor,
     editor: editorEngine,
