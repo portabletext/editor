@@ -12,6 +12,9 @@ import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
+import {raise} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -5674,6 +5677,367 @@ describe('event.patches', () => {
         },
       ])
     })
+  })
+
+  test('Scenario: a behavior raising root `unset` then `insert.block` in one action set emits an applicable patch stream', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+        ],
+      },
+    ]
+    const replacementBlock: PortableTextBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <>
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.replace all',
+                actions: [
+                  () => [
+                    raise({type: 'unset', at: []}),
+                    raise({
+                      type: 'insert.block',
+                      block: replacementBlock,
+                      placement: 'auto',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({type: 'custom.replace all'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([replacementBlock])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {type: 'unset', path: [], origin: 'local'},
+        {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [replacementBlock],
+          origin: 'local',
+        },
+      ])
+    })
+
+    expect(applyAll(initialValue, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: a behavior raising root `unset` twice then `insert.block` in one action set emits an applicable patch stream', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+        ],
+      },
+    ]
+    const replacementBlock: PortableTextBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <>
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.replace all',
+                actions: [
+                  () => [
+                    raise({type: 'unset', at: []}),
+                    raise({type: 'unset', at: []}),
+                    raise({
+                      type: 'insert.block',
+                      block: replacementBlock,
+                      placement: 'auto',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({type: 'custom.replace all'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([replacementBlock])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {type: 'unset', path: [], origin: 'local'},
+        {type: 'unset', path: [], origin: 'local'},
+        {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [replacementBlock],
+          origin: 'local',
+        },
+      ])
+    })
+
+    expect(applyAll(initialValue, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: a behavior raising root `unset` then `insert.block` while the editor is an empty placeholder emits an applicable patch stream', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <>
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.replace all',
+                actions: [
+                  () => {
+                    const replacementBlock: PortableTextBlock = {
+                      _type: 'block',
+                      _key: keyGenerator(),
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keyGenerator(),
+                          text: 'bar',
+                          marks: [],
+                        },
+                      ],
+                    }
+                    return [
+                      raise({type: 'unset', at: []}),
+                      raise({
+                        type: 'insert.block',
+                        block: replacementBlock,
+                        placement: 'auto',
+                      }),
+                    ]
+                  },
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({type: 'custom.replace all'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+            },
+          ],
+          origin: 'local',
+        },
+        {type: 'unset', path: [], origin: 'local'},
+        {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+          origin: 'local',
+        },
+      ])
+    })
+
+    expect(applyAll([] as Array<PortableTextBlock>, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `history.redo` replays a behavior-raised root `unset` then `insert.block` as an applicable patch stream', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+        ],
+      },
+    ]
+    const replacementBlock: PortableTextBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <>
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.replace all',
+                actions: [
+                  () => [
+                    raise({type: 'unset', at: []}),
+                    raise({
+                      type: 'insert.block',
+                      block: replacementBlock,
+                      placement: 'auto',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    await userEvent.click(locator)
+    editor.send({type: 'custom.replace all'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([replacementBlock])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    const patchCountBeforeRedo = patches.length
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([replacementBlock])
+    })
+
+    const redoPatches = patches.slice(patchCountBeforeRedo)
+
+    expect(applyAll(initialValue, redoPatches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
   })
 
   test('Scenario: Remote `insert` next to a pristine block synced in via `update value`', async () => {
