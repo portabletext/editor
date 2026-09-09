@@ -1,5 +1,7 @@
 # @portabletext/plugin-table
 
+## 1.3.22
+
 ## 1.3.21
 
 ## 1.3.20
