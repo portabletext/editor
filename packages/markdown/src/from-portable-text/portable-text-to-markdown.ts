@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import type {
   ArbitraryTypedObject,
   PortableTextBlock,
@@ -84,6 +85,20 @@ const defaultRenderers: PortableTextRenderers = {
 
 type Options = Partial<PortableTextRenderers> & {
   blockSpacing?: BlockSpacingRenderer
+
+  /**
+   * Compiled schema that gates the built-in type renderers; it never
+   * validates the value. A default renderer runs only when the schema
+   * declares its type (`blockObjects` for block position, `inlineObjects`
+   * for inline); undeclared types render through `unknownType`, whose
+   * default output reparses back to the same value. The gate checks the
+   * type name only, so declare the type's fields too:
+   * `markdownToPortableText` cannot rebuild a value from a fieldless
+   * declaration. Renderers passed in `types` are never gated. Pass the
+   * same schema to `markdownToPortableText` to keep the round trip
+   * consistent. Omitted, all default renderers stay active.
+   */
+  schema?: Schema
 }
 
 /**
@@ -103,7 +118,11 @@ export function portableTextToMarkdown<
       ...options.marks,
     },
     types: {
-      ...defaultRenderers.types,
+      ...gateDefaultTypeRenderers(
+        defaultRenderers.types,
+        options.schema,
+        options.unknownType ?? defaultRenderers.unknownType,
+      ),
       ...options.types,
     },
     hardBreak: options.hardBreak ?? defaultRenderers.hardBreak,
@@ -147,4 +166,29 @@ export function portableTextToMarkdown<
       return `${renderedNode}${blockSpacing}`
     })
     .join('')
+}
+
+function gateDefaultTypeRenderers(
+  defaultTypeRenderers: PortableTextRenderers['types'],
+  schema: Schema | undefined,
+  resolvedUnknownType: PortableTextRenderers['unknownType'],
+): PortableTextRenderers['types'] {
+  if (!schema) {
+    return defaultTypeRenderers
+  }
+
+  return Object.fromEntries(
+    Object.entries(defaultTypeRenderers).map(([typeName, renderer]) => [
+      typeName,
+      (rendererOptions: Parameters<typeof resolvedUnknownType>[0]) => {
+        const declared = (
+          rendererOptions.isInline ? schema.inlineObjects : schema.blockObjects
+        ).some((item) => item.name === typeName)
+
+        return declared && renderer
+          ? renderer(rendererOptions)
+          : resolvedUnknownType(rendererOptions)
+      },
+    ]),
+  )
 }
