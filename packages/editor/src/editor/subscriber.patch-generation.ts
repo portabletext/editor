@@ -49,9 +49,10 @@ export function subscribePatchGeneration({
       isEqualToEmptyEditor(initialValue, previousValue, schema) &&
       // After this editor emits `unset([])`, its own stream must
       // re-materialize the field before targeting it again, no matter what
-      // value sync recorded in between: a mirroring host's stale echo of
-      // the cleared state syncs as a genuine write and would otherwise
-      // pass the placeholder off as persisted content.
+      // value sync recorded in between: a mirroring host's echo of the
+      // cleared state that has aged out of the emitted-values ledger
+      // still syncs as a genuine write and would otherwise pass the
+      // placeholder off as persisted content.
       (editor.valueUnsetEmitted ||
         !isEqualValues({schema}, editor.lastSyncedValue, previousValue))
 
