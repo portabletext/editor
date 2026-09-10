@@ -6,6 +6,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {applyMarkdownEdit} from './apply-markdown-edit'
+import {defaultTableObjectDefinition} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 
 function block(
@@ -1336,6 +1337,77 @@ describe(applyMarkdownEdit.name, () => {
         alignment: 'center',
       },
     ])
+  })
+
+  test('inexpressible fields are restored on spans, markDefs, rows, and cells', () => {
+    const schema = compileSchema(
+      defineSchema({
+        decorators: [{name: 'strong'}],
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+        blockObjects: [defaultTableObjectDefinition],
+      }),
+    )
+    const fixture = (cellText: string) => [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [
+          {
+            _type: 'link',
+            _key: 'a1',
+            href: 'https://x.example',
+            rel: 'nofollow',
+          },
+        ],
+        children: [
+          {_type: 'span', _key: 's1', text: 'plain ', marks: [], emphasis: 0.7},
+          {_type: 'span', _key: 's2', text: 'linked', marks: ['a1']},
+          {_type: 'span', _key: 's3', text: ' and ', marks: []},
+          {_type: 'span', _key: 's4', text: 'tail', marks: ['strong']},
+        ],
+      },
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 1,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            rowTint: 'blue',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                colspan: 2,
+                value: [
+                  {
+                    _type: 'block',
+                    _key: 'cb1',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'cs1', text: cellText, marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const stored = fixture('cell')
+    const markdown = portableTextToMarkdown(structuredClone(stored), {
+      schema,
+    }).replace('cell', 'CELL')
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        schema,
+        deserialize: {keyGenerator: createTestKeyGenerator()},
+      }),
+    ).toEqual(fixture('CELL'))
   })
 
   test('an adopted table gets its markdown-inexpressible fields back', () => {
