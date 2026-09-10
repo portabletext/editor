@@ -181,6 +181,40 @@ describe(applyMarkdownEdit.name, () => {
     ).toEqual(stored)
   })
 
+  test('two identical annotations with a dropped field keep their keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [
+          {
+            _type: 'link',
+            _key: 'a1',
+            href: 'https://same.example',
+            rel: 'nofollow',
+          },
+          {
+            _type: 'link',
+            _key: 'a2',
+            href: 'https://same.example',
+            rel: 'nofollow',
+          },
+        ],
+        children: [
+          {_type: 'span', _key: 's1', text: 'first', marks: ['a1']},
+          {_type: 'span', _key: 's2', text: ' and ', marks: []},
+          {_type: 'span', _key: 's3', text: 'second', marks: ['a2']},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual(stored)
+  })
+
   test('an unchanged link keeps its annotation key and reference', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [

@@ -861,7 +861,17 @@ function adoptMarkDefs(
 
   const matchedOriginal = new Set<number>()
   const matchedTarget = new Set<number>()
-  const originalGroups = groupByNeutralForm(originalDefs, matchedOriginal)
+  // Stored definitions can carry fields the dialect drops (restored
+  // later from the stored side), which the parsed definitions never
+  // have; fingerprinting the stored side via its canonical twin keeps
+  // the two sides' fingerprints dialect-consistent.
+  const originalFingerprintSource = originalDefs.map(
+    (def, index) => canonicalDefs?.[index] ?? def,
+  )
+  const originalGroups = groupByNeutralForm(
+    originalFingerprintSource,
+    matchedOriginal,
+  )
   const targetGroups = groupByNeutralForm(targetDefs, matchedTarget)
 
   const adoptDef = (
