@@ -1,0 +1,87 @@
+{
+  "name": "@portabletext/plugin-range-decorations",
+  "version": "1.0.0",
+  "description": "Compose independent range-decoration layers (highlights, comments, presence) for the Portable Text Editor",
+  "keywords": [
+    "decorations",
+    "highlights",
+    "plugin",
+    "portabletext",
+    "presence",
+    "range"
+  ],
+  "homepage": "https://www.portabletext.org/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/plugin-range-decorations"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "pkg-utils build --strict --check",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "prepublishOnly": "turbo run build",
+    "test": "vitest --run",
+    "test:browser": "vitest --run --project browser",
+    "test:browser:chromium": "vitest run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\"",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:*",
+    "@portabletext/test": "workspace:^",
+    "@sanity/pkg-utils": "catalog:tooling",
+    "@sanity/tsconfig": "catalog:tooling",
+    "@types/react": "catalog:tooling",
+    "@vitejs/plugin-react": "catalog:tooling",
+    "@vitest/browser": "catalog:tooling",
+    "@vitest/browser-playwright": "catalog:tooling",
+    "oxc-transform-react": "catalog:tooling",
+    "react": "catalog:",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
+    "vitest": "catalog:tooling",
+    "vitest-browser-react": "catalog:tooling"
+  },
+  "peerDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "react": "^19.2"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

@@ -15,7 +15,6 @@ import {
   type DecoratorRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
-  type RangeDecoration,
   type RenderPlaceholderFunction,
   type TextBlockRenderProps,
 } from '@portabletext/editor'
@@ -50,6 +49,7 @@ import {
 import {useContext, useEffect, useState, type JSX, type ReactNode} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
+import {CommentButton} from './comment-button'
 import {EditorSettingsPopover} from './editor-settings-popover'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {
@@ -60,9 +60,9 @@ import {
 import {FullscreenProvider, FullscreenToggle, useFullscreen} from './fullscreen'
 import {highlightMachine} from './highlight-json-machine'
 import {MentionPickerPlugin} from './mention-picker'
-import type {EditorActorRef} from './playground-machine'
+import type {EditorActorRef, PlaygroundActorRef} from './playground-machine'
 import {
-  CommentAnnotationSchema,
+  FootnoteAnnotationSchema,
   LinkAnnotationSchema,
   playgroundSchemaDefinition,
 } from './playground-schema-definition'
@@ -71,12 +71,14 @@ import {ListItemBlock} from './plugins/list-item-block'
 import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
+import {CommentsPlugin} from './plugins/plugin.comments'
 import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
+import {PresencePlugin} from './plugins/plugin.presence'
 import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {markdownOptions} from './previews/markdown-options'
@@ -86,13 +88,12 @@ import {ErrorBoundary} from './primitives/error-boundary'
 import {ErrorScreen} from './primitives/error-screen'
 import {ToggleButton} from './primitives/toggle-button'
 import {Tooltip} from './primitives/tooltip'
-import {RangeDecorationButton} from './range-decoration-button'
 import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 
 export function Editor(props: {
   editorRef: EditorActorRef
-  rangeDecorations: RangeDecoration[]
+  playgroundRef: PlaygroundActorRef
 }) {
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const keyGenerator = useSelector(
@@ -140,20 +141,9 @@ export function Editor(props: {
             {playgroundFeatureFlags.toolbar ? (
               <FullscreenAwareToolbarWrapper>
                 <PortableTextToolbar>
-                  <RangeDecorationButton
-                    onAddRangeDecoration={(rangeDecoration) => {
-                      props.editorRef.send({
-                        type: 'add range decoration',
-                        rangeDecoration,
-                      })
-                    }}
-                    onRangeDecorationMoved={(details) => {
-                      props.editorRef.send({
-                        type: 'move range decoration',
-                        details,
-                      })
-                    }}
-                  />
+                  {featureFlags.commentsPlugin ? (
+                    <CommentButton playgroundRef={props.playgroundRef} />
+                  ) : null}
                 </PortableTextToolbar>
               </FullscreenAwareToolbarWrapper>
             ) : null}
@@ -205,10 +195,19 @@ export function Editor(props: {
                       })}
                     />
                   ) : null}
-                  <FullscreenAwareEditable
-                    rangeDecorations={props.rangeDecorations}
-                    featureFlags={featureFlags}
-                  />
+                  {featureFlags.presencePlugin ? (
+                    <PresencePlugin
+                      editorRef={props.editorRef}
+                      playgroundRef={props.playgroundRef}
+                    />
+                  ) : null}
+                  <FullscreenAwareEditable featureFlags={featureFlags} />
+                  {featureFlags.commentsPlugin ? (
+                    <CommentsPlugin
+                      editorRef={props.editorRef}
+                      playgroundRef={props.playgroundRef}
+                    />
+                  ) : null}
                   <EditorFooter
                     editorRef={props.editorRef}
                     readOnly={readOnly}
@@ -223,10 +222,7 @@ export function Editor(props: {
   )
 }
 
-function FullscreenAwareEditable(props: {
-  rangeDecorations: RangeDecoration[]
-  featureFlags: EditorFeatureFlags
-}) {
+function FullscreenAwareEditable(props: {featureFlags: EditorFeatureFlags}) {
   const {isFullscreen} = useFullscreen()
   const wrapperClasses = isFullscreen
     ? 'flex gap-2 items-stretch flex-1 min-h-0'
@@ -245,7 +241,6 @@ function FullscreenAwareEditable(props: {
           <NodePlugin nodes={markNodes} />
           <PortableTextEditable
             className={editableClasses}
-            rangeDecorations={props.rangeDecorations}
             renderPlaceholder={renderPlaceholder}
           />
         </EditorFeatureFlagsContext.Provider>
@@ -334,13 +329,13 @@ const annotationNode = defineAnnotation({
   type: '*',
   render: (props: AnnotationRenderProps) => {
     if (
-      CommentAnnotationSchema.safeParse({
+      FootnoteAnnotationSchema.safeParse({
         schemaType: {name: props.annotation._type},
         value: props.annotation,
       }).success
     ) {
       return (
-        <span className="bg-yellow-300 dark:bg-yellow-700">
+        <span className="bg-purple-300 dark:bg-purple-700">
           {props.children}
         </span>
       )
