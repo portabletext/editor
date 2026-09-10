@@ -2351,11 +2351,94 @@ describe(portableTextToMarkdown.name, () => {
         '![](https://example.com/image.png)',
       )
     })
+
+    test('a `src` the parser refuses (an SVG data URI) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'image',
+        _key: keyGenerator(),
+        src: 'data:image/svg+xml;base64,PHN2Zy8+',
+        alt: 'logo',
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('a `src` the parser accepts (a PNG data URI) keeps its markdown form', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'image',
+        _key: keyGenerator(),
+        src: 'data:image/png;base64,iVBORw0KGgo=',
+        alt: 'logo',
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        '![logo](data:image/png;base64,iVBORw0KGgo=)',
+      )
+    })
+
+    test('a `javascript:` protocol `src` falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'image',
+        _key: keyGenerator(),
+        src: 'javascript:alert(1)',
+        alt: 'logo',
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('the fenced form round-trips back to the identical image value', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'image',
+        _key: keyGenerator(),
+        src: 'data:image/svg+xml;base64,PHN2Zy8+',
+        alt: 'logo',
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
   })
 
   describe('inline image', () => {
     const keyGenerator = createTestKeyGenerator()
     const markdown = 'foo ![alt text](https://example.com/image.png) bar'
+
+    test('a `src` the parser refuses (an SVG data URI) falls back to the tagged code span', () => {
+      const inlineImageValue = {
+        _type: 'image',
+        _key: 'img1',
+        src: 'data:image/svg+xml;base64,PHN2Zy8+',
+        alt: 'logo',
+      }
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'block',
+            _key: 'b1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 's1', text: 'before ', marks: []},
+              inlineImageValue,
+              {_type: 'span', _key: 's2', text: ' after', marks: []},
+            ],
+          },
+        ]),
+      ).toBe(`before json:object\`${JSON.stringify(inlineImageValue)}\` after`)
+    })
 
     describe('supported by deserializer', () => {
       const portableText = markdownToPortableText(markdown, {keyGenerator})
