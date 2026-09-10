@@ -318,6 +318,7 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
         renderNode,
       }),
     )
+    .filter((rendered) => rendered !== '')
     .join('\n\n')
 
   const prefixed = renderedContent
@@ -364,6 +365,7 @@ export const DefaultBlockquoteObjectRenderer: PortableTextTypeRenderer<{
         renderNode,
       }),
     )
+    .filter((rendered) => rendered !== '')
     .join('\n\n')
 
   return renderedContent
@@ -392,15 +394,45 @@ export const DefaultListRenderer: PortableTextTypeRenderer<{
     content: Array<PortableTextBlock | TypedObject>
   }>
 }> = ({value, renderNode}) => {
+  const renderedItems = value.items.map((item) => {
+    // The marker-line mark changes how `renderBlock` plans line-start
+    // hazard escaping, so it must be placed before rendering, but which
+    // block ends up on the marker line is only knowable after (blocks
+    // rendering to '' are dropped at join time). So every text block gets
+    // the mark until something renders output; a mark on a dropped empty
+    // block is harmless, consumed by its own render. Whether the first
+    // surviving block actually takes the marker line is decided at
+    // assembly below.
+    let markerLineSettled = false
+
+    return item.content.map((block, blockIndex) => {
+      const isNestedList = (block as TypedObject)._type === 'list'
+      const isTextBlock = !isNestedList && isPortableTextBlock(block)
+      if (!markerLineSettled && isTextBlock) {
+        markListItemFirstBlock(block)
+      }
+      const text = renderNode({
+        node: block as TypedObject,
+        index: blockIndex,
+        isInline: false,
+        renderNode,
+      })
+      if (text !== '') {
+        markerLineSettled = true
+      }
+      return {isNestedList, isTextBlock, text}
+    })
+  })
+
   // A list is "loose" when any item carries multiple non-list-block
   // content entries (a continuation paragraph, a code block, etc).
   // CommonMark uses blank lines between items in loose lists; tight lists
   // pack items together with single newlines. A nested list as a second
-  // child of an item does NOT make the list loose, so we ignore those when
-  // counting.
-  const isLoose = value.items.some((item) => {
-    const nonNestedBlocks = item.content.filter(
-      (block) => (block as TypedObject)._type !== 'list',
+  // child of an item does NOT make the list loose, and neither does a
+  // block that rendered to nothing, so we ignore both when counting.
+  const isLoose = renderedItems.some((renderedBlocks) => {
+    const nonNestedBlocks = renderedBlocks.filter(
+      (rendered) => !rendered.isNestedList && rendered.text !== '',
     )
     return nonNestedBlocks.length > 1
   })
@@ -415,38 +447,54 @@ export const DefaultListRenderer: PortableTextTypeRenderer<{
     // markdown-it level, so its continuation indent stays at 2.
     const indentWidth = value.kind === 'task' ? 2 : marker.length
     const indent = ' '.repeat(indentWidth)
+    const indentLines = (text: string) =>
+      text
+        .split('\n')
+        .map((line) => (line === '' ? '' : `${indent}${line}`))
+        .join('\n')
 
-    const renderedBlocks = item.content.map((block, blockIndex) => {
-      // Only the first block shares its first line with the marker (and,
-      // for a task item, its GFM checkbox); later blocks render on their
-      // own indented lines.
-      if (blockIndex === 0 && isPortableTextBlock(block)) {
-        markListItemFirstBlock(block)
-      }
-      return {
-        isNestedList: (block as TypedObject)._type === 'list',
-        text: renderNode({
-          node: block as TypedObject,
-          index: blockIndex,
-          isInline: false,
-          renderNode,
-        }),
-      }
-    })
-
-    const [first, ...rest] = renderedBlocks
-    // Trim trailing whitespace from empty items so `- ` becomes `-`.
-    const head = `${marker}${first?.text ?? ''}`.trimEnd()
+    const nonEmptyBlocks = (renderedItems[itemIndex] ?? []).filter(
+      (rendered) => rendered.text !== '',
+    )
+    // A nested list never shares the marker line: fusing the markers into
+    // `- - sub` reparses the same for bullet and number kinds but reads as
+    // one doubled marker, and after a task checkbox the nested marker is
+    // literal text, destroying the sublist. A task item's marker line only
+    // takes a text block for the same reason: everything after `- [x] ` is
+    // inline text, so a promoted fence or table would reparse as words.
+    const markerLineCandidate = nonEmptyBlocks[0]
+    const promoted =
+      markerLineCandidate &&
+      !markerLineCandidate.isNestedList &&
+      (value.kind !== 'task' || markerLineCandidate.isTextBlock)
+        ? markerLineCandidate
+        : undefined
+    const rest = promoted ? nonEmptyBlocks.slice(1) : nonEmptyBlocks
+    // Only the promoted block's first line shares the marker line; its
+    // later lines (a code fence's body, a table's rows) are ordinary
+    // continuation lines that must sit under the item indent, or
+    // CommonMark ends the list at the first column-0 line.
+    const [promotedFirstLine = '', ...promotedRestLines] = (
+      promoted?.text ?? ''
+    ).split('\n')
+    // Trailing whitespace is trimmed from the joined head, reaching only
+    // its last line: an empty item's `- ` becomes `-`, while a hard
+    // break's trailing spaces on an earlier line survive.
+    const head = [
+      `${marker}${promotedFirstLine}`,
+      ...(promotedRestLines.length > 0
+        ? [indentLines(promotedRestLines.join('\n'))]
+        : []),
+    ]
+      .join('\n')
+      .trimEnd()
     if (rest.length === 0) {
       return head
     }
 
     const tail = rest
       .map((rendered) => {
-        const indented = rendered.text
-          .split('\n')
-          .map((line) => (line === '' ? '' : `${indent}${line}`))
-          .join('\n')
+        const indented = indentLines(rendered.text)
         // Nested lists hug the previous block (tight list); other content
         // gets a blank line separator (paragraph break).
         return rendered.isNestedList ? `\n${indented}` : `\n\n${indented}`

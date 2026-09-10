@@ -138,32 +138,30 @@ export function portableTextToMarkdown<
   const {listIndexMap, listDepthMap} = buildListIndexMap(blocks)
   const renderNode = createRenderNode(renderers, listIndexMap, listDepthMap)
 
-  return blocks
-    .map((node, index) => {
-      const renderedNode = renderNode({
-        node,
-        index,
-        isInline: false,
-        renderNode,
-      })
+  // Blocks rendering to '' are dropped before spacing is computed, so
+  // `blockSpacing` only ever sees blocks that survive into the output.
+  const renderedBlocks = blocks
+    .map((node, index) => ({
+      node,
+      rendered: renderNode({node, index, isInline: false, renderNode}),
+    }))
+    .filter(({rendered}) => rendered !== '')
 
-      if (index === blocks.length - 1) {
-        return renderedNode
-      }
+  return renderedBlocks
+    .map(({node, rendered}, index) => {
+      const nextBlock = renderedBlocks.at(index + 1)
 
-      const nextNode = blocks.at(index + 1)
-
-      if (!nextNode) {
-        return renderedNode
+      if (!nextBlock) {
+        return rendered
       }
 
       const blockSpacing =
         renderBlockSpacing({
           current: node,
-          next: nextNode,
+          next: nextBlock.node,
         }) ?? '\n\n'
 
-      return `${renderedNode}${blockSpacing}`
+      return `${rendered}${blockSpacing}`
     })
     .join('')
 }
