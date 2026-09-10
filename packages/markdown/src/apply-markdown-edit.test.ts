@@ -1316,6 +1316,175 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
+  test('an adopted text block gets its markdown-inexpressible fields back', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        ...block('b1', 's1', 'Ships tomorow.'),
+        alignment: 'center',
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'tomorow',
+      'tomorrow',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        ...block('b1', 's1', 'Ships tomorrow.'),
+        alignment: 'center',
+      },
+    ])
+  })
+
+  test('an adopted table gets its markdown-inexpressible fields back', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'table',
+        _key: 'tbl1',
+        headerRows: 1,
+        headerColumns: 2,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [block('cb1', 'cs1', 'one')],
+              },
+              {
+                _type: 'cell',
+                _key: 'c2',
+                value: [block('cb2', 'cs2', 'two')],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'two',
+      'TWO',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 'tbl1',
+        headerRows: 1,
+        headerColumns: 2,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [block('cb1', 'cs1', 'one')],
+              },
+              {
+                _type: 'cell',
+                _key: 'c2',
+                value: [block('cb2', 'cs2', 'TWO')],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('a field the markdown expresses stays removed when the edit removes it', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {_type: 'code', _key: 'code1', language: 'js', code: 'const a = 1'},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      '```js',
+      '```',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([{_type: 'code', _key: 'code1', code: 'const a = 1'}])
+  })
+
+  test('restoration skips levels where the canonical counterpart is untrustworthy', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        alignment: 'center',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 's1',
+            text: 'foo',
+            marks: ['strong'],
+            emphasis: 'high',
+          },
+          {_type: 'span', _key: 's2', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 's3', text: ' baz', marks: []},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'baz',
+      'buzz',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        alignment: 'center',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foobar', marks: ['strong']},
+          {_type: 'span', _key: 's3', text: ' buzz', marks: []},
+        ],
+      },
+    ])
+  })
+
+  test('a restored structured field is cloned, not shared, and the stored value is untouched', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        ...block('b1', 's1', 'Ships tomorow.'),
+        customField: [
+          {_key: 'x1', label: 'one'},
+          {_key: 'x2', label: 'two'},
+        ],
+      },
+    ]
+    const storedSnapshot = structuredClone(stored)
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'tomorow',
+      'tomorrow',
+    )
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+    })
+    expect(stored).toEqual(storedSnapshot)
+    expect((result[0] as Record<string, unknown>)['customField']).toEqual(
+      (stored[0] as Record<string, unknown>)['customField'],
+    )
+    expect((result[0] as Record<string, unknown>)['customField']).not.toBe(
+      (stored[0] as Record<string, unknown>)['customField'],
+    )
+  })
+
   test('inputs are not mutated and reconciliation is idempotent', () => {
     const stored = [
       block('b1', 's1', 'alpha'),

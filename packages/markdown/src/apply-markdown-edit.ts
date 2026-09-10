@@ -74,8 +74,11 @@ const MAX_KEY_GENERATOR_ATTEMPTS = 3
 const MAX_DISTINCT_BLOCK_FORMS = 55_000
 
 /**
- * Converts edited markdown to Portable Text and restores stored keys,
- * aiming for the keys the same edit would have produced in an editor:
+ * Converts edited markdown to Portable Text, restores stored keys, and
+ * restores fields the markdown dialect cannot express (dropped by
+ * serialization, so the edit could not have touched them); a field
+ * markdown does express follows the edit. Keys aim for what the same
+ * edit would have produced in an editor:
  * unchanged, moved, and rewritten-in-place content keeps its keys
  * (rewriting a paragraph in place keeps its identity, like typing over
  * it), a split keeps the key on its first non-empty fragment, a merge
@@ -113,7 +116,7 @@ export function applyMarkdownEdit(
   if (originOf) {
     const alignment = alignBlocks(canonical, result)
     if (alignment) {
-      adoptAnchors(alignment.anchors, originOf, result, adoptedNodes)
+      adoptAnchors(alignment.anchors, canonical, originOf, result, adoptedNodes)
       const gaps = adoptMoves(
         alignment.gaps,
         canonical,
@@ -282,6 +285,7 @@ function alignBlocks(
 
 function adoptAnchors(
   anchors: ReadonlyArray<Anchor>,
+  canonical: ReadonlyArray<Node>,
   originOf: (canonicalIndex: number) => Node,
   result: ReadonlyArray<Node>,
   adoptedNodes: AdoptedNodes,
@@ -289,6 +293,7 @@ function adoptAnchors(
   for (const anchor of anchors) {
     adoptNode(
       originOf(anchor.canonicalIndex),
+      canonical[anchor.canonicalIndex],
       result[anchor.resultIndex]!,
       adoptedNodes,
     )
@@ -340,6 +345,7 @@ function adoptMoves(
     consumedEdited.add(editedIndexes[0]!)
     adoptNode(
       originOf(storedIndexes[0]!),
+      canonical[storedIndexes[0]!],
       result[editedIndexes[0]!]!,
       adoptedNodes,
     )
@@ -405,7 +411,12 @@ function resolveGap(
           fragments.find(
             (fragment) => blockText(result[fragment]!).length > 0,
           ) ?? fragments[0]!
-        adoptNode(originOf(storedIndex), result[survivor]!, adoptedNodes)
+        adoptNode(
+          originOf(storedIndex),
+          canonical[storedIndex],
+          result[survivor]!,
+          adoptedNodes,
+        )
       }
     }
   }
@@ -431,7 +442,12 @@ function resolveGap(
         for (const source of sources) {
           remainingStored.delete(source)
         }
-        adoptNode(originOf(sources[0]!), result[editedIndex]!, adoptedNodes)
+        adoptNode(
+          originOf(sources[0]!),
+          canonical[sources[0]!],
+          result[editedIndex]!,
+          adoptedNodes,
+        )
       }
     }
   }
@@ -444,7 +460,12 @@ function resolveGap(
       const storedBlock = canonical[storedRest[offset]!]!
       const editedBlock = result[editedRest[offset]!]!
       if (storedBlock['_type'] === editedBlock['_type']) {
-        adoptNode(originOf(storedRest[offset]!), editedBlock, adoptedNodes)
+        adoptNode(
+          originOf(storedRest[offset]!),
+          canonical[storedRest[offset]!],
+          editedBlock,
+          adoptedNodes,
+        )
       }
     }
     return
@@ -479,7 +500,12 @@ function resolveGap(
     if (bestBack !== storedIndex) {
       continue
     }
-    adoptNode(originOf(storedIndex), result[best]!, adoptedNodes)
+    adoptNode(
+      originOf(storedIndex),
+      canonical[storedIndex],
+      result[best]!,
+      adoptedNodes,
+    )
   }
 }
 
@@ -530,12 +556,14 @@ function findConcatenation(
 }
 
 /**
- * Adopts the original node's `_key`, then its `markDefs` before its
- * other keyed children, since `span.marks` references need the
- * adopted `markDefs` keys already in place.
+ * Adopts the original node's `_key`, its markdown-inexpressible
+ * fields, then its `markDefs` before its other keyed children, since
+ * `span.marks` references need the adopted `markDefs` keys already in
+ * place.
  */
 function adoptNode(
   original: Node,
+  canonicalCounterpart: Node | undefined,
   target: Node,
   adoptedNodes: AdoptedNodes,
 ): void {
@@ -544,7 +572,9 @@ function adoptNode(
     target['_key'] = original['_key']
   }
 
-  const markDefKeyMap = adoptMarkDefs(original, target)
+  restoreFields(original, canonicalCounterpart, target)
+
+  const markDefKeyMap = adoptMarkDefs(original, canonicalCounterpart, target)
   rewriteMarkReferences(target, markDefKeyMap)
 
   for (const field of Object.keys(target)) {
@@ -559,6 +589,11 @@ function adoptNode(
     ) {
       continue
     }
+    const canonicalChildren = canonicalChildArray(
+      canonicalCounterpart,
+      field,
+      originalChildren,
+    )
 
     const matchedOriginal = new Set<number>()
     const matchedTarget = new Set<number>()
@@ -588,6 +623,7 @@ function adoptNode(
       matchedTarget.add(targetIndexes[0]!)
       adoptNode(
         originalChildren[originalIndexes[0]!]!,
+        canonicalChildren?.[originalIndexes[0]!],
         targetChildren[targetIndexes[0]!]!,
         adoptedNodes,
       )
@@ -596,6 +632,7 @@ function adoptNode(
     if (field === 'children') {
       adoptMergedSpans(
         originalChildren,
+        canonicalChildren,
         matchedOriginal,
         targetChildren,
         matchedTarget,
@@ -605,11 +642,74 @@ function adoptNode(
 
     adoptResidualZip(
       originalChildren,
+      canonicalChildren,
       matchedOriginal,
       targetChildren,
       matchedTarget,
       adoptedNodes,
     )
+  }
+}
+
+/**
+ * The container-level counterpart of `traceOrigins`'s guard: a
+ * child's canonical form is only trustworthy when the canonical
+ * container holds the same field as the same typed object array,
+ * equal in length and `_type` sequence to the original's, so pairing
+ * by index (original child `i` to canonical child `i`) means the same
+ * content on both sides.
+ */
+function canonicalChildArray(
+  canonicalCounterpart: Node | undefined,
+  field: string,
+  originalChildren: ReadonlyArray<Node>,
+): Array<Node> | undefined {
+  if (!canonicalCounterpart) {
+    return undefined
+  }
+  const candidate = canonicalCounterpart[field]
+  if (
+    !isTypedObjectArray(candidate) ||
+    candidate.length !== originalChildren.length
+  ) {
+    return undefined
+  }
+  for (let index = 0; index < originalChildren.length; index++) {
+    if (originalChildren[index]!['_type'] !== candidate[index]!['_type']) {
+      return undefined
+    }
+  }
+  return candidate
+}
+
+/**
+ * Restores fields the markdown dialect dropped: present on the
+ * original, absent from its canonical round trip (so serialization
+ * never gave the edit a chance to touch it), and absent from the
+ * parsed target (a carrier payload or the parse itself already
+ * supplied it authoritatively). Restored values are cloned, since the
+ * sibling-key-uniqueness pass may rewrite `_key`s inside a restored
+ * array of objects, and the original must stay untouched.
+ */
+function restoreFields(
+  original: Node,
+  canonicalCounterpart: Node | undefined,
+  target: Node,
+): void {
+  if (!canonicalCounterpart) {
+    return
+  }
+  for (const field of Object.keys(original)) {
+    if (field === '_key' || field === 'markDefs') {
+      continue
+    }
+    if (Object.hasOwn(canonicalCounterpart, field)) {
+      continue
+    }
+    if (Object.hasOwn(target, field)) {
+      continue
+    }
+    target[field] = structuredClone(original[field])
   }
 }
 
@@ -622,6 +722,7 @@ function adoptNode(
  */
 function adoptMergedSpans(
   originalChildren: ReadonlyArray<Node>,
+  canonicalChildren: ReadonlyArray<Node> | undefined,
   matchedOriginal: Set<number>,
   targetChildren: ReadonlyArray<Node>,
   matchedTarget: Set<number>,
@@ -665,7 +766,12 @@ function adoptMergedSpans(
           for (const usedIndex of used) {
             matchedOriginal.add(usedIndex)
           }
-          adoptNode(originalChildren[used[0]!]!, targetSpan, adoptedNodes)
+          adoptNode(
+            originalChildren[used[0]!]!,
+            canonicalChildren?.[used[0]!],
+            targetSpan,
+            adoptedNodes,
+          )
           break
         }
       }
@@ -687,14 +793,15 @@ function adoptMergedSpans(
  */
 function adoptResidualZip(
   originalChildren: ReadonlyArray<Node>,
+  canonicalChildren: ReadonlyArray<Node> | undefined,
   matchedOriginal: ReadonlySet<number>,
   targetChildren: ReadonlyArray<Node>,
   matchedTarget: ReadonlySet<number>,
   adoptedNodes: AdoptedNodes,
 ): void {
-  const originalRest = originalChildren.filter(
-    (_, index) => !matchedOriginal.has(index),
-  )
+  const originalRest = originalChildren
+    .map((node, index) => ({node, index}))
+    .filter(({index}) => !matchedOriginal.has(index))
   const targetRest = targetChildren.filter(
     (_, index) => !matchedTarget.has(index),
   )
@@ -702,8 +809,15 @@ function adoptResidualZip(
     return
   }
   for (let offset = 0; offset < originalRest.length; offset++) {
-    if (originalRest[offset]!['_type'] === targetRest[offset]!['_type']) {
-      adoptNode(originalRest[offset]!, targetRest[offset]!, adoptedNodes)
+    const originalNode = originalRest[offset]!.node
+    const targetNode = targetRest[offset]!
+    if (originalNode['_type'] === targetNode['_type']) {
+      adoptNode(
+        originalNode,
+        canonicalChildren?.[originalRest[offset]!.index],
+        targetNode,
+        adoptedNodes,
+      )
     }
   }
 }
@@ -713,20 +827,34 @@ function adoptResidualZip(
  * the mapping from the target's fresh keys to the adopted stored
  * keys, for rewriting `span.marks` references.
  */
-function adoptMarkDefs(original: Node, target: Node): Map<string, string> {
+function adoptMarkDefs(
+  original: Node,
+  canonicalCounterpart: Node | undefined,
+  target: Node,
+): Map<string, string> {
   const keyMap = new Map<string, string>()
   const originalDefs = original['markDefs']
   const targetDefs = target['markDefs']
   if (!isTypedObjectArray(originalDefs) || !isTypedObjectArray(targetDefs)) {
     return keyMap
   }
+  const canonicalDefs = canonicalChildArray(
+    canonicalCounterpart,
+    'markDefs',
+    originalDefs,
+  )
 
   const matchedOriginal = new Set<number>()
   const matchedTarget = new Set<number>()
   const originalGroups = groupByNeutralForm(originalDefs, matchedOriginal)
   const targetGroups = groupByNeutralForm(targetDefs, matchedTarget)
 
-  const adoptDef = (originalDef: Node, targetDef: Node): void => {
+  const adoptDef = (
+    originalDef: Node,
+    canonicalDef: Node | undefined,
+    targetDef: Node,
+  ): void => {
+    restoreFields(originalDef, canonicalDef, targetDef)
     if (
       typeof originalDef['_key'] === 'string' &&
       typeof targetDef['_key'] === 'string'
@@ -754,19 +882,27 @@ function adoptMarkDefs(original: Node, target: Node): Map<string, string> {
     }
     matchedOriginal.add(originalIndexes[0]!)
     matchedTarget.add(targetIndexes[0]!)
-    adoptDef(originalDefs[originalIndexes[0]!]!, targetDefs[targetIndexes[0]!]!)
+    adoptDef(
+      originalDefs[originalIndexes[0]!]!,
+      canonicalDefs?.[originalIndexes[0]!],
+      targetDefs[targetIndexes[0]!]!,
+    )
   }
 
-  const originalRest = originalDefs.filter(
-    (_, index) => !matchedOriginal.has(index),
-  )
+  const originalRest = originalDefs
+    .map((node, index) => ({node, index}))
+    .filter(({index}) => !matchedOriginal.has(index))
   const targetRest = targetDefs.filter((_, index) => !matchedTarget.has(index))
   if (
     originalRest.length === 1 &&
     targetRest.length === 1 &&
-    originalRest[0]!['_type'] === targetRest[0]!['_type']
+    originalRest[0]!.node['_type'] === targetRest[0]!['_type']
   ) {
-    adoptDef(originalRest[0]!, targetRest[0]!)
+    adoptDef(
+      originalRest[0]!.node,
+      canonicalDefs?.[originalRest[0]!.index],
+      targetRest[0]!,
+    )
   }
 
   return keyMap

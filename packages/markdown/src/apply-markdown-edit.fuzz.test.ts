@@ -130,6 +130,9 @@ function generateStored(
       _key: keyGenerator(),
       style: random() < 0.2 ? 'h2' : 'normal',
       ...(random() < 0.25 ? {listItem: 'bullet', level: 1} : {}),
+      // Markdown has no carrier for this field: exercises restoration
+      // of a field that only the stored value ever held.
+      ...(random() < 0.3 ? {alignment: pick(random, WORDS)} : {}),
       markDefs: [],
       children,
     } as unknown as PortableTextBlock
@@ -199,18 +202,79 @@ function mutateMarkdown(random: () => number, markdown: string): string {
   return paragraphs.join('\n\n')
 }
 
-function stripKeys(value: unknown): unknown {
+/**
+ * Collects every `[field name, JSON value]` pair anywhere in the
+ * stored tree, the crude provenance oracle for a restored field: a
+ * field the result carries but the plain parse does not must trace
+ * to some stored node carrying the same name and value.
+ */
+function collectFieldPairs(value: unknown, pairs: Set<string>): void {
   if (Array.isArray(value)) {
-    return value.map(stripKeys)
+    for (const item of value) {
+      collectFieldPairs(item, pairs)
+    }
+    return
   }
   if (typeof value === 'object' && value !== null) {
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([field]) => field !== '_key')
-        .map(([field, fieldValue]) => [field, stripKeys(fieldValue)]),
-    )
+    for (const [field, fieldValue] of Object.entries(value)) {
+      pairs.add(`${field}:${JSON.stringify(fieldValue)}`)
+      collectFieldPairs(fieldValue, pairs)
+    }
   }
-  return value
+}
+
+/**
+ * Reconciliation only ever adds keys and restored fields on top of
+ * the plain parse, so the two stay congruent in shape (`result` and
+ * `plainParse` walk in lockstep) at every node: every field the plain
+ * parse produced survives in `result` at an equal value (`_key`
+ * excluded, since reconciliation's whole job is changing it), and
+ * every extra field `result` carries traces to the stored tree.
+ */
+function assertFieldwiseSubsetAndProvenance(
+  result: unknown,
+  plainParse: unknown,
+  storedFieldPairs: ReadonlySet<string>,
+): void {
+  if (Array.isArray(plainParse)) {
+    expect(Array.isArray(result)).toBe(true)
+    const resultArray = result as Array<unknown>
+    expect(resultArray.length).toBe(plainParse.length)
+    for (let index = 0; index < plainParse.length; index++) {
+      assertFieldwiseSubsetAndProvenance(
+        resultArray[index],
+        plainParse[index],
+        storedFieldPairs,
+      )
+    }
+    return
+  }
+  if (typeof plainParse === 'object' && plainParse !== null) {
+    expect(typeof result === 'object' && result !== null).toBe(true)
+    const resultNode = result as Record<string, unknown>
+    const plainNode = plainParse as Record<string, unknown>
+    for (const field of Object.keys(plainNode)) {
+      if (field === '_key') {
+        continue
+      }
+      expect(Object.hasOwn(resultNode, field)).toBe(true)
+      assertFieldwiseSubsetAndProvenance(
+        resultNode[field],
+        plainNode[field],
+        storedFieldPairs,
+      )
+    }
+    for (const field of Object.keys(resultNode)) {
+      if (field === '_key' || Object.hasOwn(plainNode, field)) {
+        continue
+      }
+      expect(
+        storedFieldPairs.has(`${field}:${JSON.stringify(resultNode[field])}`),
+      ).toBe(true)
+    }
+    return
+  }
+  expect(result).toEqual(plainParse)
 }
 
 function collectKeys(value: unknown, keys: Set<string>): void {
@@ -271,11 +335,19 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
         deserialize: {keyGenerator: createTestKeyGenerator()},
       })
 
-      // Content preservation: reconciliation only ever touches keys.
+      // Content preservation: every field the plain parse produced
+      // survives in the result, and every field the result adds on
+      // top traces to the stored value.
       const plainParse = markdownToPortableText(editedMarkdown, {
         keyGenerator: createTestKeyGenerator(),
       })
-      expect(stripKeys(reconciled)).toEqual(stripKeys(plainParse))
+      const storedFieldPairs = new Set<string>()
+      collectFieldPairs(storedSnapshot, storedFieldPairs)
+      assertFieldwiseSubsetAndProvenance(
+        reconciled,
+        plainParse,
+        storedFieldPairs,
+      )
 
       // Key provenance: every key is either stored, generated fresh,
       // or carried inside the markdown itself.

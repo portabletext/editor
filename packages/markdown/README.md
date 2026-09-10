@@ -789,6 +789,7 @@ Keys follow the edit the way they would in an editor:
 - A typo fix lands as a text change on the same span, and editing a link's URL keeps its annotation key.
 - When an insertion or deletion makes the match ambiguous, a block keeps its key only on clear evidence; everything else gets a new key.
 - `json:object` payloads keep the `_key` they carry, unless the payload matches stored content, which keeps the stored key: editing markdown cannot re-key existing content.
+- A field the markdown dialect cannot express, like a text block's `alignment`, is restored on an adopted block along with its key; a field markdown does express, like `language` on a code block, follows the edit.
 
 Output keys are always unique among siblings, the inputs are never mutated, and the result is a value, not patches.
 
