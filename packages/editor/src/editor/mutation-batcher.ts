@@ -3,6 +3,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {isNormalizing} from '../engine/editor/is-normalizing'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {Operation} from '../types/operation'
 import type {EditorActor} from './editor-machine'
 import type {Relay} from './relay'
 
@@ -10,6 +11,7 @@ type PendingMutation = {
   operationId?: string
   value: Array<PortableTextBlock> | undefined
   patches: Array<Patch>
+  operations: Array<Operation>
 }
 
 const TYPE_DEBOUNCE = 250
@@ -67,6 +69,7 @@ export function createMutationBatcher({
     patch: Patch
     operationId?: string
     value: Array<PortableTextBlock>
+    operation?: Operation
   }) {
     editorEngine.isDeferringMutations = true
 
@@ -81,11 +84,15 @@ export function createMutationBatcher({
     if (lastBulk && lastBulk.operationId === event.operationId) {
       lastBulk.value = event.value
       lastBulk.patches.push(event.patch)
+      if (event.operation !== undefined) {
+        lastBulk.operations.push(event.operation)
+      }
     } else {
       pendingMutations.push({
         operationId: event.operationId,
         value: event.value,
         patches: [event.patch],
+        operations: event.operation !== undefined ? [event.operation] : [],
       })
     }
 
@@ -128,6 +135,7 @@ export function createMutationBatcher({
         type: 'mutation',
         patches: bulk.patches,
         value: bulk.value,
+        operations: bulk.operations,
       })
     }
   }

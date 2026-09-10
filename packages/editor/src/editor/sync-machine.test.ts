@@ -17,6 +17,7 @@ function createTestEngine(keyGenerator: () => string) {
   e.containers = new Map()
   e.blockIndexMap = new Map()
   e.verifiedUniqueChildGroups = new Set()
+  e.onRemoteChange = () => {}
   e.snapshot = {
     blockIndexMap: e.blockIndexMap,
     context: {

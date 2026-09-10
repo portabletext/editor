@@ -61,7 +61,7 @@ describe('Setup', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
     })
 
-    expect(events.slice(0, 4)).toEqual([
+    expect(events.slice(0, 5)).toEqual([
       // Sync applies the valid first block (replacing the seed block `k5`;
       // the missing `markDefs`/`style` defaults are deferred until a local
       // edit touches the block), then stops at the unknown block object.
@@ -82,6 +82,23 @@ describe('Setup', () => {
             children: [{_type: 'span', _key: 'k1', text: 'foo'}],
           },
         },
+        origin: 'remote',
+      },
+      {
+        type: 'change',
+        operations: [
+          {type: 'unset', path: [{_key: 'k5'}]},
+          {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            node: {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_type: 'span', _key: 'k1', text: 'foo'}],
+            },
+          },
+        ],
         origin: 'remote',
       },
       {

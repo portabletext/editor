@@ -92,6 +92,23 @@ describe('Value validation', () => {
           origin: 'remote',
         },
         {
+          type: 'change',
+          operations: [
+            {type: 'unset', path: [{_key: 'k3'}]},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              node: {
+                _type: 'block',
+                _key: 'k0',
+                children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+              },
+            },
+          ],
+          origin: 'remote',
+        },
+        {
           type: 'invalid value',
           resolution: {
             action: 'Remove the item',
@@ -242,6 +259,30 @@ describe('Value validation', () => {
             },
           ],
         },
+        {
+          type: 'change',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              offset: 3,
+              text: '!',
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k0'}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k0'}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
+            },
+          ],
+          origin: 'local',
+        },
       ])
     })
     // The engine's own document agrees with the emitted patches: the
@@ -317,6 +358,19 @@ describe('Value validation', () => {
             position: 'before',
             node: syncedBlock,
           },
+          origin: 'remote',
+        },
+        {
+          type: 'change',
+          operations: [
+            {type: 'unset', path: [{_key: 'k3'}]},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              node: syncedBlock,
+            },
+          ],
           origin: 'remote',
         },
         {type: 'value changed', value: [syncedBlock]},
@@ -529,6 +583,30 @@ describe('Value validation', () => {
             },
           ],
         },
+        {
+          type: 'change',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 3,
+              text: '!',
+            },
+            {
+              type: 'set',
+              path: [{_key: blockKey}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: blockKey}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: blockKey}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: blockKey}, 'style']},
+            },
+          ],
+          origin: 'local',
+        },
       ])
     })
     // The engine's own document agrees with the emitted patches: the
@@ -604,6 +682,23 @@ describe('Value validation', () => {
               children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
             },
           },
+          origin: 'remote',
+        },
+        {
+          type: 'change',
+          operations: [
+            {type: 'unset', path: [{_key: 'k0'}]},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              node: {
+                _type: 'block',
+                _key: 'k2',
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+            },
+          ],
           origin: 'remote',
         },
         {
@@ -754,6 +849,30 @@ describe('Value validation', () => {
               style: 'normal',
             },
           ],
+        },
+        {
+          type: 'change',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+              offset: 3,
+              text: '!',
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k2'}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k2'}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
+            },
+          ],
+          origin: 'local',
         },
       ])
     })
