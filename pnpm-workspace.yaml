@@ -43,6 +43,7 @@ catalogs:
     oxc-transform-react: ^0.145.0
     oxfmt: ^0.56.0
     oxlint: ^1.79.0
+    pkg-pr-new: ^0.0.88
     remeda: ^2.32.0
     tailwind-merge: ^3.3.1
     tailwindcss: ^4.1.18

@@ -62,6 +62,7 @@
     "lint-staged": "^15.5.2",
     "oxfmt": "catalog:tooling",
     "oxlint": "catalog:tooling",
+    "pkg-pr-new": "catalog:tooling",
     "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-gherkin": "^3.1.4",

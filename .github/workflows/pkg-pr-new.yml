@@ -1,0 +1,79 @@
+name: Publish Preview Packages
+
+on:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-preview:
+    if: "contains(github.event.pull_request.labels.*.name, 'trigger: preview') || contains(github.event.pull_request.labels.*.name, 'trigger: preview-all')"
+    runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # `Select packages` diffs against the base commit, which is only
+          # reachable with the full history.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          cache: pnpm
+          node-version: lts/*
+
+      - name: Select packages
+        id: select
+        env:
+          PREVIEW_ALL: "${{ contains(github.event.pull_request.labels.*.name, 'trigger: preview-all') }}"
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "$PREVIEW_ALL" == "true" ]]; then
+            directories=$(ls -d packages/*)
+          else
+            directories=$(git diff --name-only "$BASE_SHA...HEAD" -- packages | cut -d/ -f1-2 | sort -u)
+          fi
+
+          packages=$(
+            echo "$directories" | while read -r directory; do
+              if [[ -f "$directory/package.json" ]]; then echo "./$directory"; fi
+            done | tr '\n' ' '
+          )
+
+          if [[ -z "${packages// /}" ]]; then
+            echo "::notice::No package directories changed; nothing to publish"
+          fi
+
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+
+      - name: Install project dependencies
+        if: steps.select.outputs.packages != ''
+        run: pnpm install
+
+      - name: Build packages
+        if: steps.select.outputs.packages != ''
+        env:
+          PACKAGES: ${{ steps.select.outputs.packages }}
+        run: |
+          filters=()
+          for package in $PACKAGES; do
+            filters+=(--filter "$package")
+          done
+          pnpm build "${filters[@]}"
+
+      # `--pnpm` is required because the workspace uses `catalog:` dependency
+      # specifiers, which `npm pack` cannot resolve.
+      - name: Publish preview packages
+        if: steps.select.outputs.packages != ''
+        env:
+          PACKAGES: ${{ steps.select.outputs.packages }}
+        run: pnpm exec pkg-pr-new publish $PACKAGES --comment=update --compact --pnpm
