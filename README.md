@@ -67,6 +67,21 @@ pnpm build     # build every package
 
 Run `pnpm test` for the test suites and `pnpm check:types`, `pnpm check:lint`, and `pnpm check:format` for the checks CI runs.
 
+### Testing with preview packages
+
+Pull requests can publish preview builds to [pkg.pr.new](https://pkg.pr.new), so a change can be tried in a real project before it is merged and released to npm.
+
+1. Add the `trigger: preview` label to the pull request to publish the packages it changes, or `trigger: preview-all` to publish every package. A pull request that changes no package publishes nothing under `trigger: preview`.
+2. Wait for the "Publish Preview Packages" workflow to finish. It posts a comment with an install URL for each published package and keeps that comment updated on every subsequent commit.
+3. Install a preview build by URL:
+
+```sh
+npm install https://pkg.pr.new/@portabletext/editor@<commit-sha>
+pnpm add https://pkg.pr.new/@portabletext/editor@<commit-sha>
+```
+
+Regular dependencies between packages point at the preview builds from the same run, but peer dependencies keep their npm ranges. A plugin preview therefore resolves `@portabletext/editor` from npm unless the editor preview is installed alongside it, which requires the pull request to publish both. Preview builds are removed once the pull request is closed.
+
 ## License
 
 [MIT](./LICENSE) © [Sanity.io](https://www.sanity.io/)

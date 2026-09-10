@@ -94,6 +94,9 @@ catalogs:
     oxlint:
       specifier: ^1.79.0
       version: 1.79.0
+    pkg-pr-new:
+      specifier: ^0.0.88
+      version: 0.0.88
     remeda:
       specifier: ^2.32.0
       version: 2.32.0
@@ -171,6 +174,9 @@ importers:
       oxlint:
         specifier: catalog:tooling
         version: 1.79.0
+      pkg-pr-new:
+        specifier: catalog:tooling
+        version: 0.0.88
       prettier:
         specifier: ^3.9.1
         version: 3.9.1
@@ -7942,6 +7948,10 @@ packages:
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
+
+  pkg-pr-new@0.0.88:
+    resolution: {integrity: sha512-Xc6PMJ2gher0WZP+rtjefFk26hIb7V1PTLL30bmy1Z2vsRmSvqiss7Ag1XUdyplTGYzIlFNJp4L3vMNmK44N6g==}
+    hasBin: true
 
   playwright-core@1.62.1:
     resolution: {integrity: sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==}
@@ -16880,6 +16890,8 @@ snapshots:
   pify@4.0.1: {}
 
   pirates@4.0.7: {}
+
+  pkg-pr-new@0.0.88: {}
 
   playwright-core@1.62.1: {}
 
