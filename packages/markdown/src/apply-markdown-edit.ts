@@ -79,8 +79,11 @@ const MAX_DISTINCT_BLOCK_FORMS = 55_000
  * Converts edited markdown to Portable Text, restores stored keys, and
  * restores fields the markdown dialect cannot express (dropped by
  * serialization, so the edit could not have touched them); a field
- * markdown does express follows the edit. Keys aim for what the same
- * edit would have produced in an editor:
+ * markdown does express follows the edit. An empty text block is the
+ * same case taken to the whole block: markdown has no form for it, so
+ * it is restored next to its surviving neighbor and dropped along with
+ * that neighbor if the neighbor does not survive. Keys aim for what the
+ * same edit would have produced in an editor:
  * unchanged, moved, and rewritten-in-place content keeps its keys
  * (rewriting a paragraph in place keeps its identity, like typing over
  * it), a split keeps the key on its first non-empty fragment, a merge
@@ -119,7 +122,8 @@ export function applyMarkdownEdit(
     }),
   ) as unknown as Array<Node>
   const canonical = canonicalizeStored(storedPortableText, options)
-  const originOf = traceOrigins(storedPortableText, canonical)
+  const nonEmptyStored = nonEmptyBlocks(storedPortableText)
+  const originOf = traceOrigins(nonEmptyStored, canonical)
   const adoptedNodes: AdoptedNodes = new WeakSet()
   if (originOf) {
     const alignment = alignBlocks(canonical, result)
@@ -144,6 +148,7 @@ export function applyMarkdownEdit(
       }
     }
   }
+  reinsertEmptyRuns(storedPortableText, result, adoptedNodes)
   enforceSiblingKeyUniqueness(
     result,
     options?.deserialize?.keyGenerator ?? defaultKeyGenerator,
@@ -194,7 +199,9 @@ function canonicalizeStored(
  * trustworthy when serialization preserved the node count and the
  * type sequence; when it did not (heading hard-break splits, lossy
  * table normalization), no key can be traced back to its owner, so
- * nothing adopts.
+ * nothing adopts. `stored` is already the non-empty subsequence: empty
+ * text blocks have no markdown form, so `canonical` never carries them
+ * either, and `reinsertEmptyRuns` restores them afterward.
  */
 function traceOrigins(
   stored: ReadonlyArray<PortableTextBlock>,
@@ -1196,6 +1203,30 @@ function isTextBlock(node: Node): boolean {
   return Array.isArray(node['children'])
 }
 
+/**
+ * A text block whose concatenated span text is exactly `''`. A
+ * whitespace-only block is left alone: it still fails the trimmed
+ * text comparison `traceOrigins` already does, the existing safe
+ * degradation.
+ */
+function isEmptyTextBlock(node: Node): boolean {
+  return isTextBlock(node) && blockText(node) === ''
+}
+
+/**
+ * Blank lines are markdown's block separator, so an empty text block
+ * has no serialized form: `canonicalizeStored`'s round trip drops it,
+ * the same way `markdownToPortableText` would if it were parsed back
+ * from `editedMarkdown`. Tracing origins and aligning blocks over this
+ * subsequence keeps both sides the same length; `reinsertEmptyRuns`
+ * restores the dropped blocks afterward.
+ */
+function nonEmptyBlocks(
+  stored: ReadonlyArray<PortableTextBlock>,
+): Array<PortableTextBlock> {
+  return stored.filter((node) => !isEmptyTextBlock(node as unknown as Node))
+}
+
 function isTypedObjectArray(value: unknown): value is Array<Node> {
   return (
     Array.isArray(value) &&
@@ -1207,6 +1238,84 @@ function isTypedObjectArray(value: unknown): value is Array<Node> {
         typeof (item as Node)['_type'] === 'string',
     )
   )
+}
+
+type EmptyRun = {
+  anchorKey: string
+  insertAfter: boolean
+  blocks: Array<Node>
+}
+
+/**
+ * Maximal runs of empty text blocks, each paired with the surviving
+ * neighbor its restoration hangs off: a run with a preceding block
+ * anchors to it (insert after); a run at the document's start, with
+ * none, anchors to the block that follows it (insert before). A run
+ * with neither (the whole document is empty blocks) has nothing to
+ * anchor to and is dropped.
+ */
+function findEmptyRuns(
+  stored: ReadonlyArray<PortableTextBlock>,
+): Array<EmptyRun> {
+  const runs: Array<EmptyRun> = []
+  let index = 0
+  while (index < stored.length) {
+    if (!isEmptyTextBlock(stored[index] as unknown as Node)) {
+      index++
+      continue
+    }
+    const runStart = index
+    while (
+      index < stored.length &&
+      isEmptyTextBlock(stored[index] as unknown as Node)
+    ) {
+      index++
+    }
+    const precedingBlock =
+      runStart > 0 ? (stored[runStart - 1] as unknown as Node) : undefined
+    const followingBlock =
+      index < stored.length ? (stored[index] as unknown as Node) : undefined
+    const anchor = precedingBlock ?? followingBlock
+    if (anchor && typeof anchor['_key'] === 'string') {
+      runs.push({
+        anchorKey: anchor['_key'],
+        insertAfter: precedingBlock !== undefined,
+        blocks: stored.slice(runStart, index) as unknown as Array<Node>,
+      })
+    }
+  }
+  return runs
+}
+
+/**
+ * Restores each empty run next to the result node that adopted its
+ * anchor's key, found by `_key` since positions have already shifted
+ * under insertion, deletion, and move. An anchor whose key did not
+ * survive into `result` (its region was rewritten or deleted) drops
+ * the run with it, consistent with rewrite semantics elsewhere in this
+ * module. Runs are cloned and marked adopted, the same authoritative
+ * status as every other restored key, so a collision resolves in
+ * their favor like `enforceSiblingKeyUniqueness` already does for
+ * `json:object` duplicates.
+ */
+function reinsertEmptyRuns(
+  stored: ReadonlyArray<PortableTextBlock>,
+  result: Array<Node>,
+  adoptedNodes: AdoptedNodes,
+): void {
+  for (const run of findEmptyRuns(stored)) {
+    const anchorIndex = result.findIndex(
+      (node) => node['_key'] === run.anchorKey,
+    )
+    if (anchorIndex === -1) {
+      continue
+    }
+    const clones = run.blocks.map((block) => structuredClone(block))
+    for (const clone of clones) {
+      adoptedNodes.add(clone)
+    }
+    result.splice(run.insertAfter ? anchorIndex + 1 : anchorIndex, 0, ...clones)
+  }
 }
 
 /**

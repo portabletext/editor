@@ -790,6 +790,7 @@ Keys follow the edit the way they would in an editor:
 - When an insertion or deletion makes the match ambiguous, a block keeps its key only on clear evidence; everything else gets a new key.
 - `json:object` payloads keep the `_key` they carry, unless the payload matches stored content, which keeps the stored key: editing markdown cannot re-key existing content.
 - A field the markdown dialect cannot express, like a text block's `alignment`, is restored on an adopted block along with its key; a field markdown does express, like `language` on a code block, follows the edit.
+- An empty text block has no markdown form (blank lines are the block separator), so it is restored next to its surviving neighbor with its key intact, and deleted along with that neighbor if the neighbor goes.
 
 Output keys are always unique among siblings, the inputs are never mutated, and the result is a value, not patches.
 

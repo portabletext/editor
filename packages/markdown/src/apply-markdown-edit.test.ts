@@ -1733,6 +1733,84 @@ describe(applyMarkdownEdit.name, () => {
     })
     expect(twice).toEqual(once)
   })
+
+  test('empty blocks survive an unchanged serialization with every key intact', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'first paragraph'),
+      block('empty1', 'es1', ''),
+      block('b2', 's2', 'second paragraph'),
+      block('empty2', 'es2', ''),
+      block('empty3', 'es3', ''),
+      block('b3', 's3', 'third paragraph'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual(stored)
+  })
+
+  test('empty blocks survive an edit with all keys intact', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'first paragraph'),
+      block('empty1', 'es1', ''),
+      block('b2', 's2', 'second paragraph'),
+      block('empty2', 'es2', ''),
+      block('empty3', 'es3', ''),
+      block('b3', 's3', 'third paragraph'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'second',
+      'SECOND',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      block('b1', 's1', 'first paragraph'),
+      block('empty1', 'es1', ''),
+      block('b2', 's2', 'SECOND paragraph'),
+      block('empty2', 'es2', ''),
+      block('empty3', 'es3', ''),
+      block('b3', 's3', 'third paragraph'),
+    ])
+  })
+
+  test('an empty run whose anchor was deleted goes with it', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'alpha'),
+      block('empty1', 'es1', ''),
+      block(
+        'b2',
+        's2',
+        'a distinctively long beta paragraph that nothing else resembles',
+      ),
+    ]
+    const markdown =
+      'a distinctively long beta paragraph that nothing else resembles'
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      block(
+        'b2',
+        's2',
+        'a distinctively long beta paragraph that nothing else resembles',
+      ),
+    ])
+  })
+
+  test('leading empty blocks anchor to the first following block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('empty1', 'es1', ''),
+      block('b1', 's1', 'content here'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual(stored)
+  })
 })
 
 function alternatingSpansBlock(

@@ -53,14 +53,25 @@ function generateStored(
   const blockCount = 1 + Math.floor(random() * 7)
   return Array.from({length: blockCount}, () => {
     const roll = random()
-    if (roll < 0.1) {
+    if (roll < 0.15) {
+      // Empty text blocks have no markdown form: exercises the
+      // reinsertion path alongside every other block form.
+      return {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keyGenerator(), text: '', marks: []}],
+      } as unknown as PortableTextBlock
+    }
+    if (roll < 0.25) {
       return {
         _type: 'product',
         _key: keyGenerator(),
         sku: sentence(random),
       } as unknown as PortableTextBlock
     }
-    if (roll < 0.2) {
+    if (roll < 0.35) {
       return {
         _type: 'code',
         _key: keyGenerator(),
@@ -68,7 +79,7 @@ function generateStored(
         code: sentence(random),
       } as unknown as PortableTextBlock
     }
-    if (roll < 0.3) {
+    if (roll < 0.45) {
       return {
         _type: 'block',
         _key: keyGenerator(),
@@ -200,6 +211,44 @@ function mutateMarkdown(random: () => number, markdown: string): string {
     }
   }
   return paragraphs.join('\n\n')
+}
+
+/**
+ * An empty text block cloned back in verbatim from a top-level stored
+ * block of the same key: markdown has no form for an empty block, so
+ * its only source is `reinsertEmptyRuns`, never the plain parse. The
+ * verbatim-equality check (not just an empty text and a stored key)
+ * is what keeps this from also matching a block whose own edit
+ * emptied it: that block's key is stored too, but its content no
+ * longer matches the stored node.
+ */
+function isRestoredEmptyBlock(
+  node: unknown,
+  storedByKey: ReadonlyMap<string, unknown>,
+): boolean {
+  if (typeof node !== 'object' || node === null) {
+    return false
+  }
+  const record = node as Record<string, unknown>
+  const children = record['children']
+  if (!Array.isArray(children)) {
+    return false
+  }
+  const text = children
+    .map((child) =>
+      typeof (child as Record<string, unknown>)['text'] === 'string'
+        ? (child as Record<string, unknown>)['text']
+        : '\uFFFC',
+    )
+    .join('')
+  if (text !== '') {
+    return false
+  }
+  const key = record['_key']
+  if (typeof key !== 'string' || !storedByKey.has(key)) {
+    return false
+  }
+  return JSON.stringify(node) === JSON.stringify(storedByKey.get(key))
 }
 
 /**
@@ -335,6 +384,17 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
         deserialize: {keyGenerator: createTestKeyGenerator()},
       })
 
+      const storedKeys = new Set<string>()
+      collectKeys(storedSnapshot, storedKeys)
+      const storedByKey = new Map<string, unknown>(
+        storedSnapshot
+          .filter(
+            (node): node is PortableTextBlock & {_key: string} =>
+              typeof (node as {_key?: unknown})['_key'] === 'string',
+          )
+          .map((node) => [node['_key'], node]),
+      )
+
       // Content preservation: every field the plain parse produced
       // survives in the result, and every field the result adds on
       // top traces to the stored value.
@@ -343,16 +403,20 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
       })
       const storedFieldPairs = new Set<string>()
       collectFieldPairs(storedSnapshot, storedFieldPairs)
+      // Restored empty blocks have no markdown form, so the plain parse
+      // never produced them: skip them here and let the key-provenance
+      // and uniqueness checks below cover them instead.
+      const reconciledWithoutRestoredEmptyBlocks = reconciled.filter(
+        (node) => !isRestoredEmptyBlock(node, storedByKey),
+      )
       assertFieldwiseSubsetAndProvenance(
-        reconciled,
+        reconciledWithoutRestoredEmptyBlocks,
         plainParse,
         storedFieldPairs,
       )
 
       // Key provenance: every key is either stored, generated fresh,
       // or carried inside the markdown itself.
-      const storedKeys = new Set<string>()
-      collectKeys(storedSnapshot, storedKeys)
       const resultKeys = new Set<string>()
       collectKeys(reconciled, resultKeys)
       for (const key of resultKeys) {
