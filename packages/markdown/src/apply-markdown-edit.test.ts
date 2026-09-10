@@ -126,6 +126,61 @@ describe(applyMarkdownEdit.name, () => {
     ).toEqual([block('b1', 's1', 'foobar')])
   })
 
+  test('a merge past the span-pair cap does not adopt the key; below the cap it still does', () => {
+    const belowCap = applyMarkdownEdit(
+      [alternatingSpansBlock('b1', 3, 'small')],
+      alternatingMarkdown(2, 0, 'small0small1'),
+      {deserialize: {keyGenerator: createTestKeyGenerator()}},
+    )
+    expect(belowCap).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'smalls0', text: 'small0small1', marks: []},
+          {_type: 'span', _key: 'smalls2', text: 'edited1', marks: ['strong']},
+        ],
+      },
+    ])
+
+    const overCap = applyMarkdownEdit(
+      [alternatingSpansBlock('b1', 51, 'stored')],
+      alternatingMarkdown(61, 30, 'stored0stored1'),
+      {deserialize: {keyGenerator: createTestKeyGenerator()}},
+    )
+    expect(
+      (overCap[0] as {children: Array<{_key: string}>}).children.map(
+        (child) => child._key,
+      ),
+    ).toEqual(Array.from({length: 61}, (_, index) => `k${index + 1}`))
+  })
+
+  test('two identical annotations keep their keys, pairing in order', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [
+          {_type: 'link', _key: 'a1', href: 'https://same.example'},
+          {_type: 'link', _key: 'a2', href: 'https://same.example'},
+        ],
+        children: [
+          {_type: 'span', _key: 's1', text: 'first', marks: ['a1']},
+          {_type: 'span', _key: 's2', text: ' and ', marks: []},
+          {_type: 'span', _key: 's3', text: 'second', marks: ['a2']},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual(stored)
+  })
+
   test('an unchanged link keeps its annotation key and reference', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
@@ -614,6 +669,75 @@ describe(applyMarkdownEdit.name, () => {
             cells: [
               {_type: 'cell', _key: 'c5', value: [block('cb5', 'cs5', 'five')]},
               {_type: 'cell', _key: 'c6', value: [block('cb6', 'cs6', 'SIX')]},
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('a reorder-plus-edit of siblings with balanced counts mispairs, the accepted trade', () => {
+    const schema = compileSchema(
+      defineSchema({blockObjects: [defaultTableObjectDefinition]}),
+    )
+    const stored = [
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {_type: 'cell', _key: 'c1', value: [block('cb1', 'cs1', 'one')]},
+              {_type: 'cell', _key: 'c2', value: [block('cb2', 'cs2', 'two')]},
+              {
+                _type: 'cell',
+                _key: 'c3',
+                value: [block('cb3', 'cs3', 'three')],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    // The edited row swaps the content of cells two and three and edits
+    // both, so the residual zip (equal counts, position order) pairs
+    // each stored cell key with whichever edited cell landed in that
+    // cell's original position, not with the text it descends from:
+    // `c2` (originally "two") ends up on "THREEx", `c3` on "TWOx".
+    const markdown = [
+      '|  |  |  |',
+      '| --- | --- | --- |',
+      '| one | THREEx | TWOx |',
+    ].join('\n')
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        schema,
+        deserialize: {keyGenerator: createTestKeyGenerator()},
+      }),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {_type: 'cell', _key: 'c1', value: [block('cb1', 'cs1', 'one')]},
+              {
+                _type: 'cell',
+                _key: 'c2',
+                value: [block('cb2', 'cs2', 'THREEx')],
+              },
+              {
+                _type: 'cell',
+                _key: 'c3',
+                value: [block('cb3', 'cs3', 'TWOx')],
+              },
             ],
           },
         ],
@@ -1576,6 +1700,41 @@ describe(applyMarkdownEdit.name, () => {
     expect(twice).toEqual(once)
   })
 })
+
+function alternatingSpansBlock(
+  blockKey: string,
+  count: number,
+  prefix: string,
+): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [],
+    children: Array.from({length: count}, (_, index) => ({
+      _type: 'span',
+      _key: `${prefix}s${index}`,
+      text: `${prefix}${index}`,
+      marks: index % 2 === 0 ? [] : ['strong'],
+    })),
+  }
+}
+
+// Adjacent same-mark spans merge at parse time, so the tokens making up
+// one target span must alternate marks to stay separate; `mergedAt`
+// substitutes a text that is the concatenation of two stored spans,
+// giving the pair search a genuine merge to find.
+function alternatingMarkdown(
+  count: number,
+  mergedAt: number,
+  mergedText: string,
+): string {
+  return Array.from({length: count}, (_, index) =>
+    index === mergedAt ? mergedText : `edited${index}`,
+  )
+    .map((text, index) => (index % 2 === 0 ? text : `**${text}**`))
+    .join('')
+}
 
 function manyBlocks(count: number, prefix: string): Array<PortableTextBlock> {
   return Array.from({length: count}, (_, index) =>

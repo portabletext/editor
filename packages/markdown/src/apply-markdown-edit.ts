@@ -19,9 +19,11 @@ export type ApplyMarkdownEditOptions = {
   /**
    * Options for the markdown → Portable Text conversion of
    * `editedMarkdown` (matchers, `keyGenerator`). The same options
-   * (other than `onDegradation` and `keyGenerator`, which apply only
-   * to `editedMarkdown`) also govern the internal canonicalization of
-   * `storedPortableText` used to align the two documents.
+   * also govern the internal canonicalization of `storedPortableText`
+   * used to align the two documents, except `onDegradation`, which is
+   * scoped to `editedMarkdown` alone: `keyGenerator` supplies every
+   * fresh key the function mints, both for new content and for the
+   * sibling-uniqueness repair sweep.
    */
   deserialize?: Omit<
     NonNullable<Parameters<typeof markdownToPortableText>[1]>,
@@ -96,6 +98,12 @@ const MAX_DISTINCT_BLOCK_FORMS = 55_000
  * options that produced the markdown that was edited. A throwing or
  * stateful custom matcher or renderer propagates or degrades matching
  * respectively.
+ * Reconciliation never merges concurrent edits: compare the stored
+ * field against the live document before writing the result back.
+ * The trades in one line: same-position replacement inherits identity,
+ * a count-preserving rewrite pairs positionally (block-level and
+ * sibling-level alike), and evidence gathering is capped, degrading to
+ * fresh keys.
  *
  * @public
  */
@@ -629,7 +637,14 @@ function adoptNode(
       )
     }
 
-    if (field === 'children') {
+    // The concatenation search is quadratic in the block's span count,
+    // so it shares the similarity tier's pair cap: past it, the merge
+    // search is skipped and the unmatched spans fall through to fresh
+    // keys rather than adopting at tens-of-seconds cost.
+    if (
+      field === 'children' &&
+      originalChildren.length * targetChildren.length <= MAX_SIMILARITY_PAIRS
+    ) {
       adoptMergedSpans(
         originalChildren,
         canonicalChildren,
@@ -873,20 +888,21 @@ function adoptMarkDefs(
 
   for (const [neutral, originalIndexes] of originalGroups) {
     const targetIndexes = targetGroups.get(neutral)
-    if (
-      originalIndexes.length !== 1 ||
-      !targetIndexes ||
-      targetIndexes.length !== 1
-    ) {
+    if (!targetIndexes || targetIndexes.length !== originalIndexes.length) {
       continue
     }
-    matchedOriginal.add(originalIndexes[0]!)
-    matchedTarget.add(targetIndexes[0]!)
-    adoptDef(
-      originalDefs[originalIndexes[0]!]!,
-      canonicalDefs?.[originalIndexes[0]!],
-      targetDefs[targetIndexes[0]!]!,
-    )
+    // Equal-count identical definitions pair in order, the repeated-content
+    // policy: the definitions are content-equal, so no pairing can
+    // mis-resolve a reference.
+    for (let offset = 0; offset < originalIndexes.length; offset++) {
+      matchedOriginal.add(originalIndexes[offset]!)
+      matchedTarget.add(targetIndexes[offset]!)
+      adoptDef(
+        originalDefs[originalIndexes[offset]!]!,
+        canonicalDefs?.[originalIndexes[offset]!],
+        targetDefs[targetIndexes[offset]!]!,
+      )
+    }
   }
 
   const originalRest = originalDefs
