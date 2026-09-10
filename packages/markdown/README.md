@@ -537,7 +537,7 @@ The conversion is driven by **Renderers**: functions that render Portable Text e
 
 Unknown types render as JSON code blocks by default; unknown styles, list items, and marks pass through their children.
 
-The default type renderers are collision-safe: because the serializer dispatches on the `_type` name alone, `code`, `html`, `image`, `callout`, and `table` fall back to the `unknownType` renderer (a JSON code block) when a value doesn't match the shape their renderer expects (say, your own differently-shaped `code` type); `horizontal-rule` has no shape to check and always renders `---`. Register your own `types.<name>` renderer to override how any of them serialize, or to handle a same-named type of a different shape.
+The default type renderers are collision-safe: because the serializer dispatches on the `_type` name alone, `code`, `html`, `image`, `callout`, and `table` fall back to the `unknownType` renderer (a JSON code block) when a value doesn't match the shape their renderer expects (say, your own differently-shaped `code` type); `horizontal-rule` has no shape to check and always renders `---`. `image` also falls back when `src` is a string a Markdown parser would refuse (a `javascript:`/`vbscript:`/`file:` URI, or a `data:` URI outside `png`/`gif`/`jpeg`/`webp`), so the value survives as a `json:object` fence instead of reparsing as literal text. Register your own `types.<name>` renderer to override how any of them serialize, or to handle a same-named type of a different shape.
 
 > **Note:** The `underline` renderer is included for Portable Text that uses it, but there's no standard Markdown syntax for underline, so it renders as HTML.
 
