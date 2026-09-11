@@ -129,12 +129,20 @@ const useChildren = (props: {
           ? [{_key: node._key}]
           : [...parentPath, arrayFieldName, {_key: node._key}]
 
+      // Folding the repair generation into the key means bumping it (see
+      // `repairBlockDom` in `editable.tsx`) makes this block's key differ
+      // from its previous render, so React treats the next render as a
+      // fresh mount instead of an update and rebuilds this block's DOM
+      // subtree from the model, discarding whatever a browser extension's
+      // direct DOM mutation left behind.
+      const repairGeneration = editor.blockRepairGeneration.get(node._key) ?? 0
+
       return (
         <ElementComponent
           decorations={decorationsByChild[i] ?? []}
           element={node}
           isContainer={isContainer}
-          key={node._key}
+          key={`${node._key}:${repairGeneration}`}
           path={nodePath}
           renderElement={renderElement}
           renderLeaf={renderLeaf}
@@ -219,11 +227,27 @@ const useChildren = (props: {
         ? [{_key: node._key}]
         : [...parentPath, arrayFieldName, {_key: node._key}]
 
+    // Block objects (not inline ones - `blockRepairGeneration` only ever
+    // holds top-level block keys) fold the repair generation into their
+    // key too, the same reason `renderElementComponent` does: a void
+    // object's visible parts are `contentEditable={false}`, not immune to
+    // whatever DOM a destructive `execCommand` left behind, and
+    // `bumpAllBlockGenerations`'s full remount must actually reach it
+    // rather than leave it to an unkeyed, no-op reconciliation.
+    const repairGeneration =
+      parentPath.length === 0
+        ? (editor.blockRepairGeneration.get(node._key) ?? 0)
+        : undefined
+
     return (
       <ObjectNodeComponent
         decorations={decorationsByChild[index] ?? []}
         isInline={textBlockParent !== undefined}
-        key={node._key}
+        key={
+          repairGeneration === undefined
+            ? node._key
+            : `${node._key}:${repairGeneration}`
+        }
         objectNode={node}
         path={nodePath}
         renderElement={renderElement}

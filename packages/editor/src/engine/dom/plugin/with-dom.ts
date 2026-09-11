@@ -32,6 +32,8 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.pendingAction = null
   e.pendingSelection = null
   e.forceRender = null
+  e.blockRepairGeneration = new Map()
+  e.pendingMutationRecords = []
 
   subscribeToOperations(
     e,
