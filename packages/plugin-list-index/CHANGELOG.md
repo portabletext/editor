@@ -1,5 +1,11 @@
 # @portabletext/plugin-list-index
 
+## 2.0.8
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.1.4`
+
 ## 2.0.7
 
 ### Patch Changes

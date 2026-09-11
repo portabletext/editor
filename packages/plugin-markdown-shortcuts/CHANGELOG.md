@@ -1,5 +1,13 @@
 # Changelog
 
+## 9.0.9
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-character-pair-decorator@9.0.9
+  - @portabletext/plugin-input-rule@7.0.9
+
 ## 9.0.8
 
 ### Patch Changes

@@ -1,5 +1,58 @@
 # @portabletext/markdown
 
+## 2.2.0
+
+### Minor Changes
+
+- [#3255](https://github.com/portabletext/editor/pull/3255) [`02e2d49`](https://github.com/portabletext/editor/commit/02e2d4918e7c0a55e974f90e414a3b53aaf3b199) Thanks [@christianhg](https://github.com/christianhg)! - feat: gate the default markdown renderers on the schema in `portableTextToMarkdown`
+
+  `portableTextToMarkdown` now accepts an optional `schema`. When set, each built-in type renderer (`callout`, `code`, `horizontal-rule`, `html`, `image`, `table`) runs only when the schema declares that type at the matching position (`blockObjects` for a block, `inlineObjects` for an inline object); an undeclared type falls back to `unknownType`, whose default output is a `json:object` fence (or tagged code span, inline) that reparses back to the same value under the same schema. Renderers you pass in `types` are never gated. The gate checks the type name only, so declare each type with its fields: `markdownToPortableText` cannot rebuild a value from a fieldless declaration. Omit `schema` and every default renderer stays active, as before.
+
+  ```ts
+  import {compileSchema, defineSchema} from '@portabletext/schema'
+  import {portableTextToMarkdown} from '@portabletext/markdown'
+
+  const schema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'code',
+          fields: [
+            {name: 'code', type: 'string'},
+            {name: 'language', type: 'string'},
+          ],
+        },
+      ],
+    }),
+  )
+
+  portableTextToMarkdown(blocks, {schema})
+  // a `code` block renders as a fenced code block; a `table` block
+  // (undeclared) renders as a `json:object` fence instead
+  ```
+
+  Pass the same schema to `markdownToPortableText` to keep the round trip consistent.
+
+### Patch Changes
+
+- [#3265](https://github.com/portabletext/editor/pull/3265) [`3b2d278`](https://github.com/portabletext/editor/commit/3b2d27847eb5139b2d50dc9f3d962167342c2b91) Thanks [@christianhg](https://github.com/christianhg)! - fix: serialize images the parser would refuse as `json:object` fences
+
+  An `image` whose `src` a Markdown parser would refuse (a `data:` URI outside `png`/`gif`/`jpeg`/`webp`, or a `javascript:`/`vbscript:`/`file:` URI) previously serialized as `![alt](src)` anyway; reparsing that markdown turned the image into literal text instead of an image object, destroying it. Such an image now serializes as a `json:object` fence (or, inline, a tagged code span), which reparses back to the identical image value. Images with an accepted `src` are unaffected.
+
+- [#3255](https://github.com/portabletext/editor/pull/3255) [`d39146e`](https://github.com/portabletext/editor/commit/d39146ee48a23bad4a6c312863e76ff389a1bc2c) Thanks [@christianhg](https://github.com/christianhg)! - fix: use the inline `json:object` carrier for objects inside table cells
+
+  In `portableTextToMarkdown`, an object inside a table cell that renders through the `json:object` carrier now uses the carrier's single-line inline form instead of a block fence squashed with `<br>`.
+
+  In `markdownToPortableText`, a carrier object standing alone in a table cell is placed by the schema: it comes back at block position in the cell (`cell.value`), unless the schema declares the type inline-only, in which case it stays an inline child of the cell's text block. The same placement rule now governs standalone images, so under a schema without a block-level `image`, an image alone in a cell stays inline (reported as `image-block-to-inline`) instead of being lifted to block position.
+
+  Together the two sides make objects in table cells survive the serialize-edit-reparse round trip.
+
+- [#3264](https://github.com/portabletext/editor/pull/3264) [`deccf84`](https://github.com/portabletext/editor/commit/deccf846fb41efbcae9b6dccafbfd6cd101930a1) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit no blank lines for empty text blocks
+
+  A block that renders to the empty string (an empty or whitespace-only text block, or a custom renderer returning `''`) no longer leaves blank lines in `portableTextToMarkdown`'s output: `[h1 'foo', empty block, 'bar']` now serializes to `# foo\n\nbar` instead of `# foo\n\n\n\nbar`. A dropped block never survived reparsing anyway, and a custom `blockSpacing` callback now sees the pair of blocks that actually end up adjacent, never an invisible one. Two spacing consequences show in rendered HTML: two blockquotes separated only by an empty block now join into one quote with a paragraph break, and a list whose blank lines came only from empty blocks goes tight, since a skipped block no longer counts toward looseness.
+
+  The same filter runs inside containers: callout and structured-blockquote content joins skip empty blocks, so no more blank quote-prefixed lines. In list items, the marker line goes to the first block that renders output, with two exceptions that keep the markdown reparseable: a multi-line block (a code fence, a table) keeps its later lines indented inside the item instead of escaping the list at column 0, and a nested list or, on a task item, any non-text block stays indented below a bare marker, because after `- [x] ` (or fused with `- `) it would reparse as plain words.
+
 ## 2.1.0
 
 ### Minor Changes
