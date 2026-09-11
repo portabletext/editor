@@ -5,7 +5,11 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {applyMarkdownEdit} from './apply-markdown-edit'
+import {
+  applyMarkdownEdit,
+  type ReconciliationKeyPath,
+  type ReconciliationReport,
+} from './apply-markdown-edit'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 
@@ -93,8 +97,8 @@ function generateStored(
       const styleRoll = random()
       const style = styleRoll < 0.6 ? 'normal' : styleRoll < 0.8 ? 'h2' : 'lead'
       // Paired with `h2` a list marker plus heading marker splits into
-      // two blocks on reparse (a document-wide refusal case covered
-      // elsewhere), so `listItem` only combines with `normal`.
+      // two blocks on reparse (a document-wide skip-of-key-matching case
+      // covered elsewhere), so `listItem` only combines with `normal`.
       const listItem =
         style === 'normal' && random() < 0.3 ? 'bullet' : undefined
       return {
@@ -511,6 +515,170 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
         deserialize: {keyGenerator: createTestKeyGenerator()},
       })
       expect(again).toEqual(reconciled)
+
+      // Instrumentation neutrality: collecting a key resolution report
+      // never changes the returned value, and the report it collects is
+      // internally consistent with that value.
+      let reportCallCount = 0
+      let report: ReconciliationReport | undefined
+      const withReport = applyMarkdownEdit(storedSnapshot, editedMarkdown, {
+        schema,
+        deserialize: {keyGenerator: createTestKeyGenerator()},
+        onReconciliation: (r) => {
+          reportCallCount++
+          report = r
+        },
+      })
+      expect(withReport).toEqual(reconciled)
+      expect(reportCallCount).toBe(1)
+      assertReconciliationReportConsistency(report!, withReport, storedKeys)
     }
   })
 })
+
+describe('the reconciliation report invariants the fuzz suite checks', () => {
+  test('reject a preserved key whose key or path was corrupted', () => {
+    const stored = [block('b1', 's1', 'alpha'), block('b2', 's2', 'beta')]
+    const markdown = 'beta\n\nalpha'
+    let report: ReconciliationReport | undefined
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator: createTestKeyGenerator()},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    const storedKeys = new Set(['b1', 's1', 'b2', 's2'])
+    const producedReport = report!
+    if (producedReport.keyMatching !== 'performed') {
+      throw new Error('expected a performed report')
+    }
+    const performedReport = producedReport
+
+    // The real report passes; every mutated copy below must fail.
+    assertReconciliationReportConsistency(performedReport, result, storedKeys)
+
+    const wrongKey = structuredClone(performedReport)
+    wrongKey.preservedKeys[0]!.key = 'not-a-real-key'
+    expect(() =>
+      assertReconciliationReportConsistency(wrongKey, result, storedKeys),
+    ).toThrow()
+
+    const truncatedPath = structuredClone(performedReport)
+    const spanPreservedKey = truncatedPath.preservedKeys.find(
+      (preservedKey) => preservedKey.path.length > 1,
+    )!
+    spanPreservedKey.path = spanPreservedKey.path.slice(0, -1)
+    expect(() =>
+      assertReconciliationReportConsistency(truncatedPath, result, storedKeys),
+    ).toThrow()
+  })
+})
+
+function block(
+  blockKey: string,
+  spanKey: string,
+  text: string,
+): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+  }
+}
+
+/**
+ * Resolves a `ReconciliationKeyPath` against the value
+ * `applyMarkdownEdit` returned: a number segment always selects an
+ * array index, a string segment always selects an object field, and
+ * a `{_key}` segment always selects a keyed element out of the
+ * current array, with no guessing from runtime shape.
+ */
+function resolveReconciliationKeyPath(
+  root: unknown,
+  path: ReconciliationKeyPath,
+): unknown {
+  let current = root
+  for (const segment of path) {
+    if (typeof segment === 'number') {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current[segment]
+    } else if (typeof segment === 'string') {
+      if (typeof current !== 'object' || current === null) {
+        return undefined
+      }
+      current = (current as Record<string, unknown>)[segment]
+    } else {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current.find(
+        (item) =>
+          typeof item === 'object' &&
+          item !== null &&
+          (item as Record<string, unknown>)['_key'] === segment._key,
+      )
+    }
+    if (current === undefined) {
+      return undefined
+    }
+  }
+  return current
+}
+
+/**
+ * The report-shape invariants that must hold no matter which fuzz
+ * case produced the report: every `preservedKeys`/`renamedKeys`
+ * entry's `path` resolves to the node its `key` names, every
+ * preserved key was actually stored, no key is reported both
+ * preserved and renamed at the same path, and a rename always
+ * changes the key. A skipped report carries no `preservedKeys` field
+ * at all, so the document-wide key-matching-skip invariant needs no
+ * assertion here: the type rules it out.
+ */
+function assertReconciliationReportConsistency(
+  report: ReconciliationReport,
+  result: unknown,
+  storedKeys: ReadonlySet<string>,
+): void {
+  for (const renamedKey of report.renamedKeys) {
+    const node = resolveReconciliationKeyPath(result, renamedKey.path)
+    expect(
+      typeof node === 'object' &&
+        node !== null &&
+        (node as Record<string, unknown>)['_key'] === renamedKey.key,
+    ).toBe(true)
+    expect(renamedKey.previousKey).not.toBe(renamedKey.key)
+  }
+
+  if (report.keyMatching !== 'performed') {
+    return
+  }
+
+  for (const preservedKey of report.preservedKeys) {
+    const node = resolveReconciliationKeyPath(result, preservedKey.path)
+    expect(
+      typeof node === 'object' &&
+        node !== null &&
+        (node as Record<string, unknown>)['_key'] === preservedKey.key,
+    ).toBe(true)
+    expect(storedKeys.has(preservedKey.key)).toBe(true)
+  }
+
+  const preservedAtPath = new Set(
+    report.preservedKeys.map(
+      (preservedKey) =>
+        `${JSON.stringify(preservedKey.path)}:${preservedKey.key}`,
+    ),
+  )
+  for (const renamedKey of report.renamedKeys) {
+    expect(
+      preservedAtPath.has(
+        `${JSON.stringify(renamedKey.path)}:${renamedKey.key}`,
+      ),
+    ).toBe(false)
+  }
+}

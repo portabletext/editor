@@ -1,6 +1,8 @@
 export {
   applyMarkdownEdit,
   type ApplyMarkdownEditOptions,
+  type ReconciliationKeyPath,
+  type ReconciliationReport,
 } from './apply-markdown-edit'
 export {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 export {

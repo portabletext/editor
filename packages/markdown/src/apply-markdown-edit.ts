@@ -23,7 +23,7 @@ export type ApplyMarkdownEditOptions = {
    * used to align the two documents, except `onDegradation`, which is
    * scoped to `editedMarkdown` alone: `keyGenerator` supplies every
    * fresh key the function mints, both for new content and for the
-   * sibling-uniqueness repair sweep.
+   * sibling-uniqueness key-rename sweep.
    */
   deserialize?: Omit<
     NonNullable<Parameters<typeof markdownToPortableText>[1]>,
@@ -31,16 +31,162 @@ export type ApplyMarkdownEditOptions = {
   >
   /**
    * Options for the Portable Text → markdown conversion. Pass the same
-   * options that produced the markdown that was edited: reconciliation
-   * aligns the edit against a fresh canonical serialization of
-   * `storedPortableText`, so the two serializations must agree for
+   * options that produced the markdown that was edited: key
+   * resolution aligns the edit against a fresh canonical serialization
+   * of `storedPortableText`, so the two serializations must agree for
    * that alignment to be meaningful.
    */
   serialize?: Omit<
     NonNullable<Parameters<typeof portableTextToMarkdown>[1]>,
     'schema'
   >
+  /**
+   * Reports how stored `_key`s were reconciled onto the converted
+   * value. Reconciliation here is key restoration against the exact
+   * snapshot that produced the markdown, never a merge of concurrent
+   * edits: those are the caller's job (see the README's Concurrent
+   * edits section). Called at most once, and exactly once whenever the
+   * option is set and `applyMarkdownEdit` returns (a conversion that
+   * throws never reports), synchronously, immediately before the
+   * return, including when key matching is skipped outright: that is
+   * when a caller needs the report most. A node absent from a performed report's
+   * `preservedKeys` was not preserved from the stored value, whether
+   * it is a fresh key or a `json:object` payload key that carried its
+   * own; the report does not distinguish the two. Which keys
+   * survived, every `key` and `path`, and `renamedKeys` are facts of
+   * that invocation, safe to branch on for that invocation; a skipped
+   * report's `reason` is advisory only, since near the evidence caps
+   * it can vary with machine speed, and should never drive behavior.
+   *
+   * @beta
+   */
+  onReconciliation?: (report: ReconciliationReport) => void
 }
+
+/**
+ * A path segment into the value `applyMarkdownEdit` returns: a string
+ * field name for container nesting (`rows`, `cells`, `value`, and the
+ * like), `{_key}` wherever the path lands on a keyed array element,
+ * and a number wherever it lands on a keyless one instead. A block's
+ * own path is a single `{_key}` segment, or a single number for a
+ * keyless top-level block; a child's path is
+ * `[{_key: <block key>}, 'children', {_key: <child key>}]`. A keyless
+ * node (a `json:object` payload without a `_key` of its own, at the
+ * top level or wrapping keyed content in a nested array) contributes
+ * its index as a number segment instead of a `{_key}` segment.
+ *
+ * @beta
+ */
+export type ReconciliationKeyPath = Array<{_key: string} | string | number>
+
+/**
+ * What `applyMarkdownEdit` did with every key, delivered through
+ * `onReconciliation`. `keyMatching: 'skipped'` means key matching gave
+ * up on the whole document rather than at some local point: the
+ * returned value is the plain markdown→Portable Text conversion, so
+ * every key in it is fresh except a `json:object` payload key carried
+ * through the markdown verbatim, and no preserved key or local key
+ * fallback can have happened. `preservedKeys` and `renamedKeys` list
+ * their entries in document order, each block before its children and
+ * its mark definitions after them; `keyFallbacks` groups by kind
+ * instead: `ambiguous-region-too-large` entries in the order their
+ * gaps were resolved, then `annotation-key-conflict` entries. `basis`
+ * names the matching method that preserved a key, not the edit's
+ * semantics: a swap reports one block `content-moved` and its partner
+ * `content-unchanged`. The report carries no edit intent: a deleted
+ * stored node is not listed at all, so derive deletions as stored
+ * keys minus the keys `applyMarkdownEdit` returned.
+ *
+ * @beta
+ */
+export type ReconciliationReport =
+  | {
+      keyMatching: 'performed'
+      /**
+       * One entry per node whose stored `_key` key resolution
+       * preserved, at every depth (blocks, spans and other inline
+       * children, and mark definitions). A node absent from this list
+       * did not have its key preserved from the stored value: that
+       * covers both a freshly generated key and a `json:object`
+       * payload key carried through the markdown verbatim, which the
+       * report does not distinguish. `basis` names the tier that
+       * matched: `content-unchanged` for an exact content match (a
+       * block-level anchor, a uniquely matched child, a preserved
+       * empty-block run, or a mark definition uniquely matched by
+       * content); `content-moved` for a unique leftover matched
+       * across gaps; `content-split` for a fragment that kept its
+       * source block's key; `content-merged` for a merge that kept
+       * its first contributor's key; `same-position` for an
+       * equal-count in-order pairing (also a same-content
+       * mark-definition tie, or a single leftover mark definition
+       * paired positionally); `similar-content` for a mutual-best
+       * match under an unequal count.
+       */
+      preservedKeys: Array<{
+        basis:
+          | 'content-unchanged'
+          | 'content-moved'
+          | 'content-split'
+          | 'content-merged'
+          | 'same-position'
+          | 'similar-content'
+        key: string
+        path: ReconciliationKeyPath
+      }>
+      /**
+       * One entry per local point where key resolution gave up rather
+       * than adopt, while the rest of the document still resolves
+       * keys: `ambiguous-region-too-large` when a gap's residual
+       * similarity pairing crossed the evidence pair cap, listing the
+       * affected result block keys that fell back to fresh;
+       * `annotation-key-conflict` when an adopted mark definition key
+       * would have collided with a sibling. The span-merge pair cap,
+       * the per-diff similarity timeout, and the gap's earlier
+       * concatenation-search cap degrade the same way but are not
+       * reported: `ambiguous-region-too-large` covers the residual
+       * similarity tier only (a gap that trips the concatenation cap
+       * trips it too).
+       */
+      keyFallbacks: Array<
+        | {type: 'ambiguous-region-too-large'; keys: Array<string>}
+        | {type: 'annotation-key-conflict'; path: ReconciliationKeyPath}
+      >
+      /**
+       * One entry per key `applyMarkdownEdit` rewrote to keep
+       * siblings unique, most commonly a `json:object` payload
+       * duplicating a key already present elsewhere in the document.
+       */
+      renamedKeys: Array<{
+        previousKey: string
+        key: string
+        path: ReconciliationKeyPath
+      }>
+    }
+  | {
+      keyMatching: 'skipped'
+      /**
+       * `round-trip-mismatch` when the stored value's own
+       * canonicalization changed its node count, type sequence, or
+       * per-position text; `document-too-large` when the document
+       * holds more distinct block forms than alignment can token.
+       * Advisory only, since near the evidence caps it can vary with
+       * machine speed, and should never drive behavior.
+       */
+      reason: 'round-trip-mismatch' | 'document-too-large'
+      /**
+       * One entry per key `applyMarkdownEdit` rewrote to keep
+       * siblings unique, most commonly a `json:object` payload
+       * duplicating a key already present elsewhere in the document.
+       * The sibling-uniqueness pass still runs on a skipped document:
+       * a pasted duplicate `json:object` fence key still gets
+       * renamed even though nothing else adopted.
+       */
+      renamedKeys: Array<{
+        previousKey: string
+        key: string
+        path: ReconciliationKeyPath
+      }>
+    }
 
 /**
  * Deliberately high pending calibration against real agent edit
@@ -118,6 +264,16 @@ export function applyMarkdownEdit(
   editedMarkdown: string,
   options?: ApplyMarkdownEditOptions,
 ): Array<PortableTextBlock> {
+  const onReconciliation = options?.onReconciliation
+  const recorder: ReconciliationRecorder | undefined = onReconciliation
+    ? {
+        preservationBasis: new WeakMap(),
+        renamePreviousKey: new WeakMap(),
+        annotationKeyConflicts: [],
+        ambiguousRegionGroups: [],
+        skipReason: undefined,
+      }
+    : undefined
   const result = structuredClone(
     markdownToPortableText(editedMarkdown, {
       ...options?.deserialize,
@@ -126,18 +282,26 @@ export function applyMarkdownEdit(
   ) as unknown as Array<Node>
   const canonical = canonicalizeStored(storedPortableText, options)
   const nonEmptyStored = nonEmptyBlocks(storedPortableText, options)
-  const originOf = traceOrigins(nonEmptyStored, canonical)
+  const originOf = traceOrigins(nonEmptyStored, canonical, recorder)
   const adoptedNodes: AdoptedNodes = new WeakSet()
   if (originOf) {
-    const alignment = alignBlocks(canonical, result)
+    const alignment = alignBlocks(canonical, result, recorder)
     if (alignment) {
-      adoptAnchors(alignment.anchors, canonical, originOf, result, adoptedNodes)
+      adoptAnchors(
+        alignment.anchors,
+        canonical,
+        originOf,
+        result,
+        adoptedNodes,
+        recorder,
+      )
       const gaps = adoptMoves(
         alignment.gaps,
         canonical,
         result,
         originOf,
         adoptedNodes,
+        recorder,
       )
       for (const gap of gaps) {
         resolveGap(
@@ -147,21 +311,32 @@ export function applyMarkdownEdit(
           result,
           originOf,
           adoptedNodes,
+          recorder,
         )
       }
-      // Inside the successful trace only: a document-wide refusal means
-      // nothing adopts, and a reinserted empty block would adopt its
-      // stored key past that refusal, since its anchor can still be
-      // found whenever a `json:object` payload carries the neighboring
-      // key through the markdown verbatim.
-      reinsertEmptyRuns(storedPortableText, result, adoptedNodes, options)
+      // Inside the successful trace only: a document-wide skip of key
+      // matching means nothing adopts, and a reinserted empty block
+      // would adopt its stored key past that skip, since its anchor
+      // can still be found whenever a `json:object` payload carries
+      // the neighboring key through the markdown verbatim.
+      reinsertEmptyRuns(
+        storedPortableText,
+        result,
+        adoptedNodes,
+        options,
+        recorder,
+      )
     }
   }
   enforceSiblingKeyUniqueness(
     result,
     options?.deserialize?.keyGenerator ?? defaultKeyGenerator,
     adoptedNodes,
+    recorder,
   )
+  if (recorder && onReconciliation) {
+    onReconciliation(buildReconciliationReport(result, recorder))
+  }
   return result as unknown as Array<PortableTextBlock>
 }
 
@@ -172,6 +347,27 @@ type Node = Record<string, unknown>
  * (authoritative) key from a verbatim payload duplicate.
  */
 type AdoptedNodes = WeakSet<object>
+
+type PreservationBasis = Extract<
+  ReconciliationReport,
+  {keyMatching: 'performed'}
+>['preservedKeys'][number]['basis']
+
+/**
+ * Accumulates key resolution decisions against node identity as the
+ * passes make them; keys and paths are only meaningful once the
+ * sibling-uniqueness pass has settled every `_key`, so materializing
+ * the public report happens afterward, in `buildReconciliationReport`.
+ * `undefined` when the caller passed no `onReconciliation`, so every
+ * call site can skip its recording work with a plain optional-chain.
+ */
+type ReconciliationRecorder = {
+  preservationBasis: WeakMap<Node, PreservationBasis>
+  renamePreviousKey: WeakMap<Node, string>
+  annotationKeyConflicts: Array<Node>
+  ambiguousRegionGroups: Array<Array<Node>>
+  skipReason: 'round-trip-mismatch' | 'document-too-large' | undefined
+}
 
 /**
  * Re-expresses the stored value in the parser's dialect by serializing
@@ -214,12 +410,19 @@ function canonicalizeStored(
 function traceOrigins(
   stored: ReadonlyArray<PortableTextBlock>,
   canonical: ReadonlyArray<Node>,
+  recorder: ReconciliationRecorder | undefined,
 ): ((canonicalIndex: number) => Node) | undefined {
   if (canonical.length !== stored.length) {
+    if (recorder) {
+      recorder.skipReason = 'round-trip-mismatch'
+    }
     return undefined
   }
   for (let index = 0; index < stored.length; index++) {
     if ((stored[index] as Node)['_type'] !== canonical[index]?.['_type']) {
+      if (recorder) {
+        recorder.skipReason = 'round-trip-mismatch'
+      }
       return undefined
     }
   }
@@ -230,6 +433,9 @@ function traceOrigins(
       if (blockText(storedNode).trim() !== blockText(canonicalNode).trim()) {
         // CommonMark trims whitespace on reparse, so text identity
         // compares trimmed text.
+        if (recorder) {
+          recorder.skipReason = 'round-trip-mismatch'
+        }
         return undefined
       }
     }
@@ -249,6 +455,7 @@ type Gap = {storedIndexes: Array<number>; editedIndexes: Array<number>}
 function alignBlocks(
   canonical: ReadonlyArray<Node>,
   result: ReadonlyArray<Node>,
+  recorder: ReconciliationRecorder | undefined,
 ): {anchors: Array<Anchor>; gaps: Array<Gap>} | undefined {
   const tokenByNeutral = new Map<string, string>()
   const tokenOf = (node: Node): string => {
@@ -263,6 +470,9 @@ function alignBlocks(
   const canonicalTokens = canonical.map(tokenOf).join('')
   const resultTokens = result.map(tokenOf).join('')
   if (tokenByNeutral.size > MAX_DISTINCT_BLOCK_FORMS) {
+    if (recorder) {
+      recorder.skipReason = 'document-too-large'
+    }
     return undefined
   }
   // The tenth distinct block form draws `'\n'` as its token, and past
@@ -312,6 +522,7 @@ function adoptAnchors(
   originOf: (canonicalIndex: number) => Node,
   result: ReadonlyArray<Node>,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   for (const anchor of anchors) {
     adoptNode(
@@ -319,6 +530,8 @@ function adoptAnchors(
       canonical[anchor.canonicalIndex],
       result[anchor.resultIndex]!,
       adoptedNodes,
+      'content-unchanged',
+      recorder,
     )
   }
 }
@@ -334,6 +547,7 @@ function adoptMoves(
   result: ReadonlyArray<Node>,
   originOf: (canonicalIndex: number) => Node,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
 ): Array<Gap> {
   const consumedStored = new Set<number>()
   const consumedEdited = new Set<number>()
@@ -371,6 +585,8 @@ function adoptMoves(
       canonical[storedIndexes[0]!],
       result[editedIndexes[0]!]!,
       adoptedNodes,
+      'content-moved',
+      recorder,
     )
   }
 
@@ -399,6 +615,7 @@ function resolveGap(
   result: ReadonlyArray<Node>,
   originOf: (canonicalIndex: number) => Node,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   const remainingStored = new Set(storedIndexes)
   const remainingEdited = new Set(editedIndexes)
@@ -439,6 +656,8 @@ function resolveGap(
           canonical[storedIndex],
           result[survivor]!,
           adoptedNodes,
+          'content-split',
+          recorder,
         )
       }
     }
@@ -470,6 +689,8 @@ function resolveGap(
           canonical[sources[0]!],
           result[editedIndex]!,
           adoptedNodes,
+          'content-merged',
+          recorder,
         )
       }
     }
@@ -488,6 +709,8 @@ function resolveGap(
           canonical[storedRest[offset]!],
           editedBlock,
           adoptedNodes,
+          'same-position',
+          recorder,
         )
       }
     }
@@ -495,6 +718,11 @@ function resolveGap(
   }
 
   if (storedRest.length * editedRest.length > MAX_SIMILARITY_PAIRS) {
+    if (recorder) {
+      recorder.ambiguousRegionGroups.push(
+        editedRest.map((editedIndex) => result[editedIndex]!),
+      )
+    }
     return
   }
 
@@ -528,6 +756,8 @@ function resolveGap(
       canonical[storedIndex],
       result[best]!,
       adoptedNodes,
+      'similar-content',
+      recorder,
     )
   }
 }
@@ -589,15 +819,23 @@ function adoptNode(
   canonicalCounterpart: Node | undefined,
   target: Node,
   adoptedNodes: AdoptedNodes,
+  basis: PreservationBasis,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   adoptedNodes.add(target)
   if (typeof original['_key'] === 'string') {
     target['_key'] = original['_key']
+    recorder?.preservationBasis.set(target, basis)
   }
 
   restoreFields(original, canonicalCounterpart, target)
 
-  const markDefKeyMap = adoptMarkDefs(original, canonicalCounterpart, target)
+  const markDefKeyMap = adoptMarkDefs(
+    original,
+    canonicalCounterpart,
+    target,
+    recorder,
+  )
   rewriteMarkReferences(target, markDefKeyMap)
 
   for (const field of Object.keys(target)) {
@@ -649,6 +887,8 @@ function adoptNode(
         canonicalChildren?.[originalIndexes[0]!],
         targetChildren[targetIndexes[0]!]!,
         adoptedNodes,
+        'content-unchanged',
+        recorder,
       )
     }
 
@@ -667,6 +907,7 @@ function adoptNode(
         targetChildren,
         matchedTarget,
         adoptedNodes,
+        recorder,
       )
     }
 
@@ -677,6 +918,7 @@ function adoptNode(
       targetChildren,
       matchedTarget,
       adoptedNodes,
+      recorder,
     )
   }
 }
@@ -795,6 +1037,7 @@ function adoptMergedSpans(
   targetChildren: ReadonlyArray<Node>,
   matchedTarget: Set<number>,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   for (
     let targetIndex = 0;
@@ -839,6 +1082,8 @@ function adoptMergedSpans(
             canonicalChildren?.[used[0]!],
             targetSpan,
             adoptedNodes,
+            'content-merged',
+            recorder,
           )
           break
         }
@@ -866,6 +1111,7 @@ function adoptResidualZip(
   targetChildren: ReadonlyArray<Node>,
   matchedTarget: ReadonlySet<number>,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   const originalRest = originalChildren
     .map((node, index) => ({node, index}))
@@ -885,6 +1131,8 @@ function adoptResidualZip(
         canonicalChildren?.[originalRest[offset]!.index],
         targetNode,
         adoptedNodes,
+        'same-position',
+        recorder,
       )
     }
   }
@@ -899,6 +1147,7 @@ function adoptMarkDefs(
   original: Node,
   canonicalCounterpart: Node | undefined,
   target: Node,
+  recorder: ReconciliationRecorder | undefined,
 ): Map<string, string> {
   const keyMap = new Map<string, string>()
   const originalDefs = original['markDefs']
@@ -931,6 +1180,7 @@ function adoptMarkDefs(
     originalDef: Node,
     canonicalDef: Node | undefined,
     targetDef: Node,
+    basis: PreservationBasis,
   ): void => {
     restoreFields(originalDef, canonicalDef, targetDef)
     if (
@@ -942,10 +1192,12 @@ function adoptMarkDefs(
         (def) => def !== targetDef && def['_key'] === adoptedKey,
       )
       if (collidesWithSibling) {
+        recorder?.annotationKeyConflicts.push(targetDef)
         return
       }
       keyMap.set(targetDef['_key'], adoptedKey)
       targetDef['_key'] = adoptedKey
+      recorder?.preservationBasis.set(targetDef, basis)
     }
   }
 
@@ -964,6 +1216,7 @@ function adoptMarkDefs(
         originalDefs[originalIndexes[offset]!]!,
         canonicalDefs?.[originalIndexes[offset]!],
         targetDefs[targetIndexes[offset]!]!,
+        originalIndexes.length === 1 ? 'content-unchanged' : 'same-position',
       )
     }
   }
@@ -981,6 +1234,7 @@ function adoptMarkDefs(
       originalRest[0]!.node,
       canonicalDefs?.[originalRest[0]!.index],
       targetRest[0]!,
+      'same-position',
     )
   }
 
@@ -1396,6 +1650,7 @@ function reinsertEmptyRuns(
   result: Array<Node>,
   adoptedNodes: AdoptedNodes,
   options: ApplyMarkdownEditOptions | undefined,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   for (const run of findEmptyRuns(stored, options)) {
     // A pasted `json:object` duplicate can wear the anchor's key at an
@@ -1414,8 +1669,39 @@ function reinsertEmptyRuns(
     const clones = run.blocks.map((block) => structuredClone(block))
     for (const clone of clones) {
       adoptedNodes.add(clone)
+      if (recorder) {
+        tagSubtreePreserved(clone, recorder)
+      }
     }
     result.splice(run.insertAfter ? anchorIndex + 1 : anchorIndex, 0, ...clones)
+  }
+}
+
+/**
+ * Every keyed node in a reinserted empty run is the stored value
+ * verbatim, at every depth, so key resolution reporting tags the
+ * whole subtree `content-unchanged` rather than only the run's top
+ * block.
+ */
+function tagSubtreePreserved(
+  node: Node,
+  recorder: ReconciliationRecorder,
+): void {
+  if (typeof node['_key'] === 'string') {
+    recorder.preservationBasis.set(node, 'content-unchanged')
+  }
+  for (const value of Object.values(node)) {
+    if (
+      Array.isArray(value) &&
+      value.every((item) => typeof item === 'object' && item !== null) &&
+      value.length > 0
+    ) {
+      for (const child of value as Array<Node>) {
+        tagSubtreePreserved(child, recorder)
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      tagSubtreePreserved(value as Node, recorder)
+    }
   }
 }
 
@@ -1431,6 +1717,7 @@ function enforceSiblingKeyUniqueness(
   nodes: Array<Node>,
   keyGenerator: () => string,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
   onKeyRewritten?: (oldKey: string, newKey: string) => void,
 ): void {
   const usedKeys = new Set<string>()
@@ -1461,6 +1748,7 @@ function enforceSiblingKeyUniqueness(
       node['_key'] = freshKey
       usedKeys.add(freshKey)
       onKeyRewritten?.(key, freshKey)
+      recorder?.renamePreviousKey.set(node, key)
       return
     }
     usedKeys.add(key)
@@ -1473,7 +1761,12 @@ function enforceSiblingKeyUniqueness(
   }
 
   for (const node of nodes) {
-    enforceNestedSiblingKeyUniqueness(node, keyGenerator, adoptedNodes)
+    enforceNestedSiblingKeyUniqueness(
+      node,
+      keyGenerator,
+      adoptedNodes,
+      recorder,
+    )
   }
 }
 
@@ -1481,6 +1774,7 @@ function enforceNestedSiblingKeyUniqueness(
   node: Node,
   keyGenerator: () => string,
   adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
 ): void {
   for (const [field, value] of Object.entries(node)) {
     if (
@@ -1492,6 +1786,7 @@ function enforceNestedSiblingKeyUniqueness(
         value as Array<Node>,
         keyGenerator,
         adoptedNodes,
+        recorder,
         field === 'markDefs' ? buildMarkDefKeyRewriter(node) : undefined,
       )
     } else if (typeof value === 'object' && value !== null) {
@@ -1499,6 +1794,7 @@ function enforceNestedSiblingKeyUniqueness(
         value as Node,
         keyGenerator,
         adoptedNodes,
+        recorder,
       )
     }
   }
@@ -1561,4 +1857,111 @@ function buildMarkDefKeyRewriter(
       marks[target.markIndex] = newKey
     }
   }
+}
+
+/**
+ * Materializes the public report from the recorder's node-identity
+ * decisions, walking the settled result tree once so every `key` and
+ * `path` matches the returned value exactly: key resolution records
+ * decisions before the sibling-uniqueness pass can still rewrite a
+ * key, so keys and paths are only trustworthy read back from the
+ * final tree, not from the moment a decision was made.
+ */
+function buildReconciliationReport(
+  result: Array<Node>,
+  recorder: ReconciliationRecorder,
+): ReconciliationReport {
+  const preservedKeys: Extract<
+    ReconciliationReport,
+    {keyMatching: 'performed'}
+  >['preservedKeys'] = []
+  const renamedKeys: Extract<
+    ReconciliationReport,
+    {keyMatching: 'performed'}
+  >['renamedKeys'] = []
+  const pathByNode = new WeakMap<Node, ReconciliationKeyPath>()
+
+  const walk = (node: Node, path: ReconciliationKeyPath): void => {
+    pathByNode.set(node, path)
+    const key = node['_key']
+    if (typeof key === 'string') {
+      const basis = recorder.preservationBasis.get(node)
+      const previousKey = recorder.renamePreviousKey.get(node)
+      if (basis && previousKey === undefined) {
+        // A node that was adopted and then renamed (possible only when
+        // the stored value itself carries duplicate sibling keys) did
+        // not keep its stored key: the renamed-key entry carries that
+        // story, and a preserved-key entry would report a key that
+        // exists nowhere in the stored value.
+        preservedKeys.push({basis, key, path})
+      }
+      if (previousKey !== undefined) {
+        renamedKeys.push({previousKey, key, path})
+      }
+    }
+    for (const [field, value] of Object.entries(node)) {
+      if (
+        Array.isArray(value) &&
+        value.every((item) => typeof item === 'object' && item !== null) &&
+        value.length > 0
+      ) {
+        // `enforceNestedSiblingKeyUniqueness` recurses into every
+        // element of an all-object array whether or not the element
+        // itself carries a `_key` (a `json:object` payload can nest a
+        // keyless wrapper around keyed content); the walk enters the
+        // same nodes, or a renamed key or key fallback on a keyed
+        // descendant of a keyless wrapper never gets a path to report
+        // against.
+        value.forEach((child, index) => {
+          const childKey = (child as Node)['_key']
+          walk(child as Node, [
+            ...path,
+            field,
+            typeof childKey === 'string' ? {_key: childKey} : index,
+          ])
+        })
+      } else if (typeof value === 'object' && value !== null) {
+        walk(value as Node, [...path, field])
+      }
+    }
+  }
+
+  result.forEach((block, index) => {
+    const key = block['_key']
+    // `enforceSiblingKeyUniqueness` enters every top-level node whether
+    // or not it carries a `_key` (a `json:object` fence payload needs
+    // only `_type`), so the walk must too, or a renamed key inside a
+    // keyless block never gets reported. A keyless root contributes
+    // its index as a number segment, like a keyless wrapper at any
+    // depth.
+    walk(block, [typeof key === 'string' ? {_key: key} : index])
+  })
+
+  if (recorder.skipReason) {
+    return {keyMatching: 'skipped', reason: recorder.skipReason, renamedKeys}
+  }
+
+  const keyFallbacks: Extract<
+    ReconciliationReport,
+    {keyMatching: 'performed'}
+  >['keyFallbacks'] = []
+  for (const group of recorder.ambiguousRegionGroups) {
+    keyFallbacks.push({
+      type: 'ambiguous-region-too-large',
+      keys: group
+        .map((node) => node['_key'])
+        .filter((key): key is string => typeof key === 'string'),
+    })
+  }
+  for (const node of recorder.annotationKeyConflicts) {
+    // The walk above reaches every node in `result`, keyless
+    // intermediates included, so a key fallback's target `markDefs`
+    // entry always has a path by the time the report is built.
+    keyFallbacks.push({
+      type: 'annotation-key-conflict',
+      path: pathByNode.get(node)!,
+    })
+  }
+
+  return {keyMatching: 'performed', preservedKeys, keyFallbacks, renamedKeys}
 }

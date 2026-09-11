@@ -810,6 +810,30 @@ Markdown cannot carry everything a block stores, so an adopted block gets back w
 
 The options bag mirrors the two converters, plus a top-level `schema`: `deserialize` takes the rest of `markdownToPortableText`'s options and `serialize` takes the rest of `portableTextToMarkdown`'s. `schema` is taken once and governs both directions, because restoring keys depends on the two serializations agreeing. Pass the same `serialize` options that produced the markdown that was edited. The `deserialize` options apply to the stored value as well as the edited markdown, with two exceptions: new keys come from `deserialize.keyGenerator` (or the built-in generator), and `onDegradation` reports only on the edited markdown.
 
+#### Observing reconciliation
+
+Pass `onReconciliation` to see what happened to every key. The callback fires exactly once per call, synchronously, right before the function returns:
+
+```ts
+applyMarkdownEdit(stored, editedMarkdown, {
+  onReconciliation: (report) => {
+    if (report.keyMatching === 'skipped') {
+      // report.reason is 'round-trip-mismatch' (the stored value cannot
+      // survive its own serialize→parse round trip) or
+      // 'document-too-large'. The returned value is the plain
+      // conversion, every key fresh except the ones `json:object`
+      // payloads carry
+      return
+    }
+    report.preservedKeys // stored keys that survived, with a basis and a path
+    report.keyFallbacks // regions that got fresh keys instead of a guess
+    report.renamedKeys // keys rewritten to keep siblings unique
+  },
+})
+```
+
+Every `key` and `path` in the report matches the returned value exactly, and a path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, and `keyMatching` are facts of that invocation, safe to branch on. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+
 #### Concurrent edits
 
 Reconciling an unchanged serialization returns the stored value for round-trip-stable content; a non-canonical stored value, like adjacent same-mark spans, comes back canonicalized with its keys, so the guarantee is idempotence, not byte identity. `applyMarkdownEdit` does not merge concurrent edits: reconcile against the exact value that produced the markdown, and before writing the result back, check that the stored field still equals that value. If it changed while the markdown was being edited, the edit describes a document that no longer exists, and writing it would silently overwrite the newer changes: serialize the current value and redo the edit instead.
