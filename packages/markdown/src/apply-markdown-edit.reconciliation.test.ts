@@ -1,4 +1,8 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {
@@ -658,6 +662,113 @@ describe('the reconciliation report', () => {
           basis: 'same-position',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+    })
+  })
+
+  test('a verbatim-returned anchored block reports its stored keys preserved at every depth', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      block('b2', 's3', 'beta'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown.replace('beta', 'gamma'), {
+      schema,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        },
+        {basis: 'same-position', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'same-position',
+          key: 's3',
+          path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+    })
+  })
+
+  test('a verbatim-returned moved block reports its root content-moved and its children content-unchanged', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      block('b2', 's3', 'beta'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    const [first, second] = markdown.split('\n\n')
+    const edited = `${second}\n\n${first}`
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, edited, {
+      schema,
+      deserialize: {keyGenerator: createTestKeyGenerator()},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {basis: 'content-unchanged', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'content-unchanged',
+          key: 's3',
+          path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+        },
+        {basis: 'content-moved', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
         },
       ],
       keyFallbacks: [],
