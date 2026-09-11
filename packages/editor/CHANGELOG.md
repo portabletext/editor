@@ -1,5 +1,19 @@
 # Changelog
 
+## 8.1.4
+
+### Patch Changes
+
+- [#3257](https://github.com/portabletext/editor/pull/3257) [`df4b4ac`](https://github.com/portabletext/editor/commit/df4b4aca74bda080f21a7b0272d1cb024d24a495) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove the local placeholder on a remote root `insert` after a self-emitted `unset`
+
+  After clearing the field under a value-mirroring host, a collaborator's block arriving through `patches` no longer leaves an extra empty block in the editor; the editor shows only the collaborator's content. One additional change: an empty block that a host genuinely persisted in the window after the editor's own `unset` is now removed from the editor when a remote root `insert` arrives, until the next value sync restores it; distinguishing it from the editor's own placeholder takes provenance metadata, which is follow-up work.
+
+- [#3253](https://github.com/portabletext/editor/pull/3253) [`a4bea35`](https://github.com/portabletext/editor/commit/a4bea35a8f0c668b83502c0fd0da0cf9f8e2693e) Thanks [@christianhg](https://github.com/christianhg)! - fix: re-materialize the field before patches emitted while it is unset
+
+  A behavior replacing the whole value in one action set (a root `unset` followed by an `insert`) previously emitted a patch stream that patch-applying stores could not apply: an `insert` into a field the preceding `unset` had removed. Consumers saw `Cannot apply deep operations on primitive values`.
+
+  One narrow behavioral fix rides along: clearing the editor through a behavior-raised root `unset` now re-materializes the field on the next edit under a value-mirroring host, the same way clearing it with the keyboard already did.
+
 ## 8.1.3
 
 ### Patch Changes
