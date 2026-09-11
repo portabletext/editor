@@ -798,6 +798,7 @@ Markdown cannot carry everything a block stores, so an adopted block gets back w
 - A field the dialect cannot express, like a text block's `alignment`, including a whole custom object-array field the dialect drops. A field markdown does express, like `language` on a code block, follows the edit.
 - A custom style, list kind, or decorator markdown has no syntax for.
 - An empty or whitespace-only paragraph, which has no markdown form at all (blank lines are the block separator): it is restored next to its surviving neighbor, and deleted along with that neighbor if the neighbor goes. This covers top-level blocks; an empty paragraph nested inside a table cell or callout content is not restored. An empty heading or list item has a visible markdown form (`## `, `- `) and round-trips like any other block.
+- A block the edit did not touch comes back exactly as stored, span structure and unmappable marks included: an adjacent pair of spans that only differ by a decorator markdown has no syntax for keeps its split rather than merging into the one span a plain parse would produce.
 
 #### When keys reset
 
@@ -812,7 +813,7 @@ The options bag mirrors the two converters, plus a top-level `schema`: `deserial
 
 #### Concurrent edits
 
-Reconciling an unchanged serialization returns the stored value for round-trip-stable content; a non-canonical stored value, like adjacent same-mark spans, comes back canonicalized with its keys, so the guarantee is idempotence, not byte identity. `applyMarkdownEdit` does not merge concurrent edits: reconcile against the exact value that produced the markdown, and before writing the result back, check that the stored field still equals that value. If it changed while the markdown was being edited, the edit describes a document that no longer exists, and writing it would silently overwrite the newer changes: serialize the current value and redo the edit instead.
+Reconciling an unchanged serialization returns the stored value byte for byte for the content the edit did not touch, keys, span structure, and unmappable marks included; content the edit did touch still comes back canonicalized, with its keys restored where reconciliation can trace them. `applyMarkdownEdit` does not merge concurrent edits: reconcile against the exact value that produced the markdown, and before writing the result back, check that the stored field still equals that value. If it changed while the markdown was being edited, the edit describes a document that no longer exists, and writing it would silently overwrite the newer changes: serialize the current value and redo the edit instead.
 
 ## License
 

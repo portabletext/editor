@@ -1,4 +1,8 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {
@@ -635,6 +639,111 @@ describe('the reconciliation report', () => {
           reason: 'positional',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        },
+      ],
+      refusals: [],
+      repairs: [],
+    })
+  })
+
+  test('a verbatim-returned anchored block reports its stored keys restored at every depth', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      block('b2', 's3', 'beta'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown.replace('beta', 'gamma'), {
+      schema,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      restorations: [
+        {reason: 'unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          reason: 'unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        },
+        {
+          reason: 'unchanged',
+          key: 's2',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        },
+        {reason: 'positional', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          reason: 'positional',
+          key: 's3',
+          path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+        },
+      ],
+      refusals: [],
+      repairs: [],
+    })
+  })
+
+  test('a verbatim-returned moved block reports its root moved and its children unchanged', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      block('b2', 's3', 'beta'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    const [first, second] = markdown.split('\n\n')
+    const edited = `${second}\n\n${first}`
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, edited, {
+      schema,
+      deserialize: {keyGenerator: createTestKeyGenerator()},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      restorations: [
+        {reason: 'unchanged', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          reason: 'unchanged',
+          key: 's3',
+          path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+        },
+        {reason: 'moved', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          reason: 'unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        },
+        {
+          reason: 'unchanged',
+          key: 's2',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
         },
       ],
       refusals: [],

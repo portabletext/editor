@@ -215,7 +215,7 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
-  test('merged spans keep the first contributor key, like editor normalization', () => {
+  test('a no-op edit keeps a stored split between two same-mark spans, not their merged parse', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
       {
@@ -230,9 +230,10 @@ describe(applyMarkdownEdit.name, () => {
       },
     ]
     const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual('foobar')
     expect(
       applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
-    ).toEqual([block('b1', 's1', 'foobar')])
+    ).toEqual(stored)
   })
 
   test('a merge past the span-pair cap does not adopt the key; below the cap it still does', () => {
@@ -2382,6 +2383,118 @@ describe(applyMarkdownEdit.name, () => {
       },
       block('b2', 's2', 'gamma'),
     ])
+  })
+
+  test('a no-op edit leaves a block whose marks the dialect cannot express with its span structure verbatim', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    expect(markdown).toEqual('hello world')
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        schema,
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual(stored)
+  })
+
+  test('an edit to a neighboring block leaves an untouched unmappable-mark block verbatim', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      block('b2', 's3', 'beta'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('beta', 'gamma'), {
+        schema,
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([stored[0], block('b2', 's3', 'gamma')])
+  })
+
+  test('a moved block with unmappable-mark spans keeps its span structure', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      block('b2', 's3', 'beta'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    const [first, second] = markdown.split('\n\n')
+    const edited = `${second}\n\n${first}`
+    expect(
+      applyMarkdownEdit(stored, edited, {
+        schema,
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([stored[1], stored[0]])
+  })
+
+  test('a no-op edit returns the stored value byte for byte, decorator spans and a payload block included', () => {
+    const schema = compileSchema(
+      defineSchema({decorators: [{name: 'strong'}, {name: 'highlight'}]}),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'hello ', marks: ['highlight']},
+          {_type: 'span', _key: 's2', text: 'world', marks: []},
+        ],
+      },
+      {_type: 'product', _key: 'p1', sku: 'abc-123'},
+      block('empty1', 'es1', ''),
+      block('b2', 's3', 'tail'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {schema})
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        schema,
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual(stored)
   })
 })
 

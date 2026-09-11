@@ -276,14 +276,36 @@ function mutateMarkdown(random: () => number, markdown: string): string {
 }
 
 /**
+ * Mirrors `applyMarkdownEdit`'s own `isEmptyTextBlock`: a block whose
+ * text trims empty only lacks a markdown form when its own render
+ * comes back empty, or reparses to nothing, the same authority
+ * `reinsertEmptyRuns` defers to. A visible marker (a heading prefix,
+ * a list bullet) keeps the block through the plain parse instead of
+ * dropping it, so style and `listItem` alone do not decide this; the
+ * round trip does.
+ */
+function roundTripsToNothing(node: Record<string, unknown>): boolean {
+  const rendered = portableTextToMarkdown(
+    [structuredClone(node)] as unknown as Array<PortableTextBlock>,
+    {schema},
+  )
+  if (rendered === '') {
+    return true
+  }
+  return (
+    markdownToPortableText(rendered, {schema, keyGenerator: () => 'probe'})
+      .length === 0
+  )
+}
+
+/**
  * An empty or whitespace-only text block cloned back in verbatim from
  * a top-level stored block of the same key: markdown has no form for
  * either, so its only source is `reinsertEmptyRuns`, never the plain
- * parse. Emptiness is trimmed text, `applyMarkdownEdit`'s own
- * predicate for the same distinction. The verbatim-equality check
- * (not just an empty text and a stored key) is what keeps this from
- * also matching a block whose own edit emptied it: that block's key
- * is stored too, but its content no longer matches the stored node.
+ * parse. The verbatim-equality check (not just an empty text and a
+ * stored key) is what keeps this from also matching a block whose
+ * own edit emptied it: that block's key is stored too, but its
+ * content no longer matches the stored node.
  */
 function isRestoredEmptyBlock(
   node: unknown,
@@ -293,7 +315,12 @@ function isRestoredEmptyBlock(
     return false
   }
   const record = node as Record<string, unknown>
-  const children = record['children']
+  const key = record['_key']
+  if (typeof key !== 'string' || !storedByKey.has(key)) {
+    return false
+  }
+  const storedNode = storedByKey.get(key) as Record<string, unknown>
+  const children = storedNode['children']
   if (!Array.isArray(children)) {
     return false
   }
@@ -304,14 +331,10 @@ function isRestoredEmptyBlock(
         : '\uFFFC',
     )
     .join('')
-  if (text.trim() !== '') {
+  if (text.trim() !== '' || !roundTripsToNothing(storedNode)) {
     return false
   }
-  const key = record['_key']
-  if (typeof key !== 'string' || !storedByKey.has(key)) {
-    return false
-  }
-  return JSON.stringify(node) === JSON.stringify(storedByKey.get(key))
+  return JSON.stringify(node) === JSON.stringify(storedNode)
 }
 
 /**
@@ -332,6 +355,33 @@ function collectFieldPairs(value: unknown, pairs: Set<string>): void {
       pairs.add(`${field}:${JSON.stringify(fieldValue)}`)
       collectFieldPairs(fieldValue, pairs)
     }
+  }
+}
+
+/**
+ * Every result block is either a field-wise superset of its plain-parse
+ * counterpart, or deep-equal to a stored block: the exact-signature
+ * tiers (an anchor, a unique moved leftover) return the stored block
+ * verbatim instead of reconciling field by field into the parsed
+ * shape, so such a block is judged by the second branch, not the
+ * first.
+ */
+function assertResultMatchesEditOrStored(
+  reconciled: ReadonlyArray<unknown>,
+  plainParse: ReadonlyArray<unknown>,
+  storedFieldPairs: ReadonlySet<string>,
+  storedBlocksJson: ReadonlySet<string>,
+): void {
+  expect(reconciled.length).toBe(plainParse.length)
+  for (let index = 0; index < reconciled.length; index++) {
+    if (storedBlocksJson.has(JSON.stringify(reconciled[index]))) {
+      continue
+    }
+    assertFieldwiseSubsetAndProvenance(
+      reconciled[index],
+      plainParse[index],
+      storedFieldPairs,
+    )
   }
 }
 
@@ -480,16 +530,20 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
       })
       const storedFieldPairs = new Set<string>()
       collectFieldPairs(storedSnapshot, storedFieldPairs)
+      const storedBlocksJson = new Set(
+        storedSnapshot.map((node) => JSON.stringify(node)),
+      )
       // Restored empty blocks have no markdown form, so the plain parse
       // never produced them: skip them here and let the key-provenance
       // and uniqueness checks below cover them instead.
       const reconciledWithoutRestoredEmptyBlocks = reconciled.filter(
         (node) => !isRestoredEmptyBlock(node, storedByKey),
       )
-      assertFieldwiseSubsetAndProvenance(
+      assertResultMatchesEditOrStored(
         reconciledWithoutRestoredEmptyBlocks,
         plainParse,
         storedFieldPairs,
+        storedBlocksJson,
       )
 
       // Key provenance: every key is either stored, generated fresh,

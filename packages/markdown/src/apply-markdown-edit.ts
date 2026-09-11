@@ -244,14 +244,7 @@ export function applyMarkdownEdit(
   if (originOf) {
     const alignment = alignBlocks(canonical, result, recorder)
     if (alignment) {
-      adoptAnchors(
-        alignment.anchors,
-        canonical,
-        originOf,
-        result,
-        adoptedNodes,
-        recorder,
-      )
+      adoptAnchors(alignment.anchors, originOf, result, adoptedNodes, recorder)
       const gaps = adoptMoves(
         alignment.gaps,
         canonical,
@@ -472,21 +465,104 @@ function alignBlocks(
 
 function adoptAnchors(
   anchors: ReadonlyArray<Anchor>,
-  canonical: ReadonlyArray<Node>,
   originOf: (canonicalIndex: number) => Node,
-  result: ReadonlyArray<Node>,
+  result: Array<Node>,
   adoptedNodes: AdoptedNodes,
   recorder: ReconciliationRecorder | undefined,
 ): void {
   for (const anchor of anchors) {
-    adoptNode(
+    result[anchor.resultIndex] = adoptVerbatim(
       originOf(anchor.canonicalIndex),
-      canonical[anchor.canonicalIndex],
       result[anchor.resultIndex]!,
       adoptedNodes,
-      'unchanged',
       recorder,
     )
+  }
+}
+
+/**
+ * An anchor or a unique exact leftover pairs a canonical block against
+ * a parsed one that share the same neutral form (that is what put them
+ * in the same equal-diff run or the same neutral-form bucket), so
+ * everything the dialect can express is untouched and everything it
+ * cannot express was invisible to the edit. The stored subtree is the
+ * truth at every depth, spans, marks, markDefs, and any field the
+ * dialect drops, so adoption replaces the whole node rather than
+ * reconciling into the parsed shape (which would otherwise, for
+ * instance, keep a parser-side span merge that collapsed an
+ * unmappable mark boundary the edit never touched). `restoreFields`
+ * and per-child reconciliation are skipped entirely: a verbatim clone
+ * of the stored node is already complete.
+ */
+function adoptVerbatim(
+  original: Node,
+  target: Node,
+  adoptedNodes: AdoptedNodes,
+  recorder: ReconciliationRecorder | undefined,
+): Node {
+  const clone = structuredClone(original)
+  fillMissingKeysFromTarget(clone, target)
+  markSubtreeAdopted(clone, adoptedNodes)
+  if (recorder) {
+    tagSubtreeUnchanged(clone, recorder)
+  }
+  return clone
+}
+
+/**
+ * A stored node practically always carries its own `_key`; when it
+ * genuinely does not, there is nothing to adopt, so the clone keeps
+ * whatever key the plain parse already minted at the corresponding
+ * position, the same key adoption would have left in place. The walk
+ * follows both trees positionally (not by content matching, which is
+ * exactly what an exact-signature match already guarantees agrees at
+ * every position the two sides both still have).
+ */
+function fillMissingKeysFromTarget(clone: Node, target: Node): void {
+  if (typeof clone['_key'] !== 'string' && typeof target['_key'] === 'string') {
+    clone['_key'] = target['_key']
+  }
+  for (const field of Object.keys(clone)) {
+    const cloneValue = clone[field]
+    const targetValue = target[field]
+    if (isTypedObjectArray(cloneValue) && isTypedObjectArray(targetValue)) {
+      const length = Math.min(cloneValue.length, targetValue.length)
+      for (let index = 0; index < length; index++) {
+        fillMissingKeysFromTarget(cloneValue[index]!, targetValue[index]!)
+      }
+    } else if (
+      typeof cloneValue === 'object' &&
+      cloneValue !== null &&
+      !Array.isArray(cloneValue) &&
+      typeof targetValue === 'object' &&
+      targetValue !== null &&
+      !Array.isArray(targetValue)
+    ) {
+      fillMissingKeysFromTarget(cloneValue as Node, targetValue as Node)
+    }
+  }
+}
+
+/**
+ * Every keyed node in a verbatim clone is adopted, not only its root:
+ * the sibling-key-uniqueness pass recurses into every nested keyed
+ * array, and an adopted-first ordering there only favors a clone's
+ * descendants if they are themselves marked adopted.
+ */
+function markSubtreeAdopted(node: Node, adoptedNodes: AdoptedNodes): void {
+  adoptedNodes.add(node)
+  for (const value of Object.values(node)) {
+    if (
+      Array.isArray(value) &&
+      value.every((item) => typeof item === 'object' && item !== null) &&
+      value.length > 0
+    ) {
+      for (const child of value as Array<Node>) {
+        markSubtreeAdopted(child, adoptedNodes)
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      markSubtreeAdopted(value as Node, adoptedNodes)
+    }
   }
 }
 
@@ -498,7 +574,7 @@ function adoptAnchors(
 function adoptMoves(
   gaps: ReadonlyArray<Gap>,
   canonical: ReadonlyArray<Node>,
-  result: ReadonlyArray<Node>,
+  result: Array<Node>,
   originOf: (canonicalIndex: number) => Node,
   adoptedNodes: AdoptedNodes,
   recorder: ReconciliationRecorder | undefined,
@@ -534,14 +610,19 @@ function adoptMoves(
     }
     consumedStored.add(storedIndexes[0]!)
     consumedEdited.add(editedIndexes[0]!)
-    adoptNode(
+    const clone = adoptVerbatim(
       originOf(storedIndexes[0]!),
-      canonical[storedIndexes[0]!],
       result[editedIndexes[0]!]!,
       adoptedNodes,
-      'moved',
       recorder,
     )
+    if (recorder && typeof clone['_key'] === 'string') {
+      // The subtree tags every keyed node `unchanged`, itself included;
+      // only the moved root's own reason overrides that, since its
+      // children were not themselves moved.
+      recorder.restorationReason.set(clone, 'moved')
+    }
+    result[editedIndexes[0]!] = clone
   }
 
   return gaps.map((currentGap) => ({
