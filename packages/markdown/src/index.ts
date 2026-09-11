@@ -1,3 +1,7 @@
+export {
+  applyMarkdownEdit,
+  type ApplyMarkdownEditOptions,
+} from './apply-markdown-edit'
 export {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 export {
   DefaultBlockSpacingRenderer,
