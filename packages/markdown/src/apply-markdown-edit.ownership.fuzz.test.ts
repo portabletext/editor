@@ -18,7 +18,10 @@ import {portableTextToMarkdown} from './from-portable-text/portable-text-to-mark
 const schema = compileSchema(
   defineSchema({
     styles: [{name: 'normal'}, {name: 'h2'}, {name: 'h3'}, {name: 'lead'}],
-    decorators: [{name: 'strong'}, {name: 'em'}],
+    // `highlight` has no markdown form: the span-mark strata exercise
+    // an unmappable decorator alongside `strong`/`em`, so an untouched
+    // block carrying one still has to come back exactly as stored.
+    decorators: [{name: 'strong'}, {name: 'em'}, {name: 'highlight'}],
     lists: [{name: 'bullet'}, {name: 'number'}],
     annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
     blockObjects: [
@@ -252,7 +255,7 @@ function makeUnit(
   }
 
   if (roll < 0.48) {
-    const markName = pick(random, ['strong', 'em'] as const)
+    const markName = pick(random, ['strong', 'em', 'highlight'] as const)
     const tokens: Array<Token> = [
       {value: sentinel()},
       {value: sentinel()},
@@ -472,6 +475,7 @@ type CaseData = {
   magicChecks: Array<MagicCheck>
   widgetChecks: Array<WidgetCheck>
   emptyRunChecks: Array<EmptyRunCheck>
+  untouchedBlocks: Map<string, PortableTextBlock>
   appliedOpCount: number
 }
 
@@ -856,12 +860,21 @@ function buildCase(random: () => number, caseId: number): CaseData {
   const magicChecks: Array<MagicCheck> = []
   const widgetChecks: Array<WidgetCheck> = []
   const emptyRunChecks: Array<EmptyRunCheck> = []
+  const untouchedBlocks = new Map<string, PortableTextBlock>()
 
   for (const unit of units) {
     if (unit.kind === 'listRun') {
       for (const item of unit.items) {
         for (const token of item.tokens) {
           blockKeyByWord.set(token.value, item.blockKey)
+        }
+      }
+      // No op ever targets an individual list item on its own: a
+      // rewrite/append marks the whole run's unit index used, so an
+      // untouched run means every one of its items is untouched too.
+      if (!usedIndexes.has(unit.index)) {
+        for (const item of unit.items) {
+          untouchedBlocks.set(item.blockKey, item.block)
         }
       }
       continue
@@ -901,6 +914,13 @@ function buildCase(random: () => number, caseId: number): CaseData {
     if (unit.trailingEmpty) {
       emptyRunChecks.push({blocks: unit.trailingEmpty})
     }
+    // No op ever targets this unit: no rewrite touched its text, no
+    // move relocated it, nothing merged or split it away. The block
+    // the algorithm returns for its key should be the stored block,
+    // not merely a block whose sentinel words still resolve there.
+    if (!usedIndexes.has(unit.index)) {
+      untouchedBlocks.set(unit.blockKey, unit.block)
+    }
   }
   for (const fresh of freshUnits) {
     for (const token of fresh.tokens) {
@@ -919,6 +939,7 @@ function buildCase(random: () => number, caseId: number): CaseData {
     magicChecks,
     widgetChecks,
     emptyRunChecks,
+    untouchedBlocks,
     appliedOpCount: applied,
   }
 }
@@ -1099,6 +1120,14 @@ function assertOwnership(
         ],
       })
     }
+  }
+
+  for (const [key, storedBlock] of caseData.untouchedBlocks) {
+    const node = result.find((n) => n['_key'] === key)
+    expect(
+      node,
+      `untouched block "${key}" should come back exactly as stored`,
+    ).toEqual(storedBlock)
   }
 }
 
