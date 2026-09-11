@@ -3,7 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -21,6 +21,8 @@ import type {EditorActor} from '../../../editor/editor-machine'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
+import {getSibling} from '../../../traversal/get-sibling'
+import {getSpan} from '../../../traversal/get-span'
 import {getText} from '../../../traversal/get-text'
 import {isLeafObject} from '../../../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../../../types/editor-engine'
@@ -30,6 +32,10 @@ import {move} from '../../core/move'
 import {subscribeToOperations} from '../../core/operation-channel'
 import {DOMEditor} from '../../dom/plugin/dom-editor'
 import {TRIPLE_CLICK} from '../../dom/utils/constants'
+import {
+  normalizeStringDiff,
+  targetRange as getDiffTargetRange,
+} from '../../dom/utils/diff-text'
 import {
   containsShadowAware,
   getActiveElement,
@@ -181,6 +187,16 @@ export const Editable = forwardRef(
     const ref = useRef<HTMLDivElement | null>(null)
     const deferredOperations = useRef<DeferredOperation[]>([])
     const processing = useRef(false)
+    // Provenance for the input adoption in `onInput` below: the `timeStamp`
+    // of the most recent `beforeinput` our own handling took action on
+    // (native fast path or a preventDefault'd behavior dispatch). The `input`
+    // it produces, if any, lands within `ANNOUNCED_INPUT_WINDOW_MS` of it
+    // (observed ~0.5ms even for a real keystroke, across an extra event-loop
+    // turn we can't assume away), so a following `input` inside that window
+    // is already accounted for and must never be adopted a second time. A
+    // later, unrelated `input` (execCommand fires none of its own) simply
+    // falls outside the window and is correctly left eligible.
+    const lastAnnouncedBeforeInputTimestampRef = useRef<number | null>(null)
 
     const {onUserInput, receivedUserInput} = useTrackUserInput()
 
@@ -662,6 +678,15 @@ export const Editable = forwardRef(
             return androidInputManagerRef.current.handleDOMBeforeInput(event)
           }
 
+          // From here on this `beforeinput` is either taking the native fast
+          // path (deferred to `onInput` below) or being handled via a
+          // `preventDefault`'d behavior dispatch. Either way, the `input`
+          // that follows (if any) is already accounted for: execCommand
+          // (Grammarly's generic replacement channel) fires no `beforeinput`
+          // at all, so an unmarked `input` is the signal an unannounced DOM
+          // mutation needs adopting.
+          lastAnnouncedBeforeInputTimestampRef.current = event.timeStamp
+
           // Some IMEs/Chrome extensions like e.g. Grammarly set the selection immediately before
           // triggering a `beforeinput` expecting the change to be applied to the immediately before
           // set selection.
@@ -678,6 +703,19 @@ export const Editable = forwardRef(
           // COMPAT: use composition change events as a hint to where we should
           // insert composition text if we aren't composing.
           if (isCompositionChange && editor.composing) {
+            return
+          }
+
+          // COMPAT: Safari, unlike Chromium and Firefox, fires a real
+          // cancelable `beforeinput` for `execCommand('insertText'|'delete')`
+          // (the same channel Grammarly's generic replacement service uses)
+          // with a plain type, not a composition one, so the `isCompositionChange`
+          // check above never sees it. Leave one of these plain edit types
+          // unhandled while composing so the DOM mutates on its own; the same
+          // composing check in `onInput`'s unannounced-input adoption then
+          // refuses to adopt it too, matching the outcome Chromium and Firefox
+          // already get from never announcing it in the first place.
+          if (editor.composing && ADOPTABLE_INPUT_TYPES.has(type)) {
             return
           }
 
@@ -1187,6 +1225,23 @@ export const Editable = forwardRef(
                   }
                   deferredOperations.current = []
 
+                  const nativeInputEvent = event.nativeEvent as InputEvent
+                  const announcedTimestamp =
+                    lastAnnouncedBeforeInputTimestampRef.current
+                  const wasAnnouncedInput =
+                    announcedTimestamp !== null &&
+                    nativeInputEvent.timeStamp - announcedTimestamp >= 0 &&
+                    nativeInputEvent.timeStamp - announcedTimestamp <
+                      ANNOUNCED_INPUT_WINDOW_MS
+
+                  if (!wasAnnouncedInput && !readOnly && !editor.composing) {
+                    tryAdoptUnannouncedInput(
+                      editor,
+                      editorActor,
+                      nativeInputEvent,
+                    )
+                  }
+
                   // COMPAT: Since `beforeinput` doesn't fully `preventDefault`,
                   // there's a chance that content might be placed in the browser's undo stack.
                   // This means undo can be triggered even when the div is not focused,
@@ -1203,7 +1258,7 @@ export const Editable = forwardRef(
                     )
                   }
                 },
-                [attributes.onInput, editor, editorActor],
+                [attributes.onInput, editor, editorActor, readOnly],
               )}
               onBlur={useCallback(
                 (event: React.FocusEvent<HTMLDivElement>) => {
@@ -2063,5 +2118,133 @@ const handleNativeHistoryEvents = (
       editor,
     })
     return
+  }
+}
+
+// A real `beforeinput` -> DOM mutation -> `input` sequence for the same
+// edit crosses at least one extra event-loop turn in Chromium (measured
+// ~0.5ms for a native-fast-path keystroke), so the two can't be correlated
+// by same-tick ordering. 50ms is generous slack for that turn while still
+// being far short of the gap to any later, unrelated `input` (a Grammarly
+// correction fires no `beforeinput` of its own, so it only ever collides
+// with the window if it lands within 50ms of some earlier edit).
+const ANNOUNCED_INPUT_WINDOW_MS = 50
+
+// A span can render as several text nodes when a range decoration splits
+// it; aggregate all of them (in document order) to reconstruct the span's
+// full rendered text.
+const aggregateWrapperText = (wrapper: DOMElement) =>
+  Array.from(wrapper.querySelectorAll<HTMLElement>('[data-pt-text]'))
+    .map((textNode) => textNode.textContent ?? '')
+    .join('')
+
+// `insertHTML` is indistinguishable from an empty `inputType` in Chromium, so
+// the empty string is left out on purpose rather than adopted as `insertHTML`.
+const ADOPTABLE_INPUT_TYPES = new Set([
+  'insertText',
+  'insertReplacementText',
+  'deleteContent',
+  'deleteContentBackward',
+  'deleteContentForward',
+])
+
+/**
+ * Adopt a DOM text mutation that reached the DOM without ever announcing
+ * itself through a cancelable `beforeinput`. `execCommand('insertText'|'delete')`
+ * (the channel Grammarly's generic, non-fingerprinted replacement service uses)
+ * fires no `beforeinput` at all, only this non-cancelable `input`, after the
+ * browser has already mutated the DOM natively. Locate the model span the
+ * mutation landed in, diff its rendered text against the model, and replay
+ * the diff through the same behavior pipeline a real edit would use, so the
+ * correction produces a patch instead of silently drifting from the model
+ * until the next value transition reverts it.
+ */
+const tryAdoptUnannouncedInput = (
+  editor: Editor,
+  editorActor: EditorActor,
+  event: InputEvent,
+) => {
+  if (!ADOPTABLE_INPUT_TYPES.has(event.inputType)) {
+    return
+  }
+
+  const root = DOMEditor.findDocumentOrShadowRoot(editor)
+  const domSelection = getSelection(root)
+
+  if (!domSelection || domSelection.rangeCount === 0) {
+    return
+  }
+
+  const editorSelection = DOMEditor.toEditorSelection(editor, domSelection, {
+    exactMatch: false,
+    suppressThrow: true,
+  })
+
+  if (!editorSelection) {
+    return
+  }
+
+  const path = editorSelection.anchor.path
+  const spanEntry = getSpan(editor.snapshot, path)
+
+  if (!spanEntry) {
+    return
+  }
+
+  const wrapper = getDomNode(editor, path)
+
+  if (!wrapper || wrapper.getAttribute('data-pt-inline') !== 'span') {
+    return
+  }
+
+  // execCommand can merge adjacent styled spans into a single text node, or
+  // spread an edit across a span boundary, while still reporting a single
+  // `insertText`; either way the model still has two spans, so refuse to
+  // adopt rather than guess which one owns the changed text.
+  for (const direction of ['previous', 'next'] as const) {
+    const sibling = getSibling(editor.snapshot, path, {direction})
+    if (!sibling) {
+      continue
+    }
+
+    const siblingWrapper = getDomNode(editor, sibling.path)
+    if (!siblingWrapper) {
+      return
+    }
+
+    if (
+      isSpan({schema: editor.snapshot.context.schema}, sibling.node) &&
+      aggregateWrapperText(siblingWrapper) !== sibling.node.text
+    ) {
+      return
+    }
+  }
+
+  const domText = aggregateWrapperText(wrapper)
+
+  const diff = normalizeStringDiff(spanEntry.node.text, {
+    start: 0,
+    end: spanEntry.node.text.length,
+    text: domText,
+  })
+
+  if (!diff) {
+    return
+  }
+
+  editor.select(getDiffTargetRange({id: 0, path, diff}))
+
+  if (diff.text) {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'insert.text', text: diff.text},
+      editor,
+    })
+  } else {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'delete', direction: 'forward'},
+      editor,
+    })
   }
 }
