@@ -5,7 +5,11 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {applyMarkdownEdit} from './apply-markdown-edit'
+import {
+  applyMarkdownEdit,
+  type ReconciliationKeyPath,
+  type ReconciliationReport,
+} from './apply-markdown-edit'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 
@@ -511,6 +515,164 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
         deserialize: {keyGenerator: createTestKeyGenerator()},
       })
       expect(again).toEqual(reconciled)
+
+      // Instrumentation neutrality: collecting a reconciliation report
+      // never changes the returned value, and the report it collects is
+      // internally consistent with that value.
+      let reportCallCount = 0
+      let report: ReconciliationReport | undefined
+      const withReport = applyMarkdownEdit(storedSnapshot, editedMarkdown, {
+        schema,
+        deserialize: {keyGenerator: createTestKeyGenerator()},
+        onReconciliation: (r) => {
+          reportCallCount++
+          report = r
+        },
+      })
+      expect(withReport).toEqual(reconciled)
+      expect(reportCallCount).toBe(1)
+      assertReconciliationReportConsistency(report!, withReport, storedKeys)
     }
   })
 })
+
+describe('the reconciliation report invariants the fuzz suite checks', () => {
+  test('reject a restoration whose key or path was corrupted', () => {
+    const stored = [block('b1', 's1', 'alpha'), block('b2', 's2', 'beta')]
+    const markdown = 'beta\n\nalpha'
+    let report: ReconciliationReport | undefined
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator: createTestKeyGenerator()},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    const storedKeys = new Set(['b1', 's1', 'b2', 's2'])
+
+    // The real report passes; every mutated copy below must fail.
+    assertReconciliationReportConsistency(report!, result, storedKeys)
+
+    const wrongKey = structuredClone(report!)
+    wrongKey.restorations[0]!.key = 'not-a-real-key'
+    expect(() =>
+      assertReconciliationReportConsistency(wrongKey, result, storedKeys),
+    ).toThrow()
+
+    const truncatedPath = structuredClone(report!)
+    const spanRestoration = truncatedPath.restorations.find(
+      (restoration) => restoration.path.length > 1,
+    )!
+    spanRestoration.path = spanRestoration.path.slice(0, -1)
+    expect(() =>
+      assertReconciliationReportConsistency(truncatedPath, result, storedKeys),
+    ).toThrow()
+  })
+})
+
+function block(
+  blockKey: string,
+  spanKey: string,
+  text: string,
+): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+  }
+}
+
+/**
+ * Resolves a `ReconciliationKeyPath` against the value
+ * `applyMarkdownEdit` returned, driven by the runtime shape at each
+ * step rather than the path alone: a `{_key}` segment always selects
+ * a keyed element out of the current array, and a string segment is
+ * a field name against a plain object or, against an array (a
+ * keyless `json:object` wrapper), the index it recorded.
+ */
+function resolveReconciliationPath(
+  root: unknown,
+  path: ReconciliationKeyPath,
+): unknown {
+  let current = root
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      if (Array.isArray(current)) {
+        current = current[Number(segment)]
+      } else if (typeof current === 'object' && current !== null) {
+        current = (current as Record<string, unknown>)[segment]
+      } else {
+        return undefined
+      }
+    } else {
+      if (!Array.isArray(current)) {
+        return undefined
+      }
+      current = current.find(
+        (item) =>
+          typeof item === 'object' &&
+          item !== null &&
+          (item as Record<string, unknown>)['_key'] === segment._key,
+      )
+    }
+    if (current === undefined) {
+      return undefined
+    }
+  }
+  return current
+}
+
+/**
+ * The report-shape invariants that must hold no matter which fuzz
+ * case produced the report: every `restorations`/`repairs` entry's
+ * `path` resolves to the node its `key` names, every restored key was
+ * actually stored, no key is reported both restored and repaired at
+ * the same path, a repair always changes the key, and a document-wide
+ * refusal rules out any restoration at all.
+ */
+function assertReconciliationReportConsistency(
+  report: ReconciliationReport,
+  result: unknown,
+  storedKeys: ReadonlySet<string>,
+): void {
+  for (const restoration of report.restorations) {
+    const node = resolveReconciliationPath(result, restoration.path)
+    expect(
+      typeof node === 'object' &&
+        node !== null &&
+        (node as Record<string, unknown>)['_key'] === restoration.key,
+    ).toBe(true)
+    expect(storedKeys.has(restoration.key)).toBe(true)
+  }
+
+  for (const repair of report.repairs) {
+    const node = resolveReconciliationPath(result, repair.path)
+    expect(
+      typeof node === 'object' &&
+        node !== null &&
+        (node as Record<string, unknown>)['_key'] === repair.key,
+    ).toBe(true)
+    expect(repair.previousKey).not.toBe(repair.key)
+  }
+
+  const restoredAtPath = new Set(
+    report.restorations.map(
+      (restoration) => `${JSON.stringify(restoration.path)}:${restoration.key}`,
+    ),
+  )
+  for (const repair of report.repairs) {
+    expect(
+      restoredAtPath.has(`${JSON.stringify(repair.path)}:${repair.key}`),
+    ).toBe(false)
+  }
+
+  const hasDocumentWideRefusal = report.refusals.some(
+    (refusal) =>
+      refusal.reason === 'round-trip-mismatch' ||
+      refusal.reason === 'alignment-overflow',
+  )
+  if (hasDocumentWideRefusal) {
+    expect(report.restorations).toEqual([])
+  }
+}
