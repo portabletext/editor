@@ -1123,6 +1123,13 @@ export const Editable = forwardRef(
                   ? attributes.autoCapitalize
                   : 'false'
               }
+              // Temporary Grammarly workaround. With `data-slate-editor`
+              // present, Grammarly applies corrections via synthetic
+              // `beforeinput` events the editor handles; without it, it falls
+              // back to `document.execCommand`, which fires no `beforeinput`,
+              // so corrections revert. The attribute is removed again, without
+              // warning, once the editor handles that channel without it.
+              data-slate-editor
               data-pt-editor
               data-pt-path=""
               // explicitly set this
