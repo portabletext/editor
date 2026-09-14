@@ -833,7 +833,32 @@ applyMarkdownEdit(stored, editedMarkdown, {
 })
 ```
 
-Every `key` and `path` in the report matches the returned value exactly, and a path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, and `keyMatching` are facts of that invocation, safe to branch on. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+Every `key` and `path` in the report matches the returned value exactly, and a path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, and `keyMatching` are facts of that invocation, safe to branch on. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload. The report describes what happened to keys, never what changed inside a value: to detect content changes, compare values directly (see the next section). The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+
+#### Guarding `json:object` payloads
+
+An edit can damage a `json:object` payload, and several damage classes are already defended: a broken fence or invalid JSON reports through `onDegradation` (`object-carrier-invalid`), a payload whose `_key` changed gets the stored key back when its content matches stored content, and a duplicated payload gets its copy re-keyed, reported under `renamedKeys`.
+
+The residual class is an edit to the payload's field values, and that is invisible to reconciliation on purpose: a changed value is sometimes exactly the intended edit, and only the caller knows the difference. Enforce a no-changes policy at the call site, with a direct compare, since the caller holds both sides:
+
+```ts
+const storedByKey = new Map(
+  storedPortableText
+    .filter((block) => block._type === 'productTeaser')
+    .map((block) => [block._key, block]),
+)
+for (const block of next) {
+  if (block._type !== 'productTeaser') continue
+  const stored = storedByKey.get(block._key)
+  if (stored && !deepEqual(stored, block)) {
+    // the edit changed this object: reject, or validate the new
+    // value against your own schema rules before accepting it
+    throw new PayloadChangedError(block._key)
+  }
+}
+```
+
+An unchanged compare is a guarantee, not a heuristic: a block the edit did not touch returns exactly as stored. Do not use the report's `basis` for this, it is advisory.
 
 #### Concurrent edits
 
