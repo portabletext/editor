@@ -6,6 +6,7 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {Range} from '../../interfaces/range'
 import type {DecoratedRange} from '../../interfaces/text'
+import {pointEquals} from '../../point/point-equals'
 import {rangeEdges} from '../../range/range-edges'
 import {rangeEquals} from '../../range/range-equals'
 import {rangeIntersection} from '../../range/range-intersection'
@@ -186,6 +187,13 @@ export const splitDecorationsByChild = (
     const startIndex = resolveChildIndex(startPoint) ?? 0
     const endIndex = resolveChildIndex(endPoint) ?? children.length - 1
 
+    // Only a `'registered'` decoration's `render` ever reads `isFirst`/
+    // `isLast`; skip resolving the decoration's own true edges otherwise.
+    const trueEdges =
+      decoration.kind === 'registered'
+        ? rangeEdges(decoration, editor.snapshot.context)
+        : undefined
+
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]
       if (!ds) {
@@ -208,6 +216,12 @@ export const splitDecorationsByChild = (
       ds.push({
         ...decoration,
         ...childDecorationRange,
+        isRangeStart: trueEdges
+          ? pointEquals(childDecorationRange.anchor, trueEdges[0])
+          : false,
+        isRangeEnd: trueEdges
+          ? pointEquals(childDecorationRange.focus, trueEdges[1])
+          : false,
       })
     }
   }
