@@ -467,6 +467,69 @@ function collectKeys(value: unknown, keys: Set<string>): void {
   }
 }
 
+function collectNodesByKey(
+  value: unknown,
+  nodesByKey: Map<string, unknown>,
+): void {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectNodesByKey(item, nodesByKey)
+    }
+    return
+  }
+  if (typeof value === 'object' && value !== null) {
+    const key = (value as Record<string, unknown>)['_key']
+    if (typeof key === 'string' && !nodesByKey.has(key)) {
+      nodesByKey.set(key, value)
+    }
+    for (const fieldValue of Object.values(value)) {
+      collectNodesByKey(fieldValue, nodesByKey)
+    }
+  }
+}
+
+/**
+ * A local copy of the engine's own node-comparison helper, kept here
+ * rather than imported so drift in the engine's compare (an edit that
+ * changes what `valueChanged` measures) shows up as a fuzz failure
+ * instead of passing silently: order-insensitive on object fields (a
+ * field order shuffle is not a value change), but array order still
+ * matters (a reordered array is a different value). Sharing the
+ * implementation's algorithmic blind spots is accepted, since this
+ * oracle is for catching drift, not for testing the compare itself.
+ */
+function nodesDeepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false
+    }
+    return a.every((item, index) => nodesDeepEqual(item, b[index]))
+  }
+  if (
+    typeof a === 'object' &&
+    a !== null &&
+    typeof b === 'object' &&
+    b !== null
+  ) {
+    const aRecord = a as Record<string, unknown>
+    const bRecord = b as Record<string, unknown>
+    const aFields = Object.keys(aRecord)
+    const bFields = Object.keys(bRecord)
+    if (aFields.length !== bFields.length) {
+      return false
+    }
+    return aFields.every(
+      (field) =>
+        Object.hasOwn(bRecord, field) &&
+        nodesDeepEqual(aRecord[field], bRecord[field]),
+    )
+  }
+  return false
+}
+
 function assertSiblingKeysUnique(value: unknown): void {
   if (Array.isArray(value)) {
     const keys = value
@@ -512,6 +575,8 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
 
       const storedKeys = new Set<string>()
       collectKeys(storedSnapshot, storedKeys)
+      const storedNodesByKey = new Map<string, unknown>()
+      collectNodesByKey(storedSnapshot, storedNodesByKey)
       const storedByKey = new Map<string, unknown>(
         storedSnapshot
           .filter(
@@ -585,7 +650,12 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
       })
       expect(withReport).toEqual(reconciled)
       expect(reportCallCount).toBe(1)
-      assertReconciliationReportConsistency(report!, withReport, storedKeys)
+      assertReconciliationReportConsistency(
+        report!,
+        withReport,
+        storedKeys,
+        storedNodesByKey,
+      )
     }
   })
 })
@@ -602,6 +672,8 @@ describe('the reconciliation report invariants the fuzz suite checks', () => {
       },
     })
     const storedKeys = new Set(['b1', 's1', 'b2', 's2'])
+    const storedNodesByKey = new Map<string, unknown>()
+    collectNodesByKey(stored, storedNodesByKey)
     const producedReport = report!
     if (producedReport.keyMatching !== 'performed') {
       throw new Error('expected a performed report')
@@ -609,12 +681,22 @@ describe('the reconciliation report invariants the fuzz suite checks', () => {
     const performedReport = producedReport
 
     // The real report passes; every mutated copy below must fail.
-    assertReconciliationReportConsistency(performedReport, result, storedKeys)
+    assertReconciliationReportConsistency(
+      performedReport,
+      result,
+      storedKeys,
+      storedNodesByKey,
+    )
 
     const wrongKey = structuredClone(performedReport)
     wrongKey.preservedKeys[0]!.key = 'not-a-real-key'
     expect(() =>
-      assertReconciliationReportConsistency(wrongKey, result, storedKeys),
+      assertReconciliationReportConsistency(
+        wrongKey,
+        result,
+        storedKeys,
+        storedNodesByKey,
+      ),
     ).toThrow()
 
     const truncatedPath = structuredClone(performedReport)
@@ -623,7 +705,24 @@ describe('the reconciliation report invariants the fuzz suite checks', () => {
     )!
     spanPreservedKey.path = spanPreservedKey.path.slice(0, -1)
     expect(() =>
-      assertReconciliationReportConsistency(truncatedPath, result, storedKeys),
+      assertReconciliationReportConsistency(
+        truncatedPath,
+        result,
+        storedKeys,
+        storedNodesByKey,
+      ),
+    ).toThrow()
+
+    const flippedValueChanged = structuredClone(performedReport)
+    flippedValueChanged.preservedKeys[0]!.valueChanged =
+      !flippedValueChanged.preservedKeys[0]!.valueChanged
+    expect(() =>
+      assertReconciliationReportConsistency(
+        flippedValueChanged,
+        result,
+        storedKeys,
+        storedNodesByKey,
+      ),
     ).toThrow()
   })
 })
@@ -697,6 +796,7 @@ function assertReconciliationReportConsistency(
   report: ReconciliationReport,
   result: unknown,
   storedKeys: ReadonlySet<string>,
+  storedNodesByKey: ReadonlyMap<string, unknown>,
 ): void {
   for (const renamedKey of report.renamedKeys) {
     const node = resolveReconciliationKeyPath(result, renamedKey.path)
@@ -720,6 +820,14 @@ function assertReconciliationReportConsistency(
         (node as Record<string, unknown>)['_key'] === preservedKey.key,
     ).toBe(true)
     expect(storedKeys.has(preservedKey.key)).toBe(true)
+
+    const storedNode = storedNodesByKey.get(preservedKey.key)
+    if (storedNode === undefined) {
+      throw new Error(
+        `assertReconciliationReportConsistency: no stored node found for preserved key "${preservedKey.key}"`,
+      )
+    }
+    expect(preservedKey.valueChanged).toBe(!nodesDeepEqual(storedNode, node))
   }
 
   const preservedAtPath = new Set(
