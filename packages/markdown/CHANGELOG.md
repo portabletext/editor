@@ -1,5 +1,132 @@
 # @portabletext/markdown
 
+## 2.2.0
+
+### Minor Changes
+
+- [#3242](https://github.com/portabletext/editor/pull/3242) [`e4abe23`](https://github.com/portabletext/editor/commit/e4abe233743736ec15e3bbf3fcb118182beaf49d) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `applyMarkdownEdit` for key-preserving markdown edits
+
+  Edit Portable Text as markdown without losing identity: serialize a stored value, let anything edit the markdown, and convert it back with the stored `_key`s restored to everything the edit did not replace.
+
+  ```ts
+  import {
+    applyMarkdownEdit,
+    portableTextToMarkdown,
+  } from '@portabletext/markdown'
+
+  const markdown = portableTextToMarkdown(storedPortableText, {schema})
+  // ... the markdown gets edited ...
+  const edited = applyMarkdownEdit(storedPortableText, editedMarkdown, {
+    schema, // governs both conversion directions
+    serialize: {}, // must match the options that produced the markdown
+  })
+  ```
+
+  Keys follow the edit the way they would in an editor: unchanged and moved blocks keep their keys, rewriting a block in place keeps its key like typing over it, a split keeps the key on the first fragment, a merge on the first block, and a typo fix lands as a text change on the same span, annotation keys included. What markdown cannot express comes back on adopted content: custom fields and styles, decorators without syntax, empty paragraphs. When evidence runs out, a block gets a fresh key rather than a wrong one, and a `json:object` payload's own key never re-keys stored content.
+
+  The options bag is the exported `ApplyMarkdownEditOptions`: one top-level `schema` governs both conversion directions, and `deserialize`/`serialize` take the two converters' remaining options, with new keys coming from `deserialize.keyGenerator`. The README's `applyMarkdownEdit` section carries the full contract: what keeps its key, what gets restored, when keys reset, and the concurrent-edit rule.
+
+- [#3255](https://github.com/portabletext/editor/pull/3255) [`02e2d49`](https://github.com/portabletext/editor/commit/02e2d4918e7c0a55e974f90e414a3b53aaf3b199) Thanks [@christianhg](https://github.com/christianhg)! - feat: gate the default markdown renderers on the schema in `portableTextToMarkdown`
+
+  `portableTextToMarkdown` now accepts an optional `schema`. When set, each built-in type renderer (`callout`, `code`, `horizontal-rule`, `html`, `image`, `table`) runs only when the schema declares that type at the matching position (`blockObjects` for a block, `inlineObjects` for an inline object); an undeclared type falls back to `unknownType`, whose default output is a `json:object` fence (or tagged code span, inline) that reparses back to the same value under the same schema. Renderers you pass in `types` are never gated. The gate checks the type name only, so declare each type with its fields: `markdownToPortableText` cannot rebuild a value from a fieldless declaration. Omit `schema` and every default renderer stays active, as before.
+
+  ```ts
+  import {compileSchema, defineSchema} from '@portabletext/schema'
+  import {portableTextToMarkdown} from '@portabletext/markdown'
+
+  const schema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'code',
+          fields: [
+            {name: 'code', type: 'string'},
+            {name: 'language', type: 'string'},
+          ],
+        },
+      ],
+    }),
+  )
+
+  portableTextToMarkdown(blocks, {schema})
+  // a `code` block renders as a fenced code block; a `table` block
+  // (undeclared) renders as a `json:object` fence instead
+  ```
+
+  Pass the same schema to `markdownToPortableText` to keep the round trip consistent.
+
+- [#3266](https://github.com/portabletext/editor/pull/3266) [`fc8e2a4`](https://github.com/portabletext/editor/commit/fc8e2a4f9b3ce355bebdcf0a650aee51ea7a2001) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `onReconciliation` report to `applyMarkdownEdit`
+
+  `applyMarkdownEdit` can now report what it did with every key. A preserved key means "this node in the returned value wears its stored key". A renamed key means "this key was renamed to stay unique among siblings". A key fallback marks a place that got fresh keys instead of a guess. Concretely, for a stored value of two paragraphs around a custom object, where the edit fixes one typo:
+
+  ```ts
+  import {applyMarkdownEdit} from '@portabletext/markdown'
+
+  // stored: [block b1 'Our pick:', product p1, block b2 'Ships tomorow.']
+  // edited markdown: the same document with 'tomorow' -> 'tomorrow'
+  applyMarkdownEdit(stored, editedMarkdown, {
+    onReconciliation: (report) => {
+      // report is:
+      // {
+      //   keyMatching: 'performed',
+      //   preservedKeys: [
+      //     {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+      //     {basis: 'content-unchanged', key: 's1', path: [{_key: 'b1'}, 'children', {_key: 's1'}]},
+      //     {basis: 'content-unchanged', key: 'p1', path: [{_key: 'p1'}]},
+      //     {basis: 'same-position', key: 'b2', path: [{_key: 'b2'}]},
+      //     {basis: 'same-position', key: 's2', path: [{_key: 'b2'}, 'children', {_key: 's2'}]},
+      //   ],
+      //   keyFallbacks: [],
+      //   renamedKeys: [],
+      // }
+      // reading it: every stored key survived, at every depth. The
+      // untouched nodes matched exactly ('content-unchanged'), the edited
+      // paragraph kept its block and span keys the way typing over it
+      // in an editor would ('same-position'). Other basis values name
+      // the other matching methods: 'content-moved', 'content-split',
+      // 'content-merged', 'similar-content'.
+    },
+  })
+  ```
+
+  What the other fields mean when they are not empty:
+
+  - `report.keyMatching === 'skipped'`: key matching did not run, and `report.reason` says why, `'round-trip-mismatch'` (the stored value cannot survive its own serialize→parse round trip) or `'document-too-large'`. The returned value is the plain conversion, every key fresh except the ones `json:object` payloads carry, and the report carries only `reason` and `renamedKeys`.
+  - `keyFallbacks: [{type: 'ambiguous-region-too-large', keys: [...]}]`: one ambiguous region was too large to gather evidence for, and the listed result blocks fell back to fresh keys. `{type: 'annotation-key-conflict', path}`: one annotation definition kept its fresh key because adopting the stored one would have collided with a sibling.
+  - `renamedKeys: [{previousKey: 'p1', key: 'k7', path}]`: a key was rewritten to keep siblings unique, most commonly a pasted `json:object` payload duplicating a key that already exists.
+
+  The callback fires exactly once whenever set, synchronously, right before the function returns, a skip included: that is when a caller needs it most. A node absent from `preservedKeys` was not preserved from the stored value, whether it is a fresh key or a `json:object` payload key that carried its own, and the report does not distinguish the two. Every `key` and `path` matches the returned value exactly (a path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths).
+
+  Which keys survived, every `key` and `path`, `renamedKeys`, and `keyMatching` are facts of that invocation, safe to branch on. A preserved key's `basis` is advisory: near the evidence caps it can vary with machine speed, so never branch on it. The two exported types, `ReconciliationReport` and `ReconciliationKeyPath`, are `@beta`.
+
+### Patch Changes
+
+- [#3267](https://github.com/portabletext/editor/pull/3267) [`be2ed87`](https://github.com/portabletext/editor/commit/be2ed87b4c7a46c4e068026100ab147f1ac38a17) Thanks [@christianhg](https://github.com/christianhg)! - fix: return stored blocks verbatim when the edit did not touch them
+
+  A block whose spans carried a mark, decorator, or custom style the markdown dialect cannot express lost that structure through a no-op edit: two spans split only by an unmappable mark came back merged into one, and the mark itself vanished, even though nothing had touched that block. `applyMarkdownEdit` now recognizes when a block's canonicalized stored form and the parsed edited markdown agree exactly, proof that everything the dialect can express is untouched and everything it cannot express was invisible to the edit, and returns that block exactly as stored: span structure, marks, mark definitions, and any custom field included, at every depth. A block the edit did touch still comes back canonicalized, same as before.
+
+- [#3265](https://github.com/portabletext/editor/pull/3265) [`3b2d278`](https://github.com/portabletext/editor/commit/3b2d27847eb5139b2d50dc9f3d962167342c2b91) Thanks [@christianhg](https://github.com/christianhg)! - fix: serialize images the parser would refuse as `json:object` fences
+
+  An `image` whose `src` a Markdown parser would refuse (a `data:` URI outside `png`/`gif`/`jpeg`/`webp`, or a `javascript:`/`vbscript:`/`file:` URI) previously serialized as `![alt](src)` anyway; reparsing that markdown turned the image into literal text instead of an image object, destroying it. Such an image now serializes as a `json:object` fence (or, inline, a tagged code span), which reparses back to the identical image value. Images with an accepted `src` are unaffected.
+
+- [#3255](https://github.com/portabletext/editor/pull/3255) [`d39146e`](https://github.com/portabletext/editor/commit/d39146ee48a23bad4a6c312863e76ff389a1bc2c) Thanks [@christianhg](https://github.com/christianhg)! - fix: use the inline `json:object` carrier for objects inside table cells
+
+  In `portableTextToMarkdown`, an object inside a table cell that renders through the `json:object` carrier now uses the carrier's single-line inline form instead of a block fence squashed with `<br>`.
+
+  In `markdownToPortableText`, a carrier object standing alone in a table cell is placed by the schema: it comes back at block position in the cell (`cell.value`), unless the schema declares the type inline-only, in which case it stays an inline child of the cell's text block. The same placement rule now governs standalone images, so under a schema without a block-level `image`, an image alone in a cell stays inline (reported as `image-block-to-inline`) instead of being lifted to block position.
+
+  Together the two sides make objects in table cells survive the serialize-edit-reparse round trip.
+
+- [#3264](https://github.com/portabletext/editor/pull/3264) [`deccf84`](https://github.com/portabletext/editor/commit/deccf846fb41efbcae9b6dccafbfd6cd101930a1) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit no blank lines for empty text blocks
+
+  A block that renders to the empty string (an empty or whitespace-only text block, or a custom renderer returning `''`) no longer leaves blank lines in `portableTextToMarkdown`'s output: `[h1 'foo', empty block, 'bar']` now serializes to `# foo\n\nbar` instead of `# foo\n\n\n\nbar`. A dropped block never survived reparsing anyway, and a custom `blockSpacing` callback now sees the pair of blocks that actually end up adjacent, never an invisible one. Two spacing consequences show in rendered HTML: two blockquotes separated only by an empty block now join into one quote with a paragraph break, and a list whose blank lines came only from empty blocks goes tight, since a skipped block no longer counts toward looseness.
+
+  The same filter runs inside containers: callout and structured-blockquote content joins skip empty blocks, so no more blank quote-prefixed lines. In list items, the marker line goes to the first block that renders output, with two exceptions that keep the markdown reparseable: a multi-line block (a code fence, a table) keeps its later lines indented inside the item instead of escaping the list at column 0, and a nested list or, on a task item, any non-text block stays indented below a bare marker, because after `- [x] ` (or fused with `- `) it would reparse as plain words.
+
+- [#3242](https://github.com/portabletext/editor/pull/3242) [`e4abe23`](https://github.com/portabletext/editor/commit/e4abe233743736ec15e3bbf3fcb118182beaf49d) Thanks [@christianhg](https://github.com/christianhg)! - fix: mint sibling-unique keys even from a colliding `keyGenerator`
+
+  `markdownToPortableText` (and everything built on it) now guards the supplied `keyGenerator`: a generator that returns an already-minted key is retried, then deterministically suffixed, so one conversion can never mint the same `_key` twice. A repeated key did not just duplicate identity, it made annotation ownership ambiguous: two mark definitions sharing a key leave every referencing span attributable to either, which no later repair can resolve. Well-behaved generators are unaffected.
+
 ## 2.1.0
 
 ### Minor Changes
