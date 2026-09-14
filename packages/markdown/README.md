@@ -826,14 +826,14 @@ applyMarkdownEdit(stored, editedMarkdown, {
       // payloads carry
       return
     }
-    report.preservedKeys // stored keys that survived, with a basis and a path
+    report.preservedKeys // stored keys that survived, with a basis, a path, and whether the value changed
     report.keyFallbacks // regions that got fresh keys instead of a guess
     report.renamedKeys // keys rewritten to keep siblings unique
   },
 })
 ```
 
-Every `key` and `path` in the report matches the returned value exactly, and a path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, and `keyMatching` are facts of that invocation, safe to branch on. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+Every `key` and `path` in the report matches the returned value exactly, and a path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, and `keyMatching` are facts of that invocation, safe to branch on. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. `valueChanged`, by contrast, is a stable fact of the invocation, safe to branch on: `false` is a guarantee that the node deep-equals its stored counterpart, identical fields and values with field order aside, and for a node the edit did not touch, that value is the verbatim stored one. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
 
 #### Concurrent edits
 
