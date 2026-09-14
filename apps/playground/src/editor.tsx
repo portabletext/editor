@@ -69,7 +69,6 @@ import {
 import {BlockDropIndicator} from './plugins/block-drop-indicator'
 import {ListItemBlock} from './plugins/list-item-block'
 import {CalloutPlugin} from './plugins/plugin.callout'
-import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
@@ -161,7 +160,6 @@ export function Editor(props: {
               <MaybeDndProvider enabled={featureFlags.dndPlugin}>
                 <FullscreenAwareContainer>
                   <NodePlugin nodes={playgroundNodes} />
-                  {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
                   {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
                   {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
                   {featureFlags.tablePlugin ? <TablePlugin /> : null}
@@ -395,6 +393,14 @@ const imageStyle = tv({
   },
 })
 
+const codeStyle = tv({
+  base: 'my-2 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-slate-700 text-sm leading-relaxed dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200',
+  variants: {
+    selected: {true: 'border-slate-400 dark:border-slate-500'},
+    focused: {true: 'bg-blue-50 dark:bg-blue-900/30'},
+  },
+})
+
 const fallbackBlockStyle = tv({
   base: 'my-2 rounded border border-dashed border-gray-300 px-3 py-2 text-sm dark:border-gray-600',
   variants: {
@@ -490,7 +496,7 @@ function PlaygroundBlockObject(props: BlockObjectRenderProps) {
 
   let content: JSX.Element
 
-  if (props.node._type === 'break') {
+  if (props.node._type === 'horizontal-rule') {
     content = (
       <div
         className={breakStyle({
@@ -566,16 +572,23 @@ function PlaygroundBlockObject(props: BlockObjectRenderProps) {
         focused={props.focused}
       />
     )
-  } else if (props.node._type === 'code-block') {
-    const language = (props.node as {language?: string}).language
+  } else if (props.node._type === 'code') {
+    const codeValue = props.node as {code?: string; language?: string}
     content = (
-      <MarkdownFallback
-        value={props.node}
-        label={`Code block${language ? ` · ${language}` : ''}`}
-        icon={<CodeIcon className="size-3.5" />}
-        selected={props.selected}
-        focused={props.focused}
-      />
+      <pre
+        className={codeStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        {codeValue.language ? (
+          <div className="mb-1 flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <CodeIcon className="size-3.5" />
+            <span>{codeValue.language}</span>
+          </div>
+        ) : null}
+        <code className="block whitespace-pre-wrap">{codeValue.code}</code>
+      </pre>
     )
   } else if (props.node._type === 'table') {
     content = (

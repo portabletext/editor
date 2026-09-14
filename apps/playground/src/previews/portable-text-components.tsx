@@ -2,7 +2,9 @@ import type {PortableTextReactComponents} from '@portabletext/react'
 
 export const portableTextComponents: Partial<PortableTextReactComponents> = {
   types: {
-    'break': () => <hr className="my-4 border-gray-300 dark:border-gray-600" />,
+    'horizontal-rule': () => (
+      <hr className="my-4 border-gray-300 dark:border-gray-600" />
+    ),
     'image': ({value}: {value: {src?: string; alt?: string}}) => (
       <figure className="my-4">
         <img
