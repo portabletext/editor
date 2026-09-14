@@ -69,6 +69,28 @@ export interface DOMEditor extends BaseEditor {
   pendingAction: Action | null
   pendingSelection: Range | null
   forceRender: (() => void) | null
+
+  /**
+   * Per-block repair generation, keyed by block `_key`. Folded into that
+   * block's React `key` (see `use-children.tsx`) so bumping it makes the
+   * next render replace the block's fiber instead of updating it, forcing
+   * React to rebuild its DOM subtree from the model. Used to recover from
+   * DOM structural damage a refused input adoption leaves behind (see
+   * `repairBlockDom` in `editable.tsx`).
+   */
+  blockRepairGeneration: Map<string, number>
+
+  /**
+   * Mutation records buffered between drains, in delivery order.
+   * `MutationObserver` delivery timing is browser-dependent (Chromium
+   * flushes its queue via a microtask checkpoint before dispatching
+   * `input`; Firefox dispatches `input` first and delivers after) - the
+   * observer callback appends here whenever it fires, and whoever drains
+   * (see `tryAdoptUnannouncedInput` in `editable.tsx`) also calls
+   * `takeRecords()` for whatever hasn't been delivered yet, so the drained
+   * set is complete regardless of which order this tick happened to run in.
+   */
+  pendingMutationRecords: MutationRecord[]
 }
 
 interface DOMEditorInterface {

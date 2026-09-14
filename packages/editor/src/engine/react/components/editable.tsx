@@ -3,7 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -19,17 +19,28 @@ import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
 import {getAncestor} from '../../../traversal/get-ancestor'
+import {getChildren} from '../../../traversal/get-children'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
+import {getSibling} from '../../../traversal/get-sibling'
+import {getSpan} from '../../../traversal/get-span'
 import {getText} from '../../../traversal/get-text'
+import {getTextBlock} from '../../../traversal/get-text-block'
 import {isLeafObject} from '../../../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../../../types/editor-engine'
+import {isKeyedSegment} from '../../../utils/util.is-keyed-segment'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
 import {subscribeToOperations} from '../../core/operation-channel'
 import {DOMEditor} from '../../dom/plugin/dom-editor'
 import {TRIPLE_CLICK} from '../../dom/utils/constants'
+import {
+  applyStringDiff,
+  normalizeStringDiff,
+  targetRange as getDiffTargetRange,
+  type StringDiff,
+} from '../../dom/utils/diff-text'
 import {
   containsShadowAware,
   getActiveElement,
@@ -60,7 +71,7 @@ import {range as editorRange} from '../../editor/range'
 import {rangeRef} from '../../editor/range-ref'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
-import type {NodeEntry} from '../../interfaces/node'
+import type {Node, NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
 import {isTextBlockNode} from '../../node/is-text-block-node'
@@ -86,6 +97,40 @@ type DeferredOperation = () => void
 const Children = (props: Parameters<typeof useChildren>[0]) => {
   const children = useChildren(props)
   return <React.Fragment>{children}</React.Fragment>
+}
+
+/**
+ * Backstop around the block list for whatever `repairBlockDom`'s own
+ * reachability check doesn't anticipate: a block-scoped remount replaces
+ * one keyed fiber and leaves React to reconcile every other block's DOM
+ * unchanged, so a cross-block mutation the check missed can still hand
+ * React a commit it can't complete (`removeChild`/`insertBefore` on a node
+ * that isn't where the reconciler left it). Uncaught, that error's default
+ * recovery is React unmounting the whole root - the entire editable surface
+ * disappearing, silently, for a single block's damage. Catching it here
+ * confines the failure to "this render attempt failed", forces every block
+ * to remount from the model (the same last-resort repair a failed
+ * reachability check already escalates to), and retries: the render that
+ * threw is never reused.
+ */
+class BlockRepairBoundary extends React.Component<
+  {editor: Editor; children: React.ReactNode},
+  {hasError: boolean}
+> {
+  override state = {hasError: false}
+
+  static getDerivedStateFromError() {
+    return {hasError: true}
+  }
+
+  override componentDidCatch() {
+    bumpAllBlockGenerations(this.props.editor)
+    this.setState({hasError: false})
+  }
+
+  override render() {
+    return this.state.hasError ? null : this.props.children
+  }
 }
 
 /**
@@ -181,6 +226,11 @@ export const Editable = forwardRef(
     const ref = useRef<HTMLDivElement | null>(null)
     const deferredOperations = useRef<DeferredOperation[]>([])
     const processing = useRef(false)
+    // `timeStamp` of the last `beforeinput` this handler accounted for
+    // (native fast path or preventDefault'd behavior dispatch); the `input`
+    // it produces must not be adopted again by `onInput` below.
+    const lastAnnouncedBeforeInputTimestampRef = useRef<number | null>(null)
+    const mutationObserverRef = useRef<MutationObserver | null>(null)
 
     const {onUserInput, receivedUserInput} = useTrackUserInput()
 
@@ -634,29 +684,42 @@ export const Editable = forwardRef(
           newRange.setStart(range.startContainer, range.startOffset)
           newRange.setEnd(range.endContainer, range.endOffset)
 
-          // Translate the DOM Range into a Range
+          // Translate the DOM Range into a Range. Suppressed: the DOM may
+          // no longer map onto the model at all (a refused input adoption
+          // upstream can leave the block's DOM structurally out of sync),
+          // and this handler must never throw uncaught on event input.
           const editorSelection = DOMEditor.toEditorSelection(
             editor,
             newRange,
             {
               exactMatch: false,
-              suppressThrow: false,
+              suppressThrow: true,
             },
           )
 
-          editor.select(editorSelection)
-
           event.preventDefault()
           event.stopImmediatePropagation()
+
+          if (!editorSelection) {
+            return
+          }
+
+          editor.select(editorSelection)
           return
         }
         onUserInput()
 
-        if (
-          !readOnly &&
-          DOMEditor.hasEditableTarget(editor, event.target) &&
-          !isDOMEventHandled(event, propsOnDOMBeforeInput)
-        ) {
+        if (!readOnly && DOMEditor.hasEditableTarget(editor, event.target)) {
+          // Stamp for any editable-target `beforeinput`, even one a consumer
+          // handler claims without calling `preventDefault()`: stamping a
+          // defaultPrevented event is harmless, and skipping it would leave
+          // the `input` it produces eligible for adoption a second time.
+          lastAnnouncedBeforeInputTimestampRef.current = event.timeStamp
+
+          if (isDOMEventHandled(event, propsOnDOMBeforeInput)) {
+            return
+          }
+
           // COMPAT: BeforeInput events aren't cancelable on android, so we have to handle them differently using the android input manager.
           if (androidInputManagerRef.current) {
             return androidInputManagerRef.current.handleDOMBeforeInput(event)
@@ -678,6 +741,24 @@ export const Editable = forwardRef(
           // COMPAT: use composition change events as a hint to where we should
           // insert composition text if we aren't composing.
           if (isCompositionChange && editor.composing) {
+            return
+          }
+
+          if (
+            IS_WEBKIT &&
+            editor.composing &&
+            ADOPTABLE_INPUT_TYPES.has(type)
+          ) {
+            // COMPAT: Safari, unlike Chromium and Firefox, fires a real
+            // cancelable `beforeinput` for `execCommand('insertText'|'delete')`
+            // (the same channel Grammarly's generic replacement service uses)
+            // with a plain type, not a composition one, so the
+            // `isCompositionChange` check above never sees it. Leave one of
+            // these plain edit types unhandled while composing so the DOM
+            // mutates on its own; the same composing check in `onInput`'s
+            // unannounced-input adoption then refuses to adopt it too,
+            // matching the outcome Chromium and Firefox already get from
+            // never announcing it in the first place.
             return
           }
 
@@ -705,47 +786,63 @@ export const Editable = forwardRef(
               // Therefore we don't allow native events to insert text at the end of anchor nodes.
               const {anchor} = selection
 
-              const [node, offset] = DOMEditor.toDOMPoint(editor, anchor)
-              const anchorNode = node.parentElement?.closest('a')
-
-              const window = DOMEditor.getWindow(editor)
-
-              if (
-                native &&
-                anchorNode &&
-                DOMEditor.hasDOMNode(editor, anchorNode)
-              ) {
-                // Find the last text node inside the anchor.
-                const lastText = window?.document
-                  .createTreeWalker(anchorNode, NodeFilter.SHOW_TEXT)
-                  .lastChild() as DOMText | null
-
-                if (
-                  lastText === node &&
-                  lastText.textContent?.length === offset
-                ) {
-                  native = false
-                }
+              let domPoint: ReturnType<typeof DOMEditor.toDOMPoint> | undefined
+              try {
+                domPoint = DOMEditor.toDOMPoint(editor, anchor)
+              } catch {
+                // The model selection no longer maps onto the DOM (a refused
+                // input adoption upstream can leave a block's DOM
+                // structurally out of sync with the model); skip the native
+                // fast path rather than throw on event input.
+                native = false
               }
 
-              // Chrome has issues with the presence of tab characters inside elements with whiteSpace = 'pre'
-              // causing abnormal insert behavior: https://bugs.chromium.org/p/chromium/issues/detail?id=1219139
-              if (
-                native &&
-                node.parentElement &&
-                window?.getComputedStyle(node.parentElement)?.whiteSpace ===
-                  'pre'
-              ) {
-                const block = getParent(editor.snapshot, anchor.path, {
-                  match: (node) =>
-                    isTextBlock({schema: editor.snapshot.context.schema}, node),
-                })
+              if (domPoint) {
+                const [node, offset] = domPoint
+                const anchorNode = node.parentElement?.closest('a')
 
-                if (block) {
-                  const blockText = getText(editor.snapshot, block.path)
+                const window = DOMEditor.getWindow(editor)
 
-                  if (blockText?.includes('\t')) {
+                if (
+                  native &&
+                  anchorNode &&
+                  DOMEditor.hasDOMNode(editor, anchorNode)
+                ) {
+                  // Find the last text node inside the anchor.
+                  const lastText = window?.document
+                    .createTreeWalker(anchorNode, NodeFilter.SHOW_TEXT)
+                    .lastChild() as DOMText | null
+
+                  if (
+                    lastText === node &&
+                    lastText.textContent?.length === offset
+                  ) {
                     native = false
+                  }
+                }
+
+                // Chrome has issues with the presence of tab characters inside elements with whiteSpace = 'pre'
+                // causing abnormal insert behavior: https://bugs.chromium.org/p/chromium/issues/detail?id=1219139
+                if (
+                  native &&
+                  node.parentElement &&
+                  window?.getComputedStyle(node.parentElement)?.whiteSpace ===
+                    'pre'
+                ) {
+                  const block = getParent(editor.snapshot, anchor.path, {
+                    match: (node) =>
+                      isTextBlock(
+                        {schema: editor.snapshot.context.schema},
+                        node,
+                      ),
+                  })
+
+                  if (block) {
+                    const blockText = getText(editor.snapshot, block.path)
+
+                    if (blockText?.includes('\t')) {
+                      native = false
+                    }
                   }
                 }
               }
@@ -782,9 +879,12 @@ export const Editable = forwardRef(
             if (inputTarget) {
               const range = DOMEditor.toEditorSelection(editor, inputTarget, {
                 exactMatch: false,
-                // The DOM selection fallback is not guaranteed to be a valid
-                // editor range, so don't throw on it.
-                suppressThrow: !targetRange,
+                // Neither the browser's target range nor the DOM selection
+                // fallback is guaranteed to still map onto the model (a
+                // refused input adoption upstream can leave a block's DOM
+                // structurally out of sync with it), and this handler must
+                // never throw uncaught on event input.
+                suppressThrow: true,
               })
 
               if (range && (!selection || !rangeEquals(selection, range))) {
@@ -1033,6 +1133,9 @@ export const Editable = forwardRef(
           if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
             ref.current.removeEventListener('beforeinput', onDOMBeforeInput)
           }
+
+          mutationObserverRef.current?.disconnect()
+          mutationObserverRef.current = null
         } else {
           // Attach a native DOM event handler for `beforeinput` events, because React's
           // built-in `onBeforeInput` is actually a leaky polyfill that doesn't expose
@@ -1040,6 +1143,36 @@ export const Editable = forwardRef(
           // https://github.com/facebook/react/issues/11211
           if (HAS_BEFORE_INPUT_SUPPORT) {
             node.addEventListener('beforeinput', onDOMBeforeInput)
+          }
+
+          // Buffers records between drains rather than reacting to them:
+          // `tryAdoptUnannouncedInput`'s record-chain validation is the
+          // only consumer, and it needs every record since the last drain,
+          // not just whichever ones this async callback happened to
+          // receive before the drain ran (see `pendingMutationRecords`).
+          // Skipped on WebKit: `execCommand('insertText'|'delete')` fires a
+          // real, cancelable `beforeinput` there and never reaches
+          // adoption at all (see the module doc on `tryAdoptUnannouncedInput`),
+          // so nothing ever consumes these records on that browser - and an
+          // active `characterData`/`subtree` observer on the editable root
+          // measurably interferes with WebKit's own native `execCommand`
+          // handling there, breaking edits that don't touch this feature at
+          // all. Skipped on Android for the same "nothing ever consumes
+          // these" reason from the other direction: `onInput` always
+          // routes to `androidInputManagerRef` there (below) before this
+          // module's own adoption ever runs, so records would only ever
+          // accumulate, never drain.
+          if (!IS_WEBKIT && !IS_ANDROID) {
+            const observer = new MutationObserver((records) => {
+              editor.pendingMutationRecords.push(...records)
+            })
+            observer.observe(node, {
+              childList: true,
+              subtree: true,
+              characterData: true,
+              characterDataOldValue: true,
+            })
+            mutationObserverRef.current = observer
           }
         }
 
@@ -1176,6 +1309,18 @@ export const Editable = forwardRef(
               )}
               onInput={useCallback(
                 (event: React.FormEvent<HTMLDivElement>) => {
+                  // Drained unconditionally, before any early return below:
+                  // whether or not this turn goes on to adopt, a record
+                  // left pending past this point would leak into whichever
+                  // later turn drains next, poisoning that one's own
+                  // record-chain validation with a mutation that has
+                  // nothing to do with it.
+                  const mutationRecords = [
+                    ...editor.pendingMutationRecords,
+                    ...(mutationObserverRef.current?.takeRecords() ?? []),
+                  ]
+                  editor.pendingMutationRecords = []
+
                   if (isEventHandled(event as any, attributes.onInput)) {
                     return
                   }
@@ -1194,6 +1339,24 @@ export const Editable = forwardRef(
                   }
                   deferredOperations.current = []
 
+                  const nativeInputEvent = event.nativeEvent as InputEvent
+                  const announcedTimestamp =
+                    lastAnnouncedBeforeInputTimestampRef.current
+                  const wasAnnouncedInput =
+                    announcedTimestamp !== null &&
+                    nativeInputEvent.timeStamp - announcedTimestamp >= 0 &&
+                    nativeInputEvent.timeStamp - announcedTimestamp <
+                      ANNOUNCED_INPUT_WINDOW_MS
+
+                  if (!wasAnnouncedInput && !readOnly && !editor.composing) {
+                    tryAdoptUnannouncedInput(
+                      editor,
+                      editorActor,
+                      nativeInputEvent,
+                      mutationRecords,
+                    )
+                  }
+
                   // COMPAT: Since `beforeinput` doesn't fully `preventDefault`,
                   // there's a chance that content might be placed in the browser's undo stack.
                   // This means undo can be triggered even when the div is not focused,
@@ -1210,7 +1373,7 @@ export const Editable = forwardRef(
                     )
                   }
                 },
-                [attributes.onInput, editor, editorActor],
+                [attributes.onInput, editor, editorActor, readOnly],
               )}
               onBlur={useCallback(
                 (event: React.FocusEvent<HTMLDivElement>) => {
@@ -1911,14 +2074,32 @@ export const Editable = forwardRef(
                 [readOnly, editor, editorActor, attributes.onPaste],
               )}
             >
-              <Children
-                decorations={decorations}
-                node={editor}
-                path={[]}
-                renderElement={renderElement}
-                renderLeaf={renderLeaf}
-                renderText={renderText}
-              />
+              {IS_WEBKIT ? (
+                // `execCommand` fires a real, cancelable `beforeinput` on
+                // WebKit and never reaches `tryAdoptUnannouncedInput`, so
+                // the block-scoped remount this boundary backstops never
+                // runs there either - see the module doc on
+                // `tryAdoptUnannouncedInput`.
+                <Children
+                  decorations={decorations}
+                  node={editor}
+                  path={[]}
+                  renderElement={renderElement}
+                  renderLeaf={renderLeaf}
+                  renderText={renderText}
+                />
+              ) : (
+                <BlockRepairBoundary editor={editor}>
+                  <Children
+                    decorations={decorations}
+                    node={editor}
+                    path={[]}
+                    renderElement={renderElement}
+                    renderLeaf={renderLeaf}
+                    renderText={renderText}
+                  />
+                </BlockRepairBoundary>
+              )}
             </div>
           </RestoreDOM>
         </DecorateContext.Provider>
@@ -2071,4 +2252,925 @@ const handleNativeHistoryEvents = (
     })
     return
   }
+}
+
+// A real `beforeinput` -> DOM mutation -> `input` sequence for the same
+// edit crosses at least one extra event-loop turn in Chromium (measured
+// ~0.5ms for a native-fast-path keystroke), so the two can't be correlated
+// by same-tick ordering. 50ms is generous slack for that turn while still
+// being far short of the gap to any later, unrelated `input` (a Grammarly
+// correction fires no `beforeinput` of its own, so it only ever collides
+// with the window if it lands within 50ms of some earlier edit).
+const ANNOUNCED_INPUT_WINDOW_MS = 50
+
+// A span can render as several text nodes when a range decoration splits
+// it; aggregate all of them (in document order) to reconstruct the span's
+// full rendered text.
+const aggregateWrapperText = (wrapper: DOMElement) =>
+  Array.from(wrapper.querySelectorAll<HTMLElement>('[data-pt-text]'))
+    .map((textNode) => textNode.textContent ?? '')
+    .join('')
+
+/**
+ * `EngineString` (`string.tsx`) appends one extra `\n` of its own to the
+ * DOM when it renders the block's last leaf and that leaf's text already
+ * ends with `\n` (COMPAT: browsers collapse a trailing newline otherwise).
+ * Every aggregator below reads live rendered text to diff against the
+ * model, so left alone that renderer-only character would be read back as
+ * a real insertion and written into the model on the next adopted edit.
+ * True only for the block's actual last child, and only while that
+ * child's own model text still ends with `\n` - the same condition
+ * `EngineString` itself gates on.
+ */
+const lastCompatTrailingNewlineChild = (editor: Editor, blockPath: Path) => {
+  const children = getChildren(editor.snapshot, blockPath)
+  const lastEntry = children.at(-1)
+
+  if (
+    !lastEntry ||
+    !isSpan({schema: editor.snapshot.context.schema}, lastEntry.node) ||
+    !lastEntry.node.text.endsWith('\n')
+  ) {
+    return null
+  }
+
+  return lastEntry
+}
+
+const blockHasCompatTrailingNewline = (editor: Editor, blockPath: Path) =>
+  lastCompatTrailingNewlineChild(editor, blockPath) !== null
+
+/**
+ * Whether `path`'s own span is the one `blockHasCompatTrailingNewline`
+ * refers to, i.e. whether reading this particular span's rendered text
+ * needs the same one-character correction.
+ */
+const spanHasCompatTrailingNewline = (editor: Editor, path: Path) => {
+  if (path.length === 0 || !isKeyedSegment(path[0])) {
+    return false
+  }
+
+  const lastEntry = lastCompatTrailingNewlineChild(editor, [path[0]])
+
+  return !!lastEntry && pathEquals(path, lastEntry.path)
+}
+
+/**
+ * `aggregateWrapperText`, corrected for the one compat character
+ * `EngineString` adds when `path`'s span is the block's last and still
+ * ends with `\n` at the current model. Every call site diffs the result
+ * against a model span's text, so leaving that character in would read
+ * back as an insertion the correction never made.
+ */
+const aggregateSpanTextForDiff = (
+  editor: Editor,
+  path: Path,
+  wrapper: DOMElement,
+) => {
+  const text = aggregateWrapperText(wrapper)
+
+  return spanHasCompatTrailingNewline(editor, path) && text.endsWith('\n')
+    ? text.slice(0, -1)
+    : text
+}
+
+// A cross-span `execCommand` can destroy every span wrapper in the affected
+// range outright (Chromium) rather than just merging two of them (Firefox
+// keeps one), so `[data-pt-text]` no longer accounts for the whole block in
+// that case. Walk every text node under the block wrapper directly instead,
+// in document order, skipping only the zero-width placeholders
+// (`data-pt-zero-width`, used for empty spans and inline objects) that carry
+// no real content.
+const aggregateBlockText = (editor: Editor, blockWrapper: DOMElement) => {
+  const walker = DOMEditor.getWindow(editor).document.createTreeWalker(
+    blockWrapper,
+    NodeFilter.SHOW_TEXT,
+    {
+      // An inline object's own rendering (its `data-pt-inline="object"`
+      // wrapper) can contain arbitrary visible text - a mention chip's
+      // `@name`, a default fallback's `[type: key]` placeholder - that
+      // contributes nothing to the block's model text at all, not even a
+      // zero-length placeholder the way an empty span does. Reject it the
+      // same way a zero-width span's own placeholder character is
+      // rejected, so the aggregated text stays comparable to `modelText`.
+      acceptNode: (node) =>
+        (node as DOMText).parentElement?.closest(
+          '[data-pt-zero-width], [data-pt-inline="object"]',
+        )
+          ? NodeFilter.FILTER_REJECT
+          : NodeFilter.FILTER_ACCEPT,
+    },
+  )
+
+  let text = ''
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    text += node.textContent ?? ''
+  }
+
+  return text
+}
+
+/**
+ * `aggregateBlockText`, corrected for the one compat character
+ * `EngineString` adds when `blockPath`'s last span still ends with `\n` at
+ * the current model - see `aggregateSpanTextForDiff`.
+ */
+const aggregateBlockTextForDiff = (
+  editor: Editor,
+  blockPath: Path,
+  blockWrapper: DOMElement,
+) => {
+  const text = aggregateBlockText(editor, blockWrapper)
+
+  return blockHasCompatTrailingNewline(editor, blockPath) && text.endsWith('\n')
+    ? text.slice(0, -1)
+    : text
+}
+
+// `insertHTML` is indistinguishable from an empty `inputType` in Chromium, so
+// the empty string is left out on purpose rather than adopted as `insertHTML`.
+const ADOPTABLE_INPUT_TYPES = new Set([
+  'insertText',
+  'insertReplacementText',
+  'deleteContent',
+  'deleteContentBackward',
+  'deleteContentForward',
+])
+
+const ADOPTABLE_DELETE_INPUT_TYPES = new Set([
+  'deleteContent',
+  'deleteContentBackward',
+  'deleteContentForward',
+])
+
+/**
+ * A block-level DOM wrapper is a direct child of the editor root, one per
+ * document block. `execCommand` can merge two blocks' wrappers into one
+ * (crossing a block boundary, not just a span one) while still resolving a
+ * single, structurally-intact span inside what used to be the first block:
+ * the single-span path's own sibling check only walks siblings within the
+ * resolved span's block (`getSibling`), so it never sees damage to a
+ * neighboring block and would otherwise adopt a diff computed from one
+ * span's text while the DOM next to it silently absorbed another block's
+ * content. Both the single-span and block-scoped paths refuse rather than
+ * adopt when this count disagrees with the model.
+ */
+const blockDomCountMatchesModel = (editor: Editor) =>
+  editor.domElement?.children.length === editor.snapshot.context.value.length
+
+/**
+ * A block boundary `execCommand` can consume a whole neighboring block's
+ * text into the resolved span's own block without changing the document's
+ * overall block count at all (the neighbor's block-level wrapper survives
+ * as an empty shell) - the count check above can't see this. Confirm the
+ * immediate previous and next block (not just the immediate sibling
+ * *spans* the caller already checks) still render exactly their own model
+ * text before trusting anything about the resolved span's own diff.
+ *
+ * The text comparison only makes sense for a sibling that's itself a text
+ * block: a block object's own visible rendering (the engine's default
+ * `[type: key]` fallback, or a consumer's custom `render`) can carry
+ * arbitrary text that `getText` - span text only - never accounts for, and
+ * `execCommand`'s text-merge machinery has no editable text on a void
+ * object to merge in the first place. A sibling block object is only
+ * checked for DOM reachability, same as the wrapper-missing case above.
+ */
+const crossesIntoNeighboringBlock = (editor: Editor, path: Path) => {
+  if (path.length === 0 || !isKeyedSegment(path[0])) {
+    return false
+  }
+
+  const blockPath: Path = [path[0]]
+
+  for (const direction of ['previous', 'next'] as const) {
+    const siblingBlock = getSibling(editor.snapshot, blockPath, {direction})
+
+    if (!siblingBlock) {
+      continue
+    }
+
+    const siblingBlockWrapper = getDomNode(editor, siblingBlock.path)
+
+    if (!siblingBlockWrapper) {
+      return true
+    }
+
+    if (
+      !isTextBlock({schema: editor.snapshot.context.schema}, siblingBlock.node)
+    ) {
+      continue
+    }
+
+    if (
+      aggregateBlockTextForDiff(
+        editor,
+        siblingBlock.path,
+        siblingBlockWrapper,
+      ) !== (getText(editor.snapshot, siblingBlock.path) ?? '')
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Reconstruct a text diff for an insertion by anchoring it to `insertText`'s
+ * own length rather than trimming the full old and new text against each
+ * other blindly: find the longest common prefix the two texts still share,
+ * then place `insertText` immediately after it and derive the shared suffix
+ * from what length is left over. Returns `null` when that placement doesn't
+ * reconstruct `domText` exactly (`insertText` isn't consistent with the pair
+ * at any anchor), rather than a diff that merely fits the lengths.
+ */
+const anchoredInsertDiff = (
+  modelText: string,
+  domText: string,
+  insertText: string,
+  domInsertEnd: number | null,
+): StringDiff | null => {
+  // `execCommand('insertText', …, insertText)` leaves the caret collapsed
+  // immediately after the text it inserted, so its position in `domText`
+  // (once resolved by the caller) says exactly where `insertText` landed -
+  // unlike a plain shared-prefix search, this holds even when `insertText`
+  // itself repeats characters already adjacent to the replaced range (a
+  // selection replaced by near-identical text, or a tail like "stuf"
+  // corrected to "stuff"), where the maximal-prefix anchor below can
+  // overlap the insertion with the replaced range and miscompute or
+  // outright refuse a valid diff.
+  if (domInsertEnd !== null) {
+    const insertStart = domInsertEnd - insertText.length
+    const suffixLength = domText.length - domInsertEnd
+
+    if (insertStart >= 0 && suffixLength >= 0) {
+      const diff: StringDiff = {
+        start: insertStart,
+        end: modelText.length - suffixLength,
+        text: insertText,
+      }
+
+      if (
+        diff.end >= diff.start &&
+        diff.end <= modelText.length &&
+        applyStringDiff(modelText, diff) === domText
+      ) {
+        return diff
+      }
+    }
+  }
+
+  // No caret position to anchor to (or it didn't verify): fall back to the
+  // maximal shared-prefix anchor. Still gated by the same consistency
+  // check, so a wrong guess here refuses rather than mis-places.
+  const maxPrefixLength = Math.min(modelText.length, domText.length)
+  let prefixLength = 0
+
+  while (
+    prefixLength < maxPrefixLength &&
+    modelText[prefixLength] === domText[prefixLength]
+  ) {
+    prefixLength++
+  }
+
+  const suffixLength = domText.length - prefixLength - insertText.length
+
+  if (suffixLength < 0 || suffixLength > modelText.length - prefixLength) {
+    return null
+  }
+
+  const diff: StringDiff = {
+    start: prefixLength,
+    end: modelText.length - suffixLength,
+    text: insertText,
+  }
+
+  return applyStringDiff(modelText, diff) === domText ? diff : null
+}
+
+/**
+ * Resolve `(targetNode, targetOffset)` (a live DOM caret position) to an
+ * offset in the same text `aggregateBlockText` would produce for `wrapper` -
+ * same document-order walk, same zero-width/inline-object exclusions - so
+ * the two are directly comparable. `null` when `targetNode` isn't a text
+ * node this walk would ever visit (outside `wrapper`, or inside an excluded
+ * subtree).
+ */
+const resolveOffsetInAggregatedText = (
+  editor: Editor,
+  wrapper: DOMElement,
+  targetNode: globalThis.Node | null,
+  targetOffset: number,
+): number | null => {
+  if (!targetNode || targetNode.nodeType !== 3 /* TEXT_NODE */) {
+    return null
+  }
+
+  const walker = DOMEditor.getWindow(editor).document.createTreeWalker(
+    wrapper,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: (node) =>
+        (node as DOMText).parentElement?.closest(
+          '[data-pt-zero-width], [data-pt-inline="object"]',
+        )
+          ? NodeFilter.FILTER_REJECT
+          : NodeFilter.FILTER_ACCEPT,
+    },
+  )
+
+  let offset = 0
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node === targetNode) {
+      return offset + targetOffset
+    }
+
+    offset += node.textContent?.length ?? 0
+  }
+
+  return null
+}
+
+/**
+ * A single trusted DOM mutation (a real `execCommand`, a native fast-path
+ * keystroke) replaces one node's text in either one `characterData` step
+ * (Chromium) or two (Firefox implements a replace as delete-then-insert):
+ * verified directly (`git log`-visible only in this branch's own test
+ * suite, not asserted anywhere else) that Firefox's second step is always a
+ * pure, zero-width insertion landing exactly where the first step's own
+ * edit ended - it never touches any other position, and never consumes
+ * further characters. Same-tick script mutations interleaved with the
+ * trusted one break that shape: an unauthored write followed by the
+ * trusted op's own edit produces a second step that also *consumes*
+ * characters (not a pure insertion), because the trusted op's own selection
+ * was computed against text the unauthored write already changed. `false`
+ * on any node whose drained records don't fit the single-shape pattern -
+ * refuse rather than trust an aggregate diff that might be papering over
+ * more than one edit.
+ */
+const recordsFormOneContiguousEdit = (snapshots: Array<string>): boolean => {
+  let priorEnd: number | null = null
+
+  for (let i = 0; i < snapshots.length - 1; i++) {
+    const stepDiff = normalizeStringDiff(snapshots[i]!, {
+      start: 0,
+      end: snapshots[i]!.length,
+      text: snapshots[i + 1]!,
+    })
+
+    if (!stepDiff) {
+      continue
+    }
+
+    if (priorEnd !== null) {
+      if (stepDiff.start !== stepDiff.end || stepDiff.start !== priorEnd) {
+        return false
+      }
+    }
+
+    priorEnd = stepDiff.start + stepDiff.text.length
+  }
+
+  return priorEnd !== null
+}
+
+/**
+ * Drain-time gate for `tryAdoptUnannouncedInput`/`tryAdoptBlockScopedInput`:
+ * group the mutation records observed since the last drain by the text node
+ * they targeted, restrict to nodes inside `wrapper` (the span or block
+ * subtree about to be adopted), and confirm every one of them is
+ * `recordsFormOneContiguousEdit`. A node with no records at all is left
+ * unchecked (nothing was observed to validate; childList activity covering
+ * it is its own, separately-gated concern), but any node that *was*
+ * observed and doesn't fit the single-edit shape fails the whole batch -
+ * this is what catches the mixed-batch counterexample (a script's direct
+ * DOM write immediately followed, same tick, by a trusted `execCommand`
+ * over the resulting text): both mutate the same node, so both show up
+ * here, and the unauthored one never fits the shape a single trusted op's
+ * own records take.
+ */
+const recordChainIsOneContiguousReplacement = (
+  records: Array<MutationRecord>,
+  wrapper: DOMElement,
+): boolean => {
+  const byNode = new Map<globalThis.Node, Array<MutationRecord>>()
+
+  for (const record of records) {
+    if (record.type !== 'characterData' || !wrapper.contains(record.target)) {
+      continue
+    }
+
+    const nodeRecords = byNode.get(record.target) ?? []
+    nodeRecords.push(record)
+    byNode.set(record.target, nodeRecords)
+  }
+
+  for (const [node, nodeRecords] of byNode) {
+    const snapshots = [
+      ...nodeRecords.map((record) => record.oldValue ?? ''),
+      node.textContent ?? '',
+    ]
+
+    if (!recordsFormOneContiguousEdit(snapshots)) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Adopt a DOM text mutation that reached the DOM without ever announcing
+ * itself through a cancelable `beforeinput`. `execCommand('insertText'|'delete')`
+ * (the channel Grammarly's generic, non-fingerprinted replacement service uses)
+ * fires no `beforeinput` at all, only this non-cancelable `input`, after the
+ * browser has already mutated the DOM natively. Locate the model span the
+ * mutation landed in, diff its rendered text against the model, and replay
+ * the diff through the same behavior pipeline a real edit would use, so the
+ * correction produces a patch instead of silently drifting from the model
+ * until the next value transition reverts it.
+ */
+const tryAdoptUnannouncedInput = (
+  editor: Editor,
+  editorActor: EditorActor,
+  event: InputEvent,
+  mutationRecords: Array<MutationRecord>,
+) => {
+  if (!ADOPTABLE_INPUT_TYPES.has(event.inputType)) {
+    return
+  }
+
+  const root = DOMEditor.findDocumentOrShadowRoot(editor)
+  const domSelection = getSelection(root)
+
+  if (!domSelection || domSelection.rangeCount === 0) {
+    // No DOM selection at all to resolve a block from - not proof there's
+    // nothing to repair, since the mutation that produced this `input`
+    // could just as easily have collapsed it. `repairBlockDom` escalates a
+    // missing path to a full remount rather than no-op.
+    repairBlockDom(editor, undefined)
+    return
+  }
+
+  const editorSelection = DOMEditor.toEditorSelection(editor, domSelection, {
+    exactMatch: false,
+    suppressThrow: true,
+  })
+
+  if (!editorSelection) {
+    // The mutation left no span-level wrapper the DOM position resolves
+    // through at all: execCommand can delete every wrapper in a fully
+    // replaced range, not just merge adjacent ones. The nearest surviving
+    // `data-pt-path` ancestor of the DOM selection is still the affected
+    // block, so reconstruct/repair from there.
+    const anchorNode = domSelection.anchorNode ?? domSelection.focusNode
+    handleCrossSpanRefusal(
+      editor,
+      editorActor,
+      event,
+      anchorNode ? getDomNodePath(anchorNode) : undefined,
+      mutationRecords,
+    )
+    return
+  }
+
+  const path = editorSelection.anchor.path
+
+  // A resolved, structurally-intact single span is not proof the damage
+  // stayed inside its own block: refuse before trusting it at all when the
+  // DOM's block count has already drifted from the model's, or when a
+  // neighboring block's own rendered text no longer matches its model text
+  // (a block boundary `execCommand` merged away without changing the
+  // overall block count - the model still holds one span per block, but
+  // one block's text migrated into another's DOM subtree, hollowing it out).
+  if (
+    !blockDomCountMatchesModel(editor) ||
+    crossesIntoNeighboringBlock(editor, path)
+  ) {
+    handleCrossSpanRefusal(editor, editorActor, event, path, mutationRecords)
+    return
+  }
+
+  const spanEntry = getSpan(editor.snapshot, path)
+
+  if (!spanEntry) {
+    handleCrossSpanRefusal(editor, editorActor, event, path, mutationRecords)
+    return
+  }
+
+  const wrapper = getDomNode(editor, path)
+
+  if (!wrapper || wrapper.getAttribute('data-pt-inline') !== 'span') {
+    handleCrossSpanRefusal(editor, editorActor, event, path, mutationRecords)
+    return
+  }
+
+  // execCommand can merge adjacent styled spans into a single text node, or
+  // spread an edit across a span boundary, while still reporting a single
+  // `insertText`; either way the model still has two spans, so refuse the
+  // single-span adoption below and let `handleCrossSpanRefusal` attempt a
+  // block-wide reconstruction instead of guessing which one owns the
+  // changed text.
+  for (const direction of ['previous', 'next'] as const) {
+    const sibling = getSibling(editor.snapshot, path, {direction})
+    if (!sibling) {
+      continue
+    }
+
+    const siblingWrapper = getDomNode(editor, sibling.path)
+    if (!siblingWrapper) {
+      handleCrossSpanRefusal(editor, editorActor, event, path, mutationRecords)
+      return
+    }
+
+    if (
+      isSpan({schema: editor.snapshot.context.schema}, sibling.node) &&
+      aggregateSpanTextForDiff(editor, sibling.path, siblingWrapper) !==
+        sibling.node.text
+    ) {
+      handleCrossSpanRefusal(editor, editorActor, event, path, mutationRecords)
+      return
+    }
+  }
+
+  // Same-origin script code mixing a direct DOM write into this span's own
+  // text, in the same tick as the trusted `execCommand`, can make the
+  // aggregate before/after text look like one self-consistent diff even
+  // though it isn't one - see `recordChainIsOneContiguousReplacement`.
+  if (!recordChainIsOneContiguousReplacement(mutationRecords, wrapper)) {
+    handleCrossSpanRefusal(editor, editorActor, event, path, mutationRecords)
+    return
+  }
+
+  const domText = aggregateSpanTextForDiff(editor, path, wrapper)
+
+  const diff = normalizeStringDiff(spanEntry.node.text, {
+    start: 0,
+    end: spanEntry.node.text.length,
+    text: domText,
+  })
+
+  if (!diff) {
+    return
+  }
+
+  editor.select(getDiffTargetRange({id: 0, path, diff}))
+
+  if (diff.text) {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'insert.text', text: diff.text},
+      editor,
+    })
+  } else {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'delete', direction: 'forward'},
+      editor,
+    })
+  }
+}
+
+/**
+ * A single-span adoption refused because the edit crosses a span boundary
+ * (or destroyed the spans entirely). Try to reconstruct the full intent from
+ * the block's rendered text before falling back to a DOM-only repair: a
+ * cross-span, cross-mark correction (a whole sentence replaced in one
+ * `execCommand`, say) still has a well-defined text diff at the block level,
+ * even though no single span's diff can express it. Whether or not that
+ * reconstruction lands, the block is repaired afterwards regardless: either
+ * the model changed and the DOM must be rebuilt from it (React must not diff
+ * against the browser-mangled DOM it's holding), or nothing changed and the
+ * mangled DOM still needs to be reverted.
+ */
+const handleCrossSpanRefusal = (
+  editor: Editor,
+  editorActor: EditorActor,
+  event: InputEvent,
+  path: Path | undefined,
+  mutationRecords: Array<MutationRecord>,
+) => {
+  if (path) {
+    tryAdoptBlockScopedInput(editor, editorActor, event, path, mutationRecords)
+  }
+
+  repairBlockDom(editor, path)
+}
+
+/**
+ * Reconstruct and replay a cross-span edit's intent from the block it
+ * damaged, rather than refusing outright. Diffs the block's full rendered
+ * text (aggregated block-wide, see `aggregateBlockText`) against the
+ * block's model text, the same way the single-span path diffs one span, then
+ * maps the resulting `{start, end}` onto whichever spans they fall in.
+ *
+ * Two gates keep this from ever adopting a guess: the diff's inserted text
+ * must equal `event.data` verbatim for an insertion (or the diff must be a
+ * pure deletion for a delete event, which always carries `data: null`), and
+ * the affected range must not touch a non-span child (an inline object) -
+ * this is text-only intent reconstruction. Either gate failing, or the
+ * block containing anything other than a text block, leaves the model
+ * untouched for the caller's DOM-only repair to handle.
+ *
+ * A successful replay selects the reconstructed range and sends the same
+ * `insert.text`/`delete` behavior event the single-span path does, so a
+ * correction that crosses a mark boundary loses that mark exactly the way
+ * typing over the same selection would: this is the ordinary behavior
+ * pipeline, not a special case for adopted input.
+ */
+const tryAdoptBlockScopedInput = (
+  editor: Editor,
+  editorActor: EditorActor,
+  event: InputEvent,
+  path: Path,
+  mutationRecords: Array<MutationRecord>,
+) => {
+  if (path.length === 0 || !isKeyedSegment(path[0])) {
+    return
+  }
+
+  const blockPath: Path = [path[0]]
+  const blockEntry = getTextBlock(editor.snapshot, blockPath)
+
+  if (!blockEntry) {
+    return
+  }
+
+  const blockWrapper = getDomNode(editor, blockPath)
+
+  if (!blockWrapper) {
+    return
+  }
+
+  // Reconstruction only ever touches the one block it diffs, so refuse
+  // rather than adopt a partial fix for damage that reaches beyond it: a
+  // drifted block count (`blockDomCountMatchesModel`), or the Firefox
+  // hollowing shape where a neighbor's own rendered text no longer matches
+  // its model without changing the count at all (`crossesIntoNeighboringBlock`
+  // - the same check the single-span path already refused on to get here).
+  // Reconstructing this block's own diff regardless would risk adopting a
+  // partial fragment of damage that actually spans both blocks, while
+  // `repairBlockDom`'s later remount only reverts the DOM, not whatever this
+  // already committed to the model.
+  if (
+    !blockDomCountMatchesModel(editor) ||
+    crossesIntoNeighboringBlock(editor, path)
+  ) {
+    return
+  }
+
+  // Same-origin script code mixing a direct DOM write into this block's
+  // own text, in the same tick as the trusted `execCommand`, can make the
+  // aggregate before/after text look like one self-consistent diff even
+  // though it isn't one - see `recordChainIsOneContiguousReplacement`.
+  if (!recordChainIsOneContiguousReplacement(mutationRecords, blockWrapper)) {
+    return
+  }
+
+  const children = getChildren(editor.snapshot, blockPath)
+  const entries: Array<{
+    path: Path
+    node: Node
+    isSpan: boolean
+    start: number
+    end: number
+  }> = []
+  let modelText = ''
+
+  for (const child of children) {
+    const childIsSpan = isSpan(
+      {schema: editor.snapshot.context.schema},
+      child.node,
+    )
+    const start = modelText.length
+
+    if (childIsSpan) {
+      modelText += (child.node as PortableTextSpan).text
+    }
+
+    entries.push({
+      path: child.path,
+      node: child.node,
+      isSpan: childIsSpan,
+      start,
+      end: modelText.length,
+    })
+  }
+
+  const domText = aggregateBlockTextForDiff(editor, blockPath, blockWrapper)
+  const isDeleteInput = ADOPTABLE_DELETE_INPUT_TYPES.has(event.inputType)
+
+  // The post-mutation caret sits collapsed right after whatever
+  // `execCommand` inserted; resolving it against the same aggregated text
+  // `domText` is built from gives `anchoredInsertDiff` an authoritative
+  // anchor instead of one it has to discover by guessing at a shared
+  // prefix.
+  const root = DOMEditor.findDocumentOrShadowRoot(editor)
+  const domSelection = getSelection(root)
+  const domInsertEnd =
+    domSelection && domSelection.isCollapsed
+      ? resolveOffsetInAggregatedText(
+          editor,
+          blockWrapper,
+          domSelection.focusNode,
+          domSelection.focusOffset,
+        )
+      : null
+
+  // A plain prefix/suffix trim between the full old and new block text
+  // (`normalizeStringDiff`) can't tell a genuinely untouched tail from a new
+  // one that just happens to repeat the same characters (a correction
+  // ending in the same letter the original text did, for instance), and
+  // would silently swallow part of the real insertion into an apparently
+  // "unchanged" suffix. Anchoring the insert diff to `event.data`'s own
+  // length instead - the browser's own account of what it inserted - removes
+  // that ambiguity; a delete has no such inserted text to anchor to, so it
+  // stays on the plain trim.
+  const diff = isDeleteInput
+    ? normalizeStringDiff(modelText, {
+        start: 0,
+        end: modelText.length,
+        text: domText,
+      })
+    : event.data !== null
+      ? anchoredInsertDiff(modelText, domText, event.data, domInsertEnd)
+      : null
+
+  if (!diff) {
+    return
+  }
+
+  if (isDeleteInput && (event.data !== null || diff.text.length > 0)) {
+    return
+  }
+
+  // An inline object contributes zero length to `modelText`, so the offset
+  // right at its boundary is claimed equally by the span before it and the
+  // span after it - `diff.start`/`diff.end` alone can't say which one the
+  // edit actually landed in. Resolve that by checking each candidate's own
+  // live DOM text against its own model text directly: whichever one
+  // actually changed is the one that received it. `null` means neither
+  // did, or both did - genuinely ambiguous, not a guess to make.
+  const resolveEntryIndex = (offset: number): number | null => {
+    const candidates = entries
+      .map((entry, index) => ({entry, index}))
+      .filter(
+        ({entry}) =>
+          entry.isSpan && offset >= entry.start && offset <= entry.end,
+      )
+
+    if (candidates.length === 0) {
+      return null
+    }
+
+    const firstIndex = candidates[0]!.index
+    const lastIndex = candidates[candidates.length - 1]!.index
+    const spansAnInlineObject = entries
+      .slice(firstIndex + 1, lastIndex)
+      .some((entry) => !entry.isSpan)
+
+    if (!spansAnInlineObject) {
+      // Plain adjacent spans sharing a mark boundary, no object between
+      // them: keep the existing, deterministic "earlier span" resolution.
+      return firstIndex
+    }
+
+    const changed = candidates.filter(({entry}) => {
+      const wrapper = getDomNode(editor, entry.path)
+      return (
+        !wrapper ||
+        aggregateSpanTextForDiff(editor, entry.path, wrapper) !==
+          (entry.node as PortableTextSpan).text
+      )
+    })
+
+    return changed.length === 1 ? changed[0]!.index : null
+  }
+
+  const startIndex = resolveEntryIndex(diff.start)
+  const endIndex = resolveEntryIndex(diff.end)
+
+  if (startIndex === null || endIndex === null) {
+    return
+  }
+
+  for (let i = startIndex; i <= endIndex; i++) {
+    if (!entries[i]?.isSpan) {
+      return
+    }
+  }
+
+  const startEntry = entries[startIndex]!
+  const endEntry = entries[endIndex]!
+
+  editor.select({
+    anchor: {path: startEntry.path, offset: diff.start - startEntry.start},
+    focus: {path: endEntry.path, offset: diff.end - endEntry.start},
+  })
+
+  if (diff.text) {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'insert.text', text: diff.text},
+      editor,
+    })
+  } else {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'delete', direction: 'forward'},
+      editor,
+    })
+  }
+}
+
+/**
+ * Bump every current block's repair generation and schedule the render that
+ * key change forces (see `use-children.tsx`). The last-resort repair: every
+ * block's fiber is replaced in the same commit, so React never has to
+ * reconcile a keyed child against DOM the browser already tore down or
+ * moved out from under it.
+ */
+const bumpAllBlockGenerations = (editor: Editor) => {
+  for (const block of editor.snapshot.context.value) {
+    const generation = editor.blockRepairGeneration.get(block._key) ?? 0
+    editor.blockRepairGeneration.set(block._key, generation + 1)
+  }
+  editor.forceRender?.()
+}
+
+/**
+ * A block's host DOM node "resolves under its expected parent" when it's
+ * still a direct child of the editor root at the index the block map
+ * expects: `execCommand` merging two blocks' wrappers, or a foreign script
+ * reparenting one elsewhere in the document, both leave `getDomNode`
+ * resolving to something other than that, if they leave it resolving to
+ * anything at all.
+ */
+const isBlockDomReachable = (editor: Editor, blockKey: string) => {
+  const blockNode = getDomNode(editor, [{_key: blockKey}])
+  return !!blockNode && blockNode.parentElement === editor.domElement
+}
+
+/**
+ * Repair the DOM of the block at `path`'s block segment after a refused
+ * input adoption leaves it structurally out of sync with the model:
+ * `execCommand` can merge or delete the span wrappers the engine relies on
+ * to map DOM positions back to the model, and nothing else observes or
+ * reverses that mutation. Bumping the block's repair generation (see
+ * `use-children.tsx`) changes its React `key`, which makes the next render
+ * replace its fiber instead of updating it, discarding the damaged DOM and
+ * rebuilding the subtree from the model; `forceRender` schedules that
+ * render. A no-op while composing: an IME's own DOM state takes priority,
+ * and the composition's end already gets a normal, unbroken render.
+ *
+ * Remounting a single block only ever asks React to replace that one
+ * fiber; it still relies on every *other* block's DOM being exactly where
+ * React last left it, since the reconciler diffs the rest of the child list
+ * unchanged. A cross-block mutation can violate that (merge two blocks'
+ * wrappers into one, or reparent a block's root node elsewhere), and
+ * remounting only the block the caller resolved a path into would hand
+ * React a commit it can't complete (`removeChild`/`insertBefore` on a node
+ * that's no longer where it expects), which throws past any per-block
+ * boundary and, uncaught, takes the whole root down. Checking
+ * reachability first and escalating to a full remount avoids ever
+ * attempting that commit; `BlockRepairBoundary` around the block list is
+ * the backstop for whatever this check doesn't anticipate.
+ *
+ * A missing or empty `path` (`execCommand` stripping every block wrapper
+ * out from under the resolved DOM position, resolving it to the editor
+ * root itself) carries no block to target at all, not proof there's
+ * nothing to repair: escalate to a full remount rather than no-op, or
+ * whatever damage caused it survives untouched and the surface can stop
+ * accepting input.
+ */
+const repairBlockDom = (editor: Editor, path: Path | undefined) => {
+  if (editor.composing) {
+    return
+  }
+
+  if (!path || path.length === 0) {
+    bumpAllBlockGenerations(editor)
+    return
+  }
+
+  const blockSegment = path[0]
+
+  if (!isKeyedSegment(blockSegment)) {
+    return
+  }
+
+  if (
+    !blockDomCountMatchesModel(editor) ||
+    !isBlockDomReachable(editor, blockSegment._key) ||
+    crossesIntoNeighboringBlock(editor, path)
+  ) {
+    bumpAllBlockGenerations(editor)
+    return
+  }
+
+  const generation = editor.blockRepairGeneration.get(blockSegment._key) ?? 0
+  editor.blockRepairGeneration.set(blockSegment._key, generation + 1)
+  editor.forceRender?.()
 }
