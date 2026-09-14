@@ -77,11 +77,6 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               onChange={() => toggleFlag('codeEditorPlugin')}
             />
             <FeatureSwitch
-              label="Code block"
-              isSelected={featureFlags.codeBlockPlugin}
-              onChange={() => toggleFlag('codeBlockPlugin')}
-            />
-            <FeatureSwitch
               label="Callout"
               isSelected={featureFlags.calloutPlugin}
               onChange={() => toggleFlag('calloutPlugin')}

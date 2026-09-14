@@ -3,7 +3,10 @@ import {z} from 'zod'
 
 export const playgroundSchemaDefinition = defineSchema({
   block: {
-    fields: [{name: 'checked', title: 'Checked', type: 'boolean'}],
+    fields: [
+      {name: 'checked', title: 'Checked', type: 'boolean'},
+      {name: 'alignment', title: 'Alignment', type: 'string'},
+    ],
   },
   decorators: [
     {
@@ -97,8 +100,8 @@ export const playgroundSchemaDefinition = defineSchema({
   ],
   blockObjects: [
     {
-      title: 'Break',
-      name: 'break',
+      title: 'Horizontal rule',
+      name: 'horizontal-rule',
     },
     {
       title: 'Image',
@@ -108,33 +111,21 @@ export const playgroundSchemaDefinition = defineSchema({
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
-    // ARCHETYPE 1 - locked-down: nothing in scope.
-    // Tests: every operation correctly skips when sub-schema declares
-    // nothing. Toolbar shows everything dimmed inside a code-block.
+    // A flat leaf object, same as `image`: no sub-schema, so no
+    // container traversal to exercise. `callout` and `fact-box` below
+    // are the containers exercising sub-schema narrowing now.
     {
-      title: 'Code block',
-      name: 'code-block',
+      title: 'Code',
+      name: 'code',
       fields: [
-        {
-          name: 'lines',
-          title: 'Lines',
-          type: 'array',
-          of: [
-            {
-              type: 'block',
-              styles: [],
-              decorators: [],
-              annotations: [],
-              lists: [],
-              inlineObjects: [],
-            },
-          ],
-        },
+        {name: 'code', title: 'Code', type: 'string'},
+        {name: 'language', title: 'Language', type: 'string'},
+        {name: 'filename', title: 'Filename', type: 'string'},
       ],
     },
     // ARCHETYPE 2 - full inheritance: mirrors root exactly.
     // Tests: behaves identically to root. Allows nested heterogeneous
-    // containers (callout + code-block + image) - exercises traversal
+    // containers (callout + code + image) - exercises traversal
     // across nested containers with DIFFERENT sub-schemas.
     {
       title: 'Fact box',
@@ -224,6 +215,7 @@ export const playgroundSchemaDefinition = defineSchema({
               type: 'object',
               name: 'callout',
               fields: [
+                {name: 'tone', title: 'Tone', type: 'string'},
                 {
                   name: 'content',
                   type: 'array',
@@ -279,22 +271,10 @@ export const playgroundSchemaDefinition = defineSchema({
             },
             {
               type: 'object',
-              name: 'code-block',
+              name: 'code',
               fields: [
-                {
-                  name: 'lines',
-                  type: 'array',
-                  of: [
-                    {
-                      type: 'block',
-                      styles: [],
-                      decorators: [],
-                      annotations: [],
-                      lists: [],
-                      inlineObjects: [],
-                    },
-                  ],
-                },
+                {name: 'code', type: 'string'},
+                {name: 'language', type: 'string'},
               ],
             },
           ],
@@ -370,6 +350,7 @@ export const playgroundSchemaDefinition = defineSchema({
               type: 'object',
               name: 'callout',
               fields: [
+                {name: 'tone', title: 'Tone', type: 'string'},
                 {
                   name: 'content',
                   type: 'array',
@@ -460,6 +441,7 @@ export const playgroundSchemaDefinition = defineSchema({
                               type: 'object',
                               name: 'callout',
                               fields: [
+                                {name: 'tone', title: 'Tone', type: 'string'},
                                 {
                                   name: 'content',
                                   type: 'array',

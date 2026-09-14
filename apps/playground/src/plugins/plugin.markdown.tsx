@@ -16,7 +16,7 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
     )?.name,
   horizontalRuleObject: ({context}) => {
     const schemaType = context.schema.blockObjects.find(
-      (object) => object.name === 'break',
+      (object) => object.name === 'horizontal-rule',
     )
 
     if (!schemaType) {

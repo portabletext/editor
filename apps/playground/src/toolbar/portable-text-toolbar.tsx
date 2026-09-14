@@ -249,7 +249,7 @@ const extendList: ExtendListSchemaType = (list) => {
 }
 
 export const extendBlockObject = ((blockObject) => {
-  if (blockObject.name === 'break') {
+  if (blockObject.name === 'horizontal-rule') {
     return {
       ...blockObject,
       icon: SeparatorHorizontalIcon,
@@ -313,19 +313,13 @@ export const extendBlockObject = ((blockObject) => {
     }
   }
 
-  if (blockObject.name === 'code-block') {
+  if (blockObject.name === 'code') {
     return {
       ...blockObject,
       icon: CodeIcon,
       defaultValues: {
-        lines: [
-          {
-            _type: 'block',
-            style: 'normal',
-            children: [{_type: 'span', text: '', marks: []}],
-            markDefs: [],
-          },
-        ],
+        code: '',
+        language: '',
       },
     }
   }
