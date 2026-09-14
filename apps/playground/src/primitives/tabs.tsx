@@ -46,6 +46,10 @@ const tabStyles = tv({
       false:
         'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
     },
+    isDisabled: {
+      true: 'cursor-not-allowed opacity-40 hover:text-gray-500 dark:hover:text-gray-400',
+      false: '',
+    },
   },
 })
 
@@ -53,10 +57,11 @@ export function Tab(props: TabProps) {
   return (
     <RACTab
       {...props}
-      className={({isSelected, isFocusVisible}) =>
+      className={({isSelected, isFocusVisible, isDisabled}) =>
         tabStyles({
           isSelected,
           isFocusVisible,
+          isDisabled,
           className: props.className as string,
         })
       }

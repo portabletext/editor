@@ -12,4 +12,5 @@ packages/html/src/tests/**/*.html
 .changeset/*.md
 packages/markdown/src/example-document.out.md
 packages/markdown/src/example-document.advanced.out.md
+apps/playground/src/routeTree.gen.ts
 packages/editor/tests/__fixtures__/wire-catalogue
