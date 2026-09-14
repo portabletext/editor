@@ -135,6 +135,17 @@ export type ReconciliationReport =
           | 'similar-content'
         key: string
         path: ReconciliationKeyPath
+        /**
+         * Whether the node wearing this key in the returned value
+         * differs from its stored counterpart, field order aside but
+         * array order significant. Any difference counts, including a
+         * descendant key rewritten to keep siblings unique, or a key
+         * filled in for a stored node that had none. `false`
+         * guarantees the returned node deep-equals the stored one.
+         * Unlike `basis`, this is a stable fact of the invocation,
+         * safe to branch on.
+         */
+        valueChanged: boolean
       }>
       /**
        * One entry per local point where key resolution gave up rather
@@ -270,7 +281,7 @@ export function applyMarkdownEdit(
   const onReconciliation = options?.onReconciliation
   const recorder: ReconciliationRecorder | undefined = onReconciliation
     ? {
-        preservationBasis: new WeakMap(),
+        preservation: new WeakMap(),
         renamePreviousKey: new WeakMap(),
         annotationKeyConflicts: [],
         ambiguousRegionGroups: [],
@@ -358,7 +369,10 @@ type PreservationBasis = Extract<
  * call site can skip its recording work with a plain optional-chain.
  */
 type ReconciliationRecorder = {
-  preservationBasis: WeakMap<Node, PreservationBasis>
+  preservation: WeakMap<
+    Node,
+    {basis: PreservationBasis; storedCounterpart: Node}
+  >
   renamePreviousKey: WeakMap<Node, string>
   annotationKeyConflicts: Array<Node>
   ambiguousRegionGroups: Array<Array<Node>>
@@ -567,9 +581,10 @@ function adoptVerbatim(
     // The subtree tags every keyed node `content-unchanged`, the root
     // included. A non-default basis overrides the root only: a moved
     // block's children were not themselves moved.
-    tagSubtreePreserved(clone, recorder)
+    const storedCounterpart = structuredClone(original)
+    tagSubtreePreservedAgainst(clone, storedCounterpart, recorder)
     if (basis !== 'content-unchanged' && typeof clone['_key'] === 'string') {
-      recorder.preservationBasis.set(clone, basis)
+      recorder.preservation.set(clone, {basis, storedCounterpart})
     }
   }
   return clone
@@ -921,7 +936,7 @@ function adoptNode(
   adoptedNodes.add(target)
   if (typeof original['_key'] === 'string') {
     target['_key'] = original['_key']
-    recorder?.preservationBasis.set(target, basis)
+    recorder?.preservation.set(target, {basis, storedCounterpart: original})
   }
 
   restoreFields(original, canonicalCounterpart, target)
@@ -1293,7 +1308,10 @@ function adoptMarkDefs(
       }
       keyMap.set(targetDef['_key'], adoptedKey)
       targetDef['_key'] = adoptedKey
-      recorder?.preservationBasis.set(targetDef, basis)
+      recorder?.preservation.set(targetDef, {
+        basis,
+        storedCounterpart: originalDef,
+      })
     }
   }
 
@@ -1783,20 +1801,41 @@ function tagSubtreePreserved(
   node: Node,
   recorder: ReconciliationRecorder,
 ): void {
+  tagSubtreePreservedAgainst(node, structuredClone(node), recorder)
+}
+
+function tagSubtreePreservedAgainst(
+  node: Node,
+  counterpart: Node,
+  recorder: ReconciliationRecorder,
+): void {
   if (typeof node['_key'] === 'string') {
-    recorder.preservationBasis.set(node, 'content-unchanged')
+    recorder.preservation.set(node, {
+      basis: 'content-unchanged',
+      storedCounterpart: counterpart,
+    })
   }
-  for (const value of Object.values(node)) {
+  for (const [field, value] of Object.entries(node)) {
+    const counterpartValue = counterpart[field]
     if (
       Array.isArray(value) &&
       value.every((item) => typeof item === 'object' && item !== null) &&
       value.length > 0
     ) {
-      for (const child of value as Array<Node>) {
-        tagSubtreePreserved(child, recorder)
-      }
+      const counterpartChildren = counterpartValue as Array<Node>
+      value.forEach((child, index) => {
+        tagSubtreePreservedAgainst(
+          child as Node,
+          counterpartChildren[index]!,
+          recorder,
+        )
+      })
     } else if (typeof value === 'object' && value !== null) {
-      tagSubtreePreserved(value as Node, recorder)
+      tagSubtreePreservedAgainst(
+        value as Node,
+        counterpartValue as Node,
+        recorder,
+      )
     }
   }
 }
@@ -1981,15 +2020,20 @@ function buildReconciliationReport(
     pathByNode.set(node, path)
     const key = node['_key']
     if (typeof key === 'string') {
-      const basis = recorder.preservationBasis.get(node)
+      const preservation = recorder.preservation.get(node)
       const previousKey = recorder.renamePreviousKey.get(node)
-      if (basis && previousKey === undefined) {
+      if (preservation && previousKey === undefined) {
         // A node that was adopted and then renamed (possible only when
         // the stored value itself carries duplicate sibling keys) did
         // not keep its stored key: the renamed-key entry carries that
         // story, and a preserved-key entry would report a key that
         // exists nowhere in the stored value.
-        preservedKeys.push({basis, key, path})
+        preservedKeys.push({
+          basis: preservation.basis,
+          key,
+          path,
+          valueChanged: !deepEqualNodes(preservation.storedCounterpart, node),
+        })
       }
       if (previousKey !== undefined) {
         renamedKeys.push({previousKey, key, path})
@@ -2060,4 +2104,40 @@ function buildReconciliationReport(
   }
 
   return {keyMatching: 'performed', preservedKeys, keyFallbacks, renamedKeys}
+}
+
+/**
+ * Field order is noise here, matching the fingerprints this module
+ * compares on, while array order is part of the value.
+ */
+function deepEqualNodes(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false
+    }
+    return a.every((item, index) => deepEqualNodes(item, b[index]))
+  }
+  if (
+    typeof a === 'object' &&
+    a !== null &&
+    typeof b === 'object' &&
+    b !== null
+  ) {
+    const aRecord = a as Record<string, unknown>
+    const bRecord = b as Record<string, unknown>
+    const aFields = Object.keys(aRecord)
+    const bFields = Object.keys(bRecord)
+    if (aFields.length !== bFields.length) {
+      return false
+    }
+    return aFields.every(
+      (field) =>
+        Object.hasOwn(bRecord, field) &&
+        deepEqualNodes(aRecord[field], bRecord[field]),
+    )
+  }
+  return false
 }
