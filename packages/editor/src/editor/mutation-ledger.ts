@@ -35,6 +35,18 @@ export type MutationLedger = {
    * The recorded patches no echo has acknowledged yet, in emission order.
    */
   unacknowledged: () => Array<Patch>
+  /**
+   * Drop the whole backlog: for the moment a waiter stops believing the
+   * missing echoes will ever arrive. A late echo for a cleared patch is
+   * then reported unmatched, which is harmless.
+   */
+  clear: () => void
+  /**
+   * Invoked after every successful `acknowledge`. The mutation batcher
+   * installs this to learn that the host echoes at all, and to flush
+   * gated work the moment the backlog drains.
+   */
+  onAcknowledge: (() => void) | null
 }
 
 // A host that never echoes (a snapshot-only integration) never drains the
@@ -49,7 +61,7 @@ const MAX_UNACKNOWLEDGED = 500
 export function createMutationLedger(): MutationLedger {
   const inFlight: Array<Patch> = []
 
-  return {
+  const ledger: MutationLedger = {
     record: (patches) => {
       inFlight.push(...patches)
       if (inFlight.length > MAX_UNACKNOWLEDGED) {
@@ -62,10 +74,17 @@ export function createMutationLedger(): MutationLedger {
         return false
       }
       inFlight.splice(0, index + 1)
+      ledger.onAcknowledge?.()
       return true
     },
     unacknowledged: () => inFlight.slice(),
+    clear: () => {
+      inFlight.length = 0
+    },
+    onAcknowledge: null,
   }
+
+  return ledger
 }
 
 function isEcho(emitted: Patch, incoming: Patch): boolean {
