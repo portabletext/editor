@@ -16,6 +16,7 @@ import type {
   ObjectSchemaType,
   PortableTextBlock,
   SchemaType,
+  SchemaTypeDefinition,
   SpanSchemaType,
 } from '@sanity/types'
 
@@ -26,6 +27,9 @@ import type {
  * A Portable Text `Schema` is compatible with a Portable Text
  * `SchemaDefinition` and can be used as configuration for the Portable Text
  * Editor.
+ *
+ * For a raw (uncompiled) array definition whose fields reference a sibling
+ * type by name, use `sanitySchemaDefinitionToPortableTextSchema` instead.
  *
  * @example
  * ```tsx
@@ -50,6 +54,62 @@ export function sanitySchemaToPortableTextSchema(
     : compileType(sanitySchema)
 
   return sanitySchemaTypeToSchema(compiled)
+}
+
+/**
+ * @public
+ * Compile a raw (uncompiled) Sanity array definition to a Portable Text
+ * `Schema`, resolving named references to sibling types via
+ * `options.types`.
+ *
+ * A raw definition whose fields reference another type by name (for
+ * example a `customLink` annotation field typed `customUrl`) fails to
+ * compile on its own: `definition` only carries the types nested inside
+ * it, not its siblings elsewhere in the schema. Pass those siblings
+ * through `options.types`.
+ *
+ * `options.types` entries named the same as `definition` itself are
+ * ignored, `definition` wins, so a complete schema type list that
+ * includes the portable text field can be passed as-is. Entries named
+ * like one of Sanity's built-in types (`image`, `block`, `span`, ...) are
+ * also ignored: Sanity's compiler gives built-ins precedence over
+ * same-named custom types.
+ *
+ * When a reference still cannot be resolved, the thrown error names the
+ * fix: ``Unknown type: customUrl. Define 'customUrl' in the schema or
+ * pass it via `options.types`.``
+ *
+ * @example
+ * ```tsx
+ * const schema = sanitySchemaDefinitionToPortableTextSchema(richTextDefinition, {
+ *   types: [customUrl],
+ * })
+ * ```
+ */
+export function sanitySchemaDefinitionToPortableTextSchema(
+  definition: ArrayDefinition,
+  options?: {types?: ReadonlyArray<SchemaTypeDefinition>},
+): Schema {
+  const types = (options?.types ?? []).filter(
+    (type) => type.name !== definition.name,
+  )
+
+  try {
+    return sanitySchemaTypeToSchema(compileType(definition, types))
+  } catch (error) {
+    // The matched text is Sanity's own error message for an unresolved
+    // named reference, not a string this package controls.
+    const unknownType =
+      error instanceof Error && /^Unknown type: (.+)$/.exec(error.message)
+    if (!unknownType) {
+      throw error
+    }
+    const typeName = unknownType[1]
+    throw new Error(
+      `Unknown type: ${typeName}. Define '${typeName}' in the schema or pass it via \`options.types\`.`,
+      {cause: error},
+    )
+  }
 }
 
 function sanitySchemaTypeToSchema(
@@ -648,9 +708,12 @@ function findBlockType(type: SchemaType): BlockSchemaType | null {
   return null
 }
 
-function compileType(rawType: any) {
+function compileType(
+  rawType: any,
+  types: ReadonlyArray<SchemaTypeDefinition> = [],
+) {
   return SanitySchema.compile({
     name: 'blockTypeSchema',
-    types: [rawType, ...builtinTypes],
+    types: [rawType, ...types, ...builtinTypes],
   }).get(rawType.name)
 }

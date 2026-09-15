@@ -173,6 +173,53 @@ resolved sub-schema, so a schema where many types embed each other
 produces output that grows with the number of embedding positions, not
 just the number of types.
 
+### Convert an uncompiled definition
+
+An uncompiled array definition only carries the types nested inside it.
+When one of its fields references a sibling type by name, convert it with
+`sanitySchemaDefinitionToPortableTextSchema` and pass the siblings through
+`options.types`:
+
+```ts
+import {sanitySchemaDefinitionToPortableTextSchema} from '@portabletext/sanity-bridge'
+import {defineField, defineType} from '@sanity/types'
+
+const customUrl = defineType({
+  name: 'customUrl',
+  type: 'object',
+  fields: [defineField({name: 'href', type: 'url'})],
+})
+
+const richText = defineType({
+  name: 'richText',
+  type: 'array',
+  of: [
+    {
+      type: 'block',
+      name: 'block',
+      marks: {
+        annotations: [
+          {
+            name: 'customLink',
+            type: 'object',
+            fields: [{name: 'link', type: 'customUrl'}],
+          },
+        ],
+      },
+    },
+  ],
+})
+
+const portableTextSchema = sanitySchemaDefinitionToPortableTextSchema(
+  richText,
+  {types: [customUrl]},
+)
+```
+
+`options.types` can be the complete schema type list, including the
+portable text field itself. When a reference cannot be resolved, the
+thrown error names the missing type.
+
 ### Keep hold of the original Sanity types
 
 The expanded Portable Text schema is what the editor runs on, but
