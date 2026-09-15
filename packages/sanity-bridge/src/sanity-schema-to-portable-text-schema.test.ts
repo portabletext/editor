@@ -13,7 +13,10 @@ import {
   type ArrayDefinition,
 } from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
+import {
+  sanitySchemaDefinitionToPortableTextSchema,
+  sanitySchemaToPortableTextSchema,
+} from './sanity-schema-to-portable-text-schema'
 
 // The resolved sub-schema for an unmodified nested block member: the bridge
 // emits each block member's own resolved lists, and an unmodified block
@@ -1194,6 +1197,63 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     expect(subSchema.inlineObjects.map((object) => object.name)).toEqual([])
   })
 
+  test('a compiled schema whose annotation field references a named type absent from the registry throws the raw Sanity error with no hint', () => {
+    const richText = defineType({
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      name: 'test',
+      types: [richText, ...builtinTypes],
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(sanitySchema.get('richText')),
+    ).toThrow(new Error('Unknown type: customUrl'))
+  })
+
+  test('a raw array definition whose annotation field references an undefined named type throws the raw Sanity error with no hint', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+      ],
+    }
+
+    expect(() => sanitySchemaToPortableTextSchema(richText)).toThrow(
+      new Error('Unknown type: customUrl'),
+    )
+  })
+
   test('a container inline object that shares a name with the root but differs in shape keeps its own shape', () => {
     // Root allows inline `widget` with field `a`; the code-block line
     // allows inline `widget` with field `b`. The name matches but the
@@ -1269,5 +1329,329 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         .find((object) => object.name === 'widget')
         ?.fields.map((field) => field.name),
     ).toEqual(['b'])
+  })
+})
+
+describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
+  test('a raw array definition whose annotation field references a named sibling type resolves it via options.types', () => {
+    const customUrl = defineType({
+      name: 'customUrl',
+      type: 'object',
+      fields: [
+        defineField({name: 'href', type: 'url'}),
+        defineField({name: 'blank', type: 'boolean'}),
+      ],
+    })
+
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+        defineArrayMember({
+          type: 'object',
+          name: 'customCallout',
+          fields: [{name: 'link', type: 'customUrl'}],
+        }),
+      ],
+    }
+
+    const schema = sanitySchemaDefinitionToPortableTextSchema(richText, {
+      types: [customUrl],
+    })
+
+    expect(schema).toEqual({
+      block: {
+        name: 'block',
+      },
+      span: {
+        name: 'span',
+      },
+      styles: [
+        {name: 'normal', title: 'Normal', value: 'normal'},
+        {name: 'h1', title: 'Heading 1', value: 'h1'},
+        {name: 'h2', title: 'Heading 2', value: 'h2'},
+        {name: 'h3', title: 'Heading 3', value: 'h3'},
+        {name: 'h4', title: 'Heading 4', value: 'h4'},
+        {name: 'h5', title: 'Heading 5', value: 'h5'},
+        {name: 'h6', title: 'Heading 6', value: 'h6'},
+        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+      ],
+      lists: [
+        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
+        {name: 'number', title: 'Numbered list', value: 'number'},
+      ],
+      decorators: [
+        {name: 'strong', title: 'Strong', value: 'strong'},
+        {name: 'em', title: 'Italic', value: 'em'},
+        {name: 'code', title: 'Code', value: 'code'},
+        {name: 'underline', title: 'Underline', value: 'underline'},
+        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+      ],
+      annotations: [
+        {
+          name: 'customLink',
+          title: 'Custom Link',
+          fields: [
+            {
+              name: 'customLink',
+              type: 'object',
+              title: 'Custom Link',
+            },
+          ],
+        },
+      ],
+      blockObjects: [
+        {
+          name: 'customCallout',
+          title: 'Custom Callout',
+          fields: [
+            {
+              name: 'link',
+              type: 'object',
+              title: 'Link',
+            },
+          ],
+        },
+      ],
+      inlineObjects: [],
+    })
+  })
+
+  test('a raw array definition whose annotation field references an undefined named type throws with a hint to pass options.types', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+      ],
+    }
+
+    expect(() => sanitySchemaDefinitionToPortableTextSchema(richText)).toThrow(
+      new Error(
+        "Unknown type: customUrl. Define 'customUrl' in the schema or pass it via `options.types`.",
+      ),
+    )
+  })
+
+  test('a raw array definition whose annotation field references a named type not covered by options.types throws with a hint to pass options.types', () => {
+    const someOtherType = defineType({
+      name: 'someOtherType',
+      type: 'object',
+      fields: [defineField({name: 'label', type: 'string'})],
+    })
+
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+      ],
+    }
+
+    expect(() =>
+      sanitySchemaDefinitionToPortableTextSchema(richText, {
+        types: [someOtherType],
+      }),
+    ).toThrow(
+      new Error(
+        "Unknown type: customUrl. Define 'customUrl' in the schema or pass it via `options.types`.",
+      ),
+    )
+  })
+
+  test('options.types entries named like the root definition are dropped, the passed definition wins', () => {
+    const customUrl = defineType({
+      name: 'customUrl',
+      type: 'object',
+      fields: [
+        defineField({name: 'href', type: 'url'}),
+        defineField({name: 'blank', type: 'boolean'}),
+      ],
+    })
+
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+      ],
+    }
+
+    const expected: Schema = {
+      block: {
+        name: 'block',
+      },
+      span: {
+        name: 'span',
+      },
+      styles: [
+        {name: 'normal', title: 'Normal', value: 'normal'},
+        {name: 'h1', title: 'Heading 1', value: 'h1'},
+        {name: 'h2', title: 'Heading 2', value: 'h2'},
+        {name: 'h3', title: 'Heading 3', value: 'h3'},
+        {name: 'h4', title: 'Heading 4', value: 'h4'},
+        {name: 'h5', title: 'Heading 5', value: 'h5'},
+        {name: 'h6', title: 'Heading 6', value: 'h6'},
+        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+      ],
+      lists: [
+        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
+        {name: 'number', title: 'Numbered list', value: 'number'},
+      ],
+      decorators: [
+        {name: 'strong', title: 'Strong', value: 'strong'},
+        {name: 'em', title: 'Italic', value: 'em'},
+        {name: 'code', title: 'Code', value: 'code'},
+        {name: 'underline', title: 'Underline', value: 'underline'},
+        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+      ],
+      annotations: [
+        {
+          name: 'customLink',
+          title: 'Custom Link',
+          fields: [
+            {
+              name: 'customLink',
+              type: 'object',
+              title: 'Custom Link',
+            },
+          ],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [],
+    }
+
+    expect(
+      sanitySchemaDefinitionToPortableTextSchema(richText, {
+        types: [customUrl],
+      }),
+    ).toEqual(expected)
+
+    expect(
+      sanitySchemaDefinitionToPortableTextSchema(richText, {
+        types: [richText, customUrl],
+      }),
+    ).toEqual(expected)
+
+    const divergentRichText = defineType({
+      name: 'richText',
+      type: 'array',
+      of: [{type: 'string'}],
+    })
+
+    expect(
+      sanitySchemaDefinitionToPortableTextSchema(richText, {
+        types: [divergentRichText, customUrl],
+      }),
+    ).toEqual(expected)
+  })
+
+  test('an options.types entry named like a Sanity built-in type is ignored, the built-in wins', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'image', name: 'image'}),
+      ],
+    }
+
+    const customImage = defineType({
+      name: 'image',
+      type: 'object',
+      fields: [defineField({name: 'caption', type: 'string'})],
+    })
+
+    const schema = sanitySchemaDefinitionToPortableTextSchema(richText, {
+      types: [customImage],
+    })
+
+    expect(schema.blockObjects).toEqual([
+      {
+        name: 'image',
+        title: 'Image',
+        fields: [
+          {name: 'asset', title: 'Asset', type: 'object'},
+          {name: 'media', title: 'Media', type: 'object'},
+          {name: 'hotspot', title: 'Hotspot', type: 'object'},
+          {name: 'crop', title: 'Crop', type: 'object'},
+        ],
+      },
+    ])
+  })
+
+  test("two options.types entries sharing a name throw Sanity's raw duplicate-type-name error untouched", () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [defineArrayMember({type: 'block', name: 'block'})],
+    }
+
+    const dupA = defineType({
+      name: 'dup',
+      type: 'object',
+      fields: [defineField({name: 'a', type: 'string'})],
+    })
+    const dupB = defineType({
+      name: 'dup',
+      type: 'object',
+      fields: [defineField({name: 'b', type: 'string'})],
+    })
+
+    expect(() =>
+      sanitySchemaDefinitionToPortableTextSchema(richText, {
+        types: [dupA, dupB],
+      }),
+    ).toThrow(new Error('Duplicate type name added to schema: dup'))
   })
 })
