@@ -93,6 +93,69 @@ describe('event.mutation', () => {
     })
   })
 
+  test('Scenario: an echoing host paces mutations one acknowledged batch at a time', async () => {
+    const mutations: Array<MutationEvent> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(mutations).toHaveLength(1)
+    })
+
+    // The host echoes the first batch back: this proves the echo channel
+    // and activates the one-batch-at-a-time gate.
+    editor.send({
+      type: 'patches',
+      patches: mutations[0]!.patches,
+      snapshot: editor.getSnapshot().context.value,
+    })
+
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(mutations).toHaveLength(2)
+    })
+
+    await userEvent.type(locator, 'c')
+
+    // The second batch is never echoed, so the third holds. Waiting past
+    // the type debounce and the flush interval (250ms + 500ms in test
+    // mode) proves it is held, not merely not-yet-flushed.
+    await new Promise((resolve) => setTimeout(resolve, 900))
+
+    expect(mutations).toHaveLength(2)
+
+    // Echoing the second batch drains the backlog and releases the third.
+    editor.send({
+      type: 'patches',
+      patches: mutations[1]!.patches,
+      snapshot: editor.getSnapshot().context.value,
+    })
+
+    await vi.waitFor(() => {
+      expect(mutations).toHaveLength(3)
+    })
+    expect(
+      toTextspec({
+        schema: compileSchema(defineSchema({})),
+        value: mutations[2]!.value ?? [],
+        selection: null,
+      }),
+    ).toEqual('B: abc')
+  })
+
   test('Scenario: Batching typing mutations', async () => {
     const mutations: Array<MutationEvent> = []
 

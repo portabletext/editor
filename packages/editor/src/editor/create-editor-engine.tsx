@@ -7,6 +7,7 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
+import {createMutationLedger} from './mutation-ledger'
 import {setupRemotePatches} from './remote-patches'
 import {subscribeHistory} from './subscriber.history'
 import {subscribePatchGeneration} from './subscriber.patch-generation'
@@ -76,6 +77,7 @@ export function createEditorEngine(
   editor.undoStepId = undefined
 
   editor.isDeferringMutations = false
+  editor.mutationLedger = createMutationLedger()
   editor.lastSyncedValue = undefined
   editor.valueUnsetEmitted = false
   editor.isPatching = true

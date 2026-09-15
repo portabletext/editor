@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import type {MutationLedger} from '../editor/mutation-ledger'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {ApplyContextFrame} from '../engine/core/apply-context'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
@@ -80,6 +81,11 @@ export interface PortableTextEditorEngine extends DOMEditor {
   undoStepId: string | undefined
 
   isDeferringMutations: boolean
+  /**
+   * The in-flight ledger: patches emitted through `mutation` events that
+   * no host echo has acknowledged yet. See `createMutationLedger`.
+   */
+  mutationLedger: MutationLedger
   /**
    * The last host value recorded by a value sync that changed the engine. A
    * pristine block equal to it is persisted content, not the local
