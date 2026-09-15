@@ -122,6 +122,7 @@ export function createMutationBatcher({
     editorEngine.isDeferringMutations = false
 
     for (const bulk of mutations) {
+      editorEngine.mutationLedger.record(bulk.patches)
       // The editor machine still gates mutations through its setup states
       // and re-emits them to the relay.
       editorActor.send({

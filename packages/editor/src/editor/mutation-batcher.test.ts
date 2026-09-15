@@ -9,6 +9,7 @@ import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
+import {createMutationLedger} from './mutation-ledger'
 import {createRelay} from './relay'
 
 const FLUSH_INTERVAL = 500
@@ -17,6 +18,7 @@ const TYPE_DEBOUNCE = 250
 function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const editorEngine = createEditor() as PortableTextEditorEngine
   editorEngine.isDeferringMutations = false
+  editorEngine.mutationLedger = createMutationLedger()
 
   let isReadOnly = readOnly
   let patchListener:
@@ -149,6 +151,22 @@ describe('mutation batcher', () => {
       {patches: [createPatch('c')]},
     ])
     expect(harness.editorEngine.isDeferringMutations).toBe(false)
+  })
+
+  test('records flushed mutation patches in the ledger', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    harness.sendPatch(createPatch('b'), 'op-1')
+
+    expect(harness.editorEngine.mutationLedger.unacknowledged()).toEqual([])
+
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    expect(harness.editorEngine.mutationLedger.unacknowledged()).toEqual([
+      createPatch('a'),
+      createPatch('b'),
+    ])
   })
 
   test('relays individual patch events immediately while batching mutations', () => {
