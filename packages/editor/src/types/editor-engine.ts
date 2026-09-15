@@ -81,6 +81,15 @@ export interface PortableTextEditorEngine extends DOMEditor {
 
   isDeferringMutations: boolean
   /**
+   * Called by the sync machine once a value sync pass has fully settled,
+   * whether or not it changed anything, including any fresh repair
+   * patches normalization emitted in response. The mutation batcher
+   * installs this to drop held bulks the settled snapshot has superseded.
+   * Only value syncs call it: a remote patch batch is a delta and cannot
+   * prove a held repair superseded.
+   */
+  notifyInboundStateApplied: (() => void) | null
+  /**
    * The last host value recorded by a value sync that changed the engine. A
    * pristine block equal to it is persisted content, not the local
    * placeholder. Syncs that write nothing are not recorded: hosts mirror

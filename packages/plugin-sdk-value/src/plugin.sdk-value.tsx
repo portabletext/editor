@@ -824,9 +824,20 @@ function applySync({
 const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
   ({sendBack, input}) => {
     const patchSubscription = input.editor.on('patch', () => {
-      // Every 'patch' event is a local edit (remote application suppresses
-      // patch generation), so the store now lags the editor until the next
-      // mutation flush.
+      if (input.editor.getSnapshot().context.readOnly) {
+        // A patch produced while read-only can only be an engine repair of
+        // an incoming value (local edits are impossible), and the mutation
+        // that would flush it is held until the editor becomes editable.
+        // Latching here would park the machine and `unflushedEdits` behind
+        // a flush that cannot come, freezing store updates for the rest of
+        // the read-only session. The held repair still pushes once it
+        // flushes: 'mutation flushed' is handled in every state.
+        return
+      }
+      // Every remaining `patch` event marks a change the editor produced
+      // on its own, a user edit or a normalization repair, never a remote
+      // application bouncing its own patches back; either way, the store
+      // now lags the editor until the next mutation flush.
       unflushedEdits.set(input.editor, true)
       sendBack({type: 'patch emitted'})
     })
