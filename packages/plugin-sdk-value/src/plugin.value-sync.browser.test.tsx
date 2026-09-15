@@ -120,6 +120,7 @@ async function createSyncedEditor(options: {
   initialValue?: PortableTextBlock[]
   store: MockStore | MockPatchStore
   schemaDefinition?: ReturnType<typeof defineSchema>
+  readOnly?: boolean
 }) {
   const editorRef = createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
@@ -131,6 +132,7 @@ async function createSyncedEditor(options: {
         keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
+        readOnly: options.readOnly,
       }}
     >
       <EditorRefPlugin ref={editorRef} />
@@ -147,7 +149,18 @@ async function createSyncedEditor(options: {
     </EditorProvider>,
   )
 
-  const locator = page.getByRole('textbox')
+  // A read-only editable carries no ARIA `textbox` role, so `getByRole`
+  // never resolves; the always-present `data-pt-editor` marker locates it
+  // instead.
+  const locator = options.readOnly
+    ? await vi.waitFor(() => {
+        const element = result.container.querySelector('[data-pt-editor]')
+        if (element === null) {
+          throw new Error('Expected to find an element with `data-pt-editor`')
+        }
+        return page.elementLocator(element)
+      })
+    : page.getByRole('textbox')
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
   return {
@@ -305,6 +318,36 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('remote changes apply to editor', () => {
+    test('remote changes keep applying after an intake repair while read-only', async () => {
+      const store = createMockValueStore([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', text: 'Hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        readOnly: true,
+      })
+      cleanup = unmount
+
+      // The keyless child provokes an intake repair: the repair patch
+      // relays immediately, but the mutation that would flush it is held
+      // for as long as the editor stays read-only.
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      store.setRemoteValue([makeBlock('b1', 'Goodbye')])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Goodbye')
+      })
+    })
+
     test('remote change updates editor when idle', async () => {
       const store = createMockValueStore()
       const {editor, unmount} = await createSyncedEditor({store})
