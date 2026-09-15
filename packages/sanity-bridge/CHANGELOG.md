@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.1.0
+
+### Minor Changes
+
+- [#3278](https://github.com/portabletext/editor/pull/3278) [`7a9a566`](https://github.com/portabletext/editor/commit/7a9a566e95fa599cc31011dabfa760f345727a2f) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `sanitySchemaDefinitionToPortableTextSchema` for raw definitions with named type references
+
+  A raw (uncompiled) array definition whose fields reference another type by name (for example a `customLink` annotation field typed `customUrl`) cannot resolve that reference on its own: the definition only carries the types nested inside it. `sanitySchemaDefinitionToPortableTextSchema` takes the sibling definitions through its `options` argument:
+
+  ```ts
+  const schema = sanitySchemaDefinitionToPortableTextSchema(
+    richTextDefinition,
+    {
+      types: [customUrl],
+    },
+  )
+  ```
+
+  `options.types` can be your complete schema type list, including the portable text field itself: an entry sharing the definition's own name is dropped in favor of the passed definition. When a reference still cannot be resolved, the error names the fix: ``Unknown type: customUrl. Define 'customUrl' in the schema or pass it via `options.types`.``
+
 ## 4.0.0
 
 ### Major Changes
