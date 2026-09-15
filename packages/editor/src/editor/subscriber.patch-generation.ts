@@ -123,13 +123,19 @@ export function subscribePatchGeneration({
       }
     }
 
-    // Prepend patches with setIfMissing when a root `unset` earlier in this
-    // editor's emitted stream destroyed the field: the store cannot apply
-    // patches into a destroyed field until something rebuilds it, and these
-    // patches are neither the destroy nor the rebuild themselves.
+    // Prepend a rebuild when a root `unset` earlier in this editor's
+    // emitted stream destroyed the field: the store cannot apply patches
+    // into a destroyed field until something rebuilds it, and these
+    // patches are neither the destroy nor the rebuild themselves. With
+    // zero blocks before the edit, `setIfMissing` suffices (the edit's own
+    // patches create the content). With blocks the stream never rebuilt
+    // (a host synced a value in without patches, resurrecting content the
+    // stream had destroyed), the rebuild re-inserts the pre-edit value,
+    // the same `setIfMissing` + `insert` pair the placeholder rebuild
+    // uses: additive on purpose, so a store that unexpectedly still holds
+    // the field ends up with duplicated blocks, never destroyed ones.
     const [firstPatch] = patches
     if (
-      previousValue.length === 0 &&
       editor.valueUnsetEmitted &&
       firstPatch &&
       !(
@@ -138,7 +144,14 @@ export function subscribePatchGeneration({
           firstPatch.path.length === 0)
       )
     ) {
-      patches = [setIfMissing([], []), ...patches]
+      patches =
+        previousValue.length === 0
+          ? [setIfMissing([], []), ...patches]
+          : [
+              setIfMissing([], []),
+              insert(previousValue, 'before', [0]),
+              ...patches,
+            ]
     }
 
     // The stream's own truth about whether the field is currently

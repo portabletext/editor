@@ -62,7 +62,7 @@ test('Scenario: Store converges through a clear and retype under a value-mirrori
   expect(editor.getSnapshot().context.value).toEqual(store.value)
 })
 
-test.fails('Scenario: Store converges after a stale echo resurrects the cleared value', async () => {
+test('Scenario: Store converges after a stale echo resurrects the cleared value', async () => {
   const initialValue = [
     {
       _type: 'block',
