@@ -3,7 +3,11 @@ import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {EditorRefPlugin} from '@portabletext/editor/plugins'
 import {toTextspec} from '@portabletext/editor/test'
 import {applyAll, type JSONValue} from '@portabletext/patches'
-import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
+import {
+  defineSchema,
+  isTextBlock,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef} from 'react'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -120,6 +124,7 @@ async function createSyncedEditor(options: {
   initialValue?: PortableTextBlock[]
   store: MockStore | MockPatchStore
   schemaDefinition?: ReturnType<typeof defineSchema>
+  readOnly?: boolean
 }) {
   const editorRef = createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
@@ -131,6 +136,7 @@ async function createSyncedEditor(options: {
         keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
+        readOnly: options.readOnly,
       }}
     >
       <EditorRefPlugin ref={editorRef} />
@@ -147,7 +153,18 @@ async function createSyncedEditor(options: {
     </EditorProvider>,
   )
 
-  const locator = page.getByRole('textbox')
+  // A read-only editable carries no ARIA `textbox` role, so `getByRole`
+  // never resolves; the always-present `data-pt-editor` marker locates it
+  // instead.
+  const locator = options.readOnly
+    ? await vi.waitFor(() => {
+        const element = result.container.querySelector('[data-pt-editor]')
+        if (element === null) {
+          throw new Error('Expected to find an element with `data-pt-editor`')
+        }
+        return page.elementLocator(element)
+      })
+    : page.getByRole('textbox')
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
   return {
@@ -171,6 +188,15 @@ function makeBlock(key: string, text: string): PortableTextBlock {
 
 function getEditorText(editor: Editor): string {
   return toTextspec(editor.getSnapshot().context)
+}
+
+function getFirstChildKey(editor: Editor): string | undefined {
+  const context = editor.getSnapshot().context
+  const [firstBlock] = context.value
+  if (!isTextBlock({schema: context.schema}, firstBlock)) {
+    return undefined
+  }
+  return firstBlock.children[0]?._key
 }
 
 // ---- Tests ----
@@ -305,6 +331,81 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('remote changes apply to editor', () => {
+    test('remote changes keep applying after an intake repair while read-only', async () => {
+      const store = createMockValueStore([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', text: 'Hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        readOnly: true,
+      })
+      cleanup = unmount
+
+      // The keyless child provokes an intake repair: the repair patch
+      // relays immediately, but the mutation that would flush it is held
+      // for as long as the editor stays read-only.
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      store.setRemoteValue([makeBlock('b1', 'Goodbye')])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Goodbye')
+      })
+    })
+
+    // Field regression: the read-only skip that stopped intake-repair
+    // patches from latching the machine (see the test above) didn't record
+    // that the engine held an unpushed repair. The idle state's quiescent
+    // one-shot repair then read the still-broken store as divergence from
+    // the repaired engine and shipped patches undoing the repair, churning
+    // the minted key, until the held mutation finally flushed on the
+    // editable flip.
+    test('a held read-only repair survives a store-driven sync pass and flushes once editable', async () => {
+      const store = createMockValueStore([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', text: 'Hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        readOnly: true,
+      })
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      const mintedKey = getFirstChildKey(editor)
+      expect(mintedKey).toEqual('k2')
+
+      // Outlast the idle state's quiescent one-shot repair (500ms) plus the
+      // repair confirmation window (150ms in test mode), so a store-driven
+      // sync pass runs against the store's still-broken (keyless) value.
+      await new Promise((resolve) => setTimeout(resolve, 800))
+
+      expect(getEditorText(editor)).toEqual('B: Hello')
+      expect(getFirstChildKey(editor)).toEqual(mintedKey)
+
+      editor.send({type: 'update readOnly', readOnly: false})
+
+      await vi.waitFor(() => {
+        expect(store.pushValue).toHaveBeenCalledTimes(1)
+      })
+    })
+
     test('remote change updates editor when idle', async () => {
       const store = createMockValueStore()
       const {editor, unmount} = await createSyncedEditor({store})
