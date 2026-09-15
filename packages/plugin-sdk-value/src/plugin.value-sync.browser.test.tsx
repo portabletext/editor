@@ -1,9 +1,15 @@
 import type {Editor, Patch as PtePatch} from '@portabletext/editor'
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
-import {EditorRefPlugin} from '@portabletext/editor/plugins'
+import {defineBehavior, forward, raise} from '@portabletext/editor/behaviors'
+import type {Behavior} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin, EditorRefPlugin} from '@portabletext/editor/plugins'
 import {toTextspec} from '@portabletext/editor/test'
 import {applyAll, type JSONValue} from '@portabletext/patches'
-import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
+import {
+  defineSchema,
+  isTextBlock,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef} from 'react'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -120,6 +126,8 @@ async function createSyncedEditor(options: {
   initialValue?: PortableTextBlock[]
   store: MockStore | MockPatchStore
   schemaDefinition?: ReturnType<typeof defineSchema>
+  readOnly?: boolean
+  behaviors?: Array<Behavior>
 }) {
   const editorRef = createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
@@ -131,10 +139,14 @@ async function createSyncedEditor(options: {
         keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
+        readOnly: options.readOnly,
       }}
     >
       <EditorRefPlugin ref={editorRef} />
       <PortableTextEditable />
+      {options.behaviors ? (
+        <BehaviorPlugin behaviors={options.behaviors} />
+      ) : null}
       <ValueSyncPlugin
         getRemoteValue={store.getRemoteValue}
         pushValue={store.pushValue}
@@ -147,7 +159,18 @@ async function createSyncedEditor(options: {
     </EditorProvider>,
   )
 
-  const locator = page.getByRole('textbox')
+  // A read-only editable carries no ARIA `textbox` role, so `getByRole`
+  // never resolves; the always-present `data-pt-editor` marker locates it
+  // instead.
+  const locator = options.readOnly
+    ? await vi.waitFor(() => {
+        const element = result.container.querySelector('[data-pt-editor]')
+        if (element === null) {
+          throw new Error('Expected to find an element with `data-pt-editor`')
+        }
+        return page.elementLocator(element)
+      })
+    : page.getByRole('textbox')
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
   return {
@@ -171,6 +194,15 @@ function makeBlock(key: string, text: string): PortableTextBlock {
 
 function getEditorText(editor: Editor): string {
   return toTextspec(editor.getSnapshot().context)
+}
+
+function getFirstChildKey(editor: Editor): string | undefined {
+  const context = editor.getSnapshot().context
+  const [firstBlock] = context.value
+  if (!isTextBlock({schema: context.schema}, firstBlock)) {
+    return undefined
+  }
+  return firstBlock.children[0]?._key
 }
 
 // ---- Tests ----
@@ -305,6 +337,159 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('remote changes apply to editor', () => {
+    test('remote changes keep applying after an intake repair while read-only', async () => {
+      const store = createMockValueStore([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', text: 'Hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        readOnly: true,
+      })
+      cleanup = unmount
+
+      // The keyless child provokes an intake repair: the repair patch
+      // relays immediately, but the mutation that would flush it is held
+      // for as long as the editor stays read-only.
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      store.setRemoteValue([makeBlock('b1', 'Goodbye')])
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Goodbye')
+      })
+    })
+
+    test('a held read-only repair survives a store-driven sync pass and flushes once editable', async () => {
+      const store = createMockValueStore([
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', text: 'Hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        readOnly: true,
+      })
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: Hello')
+      })
+
+      const mintedKey = getFirstChildKey(editor)
+      expect(mintedKey).toEqual('k2')
+
+      // Outlast the idle state's quiescent one-shot repair (500ms) plus the
+      // repair confirmation window (150ms in test mode), so a store-driven
+      // sync pass runs against the store's still-broken (keyless) value.
+      // No local edit can reach the editor while it's read-only, so
+      // there's no flush to anchor this wait on instead; the assertion is
+      // exactly that the sync pass runs and does nothing.
+      await new Promise((resolve) => setTimeout(resolve, 800))
+
+      expect(getEditorText(editor)).toEqual('B: Hello')
+      expect(getFirstChildKey(editor)).toEqual(mintedKey)
+
+      editor.send({type: 'update readOnly', readOnly: false})
+
+      await vi.waitFor(() => {
+        expect(store.pushValue).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    test('a mutating Behavior on `select` while read-only is never diffed away as a held repair', async () => {
+      const store = createMockValueStore([
+        makeBlock('keep', 'keep'),
+        makeBlock('gone', 'gone'),
+      ])
+      const {editor, unmount} = await createSyncedEditor({
+        store,
+        readOnly: true,
+        behaviors: [
+          defineBehavior({
+            on: 'select',
+            actions: [
+              ({event}) => {
+                const anchorSegment = event.at?.anchor.path[0]
+                const targetsKeepBlock =
+                  typeof anchorSegment === 'object' &&
+                  anchorSegment !== null &&
+                  '_key' in anchorSegment &&
+                  anchorSegment._key === 'keep'
+
+                // `select` is one of the handful of Behavior events the
+                // edit-mode machine still admits while read-only, so this
+                // action runs, and mutates, even though the editor never
+                // left read-only.
+                return targetsKeepBlock
+                  ? [
+                      forward(event),
+                      raise({type: 'delete.block', at: [{_key: 'gone'}]}),
+                    ]
+                  : [forward(event)]
+              },
+            ],
+          }),
+        ],
+      })
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: keep\nB: gone')
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: 'keep'}, 'children', 0], offset: 0},
+          focus: {path: [{_key: 'keep'}, 'children', 0], offset: 0},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: |keep')
+      })
+
+      // A genuinely new remote value, still read-only: the store never
+      // learned about the delete above (its mutation is held), so this
+      // is exactly the divergence the background repair diff would
+      // otherwise "fix" by resurrecting the deleted block.
+      store.setRemoteValue([
+        makeBlock('keep', 'kept'),
+        makeBlock('gone', 'gone'),
+      ])
+
+      // Outlast the repair confirmation window (150ms in test mode) plus
+      // a retry of it, so a would-be repair has had every chance to
+      // apply. No local edit can reach the editor while it's read-only,
+      // so there's no flush to anchor this wait on instead; the assertion
+      // is exactly that no repair fires.
+      await new Promise((resolve) => setTimeout(resolve, 400))
+
+      expect(getEditorText(editor)).toEqual('B: |keep')
+
+      editor.send({type: 'update readOnly', readOnly: false})
+
+      await vi.waitFor(() => {
+        expect(
+          store.pushValue.mock.calls.some(([value]) =>
+            value.every((block: PortableTextBlock) => block._key !== 'gone'),
+          ),
+        ).toBe(true)
+      })
+    })
+
     test('remote change updates editor when idle', async () => {
       const store = createMockValueStore()
       const {editor, unmount} = await createSyncedEditor({store})

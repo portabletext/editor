@@ -694,6 +694,72 @@ const pendingRepairs = new WeakMap<Editor, PendingRepair>()
  */
 const unflushedEdits = new WeakMap<Editor, boolean>()
 
+/**
+ * The store value a still-unpushed read-only intake repair was diffed away
+ * from. `applySync` normally reads any editor/store divergence as the store
+ * having drifted and repairs the editor to match it, but while this holds a
+ * value, a divergence against that exact value is the held repair itself,
+ * not the store drifting, and must not be reverted. It clears once the
+ * store moves on, whether because the held mutation finally pushed or a
+ * genuinely new remote value arrived; either way, the next `applySync` diffs
+ * against the current store value on its own merits.
+ */
+const heldReadOnlyRepairBaselines = new WeakMap<Editor, PortableTextBlock[]>()
+
+/**
+ * Structural equality over plain JSON values: object keys compare
+ * order-insensitively, array elements compare order-sensitively by index.
+ * Duplicated from `packages/editor/src/internal-utils/deep-equal-json.ts`
+ * (not exported from `@portabletext/editor`) rather than exported from
+ * core; keep the two in sync.
+ */
+function deepEqualJson(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true
+  }
+
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false
+    }
+    for (let index = 0; index < a.length; index++) {
+      if (!deepEqualJson(a[index], b[index])) {
+        return false
+      }
+    }
+    return true
+  }
+
+  if (
+    a !== null &&
+    b !== null &&
+    typeof a === 'object' &&
+    typeof b === 'object'
+  ) {
+    const recordA = a as Record<string, unknown>
+    const recordB = b as Record<string, unknown>
+    const keysA = Object.keys(recordA)
+    const keysB = Object.keys(recordB)
+
+    if (keysA.length !== keysB.length) {
+      return false
+    }
+
+    for (const key of keysA) {
+      if (
+        !Object.prototype.hasOwnProperty.call(recordB, key) ||
+        !deepEqualJson(recordA[key], recordB[key])
+      ) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  return false
+}
+
 function computeRepair(
   editor: Editor,
   remoteValue: PortableTextBlock[],
@@ -736,6 +802,22 @@ function applySync({
 
   if (!remoteValue) {
     return
+  }
+
+  const heldRepairBaseline = heldReadOnlyRepairBaselines.get(editor)
+  if (heldRepairBaseline !== undefined) {
+    if (deepEqualJson(remoteValue, heldRepairBaseline)) {
+      // The store hasn't moved since the read-only repair that's still
+      // waiting to flush: the divergence below would be fully explained by
+      // that held repair, not by the store drifting, so there's nothing to
+      // reconcile yet.
+      return
+    }
+    // The store moved past the value the held repair was diffed from,
+    // whether from the eventual push or a genuinely new remote value:
+    // either way, the divergence is now real and evaluated on its own
+    // merits below.
+    heldReadOnlyRepairBaselines.delete(editor)
   }
 
   const first = computeRepair(editor, remoteValue)
@@ -821,38 +903,65 @@ function applySync({
   pendingRepairs.set(editor, {signature: first.signature, timer})
 }
 
-const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
-  ({sendBack, input}) => {
-    const patchSubscription = input.editor.on('patch', () => {
-      // Every `patch` event marks a change the editor produced on its own,
-      // a user edit or an intake/normalization repair, never a remote
-      // application bouncing its own patches back; either way, the store
-      // now lags the editor until the next mutation flush.
-      unflushedEdits.set(input.editor, true)
-      sendBack({type: 'patch emitted'})
-    })
-
-    const mutationSubscription = input.editor.on('mutation', (event) => {
-      unflushedEdits.set(input.editor, false)
-      if (debug.mutation.enabled) {
-        debug.mutation('flushed %o', {
-          flushText: debugTextOf(event.value),
-          snapshotText: debugTextOf(input.editor.getSnapshot().context.value),
-        })
+const listenToEditor = fromCallback<
+  AnyEventObject,
+  {
+    editor: Editor
+    getRemoteValue: ValueSyncConfig['getRemoteValue']
+  }
+>(({sendBack, input}) => {
+  const patchSubscription = input.editor.on('patch', (event) => {
+    if (event.intakeRepair && input.editor.getSnapshot().context.readOnly) {
+      // An intake repair is never user work, regardless of read-only
+      // state (a handful of Behavior events, like `select`, still run
+      // their actions while read-only, and a mutating Behavior on one of
+      // those produces user work, not a repair). While read-only, the
+      // mutation that would flush this repair is held until the editor
+      // becomes editable. Latching here would park the machine and
+      // `unflushedEdits` behind a flush that cannot come, freezing store
+      // updates for the rest of the read-only session. The held repair
+      // still pushes once it flushes: 'mutation flushed' is handled in
+      // every state.
+      //
+      // `applySync` still needs to know the repair is unpushed: record
+      // the store value it was diffed away from, so a divergence against
+      // that exact value reads as the held repair, not the store
+      // drifting, and doesn't get reverted before it can flush.
+      const remoteValue = input.getRemoteValue()
+      if (remoteValue) {
+        heldReadOnlyRepairBaselines.set(input.editor, remoteValue)
       }
-      sendBack({
-        type: 'mutation flushed',
-        value: event.value,
-        patches: event.patches,
-      })
-    })
-
-    return () => {
-      patchSubscription.unsubscribe()
-      mutationSubscription.unsubscribe()
+      return
     }
-  },
-)
+    // Every remaining `patch` event marks genuine user work: an edit, or
+    // a mutating Behavior action, never a remote application bouncing its
+    // own patches back, nor a repair still held read-only. Either way,
+    // the store now lags the editor until the next mutation flush.
+    unflushedEdits.set(input.editor, true)
+    sendBack({type: 'patch emitted'})
+  })
+
+  const mutationSubscription = input.editor.on('mutation', (event) => {
+    unflushedEdits.set(input.editor, false)
+    heldReadOnlyRepairBaselines.delete(input.editor)
+    if (debug.mutation.enabled) {
+      debug.mutation('flushed %o', {
+        flushText: debugTextOf(event.value),
+        snapshotText: debugTextOf(input.editor.getSnapshot().context.value),
+      })
+    }
+    sendBack({
+      type: 'mutation flushed',
+      value: event.value,
+      patches: event.patches,
+    })
+  })
+
+  return () => {
+    patchSubscription.unsubscribe()
+    mutationSubscription.unsubscribe()
+  }
+})
 
 const listenToRemote = fromCallback<
   AnyEventObject,
@@ -971,7 +1080,10 @@ const valueSyncMachine = setup({
   invoke: [
     {
       src: 'listen to editor',
-      input: ({context}) => ({editor: context.editor}),
+      input: ({context}) => ({
+        editor: context.editor,
+        getRemoteValue: context.getRemoteValue,
+      }),
     },
     {
       src: 'listen to remote',
