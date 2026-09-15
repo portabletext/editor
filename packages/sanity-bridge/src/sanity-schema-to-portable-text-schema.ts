@@ -49,9 +49,14 @@ import type {
 export function sanitySchemaToPortableTextSchema(
   sanitySchema: ArraySchemaType<unknown> | ArrayDefinition,
 ): Schema {
-  const compiled = sanitySchema.hasOwnProperty('jsonType')
+  const isCompiled = sanitySchema.hasOwnProperty('jsonType')
+  const compiled = isCompiled
     ? (sanitySchema as ArraySchemaType<PortableTextBlock>)
     : compileType(sanitySchema)
+
+  if (isCompiled && compiled.jsonType !== 'array') {
+    throwNonArrayDiagnostic(compiled)
+  }
 
   return sanitySchemaTypeToSchema(compiled)
 }
@@ -708,12 +713,65 @@ function findBlockType(type: SchemaType): BlockSchemaType | null {
   return null
 }
 
+/**
+ * Sanity's core built-in type names (`text`, `image`, `url`, `block`, `span`,
+ * ...) are baked into the compiler itself and always win a name collision,
+ * unlike `builtinTypes` from `@sanity/schema/_internal`, which only carries
+ * Studio's extra types (`slug`, `geopoint`, ...) and loses a collision with
+ * an explicit `Duplicate type name` error instead. Compiling an empty
+ * schema and looking the name up asks Sanity directly which core built-ins
+ * exist, rather than hardcoding that list here.
+ */
+function isBuiltinTypeName(name: string): boolean {
+  return Boolean(
+    SanitySchema.compile({name: 'builtinProbe', types: []}).get(name),
+  )
+}
+
+function throwNonArrayDiagnostic(schemaType: SchemaType): never {
+  const name = schemaType.name
+  const base = `Expected an array schema type but received '${name}' (jsonType: '${schemaType.jsonType}').`
+  if (isBuiltinTypeName(name)) {
+    throw new Error(
+      `${base} '${name}' collides with a Sanity built-in type, so \`.get('${name}')\` returned the built-in type instead of your custom type.`,
+    )
+  }
+  throw new Error(base)
+}
+
+const ROOT_PLACEHOLDER_NAME = '__portableTextBridgeRoot'
+
+/**
+ * The root compiles under a reserved placeholder name: `.get(rawType.name)`
+ * on a root named like a core built-in (`text`, `image`, ...) would return
+ * the built-in, since core built-ins always win a name collision. The
+ * definition is also registered under its own name so a field elsewhere in
+ * the schema typed like the root keeps resolving to it, except when a
+ * built-in holds that name: core built-ins silently win the collision and
+ * the `builtinTypes` extras (`slug`, `geopoint`, ...) throw a
+ * duplicate-name error, so the extras are skipped up front and a
+ * same-named field reference resolves to the built-in, as it would in a
+ * Studio schema.
+ */
 function compileType(
   rawType: any,
   types: ReadonlyArray<SchemaTypeDefinition> = [],
 ) {
+  const siblingTypes = types.filter(
+    (type) => type.name !== ROOT_PLACEHOLDER_NAME,
+  )
+  const ownNameRegistration = builtinTypes.some(
+    (type: {name?: string}) => type.name === rawType.name,
+  )
+    ? []
+    : [rawType]
   return SanitySchema.compile({
     name: 'blockTypeSchema',
-    types: [rawType, ...types, ...builtinTypes],
-  }).get(rawType.name)
+    types: [
+      {...rawType, name: ROOT_PLACEHOLDER_NAME},
+      ...ownNameRegistration,
+      ...siblingTypes,
+      ...builtinTypes,
+    ],
+  }).get(ROOT_PLACEHOLDER_NAME)
 }

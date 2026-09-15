@@ -1254,6 +1254,199 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     )
   })
 
+  test('a root array definition named like a Sanity built-in type still resolves its own block member', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'text',
+      of: [defineField({type: 'block', name: 'block'})],
+    }
+
+    expect(sanitySchemaToPortableTextSchema(richText)).toEqual(defaultSchema)
+  })
+
+  test('a raw array definition whose block object has a field typed like the root type resolves the field to itself', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({
+          type: 'object',
+          name: 'callout',
+          fields: [defineField({name: 'nested', type: 'richText'})],
+        }),
+      ],
+    }
+
+    const schema = sanitySchemaToPortableTextSchema(richText)
+
+    expect(schema).toEqual({
+      ...defaultSchema,
+      blockObjects: [
+        {
+          name: 'callout',
+          title: 'Callout',
+          fields: [
+            {
+              name: 'nested',
+              type: 'array',
+              title: 'Nested',
+              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test('a root array definition named like a `builtinTypes` extra compiles', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'slug',
+      of: [defineField({type: 'block', name: 'block'})],
+    }
+
+    expect(sanitySchemaToPortableTextSchema(richText)).toEqual(defaultSchema)
+  })
+
+  test('a block object reached through a same-named root reference stays a bare reference', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({
+          type: 'object',
+          name: 'callout',
+          fields: [defineField({name: 'title', type: 'string'})],
+        }),
+        defineArrayMember({
+          type: 'object',
+          name: 'note',
+          fields: [defineField({name: 'body', type: 'richText'})],
+        }),
+      ],
+    }
+
+    const schema = sanitySchemaToPortableTextSchema(richText)
+
+    expect(schema).toEqual({
+      ...defaultSchema,
+      blockObjects: [
+        {
+          name: 'callout',
+          title: 'Callout',
+          fields: [{name: 'title', type: 'string', title: 'Title'}],
+        },
+        {
+          name: 'note',
+          title: 'Note',
+          fields: [
+            {
+              name: 'body',
+              type: 'array',
+              title: 'Body',
+              of: [
+                defaultBlockOfMember,
+                {type: 'callout', title: 'Callout'},
+                {type: 'note', title: 'Note'},
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test('a member field named like a Sanity built-in type resolves to the built-in type instead of the same-named root definition', () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'text',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({
+          type: 'object',
+          name: 'callout',
+          fields: [defineField({name: 'label', type: 'text'})],
+        }),
+      ],
+    }
+
+    expect(sanitySchemaToPortableTextSchema(richText)).toEqual({
+      ...defaultSchema,
+      blockObjects: [
+        {
+          name: 'callout',
+          title: 'Callout',
+          fields: [{name: 'label', type: 'string', title: 'Label'}],
+        },
+      ],
+    })
+  })
+
+  test('a compiled non-array type whose name collides with a Sanity built-in type throws a diagnostic naming the collision', () => {
+    const compiled = SanitySchema.compile({
+      name: 'test',
+      types: [
+        {
+          type: 'array',
+          name: 'text',
+          of: [defineField({type: 'block', name: 'block'})],
+        },
+      ],
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(compiled.get('text') as any),
+    ).toThrow(
+      new Error(
+        "Expected an array schema type but received 'text' (jsonType: 'string'). 'text' collides with a Sanity built-in type, so `.get('text')` returned the built-in type instead of your custom type.",
+      ),
+    )
+  })
+
+  test('a compiled non-array type whose name collides with a Sanity built-in object type throws a diagnostic naming the collision', () => {
+    const compiled = SanitySchema.compile({
+      name: 'test',
+      types: [
+        {
+          type: 'array',
+          name: 'image',
+          of: [defineField({type: 'block', name: 'block'})],
+        },
+      ],
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(compiled.get('image') as any),
+    ).toThrow(
+      new Error(
+        "Expected an array schema type but received 'image' (jsonType: 'object'). 'image' collides with a Sanity built-in type, so `.get('image')` returned the built-in type instead of your custom type.",
+      ),
+    )
+  })
+
+  test('a compiled non-array type whose name does not collide with a Sanity built-in type throws a diagnostic without the collision sentence', () => {
+    const compiled = SanitySchema.compile({
+      name: 'test',
+      types: [
+        defineType({
+          type: 'object',
+          name: 'foo',
+          fields: [defineField({name: 'a', type: 'string'})],
+        }),
+      ],
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(compiled.get('foo') as any),
+    ).toThrow(
+      new Error(
+        "Expected an array schema type but received 'foo' (jsonType: 'object').",
+      ),
+    )
+  })
+
   test('a container inline object that shares a name with the root but differs in shape keeps its own shape', () => {
     // Root allows inline `widget` with field `a`; the code-block line
     // allows inline `widget` with field `b`. The name matches but the
@@ -1653,5 +1846,171 @@ describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
         types: [dupA, dupB],
       }),
     ).toThrow(new Error('Duplicate type name added to schema: dup'))
+  })
+
+  test('a raw array definition named like a Sanity built-in type resolves a customUrl sibling via options.types', () => {
+    const customUrl = defineType({
+      name: 'customUrl',
+      type: 'object',
+      fields: [
+        defineField({name: 'href', type: 'url'}),
+        defineField({name: 'blank', type: 'boolean'}),
+      ],
+    })
+
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'text',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+        defineArrayMember({
+          type: 'object',
+          name: 'customCallout',
+          fields: [{name: 'link', type: 'customUrl'}],
+        }),
+      ],
+    }
+
+    const schema = sanitySchemaDefinitionToPortableTextSchema(richText, {
+      types: [customUrl],
+    })
+
+    expect(schema).toEqual({
+      block: {
+        name: 'block',
+      },
+      span: {
+        name: 'span',
+      },
+      styles: [
+        {name: 'normal', title: 'Normal', value: 'normal'},
+        {name: 'h1', title: 'Heading 1', value: 'h1'},
+        {name: 'h2', title: 'Heading 2', value: 'h2'},
+        {name: 'h3', title: 'Heading 3', value: 'h3'},
+        {name: 'h4', title: 'Heading 4', value: 'h4'},
+        {name: 'h5', title: 'Heading 5', value: 'h5'},
+        {name: 'h6', title: 'Heading 6', value: 'h6'},
+        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+      ],
+      lists: [
+        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
+        {name: 'number', title: 'Numbered list', value: 'number'},
+      ],
+      decorators: [
+        {name: 'strong', title: 'Strong', value: 'strong'},
+        {name: 'em', title: 'Italic', value: 'em'},
+        {name: 'code', title: 'Code', value: 'code'},
+        {name: 'underline', title: 'Underline', value: 'underline'},
+        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+      ],
+      annotations: [
+        {
+          name: 'customLink',
+          title: 'Custom Link',
+          fields: [
+            {
+              name: 'customLink',
+              type: 'object',
+              title: 'Custom Link',
+            },
+          ],
+        },
+      ],
+      blockObjects: [
+        {
+          name: 'customCallout',
+          title: 'Custom Callout',
+          fields: [
+            {
+              name: 'link',
+              type: 'object',
+              title: 'Link',
+            },
+          ],
+        },
+      ],
+      inlineObjects: [],
+    })
+  })
+
+  test("a raw array definition whose block object references the root type by name resolves the field as the root's array shape", () => {
+    const richText: ArrayDefinition = {
+      type: 'array',
+      name: 'richText',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({
+          type: 'object',
+          name: 'callout',
+          fields: [defineField({name: 'nested', type: 'richText'})],
+        }),
+      ],
+    }
+
+    const schema = sanitySchemaDefinitionToPortableTextSchema(richText)
+
+    expect(schema).toEqual({
+      block: {
+        name: 'block',
+      },
+      span: {
+        name: 'span',
+      },
+      styles: [
+        {name: 'normal', title: 'Normal', value: 'normal'},
+        {name: 'h1', title: 'Heading 1', value: 'h1'},
+        {name: 'h2', title: 'Heading 2', value: 'h2'},
+        {name: 'h3', title: 'Heading 3', value: 'h3'},
+        {name: 'h4', title: 'Heading 4', value: 'h4'},
+        {name: 'h5', title: 'Heading 5', value: 'h5'},
+        {name: 'h6', title: 'Heading 6', value: 'h6'},
+        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
+      ],
+      lists: [
+        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
+        {name: 'number', title: 'Numbered list', value: 'number'},
+      ],
+      decorators: [
+        {name: 'strong', title: 'Strong', value: 'strong'},
+        {name: 'em', title: 'Italic', value: 'em'},
+        {name: 'code', title: 'Code', value: 'code'},
+        {name: 'underline', title: 'Underline', value: 'underline'},
+        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
+      ],
+      annotations: [
+        {
+          name: 'link',
+          title: 'Link',
+          fields: [{name: 'href', type: 'string', title: 'Link'}],
+        },
+      ],
+      blockObjects: [
+        {
+          name: 'callout',
+          title: 'Callout',
+          fields: [
+            {
+              name: 'nested',
+              type: 'array',
+              title: 'Nested',
+              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
+            },
+          ],
+        },
+      ],
+      inlineObjects: [],
+    })
   })
 })
