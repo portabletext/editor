@@ -209,6 +209,168 @@ test.fails('Scenario: Store converges when a clear is held through a read-only w
   )
 })
 
+test('Scenario: Store stays untouched by a remote root `unset` while idle', async () => {
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo')
+
+  await vi.waitFor(() => {
+    expect(mutations.length).toEqual(1)
+  })
+
+  editor.send({
+    type: 'patches',
+    patches: [{type: 'unset', path: [], origin: 'remote'}],
+    snapshot: undefined,
+  })
+  editor.send({type: 'update value', value: undefined})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+      },
+    ])
+  })
+
+  expect(mutations.length).toEqual(1)
+})
+
+test('Scenario: Store converges to what the user types after a remote clear', async () => {
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  editor.on('mutation', (event) => {
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  store.apply([{type: 'unset', path: [], origin: 'remote'}])
+  editor.send({
+    type: 'patches',
+    patches: [{type: 'unset', path: [], origin: 'remote'}],
+    snapshot: undefined,
+  })
+  editor.send({type: 'update value', value: undefined})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+      },
+    ])
+  })
+
+  await userEvent.type(locator, 'bar')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+  expect(editor.getSnapshot().context.value).toEqual(store.value)
+})
+
+test('Scenario: A stale empty `update value` with no patches event leaves typed content in place', async () => {
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  editor.send({type: 'update value', value: []})
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  const mutationsBeforeRetype = mutations.length
+  await userEvent.type(locator, 'x')
+
+  await vi.waitFor(() => {
+    expect(mutations.length).toEqual(mutationsBeforeRetype + 1)
+  })
+
+  expect(mutations[mutationsBeforeRetype]).toEqual([
+    {
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+      origin: 'local',
+    },
+  ])
+  expect(editor.getSnapshot().context.value).toEqual(store.value)
+})
+
 /**
  * A store applying the editor's emitted mutations with the semantics the
  * incident path relies on: a patch it cannot apply (a deep patch into a
