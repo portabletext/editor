@@ -90,14 +90,30 @@ export interface PortableTextEditorEngine extends DOMEditor {
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
   /**
-   * True while this editor's own emitted patch stream has destroyed the
-   * field (a root `unset([])` went out) and not yet re-materialized it (a
-   * root `setIfMissing` or `set` went out since). While true, patch
-   * generation rebuilds the field before targeting it again, and both it
-   * and remote root inserts treat a placeholder equal to `lastSyncedValue`
-   * as unpersisted rather than as proof the field survived.
+   * True while the field is destroyed in this session's store: either this
+   * editor's own emitted patch stream destroyed it (a root `unset([])`
+   * went out) or a host-synthesized root `unset` was observed on the
+   * local-origin patch echo (the host cleared the field without the
+   * editor asking). Cleared whenever a root `setIfMissing` or `set` goes
+   * out on the emitted stream or is observed on the local-origin echo,
+   * regardless of which channel armed it. While true, patch generation
+   * rebuilds the field before targeting it again, and both it and remote
+   * root inserts treat a placeholder equal to `lastSyncedValue` as
+   * unpersisted rather than as proof the field survived.
    */
   valueUnsetEmitted: boolean
+  /**
+   * Count of this editor's own emitted root `unset`s not yet accounted
+   * for on the local-origin patch echo. Incremented where patch
+   * generation emits a root `unset`; consumed (decremented, with no arm
+   * and no warning) by the local-echo fold the first time it sees a
+   * matching local-origin root `unset`, whether that echo arrives before
+   * or after the field has since been rebuilt. Distinguishes the editor's
+   * own destroy-echo, already accounted for by its own emission
+   * bookkeeping, from a root `unset` the host synthesized on its own: the
+   * former must not re-arm `valueUnsetEmitted` or warn, the latter must.
+   */
+  pendingSelfUnsetEchoes: number
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
   withHistory: boolean

@@ -209,6 +209,119 @@ test.fails('Scenario: Store converges when a clear is held through a read-only w
   )
 })
 
+test('Scenario: Store converges when a host swallows a keyed block delete and echoes a root `unset`', async () => {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  let hostSwallowsNextMutation = false
+  editor.on('mutation', (event) => {
+    if (hostSwallowsNextMutation) {
+      hostSwallowsNextMutation = false
+      store.set(undefined)
+      editor.send({
+        type: 'patches',
+        patches: [{type: 'unset', path: [], origin: 'local'}],
+        snapshot: undefined,
+      })
+      return
+    }
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo{Enter}bar{Enter}baz')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+      },
+    ])
+  })
+
+  hostSwallowsNextMutation = true
+  editor.send({type: 'delete.block', at: [{_key: 'k2'}]})
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual(undefined)
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+      },
+    ])
+  })
+
+  expect(warnSpy).toHaveBeenCalledTimes(1)
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 3},
+      focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 3},
+    },
+  })
+  await userEvent.type(locator, '!')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'baz!', marks: []}],
+      },
+    ])
+  })
+  expect(editor.getSnapshot().context.value).toEqual(store.value)
+  expect(warnSpy).toHaveBeenCalledTimes(1)
+
+  warnSpy.mockRestore()
+})
+
 test('Scenario: Store stays untouched by a remote root `unset` while idle', async () => {
   const {editor, locator} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
@@ -371,6 +484,385 @@ test('Scenario: A stale empty `update value` with no patches event leaves typed 
   expect(editor.getSnapshot().context.value).toEqual(store.value)
 })
 
+test('Scenario: An echoed rebuild `setIfMissing` disarms the unset flag before the next edit', async () => {
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  let hostSwallowsNextMutation = false
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+    if (hostSwallowsNextMutation) {
+      hostSwallowsNextMutation = false
+      store.set(undefined)
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', path: [], origin: 'local'},
+          {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        ],
+        snapshot: [],
+      })
+      return
+    }
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo{Enter}bar')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+
+  hostSwallowsNextMutation = true
+  editor.send({type: 'delete.block', at: [{_key: 'k0'}]})
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual(undefined)
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+
+  const mutationsBeforeRetype = mutations.length
+  await userEvent.type(locator, 'x')
+
+  await vi.waitFor(() => {
+    expect(mutations.length).toEqual(mutationsBeforeRetype + 1)
+  })
+
+  expect(mutations[mutationsBeforeRetype]).toEqual([
+    {
+      type: 'diffMatchPatch',
+      path: [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text'],
+      value: '@@ -1,3 +1,4 @@\n+x\n bar\n',
+      origin: 'local',
+    },
+  ])
+})
+
+test("Scenario: The editor's own root `unset` echoing back after the rebuild does not re-arm", async () => {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  await userEvent.keyboard('{Backspace}')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual(undefined)
+  })
+
+  await userEvent.type(locator, 'bar')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+      },
+    ])
+  })
+
+  editor.send({
+    type: 'patches',
+    patches: [{type: 'unset', path: [], origin: 'local'}],
+    snapshot: undefined,
+  })
+
+  expect(warnSpy).not.toHaveBeenCalled()
+
+  const mutationsBeforeRetype = mutations.length
+  await userEvent.type(locator, '!')
+
+  await vi.waitFor(() => {
+    expect(mutations.length).toEqual(mutationsBeforeRetype + 1)
+  })
+
+  expect(mutations[mutationsBeforeRetype]).toEqual([
+    {
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+      origin: 'local',
+    },
+  ])
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'bar!', marks: []}],
+      },
+    ])
+  })
+  expect(editor.getSnapshot().context.value).toEqual(store.value)
+
+  warnSpy.mockRestore()
+})
+
+test('Scenario: A host echoing a legitimate clear as `[setIfMissing, unset]` does not warn or duplicate the rebuild', async () => {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  await userEvent.keyboard('{Backspace}')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual(undefined)
+  })
+
+  editor.send({
+    type: 'patches',
+    patches: [
+      {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+      {type: 'unset', path: [], origin: 'local'},
+    ],
+    snapshot: undefined,
+  })
+
+  expect(warnSpy).not.toHaveBeenCalled()
+
+  const mutationsBeforeRetype = mutations.length
+  await userEvent.type(locator, 'x')
+
+  await vi.waitFor(() => {
+    expect(mutations.length).toEqual(mutationsBeforeRetype + 1)
+  })
+
+  expect(mutations[mutationsBeforeRetype]).toEqual([
+    {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+    {
+      type: 'insert',
+      path: [0],
+      position: 'before',
+      items: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+        },
+      ],
+      origin: 'local',
+    },
+    {
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: '@@ -0,0 +1 @@\n+x\n',
+      origin: 'local',
+    },
+  ])
+
+  warnSpy.mockRestore()
+})
+
+test('Scenario: A host-synthesized `[setIfMissing, unset]` echo with no self-emission credit still arms', async () => {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+  })
+
+  const store = createStore(undefined)
+  let hostSwallowsNextMutation = false
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+    if (hostSwallowsNextMutation) {
+      hostSwallowsNextMutation = false
+      store.set(undefined)
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        snapshot: undefined,
+      })
+      return
+    }
+    store.apply(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo{Enter}bar')
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+
+  hostSwallowsNextMutation = true
+  editor.send({type: 'delete.block', at: [{_key: 'k2'}]})
+
+  await vi.waitFor(() => {
+    expect(store.value).toEqual(undefined)
+  })
+
+  expect(warnSpy).toHaveBeenCalledTimes(1)
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+
+  const mutationsBeforeRetype = mutations.length
+  await userEvent.type(locator, '!')
+
+  await vi.waitFor(() => {
+    expect(mutations.length).toEqual(mutationsBeforeRetype + 1)
+  })
+
+  expect(mutations[mutationsBeforeRetype]).toEqual([
+    {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+    {
+      type: 'insert',
+      path: [0],
+      position: 'before',
+      items: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+      ],
+      origin: 'local',
+    },
+    {
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: '@@ -1,3 +1,4 @@\n foo\n+!\n',
+      origin: 'local',
+    },
+  ])
+
+  warnSpy.mockRestore()
+})
+
 /**
  * A store applying the editor's emitted mutations with the semantics the
  * incident path relies on: a patch it cannot apply (a deep patch into a
@@ -384,6 +876,9 @@ function createStore(initialValue: Array<PortableTextBlock> | undefined) {
   return {
     get value() {
       return value
+    },
+    set(newValue: Array<PortableTextBlock> | undefined) {
+      value = newValue
     },
     apply(patches: Array<Patch>) {
       for (const patch of patches) {
