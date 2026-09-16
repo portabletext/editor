@@ -114,6 +114,7 @@ export const syncMachine = setup({
       readOnly: boolean
       editorEngine: PortableTextEditorEngine
       pendingValue: Array<PortableTextBlock> | undefined
+      hasPendingValue: boolean
       previousValue: Array<PortableTextBlock> | undefined
     },
     input: {} as {
@@ -157,9 +158,11 @@ export const syncMachine = setup({
         assertEvent(event, 'update value')
         return event.value
       },
+      hasPendingValue: true,
     }),
     'clear pending value': assign({
       pendingValue: undefined,
+      hasPendingValue: false,
     }),
     'assign previous value': assign({
       previousValue: ({event}) => {
@@ -214,13 +217,20 @@ export const syncMachine = setup({
         return false
       }
 
-      if (context.previousValue === event.value) {
+      // A parked `pendingValue` (which may itself be `undefined`, e.g. the
+      // host unset the field) is newer than `previousValue` and must be the
+      // baseline a further `update value` is judged against.
+      const comparisonValue = context.hasPendingValue
+        ? context.pendingValue
+        : context.previousValue
+
+      if (comparisonValue === event.value) {
         return false
       }
 
       return !isEqualValues(
         {schema: context.schema},
-        context.previousValue,
+        comparisonValue,
         event.value,
       )
     },
@@ -260,6 +270,7 @@ export const syncMachine = setup({
     readOnly: input.readOnly,
     editorEngine: input.editorEngine,
     pendingValue: undefined,
+    hasPendingValue: false,
     previousValue: undefined,
   }),
   entry: [

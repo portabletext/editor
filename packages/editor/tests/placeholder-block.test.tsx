@@ -326,6 +326,127 @@ describe(createPlaceholderBlock.name, () => {
     })
   })
 
+  test('Scenario: A value parked while busy is superseded by a newer one', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const initialPlaceholder = [
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialPlaceholder)
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'f')
+
+    // While the typed edit's mutation is still deferred, a stale value
+    // parks as pending, then the newest host truth (the field unset)
+    // supersedes it.
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    editor.send({type: 'update value', value: undefined})
+
+    // A remote root unset clears the field entirely while the parked value
+    // is still awaiting sync; the engine normalizes back to a placeholder.
+    editor.send({
+      type: 'patches',
+      patches: [{type: 'unset', origin: 'remote', path: []}],
+      snapshot: undefined,
+    })
+
+    const remoteUnsetPlaceholder = [
+      {
+        _type: 'block',
+        _key: 'k4',
+        children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(remoteUnsetPlaceholder)
+    })
+
+    // Let the deferred mutation flush and the busy sync retry install
+    // whatever it decided to park: the retry always replaces this interim
+    // placeholder, on both the buggy and the fixed guard.
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).not.toEqual(
+          remoteUnsetPlaceholder,
+        )
+      },
+      // The sync machine parks in `busy` while the deferred mutation
+      // flushes and re-checks on a 1s timer.
+      {timeout: 5000},
+    )
+
+    const settledPlaceholder = [
+      {
+        _type: 'block',
+        _key: 'k6',
+        children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    expect(editor.getSnapshot().context.value).toEqual(settledPlaceholder)
+
+    patches.length = 0
+
+    await userEvent.type(locator, 'g')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...settledPlaceholder[0],
+          children: [{_type: 'span', _key: 'k7', text: 'g', marks: []}],
+        },
+      ])
+    })
+
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(settledPlaceholder, 'before', [0]),
+      diffMatchPatch('', 'g', [{_key: 'k6'}, 'children', {_key: 'k7'}, 'text']),
+    ])
+  })
+
   test('Scenario: Lonely block object removed by incoming patch', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
