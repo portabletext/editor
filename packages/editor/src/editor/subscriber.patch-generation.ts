@@ -161,6 +161,7 @@ export function subscribePatchGeneration({
     for (const patch of patches) {
       if (patch.type === 'unset' && patch.path.length === 0) {
         editor.valueUnsetEmitted = true
+        editor.pendingSelfUnsetEchoes += 1
       } else if (
         (patch.type === 'setIfMissing' || patch.type === 'set') &&
         patch.path.length === 0

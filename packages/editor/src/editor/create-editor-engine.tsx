@@ -78,6 +78,7 @@ export function createEditorEngine(
   editor.isDeferringMutations = false
   editor.lastSyncedValue = undefined
   editor.valueUnsetEmitted = false
+  editor.pendingSelfUnsetEchoes = 0
   editor.isPatching = true
   editor.isPerformingBehaviorOperation = false
   editor.withHistory = true

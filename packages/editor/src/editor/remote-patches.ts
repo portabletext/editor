@@ -68,6 +68,26 @@ export function setupRemotePatches({
   }
 
   const handlePatches = ({patches}: {patches: Patch[]}) => {
+    for (const patch of patches) {
+      if (patch.origin !== 'local' || patch.path.length > 0) {
+        continue
+      }
+      if (patch.type === 'unset') {
+        if (editor.pendingSelfUnsetEchoes > 0) {
+          editor.pendingSelfUnsetEchoes -= 1
+          continue
+        }
+        if (!editor.valueUnsetEmitted) {
+          console.warn(
+            "The host application removed the editor's field without the editor requesting it. The editor will restore its visible content with the next edit.",
+          )
+        }
+        editor.valueUnsetEmitted = true
+      } else if (patch.type === 'set' || patch.type === 'setIfMissing') {
+        editor.valueUnsetEmitted = false
+      }
+    }
+
     const remotePatches = patches.filter((patch) => patch.origin !== 'local')
     if (remotePatches.length === 0) {
       return
