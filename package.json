@@ -88,7 +88,9 @@
       "@portabletext/patches": "workspace:*",
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom",
-      "@types/react-is": "$@types/react-is"
+      "@types/react-is": "$@types/react-is",
+      "sanity>@portabletext/editor": "workspace:*",
+      "sanity>@sanity/cli": "8.9.0"
     }
   }
 }
