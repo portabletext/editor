@@ -57,6 +57,22 @@
         "sharp"
       ]
     },
+    "apps/studio": {
+      "ignoreDependencies": [
+        "@portabletext/block-tools",
+        "@portabletext/editor",
+        "@portabletext/html",
+        "@portabletext/patches",
+        "@portabletext/plugin-dnd",
+        "@portabletext/plugin-list-index",
+        "@portabletext/plugin-markdown-shortcuts",
+        "@portabletext/plugin-one-line",
+        "@portabletext/plugin-paste-link",
+        "@portabletext/plugin-table",
+        "@portabletext/plugin-typography",
+        "@portabletext/sanity-bridge"
+      ]
+    },
     "examples/*": {},
     ".": {
       "entry": ["bundle-stats.config.ts"]

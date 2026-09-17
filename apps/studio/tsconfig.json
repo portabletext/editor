@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
+    "allowJs": true,
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
@@ -11,5 +12,12 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["./schemaTypes", "./scripts", "./sanity.config.ts", "./sanity.cli.ts"]
+  "include": [
+    "./schemaTypes",
+    "./scripts",
+    "./e2e",
+    "./sanity.config.ts",
+    "./sanity.cli.ts",
+    "./playwright.config.ts"
+  ]
 }

@@ -1,26 +1,14 @@
+import {fileURLToPath} from 'node:url'
 import {createClient} from '@sanity/client'
-
-const token = process.env.SANITY_PTE_LAB_TOKEN
-
-if (!token) {
-  console.error(
-    'SANITY_PTE_LAB_TOKEN is not set. Run this script with `node --env-file=.env.local scripts/seed.mjs` ' +
-      '(via `pnpm --filter studio seed`), with `.env.local` populated from `~/code/@portabletext/.pte-lab.env`.',
-  )
-  process.exit(1)
-}
-
-const client = createClient({
-  projectId: 'e2sapjbh',
-  dataset: 'scratch',
-  apiVersion: '2026-01-01',
-  token,
-  useCdn: false,
-})
 
 const link = (key, href) => ({_type: 'link', _key: key, href})
 
-const span = (key, text, marks = []) => ({_type: 'span', _key: key, text, marks})
+const span = (key, text, marks = []) => ({
+  _type: 'span',
+  _key: key,
+  text,
+  marks,
+})
 
 const textBlock = (key, children, markDefs = []) => ({
   _type: 'block',
@@ -34,7 +22,7 @@ const callout = (key, text) => ({_type: 'callout', _key: key, text})
 
 const stockTicker = (key, symbol) => ({_type: 'stockTicker', _key: key, symbol})
 
-const documents = [
+export const documents = [
   {
     _id: 'pte-lab.clean',
     _type: 'article',
@@ -105,7 +93,9 @@ const documents = [
     lockBody: false,
     body: [
       textBlock('dup-block', [span('span-a', 'First block sharing a `_key`.')]),
-      textBlock('dup-block', [span('span-b', 'Second block sharing a `_key`.')]),
+      textBlock('dup-block', [
+        span('span-b', 'Second block sharing a `_key`.'),
+      ]),
       textBlock('dup-children-block', [
         span('dup-span', 'One span, '),
         span('dup-span', 'another span sharing a `_key`.'),
@@ -151,7 +141,27 @@ const documents = [
   },
 ]
 
-for (const doc of documents) {
-  await client.createOrReplace(doc)
-  console.log(`seeded ${doc._id}`)
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const token = process.env.SANITY_PTE_LAB_TOKEN
+
+  if (!token) {
+    console.error(
+      'SANITY_PTE_LAB_TOKEN is not set. Run this script with `node --env-file=.env.local scripts/seed.mjs` ' +
+        '(via `pnpm --filter studio seed`), with `.env.local` populated from `~/code/@portabletext/.pte-lab.env`.',
+    )
+    process.exit(1)
+  }
+
+  const client = createClient({
+    projectId: 'e2sapjbh',
+    dataset: 'scratch',
+    apiVersion: '2026-01-01',
+    token,
+    useCdn: false,
+  })
+
+  for (const doc of documents) {
+    await client.createOrReplace(doc)
+    console.log(`seeded ${doc._id}`)
+  }
 }

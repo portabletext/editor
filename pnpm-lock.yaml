@@ -464,6 +464,42 @@ importers:
 
   apps/studio:
     dependencies:
+      '@portabletext/block-tools':
+        specifier: workspace:*
+        version: link:../../packages/block-tools
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
+      '@portabletext/html':
+        specifier: workspace:*
+        version: link:../../packages/html
+      '@portabletext/patches':
+        specifier: workspace:*
+        version: link:../../packages/patches
+      '@portabletext/plugin-dnd':
+        specifier: workspace:*
+        version: link:../../packages/plugin-dnd
+      '@portabletext/plugin-list-index':
+        specifier: workspace:*
+        version: link:../../packages/plugin-list-index
+      '@portabletext/plugin-markdown-shortcuts':
+        specifier: workspace:*
+        version: link:../../packages/plugin-markdown-shortcuts
+      '@portabletext/plugin-one-line':
+        specifier: workspace:*
+        version: link:../../packages/plugin-one-line
+      '@portabletext/plugin-paste-link':
+        specifier: workspace:*
+        version: link:../../packages/plugin-paste-link
+      '@portabletext/plugin-table':
+        specifier: workspace:*
+        version: link:../../packages/plugin-table
+      '@portabletext/plugin-typography':
+        specifier: workspace:*
+        version: link:../../packages/plugin-typography
+      '@portabletext/sanity-bridge':
+        specifier: workspace:*
+        version: link:../../packages/sanity-bridge
       '@sanity/vision':
         specifier: 6.12.0
         version: 6.12.0(28d36e74a564dd3733518659efc7c733)
@@ -480,9 +516,15 @@ importers:
         specifier: ^6.5.3
         version: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.62.1
+        version: 1.62.1
       '@sanity/client':
         specifier: ^8.6.2
         version: 8.6.2(vitest@4.1.11)
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.4.2
 
   examples/basic:
     dependencies:
@@ -8144,6 +8186,10 @@ packages:
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
+
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+    engines: {node: '>=12'}
 
   dotenv@8.6.0:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
@@ -20126,6 +20172,8 @@ snapshots:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
       domhandler: 5.0.3
+
+  dotenv@17.4.2: {}
 
   dotenv@8.6.0: {}
 

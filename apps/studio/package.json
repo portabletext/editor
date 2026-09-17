@@ -6,10 +6,23 @@
   "scripts": {
     "build": "sanity build",
     "dev": "sanity dev",
+    "e2e": "playwright test",
     "reset": "node --env-file=.env.local scripts/reset.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs"
   },
   "dependencies": {
+    "@portabletext/block-tools": "workspace:*",
+    "@portabletext/editor": "workspace:*",
+    "@portabletext/html": "workspace:*",
+    "@portabletext/patches": "workspace:*",
+    "@portabletext/plugin-dnd": "workspace:*",
+    "@portabletext/plugin-list-index": "workspace:*",
+    "@portabletext/plugin-markdown-shortcuts": "workspace:*",
+    "@portabletext/plugin-one-line": "workspace:*",
+    "@portabletext/plugin-paste-link": "workspace:*",
+    "@portabletext/plugin-table": "workspace:*",
+    "@portabletext/plugin-typography": "workspace:*",
+    "@portabletext/sanity-bridge": "workspace:*",
     "@sanity/vision": "6.12.0",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -17,6 +30,8 @@
     "styled-components": "^6.5.3"
   },
   "devDependencies": {
-    "@sanity/client": "^8.6.2"
+    "@playwright/test": "^1.62.1",
+    "@sanity/client": "^8.6.2",
+    "dotenv": "^17.2.3"
   }
 }

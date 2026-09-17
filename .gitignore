@@ -3,6 +3,8 @@
 .vscode
 __screenshots__
 .sanity
+test-results
+playwright-report
 dist
 node_modules
 *.tgz
