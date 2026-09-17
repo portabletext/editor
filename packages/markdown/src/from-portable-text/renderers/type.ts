@@ -100,7 +100,8 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
 // all `data:` URIs except png/gif/jpeg/webp; a `src` it rejects would
 // reparse as literal text instead of an image, so such a `src` is
 // guarded here the same way a malformed image shape is.
-const linkValidator = new markdownit().validateLink
+const md = new markdownit()
+const linkValidator = (url: string) => md.validateLink(url)
 
 function isImageShaped(value: unknown): value is {
   src: string
