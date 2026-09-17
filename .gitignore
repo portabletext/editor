@@ -8,3 +8,4 @@ node_modules
 .claude/settings.local.json
 .vercel
 .env*.local
+perf/bench/results
