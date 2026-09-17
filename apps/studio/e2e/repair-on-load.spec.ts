@@ -41,6 +41,50 @@ async function listenFor(id: string, ms: number) {
   return events
 }
 
+// A single Actions API draft-create bundles the server's own array-key
+// enrichment (`create` plus `_system.*` bookkeeping patches plus
+// index-addressed `_key` sets like `body[0].children[1]._key`) into one
+// transaction, ahead of and independent from the editor's own intake
+// repair. Grouping by `transactionId` separates that expected server
+// transaction from the editor's.
+function groupByTransaction(events: MutationEvent[]) {
+  const order: string[] = []
+  const byTransactionId = new Map<string, MutationEvent[]>()
+  for (const event of events) {
+    if (!byTransactionId.has(event.transactionId)) {
+      order.push(event.transactionId)
+      byTransactionId.set(event.transactionId, [])
+    }
+    byTransactionId.get(event.transactionId)?.push(event)
+  }
+  return order.map((transactionId) => byTransactionId.get(transactionId) ?? [])
+}
+
+// The editor addresses the repaired block by key (`body[_key=="..."]`),
+// unlike the server's index-addressed enrichment (`body[0]...`), so the
+// block-level selector alone distinguishes an editor-emitted repair patch
+// from the server's.
+function hasEditorRepairPatch(transactionEvents: MutationEvent[]) {
+  return transactionEvents.some((event) =>
+    event.mutations.some((mutation) => {
+      if (!('patch' in mutation)) {
+        return false
+      }
+      const patch = mutation.patch as {
+        set?: Record<string, unknown>
+        diffMatchPatch?: Record<string, unknown>
+      }
+      const paths = [
+        ...Object.keys(patch.set ?? {}),
+        ...Object.keys(patch.diffMatchPatch ?? {}),
+      ]
+      return paths.some(
+        (path) => path.startsWith('body[_key==') && path.endsWith('._key'),
+      )
+    }),
+  )
+}
+
 test.describe.serial('repair-on-load', () => {
   test('structural repair persists exactly once on load', async ({page}) => {
     const id = 'pte-lab.keyless-child'
@@ -63,12 +107,15 @@ test.describe.serial('repair-on-load', () => {
 
     expect(draftEvents.length).toBeGreaterThan(0)
 
-    const firstEventIndex = events.indexOf(draftEvents[0])
-    const eventsAfterFirst = events.slice(firstEventIndex + 1)
-    const furtherDraftEvents = eventsAfterFirst.filter(
-      (event) => event.documentId === `drafts.${id}`,
-    )
-    expect(furtherDraftEvents).toEqual([])
+    const transactions = groupByTransaction(draftEvents)
+    const repairTransactions = transactions.filter(hasEditorRepairPatch)
+    expect(repairTransactions).toHaveLength(1)
+
+    const repairTransactionIndex = transactions.indexOf(repairTransactions[0])
+    const furtherRepairTransactions = transactions
+      .slice(repairTransactionIndex + 1)
+      .filter(hasEditorRepairPatch)
+    expect(furtherRepairTransactions).toEqual([])
 
     const draft = await client.getDocument(`drafts.${id}`)
     expect(draft).toBeDefined()

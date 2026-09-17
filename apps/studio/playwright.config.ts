@@ -7,7 +7,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 dotenv.config({path: path.join(dirname, '.env.local')})
 
-const baseURL = 'http://localhost:3333'
+const baseURL = 'http://localhost:3391'
 const projectId = 'e2sapjbh'
 
 export default defineConfig({
@@ -49,8 +49,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
-    port: 3333,
+    command: 'pnpm dev --port 3391',
+    port: 3391,
     reuseExistingServer: true,
     timeout: 180_000,
     env: {
