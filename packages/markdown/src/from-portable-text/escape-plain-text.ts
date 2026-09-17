@@ -4,7 +4,7 @@ import type {
   PortableTextMarkDefinition,
   PortableTextSpan,
 } from '@portabletext/types'
-import LinkifyIt from 'linkify-it'
+import {LinkifyIt} from 'linkify-it'
 
 /**
  * The CommonMark ASCII punctuation set. Only these characters can be
@@ -34,11 +34,11 @@ const BRACKET_BEFORE_LINK_OPEN = /\](?=[([])/g
  */
 const UNICODE_PUNCTUATION_OR_SYMBOL = /^(?:\p{P}|\p{S})$/u
 
-// Configured with no options, exactly like markdown-it constructs its own
-// `md.linkify` instance: same default schemas (http/https/ftp/'//'/mailto)
-// and the same built-in TLD list, so a range this reports as a link is a
-// range the real reparse will claim too.
-const linkify = new LinkifyIt()
+// Mirrors `md.linkify` in `markdown-to-portable-text.ts`: same default
+// schemas (http/https/ftp/'//'/mailto), the same built-in TLD list, and the
+// same `fuzzyLink`/`urlAuth` overrides, so a range this reports as a link is
+// a range the real reparse will claim too.
+const linkify = new LinkifyIt({fuzzyLink: true, urlAuth: true})
 
 type LeafPiece =
   | {kind: 'text'; raw: string; isLinkLabel: boolean; markSignature: string}

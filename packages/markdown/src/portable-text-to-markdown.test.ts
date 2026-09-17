@@ -4325,6 +4325,32 @@ describe(portableTextToMarkdown.name, () => {
       ])
     })
 
+    test('a bare URL with a user:pass auth part round-trips byte-identical and gains a link mark', () => {
+      const text = 'http://user:pass@example.com/x'
+      const inKeys = createTestKeyGenerator()
+      const portableText = [normalBlock(inKeys(), inKeys(), text)]
+
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe(text)
+
+      const reparsed = markdownToPortableText(markdown, {
+        keyGenerator: createTestKeyGenerator(),
+      })
+      const outKeys = createTestKeyGenerator()
+      const blockKey = outKeys()
+      const linkKey = outKeys()
+      const spanKey = outKeys()
+      expect(reparsed).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [{_key: linkKey, _type: 'link', href: text}],
+          children: [{_type: 'span', _key: spanKey, text, marks: [linkKey]}],
+        },
+      ])
+    })
+
     describe('leading spaces before a block marker', () => {
       // CommonMark allows up to 3 leading spaces before a block marker
       // without affecting how the line is parsed.

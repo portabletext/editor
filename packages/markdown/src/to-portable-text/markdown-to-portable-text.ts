@@ -8,6 +8,7 @@ import {
   type Schema,
 } from '@portabletext/schema'
 import markdownit from 'markdown-it'
+import type {Token} from 'markdown-it'
 import {
   blockquoteStyleDefinition,
   defaultCalloutObjectDefinition,
@@ -289,6 +290,18 @@ const defaultOptions = {
     table: tableBlockMatcher,
   },
 } as const satisfies Options
+
+/**
+ * Reads a token attribute as a string. markdown-it's own `Token#attrs` type
+ * also allows numeric values, for attributes like an ordered list's
+ * `start`, but the attributes this file reads (`src`, `href`, `title`,
+ * `style`) are always strings, set by markdown-it's own link/image/table
+ * parsing.
+ */
+function stringAttr(token: Token, name: string): string | undefined {
+  const value = token.attrGet(name)
+  return typeof value === 'string' ? value : undefined
+}
 
 /**
  * Reads GFM column alignment from a markdown-it cell token's `style`
@@ -635,6 +648,11 @@ export function markdownToPortableText(
   })
     .enable(['strikethrough', 'table'])
     .use(alert)
+
+  // Fuzzy links (bare `www.example.com`) and the URL auth part scan
+  // (`user:pass@host`) are off by default; this must stay in lockstep
+  // with the mirror `LinkifyIt` in `escape-plain-text.ts`.
+  md.linkify.set({fuzzyLink: true, urlAuth: true})
 
   const tokens = md.parse(markdown, {})
 
@@ -1913,7 +1931,7 @@ export function markdownToPortableText(
         // from the header so each column contributes exactly one entry.
         if (currentTable && inTableHead && token.type === 'th_open') {
           currentTable.alignment.push(
-            extractAlignmentFromStyleAttr(token.attrGet('style')),
+            extractAlignmentFromStyleAttr(stringAttr(token, 'style') ?? null),
           )
         }
 
@@ -2079,12 +2097,9 @@ export function markdownToPortableText(
             break
           }
 
-          const src =
-            imageToken.attrs?.find(([name]) => name === 'src')?.at(1) || ''
+          const src = stringAttr(imageToken, 'src') || ''
           const alt = unescapeImageAndLinkText(imageToken.content || '')
-          const title =
-            imageToken.attrs?.find(([name]) => name === 'title')?.at(1) ||
-            undefined
+          const title = stringAttr(imageToken, 'title')
 
           const blockImageObject = consolidatedOptions.types.image({
             context: {
@@ -2438,9 +2453,7 @@ export function markdownToPortableText(
               break
             }
             case 'link_open': {
-              const href = childToken.attrs
-                ?.find(([name]) => name === 'href')
-                ?.at(1)
+              const href = stringAttr(childToken, 'href')
 
               if (!href) {
                 const missingHrefSnippet = truncateSnippet(
@@ -2461,9 +2474,7 @@ export function markdownToPortableText(
                 break
               }
 
-              const title = childToken.attrs
-                ?.find(([name]) => name === 'title')
-                ?.at(1)
+              const title = stringAttr(childToken, 'title')
 
               const linkObject = consolidatedOptions.marks.link({
                 context: {
@@ -2516,8 +2527,7 @@ export function markdownToPortableText(
               break
             }
             case 'image': {
-              const src =
-                childToken.attrs?.find(([name]) => name === 'src')?.at(1) || ''
+              const src = stringAttr(childToken, 'src') || ''
               const alt = unescapeImageAndLinkText(childToken.content || '')
 
               // Try to create an inline image first

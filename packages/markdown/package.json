@@ -49,20 +49,18 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@mdit/plugin-alert": "^0.23.2",
+    "@mdit/plugin-alert": "^2.0.1",
     "@portabletext/schema": "workspace:^",
     "@portabletext/toolkit": "^6.0.0",
     "@sanity/diff-match-patch": "catalog:",
-    "linkify-it": "^5.0.2",
-    "markdown-it": "^14.3.0"
+    "linkify-it": "^6.1.0",
+    "markdown-it": "^15.0.2"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@portabletext/types": "^4.0.2",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
-    "@types/linkify-it": "^5.0.0",
-    "@types/markdown-it": "^14.1.2",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
