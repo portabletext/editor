@@ -35,6 +35,14 @@ Trivial commits get **no body**. One logical change per commit: tests pinning a 
 
 Once a PR is **in review**, follow-ups are `fixup!` commits (`git commit --fixup <sha>`), squashed with `git rebase -i --autosquash` before merge. Before review, fold changes into the logical commit they belong to. Merge-time history is clean logical commits, never a trail of "address review feedback".
 
+The `check-commits` CI job exists only to enforce the last step: it fails
+while any `fixup!`/`squash!`/`amend!` subject is on the PR, so fixup
+commits cannot reach `main` unsquashed. A red `check-commits` on a PR
+mid-review is the expected state, not a problem to fix: do not reword
+fixups to appease it, and do not autosquash early (that folds review
+follow-ups before the reviewer has seen them). It goes green at the
+pre-merge autosquash.
+
 ## Exemplars (real, from the repo)
 
 ### fix with a lying-contract framing (`24996df6b`)
