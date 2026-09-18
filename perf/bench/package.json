@@ -1,0 +1,33 @@
+{
+  "name": "bench",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Keydown-to-paint typing latency bench for @portabletext/editor",
+  "type": "module",
+  "scripts": {
+    "bench": "tsx cli/index.ts",
+    "check:types": "tsc",
+    "test": "vitest --run",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@portabletext/editor": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@sanity/tsconfig": "catalog:tooling",
+    "@types/node": "catalog:tooling",
+    "@types/react": "catalog:tooling",
+    "@types/react-dom": "catalog:tooling",
+    "@vitejs/plugin-react": "catalog:tooling",
+    "esbuild": "0.28.2",
+    "playwright": "1.62.1",
+    "tsx": "^4.23.12",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
+    "vitest": "catalog:tooling"
+  }
+}
