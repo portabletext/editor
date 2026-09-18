@@ -34,11 +34,14 @@ export type ApplyMarkdownEditOptions = {
    * options that produced the markdown that was edited: key
    * resolution aligns the edit against a fresh canonical serialization
    * of `storedPortableText`, so the two serializations must agree for
-   * that alignment to be meaningful.
+   * that alignment to be meaningful. Excludes `onDegradation`: this
+   * serialization only ever runs internally, to canonicalize
+   * `storedPortableText` for alignment, never on `editedMarkdown` or its
+   * result, so there is nothing here for a caller to observe losses in.
    */
   serialize?: Omit<
     NonNullable<Parameters<typeof portableTextToMarkdown>[1]>,
-    'schema'
+    'schema' | 'onDegradation'
   >
   /**
    * Reports how stored `_key`s were reconciled onto the converted
@@ -378,7 +381,7 @@ function canonicalizeStored(
 ): Array<Node> {
   const storedClone = structuredClone(stored) as Array<PortableTextBlock>
   const storedMarkdown = portableTextToMarkdown(storedClone, {
-    ...options?.serialize,
+    ...stripOnDegradation(options?.serialize),
     schema: options?.schema,
   })
   const {onDegradation, ...canonicalDeserializeOptions} =
@@ -389,6 +392,15 @@ function canonicalizeStored(
     schema: options?.schema,
     keyGenerator: () => `__canonical_${canonicalKeyCounter++}`,
   }) as unknown as Array<Node>
+}
+
+function stripOnDegradation<T extends object>(
+  value: T | undefined,
+): Omit<T, 'onDegradation'> {
+  const {onDegradation: _onDegradation, ...rest} = (value ?? {}) as T & {
+    onDegradation?: unknown
+  }
+  return rest
 }
 
 /**
@@ -1623,7 +1635,7 @@ function isEmptyTextBlock(
   }
   const rendered = portableTextToMarkdown(
     [structuredClone(node)] as unknown as Array<PortableTextBlock>,
-    {...options?.serialize, schema: options?.schema},
+    {...stripOnDegradation(options?.serialize), schema: options?.schema},
   )
   if (rendered === '') {
     return true
