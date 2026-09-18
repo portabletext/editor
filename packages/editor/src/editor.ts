@@ -6,6 +6,11 @@ import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
 import type {EditorEmittedEvent} from './editor/relay'
 import type {RegistrableNode} from './renderers/renderer.types'
+import type {
+  RangeDecorationMapping,
+  RangeDecorationRegistration,
+  RegistrableRangeDecoration,
+} from './types/editor'
 
 /**
  * @public
@@ -68,6 +73,44 @@ export type Editor = {
    * @public
    */
   registerNode: (config: {node: RegistrableNode}) => () => void
+  /**
+   * @beta
+   *
+   * Register range decorations, independent of any
+   * `PortableTextEditable`'s `rangeDecorations` prop. Multiple sources
+   * (the prop and any number of registrations) compose: their
+   * decorations flatten with every `PortableTextEditable`'s prop
+   * decorations first (in mount order when there's more than one
+   * editable), then each registration in the order it was made. The
+   * prop always renders outermost, even when a registration's decoration
+   * mounts before the `PortableTextEditable` carrying the prop. Nesting
+   * is outer-to-inner across sources the same way array order nests
+   * within one registration.
+   *
+   * Each range decoration needs a stable, unique `id` so `update` can
+   * reconcile by identity: a decoration whose `id` carries over keeps its
+   * live position (and any in-flight move) across the call, only
+   * adopting a new `range` when the `id`'s `range` actually changed,
+   * while always picking up a new `render` reference. Registering (or
+   * updating with) more than one decoration sharing an `id` throws
+   * synchronously, before any state change. `update` and `unregister`
+   * after `unregister` are no-ops.
+   *
+   * This is the primitive: `@portabletext/plugin-range-decorations`
+   * builds the batched event, `current`-snapshot, and hook/component
+   * vocabulary consumers want on top of it.
+   */
+  registerRangeDecorations: (config: {
+    rangeDecorations: Array<RegistrableRangeDecoration>
+    /**
+     * Synchronous, per engine operation that moved, touched, or
+     * destroyed at least one of this registration's decorations; one
+     * entry per affected decoration. Fires mid-apply: do not dispatch
+     * editor events from it. Fixed at registration. No calls before
+     * `ready`, none from `update()` reconciliation.
+     */
+    onMapped?: (mappings: Array<RangeDecorationMapping>) => void
+  }) => RangeDecorationRegistration
   send: (event: EditorEvent) => void
   /**
    * Register an event listener.

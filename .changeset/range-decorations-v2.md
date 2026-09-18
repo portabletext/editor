@@ -1,0 +1,11 @@
+---
+'@portabletext/editor': minor
+---
+
+feat: add the range decoration primitive (`registerRangeDecorations`)
+
+`editor.registerRangeDecorations({rangeDecorations, onMapped?})` registers a set of range decorations independent of any `PortableTextEditable`'s `rangeDecorations` prop, and returns a `RangeDecorationRegistration`: `update(rangeDecorations)`, `unregister()`, and `getDecorations()`, a fresh `Array<{id, range}>` of the live, edit-adjusted positions at call time (empty before the editor's `ready` event). Each decoration is `{id, range, render}`: `id` is the identity `update()` reconciles by (duplicates throw, and a throwing `update()` leaves the registration unchanged), `range` is a non-nullable editor selection, and `render` is a plain-called factory receiving `{children, isFirst, isLast}` (`isFirst`/`isLast` mark the fragments carrying the decoration's start/end point, both `true` when collapsed). Registrations compose with each other and with the legacy `rangeDecorations` prop: the prop renders outermost, then each registration in the order it was made, array order nesting first-outermost within one registration.
+
+`onMapped` receives one `RangeDecorationMapping` per engine operation that moved, touched, or destroyed one of the registration's decorations, one entry per affected decoration: `{id, previousRange, newRange, contentTouched, origin}`. `newRange` is `null` when the operation destroyed the decoration (deleting exactly the decorated text counts: an expanded decoration collapsed to zero length by an edit is destroyed; a decoration that is collapsed by configuration, like a presence caret, never dies from staying collapsed), and carries over the same object reference as `previousRange` when the operation didn't move it. `onMapped` fires synchronously, mid-apply (do not dispatch editor events from it), is fixed at registration, and never fires before the editor's `ready` event or from `update()`'s own reconciliation.
+
+This is the framework-neutral primitive. `@portabletext/plugin-range-decorations` builds the batched `moved`/`content-changed`/`lost` events, the `current` live-position snapshot, `useRangeDecorationLayer`, `RangeDecorationPlugin`, and `RangeDecorationWidget` on top of it.
