@@ -1,0 +1,66 @@
+name: Browser tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+concurrency:
+  group: studio-e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Browser tests (sanity studio)
+    # Fork PRs never receive the write token, so a labeled fork run could
+    # only fail at seeding; skip it cleanly instead.
+    if: "github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'trigger: studio-e2e'))"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          cache: pnpm
+          node-version: lts/*
+
+      - name: Install project dependencies
+        run: pnpm install
+
+      - name: Build the editor packages the studio rig depends on
+        run: pnpm exec turbo build --filter='studio^...'
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter studio exec playwright install chromium --with-deps
+
+      - name: Seed the pte-lab fixture articles
+        working-directory: apps/studio
+        env:
+          SANITY_PTE_LAB_TOKEN: ${{ secrets.SANITY_PTE_LAB_TOKEN }}
+        run: node scripts/seed.mjs
+
+      - name: Run the Studio Lab Playwright suite
+        env:
+          SANITY_PTE_LAB_TOKEN: ${{ secrets.SANITY_PTE_LAB_TOKEN }}
+          # Written outside `playwright-report/`: the html reporter owns
+          # that directory and clears it as part of finalizing the report.
+          REPAIR_MATRIX_RESULTS_PATH: test-artifacts/repair-matrix-results.json
+        run: pnpm --filter studio exec playwright test --reporter=line,html
+
+      - name: Upload Playwright report and test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: studio-e2e-report
+          path: |
+            apps/studio/playwright-report
+            apps/studio/test-artifacts
+          retention-days: 7
