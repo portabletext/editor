@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.1.1
+
+### Patch Changes
+
+- [#3280](https://github.com/portabletext/editor/pull/3280) [`cdca034`](https://github.com/portabletext/editor/commit/cdca034fc6b734f8d6c76dd70a78e9d44276d968) Thanks [@christianhg](https://github.com/christianhg)! - fix: compile Portable Text fields named after Sanity built-in types
+
+  A Portable Text field whose `name` is one of Sanity's built-in type names (`text`, `image`, `url`, `slug`, ...) previously failed to compile with `Block type is not defined in this schema (required)`, even though the block was defined: the built-in type silently replaced the field's own definition. Any field name compiles now.
+
+  Passing an already-compiled schema type that is not an array throws a clear diagnostic, `Expected an array schema type but received '<name>' (jsonType: '<type>').`, with an added sentence naming the collision when the name matches one of Sanity's built-ins.
+
 ## 4.1.0
 
 ### Minor Changes
