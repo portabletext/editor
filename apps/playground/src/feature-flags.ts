@@ -22,7 +22,6 @@ export type EditorFeatureFlags = {
   mentionPickerPlugin: boolean
   slashCommandPlugin: boolean
   codeEditorPlugin: boolean
-  codeBlockPlugin: boolean
   calloutPlugin: boolean
   factBoxPlugin: boolean
   tablePlugin: boolean
@@ -43,7 +42,6 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   mentionPickerPlugin: true,
   slashCommandPlugin: true,
   codeEditorPlugin: false,
-  codeBlockPlugin: true,
   calloutPlugin: true,
   factBoxPlugin: true,
   tablePlugin: true,

@@ -26,8 +26,12 @@ const overlayStyles = tv({
 })
 
 const modalStyles = tv({
-  base: 'w-full max-w-sm mx-4',
+  base: 'w-full mx-4',
   variants: {
+    size: {
+      sm: 'max-w-sm',
+      lg: 'max-w-2xl',
+    },
     isEntering: {
       true: 'animate-in fade-in zoom-in-95 duration-200 ease-out',
     },
@@ -35,12 +39,16 @@ const modalStyles = tv({
       true: 'animate-out fade-out zoom-out-95 duration-150 ease-in',
     },
   },
+  defaultVariants: {
+    size: 'sm',
+  },
 })
 
 export function Dialog(props: {
   title: string
   icon?: React.ComponentType
   isOpen?: boolean
+  size?: 'sm' | 'lg'
   trigger: React.ReactNode
   children: (props: {close: () => void}) => React.ReactNode
   onOpenChange?: (isOpen: boolean) => void
@@ -49,7 +57,11 @@ export function Dialog(props: {
     <DialogTrigger onOpenChange={props.onOpenChange} isOpen={props.isOpen}>
       {props.trigger}
       <ModalOverlay className={overlayStyles}>
-        <Modal className={modalStyles}>
+        <Modal
+          className={(renderProps) =>
+            modalStyles({...renderProps, size: props.size})
+          }
+        >
           <RACDialog className="outline-none">
             {({close}) => (
               <Container className="flex flex-col gap-3 shadow-xl">

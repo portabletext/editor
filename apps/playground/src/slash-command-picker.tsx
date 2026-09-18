@@ -144,14 +144,14 @@ const commands: CommandMatch[] = [
     },
   },
   {
-    key: 'code-block',
-    label: 'Code Block',
+    key: 'code',
+    label: 'Code',
     description: 'Formatted code snippet',
     icon: <CodeIcon className="size-4" />,
     keywords: ['code', 'code block', 'pre', 'snippet'],
     action: {
       type: 'insert.block',
-      block: {_type: 'code-block'},
+      block: {_type: 'code'},
     },
   },
   {
@@ -166,14 +166,14 @@ const commands: CommandMatch[] = [
     },
   },
   {
-    key: 'break',
+    key: 'horizontal-rule',
     label: 'Divider',
     description: 'Horizontal rule',
     icon: <SeparatorHorizontalIcon className="size-4" />,
     keywords: ['break', 'hr', 'divider', 'separator', 'line'],
     action: {
       type: 'insert.block',
-      block: {_type: 'break'},
+      block: {_type: 'horizontal-rule'},
     },
   },
 ]
