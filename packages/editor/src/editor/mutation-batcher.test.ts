@@ -9,14 +9,17 @@ import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
+import {createMutationLedger} from './mutation-ledger'
 import {createRelay} from './relay'
 
 const FLUSH_INTERVAL = 500
 const TYPE_DEBOUNCE = 250
+const ACK_TIMEOUT = 3000
 
 function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const editorEngine = createEditor() as PortableTextEditorEngine
   editorEngine.isDeferringMutations = false
+  editorEngine.mutationLedger = createMutationLedger()
 
   let isReadOnly = readOnly
   let patchListener:
@@ -149,6 +152,188 @@ describe('mutation batcher', () => {
       {patches: [createPatch('c')]},
     ])
     expect(harness.editorEngine.isDeferringMutations).toBe(false)
+  })
+
+  test('keeps the fire-and-forget cadence for a host that never echoes', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    harness.sendPatch(createPatch('b'), 'op-2')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    // `a` was never acknowledged, but without a proven echo channel the
+    // gate stays inactive.
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+    ])
+  })
+
+  test('holds the next batch until the previous one is echoed, once the host has echoed', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+    expect(
+      harness.editorEngine.mutationLedger.acknowledge(createPatch('a')),
+    ).toBe(true)
+
+    harness.sendPatch(createPatch('b'), 'op-2')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    harness.sendPatch(createPatch('c'), 'op-3')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    // `b` is in flight and unacknowledged, so `c` holds.
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+    ])
+
+    // The echo drains the backlog and flushes the gated batch eagerly,
+    // without waiting for the next interval tick.
+    harness.editorEngine.mutationLedger.acknowledge(createPatch('b'))
+
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+      {patches: [createPatch('c')]},
+    ])
+  })
+
+  test('a gated batch degrades to send-anyway after the ack timeout', () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+    harness.editorEngine.mutationLedger.acknowledge(createPatch('a'))
+
+    harness.sendPatch(createPatch('b'), 'op-2')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    harness.sendPatch(createPatch('c'), 'op-3')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+    expect(harness.mutationSends).toHaveLength(2)
+
+    vi.advanceTimersByTime(ACK_TIMEOUT)
+
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+      {patches: [createPatch('c')]},
+    ])
+    // The timed-out batch's records are dropped: those echoes are not
+    // coming, and only the freshly flushed batch remains in flight.
+    expect(harness.editorEngine.mutationLedger.unacknowledged()).toEqual([
+      createPatch('c'),
+    ])
+    // The degrade is loud: a broken echo loop must show up in the field.
+    expect(consoleWarn).toHaveBeenCalledWith(
+      'Mutation patches were not echoed back within the acknowledgment window. The host may have dropped or rewritten them; sending the next mutation without confirmation.',
+      [createPatch('b')],
+    )
+    consoleWarn.mockRestore()
+  })
+
+  test('a host that starts echoing mid-session activates the gate without stalling on the pre-echo backlog', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    harness.sendPatch(createPatch('b'), 'op-2')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    // The first echo ever arrives, for the newest batch: it activates the
+    // gate and drops the never-echoed `a` record along the way.
+    harness.editorEngine.mutationLedger.acknowledge(createPatch('b'))
+
+    harness.sendPatch(createPatch('c'), 'op-3')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+      {patches: [createPatch('c')]},
+    ])
+  })
+
+  test('read-only-deferred patch events relay ahead of the ack gate', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+    harness.editorEngine.mutationLedger.acknowledge(createPatch('a'))
+
+    harness.sendPatch(createPatch('b'), 'op-2')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    harness.setReadOnly(true)
+    harness.sendPatch(createPatch('c'), 'op-3')
+    harness.setReadOnly(false)
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    // The unacknowledged `b` batch holds mutation `c`, but the deferred
+    // patch event is informational and must not wait with it.
+    expect(harness.relayedPatches).toEqual([
+      createPatch('a'),
+      createPatch('b'),
+      createPatch('c'),
+    ])
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+    ])
+
+    harness.editorEngine.mutationLedger.acknowledge(createPatch('b'))
+
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+      {patches: [createPatch('c')]},
+    ])
+  })
+
+  test('the unsubscribe flush ignores the ack gate', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+    harness.editorEngine.mutationLedger.acknowledge(createPatch('a'))
+
+    harness.sendPatch(createPatch('b'), 'op-2')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    harness.sendPatch(createPatch('c'), 'op-3')
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+    expect(harness.mutationSends).toHaveLength(2)
+
+    harness.unsubscribe()
+
+    expect(harness.mutationSends).toEqual([
+      {patches: [createPatch('a')]},
+      {patches: [createPatch('b')]},
+      {patches: [createPatch('c')]},
+    ])
+  })
+
+  test('records flushed mutation patches in the ledger', () => {
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    harness.sendPatch(createPatch('b'), 'op-1')
+
+    expect(harness.editorEngine.mutationLedger.unacknowledged()).toEqual([])
+
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    expect(harness.editorEngine.mutationLedger.unacknowledged()).toEqual([
+      createPatch('a'),
+      createPatch('b'),
+    ])
   })
 
   test('relays individual patch events immediately while batching mutations', () => {

@@ -68,6 +68,15 @@ export function setupRemotePatches({
   }
 
   const handlePatches = ({patches}: {patches: Patch[]}) => {
+    for (const patch of patches) {
+      if (patch.origin === 'local') {
+        // The host echoing one of this editor's own emitted patches back:
+        // an acknowledgment that it reached the stored document, not new
+        // content to apply.
+        editor.mutationLedger.acknowledge(patch)
+      }
+    }
+
     const remotePatches = patches.filter((patch) => patch.origin !== 'local')
     if (remotePatches.length === 0) {
       return
