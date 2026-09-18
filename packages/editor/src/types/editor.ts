@@ -108,6 +108,10 @@ export type EditorSelection = {
  * The editor has invalid data in the value that can be resolved by the user
  * @public */
 export type InvalidValueResolution = {
+  /**
+   * @deprecated Never set. Mechanically fixable defects are repaired by the
+   * editor itself and no longer produce a resolution.
+   */
   autoResolve?: boolean
   patches: Patch[]
   description: string

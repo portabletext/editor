@@ -31,9 +31,11 @@ export type EditorEmittedEvent =
        * Emitted synchronously for every document-changing operation the
        * engine applies (`set.selection` is excluded; the `selection` event
        * serves selection observers), including operations from initial
-       * value sync and normalization, unlike `patch` and `mutation`
-       * events, which are held back until the editor is dirty. Do not
-       * dispatch editor events from a listener; read current state via
+       * value sync and normalization. `patch` and `mutation` events cover
+       * these operations too, including repairs the editor makes to a
+       * structurally invalid incoming value: `patch` emits as each patch
+       * is produced, `mutation` batches patches on a debounced flush. Do not dispatch editor
+       * events from a listener; read current state via
        * `editor.getSnapshot()`.
        *
        * The `operation` object is the engine's own, passed by reference:
@@ -75,6 +77,14 @@ export type EditorEmittedEvent =
 
 /**
  * @public
+ *
+ * Emitted at each debounced flush with the patches produced since the
+ * previous flush, batched so a user action and its normalization fallout
+ * arrive together. Patches the editor produced on its own, repairing a
+ * structurally invalid incoming value (a minted `_key`, a placeholder
+ * span), arrive the same way. While the editor is read-only, mutations
+ * hold until it becomes editable; a held repair that a newer incoming
+ * value supersedes is dropped rather than delivered late.
  */
 export type MutationEvent = {
   type: 'mutation'
@@ -82,9 +92,26 @@ export type MutationEvent = {
   value: Array<PortableTextBlock> | undefined
 }
 
+/**
+ * Emitted synchronously as each patch is produced, including repair
+ * patches for a structurally invalid incoming value, and regardless of
+ * read-only state; the `mutation` event batches patches separately on
+ * its own debounced schedule.
+ */
 export type PatchEvent = {
   type: 'patch'
   patch: Patch
+  /**
+   * Whether this patch is an engine repair of a structurally invalid
+   * incoming value, as opposed to user work (an edit, or a mutating
+   * Behavior action). Read-only state alone doesn't tell them apart: a
+   * handful of Behavior events still run their actions while read-only
+   * (`select`, `mouse.click`, `clipboard.copy`, `serialize`,
+   * `serialization.failure`, `serialization.success`), and a mutating
+   * Behavior on one of those produces a patch that's genuine user work
+   * even though it arrived read-only.
+   */
+  intakeRepair: boolean
 }
 
 type RelayListener = (event: EditorEmittedEvent) => void
