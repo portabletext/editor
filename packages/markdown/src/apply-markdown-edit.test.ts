@@ -1696,6 +1696,41 @@ describe(applyMarkdownEdit.name, () => {
     expect(onDegradation).toHaveBeenCalledTimes(1)
   })
 
+  test('a sneaked-in `serialize.onDegradation` (an untyped caller) is never invoked, even when the stored value has an unknown annotation', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [
+          {_type: 'customLink', _key: 'l1', href: 'https://example.com'},
+        ],
+        children: [{_type: 'span', _key: 's1', text: 'foo', marks: ['l1']}],
+      },
+    ]
+
+    applyMarkdownEdit(stored, 'bar', {
+      deserialize: {keyGenerator},
+      serialize: {onDegradation},
+    } as Parameters<typeof applyMarkdownEdit>[2])
+
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('the `serialize` option type omits `onDegradation`', () => {
+    const onDegradation = vi.fn()
+    const stored: Array<PortableTextBlock> = []
+
+    applyMarkdownEdit(stored, 'foo', {
+      deserialize: {keyGenerator: createTestKeyGenerator()},
+      // @ts-expect-error `serialize` excludes `onDegradation` (see
+      // `ApplyMarkdownEditOptions`)
+      serialize: {onDegradation},
+    })
+  })
+
   test('two fences carrying the same key stay unique against a constant keyGenerator', () => {
     const stored: Array<PortableTextBlock> = []
     const fence = (key: string, sku: string) =>

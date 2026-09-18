@@ -380,6 +380,9 @@ function flattenTable(
  * ending mid-emoji doesn't produce an unpaired surrogate. A literal newline
  * surviving into the snippet is escaped to `\n`, since the reported message
  * is one line per finding.
+ *
+ * Kept in sync manually with `from-portable-text/degradation-report.ts`'s
+ * own `truncateSnippet`.
  */
 function truncateSnippet(text: string, maxLength = 40): string | undefined {
   if (text.length === 0) {
@@ -439,6 +442,8 @@ function collectInlineText(
 // A per-group snippet/line list longer than this is truncated with an
 // `and N more` tail: the grouped message is a one-line-per-finding summary,
 // not a full dump of every occurrence (that's what `degradations` is for).
+// Kept in sync manually with `from-portable-text/degradation-report.ts`'s
+// own `MAX_LISTED_PER_GROUP`.
 const MAX_LISTED_PER_GROUP = 5
 
 function capList(values: ReadonlyArray<string>): string {

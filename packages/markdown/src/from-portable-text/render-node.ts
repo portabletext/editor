@@ -5,6 +5,7 @@ import {
   isPortableTextToolkitSpan,
   isPortableTextToolkitTextNode,
   spanToPlainText,
+  toPlainText,
   type ToolkitNestedPortableTextSpan,
   type ToolkitTextNode,
 } from '@portabletext/toolkit'
@@ -15,12 +16,27 @@ import type {
   PortableTextSpan,
   TypedObject,
 } from '@portabletext/types'
+import {serializeDegradationMessage} from './degradation-messages'
+import {
+  truncateSnippet,
+  type SerializeDegradationType,
+} from './degradation-report'
 import {planLeafEscaping} from './escape-plain-text'
 import {
   consumeListItemFirstBlock,
   markListItemFirstBlock,
 } from './list-item-first-block'
+import {DefaultUnknownListItemRenderer} from './renderers/list-item'
+import {DefaultUnknownMarkRenderer} from './renderers/marks'
+import {DefaultUnknownStyleRenderer} from './renderers/style'
 import type {PortableTextRenderers, RenderNode, Serializable} from './types'
+
+type ReportDegradation = (entry: {
+  type: SerializeDegradationType
+  message: string
+  snippet: string | undefined
+  node: object
+}) => void
 
 /**
  * ATX headings are single-line, inline-only leaf blocks: an ATX heading's
@@ -35,6 +51,7 @@ export const createRenderNode = (
   renderers: PortableTextRenderers,
   listIndexMap: Map<string, number>,
   listDepthMap: Map<string, number>,
+  reportDegradation: ReportDegradation | undefined,
 ): RenderNode => {
   // Keyed by the actual `@text` node objects `buildMarksTree` produces, not
   // by render order: a custom type/mark renderer can call `renderNode` with
@@ -43,6 +60,12 @@ export const createRenderNode = (
   // A synthetic node was never planned, so it's absent from the map and
   // renders its own raw text.
   const escapedTextByNode = new WeakMap<ToolkitTextNode, string>()
+
+  // `renderListItem` renders a styled item through a copy of the block
+  // (with `listItem` stripped, to avoid recursing back into itself), so a
+  // degradation reported on that copy could not be re-found in the input
+  // tree by reference. The alias maps the copy back to the input node.
+  const reportedNodeAliases = new WeakMap<TypedObject, TypedObject>()
 
   // Computed once per document render: a custom `hardBreak` can render to
   // something with no newline of its own (eg `() => '<br />'`), in which
@@ -140,6 +163,20 @@ export const createRenderNode = (
       typeof renderer === 'function' ? renderer : renderer[node.listItem]
     const itemHandler = handler || renderers.unknownListItem
 
+    if (
+      !handler &&
+      renderers.unknownListItem === DefaultUnknownListItemRenderer
+    ) {
+      reportDegradation?.({
+        type: 'list-item-fallback',
+        message: serializeDegradationMessage['list-item-fallback'](
+          node.listItem,
+        ),
+        snippet: truncateSnippet(toPlainText(node)),
+        node,
+      })
+    }
+
     let children: string
 
     if (node.style && node.style !== 'normal') {
@@ -150,6 +187,7 @@ export const createRenderNode = (
       // (line-start hazard escaping, the GFM checkbox prefix) onto that
       // same copy so `renderBlock` picks it up via `consumeListItemFirstBlock`.
       const {listItem: _listItem, ...blockNode} = node
+      reportedNodeAliases.set(blockNode, node)
       markListItemFirstBlock(blockNode)
       children = renderNode({
         node: blockNode,
@@ -176,7 +214,21 @@ export const createRenderNode = (
 
   function renderSpan(node: ToolkitNestedPortableTextSpan): string {
     const {markDef, markType, markKey} = node
-    const span = renderers.marks[markType] || renderers.unknownMark
+    const resolvedMark = renderers.marks[markType]
+    const span = resolvedMark || renderers.unknownMark
+
+    if (!resolvedMark && renderers.unknownMark === DefaultUnknownMarkRenderer) {
+      const type: SerializeDegradationType = markDef
+        ? 'annotation-dropped'
+        : 'decorator-dropped'
+      reportDegradation?.({
+        type,
+        message: serializeDegradationMessage[type](markType),
+        snippet: truncateSnippet(spanToPlainText(node)),
+        node,
+      })
+    }
+
     const children = node.children.map((child, childIndex) =>
       renderNode({node: child, index: childIndex, isInline: true, renderNode}),
     )
@@ -208,6 +260,18 @@ export const createRenderNode = (
         ? renderers.block
         : renderers.block[style]
     const block = handler || renderers.unknownBlockStyle
+
+    if (
+      !handler &&
+      renderers.unknownBlockStyle === DefaultUnknownStyleRenderer
+    ) {
+      reportDegradation?.({
+        type: 'style-fallback',
+        message: serializeDegradationMessage['style-fallback'](style),
+        snippet: truncateSnippet(toPlainText(node)),
+        node: reportedNodeAliases.get(node) ?? node,
+      })
+    }
 
     return block({index, isInline, children, value: node, renderNode})
   }
