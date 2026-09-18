@@ -1,7 +1,9 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import type {MutationEvent, Patch} from '../src'
 import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -52,6 +54,63 @@ const codeBlockContainer = [
   defineContainer({
     type: 'code-block',
     arrayField: 'lines',
+    render: ({children}) => <>{children}</>,
+  }),
+]
+
+const tableSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [{type: 'block'}],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const tableContainers = [
+  defineContainer({
+    type: 'table',
+    arrayField: 'rows',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer({
+    type: 'row',
+    arrayField: 'cells',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer({
+    type: 'cell',
+    arrayField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -1115,3 +1174,656 @@ describe('event.update value with containers', () => {
     })
   })
 })
+
+describe('event.update value with containers: intake repairs', () => {
+  test('Scenario: a loaded container with a missing child array materializes its default child in one repair mutation', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={calloutContainer} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+        } as never,
+      ],
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: calloutKey}, 'content'],
+      value: [
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+        },
+      ],
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: repairPatch.value,
+        },
+      ])
+    })
+
+    // The host echoes back the pre-repair snapshot: `content` is still
+    // missing. An unrelated new sibling block makes this a genuine new
+    // value, so the machine reconciles it instead of no-opping, giving a
+    // deterministic point to prove the echo alone minted nothing further.
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+        } as never,
+        {
+          _key: 'sibling',
+          _type: 'block',
+          children: [
+            {_key: 'siblingSpan', _type: 'span', text: 'sibling', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: repairPatch.value,
+          },
+          {
+            _key: 'sibling',
+            _type: 'block',
+            children: [
+              {_key: 'siblingSpan', _type: 'span', text: 'sibling', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      {timeout: 5000},
+    )
+
+    // No second repair: the echo was recognized, not re-repaired.
+    expect(patches).toEqual([repairPatch])
+    await vi.waitFor(() => {
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+    })
+  })
+
+  test('Scenario: a loaded container with a deep missing child key is repaired once, echo swallowed at block granularity', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={tableContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+      initialValue: [
+        deepTable({tableKey, rowKey, cellKey, blockKey, text: 'deep'}),
+      ],
+    })
+
+    const repairPatch = deepSpanKeyRepairPatch({
+      tableKey,
+      rowKey,
+      cellKey,
+      blockKey,
+      mintedKey: 'k6',
+    })
+
+    const repairedTable = deepTable({
+      tableKey,
+      rowKey,
+      cellKey,
+      blockKey,
+      text: 'deep',
+      spanKey: 'k6',
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([repairedTable])
+    })
+
+    // The host echoes back the pre-repair snapshot: the deep span is
+    // still keyless. An unrelated new sibling block makes this a genuine
+    // new value, so the machine reconciles it instead of no-opping.
+    editor.send({
+      type: 'update value',
+      value: [
+        deepTable({tableKey, rowKey, cellKey, blockKey, text: 'deep'}),
+        {
+          _key: 'sibling',
+          _type: 'block',
+          children: [
+            {_key: 'siblingSpan', _type: 'span', text: 'sibling', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          repairedTable,
+          {
+            _key: 'sibling',
+            _type: 'block',
+            children: [
+              {_key: 'siblingSpan', _type: 'span', text: 'sibling', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      {timeout: 5000},
+    )
+
+    // No second repair: the echo was recognized at the top-level
+    // container's own granularity, not re-repaired.
+    expect(patches).toEqual([repairPatch])
+    await vi.waitFor(() => {
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+    })
+  })
+
+  test("Scenario: two sibling containers with deep defects, one host-repaired and one still echoing, flush only the still-echoing container's repair", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableAKey = keyGenerator()
+    const rowAKey = keyGenerator()
+    const cellAKey = keyGenerator()
+    const blockAKey = keyGenerator()
+    const tableBKey = keyGenerator()
+    const rowBKey = keyGenerator()
+    const cellBKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      readOnly: true,
+      children: (
+        <>
+          <NodePlugin nodes={tableContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+      initialValue: [
+        deepTable({
+          tableKey: tableAKey,
+          rowKey: rowAKey,
+          cellKey: cellAKey,
+          blockKey: blockAKey,
+          text: 'alpha',
+        }),
+        deepTable({
+          tableKey: tableBKey,
+          rowKey: rowBKey,
+          cellKey: cellBKey,
+          blockKey: blockBKey,
+          text: 'beta',
+        }),
+      ],
+    })
+
+    const repairPatchA = deepSpanKeyRepairPatch({
+      tableKey: tableAKey,
+      rowKey: rowAKey,
+      cellKey: cellAKey,
+      blockKey: blockAKey,
+      mintedKey: 'k10',
+    })
+    const repairPatchB = deepSpanKeyRepairPatch({
+      tableKey: tableBKey,
+      rowKey: rowBKey,
+      cellKey: cellBKey,
+      blockKey: blockBKey,
+      mintedKey: 'k11',
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatchA, repairPatchB])
+      expect(editor.getSnapshot().context.value).toEqual([
+        deepTable({
+          tableKey: tableAKey,
+          rowKey: rowAKey,
+          cellKey: cellAKey,
+          blockKey: blockAKey,
+          text: 'alpha',
+          spanKey: 'k10',
+        }),
+        deepTable({
+          tableKey: tableBKey,
+          rowKey: rowBKey,
+          cellKey: cellBKey,
+          blockKey: blockBKey,
+          text: 'beta',
+          spanKey: 'k11',
+        }),
+      ])
+    })
+
+    // The host (e.g. Sanity Studio) persisted its own key for table A's
+    // deep span, but never picked up table B's repair: table B still
+    // echoes its pre-repair keyless shape. A control block makes this a
+    // new value, so the machine reconciles it instead of no-opping.
+    editor.send({
+      type: 'update value',
+      value: [
+        deepTable({
+          tableKey: tableAKey,
+          rowKey: rowAKey,
+          cellKey: cellAKey,
+          blockKey: blockAKey,
+          text: 'alpha',
+          spanKey: 'hostKey',
+        }),
+        deepTable({
+          tableKey: tableBKey,
+          rowKey: rowBKey,
+          cellKey: cellBKey,
+          blockKey: blockBKey,
+          text: 'beta',
+        }),
+        {
+          _key: 'control',
+          _type: 'block',
+          children: [
+            {_key: 'controlSpan', _type: 'span', text: 'control', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const settledValue = [
+      deepTable({
+        tableKey: tableAKey,
+        rowKey: rowAKey,
+        cellKey: cellAKey,
+        blockKey: blockAKey,
+        text: 'alpha',
+        spanKey: 'hostKey',
+      }),
+      deepTable({
+        tableKey: tableBKey,
+        rowKey: rowBKey,
+        cellKey: cellBKey,
+        blockKey: blockBKey,
+        text: 'beta',
+        spanKey: 'k11',
+      }),
+      {
+        _key: 'control',
+        _type: 'block',
+        children: [
+          {_key: 'controlSpan', _type: 'span', text: 'control', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(settledValue)
+    })
+
+    // No re-repair of either table: table A's repair was superseded by
+    // the host's own key, not re-applied, and table B's echo was
+    // recognized, not re-repaired.
+    expect(patches).toEqual([repairPatchA, repairPatchB])
+
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    // Only table B's repair flushes: table A's repair bulk was dropped as
+    // superseded once the host's own key for table A landed.
+    await vi.waitFor(() => {
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatchB],
+      ])
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual(settledValue)
+  })
+
+  test('Scenario: a stale echo of a keyless container with a deep typeless block delivers every repair patch, none dropped', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+
+    // The table itself arrives without a `_key`, and the block nested
+    // three levels down (table > row > cell > block) arrives without a
+    // `_type` on top of that. `normalizeNode`'s missing-`_type` arm (the
+    // second per-node arm) fires before its missing-`_key` arm (the
+    // fourth), so the deep block gets its `_type` set, then its own
+    // `_key` minted, while the table is still keyless: both of those
+    // repair patches address the deep block through the table's own
+    // still-numeric root index, so the mutation batcher can't resolve
+    // either one to the table's block key yet. Only the table's own
+    // `_key` mint, third and last, resolves once applied. That gives the
+    // unresolved-then-resolved repair pair `dropSupersededRepairs` must
+    // never let the cull silently swallow.
+    const rawTable = {
+      _type: 'table',
+      rows: [
+        {
+          _type: 'row',
+          _key: rowKey,
+          cells: [
+            {
+              _type: 'cell',
+              _key: cellKey,
+              content: [
+                {
+                  children: [{_type: 'span', text: 'deep', marks: []}],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    } as never
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      readOnly: true,
+      children: (
+        <>
+          <NodePlugin nodes={tableContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+      initialValue: [rawTable],
+    })
+
+    const deepTypeRepairPatch = {
+      type: 'set',
+      path: [
+        0,
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        0,
+        '_type',
+      ],
+      value: 'block',
+      origin: 'local',
+    }
+    const deepKeyRepairPatch = {
+      type: 'set',
+      path: [
+        0,
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        0,
+        '_key',
+      ],
+      value: 'k4',
+      origin: 'local',
+    }
+    const tableKeyRepairPatch = {
+      type: 'set',
+      path: [0, '_key'],
+      value: 'k5',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        deepTypeRepairPatch,
+        deepKeyRepairPatch,
+        tableKeyRepairPatch,
+      ])
+    })
+
+    const repairedTable = {
+      _type: 'table',
+      _key: 'k5',
+      rows: [
+        {
+          _type: 'row',
+          _key: rowKey,
+          cells: [
+            {
+              _type: 'cell',
+              _key: cellKey,
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k4',
+                  children: [{_type: 'span', text: 'deep', marks: []}],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(editor.getSnapshot().context.value).toEqual([repairedTable])
+
+    // The host echoes back the pre-repair snapshot verbatim: the table is
+    // still keyless and the deep block still lacks a `_type`. A control
+    // block makes this a genuine new value, not a no-op.
+    editor.send({
+      type: 'update value',
+      value: [
+        rawTable,
+        {
+          _key: 'control',
+          _type: 'block',
+          children: [
+            {_key: 'controlSpan', _type: 'span', text: 'control', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        repairedTable,
+        {
+          _key: 'control',
+          _type: 'block',
+          children: [
+            {_key: 'controlSpan', _type: 'span', text: 'control', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // The echo was recognized: no fourth repair patch.
+    expect(patches).toEqual([
+      deepTypeRepairPatch,
+      deepKeyRepairPatch,
+      tableKeyRepairPatch,
+    ])
+
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    // Every repair patch flushes once editable, none dropped by the
+    // settle the stale echo triggered.
+    await vi.waitFor(() => {
+      expect(mutations.flatMap((mutation) => mutation.patches)).toEqual([
+        deepTypeRepairPatch,
+        deepKeyRepairPatch,
+        tableKeyRepairPatch,
+      ])
+    })
+  })
+})
+
+function deepTable(args: {
+  tableKey: string
+  rowKey: string
+  cellKey: string
+  blockKey: string
+  text: string
+  spanKey?: string
+}) {
+  return {
+    _type: 'table',
+    _key: args.tableKey,
+    rows: [
+      {
+        _type: 'row',
+        _key: args.rowKey,
+        cells: [
+          {
+            _type: 'cell',
+            _key: args.cellKey,
+            content: [
+              {
+                _type: 'block',
+                _key: args.blockKey,
+                children: [
+                  args.spanKey === undefined
+                    ? ({_type: 'span', text: args.text, marks: []} as never)
+                    : {
+                        _type: 'span',
+                        _key: args.spanKey,
+                        text: args.text,
+                        marks: [],
+                      },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+}
+
+function deepSpanKeyRepairPatch(args: {
+  tableKey: string
+  rowKey: string
+  cellKey: string
+  blockKey: string
+  mintedKey: string
+}) {
+  return {
+    type: 'set',
+    path: [
+      {_key: args.tableKey},
+      'rows',
+      {_key: args.rowKey},
+      'cells',
+      {_key: args.cellKey},
+      'content',
+      {_key: args.blockKey},
+      'children',
+      0,
+      '_key',
+    ],
+    value: args.mintedKey,
+    origin: 'local',
+  }
+}
