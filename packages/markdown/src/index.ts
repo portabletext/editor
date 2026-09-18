@@ -5,6 +5,7 @@ export {
   type ReconciliationReport,
 } from './apply-markdown-edit'
 export {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
+export type {SerializeDegradation} from './from-portable-text/degradation-report'
 export {
   DefaultBlockSpacingRenderer,
   type BlockSpacingRenderer,

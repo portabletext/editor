@@ -9,8 +9,12 @@ import {
   isPortableTextListItemBlock,
   isPortableTextSpan,
 } from '@portabletext/toolkit'
-import type {PortableTextBlock, TypedObject} from '@portabletext/types'
-import {describe, expect, test} from 'vitest'
+import type {
+  ArbitraryTypedObject,
+  PortableTextBlock,
+  TypedObject,
+} from '@portabletext/types'
+import {describe, expect, test, vi} from 'vitest'
 import {
   defaultCalloutObjectDefinition,
   defaultCodeObjectDefinition,
@@ -20,6 +24,7 @@ import {
   defaultSchema,
   defaultTableObjectDefinition,
 } from './default-schema'
+import type {SerializeDegradation} from './from-portable-text/degradation-report'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
@@ -5923,6 +5928,974 @@ describe(portableTextToMarkdown.name, () => {
           markdownToPortableText(markdown, {keyGenerator}),
         ),
       ).toBe(markdown)
+    })
+  })
+
+  describe('degradation report', () => {
+    type SerializeDegradationReport = {
+      degradations: Array<SerializeDegradation>
+      message: string
+    }
+
+    test('unknown annotation: `customLink` markDef with no mark renderer', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const markDefKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [
+            {
+              _type: 'customLink',
+              _key: markDefKey,
+              href: 'https://example.com',
+            },
+          ],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: [markDefKey]},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'annotation-dropped',
+            message:
+              'Removed the `customLink` annotation, kept its text: no `customLink` mark renderer',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `customLink` annotation, kept its text: no `customLink` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('unknown decorator: undeclared `highlight` mark', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['highlight']},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `highlight` decorator, kept the text: no `highlight` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('dangling mark: a span marked `l1` with no matching `markDefs` entry reports a decorator, not an annotation', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['l1']},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `l1` decorator, kept the text: no `l1` mark renderer',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `l1` decorator, kept the text: no `l1` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('unknown block style: undeclared `fancy` style falls back to the default unknown-style renderer', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'fancy',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'style-fallback',
+            message:
+              'Dropped the `fancy` style, kept the text: no `fancy` block renderer',
+            path: [{_key: blockKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Dropped the `fancy` style, kept the text: no `fancy` block renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('list item fallback: reachable only behind a consumer-supplied partial `listItem` map, since the default `listItem` handles every kind itself and never falls through to `unknownListItem`', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        listItem: {bullet: () => 'unused'},
+        onDegradation,
+      })
+
+      expect(markdown).toBe('- foo\n')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'list-item-fallback',
+            message:
+              'Rendered the `number` list item as a plain bullet, kept the text: no `number` list-item renderer',
+            path: [{_key: blockKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Rendered the `number` list item as a plain bullet, kept the text: no `number` list-item renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('nested anchoring: an unknown annotation inside a table cell reports the full path down to the span', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const markDefKey = keyGenerator()
+      const cellBlockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: cellBlockKey,
+                      style: 'normal',
+                      markDefs: [
+                        {
+                          _type: 'customLink',
+                          _key: markDefKey,
+                          href: 'https://example.com',
+                        },
+                      ],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: spanKey,
+                          text: 'foo',
+                          marks: [markDefKey],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('|  |\n| --- |\n| foo |')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'annotation-dropped',
+            message:
+              'Removed the `customLink` annotation, kept its text: no `customLink` mark renderer',
+            path: [
+              {_key: tableKey},
+              'rows',
+              {_key: rowKey},
+              'cells',
+              {_key: cellKey},
+              'value',
+              {_key: cellBlockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `customLink` annotation, kept its text: no `customLink` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('nested anchoring: an unknown style on a list item inside a table cell reports the full path down to the item', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const itemKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: itemKey,
+                      listItem: 'bullet',
+                      level: 1,
+                      style: 'fancy',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: spanKey,
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      portableTextToMarkdown(portableText, {onDegradation})
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'style-fallback',
+            message:
+              'Dropped the `fancy` style, kept the text: no `fancy` block renderer',
+            path: [
+              {_key: tableKey},
+              'rows',
+              {_key: rowKey},
+              'cells',
+              {_key: cellKey},
+              'value',
+              {_key: itemKey},
+            ],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Dropped the `fancy` style, kept the text: no `fancy` block renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test("a row sharing the degraded span's `_key` (spec-legal: `_key` uniqueness only holds among siblings) never hijacks the path", () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const tableKey = keyGenerator()
+      const collidingKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const cellBlockKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: collidingKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: cellBlockKey,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: collidingKey,
+                          text: 'foo',
+                          marks: ['highlight'],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('|  |\n| --- |\n| foo |')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [
+              {_key: tableKey},
+              'rows',
+              {_key: collidingKey},
+              'cells',
+              {_key: cellKey},
+              'value',
+              {_key: cellBlockKey},
+              'children',
+              {_key: collidingKey},
+            ],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `highlight` decorator, kept the text: no `highlight` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('grouping: the same unknown annotation across three spans in two blocks collapses into one grouped message', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const block0Key = keyGenerator()
+      const markDef1Key = keyGenerator()
+      const span1Key = keyGenerator()
+      const spacerSpanKey = keyGenerator()
+      const markDef2Key = keyGenerator()
+      const span2Key = keyGenerator()
+      const block1Key = keyGenerator()
+      const markDef3Key = keyGenerator()
+      const span3Key = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: block0Key,
+          style: 'normal',
+          markDefs: [
+            {
+              _type: 'customLink',
+              _key: markDef1Key,
+              href: 'https://example.com/a',
+            },
+            {
+              _type: 'customLink',
+              _key: markDef2Key,
+              href: 'https://example.com/b',
+            },
+          ],
+          children: [
+            {_type: 'span', _key: span1Key, text: 'foo', marks: [markDef1Key]},
+            {_type: 'span', _key: spacerSpanKey, text: ' ', marks: []},
+            {_type: 'span', _key: span2Key, text: 'bar', marks: [markDef2Key]},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: block1Key,
+          style: 'normal',
+          markDefs: [
+            {
+              _type: 'customLink',
+              _key: markDef3Key,
+              href: 'https://example.com/c',
+            },
+          ],
+          children: [
+            {_type: 'span', _key: span3Key, text: 'baz', marks: [markDef3Key]},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo bar\n\nbaz')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'annotation-dropped',
+            message:
+              'Removed the `customLink` annotation, kept its text: no `customLink` mark renderer',
+            path: [{_key: block0Key}, 'children', {_key: span1Key}],
+            snippet: 'foo',
+          },
+          {
+            type: 'annotation-dropped',
+            message:
+              'Removed the `customLink` annotation, kept its text: no `customLink` mark renderer',
+            path: [{_key: block0Key}, 'children', {_key: span2Key}],
+            snippet: 'bar',
+          },
+          {
+            type: 'annotation-dropped',
+            message:
+              'Removed the `customLink` annotation, kept its text: no `customLink` mark renderer',
+            path: [{_key: block1Key}, 'children', {_key: span3Key}],
+            snippet: 'baz',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- Removed the `customLink` annotation, kept its text: no `customLink` mark renderer (3\u00d7: "foo", "bar", "baz")',
+        ].join('\n'),
+      })
+    })
+
+    test('no callback for clean input: nothing degrades, so the guard never fires', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+        },
+      ]
+
+      expect(
+        portableTextToMarkdown(portableText, {
+          onDegradation,
+        }),
+      ).toBe('foo')
+      expect(onDegradation).not.toHaveBeenCalled()
+    })
+
+    test('a consumer-supplied `unknownMark` renderer suppresses annotation and decorator reports', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const markDefKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [
+            {
+              _type: 'customLink',
+              _key: markDefKey,
+              href: 'https://example.com',
+            },
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo',
+              marks: [markDefKey],
+            },
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: ' bar',
+              marks: ['highlight'],
+            },
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        unknownMark: ({children}) => children,
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo bar')
+      expect(onDegradation).not.toHaveBeenCalled()
+    })
+
+    test('a consumer-supplied `unknownBlockStyle` renderer suppresses style-fallback reports', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'fancy',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        unknownBlockStyle: ({children}) => children ?? '',
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).not.toHaveBeenCalled()
+    })
+
+    test('a consumer-supplied `unknownListItem` renderer suppresses list-item-fallback reports', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        listItem: {bullet: () => 'unused'},
+        unknownListItem: ({children}) => `- ${children}\n`,
+        onDegradation,
+      })
+
+      expect(markdown).toBe('- foo\n')
+      expect(onDegradation).not.toHaveBeenCalled()
+    })
+
+    test('cap: a group with six occurrences lists five snippets', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const snippets = ['a', 'b', 'c', 'd', 'e', 'f']
+      const children: PortableTextBlock['children'] = []
+      snippets.forEach((snippet, index) => {
+        if (index > 0) {
+          children.push({
+            _type: 'span',
+            _key: keyGenerator(),
+            text: ' ',
+            marks: [],
+          })
+        }
+        children.push({
+          _type: 'span',
+          _key: keyGenerator(),
+          text: snippet,
+          marks: ['highlight'],
+        })
+      })
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children,
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('a b c d e f')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            snippet: 'a',
+          },
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+            snippet: 'b',
+          },
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: 'k0'}, 'children', {_key: 'k5'}],
+            snippet: 'c',
+          },
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: 'k0'}, 'children', {_key: 'k7'}],
+            snippet: 'd',
+          },
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: 'k0'}, 'children', {_key: 'k9'}],
+            snippet: 'e',
+          },
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: 'k0'}, 'children', {_key: 'k11'}],
+            snippet: 'f',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- Removed the `highlight` decorator, kept the text: no `highlight` mark renderer (6\u00d7: "a", "b", "c", "d", "e", and 1 more)',
+        ].join('\n'),
+      })
+    })
+
+    test('snippet truncation: a span longer than 40 characters is truncated with an ellipsis', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const longText = 'a'.repeat(45)
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: longText,
+              marks: ['highlight'],
+            },
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe(longText)
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      const truncatedSnippet = `${'a'.repeat(40)}...`
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            snippet: truncatedSnippet,
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          `- block 0: Removed the \`highlight\` decorator, kept the text: no \`highlight\` mark renderer ("${truncatedSnippet}")`,
+        ].join('\n'),
+      })
+    })
+
+    test('a keyless top-level block reports a numeric first path segment, not a generated key', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const spanKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['highlight']},
+          ],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [0, 'children', {_key: spanKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `highlight` decorator, kept the text: no `highlight` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('a keyless nested span with an unknown decorator falls back to just the top-level segment', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const blockKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', text: 'foo', marks: ['highlight']}],
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'decorator-dropped',
+            message:
+              'Removed the `highlight` decorator, kept the text: no `highlight` mark renderer',
+            path: [{_key: blockKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Removed the `highlight` decorator, kept the text: no `highlight` mark renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('a custom `types` renderer that clones a nested block under a different `_key` before rendering it falls back to just the top-level segment', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: SerializeDegradationReport) => void>()
+      const wrapperKey = keyGenerator()
+      const originalBlockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const portableText: Array<ArbitraryTypedObject> = [
+        {
+          _type: 'wrapper',
+          _key: wrapperKey,
+          block: {
+            _type: 'block',
+            _key: originalBlockKey,
+            style: 'fancy',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        },
+      ]
+
+      const markdown = portableTextToMarkdown(portableText, {
+        types: {
+          wrapper: ({value, renderNode}) => {
+            const original = (value as {block: PortableTextBlock}).block
+            const cloned = {...original, _key: 'cloned-block-key'}
+            return renderNode({
+              node: cloned,
+              index: 0,
+              isInline: false,
+              renderNode,
+            })
+          },
+        },
+        onDegradation,
+      })
+
+      expect(markdown).toBe('foo')
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]).toEqual({
+        degradations: [
+          {
+            type: 'style-fallback',
+            message:
+              'Dropped the `fancy` style, kept the text: no `fancy` block renderer',
+            path: [{_key: wrapperKey}],
+            snippet: 'foo',
+          },
+        ],
+        message: [
+          'Portable Text could not be serialized to Markdown without loss:',
+          '- block 0: Dropped the `fancy` style, kept the text: no `fancy` block renderer ("foo")',
+        ].join('\n'),
+      })
+    })
+
+    test('output is byte-identical with and without `onDegradation`, on a lossy document', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markDefKey = keyGenerator()
+      const portableText: Array<PortableTextBlock> = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [
+            {
+              _type: 'customLink',
+              _key: markDefKey,
+              href: 'https://example.com',
+            },
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo',
+              marks: [markDefKey],
+            },
+          ],
+        },
+      ]
+
+      const withoutCallback = portableTextToMarkdown(portableText)
+      const withCallback = portableTextToMarkdown(portableText, {
+        onDegradation: vi.fn(),
+      })
+
+      expect(withCallback).toBe(withoutCallback)
     })
   })
 })
