@@ -4,13 +4,13 @@ import {
   launchBrowser,
 } from '../runner/browser'
 import {bundleInstrumentation} from '../runner/bundle-instrumentation'
-import {type AbScenarioResult, runAbScenario} from '../runner/orchestrator'
+import {runAbScenario} from '../runner/orchestrator'
 import {DEFAULT_SESSION_CONFIG} from '../runner/session'
 import {serveHostDist} from '../runner/static-server'
 import {countBlocks, scenarios} from '../scenarios'
 import {hasDecidedVerdict, type Verdict} from '../stats/gate'
-import {summarize} from '../stats/quantiles'
 import {mulberry32} from '../stats/rng'
+import {printVerdictRow, toScenarioResult} from './ab-report'
 import {buildHost} from './build-host'
 import {computeRunId, readGitInfo} from './git-info'
 import {readRunnerInfo} from './runner-info'
@@ -106,58 +106,5 @@ export async function selfTestCommand(): Promise<void> {
   } finally {
     await browser.close()
     await server.close()
-  }
-}
-
-function printVerdictRow(
-  scenarioName: string,
-  abResult: AbScenarioResult,
-): void {
-  const referenceMedian = summarize(abResult.referenceSessions.flat()).median
-  const {comparison} = abResult
-  console.log(
-    `${scenarioName.padEnd(24)} ${abResult.stoppedBy.padEnd(12)} ` +
-      `${String(abResult.referenceSessions.length).padStart(5)} ${String(abResult.experimentSessions.length).padStart(5)} ` +
-      `${referenceMedian.toFixed(1).padStart(10)}ms  ` +
-      `${comparison.diff.toFixed(1)}ms [${comparison.lo.toFixed(1)}, ${comparison.hi.toFixed(1)}]`.padEnd(
-        26,
-      ) +
-      ` ${comparison.verdict}`,
-  )
-}
-
-function toScenarioResult(
-  scenarioName: string,
-  blockCount: number,
-  abResult: AbScenarioResult,
-): BenchScenarioResult {
-  const referenceSummary = summarize(abResult.referenceSessions.flat())
-  const experimentSummary = summarize(abResult.experimentSessions.flat())
-  return {
-    name: scenarioName,
-    source: 'core',
-    blockCount,
-    metrics: [
-      {
-        label: 'keydown-to-paint',
-        unit: 'ms',
-        experiment: {
-          sessions: abResult.experimentSessions,
-          summary: experimentSummary,
-          belowFloorCount: abResult.experimentBelowFloorCount,
-        },
-        reference: {
-          sessions: abResult.referenceSessions,
-          summary: referenceSummary,
-          belowFloorCount: abResult.referenceBelowFloorCount,
-        },
-        comparison: {
-          diff: abResult.comparison.diff,
-          lo: abResult.comparison.lo,
-          hi: abResult.comparison.hi,
-          verdict: abResult.comparison.verdict,
-        },
-      },
-    ],
   }
 }

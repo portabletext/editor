@@ -6,6 +6,11 @@ export interface GitInfo {
   branch: string
   mergeBaseSha?: string
   committedAt: string
+  /** `ab` only: the `--from` side's resolved commit (`sha`/`branch`/etc. above describe `--to`). */
+  reference?: {
+    sha: string
+    committedAt: string
+  }
 }
 
 export interface RunnerInfo {
@@ -24,7 +29,7 @@ export interface RunnerInfo {
 
 export interface BenchConfig {
   cpuThrottleRate: number
-  /** Only present for `self-test`: seeds the A/B bootstrap's session resampling. */
+  /** Present for `self-test` and `ab`: seeds the A/B bootstrap's session resampling. Absent from `run`'s absolute mode, which doesn't resample. */
   seed?: number
   warmupKeystrokes: number
   measuredKeystrokes: number

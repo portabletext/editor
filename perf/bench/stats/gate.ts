@@ -66,6 +66,13 @@ export function hasDecidedVerdict(
   return verdicts.some(isDecidedVerdict)
 }
 
+/** `ab` exits non-zero on a regression, but not on an improvement — unlike `self-test`, a real product change is expected to move the numbers. */
+export function hasRegressionVerdict(
+  verdicts: Array<Verdict | undefined>,
+): boolean {
+  return verdicts.some((verdict) => verdict === 'regression')
+}
+
 /**
  * Dynamic stopping: stop sampling once the CI is tight enough to decide —
  * the exact complement of gate()'s `inconclusive` boundary, so a run that

@@ -9,3 +9,4 @@ node_modules
 .vercel
 .env*.local
 perf/bench/results
+perf/bench/.cache

@@ -26,8 +26,9 @@ two of them — indices 1 and 3 — decorated).
 scenario). `pnpm bench self-test` A/Bs the same built dist against itself
 across every scenario — a regression or improvement verdict there means the
 statistics or the noise controls are broken, not that the editor changed.
-There is no PR-comparison mode yet (no merge-base build recipe, no CI
-wiring) — `run` and `self-test` are what exists.
+`pnpm bench ab --from <ref> --to <ref>` A/Bs `@portabletext/editor` built at
+two different git refs against each other (see `A/B between refs` below).
+There is still no CI wiring — all three commands are local-only.
 
 ## Noise policy
 
@@ -127,6 +128,92 @@ scenario's own fixture data is generated from a seed baked into that
 scenario's source file (`scenarios/plain.ts`, `huge-doc.ts`,
 `decorator-heavy.ts`), not from `config.seed`.
 
+`ab` writes the same `mode: 'ab'` shape `self-test` does, `schemaVersion`
+unchanged at `1`: `git.sha`/`git.committedAt`/`git.mergeBaseSha` describe the
+resolved `--to` (experiment) commit, exactly as any other run's `git` block
+would; `git.branch` is always the invoking checkout's currently checked-out
+branch, not resolved per-ref — `--from`/`--to` can be any ref, including a
+detached sha with no branch of its own. An additive
+`git.reference: {sha, committedAt}` carries the resolved `--from`
+(reference) commit. Every scenario's metric
+carries both sides' `sessions`/`summary`/`belowFloorCount` under
+`experiment`/`reference` and a `comparison` — the same per-metric shape
+`self-test` already produces, just built from two different builds instead
+of one dist against itself.
+
+## A/B between refs
+
+```bash
+cd perf/bench
+pnpm bench ab --from main --to HEAD --scenario hugeDoc
+pnpm bench ab --from main --to HEAD --all                  # every scenario
+pnpm bench ab --from main --to HEAD --all --force-build     # bust the tarball cache
+pnpm bench ab --from main --to HEAD --all --headed --trace  # same flags run has
+```
+
+`--from`/`--to` take anything `git rev-parse` accepts (branch, tag, sha).
+For each side, `cli/ref-build/pack-editor.ts` checks out the resolved commit
+into a throwaway `git worktree`, installs it with `--frozen-lockfile` (a
+replay of that commit's own install), builds `@portabletext/editor`'s
+workspace dependency closure, and `pnpm pack`s every publishable package in
+it exactly as `npm publish` would — this worktree-install-build-pack step is
+the expensive one, and the only one that's cached (see `Caching` below).
+
+`cli/ref-build/build-host-at-ref.ts` then builds the bench host from those
+tarballs — host source always comes from the _current_ checkout, since a
+historical ref never had one — in a throwaway, one-package install whose
+`package.json` points `@portabletext/editor` at the tarball and whose
+`pnpm-workspace.yaml` carries an `overrides` entry per packed package (pnpm
+no longer reads `pnpm.overrides` from `package.json`), so every transitive
+`@portabletext/*` request (the tarball's own `workspace:*` dependencies,
+rewritten to real semver ranges by `pnpm pack`) resolves to the same
+tarballs rather than the npm registry. This host build always runs fresh,
+for both sides, on every `ab` invocation.
+
+Two checks guard against the host silently falling back to the registry or
+to workspace source. `verifyPackedResolution` scans the throwaway install's
+`node_modules/.pnpm` store for every packed package and fails if any of
+them resolved to a registry version anywhere in the graph — under pnpm's
+isolated layout a transitive dependency like `@portabletext/schema` never
+appears at `node_modules/@portabletext/schema`, only inside `.pnpm`, so a
+check limited to the top level would miss an override that silently failed.
+Separately, the built dist's JS must not embed an absolute path into the
+repo, which only a host that resolved `@portabletext/editor` from workspace
+source could do.
+
+Both sides then run through the same `runAbScenario` orchestrator
+`self-test` uses, one served host against the other instead of a build
+against itself, and `ab` exits non-zero when any scenario's verdict is
+`regression` (an `improvement` prints but does not fail the run — unlike
+`self-test`, an A/B between two different builds is expected to move the
+numbers).
+
+### Caching
+
+Only the tarballs — the worktree + install + build + pack step — are cached,
+by resolved sha, under the gitignored
+`perf/bench/.cache/refs/<sha>/tarballs/`. The host is never cached: it's
+rebuilt from the current checkout's `host/`/`scenarios/`/`stats/` source for
+both sides on every `ab` invocation. This is deliberate: a cached host dist
+reflects whatever host source existed the last time that sha's tarballs
+were built, and if the checkout has since changed that source, an A/B
+between a stale cached host on one side and a freshly built one on the
+other would attribute the host's own difference to the editor. Rebuilding
+the host every time keeps both sides on the same host build by
+construction. `--force-build` deletes a side's tarball cache before
+rebuilding it. The throwaway git worktrees and host install directories are
+always removed once a side's build finishes (or fails); only the tarball
+cache persists.
+
+Two asymmetries follow from this. Uncommitted edits to `host/`,
+`scenarios/`, or `stats/` in the working tree are measured on both sides of
+every `ab` run, since the host always builds from the working tree;
+uncommitted edits to the editor itself are not, since `--from`/`--to`
+resolve to checked-out commits, never the working tree. And because the
+cache is a plain directory with no locking, this is a local, single-user
+tool: two `ab` (or `self-test`) invocations racing on the same sha can step
+on each other's tarball cache mid-write.
+
 ## Deterministic run ids
 
 `cli/git-info.ts`'s `computeRunId(mode, branch, sha)` produces
@@ -154,8 +241,9 @@ This suite is a slice of sanity's, trimmed to what measuring
   dependencies to police.
 - **No INP, page-load, soak, or settle modes.** Only the isolated-cadence
   keydown-to-paint metric and its A/B self-test exist.
-- **No PR/CI wiring, no merge-base reference build.** `run` and
-  `self-test` are local-only commands today.
+- **No CI wiring, no automatic merge-base resolution.** `ab` takes explicit
+  `--from`/`--to` refs; nothing resolves a merge-base or a PR's base branch
+  for you the way sanity's `prepare-reference` does.
 - **Tighter A/B budget.** `runAbScenario`'s per-scenario wall-clock budget
   is 5 minutes a side (`DEFAULT_ORCHESTRATOR_CONFIG.budgetMs`); sanity's
   bench budgets 8.
@@ -184,7 +272,15 @@ own header comment (`instrumentation/index.ts`, `runner/browser.ts`,
 `runner/bundle-instrumentation.ts`). `runner/session.ts`'s `toSessionResult`
 is a near-verbatim port of sanity's `toLatencies`
 (`runner/session/interaction.ts`) and carries the same pointer in its own
-comment. When `sanity-io/sanity`'s `perf/bench` changes the shared shape
-those port from (Event Timing collection, CPU calibration, the bootstrap
-kernel, the gate thresholds), check whether this bench needs the same
-change.
+comment. `cli/ref-build/pack-editor.ts` and `cli/ref-build/tarball.ts` port
+the checkout-install-build-pack shape of sanity's
+`cli/commands/buildDistAtCommit.ts` (`packProductAt`/`tarballFilename`); the
+host-install side diverges (a throwaway one-package `pnpm-workspace.yaml`
+with a hand-rolled `overrides` block, instead of sanity's sparse
+multi-package workspace checkout and its `yaml` library merge — this
+bench's host has no workspace of its own, and every override value here is
+a plain `file:` string).
+When `sanity-io/sanity`'s `perf/bench` changes the shared shape those port
+from (Event Timing collection, CPU calibration, the bootstrap kernel, the
+gate thresholds, the build-at-commit recipe), check whether this bench needs
+the same change.
