@@ -3,6 +3,7 @@ import type {DiffInterval} from './bootstrap'
 import {
   gate,
   hasDecidedVerdict,
+  hasRegressionVerdict,
   isDecidedVerdict,
   KEYSTROKE_LATENCY_THRESHOLDS,
   shouldStop,
@@ -89,5 +90,22 @@ describe('hasDecidedVerdict', () => {
   test('passes the self-test when no scenario is decided', () => {
     expect(hasDecidedVerdict(['neutral', 'inconclusive'])).toBe(false)
     expect(hasDecidedVerdict([])).toBe(false)
+  })
+})
+
+describe('hasRegressionVerdict', () => {
+  test('fails ab as soon as one scenario regresses', () => {
+    expect(
+      hasRegressionVerdict(['neutral', 'inconclusive', 'regression']),
+    ).toBe(true)
+  })
+
+  test('does not fail ab on an improvement — unlike self-test, a real change is expected to move the numbers', () => {
+    expect(hasRegressionVerdict(['neutral', 'improvement'])).toBe(false)
+  })
+
+  test('passes when every scenario is neutral or inconclusive', () => {
+    expect(hasRegressionVerdict(['neutral', 'inconclusive'])).toBe(false)
+    expect(hasRegressionVerdict([])).toBe(false)
   })
 })

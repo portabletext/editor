@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type {Browser} from 'playwright'
 import type {CaretTarget} from '../scenarios/types'
 import {bootstrapDiffOfMedians, type DiffInterval} from '../stats/bootstrap'
@@ -18,6 +19,7 @@ export interface OrchestratorConfig {
   /** Wall-clock budget (cap, not duration — the stopping rule exits early). */
   budgetMs: number
   sessionConfig: Partial<SessionConfig>
+  traceDir?: string
 }
 
 export const DEFAULT_ORCHESTRATOR_CONFIG: OrchestratorConfig = {
@@ -84,6 +86,10 @@ export async function runAbScenario(options: {
   const runOneSession = async (
     side: 'reference' | 'experiment',
   ): Promise<void> => {
+    const sessionNumber =
+      (side === 'reference'
+        ? referenceSessions.length
+        : experimentSessions.length) + 1
     const result = await withSessionRetry({
       label: `${options.scenarioName} ${side} session`,
       run: () =>
@@ -95,6 +101,12 @@ export async function runAbScenario(options: {
           target: options.target,
           instrumentationSource: options.instrumentationSource,
           config: config.sessionConfig,
+          traceFile: config.traceDir
+            ? path.join(
+                config.traceDir,
+                `trace-${options.scenarioName}-${side}-session-${sessionNumber}.zip`,
+              )
+            : undefined,
         }),
       onFailure: (error, attempt) => {
         const message = error instanceof Error ? error.message : String(error)

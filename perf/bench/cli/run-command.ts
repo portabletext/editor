@@ -10,11 +10,12 @@ import {DEFAULT_ORCHESTRATOR_CONFIG} from '../runner/orchestrator'
 import {withSessionRetry} from '../runner/retry'
 import {DEFAULT_SESSION_CONFIG, runTypingSession} from '../runner/session'
 import {serveHostDist} from '../runner/static-server'
-import {countBlocks, getScenario, scenarios} from '../scenarios'
+import {countBlocks, getScenario} from '../scenarios'
 import {summarize} from '../stats/quantiles'
 import {buildHost} from './build-host'
 import {computeRunId, readGitInfo} from './git-info'
 import {readRunnerInfo} from './runner-info'
+import {resolveScenarioNames} from './scenario-selection'
 import type {BenchRun, BenchScenarioResult} from './types'
 import {writeBenchRun} from './write-result'
 
@@ -93,16 +94,6 @@ export async function runCommand(argv: string[]): Promise<void> {
     await browser.close()
     await server.close()
   }
-}
-
-function resolveScenarioNames(
-  requested: string[] | undefined,
-  all: boolean | undefined,
-): string[] {
-  if (all || !requested || requested.length === 0) {
-    return scenarios.map((scenario) => scenario.name)
-  }
-  return requested
 }
 
 async function runScenario(options: {
