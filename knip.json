@@ -58,6 +58,14 @@
       ]
     },
     "examples/*": {},
+    "perf/bench": {
+      "entry": [
+        "cli/index.ts!",
+        "host/src/main.tsx!",
+        "host/vite.config.ts!",
+        "instrumentation/index.ts!"
+      ]
+    },
     ".": {
       "entry": ["bundle-stats.config.ts"]
     }
