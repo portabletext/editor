@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.0.10
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.1.6`
+
 ## 8.0.9
 
 ### Patch Changes
