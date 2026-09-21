@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.1.5
+
+### Patch Changes
+
+- [#3290](https://github.com/portabletext/editor/pull/3290) [`0f95709`](https://github.com/portabletext/editor/commit/0f95709d8038a4fc6768758ae11fae6e246c0be0) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @sanity/diff-match-patch to ^3.2.1
+
+- Updated dependencies [[`0f95709`](https://github.com/portabletext/editor/commit/0f95709d8038a4fc6768758ae11fae6e246c0be0)]:
+  - @portabletext/patches@3.0.1
+
 ## 8.1.4
 
 ### Patch Changes
