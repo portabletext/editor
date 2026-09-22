@@ -347,6 +347,82 @@ describe('createDecorationLayer: events', () => {
     ])
   })
 
+  test("Scenario: a same-length local edit inside a `backward` decorated range delivers 'content-changed' only, never 'moved'", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    const on = vi.fn()
+    const render = (props: DecorationRenderProps) => (
+      <span>{props.children}</span>
+    )
+    // The live, edit-adjusted position a `content-changed` event reports:
+    // bare, like every range that has been through the editor's
+    // transform, and used below to assert that event's shape.
+    const range = {
+      anchor: {path: spanPath, offset: 1},
+      focus: {path: spanPath, offset: 5},
+    }
+    // The range as registered: a `backward` own key, the same shape a
+    // consumer would capture off an editor selection.
+    const registeredRange = {...range, backward: true}
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'abcdef', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+
+    const registeredDecoration: Decoration = {
+      id: 'trackable',
+      type: 'range',
+      render,
+      range: registeredRange,
+    }
+
+    createDecorationLayer(editor, {
+      decorations: [registeredDecoration],
+      on,
+    })
+
+    // Same edit shape as the plain-range scenario above: replacing "d"
+    // nets no move, but the registered range's `backward` key is absent
+    // from the transformed range that comes back out, so a key-count
+    // comparison would misread this net-zero move as a real one.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 4},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'X'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: abcX|ef')
+    })
+
+    await vi.waitFor(() => {
+      expect(on).toHaveBeenCalledTimes(1)
+    })
+
+    expect(on.mock.calls[0]?.[0]).toEqual([
+      {
+        type: 'content-changed',
+        range,
+        decoration: registeredDecoration,
+        origin: 'local',
+      },
+    ])
+  })
+
   test('Scenario: an edit destroying a registered decoration delivers `lost` only, no other events, in that batch', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -1538,6 +1614,87 @@ describe('createDecorationLayer: reading state', () => {
       expect(block.children[0]?.text).toEqual('foo')
     })
 
+    expect(layer.current).toEqual([{id: 'a', range}])
+    expect(layer.current).toBe(before)
+  })
+
+  test("Scenario: a net-zero local burst on a `backward` decorated range flushes no `moved` event and leaves `current`'s reference unchanged", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    const on = vi.fn()
+    const render = (props: DecorationRenderProps) => (
+      <span>{props.children}</span>
+    )
+    // A `backward` own key, the same shape a consumer would capture off
+    // an editor selection: the transformed range that comes back out
+    // never carries it, even when the net position doesn't change.
+    const range = {
+      anchor: {path: spanPath, offset: 0},
+      focus: {path: spanPath, offset: 3},
+      backward: true,
+    }
+    const registeredDecoration: Decoration = {
+      id: 'a',
+      type: 'range',
+      render,
+      range,
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+
+    const layer = createDecorationLayer(editor, {
+      decorations: [registeredDecoration],
+      on,
+    })
+
+    await vi.waitFor(() => {
+      expect(layer.current).toEqual([{id: 'a', range}])
+    })
+
+    const before = layer.current
+
+    // Same net-zero burst as the plain-range scenario above: the range
+    // ends up back where it started, without ever moving through an
+    // intermediate render.
+    editor.send({
+      type: 'insert.text',
+      at: spanPath,
+      offset: 0,
+      text: 'X',
+    })
+    editor.send({
+      type: 'remove.text',
+      at: spanPath,
+      offset: 0,
+      text: 'X',
+    })
+
+    // Waiting for the applied text proves the burst already ran: the
+    // machine's operation listener runs synchronously in the `before`
+    // phase, so by the time this settles, any batcher flush the burst
+    // scheduled has already run too.
+    await vi.waitFor(() => {
+      const block = editor.getSnapshot().context
+        .value[0] as PortableTextBlock & {
+        children: Array<{text?: string}>
+      }
+      expect(block.children[0]?.text).toEqual('foo')
+    })
+
+    expect(on).not.toHaveBeenCalled()
     expect(layer.current).toEqual([{id: 'a', range}])
     expect(layer.current).toBe(before)
   })
