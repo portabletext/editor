@@ -44,6 +44,11 @@ evidence or produce it:
 - A claimed regression test must be red pre-fix: check out the pre-fix
   source (or revert the fix hunks in the working tree) and run it, unless
   the PR or commit body records the red run.
+- Break something to trust something: prove at least one pinned test red
+  by reverting or breaking the mechanism it claims to pin, even when the
+  commit body records a red run. A review that broke nothing verified
+  nothing empirically, and the strongest findings come from watching
+  which tests do _not_ notice a broken mechanism.
 - Run the gates the diff touches: `check:types`, `check:lint`,
   `check:format`, `check:knip`, and the affected package's test suites.
 - Spot-check "full value" assertions for smuggled partial matchers.
