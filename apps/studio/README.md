@@ -101,6 +101,48 @@ under the Studio's own auth-token key, so no interactive login happens.
   `test-artifacts/repair-matrix-results.json`) as a before/after baseline
   rather than pinning a specific mutation count as "correct".
 
+### Comments
+
+Fixtures: `pte-lab.comments.*` (`scripts/seed.mjs`, `commentsFixtures`).
+Specs: `e2e/comments/inline-comments.spec.ts`. Family-local support (not
+shared with repairs) lives alongside the specs: `e2e/comments/addon-dataset.ts`
+resolves and cleans up Studio's comments addon dataset
+(`e2sapjbh`'s `scratch` gets a `scratch-comments` dataset, created lazily by
+Studio on a project's first comment), and `e2e/comments/comment-ui.ts` drives
+Studio's own inline-comment UI (the floating "Add comment" button, the
+popover's comment composer, and the range-decoration span it renders around
+commented text).
+
+This family proves Studio's inline comments still work end to end against
+this branch's `rangeDecorations` consumer: creating a comment decorates the
+selected text, and editing text next to a decorated range leaves the
+decoration wrapping exactly the original commented word.
+
+- **`inline-comments.spec.ts`**:
+  - **creating an inline comment decorates the selected text**: resets the
+    control article and its addon-dataset comments, opens the document,
+    selects the word "bar", adds a comment through Studio's own UI, and
+    asserts a single decoration renders around exactly that word.
+  - **the comment highlight tracks edits**: same setup, then places the
+    caret at the start of the commented word and types two characters, and
+    asserts the decoration still wraps exactly the original word rather
+    than the new text or a shifted range.
+
+### The editor handle (test instrumentation)
+
+The workspace config mounts `TestEditorHandlePlugins`
+(`schemaTypes/test-editor-handle.tsx`) through Studio's
+`form.components.portableText.plugins` slot, which Studio renders inside
+the input's `EditorProvider`. It renders the default plugins unchanged
+and parks the field's editor instance on `window.__pteLabEditor` (first
+registration wins, so Studio's comment composer, itself a Portable Text
+editor, can neither steal nor clear the handle). Specs drive the editor
+through its own event API with it (`putCaretBefore` in
+`e2e/comments/comment-ui.ts` sends `focus` and `select` events computed
+from the editor's snapshot) instead of synthesizing DOM selections. This
+works because the root `pnpm.overrides` pin `sanity>@portabletext/editor`
+to the workspace package, so the handle shares Studio's React context.
+
 ### Environment note: `fs.watch` and this monorepo's `node_modules`
 
 `sanity dev`'s Vite dev server watches the project directory with a
