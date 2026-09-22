@@ -25,6 +25,16 @@ import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 /**
+ * `changeset version` writes this placeholder into a version section that
+ * has no changeset-derived or dependency-derived lines of its own (for
+ * example, a package released only because `updateInternalDependents:
+ * "always"` forced it). Older `@changesets/cli` releases left the section
+ * body empty instead; `annotateChangelog` treats both forms as bare so it
+ * still recognizes the section as ready to fill in.
+ */
+const NO_CHANGES_PLACEHOLDER = 'No changes in this release.'
+
+/**
  * The range pnpm publishes for a `workspace:` range once the dependency
  * is released at `releasedVersion`, or `null` when the release does not
  * move the published range: an explicit range like `workspace:^8.0.2`
@@ -60,7 +70,7 @@ export function annotateChangelog({
   const bodyStart = headingStart + heading.length
   const bodyEnd = changelog.indexOf('\n## ', bodyStart)
   const body = changelog.slice(bodyStart, bodyEnd === -1 ? undefined : bodyEnd)
-  if (body.trim() !== '') {
+  if (body.trim() !== '' && body.trim() !== NO_CHANGES_PLACEHOLDER) {
     return null
   }
 
@@ -90,7 +100,8 @@ export function annotateChangelog({
       ? `- fix(deps): require ${publishedRanges.join(', ')}`
       : '- chore: lockstep release, no changes'
 
-  return `${changelog.slice(0, bodyStart)}\n\n### Patch Changes\n\n${explanation}${changelog.slice(bodyStart)}`
+  const rest = bodyEnd === -1 ? '' : changelog.slice(bodyEnd)
+  return `${changelog.slice(0, bodyStart)}\n\n### Patch Changes\n\n${explanation}\n${rest}`
 }
 
 function main() {

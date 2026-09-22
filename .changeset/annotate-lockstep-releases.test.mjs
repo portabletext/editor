@@ -165,6 +165,64 @@ test('a second run over annotated output changes nothing', () => {
   assert.equal(annotateChangelog({...input, changelog: annotated}), null)
 })
 
+test("fills a section that only has the CLI's no-changes placeholder", () => {
+  const annotated = annotateChangelog({
+    changelog: [
+      '# @portabletext/plugin-dnd',
+      '',
+      '## 2.0.13',
+      '',
+      'No changes in this release.',
+      '',
+      '## 2.0.12',
+      '',
+      '- An earlier release line.',
+      '',
+    ].join('\n'),
+    version: '2.0.13',
+    manifest: {
+      name: '@portabletext/plugin-dnd',
+      peerDependencies: {'@portabletext/editor': 'workspace:^'},
+    },
+    releasedVersions,
+  })
+
+  assert.equal(
+    annotated,
+    [
+      '# @portabletext/plugin-dnd',
+      '',
+      '## 2.0.13',
+      '',
+      '### Patch Changes',
+      '',
+      '- fix(deps): require `@portabletext/editor@^8.1.3`',
+      '',
+      '## 2.0.12',
+      '',
+      '- An earlier release line.',
+      '',
+    ].join('\n'),
+  )
+})
+
+test('fills the no-changes placeholder when it is the last section in the file', () => {
+  const annotated = annotateChangelog({
+    changelog: '# pkg\n\n## 1.0.1\n\nNo changes in this release.\n',
+    version: '1.0.1',
+    manifest: {
+      name: 'pkg',
+      peerDependencies: {'@portabletext/editor': 'workspace:^'},
+    },
+    releasedVersions,
+  })
+
+  assert.equal(
+    annotated,
+    '# pkg\n\n## 1.0.1\n\n### Patch Changes\n\n- fix(deps): require `@portabletext/editor@^8.1.3`\n',
+  )
+})
+
 test('movedPublishedRange mirrors the pnpm workspace protocol substitutions', () => {
   assert.equal(movedPublishedRange('workspace:^', '8.1.3'), '^8.1.3')
   assert.equal(movedPublishedRange('workspace:~', '8.1.3'), '~8.1.3')
