@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.2.1
+
+### Patch Changes
+
+- [#3314](https://github.com/portabletext/editor/pull/3314) [`75a44a1`](https://github.com/portabletext/editor/commit/75a44a18a4eb44793c406abeee70ef6dbc1df0b6) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep a decoration's live position when a resupplied range differs only in extra selection keys
+  
+  `registerDecorations`' `update()` no longer treats a range differing only in extra keys (like `backward` on a captured selection) as a re-anchor, so the decoration keeps its live, edit-adjusted position.
+
 ## 8.2.0
 
 ### Minor Changes
