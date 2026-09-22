@@ -1,5 +1,11 @@
 # @portabletext/plugin-decorations
 
+## 1.0.2
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.1`
+
 ## 1.0.1
 
 ### Patch Changes
