@@ -31,7 +31,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "@sanity/client": "^8.6.2",
-    "dotenv": "^17.2.3"
+    "@sanity/client": "^8.6.2"
   }
 }

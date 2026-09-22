@@ -1,11 +1,14 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {defineConfig, devices} from '@playwright/test'
-import dotenv from 'dotenv'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-dotenv.config({path: path.join(dirname, '.env.local')})
+const envFile = path.join(dirname, '.env.local')
+if (fs.existsSync(envFile)) {
+  process.loadEnvFile(envFile)
+}
 
 const baseURL = 'http://localhost:3391'
 const projectId = 'e2sapjbh'
