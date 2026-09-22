@@ -95,6 +95,7 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^6.0.0",
+    "@sanity/diff-match-patch": "catalog:",
     "@xstate/react": "catalog:",
     "debug": "catalog:",
     "scroll-into-view-if-needed": "^3.1.0",
@@ -102,7 +103,6 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@sanity/diff-match-patch": "catalog:",
     "@sanity/diff-patch": "catalog:",
     "@sanity/json-match": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
@@ -130,8 +130,5 @@
   },
   "engines": {
     "node": ">=22.12"
-  },
-  "inlinedDependencies": {
-    "@sanity/diff-match-patch": "3.2.1"
   }
 }
