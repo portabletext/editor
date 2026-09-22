@@ -295,7 +295,7 @@ function reconcileRegisteredSource(
       previousConfig !== undefined &&
       previousLive !== undefined &&
       previousConfig.render === rangeDecoration.render &&
-      isDeepEqual(previousConfig.range, rangeDecoration.range)
+      hasSameAnchorAndFocus(previousConfig.range, rangeDecoration.range)
 
     if (fullyUnchanged && previousLive) {
       next.push(previousLive)
@@ -304,7 +304,7 @@ function reconcileRegisteredSource(
 
     const rangeUnchanged =
       previousConfig !== undefined &&
-      isDeepEqual(previousConfig.range, rangeDecoration.range)
+      hasSameAnchorAndFocus(previousConfig.range, rangeDecoration.range)
 
     if (rangeUnchanged && previousLive) {
       next.push({
@@ -345,11 +345,12 @@ function reconcileRegisteredSource(
 }
 
 /**
- * A tombstoned range can carry extra own keys (`backward`, from a
- * captured editor selection) that a moved range never does:
- * `transformRange` always returns a plain `{anchor, focus}`. Comparing
- * whole objects would treat that extra key as a deliberate re-anchor and
- * revive onto destroyed content.
+ * A range can carry extra own keys (`backward`, from a captured editor
+ * selection) that a live, edit-adjusted range never does: `transformRange`
+ * always returns a plain `{anchor, focus}`. Comparing whole objects would
+ * treat that extra key as a deliberate re-anchor, snapping a moved
+ * decoration back to its config position or reviving a tombstoned one onto
+ * destroyed content.
  */
 function hasSameAnchorAndFocus(
   a: NonNullable<EditorSelection>,

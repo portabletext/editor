@@ -641,6 +641,71 @@ describe(rangeDecorationsMachine.id, () => {
     }).toEqual({...movedSelectionA, render: renderTwo})
   })
 
+  test('Scenario: resupplying the original range with extra own keys (e.g. `backward`) after a move keeps the live position', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const selectionA = {
+      anchor: {path: spanPath, offset: 0},
+      focus: {path: spanPath, offset: 3},
+    }
+    const actor = startReadyActor(blockKey, spanKey)
+
+    const render = () => null as never
+
+    actor.send({
+      type: 'source updated',
+      sourceKey: 'registered',
+      kind: 'registered',
+      rangeDecorations: [{id: 'a', type: 'range', render, range: selectionA}],
+    })
+
+    // Move it: inserting text before the range shifts both endpoints away
+    // from `selectionA`, the range this `id` was registered with.
+    actor.send({
+      type: 'engine operation',
+      operation: {
+        type: 'insert.text',
+        path: spanPath,
+        offset: 0,
+        text: 'XY',
+      },
+      origin: 'local',
+    })
+
+    const movedSelectionA = {
+      anchor: {path: spanPath, offset: 2},
+      focus: {path: spanPath, offset: 5},
+    }
+
+    // Same anchor/focus as the original config, but with `backward: true`
+    // added, as a captured editor selection would carry: not a re-anchor.
+    actor.send({
+      type: 'source updated',
+      sourceKey: 'registered',
+      kind: 'registered',
+      rangeDecorations: [
+        {
+          id: 'a',
+          type: 'range',
+          render,
+          range: {...selectionA, backward: true},
+        },
+      ],
+    })
+
+    const decoratedRange = actor
+      .getSnapshot()
+      .context.editorEngine.decoratedRanges.find(
+        (candidate) => (candidate.rangeDecoration as {id?: string}).id === 'a',
+      )
+    expect({
+      anchor: decoratedRange?.anchor,
+      focus: decoratedRange?.focus,
+    }).toEqual(movedSelectionA)
+  })
+
   test("Scenario: each registration's `on` handler only receives its own decoration's mapping", () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
