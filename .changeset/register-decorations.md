@@ -18,7 +18,7 @@ Decorations from every source render in this order:
 
 ```ts
 const registration = editor.registerDecorations({
-  decorations: [{id: 'match-1', type: 'range', range, render: MatchHighlight}],
+  decorations: [defineDecoration({id: 'match-1', type: 'range', range, render: MatchHighlight})],
   onMapped: (mappings) => {
     // {id: 'match-1', previousRange, newRange, contentTouched, origin}
   },
@@ -29,6 +29,6 @@ registration.getDecorations() // [{id: 'match-1', range: nextRange}]
 registration.unregister()
 ```
 
-`Decoration`, `DecorationRenderProps`, `DecorationMapping`, `DecorationPosition`, and `DecorationRegistration` are the new exported types.
+`Decoration`, `DecorationRenderProps`, `DecorationMapping`, `DecorationPosition`, and `DecorationRegistration` are the new exported types, and `defineDecoration` is an identity helper in the `defineSchema` tradition: it gives a `Decoration` literal contextual typing and autocomplete without a type annotation, and accepts every member of the union. It is unrelated to `defineDecorator`, which defines a schema mark like `strong`.
 
 One additional change: two `PortableTextEditable`s under one `EditorProvider` previously fed one shared source, so the second editable's prop replaced the first's outright. Each editable's prop is now its own composed source: both coexist, and unmounting an editable removes only its own contribution.
