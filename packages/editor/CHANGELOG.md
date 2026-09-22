@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.1.8
+
+### Patch Changes
+
+- [#3303](https://github.com/portabletext/editor/pull/3303) [`47adf66`](https://github.com/portabletext/editor/commit/47adf660f2d92b03c4f31af247e64bacaa6beb99) Thanks [@christianhg](https://github.com/christianhg)! - fix(deps): replace `debug` with `obug`
+  
+  Both packages now pull in `obug`, an actively maintained ESM/TypeScript fork of `debug`, instead of `debug` itself. Debug output is unchanged: the same namespaces (`pte:*`, `pte:plugin-sdk-value:*`) are still enabled the same way, via the `DEBUG` environment variable in Node.js or `localStorage.debug` in browsers. `@types/debug` is no longer installed alongside it, since `obug` ships its own types.
+
 ## 8.1.7
 
 ### Patch Changes
