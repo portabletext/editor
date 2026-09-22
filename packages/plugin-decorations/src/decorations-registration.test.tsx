@@ -393,9 +393,8 @@ describe('createDecorationLayer: events', () => {
     })
 
     // Same edit shape as the plain-range scenario above: replacing "d"
-    // nets no move, but the registered range's `backward` key is absent
-    // from the transformed range that comes back out, so a key-count
-    // comparison would misread this net-zero move as a real one.
+    // nets no move. The registered range's `backward` key never appears
+    // in the transformed range that comes back out.
     editor.send({
       type: 'select',
       at: {
@@ -1084,6 +1083,81 @@ describe('createDecorationLayer: events', () => {
 
     expect(on.mock.calls[0]?.[0][0]?.decoration).toEqual(registeredDecoration)
   })
+
+  test('Scenario: a same-tick update() resupplying identical anchor/focus under a different key shape (e.g. `backward`) keeps the live position, exactly like resupplying the same object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    const on = vi.fn()
+    const render = (props: DecorationRenderProps) => (
+      <span>{props.children}</span>
+    )
+    const range = {
+      anchor: {path: spanPath, offset: 1},
+      focus: {path: spanPath, offset: 3},
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+
+    const registeredDecoration: Decoration = {
+      id: 'a',
+      type: 'range',
+      render,
+      range,
+    }
+
+    const layer = createDecorationLayer(editor, {
+      decorations: [registeredDecoration],
+      on,
+    })
+
+    // Queues a `moved` mapping in the batcher, not yet flushed.
+    editor.send({
+      type: 'insert.text',
+      at: spanPath,
+      offset: 0,
+      text: 'x',
+    })
+
+    const movedRange = {
+      anchor: {path: spanPath, offset: 2},
+      focus: {path: spanPath, offset: 4},
+    }
+
+    // Same tick: resupplies the same anchor/focus with `backward: true`
+    // added, as a captured editor selection would carry. Not a re-anchor,
+    // so this must behave exactly like resupplying `range` itself.
+    layer.update([
+      {id: 'a', type: 'range', render, range: {...range, backward: true}},
+    ])
+
+    await vi.waitFor(() => {
+      expect(on).toHaveBeenCalledTimes(1)
+    })
+
+    expect(on.mock.calls[0]?.[0]).toEqual([
+      {
+        type: 'moved',
+        previousRange: range,
+        newRange: movedRange,
+        decoration: registeredDecoration,
+        origin: 'local',
+      },
+    ])
+    expect(layer.current).toEqual([{id: 'a', range: movedRange}])
+  })
 })
 
 describe('createDecorationLayer: mixed-origin bursts', () => {
@@ -1629,8 +1703,8 @@ describe('createDecorationLayer: reading state', () => {
       <span>{props.children}</span>
     )
     // A `backward` own key, the same shape a consumer would capture off
-    // an editor selection: the transformed range that comes back out
-    // never carries it, even when the net position doesn't change.
+    // an editor selection. The transformed range that comes back out
+    // never carries it.
     const range = {
       anchor: {path: spanPath, offset: 0},
       focus: {path: spanPath, offset: 3},
