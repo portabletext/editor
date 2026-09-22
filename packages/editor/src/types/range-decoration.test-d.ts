@@ -1,5 +1,6 @@
 import type {PropsWithChildren, ReactElement} from 'react'
 import {describe, expectTypeOf, test} from 'vitest'
+import {defineDecoration} from '../define-decoration'
 import type {Editor} from '../editor'
 import type {EditorSelection} from './editor'
 import type {
@@ -137,5 +138,23 @@ describe('registerDecorations', () => {
     expectTypeOf(
       editor.registerDecorations({decorations: []}),
     ).toEqualTypeOf<DecorationRegistration>()
+  })
+})
+
+describe(defineDecoration.name, () => {
+  test('accepts a `Decoration` literal and preserves the union type', () => {
+    expectTypeOf(
+      defineDecoration({
+        id: 'a',
+        type: 'range',
+        range,
+        render: () => null as never,
+      }),
+    ).toEqualTypeOf<Decoration>()
+  })
+
+  test('rejects a literal without the `type` discriminant', () => {
+    // @ts-expect-error -- `type` is required on `Decoration`
+    defineDecoration({id: 'a', range, render: () => null as never})
   })
 })
