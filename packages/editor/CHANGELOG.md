@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.1.7
+
+### Patch Changes
+
+- [#3297](https://github.com/portabletext/editor/pull/3297) [`221a2e5`](https://github.com/portabletext/editor/commit/221a2e56cd34fb71c84ba0fdbe5f9912c28b7841) Thanks [@christianhg](https://github.com/christianhg)! - fix: declare `@sanity/diff-match-patch` as a runtime dependency instead of inlining it
+  
+  The package now declares `@sanity/diff-match-patch` as a regular dependency instead of bundling a private copy into its build output. `@portabletext/patches`, which the editor already depends on, installs the same package, so this removes a second, potentially different, copy of the library that used to ship inside the editor's own bundle.
+
 ## 8.1.6
 
 ### Patch Changes
