@@ -1,13 +1,13 @@
-import rawDebug from 'debug'
+import {createDebug, enabled} from 'obug'
 
 const rootName = 'pte:'
 
-function createDebugger(name: string): rawDebug.Debugger {
+function createDebugger(name: string) {
   const namespace = `${rootName}${name}`
-  if (rawDebug && rawDebug.enabled(namespace)) {
-    return rawDebug(namespace)
+  if (enabled(namespace)) {
+    return createDebug(namespace)
   }
-  return rawDebug(rootName)
+  return createDebug(rootName)
 }
 
 export const debug = {

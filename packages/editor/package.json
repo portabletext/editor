@@ -97,7 +97,7 @@
     "@portabletext/to-html": "^6.0.0",
     "@sanity/diff-match-patch": "catalog:",
     "@xstate/react": "catalog:",
-    "debug": "catalog:",
+    "obug": "catalog:",
     "scroll-into-view-if-needed": "^3.1.0",
     "xstate": "catalog:"
   },
@@ -107,7 +107,6 @@
     "@sanity/json-match": "catalog:",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
-    "@types/debug": "catalog:",
     "@types/node": "catalog:tooling",
     "@types/react": "catalog:tooling",
     "@types/react-dom": "catalog:tooling",

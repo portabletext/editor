@@ -65,7 +65,7 @@
     "@sanity/diff-patch": "^6.0.0",
     "@sanity/json-match": "^1.0.5",
     "@xstate/react": "catalog:",
-    "debug": "catalog:",
+    "obug": "catalog:",
     "xstate": "catalog:"
   },
   "devDependencies": {
@@ -75,7 +75,6 @@
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/sdk-react": "^3.0.0",
     "@sanity/tsconfig": "catalog:tooling",
-    "@types/debug": "catalog:",
     "@types/react": "catalog:tooling",
     "@types/react-dom": "catalog:tooling",
     "@vitejs/plugin-react": "catalog:tooling",
