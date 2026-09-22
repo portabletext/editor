@@ -1,9 +1,9 @@
 import {isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import {
-  and,
   assign,
   fromCallback,
   setup,
+  type ActorRefFrom,
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
@@ -12,13 +12,22 @@ import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
+import {isAfterPoint} from '../engine/point/is-after-point'
+import {isBeforePoint} from '../engine/point/is-before-point'
+import {cloneRange} from '../engine/range/clone-range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
-import type {RangeDecoration} from '../types/editor'
+import type {
+  Decoration,
+  DecorationMapping,
+  EditorSelection,
+  RangeDecoration,
+} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -53,33 +62,503 @@ const engineOperationCallback: CallbackLogicFunction<
 }
 
 export type DecoratedRange = Range & {
-  rangeDecoration: RangeDecoration
+  rangeDecoration: RangeDecoration | Decoration
+  kind: RangeDecorationSourceKind
   merge: (leaf: PortableTextSpan, decoration: object) => void
 }
 
+export type LeafRangeDecoration =
+  | {
+      kind: 'prop'
+      rangeDecoration: RangeDecoration
+      isFirst: boolean
+      isLast: boolean
+    }
+  | {
+      kind: 'registered'
+      rangeDecoration: Decoration
+      isFirst: boolean
+      isLast: boolean
+    }
+
+type RangeDecorationSourceKind = 'prop' | 'registered'
+
+/**
+ * One source's decorations. `rangeDecorations` is the raw config last
+ * supplied by the source (the `PortableTextEditable` prop, or a
+ * `registerDecorations` call). `decoratedRanges` is the live,
+ * positionally up-to-date state, moved by local/remote edits and
+ * reconciled by `id` for registered sources. `deadSelections` tombstones
+ * a registered id whose decoration died, keyed to the range it died
+ * under. `initialized` marks whether `decoratedRanges` has been built
+ * from `rangeDecorations` yet.
+ */
+type RangeDecorationSource = {
+  sourceKey: string
+  kind: RangeDecorationSourceKind
+  rangeDecorations: Array<RangeDecoration | Decoration>
+  decoratedRanges: Array<DecoratedRange>
+  deadSelections: Map<string, EditorSelection>
+  initialized: boolean
+  /**
+   * Only meaningful for a `registered` source; fixed at registration.
+   * Receives this source's mappings for one engine operation, one entry
+   * per affected decoration, in this source's array order.
+   */
+  on?: (mappings: Array<DecorationMapping>) => void
+}
+
+/**
+ * The per-fragment record `mergeRangeDecoration` accumulates before the
+ * final `isFirst`/`isLast` pass. `decorationStart`/`decorationEnd` are the
+ * decoration's clipped offsets local to the span being merged into;
+ * `isRangeStart`/`isRangeEnd` say whether that span is where the
+ * decoration's true (document-wide) start/end point lands. A fragment is
+ * only ever the decoration's first (or last) rendered piece when both the
+ * span-level and the offset-level condition hold.
+ */
+type PendingLeafRangeDecoration = {
+  rangeDecoration: RangeDecoration | Decoration
+  kind: RangeDecorationSourceKind
+  isRangeStart: boolean
+  isRangeEnd: boolean
+  decorationStart: number
+  decorationEnd: number
+}
+
 function mergeRangeDecoration(
-  leaf: PortableTextSpan & {rangeDecorations?: Array<RangeDecoration>},
+  leaf: PortableTextSpan & {
+    rangeDecorations?: Array<PendingLeafRangeDecoration>
+  },
   decoration: object,
 ) {
-  const {rangeDecoration} = decoration as {rangeDecoration: RangeDecoration}
-  leaf.rangeDecorations = [...(leaf.rangeDecorations ?? []), rangeDecoration]
+  const {
+    rangeDecoration,
+    kind,
+    isRangeStart,
+    isRangeEnd,
+    decorationStart,
+    decorationEnd,
+  } = decoration as PendingLeafRangeDecoration
+  leaf.rangeDecorations = [
+    ...(leaf.rangeDecorations ?? []),
+    {
+      rangeDecoration,
+      kind,
+      isRangeStart,
+      isRangeEnd,
+      decorationStart,
+      decorationEnd,
+    },
+  ]
+}
+
+function buildPropDecoratedRangesFromScratch(
+  rangeDecorations: Array<RangeDecoration>,
+): Array<DecoratedRange> {
+  const decoratedRanges: Array<DecoratedRange> = []
+
+  for (const rangeDecoration of rangeDecorations) {
+    if (!rangeDecoration.selection) {
+      rangeDecoration.onMoved?.({
+        newSelection: null,
+        rangeDecoration,
+        origin: 'local',
+      })
+      continue
+    }
+
+    decoratedRanges.push({
+      rangeDecoration,
+      kind: 'prop',
+      merge: mergeRangeDecoration,
+      ...rangeDecoration.selection,
+    })
+  }
+
+  return decoratedRanges
+}
+
+function buildRegisteredDecoratedRangesFromScratch(
+  rangeDecorations: Array<Decoration>,
+): Array<DecoratedRange> {
+  return rangeDecorations.map((rangeDecoration) => {
+    const range = cloneRange(rangeDecoration.range)
+    return {
+      rangeDecoration: {...rangeDecoration, range},
+      kind: 'registered',
+      merge: mergeRangeDecoration,
+      ...range,
+    }
+  })
+}
+
+/**
+ * The two configuration shapes (`selection` vs. `range`, and only the
+ * registered one tombstones by `id`) aren't interchangeable.
+ */
+function buildDecoratedRangesFromScratch(
+  kind: RangeDecorationSourceKind,
+  rangeDecorations: Array<RangeDecoration | Decoration>,
+): Array<DecoratedRange> {
+  if (kind === 'registered') {
+    return buildRegisteredDecoratedRangesFromScratch(
+      rangeDecorations as Array<Decoration>,
+    )
+  }
+
+  return buildPropDecoratedRangesFromScratch(
+    rangeDecorations as Array<RangeDecoration>,
+  )
+}
+
+/**
+ * The registered-source config mirror (`source.rangeDecorations`, read back
+ * as `previousConfig` by `reconcileRegisteredSource`) must not alias the
+ * consumer's own range objects: `isDeepEqual` short-circuits on reference
+ * identity, so a consumer that mutates a range in place and calls `update()`
+ * with that same object would otherwise see the mutation silently ignored.
+ */
+function cloneRegisteredConfig(
+  rangeDecorations: Array<Decoration>,
+): Array<Decoration> {
+  return rangeDecorations.map((rangeDecoration) => ({
+    ...rangeDecoration,
+    range: cloneRange(rangeDecoration.range),
+  }))
+}
+
+/**
+ * The `PortableTextEditable` prop's equality guard: a decoration is
+ * only rebuilt when its anchor, focus, or payload actually changed. This
+ * keeps the `rangeDecoration` object (and its `component`/`onMoved`
+ * references) stable across renders that resupply the same configuration,
+ * which downstream leaf memoization relies on to skip re-rendering.
+ */
+function hasDifferentDecorations(
+  previous: Array<DecoratedRange>,
+  next: Array<RangeDecoration>,
+): boolean {
+  const existingRangeDecorations = previous.map((decoratedRange) => {
+    const rangeDecoration = decoratedRange.rangeDecoration as RangeDecoration
+    return {
+      anchor: rangeDecoration.selection?.anchor,
+      focus: rangeDecoration.selection?.focus,
+      payload: rangeDecoration.payload,
+    }
+  })
+
+  const newRangeDecorations = next.map((rangeDecoration) => ({
+    anchor: rangeDecoration.selection?.anchor,
+    focus: rangeDecoration.selection?.focus,
+    payload: rangeDecoration.payload,
+  }))
+
+  return !isDeepEqual(existingRangeDecorations, newRangeDecorations)
+}
+
+function reconcileRegisteredSource(
+  previousRangeDecorations: Array<Decoration>,
+  previousDecoratedRanges: Array<DecoratedRange>,
+  incoming: Array<Decoration>,
+  deadSelections: Map<string, EditorSelection>,
+): Array<DecoratedRange> {
+  const incomingIds = new Set(
+    incoming.map((rangeDecoration) => rangeDecoration.id),
+  )
+  for (const id of deadSelections.keys()) {
+    if (!incomingIds.has(id)) {
+      deadSelections.delete(id)
+    }
+  }
+
+  const previousConfigById = new Map(
+    previousRangeDecorations.map((rangeDecoration) => [
+      rangeDecoration.id,
+      rangeDecoration,
+    ]),
+  )
+  const previousLiveById = new Map(
+    previousDecoratedRanges.map((decoratedRange) => [
+      (decoratedRange.rangeDecoration as Decoration).id,
+      decoratedRange,
+    ]),
+  )
+
+  const next: Array<DecoratedRange> = []
+
+  for (const rangeDecoration of incoming) {
+    const previousConfig = previousConfigById.get(rangeDecoration.id)
+    const previousLive = previousLiveById.get(rangeDecoration.id)
+
+    const fullyUnchanged =
+      previousConfig !== undefined &&
+      previousLive !== undefined &&
+      previousConfig.render === rangeDecoration.render &&
+      isDeepEqual(previousConfig.range, rangeDecoration.range)
+
+    if (fullyUnchanged && previousLive) {
+      next.push(previousLive)
+      continue
+    }
+
+    const rangeUnchanged =
+      previousConfig !== undefined &&
+      isDeepEqual(previousConfig.range, rangeDecoration.range)
+
+    if (rangeUnchanged && previousLive) {
+      next.push({
+        anchor: previousLive.anchor,
+        focus: previousLive.focus,
+        rangeDecoration: {
+          ...rangeDecoration,
+          range: (previousLive.rangeDecoration as Decoration).range,
+        },
+        kind: 'registered',
+        merge: mergeRangeDecoration,
+      })
+      continue
+    }
+
+    if (deadSelections.has(rangeDecoration.id)) {
+      const deadRange = deadSelections.get(rangeDecoration.id)
+      if (
+        rangeUnchanged ||
+        (deadRange && hasSameAnchorAndFocus(deadRange, rangeDecoration.range))
+      ) {
+        continue
+      }
+      deadSelections.delete(rangeDecoration.id)
+    }
+
+    const range = cloneRange(rangeDecoration.range)
+
+    next.push({
+      rangeDecoration: {...rangeDecoration, range},
+      kind: 'registered',
+      merge: mergeRangeDecoration,
+      ...range,
+    })
+  }
+
+  return next
+}
+
+/**
+ * A tombstoned range can carry extra own keys (`backward`, from a
+ * captured editor selection) that a moved range never does:
+ * `transformRange` always returns a plain `{anchor, focus}`. Comparing
+ * whole objects would treat that extra key as a deliberate re-anchor and
+ * revive onto destroyed content.
+ */
+function hasSameAnchorAndFocus(
+  a: NonNullable<EditorSelection>,
+  b: NonNullable<EditorSelection>,
+): boolean {
+  return isDeepEqual(a.anchor, b.anchor) && isDeepEqual(a.focus, b.focus)
+}
+
+function movePropDecoratedRanges(
+  decoratedRanges: Array<DecoratedRange>,
+  operation: EngineOperation,
+  origin: 'local' | 'remote',
+  snapshotContext: PortableTextEditorEngine['snapshot']['context'],
+): Array<DecoratedRange> {
+  const next: Array<DecoratedRange> = []
+
+  for (const decoratedRange of decoratedRanges) {
+    const rangeDecoration = decoratedRange.rangeDecoration as RangeDecoration
+    const currentSelection = rangeDecoration.selection
+
+    if (!currentSelection) {
+      rangeDecoration.onMoved?.({
+        newSelection: null,
+        rangeDecoration,
+        origin,
+      })
+      continue
+    }
+
+    const newRange = transformRange(
+      currentSelection,
+      operation,
+      snapshotContext,
+    )
+
+    if (
+      (newRange && newRange !== currentSelection) ||
+      (newRange === null && currentSelection)
+    ) {
+      rangeDecoration.onMoved?.({
+        newSelection: newRange,
+        rangeDecoration,
+        origin,
+      })
+    }
+
+    if (newRange !== null) {
+      next.push({
+        ...newRange,
+        rangeDecoration: {...rangeDecoration, selection: newRange},
+        kind: 'prop',
+        merge: mergeRangeDecoration,
+      })
+    }
+  }
+
+  return next
+}
+
+/**
+ * A `set`/`unset`/`insert` touches `range` when it targets a node inside
+ * it. `insert.text`/`remove.text` touch when the affected span overlaps
+ * `range`'s content: an insertion exactly at `range`'s own start/end
+ * offset doesn't touch it (matching `transformRange`'s affinity), but a
+ * removal reaching into `range` from either side does. A collapsed
+ * `range` never touches, regardless of operation type.
+ */
+function operationTouchesRange(
+  operation: EngineOperation,
+  range: NonNullable<EditorSelection>,
+  editorEngine: PortableTextEditorEngine,
+): boolean {
+  if (isCollapsedRange(range)) {
+    return false
+  }
+
+  switch (operation.type) {
+    case 'insert.text':
+    case 'remove.text': {
+      const root = {value: editorEngine.snapshot.context.value}
+      const [start, end] = rangeEdges(range, root)
+      const target = {path: operation.path, offset: operation.offset}
+      const touchedEnd =
+        operation.type === 'remove.text'
+          ? {
+              path: operation.path,
+              offset: operation.offset + operation.text.length,
+            }
+          : target
+      return (
+        isAfterPoint(touchedEnd, start, root) &&
+        isBeforePoint(target, end, root)
+      )
+    }
+    case 'set':
+    case 'unset':
+    case 'insert':
+      return rangeIntersects(editorEngine.snapshot, range, operation.path)
+    default:
+      return false
+  }
+}
+
+function moveRegisteredDecoratedRanges(
+  decoratedRanges: Array<DecoratedRange>,
+  operation: EngineOperation,
+  origin: 'local' | 'remote',
+  editorEngine: PortableTextEditorEngine,
+  deadSelections: Map<string, EditorSelection>,
+): {
+  decoratedRanges: Array<DecoratedRange>
+  mappings: Array<DecorationMapping>
+} {
+  const next: Array<DecoratedRange> = []
+  const mappings: Array<DecorationMapping> = []
+
+  for (const decoratedRange of decoratedRanges) {
+    const liveRangeDecoration = decoratedRange.rangeDecoration as Decoration
+    const currentRange = liveRangeDecoration.range
+
+    const newRange = transformRange(
+      currentRange,
+      operation,
+      editorEngine.snapshot.context,
+    )
+
+    const killedByCollapse =
+      newRange !== null &&
+      isCollapsedRange(newRange) &&
+      !isCollapsedRange(currentRange)
+
+    const contentTouched = operationTouchesRange(
+      operation,
+      currentRange,
+      editorEngine,
+    )
+    const clonedCurrentRange = cloneRange(currentRange)
+
+    if (newRange === null || killedByCollapse) {
+      mappings.push({
+        id: liveRangeDecoration.id,
+        previousRange: clonedCurrentRange,
+        newRange: null,
+        contentTouched,
+        origin,
+      })
+      deadSelections.set(liveRangeDecoration.id, currentRange)
+      continue
+    }
+
+    const moved = newRange !== currentRange
+
+    if (moved || contentTouched) {
+      mappings.push({
+        id: liveRangeDecoration.id,
+        previousRange: clonedCurrentRange,
+        newRange: moved ? cloneRange(newRange) : clonedCurrentRange,
+        contentTouched,
+        origin,
+      })
+    }
+
+    next.push({
+      ...newRange,
+      rangeDecoration: {...liveRangeDecoration, range: newRange},
+      kind: 'registered',
+      merge: mergeRangeDecoration,
+    })
+  }
+
+  return {decoratedRanges: next, mappings}
+}
+
+function flattenSources(
+  sources: Array<RangeDecorationSource>,
+): Array<DecoratedRange> {
+  const kindOrder: Record<RangeDecorationSourceKind, number> = {
+    prop: 0,
+    registered: 1,
+  }
+
+  return [...sources]
+    .sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind])
+    .flatMap((source) => source.decoratedRanges)
 }
 
 export const rangeDecorationsMachine = setup({
   types: {
     context: {} as {
-      pendingRangeDecorations: Array<RangeDecoration>
-      skipSetup: boolean
+      sources: Array<RangeDecorationSource>
       readOnly: boolean
       schema: EditorSchema
       editorEngine: PortableTextEditorEngine
       decorate: {fn: (nodeEntry: NodeEntry) => Array<Range>}
+      /**
+       * Set by `process source update`, read by `update decorate if
+       * source changed`. `assign()` is what makes xstate hand out a new
+       * snapshot object, which `useSelector` needs to see a new
+       * `decorate.fn`: a plain mutation of `context.decorate` leaves the
+       * snapshot object `===` the previous one, so
+       * `useSyncExternalStoreWithSelector` never re-runs the selector.
+       * Threading the verdict through this field lets the actual
+       * `decorate.fn` reassignment go through a conditional `assign()`.
+       */
+      sourceUpdateChanged: boolean
     },
     input: {} as {
-      rangeDecorations: Array<RangeDecoration>
       readOnly: boolean
       schema: EditorSchema
-      skipSetup: boolean
       editorEngine: PortableTextEditorEngine
     },
     events: {} as
@@ -87,8 +566,19 @@ export const rangeDecorationsMachine = setup({
           type: 'ready'
         }
       | {
-          type: 'range decorations updated'
-          rangeDecorations: Array<RangeDecoration>
+          type: 'source updated'
+          sourceKey: string
+          kind: RangeDecorationSourceKind
+          rangeDecorations: Array<RangeDecoration | Decoration>
+          /**
+           * Only read when this `sourceKey` is seen for the first time:
+           * fixed at registration, an `update()` call never carries one.
+           */
+          on?: (mappings: Array<DecorationMapping>) => void
+        }
+      | {
+          type: 'source removed'
+          sourceKey: string
         }
       | {
           type: 'engine operation'
@@ -101,114 +591,6 @@ export const rangeDecorationsMachine = setup({
         },
   },
   actions: {
-    'update pending range decorations': assign({
-      pendingRangeDecorations: ({context, event}) => {
-        if (event.type !== 'range decorations updated') {
-          return context.pendingRangeDecorations
-        }
-
-        return event.rangeDecorations
-      },
-    }),
-    'set up initial range decorations': ({context}) => {
-      const rangeDecorationState: Array<DecoratedRange> = []
-
-      for (const rangeDecoration of context.pendingRangeDecorations) {
-        if (!rangeDecoration.selection) {
-          rangeDecoration.onMoved?.({
-            newSelection: null,
-            rangeDecoration,
-            origin: 'local',
-          })
-          continue
-        }
-
-        rangeDecorationState.push({
-          rangeDecoration,
-          merge: mergeRangeDecoration,
-          ...rangeDecoration.selection,
-        })
-      }
-
-      context.editorEngine.decoratedRanges = rangeDecorationState
-    },
-    'update range decorations': ({context, event}) => {
-      if (event.type !== 'range decorations updated') {
-        return
-      }
-
-      const rangeDecorationState: Array<DecoratedRange> = []
-
-      for (const rangeDecoration of event.rangeDecorations) {
-        if (!rangeDecoration.selection) {
-          rangeDecoration.onMoved?.({
-            newSelection: null,
-            rangeDecoration,
-            origin: 'local',
-          })
-          continue
-        }
-
-        rangeDecorationState.push({
-          rangeDecoration,
-          merge: mergeRangeDecoration,
-          ...rangeDecoration.selection,
-        })
-      }
-
-      context.editorEngine.decoratedRanges = rangeDecorationState
-    },
-
-    'move range decorations': ({context, event}) => {
-      if (event.type !== 'engine operation') {
-        return
-      }
-
-      const rangeDecorationState: Array<DecoratedRange> = []
-
-      for (const decoratedRange of context.editorEngine.decoratedRanges) {
-        const currentSelection = decoratedRange.rangeDecoration.selection
-
-        if (!currentSelection) {
-          decoratedRange.rangeDecoration.onMoved?.({
-            newSelection: null,
-            rangeDecoration: decoratedRange.rangeDecoration,
-            origin: event.origin,
-          })
-          continue
-        }
-
-        const newRange = transformRange(
-          currentSelection,
-          event.operation,
-          context.editorEngine.snapshot.context,
-        )
-
-        if (
-          (newRange && newRange !== currentSelection) ||
-          (newRange === null && currentSelection)
-        ) {
-          decoratedRange.rangeDecoration.onMoved?.({
-            newSelection: newRange,
-            rangeDecoration: decoratedRange.rangeDecoration,
-            origin: event.origin,
-          })
-        }
-
-        if (newRange !== null) {
-          rangeDecorationState.push({
-            ...(newRange || currentSelection),
-            rangeDecoration: {
-              ...decoratedRange.rangeDecoration,
-              selection: newRange || currentSelection,
-            },
-            merge: mergeRangeDecoration,
-          })
-        }
-      }
-
-      context.editorEngine.decoratedRanges = rangeDecorationState
-    },
     'assign readOnly': assign({
       readOnly: ({context, event}) => {
         if (event.type !== 'update read only') {
@@ -225,58 +607,226 @@ export const rangeDecorationsMachine = setup({
         }
       },
     }),
+    'update decorate if source changed': assign(({context}) => {
+      if (!context.sourceUpdateChanged) {
+        return {}
+      }
+
+      return {
+        decorate: {fn: createDecorate(context.schema, context.editorEngine)},
+      }
+    }),
+    'queue source': ({context, event}) => {
+      if (event.type !== 'source updated') {
+        return
+      }
+
+      const existing = context.sources.find(
+        (source) => source.sourceKey === event.sourceKey,
+      )
+
+      const rangeDecorations =
+        event.kind === 'registered'
+          ? cloneRegisteredConfig(event.rangeDecorations as Array<Decoration>)
+          : event.rangeDecorations
+
+      if (existing) {
+        existing.rangeDecorations = rangeDecorations
+        return
+      }
+
+      context.sources.push({
+        sourceKey: event.sourceKey,
+        kind: event.kind,
+        rangeDecorations,
+        decoratedRanges: [],
+        deadSelections: new Map(),
+        initialized: false,
+        on: event.on,
+      })
+    },
+    'remove queued source': ({context, event}) => {
+      if (event.type !== 'source removed') {
+        return
+      }
+
+      context.sources = context.sources.filter(
+        (source) => source.sourceKey !== event.sourceKey,
+      )
+    },
+    'set up sources': ({context}) => {
+      for (const source of context.sources) {
+        if (source.initialized) {
+          continue
+        }
+
+        source.decoratedRanges = buildDecoratedRangesFromScratch(
+          source.kind,
+          source.rangeDecorations,
+        )
+        source.initialized = true
+      }
+
+      context.editorEngine.decoratedRanges = flattenSources(context.sources)
+    },
+    'process source update': ({context, event}) => {
+      if (event.type !== 'source updated') {
+        return
+      }
+
+      let source = context.sources.find(
+        (candidate) => candidate.sourceKey === event.sourceKey,
+      )
+
+      let changed = true
+
+      if (!source) {
+        source = {
+          sourceKey: event.sourceKey,
+          kind: event.kind,
+          rangeDecorations:
+            event.kind === 'registered'
+              ? cloneRegisteredConfig(
+                  event.rangeDecorations as Array<Decoration>,
+                )
+              : event.rangeDecorations,
+          decoratedRanges: buildDecoratedRangesFromScratch(
+            event.kind,
+            event.rangeDecorations,
+          ),
+          deadSelections: new Map(),
+          initialized: true,
+          on: event.on,
+        }
+        context.sources.push(source)
+      } else if (source.kind === 'prop') {
+        changed = hasDifferentDecorations(
+          source.decoratedRanges,
+          event.rangeDecorations as Array<RangeDecoration>,
+        )
+
+        if (changed) {
+          source.rangeDecorations = event.rangeDecorations
+          source.decoratedRanges = buildDecoratedRangesFromScratch(
+            source.kind,
+            event.rangeDecorations,
+          )
+        }
+      } else {
+        const previousRangeDecorations =
+          source.rangeDecorations as Array<Decoration>
+        const previousDecoratedRanges = source.decoratedRanges
+
+        const nextDecoratedRanges = reconcileRegisteredSource(
+          previousRangeDecorations,
+          previousDecoratedRanges,
+          event.rangeDecorations as Array<Decoration>,
+          source.deadSelections,
+        )
+
+        changed =
+          nextDecoratedRanges.length !== previousDecoratedRanges.length ||
+          nextDecoratedRanges.some(
+            (decoratedRange, index) =>
+              decoratedRange !== previousDecoratedRanges[index],
+          )
+
+        source.rangeDecorations = cloneRegisteredConfig(
+          event.rangeDecorations as Array<Decoration>,
+        )
+        source.decoratedRanges = nextDecoratedRanges
+      }
+
+      context.sourceUpdateChanged = changed
+
+      if (!changed) {
+        return
+      }
+
+      context.editorEngine.decoratedRanges = flattenSources(context.sources)
+    },
+    'process source removal': ({context, event}) => {
+      if (event.type !== 'source removed') {
+        return
+      }
+
+      const removedSource = context.sources.find(
+        (source) => source.sourceKey === event.sourceKey,
+      )
+
+      context.sources = context.sources.filter(
+        (source) => source.sourceKey !== event.sourceKey,
+      )
+      context.editorEngine.decoratedRanges = flattenSources(context.sources)
+      context.sourceUpdateChanged = Boolean(
+        removedSource && removedSource.decoratedRanges.length > 0,
+      )
+    },
+    'move range decorations': ({context, event}) => {
+      if (event.type !== 'engine operation') {
+        return
+      }
+
+      const pendingNotifications: Array<{
+        on: (mappings: Array<DecorationMapping>) => void
+        mappings: Array<DecorationMapping>
+      }> = []
+
+      for (const source of context.sources) {
+        if (source.kind === 'registered') {
+          const result = moveRegisteredDecoratedRanges(
+            source.decoratedRanges,
+            event.operation,
+            event.origin,
+            context.editorEngine,
+            source.deadSelections,
+          )
+          source.decoratedRanges = result.decoratedRanges
+          if (source.on && result.mappings.length > 0) {
+            pendingNotifications.push({
+              on: source.on,
+              mappings: result.mappings,
+            })
+          }
+        } else if (!context.readOnly) {
+          source.decoratedRanges = movePropDecoratedRanges(
+            source.decoratedRanges,
+            event.operation,
+            event.origin,
+            context.editorEngine.snapshot.context,
+          )
+        }
+      }
+
+      context.editorEngine.decoratedRanges = flattenSources(context.sources)
+
+      for (const notification of pendingNotifications) {
+        try {
+          notification.on(notification.mappings)
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    },
   },
   actors: {
     'engine operation listener': fromCallback(engineOperationCallback),
   },
   guards: {
-    'has pending range decorations': ({context}) =>
-      context.pendingRangeDecorations.length > 0,
     'has range decorations': ({context}) =>
       context.editorEngine.decoratedRanges.length > 0,
-    'has different decorations': ({context, event}) => {
-      if (event.type !== 'range decorations updated') {
-        return false
-      }
-
-      const existingRangeDecorations = context.editorEngine.decoratedRanges.map(
-        (decoratedRange) => ({
-          anchor: decoratedRange.rangeDecoration.selection?.anchor,
-          focus: decoratedRange.rangeDecoration.selection?.focus,
-          payload: decoratedRange.rangeDecoration.payload,
-        }),
-      )
-
-      const newRangeDecorations = event.rangeDecorations.map(
-        (rangeDecoration) => ({
-          anchor: rangeDecoration.selection?.anchor,
-          focus: rangeDecoration.selection?.focus,
-          payload: rangeDecoration.payload,
-        }),
-      )
-
-      const different = !isDeepEqual(
-        existingRangeDecorations,
-        newRangeDecorations,
-      )
-
-      return different
-    },
-    'not read only': ({context}) => !context.readOnly,
-    'should skip setup': ({context}) => context.skipSetup,
   },
 }).createMachine({
   id: 'range decorations',
   context: ({input}) => ({
     readOnly: input.readOnly,
-    pendingRangeDecorations: input.rangeDecorations,
-    decoratedRanges: [],
-    skipSetup: input.skipSetup,
+    sources: [],
     schema: input.schema,
     editorEngine: input.editorEngine,
     decorate: {
       fn: createDecorate(input.schema, input.editorEngine),
     },
+    sourceUpdateChanged: false,
   }),
   invoke: {
     src: 'engine operation listener',
@@ -290,40 +840,35 @@ export const rangeDecorationsMachine = setup({
   initial: 'setting up',
   states: {
     'setting up': {
-      always: [
-        {
-          guard: and(['should skip setup', 'has pending range decorations']),
-          target: 'ready',
-          actions: ['set up initial range decorations', 'update decorate'],
-        },
-        {
-          guard: 'should skip setup',
-          target: 'ready',
-        },
-      ],
       on: {
-        'range decorations updated': {
-          actions: ['update pending range decorations'],
+        'source updated': {
+          actions: ['queue source'],
         },
-        'ready': [
-          {
-            target: 'ready',
-            guard: 'has pending range decorations',
-            actions: ['set up initial range decorations', 'update decorate'],
-          },
-          {
-            target: 'ready',
-          },
-        ],
+        'source removed': {
+          actions: ['remove queued source'],
+        },
+        'ready': {
+          target: 'ready',
+          actions: ['set up sources', 'update decorate'],
+        },
       },
     },
     'ready': {
       initial: 'idle',
       on: {
-        'range decorations updated': {
+        'source updated': {
           target: '.idle',
-          guard: 'has different decorations',
-          actions: ['update range decorations', 'update decorate'],
+          actions: [
+            'process source update',
+            'update decorate if source changed',
+          ],
+        },
+        'source removed': {
+          target: '.idle',
+          actions: [
+            'process source removal',
+            'update decorate if source changed',
+          ],
         },
       },
       states: {
@@ -331,7 +876,7 @@ export const rangeDecorationsMachine = setup({
           on: {
             'engine operation': {
               target: 'moving range decorations',
-              guard: and(['has range decorations', 'not read only']),
+              guard: 'has range decorations',
             },
           },
         },
@@ -345,6 +890,8 @@ export const rangeDecorationsMachine = setup({
     },
   },
 })
+
+export type RangeDecorationsActor = ActorRefFrom<typeof rangeDecorationsMachine>
 
 function createDecorate(
   schema: EditorSchema,
