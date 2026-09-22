@@ -5,6 +5,11 @@ import type {
   TypedObject,
 } from '@portabletext/types'
 import {buildListIndexMap} from './build-list-index-map'
+import type {SerializeDegradation} from './degradation-report'
+import {
+  buildSerializeDegradationMessage,
+  buildSerializeDegradationPath,
+} from './degradation-report'
 import {createRenderNode} from './render-node'
 import {
   DefaultBlockSpacingRenderer,
@@ -99,6 +104,30 @@ type Options = Partial<PortableTextRenderers> & {
    * consistent. Omitted, all default renderers stay active.
    */
   schema?: Schema
+
+  /**
+   * Called at most once, after the conversion has walked every block,
+   * only when at least one construct degraded to a lossier rendering (an
+   * annotation or decorator with no mark renderer, a block style or
+   * list-item kind with no renderer). Left unset, the conversion stays
+   * silent and returns the lossiest representation it can build. Passed
+   * a function, observe every degradation via `report.degradations`, in
+   * encounter order, and the same degradations grouped and sorted by
+   * block via `report.message`. Enforce against lossy output by throwing
+   * your own error from inside the callback. The throw propagates out of
+   * `portableTextToMarkdown`.
+   *
+   * ```ts
+   * portableTextToMarkdown(blocks, {onDegradation: ({message}) => { throw new Error(message) }})
+   * ```
+   *
+   * `report` is a single object, not positional parameters, so it can
+   * gain fields later without a breaking change.
+   */
+  onDegradation?: (report: {
+    degradations: Array<SerializeDegradation>
+    message: string
+  }) => void
 }
 
 /**
@@ -135,19 +164,70 @@ export function portableTextToMarkdown<
   }
   const renderBlockSpacing = options.blockSpacing ?? DefaultBlockSpacingRenderer
 
+  const originalBlockKeys = options.onDegradation
+    ? blocks.map((node) => node._key)
+    : undefined
+
   const {listIndexMap, listDepthMap} = buildListIndexMap(blocks)
-  const renderNode = createRenderNode(renderers, listIndexMap, listDepthMap)
+
+  type PathSegment = SerializeDegradation['path'][number]
+
+  const internalDegradations: Array<SerializeDegradation & {topIndex: number}> =
+    []
+  let currentBlock: {block: TypedObject; index: number; topSegment: PathSegment}
+  const reportDegradation = options.onDegradation
+    ? (entry: {
+        type: SerializeDegradation['type']
+        message: string
+        snippet: string | undefined
+        node: object
+      }) => {
+        const degradation: SerializeDegradation = {
+          type: entry.type,
+          message: entry.message,
+          path: buildSerializeDegradationPath(
+            currentBlock.block,
+            currentBlock.topSegment,
+            entry.node,
+          ),
+        }
+        if (entry.snippet !== undefined) {
+          degradation.snippet = entry.snippet
+        }
+        internalDegradations.push({
+          ...degradation,
+          topIndex: currentBlock.index,
+        })
+      }
+    : undefined
+
+  const renderNode = createRenderNode(
+    renderers,
+    listIndexMap,
+    listDepthMap,
+    reportDegradation,
+  )
 
   // Blocks rendering to '' are dropped before spacing is computed, so
   // `blockSpacing` only ever sees blocks that survive into the output.
   const renderedBlocks = blocks
-    .map((node, index) => ({
-      node,
-      rendered: renderNode({node, index, isInline: false, renderNode}),
-    }))
+    .map((node, index) => {
+      if (originalBlockKeys !== undefined) {
+        const key = originalBlockKeys[index]
+        currentBlock = {
+          block: node,
+          index,
+          topSegment: key !== undefined ? {_key: key} : index,
+        }
+      }
+      return {
+        node,
+        rendered: renderNode({node, index, isInline: false, renderNode}),
+      }
+    })
     .filter(({rendered}) => rendered !== '')
 
-  return renderedBlocks
+  const markdown = renderedBlocks
     .map(({node, rendered}, index) => {
       const nextBlock = renderedBlocks.at(index + 1)
 
@@ -164,6 +244,17 @@ export function portableTextToMarkdown<
       return `${rendered}${blockSpacing}`
     })
     .join('')
+
+  if (options.onDegradation && internalDegradations.length > 0) {
+    options.onDegradation({
+      degradations: internalDegradations.map(
+        ({topIndex, ...degradation}) => degradation,
+      ),
+      message: buildSerializeDegradationMessage(internalDegradations),
+    })
+  }
+
+  return markdown
 }
 
 function gateDefaultTypeRenderers(

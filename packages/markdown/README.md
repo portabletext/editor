@@ -743,6 +743,26 @@ portableTextToMarkdown(blocks, {
 })
 ```
 
+#### Reporting degradation
+
+An annotation or decorator with no mark renderer drops to plain text, a block style with no renderer falls back to a normal paragraph, and a list-item kind with no renderer falls back to a plain bullet item: each degrades rather than throwing. `onDegradation` observes those losses, called once, after the whole document has been walked, only when at least one construct degraded, with a report object holding every `SerializeDegradation` in encounter order and a canonical grouped `message`. Left unset, the conversion stays silent and returns the lossiest representation it can build. Enforce against lossy output by throwing your own error from inside that callback. The throw propagates out of `portableTextToMarkdown`.
+
+```ts
+portableTextToMarkdown(blocks, {
+  onDegradation: ({degradations, message}) => {
+    // degradations: every SerializeDegradation, in encounter order
+    // message: the same degradations grouped, snippeted, and sorted by block
+    logger.warn(message)
+  },
+})
+```
+
+Each `SerializeDegradation` carries `type` (`annotation-dropped`, `decorator-dropped`, `style-fallback`, or `list-item-fallback`), a human-readable `message`, `path`, and `snippet` (the offending text, truncated to 40 characters) when there's a specific piece of text to quote. `path` addresses the node the loss occurred on, from the top-level `blocks` array down: an array position is `{_key: node._key}` when the node has a `_key`, the numeric index otherwise, and an object property is its field name. A degradation inside a table cell carries the full path down to the offending node, not just the table's own position. `path` is best-effort: it names the deepest node the conversion can re-find, falling back to just the top-level segment when it can't (a custom renderer cloning a node before rendering it, or a keyless nested span with nothing left to search by). Match on `type`, not `message`: the type is the stable contract, the message can change between releases, and the set of `type` values itself grows in minor releases, so compare against the values you handle rather than switching exhaustively.
+
+Providing your own renderer for the affected construct (a custom `unknownMark`, `unknownBlockStyle`, or `unknownListItem`, or a `listItem` map covering every kind the document uses) suppresses the report for that construct: `onDegradation` only fires for fallbacks the library's own default renderers produced. `list-item-fallback` never fires under the default configuration, since the default `listItem` renderer already covers every kind. It only fires behind a consumer-supplied partial `listItem` map.
+
+`applyMarkdownEdit`'s `serialize` option doesn't accept `onDegradation`: it serializes `storedPortableText` only for internal alignment, never `editedMarkdown` itself, so there's nothing there for a caller to observe losses in.
+
 ### `applyMarkdownEdit`
 
 Parsing markdown mints fresh `_key`s for text blocks (see [Round-trip behavior](#round-trip-behavior)), so converting a document to markdown, editing one word, and converting back returns what looks like a full rewrite: comment anchors detach, history churns, and granular patching is impossible. `applyMarkdownEdit` converts edited markdown back to Portable Text and restores stored `_key`s the way the same edit in an editor would have kept them:
