@@ -4,10 +4,10 @@ import type {
   Editor,
   EditorSelection,
 } from '@portabletext/editor'
+import {isEqualSelections} from '@portabletext/editor/utils'
 import {assertUniqueDecorationIds} from './assert-unique-decoration-ids'
 import {cloneRange} from './clone-range'
 import type {DecorationEvent, DecorationLayer} from './decoration.types'
-import {isDeepEqual} from './equality'
 
 export type DecorationsLayerInternals = {
   subscribe: (callback: () => void) => () => void
@@ -76,7 +76,7 @@ export function createDecorationLayer(
     // that nets to the same positions (or a fully-unchanged `update()`)
     // must not hand out a new array, or every dependency array watching
     // it would re-run for nothing.
-    if (isDeepEqual(next, currentCache)) {
+    if (hasSameCurrent(next, currentCache)) {
       return
     }
 
@@ -143,7 +143,7 @@ export function createDecorationLayer(
       for (const previous of currentDecorations) {
         const next = nextById.get(previous.id)
 
-        if (!next || isDeepEqual(previous.range, next.range)) {
+        if (!next || isEqualSelections(previous.range, next.range)) {
           if (!next) {
             idsToDropNow.push(previous.id)
           }
@@ -201,6 +201,21 @@ export function createDecorationLayer(
   })
 
   return layer
+}
+
+function hasSameCurrent(
+  a: DecorationLayer['current'],
+  b: DecorationLayer['current'],
+): boolean {
+  if (a.length !== b.length) {
+    return false
+  }
+
+  return a.every(
+    (entry, index) =>
+      entry.id === b[index]!.id &&
+      isEqualSelections(entry.range, b[index]!.range),
+  )
 }
 
 function cloneDecorations(decorations: Array<Decoration>): Array<Decoration> {
@@ -377,7 +392,7 @@ function createDecorationsBatcher(options: {
           leg.movedOrigin &&
           leg.movedPreviousRange &&
           leg.latestRange &&
-          !isDeepEqual(leg.movedPreviousRange, leg.latestRange)
+          !isEqualSelections(leg.movedPreviousRange, leg.latestRange)
         ) {
           events.push({
             type: 'moved',
