@@ -1129,6 +1129,7 @@ export const Editable = forwardRef(
               // back to `document.execCommand`, which fires no `beforeinput`,
               // so corrections revert. The attribute is removed again, without
               // warning, once the editor handles that channel without it.
+              // oxlint-disable-next-line pte/no-data-slate-editor -- Grammarly fingerprint
               data-slate-editor
               data-pt-editor
               data-pt-path=""

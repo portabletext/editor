@@ -84,8 +84,14 @@ export type {
   RegisteredSpan,
 } from './schema/resolve-containers'
 export type {AddedAnnotationPaths} from './types/editor'
+export {defineDecoration} from './define-decoration'
 export type {BlockOffset} from './types/block-offset'
 export type {
+  Decoration,
+  DecorationMapping,
+  DecorationPosition,
+  DecorationRegistration,
+  DecorationRenderProps,
   EditableAPIDeleteOptions,
   EditorSelection,
   EditorSelectionPoint,
