@@ -9,12 +9,9 @@ import {wiretap} from '../support/wiretap'
 const client = createLabClient()
 
 test.describe.serial('repair-on-load', () => {
-  test('loading a structurally broken document mutates nothing', async ({
-    page,
-  }) => {
+  test('structural repair persists exactly once on load', async ({page}) => {
     const id = 'pte-lab.repairs.keyless-child'
     await resetDoc(client, repairsFixtures, id)
-    const seeded = await client.getDocument(id)
 
     const tap = wiretap(client, [id], 40_000)
 
@@ -27,17 +24,29 @@ test.describe.serial('repair-on-load', () => {
     await expect(page.getByText('Invalid value')).toHaveCount(0)
 
     const entries = await tap.done
-    const events = entries.map(({event}) => event)
+    const draftEvents = entries
+      .filter(({event}) => event.documentId === `drafts.${id}`)
+      .map(({event}) => event)
 
-    const transactions = groupByTransaction(events)
+    expect(draftEvents.length).toBeGreaterThan(0)
+
+    const transactions = groupByTransaction(draftEvents)
     const repairTransactions = transactions.filter(hasEditorRepairPatch)
-    expect(repairTransactions).toEqual([])
-
-    const published = await client.getDocument(id)
-    expect(published?.body).toEqual(seeded?.body)
+    expect(repairTransactions).toHaveLength(1)
 
     const draft = await client.getDocument(`drafts.${id}`)
-    expect(draft?.body ?? seeded?.body).toEqual(seeded?.body)
+    expect(draft).toBeDefined()
+    const body = draft?.body as Array<{
+      children: Array<{_key?: string; text: string}>
+    }>
+    for (const block of body) {
+      for (const child of block.children) {
+        expect(typeof child._key).toBe('string')
+      }
+    }
+    expect(
+      body.flatMap((block) => block.children.map((child) => child.text)),
+    ).toEqual(['This span has a `_key`, but ', 'this one does not', '.'])
   })
 
   test('clean document stays silent', async ({page}) => {

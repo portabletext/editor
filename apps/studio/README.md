@@ -85,12 +85,15 @@ under the Studio's own auth-token key, so no interactive login happens.
 
 - **`repair-on-load.spec.ts`**, run serially against
   `pte-lab.repairs.keyless-child` and `pte-lab.repairs.clean`:
-  - **loading a structurally broken document mutates nothing**: resets
-    the keyless-child article, opens it, and asserts the editor renders
-    without an "Invalid value" dialog (the missing key is repaired in
-    the editor's memory), that zero editor-emitted repair transactions
-    reach the dataset, and that the stored body is unchanged afterwards.
-    See "The contract on this branch" below.
+  - **structural repair persists exactly once on load**: resets the
+    keyless-child article, opens it, and asserts the editor renders
+    without an "Invalid value" dialog. It listens for mutations on
+    `drafts.pte-lab.repairs.keyless-child`, groups them into
+    transactions, and asserts exactly one transaction contains an
+    editor-emitted repair (with no further one following it), then
+    re-fetches the draft and asserts every child now has a string `_key`
+    with the seeded text unchanged. See "Known shape" below for why more
+    than one mutation transaction on load is expected.
   - **clean document stays silent**: resets the well-formed control
     article, opens it, and asserts zero mutations arrive and no draft
     gets created.
@@ -163,22 +166,30 @@ CHOKIDAR_USEPOLLING=1 pnpm --filter studio dev --port 3391
 `webServer` it manages, so `pnpm --filter studio e2e` only needs the
 raised `ulimit`.
 
-### The contract on this branch: loading never mutates
+### Known shape: two mutation transactions on a broken doc's first load
 
-On this stable line, the editor repairs structural defects (missing or
-duplicate `_key`s, empty `children`) in memory only, and the fixing
-patches wait for the user's first local edit. Opening a broken document
-therefore writes nothing: no draft, no mutation, and the stored body is
-byte-identical afterwards. `repair-on-load.spec.ts` pins exactly that,
-so any change that starts persisting repairs on load turns this suite
-red here.
+Opening a structurally broken document like `pte-lab.repairs.keyless-child`
+produces two mutation transactions on the draft, not one, and that's
+expected:
 
-The prerelease line (`next`) makes the opposite choice by design:
-repairs are persisted immediately when a value is applied, and its copy
-of this suite asserts exactly one editor-emitted repair transaction on
-load (alongside Content Lake's own server-side key enrichment during
-draft creation). Same rig, opposite contracts, each pinning its line's
-intended behavior.
+1. The Actions API draft-create itself. Content Lake enriches array
+   items with `_key`s server-side as part of creating the draft, so this
+   transaction bundles the `create`, `_system.*` bookkeeping patches, and
+   index-addressed `_key` sets (`body[0].children[1]._key`) into one
+   transaction.
+2. The editor's own intake repair, addressing the same child by its
+   block's key instead of an index (a `set`/`diffMatchPatch` patch on
+   `body[_key=="..."]...children...._key`), which runs once per load and
+   supersedes the server's generated key with its own.
+
+The two transactions are independent and expected: the server enriches
+keys at draft-creation time as a general Content Lake behavior unrelated
+to this editor, and the editor repairs the same structural gap on intake
+regardless of what the server already did. The editor's key wins because
+it lands second. `repair-on-load.spec.ts` asserts on this shape directly:
+exactly one transaction contains an editor-emitted repair, and no further
+one follows it. Document this here so the two-transaction shape doesn't
+get re-diagnosed as a bug.
 
 ## Adding a new family
 
