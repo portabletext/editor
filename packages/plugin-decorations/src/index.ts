@@ -1,0 +1,6 @@
+export {createDecorationLayer} from './create-decoration-layer'
+export {DecorationWidget, type DecorationWidgetProps} from './decoration-widget'
+export type {DecorationEvent, DecorationLayer} from './decoration.types'
+export {DecorationsPlugin} from './plugin.decorations'
+export {useDecorationLayer} from './use-decoration-layer'
+export {useDecorations} from './use-decorations'
