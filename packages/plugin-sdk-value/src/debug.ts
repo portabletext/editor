@@ -1,16 +1,16 @@
-import rawDebug from 'debug'
+import {createDebug, enabled} from 'obug'
 
 // Keep in sync with `packages/editor/src/internal-utils/debug.ts`: sharing
 // the `pte:` root lets `localStorage.debug = 'pte:*'` interleave this
 // plugin's sync traces with the editor's own output on one timeline.
 const rootName = 'pte:plugin-sdk-value:'
 
-function createDebugger(name: string): rawDebug.Debugger {
+function createDebugger(name: string) {
   const namespace = `${rootName}${name}`
-  if (rawDebug && rawDebug.enabled(namespace)) {
-    return rawDebug(namespace)
+  if (enabled(namespace)) {
+    return createDebug(namespace)
   }
-  return rawDebug(rootName)
+  return createDebug(rootName)
 }
 
 export const debug = {

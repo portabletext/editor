@@ -30,15 +30,12 @@ catalogs:
     '@sanity/types':
       specifier: ^6.9.1
       version: 6.15.0
-    '@types/debug':
-      specifier: ^4.1.13
-      version: 4.1.13
     '@xstate/react':
       specifier: ^6.1.0
       version: 6.1.0
-    debug:
-      specifier: ^4.4.3
-      version: 4.4.3
+    obug:
+      specifier: ^3.0.0
+      version: 3.0.0
     react:
       specifier: ^19.2.8
       version: 19.2.8
@@ -621,9 +618,9 @@ importers:
       '@xstate/react':
         specifier: 'catalog:'
         version: 6.1.0(@types/react@19.2.17)(react@19.2.8)(xstate@5.33.2)
-      debug:
+      obug:
         specifier: 'catalog:'
-        version: 4.4.3(supports-color@8.1.1)
+        version: 3.0.0
       scroll-into-view-if-needed:
         specifier: ^3.1.0
         version: 3.1.0
@@ -646,9 +643,6 @@ importers:
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
-      '@types/debug':
-        specifier: 'catalog:'
-        version: 4.1.13
       '@types/node':
         specifier: catalog:tooling
         version: 20.19.25
@@ -1223,9 +1217,9 @@ importers:
       '@xstate/react':
         specifier: 'catalog:'
         version: 6.1.0(@types/react@19.2.17)(react@19.2.8)(xstate@5.33.2)
-      debug:
+      obug:
         specifier: 'catalog:'
-        version: 4.4.3(supports-color@8.1.1)
+        version: 3.0.0
       xstate:
         specifier: 'catalog:'
         version: 5.33.2
@@ -1248,9 +1242,6 @@ importers:
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
-      '@types/debug':
-        specifier: 'catalog:'
-        version: 4.1.13
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
