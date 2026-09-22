@@ -42,7 +42,7 @@ When scaffolding a new package, mirror `plugin-typeahead-picker`'s vitest config
 ## Structure
 
 - `test('Scenario: ...')` naming for integration tests. Every integration test carries its own `Scenario:`; a `describe` may group by mechanism but never carries the scenario, narration, or a comment preamble.
-- Test and `describe` names are prose describing behavior, never a bare code identifier: `describe('isActiveListItem', ...)` and `describe(isActiveListItem.name, ...)` are both banned. Name the behavior under test (`describe('the focus block', ...)`); the file name and the assertions carry the identifier.
+- Unit suites covering a single function group under `describe(fn.name, ...)` (for example `describe(buildIndexMaps.name, ...)`), tying the group to the symbol it pins and surviving renames. Every other `describe` and every test name is prose describing behavior. A quoted identifier string is the one banned form: `describe('isActiveListItem', ...)` goes stale on rename without gaining readability.
 - Test files hold comments to the same bar as source files: the default is none. The scenario name and the full-value assertions are the documentation; narrative about why a contract exists belongs in the commit body, not in a comment above the test.
 - A known-broken contract is pinned with `test.fails` asserting the desired behavior: it documents the bug executably, and the fix flips it to a plain `test` (CI reports it as unexpectedly passing until someone does).
 - A quote character inside a test name is solved by switching the string's quotes (`"...set's fallout..."`), never with `\u` escapes or backslash-escaping. Prettier keeps whichever quote style avoids the escape.
