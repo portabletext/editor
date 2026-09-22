@@ -22,7 +22,7 @@ export async function waitForRenderState(
   timeoutMs = 15_000,
 ): Promise<RenderState> {
   const candidates: Array<[RenderState, ReturnType<typeof page.locator>]> = [
-    ['editor', page.locator('[data-slate-editor][contenteditable="true"]')],
+    ['editor', page.locator('[data-pt-editor][contenteditable="true"]')],
     ['missing-keys-guard', page.getByText('Missing keys')],
     ['non-unique-keys-guard', page.getByText('Non-unique keys')],
   ]
