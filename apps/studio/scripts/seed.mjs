@@ -141,8 +141,25 @@ export const repairsFixtures = [
   },
 ]
 
+export const commentsFixtures = [
+  {
+    _id: 'pte-lab.comments.clean',
+    _type: 'article',
+    title: 'Comments control article',
+    lockBody: false,
+    body: [
+      textBlock('block-text', [
+        span('span-1', 'foo '),
+        span('span-2', 'bar'),
+        span('span-3', ' baz.'),
+      ]),
+    ],
+  },
+]
+
 export const fixtureGroups = {
   repairs: repairsFixtures,
+  comments: commentsFixtures,
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
