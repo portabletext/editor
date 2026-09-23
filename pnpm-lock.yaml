@@ -325,6 +325,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
+      '@portabletext/plugin-decorations':
+        specifier: workspace:*
+        version: link:../../packages/plugin-decorations
       '@portabletext/plugin-dnd':
         specifier: workspace:*
         version: link:../../packages/plugin-dnd

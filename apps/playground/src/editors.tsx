@@ -13,10 +13,6 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
     (s) => s.context.featureFlags,
   )
   const editors = useSelector(props.playgroundRef, (s) => s.context.editors)
-  const rangeDecorations = useSelector(
-    props.playgroundRef,
-    (s) => s.context.rangeDecorations,
-  )
 
   return (
     <div className="p-3 md:p-4 flex-1 min-w-0">
@@ -33,7 +29,7 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
               <Editor
                 key={editor.id}
                 editorRef={editor}
-                rangeDecorations={rangeDecorations}
+                playgroundRef={props.playgroundRef}
               />
             ))}
           </PlaygroundFeatureFlagsContext.Provider>
