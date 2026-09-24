@@ -1,5 +1,18 @@
 # @portabletext/markdown
 
+## 2.4.0
+
+### Minor Changes
+
+- [#3274](https://github.com/portabletext/editor/pull/3274) [`6933887`](https://github.com/portabletext/editor/commit/69338875f285930b014e572b29e13266a3dd9101) Thanks [@christianhg](https://github.com/christianhg)! - feat: report `valueChanged` per preserved key in `onReconciliation`
+  
+  Each `preservedKeys` entry now carries a `valueChanged` boolean alongside `basis`, `key`, and `path`: whether the node wearing that key in the returned value differs from its stored counterpart, field order aside but array order significant. Any difference counts, including a descendant key rewritten to keep siblings unique, or a key filled in for a stored node that had none. `false` guarantees the returned node deep-equals the stored one:
+  
+  ```ts
+  const changed = report.preservedKeys.filter((entry) => entry.valueChanged)
+  // keys whose returned node differs from its stored counterpart
+  ```
+
 ## 2.3.0
 
 ### Minor Changes
