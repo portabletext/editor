@@ -846,6 +846,103 @@ describe(createPlaceholderBlock.name, () => {
     })
   })
 
+  test('Scenario: Undoing the deletion of the placeholder and typing', async () => {
+    let foreignValue: Array<PortableTextBlock> | undefined
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+              foreignValue = applyAll(foreignValue, [patch])
+            }
+          }}
+        />
+      ),
+    })
+
+    const placeholder = {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'delete.block', at: [{_key: 'k0'}]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k2',
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert([placeholder], 'before', [0]),
+        unset([{_key: 'k0'}]),
+      ])
+      expect(foreignValue).toEqual([])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([placeholder])
+      expect(patches.slice(3)).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k2',
+              children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        unset([{_key: 'k2'}]),
+        insert([placeholder], 'before', [0]),
+      ])
+      expect(foreignValue).toEqual([placeholder])
+    })
+
+    editor.send({type: 'insert.text', text: 'f'})
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches.slice(7)).toEqual([
+        diffMatchPatch('', 'f', [
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+          'text',
+        ]),
+      ])
+    })
+  })
+
   describe('Scenario: Placeholder can be represented by a custom React Node', () => {
     test('no initial value', async () => {
       const renderPlaceholder = () => <div>Placeholder</div>
