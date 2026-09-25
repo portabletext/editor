@@ -5435,17 +5435,17 @@ describe('event.patches', () => {
       })
     })
 
-    // A model-level selection over the whole text plus one Backspace
-    // clears in a single flush on every platform (chord-based word
-    // deletion is OS-dependent).
+    // A model-level `delete` over the whole text clears in a single flush
+    // on every platform (chord-based word deletion is OS-dependent), and
+    // skips the native caret, which trails the model by a render.
     editor.send({
-      type: 'select',
+      type: 'delete',
       at: {
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
       },
+      direction: 'backward',
     })
-    await userEvent.keyboard('{Backspace}')
 
     // Waiting on the mutation (not the earlier per-patch relay) orders the
     // echo before the retype: `editor.on` subscribers run in the emit
@@ -5654,13 +5654,13 @@ describe('event.patches', () => {
     // make this transition treat the placeholder as persisted content.
     const patchCountBeforeSecondClear = patches.length
     editor.send({
-      type: 'select',
+      type: 'delete',
       at: {
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
       },
+      direction: 'backward',
     })
-    await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
       expect(patches.slice(patchCountBeforeSecondClear)).toEqual([

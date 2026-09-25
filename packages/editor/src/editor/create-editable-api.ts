@@ -54,6 +54,8 @@ export function createEditableAPI(
       })
     },
     toggleMark: (mark: string): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -64,6 +66,8 @@ export function createEditableAPI(
       })
     },
     toggleList: (listItem: string): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -74,6 +78,8 @@ export function createEditableAPI(
       })
     },
     toggleBlockStyle: (style: string): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -99,6 +105,8 @@ export function createEditableAPI(
       return [...activeAnnotations, ...activeDecorators]
     },
     undo: (): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -108,6 +116,8 @@ export function createEditableAPI(
       })
     },
     redo: (): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -117,6 +127,8 @@ export function createEditableAPI(
       })
     },
     select: (selection: EditorSelection): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -159,6 +171,8 @@ export function createEditableAPI(
       type: TSchemaType,
       value?: {[prop: string]: any},
     ): Path => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -177,6 +191,8 @@ export function createEditableAPI(
       type: TSchemaType,
       value?: {[prop: string]: any},
     ): Path => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -299,6 +315,8 @@ export function createEditableAPI(
       return isActiveAnnotation(annotationType)(snapshot)
     },
     addAnnotation: (type, value) => {
+      editor.flushPendingDOMSelectionChange?.()
+
       const snapshotBefore = editor.snapshot
       const selectedValueBefore = getSelectedValue(snapshotBefore)
       const focusSpanBefore = getFocusSpan(snapshotBefore)
@@ -380,6 +398,8 @@ export function createEditableAPI(
         return
       }
 
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -398,6 +418,8 @@ export function createEditableAPI(
     removeAnnotation: <TSchemaType extends {name: string}>(
       type: TSchemaType,
     ): void => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -426,6 +448,8 @@ export function createEditableAPI(
       )
     },
     insertBreak: () => {
+      editor.flushPendingDOMSelectionChange?.()
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
