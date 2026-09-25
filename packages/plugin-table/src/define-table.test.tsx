@@ -7,6 +7,11 @@ import {userEvent} from 'vitest/browser'
 import {defineTable} from './define-table'
 import {Table, TableCell, TableRow} from './ui/table-render'
 
+// Keep in sync with `IS_MAC` in the editor's `internal-utils/is-hotkey.ts`:
+// the engine picks the shortcut modifier from the user agent, and
+// Playwright's WebKit reports a Mac user agent on every host.
+const IS_MAC = /Mac|iPod|iPhone|iPad/.test(window.navigator.userAgent)
+
 // A definition with every configurable name renamed: type names as a
 // migration from a foreign table plugin would have them, the cell content
 // array as `content` instead of `value`. The reference components render
@@ -797,7 +802,9 @@ describe('Feature: members declared by the cell block', () => {
       expect(editor.getSnapshot().context.selection).toEqual(selection)
     })
 
-    await userEvent.keyboard("{ControlOrMeta>}'{/ControlOrMeta}")
+    await userEvent.keyboard(
+      IS_MAC ? "{Meta>}'{/Meta}" : "{Control>}'{/Control}",
+    )
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
