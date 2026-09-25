@@ -53,6 +53,20 @@ const arrowUp = createKeyboardShortcut({
     {key: 'ArrowUp', alt: false, ctrl: false, meta: false, shift: false},
   ],
 })
+const shiftArrow = {
+  down: createKeyboardShortcut({
+    default: [
+      {key: 'ArrowDown', alt: false, ctrl: false, meta: false, shift: true},
+    ],
+  }),
+  up: createKeyboardShortcut({
+    default: [
+      {key: 'ArrowUp', alt: false, ctrl: false, meta: false, shift: true},
+    ],
+  }),
+}
+
+type SelectionExtension = {at: NonNullable<EditorSelection>} | {stay: true}
 
 export function createNavBehaviors(config: TableConfig) {
   return [
@@ -249,7 +263,108 @@ export function createNavBehaviors(config: TableConfig) {
             : [escapeTableAction(snapshot, result.escapeTablePath, 'before')],
       ],
     }),
+
+    ...(['down', 'up'] as const).map((direction) =>
+      defineBehavior<
+        Record<string, never>,
+        'keyboard.keydown',
+        SelectionExtension
+      >({
+        on: 'keyboard.keydown',
+        guard: ({snapshot, event, dom}) => {
+          if (!shiftArrow[direction].guard(event.originEvent)) {
+            return false
+          }
+          if (getFocusBlockObject(snapshot)) {
+            return false
+          }
+          return (
+            resolveSelectionExtension(config, snapshot, dom, direction) ?? false
+          )
+        },
+        actions: [
+          (_, result) =>
+            'at' in result ? [raise({type: 'select', at: result.at})] : [],
+        ],
+      }),
+    ),
   ]
+}
+
+function resolveSelectionExtension(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+  dom: Dom,
+  direction: 'up' | 'down',
+): SelectionExtension | undefined {
+  const selection = snapshot.context.selection
+  if (!selection) {
+    return undefined
+  }
+  const focusPosition = resolveCell(snapshot, selection.focus.path, config)
+  const anchorPosition = resolveCell(snapshot, selection.anchor.path, config)
+  if (
+    !focusPosition ||
+    !anchorPosition ||
+    !isEqualPaths(focusPosition.table.path, anchorPosition.table.path)
+  ) {
+    return undefined
+  }
+  const exitEdge = direction === 'down' ? 'last' : 'first'
+  const entryEdge = direction === 'down' ? 'first' : 'last'
+  const siblingDirection = direction === 'down' ? 'next' : 'previous'
+  const focusSnapshot = collapsedAt(snapshot, selection.focus)
+  if (
+    isEqualPaths(focusPosition.cell.path, anchorPosition.cell.path) &&
+    !(
+      focusAtCellEdge(focusSnapshot, focusPosition.cell.path, exitEdge) &&
+      focusOnVisualEdge(focusSnapshot, dom, exitEdge)
+    )
+  ) {
+    return undefined
+  }
+  const neighborRow = getSibling(snapshot, focusPosition.row.path, {
+    direction: siblingDirection,
+  })
+  if (!neighborRow) {
+    const siblingBlock = getSibling(snapshot, focusPosition.table.path, {
+      direction: siblingDirection,
+    })
+    if (!siblingBlock) {
+      return {stay: true}
+    }
+    const entry = blockEntrySelection(
+      focusSnapshot,
+      dom,
+      siblingBlock,
+      entryEdge,
+    )
+    return entry
+      ? {at: {anchor: selection.anchor, focus: entry.focus}}
+      : undefined
+  }
+  const target = sameColumnCell(
+    snapshot,
+    focusPosition.cell,
+    focusPosition.row,
+    neighborRow,
+  )
+  const entry =
+    target &&
+    cellEntrySelection(config, focusSnapshot, dom, target.path, entryEdge)
+  return entry
+    ? {at: {anchor: selection.anchor, focus: entry.focus}}
+    : undefined
+}
+
+function collapsedAt(
+  snapshot: EditorSnapshot,
+  point: EditorSelectionPoint,
+): EditorSnapshot {
+  return {
+    ...snapshot,
+    context: {...snapshot.context, selection: {anchor: point, focus: point}},
+  }
 }
 
 /**
