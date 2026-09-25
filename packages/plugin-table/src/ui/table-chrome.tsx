@@ -1,7 +1,15 @@
-import {autoUpdate, computePosition, hide, offset} from '@floating-ui/dom'
+import {
+  autoUpdate,
+  computePosition,
+  getOverflowAncestors,
+  hide,
+  offset,
+  platform,
+} from '@floating-ui/dom'
 import {
   type CSSProperties,
   useCallback,
+  useEffect,
   type ReactNode,
   useLayoutEffect,
   useRef,
@@ -736,12 +744,15 @@ function TrashButton({
     if (!floating || !reference) {
       return undefined
     }
-    const update = () => {
+    const update = (diagEvent?: Event) => {
       computePosition(reference, floating, {
         strategy: 'fixed',
         placement,
         middleware: [offset(TRASH_GAP), hide()],
       }).then(({x, y, middlewareData}) => {
+        console.log(
+          `[DIAG] trash update t=${diagNow()} source=${diagSource(diagEvent)} scrollY=${window.scrollY} refRect=${diagRect(reference.getBoundingClientRect())} x=${x} y=${y} hide=${JSON.stringify(middlewareData.hide)}`,
+        )
         setPosition({
           left: x,
           top: y,
@@ -903,9 +914,24 @@ export function TableMenu({
   )
 
   const closeMenu = useCallback(() => {
+    console.log(`[DIAG] menu closeMenu() t=${diagNow()}`)
     setOpen(false)
     setMenuPos(null)
   }, [])
+
+  const diagInstance = useRef(++diagMenuInstanceCounter)
+  useEffect(() => {
+    const instance = diagInstance.current
+    console.log(`[DIAG] menu instance=${instance} mounted t=${diagNow()}`)
+    return () => {
+      console.log(`[DIAG] menu instance=${instance} unmounted t=${diagNow()}`)
+    }
+  }, [])
+  useEffect(() => {
+    console.log(
+      `[DIAG] menu instance=${diagInstance.current} open-state open=${open} t=${diagNow()} menuInDom=${document.querySelectorAll('[role="menu"]').length}`,
+    )
+  }, [open])
 
   // The dropdown anchors to its trigger through `autoUpdate`; the `hide`
   // middleware closes it when the trigger scrolls out of the scrollport,
@@ -916,23 +942,81 @@ export function TableMenu({
     }
     const trigger = triggerRef.current
     const menu = menuRef.current
+    const instance = diagInstance.current
     if (!trigger || !menu) {
+      console.log(
+        `[DIAG] menu instance=${instance} effect EARLY RETURN (no autoUpdate) t=${diagNow()} trigger=${diagDescribe(trigger)} menu=${diagDescribe(menu)}`,
+      )
       return undefined
     }
-    const update = () => {
+    const visualViewport = window.visualViewport
+    console.log(
+      `[DIAG] menu instance=${instance} effect setup t=${diagNow()} reference=${diagDescribe(trigger)} referenceConnected=${trigger.isConnected} referenceIsLiveTrigger=${trigger === document.querySelector('button[aria-label="Table options"]')} floating=${diagDescribe(menu)} floatingParent=${diagDescribe(menu.parentElement)} referenceRect=${diagRect(trigger.getBoundingClientRect())} scrollY=${window.scrollY} scrollingElement=${diagDescribe(document.scrollingElement)} inIframe=${window.self !== window.top} visualViewport=${visualViewport ? JSON.stringify({width: visualViewport.width, height: visualViewport.height, offsetTop: visualViewport.offsetTop, pageTop: visualViewport.pageTop, scale: visualViewport.scale}) : 'none'} ua=${navigator.userAgent}`,
+    )
+    console.log(
+      `[DIAG] menu instance=${instance} referenceOverflowAncestors=${getOverflowAncestors(trigger).map(diagDescribe).join(' | ')}`,
+    )
+    console.log(
+      `[DIAG] menu instance=${instance} floatingOverflowAncestors=${getOverflowAncestors(menu).map(diagDescribe).join(' | ')}`,
+    )
+    let updateCount = 0
+    const update = (diagEvent?: Event) => {
+      const call = ++updateCount
+      const calledAt = diagNow()
+      console.log(
+        `[DIAG] menu instance=${instance} update#${call} called t=${calledAt} source=${diagSource(diagEvent)} scrollY=${window.scrollY} refRect=${diagRect(trigger.getBoundingClientRect())} refConnected=${trigger.isConnected}`,
+      )
       computePosition(trigger, menu, {
         strategy: 'fixed',
         placement: 'bottom-end',
         middleware: [offset(6), hide()],
-      }).then(({x, y, middlewareData}) => {
-        if (middlewareData.hide?.referenceHidden) {
-          closeMenu()
-          return
-        }
-        setMenuPos({left: x, top: y})
       })
+        .then(({x, y, middlewareData}) => {
+          console.log(
+            `[DIAG] menu instance=${instance} update#${call} resolved t=${diagNow()} (called ${calledAt}) scrollY=${window.scrollY} refRect=${diagRect(trigger.getBoundingClientRect())} x=${x} y=${y} hide=${JSON.stringify(middlewareData.hide)} decision=${middlewareData.hide?.referenceHidden ? 'CLOSE' : 'position'}`,
+          )
+          void (async () => {
+            try {
+              const diagPlatform = {...platform, _c: new Map()}
+              const clippingRect = await diagPlatform.getClippingRect({
+                element: trigger,
+                boundary: 'clippingAncestors',
+                rootBoundary: 'viewport',
+                strategy: 'fixed',
+              })
+              const elementRects = await diagPlatform.getElementRects({
+                reference: trigger,
+                floating: menu,
+                strategy: 'fixed',
+              })
+              console.log(
+                `[DIAG] menu instance=${instance} update#${call} probe floatingUiReferenceRect=${diagRect(elementRects.reference)} clippingRect=${diagRect(clippingRect)}`,
+              )
+            } catch (error) {
+              console.log(
+                `[DIAG] menu instance=${instance} update#${call} probe failed ${String(error)}`,
+              )
+            }
+          })()
+          if (middlewareData.hide?.referenceHidden) {
+            closeMenu()
+            return
+          }
+          setMenuPos({left: x, top: y})
+        })
+        .catch((error: unknown) => {
+          console.log(
+            `[DIAG] menu instance=${instance} update#${call} REJECTED t=${diagNow()} ${String(error)}`,
+          )
+        })
     }
-    return autoUpdate(trigger, menu, update)
+    const cleanup = autoUpdate(trigger, menu, update)
+    return () => {
+      console.log(
+        `[DIAG] menu instance=${instance} autoUpdate cleanup t=${diagNow()} updates=${updateCount}`,
+      )
+      cleanup()
+    }
   }, [open, closeMenu])
 
   useLayoutEffect(() => {
@@ -948,10 +1032,14 @@ export function TableMenu({
       ) {
         return
       }
+      console.log(
+        `[DIAG] menu close reason=outside-pointerdown target=${diagDescribe(target)}`,
+      )
       closeMenu()
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        console.log('[DIAG] menu close reason=escape')
         closeMenu()
       }
     }
@@ -982,6 +1070,9 @@ export function TableMenu({
           event.stopPropagation()
         }}
         onClick={() => {
+          console.log(
+            `[DIAG] menu trigger click t=${diagNow()} open=${open} activeElement=${diagDescribe(document.activeElement)}`,
+          )
           if (open) {
             closeMenu()
           } else {
@@ -1389,4 +1480,66 @@ export function TableScrollFade({
       ) : null}
     </>
   )
+}
+
+let diagMenuInstanceCounter = 0
+
+function diagNow(): string {
+  return performance.now().toFixed(1)
+}
+
+function diagRect(rect: {
+  x: number
+  y: number
+  width: number
+  height: number
+}): string {
+  return `{x:${rect.x.toFixed(1)},y:${rect.y.toFixed(1)},w:${rect.width.toFixed(1)},h:${rect.height.toFixed(1)},bottom:${(rect.y + rect.height).toFixed(1)}}`
+}
+
+export function diagDescribe(node: unknown): string {
+  if (node === null || node === undefined) {
+    return String(node)
+  }
+  if (node === window.parent && node !== window) {
+    return 'window.parent'
+  }
+  if (node === window.parent.visualViewport && node !== window.visualViewport) {
+    return 'window.parent.visualViewport'
+  }
+  if (typeof Window !== 'undefined' && node instanceof Window) {
+    return node === window
+      ? 'window'
+      : node === window.top
+        ? 'window.top'
+        : 'window(other)'
+  }
+  if (typeof VisualViewport !== 'undefined' && node instanceof VisualViewport) {
+    return 'visualViewport'
+  }
+  if (node instanceof Document) {
+    return node === document ? 'document' : 'document(other)'
+  }
+  if (node instanceof Element) {
+    const style = getComputedStyle(node)
+    const id = node.id ? `#${node.id}` : ''
+    const className = node.getAttribute('class')
+      ? `.${node.getAttribute('class')}`
+      : ''
+    const label = node.getAttribute('aria-label')
+      ? `[aria-label=${node.getAttribute('aria-label')}]`
+      : ''
+    const role = node.getAttribute('role')
+      ? `[role=${node.getAttribute('role')}]`
+      : ''
+    return `<${node.tagName.toLowerCase()}${id}${className}${label}${role} overflow=${style.overflowX}/${style.overflowY} position=${style.position}>`
+  }
+  return Object.prototype.toString.call(node)
+}
+
+function diagSource(event: Event | undefined): string {
+  if (!event) {
+    return 'direct(initial|ResizeObserver|IntersectionObserver)'
+  }
+  return `${event.type}@${diagDescribe(event.currentTarget)}`
 }
