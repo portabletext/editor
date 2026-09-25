@@ -4,6 +4,7 @@ import {Input, Label} from './field'
 export function TextField(props: {
   name: string
   label?: string
+  placeholder?: string
   autoFocus?: boolean
   defaultValue?: string
 }) {
@@ -15,7 +16,7 @@ export function TextField(props: {
       defaultValue={props.defaultValue}
     >
       <Label>{props.label ?? props.name}</Label>
-      <Input name={props.name} />
+      <Input name={props.name} placeholder={props.placeholder} />
     </RACTextField>
   )
 }

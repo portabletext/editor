@@ -31,6 +31,7 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | Package                                                                                        | Description                                                               |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | [`@portabletext/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/) | Automatically match a pair of characters and decorate the text in between |
+| [`@portabletext/plugin-decorations`](./packages/plugin-decorations/)                           | Compose independent decoration layers (highlights, comments, presence)    |
 | [`@portabletext/plugin-dnd`](./packages/plugin-dnd/)                                           | Track the drop position during drag and drop for custom drop indicators   |
 | [`@portabletext/plugin-emoji-picker`](./packages/plugin-emoji-picker/)                         | Easily configure an Emoji Picker for the Portable Text Editor             |
 | [`@portabletext/plugin-input-rule`](./packages/plugin-input-rule/)                             | Easily configure Input Rules in the Portable Text Editor                  |

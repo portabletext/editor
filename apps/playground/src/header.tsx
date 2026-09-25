@@ -2,6 +2,7 @@ import {useSelector} from '@xstate/react'
 import {
   BookOpenIcon,
   GithubIcon,
+  MessageSquareIcon,
   MonitorIcon,
   MoonIcon,
   PanelRightIcon,
@@ -109,6 +110,18 @@ export function Header(props: {playgroundRef: PlaygroundActorRef}) {
           >
             <WrenchIcon className="size-4" />
             <span className="hidden sm:inline">Toolbar</span>
+          </Switch>
+          <Switch
+            isSelected={playgroundFeatureFlags.commentsPlugin}
+            onChange={() => {
+              props.playgroundRef.send({
+                type: 'toggle feature flag',
+                flag: 'commentsPlugin',
+              })
+            }}
+          >
+            <MessageSquareIcon className="size-4" />
+            <span className="hidden sm:inline">Comments</span>
           </Switch>
           <Switch
             isSelected={showInspector}

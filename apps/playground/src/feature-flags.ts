@@ -2,10 +2,12 @@ import {createContext} from 'react'
 
 export type PlaygroundFeatureFlags = {
   toolbar: boolean
+  commentsPlugin: boolean
 }
 
 export const defaultPlaygroundFeatureFlags: PlaygroundFeatureFlags = {
   toolbar: true,
+  commentsPlugin: true,
 }
 
 export const PlaygroundFeatureFlagsContext =
@@ -30,6 +32,7 @@ export type EditorFeatureFlags = {
   oneLinePlugin: boolean
   markdownPlugin: boolean
   typographyPlugin: boolean
+  presencePlugin: boolean
 }
 
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
@@ -51,6 +54,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   oneLinePlugin: false,
   markdownPlugin: true,
   typographyPlugin: true,
+  presencePlugin: true,
 }
 
 export const EditorFeatureFlagsContext = createContext<EditorFeatureFlags>({

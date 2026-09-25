@@ -47,18 +47,193 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
-        {basis: 'content-unchanged', key: 'p1', path: [{_key: 'p1'}]},
-        {basis: 'same-position', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'p1',
+          path: [{_key: 'p1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
         {
           basis: 'same-position',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+    })
+  })
+
+  test('an edited `json:object` payload reports `valueChanged` on its preserved key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'text'),
+      {_type: 'product', _key: 'p1', sku: 'abc'},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      '"sku": "abc"',
+      '"sku": "xyz"',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 's1', 'text'),
+      {_type: 'product', _key: 'p1', sku: 'xyz'},
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'p1',
+          path: [{_key: 'p1'}],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+    })
+  })
+
+  test('a stored span with no `_key` reports `valueChanged: true` once key filling mints one', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', text: 'foo', marks: []}],
+      },
+      block('b2', 's2', 'bar'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'baz',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      block('b2', 's2', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'b1'}, 'children', {_key: 'k1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's2',
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+    })
+  })
+
+  test('a moved block reports `valueChanged: false` when only its position changed', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [block('b1', 's1', 'alpha'), block('b2', 's2', 'beta')]
+    const markdown = 'beta\n\nalpha'
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-moved',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -80,17 +255,29 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: false,
         },
-        {basis: 'content-moved', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-moved',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -112,11 +299,17 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-split', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-split',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
         {
           basis: 'same-position',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [],
@@ -138,11 +331,17 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-merged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-merged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
         {
           basis: 'same-position',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [],
@@ -175,17 +374,29 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
-        {basis: 'similar-content', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'similar-content',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
         {
           basis: 'same-position',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [],
@@ -261,11 +472,17 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'same-position', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [
@@ -297,11 +514,17 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -340,21 +563,29 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'same-position', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
         {
           basis: 'content-unchanged',
           key: 's2',
           path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          valueChanged: false,
         },
         {
           basis: 'same-position',
           key: 's3',
           path: [{_key: 'b1'}, 'children', {_key: 's3'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [],
@@ -407,11 +638,17 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -469,16 +706,23 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'dup', path: [{_key: 'dup'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'dup',
+          path: [{_key: 'dup'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'dup'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
         {
           basis: 'content-unchanged',
           key: 's2',
           path: [{_key: 'k4'}, 'children', {_key: 's2'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -529,11 +773,17 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -597,26 +847,35 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'same-position', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
         {
           basis: 'content-unchanged',
           key: 's2',
           path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          valueChanged: false,
         },
         {
           basis: 'same-position',
           key: 's3',
           path: [{_key: 'b1'}, 'children', {_key: 's3'}],
+          valueChanged: true,
         },
         {
           basis: 'content-unchanged',
           key: 'link1',
           path: [{_key: 'b1'}, 'markDefs', {_key: 'link1'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
@@ -645,27 +904,120 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
-        {basis: 'content-unchanged', key: 'empty1', path: [{_key: 'empty1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'empty1',
+          path: [{_key: 'empty1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 'es1',
           path: [{_key: 'empty1'}, 'children', {_key: 'es1'}],
+          valueChanged: false,
         },
-        {basis: 'same-position', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'same-position',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
         {
           basis: 'same-position',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [],
       renamedKeys: [],
+    })
+  })
+
+  test('a reinserted empty-block run with a duplicate-keyed child reports the subtree change on the block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'first paragraph'),
+      {
+        _type: 'block',
+        _key: 'empty1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'dup', text: '', marks: []},
+          {_type: 'span', _key: 'dup', text: '', marks: []},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 's1', 'first paragraph'),
+      {
+        _type: 'block',
+        _key: 'empty1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'dup', text: '', marks: []},
+          {_type: 'span', _key: 'k2', text: '', marks: []},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'empty1',
+          path: [{_key: 'empty1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'dup',
+          path: [{_key: 'empty1'}, 'children', {_key: 'dup'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [
+        {
+          previousKey: 'dup',
+          key: 'k2',
+          path: [{_key: 'empty1'}, 'children', {_key: 'k2'}],
+        },
+      ],
     })
   })
 
@@ -699,22 +1051,35 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
         {
           basis: 'content-unchanged',
           key: 's2',
           path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          valueChanged: false,
         },
-        {basis: 'same-position', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'same-position',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
         {
           basis: 'same-position',
           key: 's3',
           path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+          valueChanged: true,
         },
       ],
       keyFallbacks: [],
@@ -753,22 +1118,35 @@ describe('the reconciliation report', () => {
     expect(report).toEqual({
       keyMatching: 'performed',
       preservedKeys: [
-        {basis: 'content-unchanged', key: 'b2', path: [{_key: 'b2'}]},
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's3',
           path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+          valueChanged: false,
         },
-        {basis: 'content-moved', key: 'b1', path: [{_key: 'b1'}]},
+        {
+          basis: 'content-moved',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
         {
           basis: 'content-unchanged',
           key: 's1',
           path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
         },
         {
           basis: 'content-unchanged',
           key: 's2',
           path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          valueChanged: false,
         },
       ],
       keyFallbacks: [],
