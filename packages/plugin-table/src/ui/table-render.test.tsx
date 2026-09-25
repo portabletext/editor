@@ -146,15 +146,20 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
       },
     })
     await vi.waitFor(() => {
-      expect(
-        document.querySelectorAll('button[aria-label="Delete row"]').length,
-      ).toBe(1)
+      const chips = document.querySelectorAll<HTMLElement>(
+        'button[aria-label="Delete row"]',
+      )
+      expect(chips.length).toBe(1)
+      expect(getComputedStyle(chips[0]!).visibility).toBe('visible')
     })
 
     // Scroll the table far above the viewport: the chip must not float.
     // It stays mounted (the anchoring keeps watching for its return) but
     // invisible and inert.
     window.scrollTo(0, 4000)
+    // Browsers fire `scroll` only during a rendering update, and headless
+    // WebKit can go seconds without one.
+    window.dispatchEvent(new Event('scroll'))
     await vi.waitFor(() => {
       const chip = document.querySelector('button[aria-label="Delete row"]')
       expect(chip).not.toBeNull()
@@ -163,6 +168,7 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
 
     // Scrolling back restores it: the selection never changed.
     window.scrollTo(0, 0)
+    window.dispatchEvent(new Event('scroll'))
     await vi.waitFor(() => {
       const chip = document.querySelector('button[aria-label="Delete row"]')
       expect(chip).not.toBeNull()
@@ -287,10 +293,13 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     ) as HTMLButtonElement
     await userEvent.click(trigger)
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('[role="menu"]').length).toBe(1)
+      const menus = document.querySelectorAll<HTMLElement>('[role="menu"]')
+      expect(menus.length).toBe(1)
+      expect(getComputedStyle(menus[0]!).visibility).toBe('visible')
     })
 
     window.scrollTo(0, 4000)
+    window.dispatchEvent(new Event('scroll'))
     await vi.waitFor(() => {
       expect(document.querySelectorAll('[role="menu"]').length).toBe(0)
     })
@@ -349,10 +358,9 @@ describe('Feature: Per-Instance Theming Tokens', () => {
 
     // Selecting a row summons the trash chip, which portals outside the
     // editor subtree and must carry its own copy of the values.
-    const handle = document.querySelector<HTMLButtonElement>(
+    await focusElement(
       '[data-pt-plugin-table-handle="row"][data-pt-plugin-table-handle-index="0"]',
     )
-    handle?.focus()
     await userEvent.keyboard(' ')
 
     await vi.waitFor(() => {
@@ -427,10 +435,7 @@ describe('Feature: Chrome Label Overrides', () => {
     })
 
     // The built-in menu's items render the `menu-*` keys once opened.
-    const trigger = document.querySelector<HTMLButtonElement>(
-      'button[aria-label="Tabellenoptionen"]',
-    )
-    trigger?.focus()
+    await focusElement('button[aria-label="Tabellenoptionen"]')
     await userEvent.keyboard(' ')
 
     await vi.waitFor(() => {
@@ -466,11 +471,7 @@ describe('Feature: Keyboard Activation of Chrome', () => {
       )
     })
 
-    const lane = document.querySelector<HTMLButtonElement>(
-      'button[aria-label="Add row at end"]',
-    )
-    expect(lane).not.toBeNull()
-    lane?.focus()
+    await focusElement('button[aria-label="Add row at end"]')
     await userEvent.keyboard(' ')
 
     await vi.waitFor(() => {
@@ -499,11 +500,9 @@ describe('Feature: Keyboard Activation of Chrome', () => {
       )
     })
 
-    const handle = document.querySelector<HTMLButtonElement>(
+    await focusElement(
       '[data-pt-plugin-table-handle="row"][data-pt-plugin-table-handle-index="1"]',
     )
-    expect(handle).not.toBeNull()
-    handle?.focus()
     await userEvent.keyboard(' ')
 
     await vi.waitFor(() => {
@@ -515,14 +514,7 @@ describe('Feature: Keyboard Activation of Chrome', () => {
       ).toEqual([false, true])
     })
 
-    const trash = await vi.waitFor(() => {
-      const trashButton = document.querySelector<HTMLButtonElement>(
-        'button[aria-label="Delete row"]',
-      )
-      expect(trashButton).not.toBeNull()
-      return trashButton
-    })
-    trash?.focus()
+    await focusElement('button[aria-label="Delete row"]')
     await userEvent.keyboard(' ')
 
     await vi.waitFor(() => {
@@ -540,18 +532,11 @@ describe('Feature: Keyboard Activation of Chrome', () => {
       children: <NodePlugin nodes={[tableContainer]} />,
     })
 
-    const trigger = await vi.waitFor(() => {
-      const triggerButton = document.querySelector<HTMLButtonElement>(
-        'button[aria-label="Table options"]',
-      )
-      expect(triggerButton).not.toBeNull()
-      return triggerButton
-    })
-    trigger?.focus()
+    const trigger = await focusElement('button[aria-label="Table options"]')
     await userEvent.keyboard(' ')
 
     await vi.waitFor(() => {
-      expect(trigger?.getAttribute('aria-expanded')).toBe('true')
+      expect(trigger.getAttribute('aria-expanded')).toBe('true')
       expect(document.querySelectorAll('[role="menuitem"]').length).toBe(3)
     })
   })
@@ -765,3 +750,15 @@ describe('Feature: Read-Only Table Chrome', () => {
     })
   })
 })
+
+function focusElement(selector: string) {
+  return vi.waitFor(() => {
+    const element = document.querySelector<HTMLElement>(selector)
+    expect(element).not.toBeNull()
+    // The trash chip stays `visibility: hidden` until it is positioned, and
+    // `focus()` on a hidden element is a silent no-op.
+    element!.focus()
+    expect(document.activeElement).toBe(element)
+    return element!
+  })
+}
