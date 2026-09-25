@@ -1,6 +1,15 @@
-import {insert, set, setIfMissing, unset} from '@portabletext/patches'
+import {
+  applyAll,
+  diffMatchPatch,
+  insert,
+  set,
+  setIfMissing,
+  unset,
+} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineSchema, type Patch} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
@@ -638,9 +647,10 @@ describe('event.block.unset', () => {
   })
 
   test('Scenario: `unset`ing text block children removes them and normalization restores', async () => {
+    let foreignValue: Array<PortableTextBlock> | undefined
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         styles: [{name: 'normal'}, {name: 'h1'}],
@@ -651,6 +661,7 @@ describe('event.block.unset', () => {
             if (event.type === 'patch') {
               const {origin: _, ...patch} = event.patch
               patches.push(patch)
+              foreignValue = applyAll(foreignValue, [patch])
             }
           }}
         />
@@ -721,6 +732,48 @@ describe('event.block.unset', () => {
           {_key: textBlockKey},
           'children',
           0,
+        ]),
+        unset([]),
+      ])
+      expect(foreignValue).toEqual(undefined)
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'f')
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _key: textBlockKey,
+          _type: 'block',
+          children: [{_key: 'k4', _type: 'span', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches.slice(11)).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: textBlockKey,
+              _type: 'block',
+              children: [{_key: 'k4', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        diffMatchPatch('', 'f', [
+          {_key: textBlockKey},
+          'children',
+          {_key: 'k4'},
+          'text',
         ]),
       ])
     })

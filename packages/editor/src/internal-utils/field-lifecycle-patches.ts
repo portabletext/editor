@@ -49,11 +49,13 @@ export function addFieldLifecyclePatches(
     patches = [insert(beforeValue, 'before', [0]), ...patches]
   }
 
-  if (
-    !wasPlaceholder &&
-    isPlaceholder &&
-    ['set', 'unset', 'remove.text'].includes(operation.type)
-  ) {
+  const isRootUnset = operation.type === 'unset' && operation.path.length === 0
+  const teardown =
+    beforeValue.length > 0 &&
+    ((isPlaceholder && !wasPlaceholder) ||
+      (afterValue.length === 0 && !isRootUnset))
+
+  if (teardown) {
     patches = [...patches, unset([])]
   }
 
