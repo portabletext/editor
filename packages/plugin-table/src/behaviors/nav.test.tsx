@@ -7,7 +7,7 @@ import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
 import {createTableGuards, defaultTableConfig} from '../table-config'
 
-const {isCell} = createTableGuards(defaultTableConfig)
+const {isCell, isRow} = createTableGuards(defaultTableConfig)
 
 const schemaDefinition = defineSchema({
   lists: [{name: 'bullet'}],
@@ -115,6 +115,14 @@ function focusCellKey(snapshot: EditorSnapshot): string | undefined {
     return undefined
   }
   return getEnclosingBlock(snapshot, focus, {match: isCell})?.node._key
+}
+
+function focusRowKey(snapshot: EditorSnapshot): string | undefined {
+  const focus = snapshot.context.selection?.focus.path
+  if (!focus) {
+    return undefined
+  }
+  return getEnclosingBlock(snapshot, focus, {match: isRow})?.node._key
 }
 
 function focusBlockKey(snapshot: EditorSnapshot): string | undefined {
@@ -511,10 +519,11 @@ describe('table keyboard navigation', () => {
 
     // Back into the table's bottom row, then out again. The placeholder
     // from the first escape already lies below; navigation must land in
-    // it without inserting another.
+    // it without inserting another. The browser moves the caret up, and
+    // Chromium and Firefox pick different cells of the bottom row.
     await userEvent.keyboard('{ArrowUp}')
     await vi.waitFor(() => {
-      expect(focusCellKey(editor.getSnapshot())).toEqual('c11')
+      expect(focusRowKey(editor.getSnapshot())).toEqual('r1')
     })
     await userEvent.keyboard('{ArrowDown}')
     await vi.waitFor(() => {
