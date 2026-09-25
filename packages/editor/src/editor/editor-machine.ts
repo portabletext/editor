@@ -27,6 +27,7 @@ import {pathContains} from '../traversal/path-contains'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {Operation} from '../types/operation'
 import type {EditorSchema} from './editor-schema'
 import {
   registerNodeOnEngine,
@@ -58,6 +59,15 @@ export type ExternalEditorEvent =
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
   operationId?: string
   value: Array<PortableTextBlock>
+  // Set on an operation's first patch only; the batcher bulks one entry
+  // per applied operation.
+  operation?: Operation
+}
+
+// Internal-only: the flushed bulk's operations ride to the relay bridge,
+// which strips them before the `mutation` reaches consumers.
+type InternalMutationEvent = MutationEvent & {
+  operations: Array<Operation>
 }
 
 /**
@@ -102,7 +112,7 @@ type InternalEditorEvent =
       editor: PortableTextEditorEngine
       nativeEvent?: {preventDefault: () => void}
     }
-  | MutationEvent
+  | InternalMutationEvent
   | InternalPatchEvent
   | {
       type: 'set drag ghost'
@@ -129,8 +139,9 @@ type InternalEditorEvent =
  * @internal
  */
 type InternalEditorEmittedEvent =
-  | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
+  | OmitFromUnion<EditorEmittedEvent, 'type', 'patch' | 'mutation'>
   | InternalPatchEvent
+  | InternalMutationEvent
   | PatchesEvent
 
 export function rerouteExternalBehaviorEvent({
@@ -186,7 +197,7 @@ export const editorMachine = setup({
       behaviorsSorted: boolean
       initialConverters: Array<Converter>
       keyGenerator: () => string
-      pendingEvents: Array<InternalPatchEvent | MutationEvent>
+      pendingEvents: Array<InternalPatchEvent | InternalMutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
       pendingRegistrations: Array<RegistrableNode>
       schema: EditorSchema
