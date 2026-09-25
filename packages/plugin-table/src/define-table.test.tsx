@@ -1,5 +1,6 @@
 import {defineContainer, defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
+import {getUnionSchema} from '@portabletext/editor/traversal'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -653,5 +654,186 @@ describe('Feature: `defineTable` with renamed containers', () => {
       ],
     ])
     warnSpy.mockRestore()
+  })
+})
+
+const cellMembersTable = defineTable()
+
+const cellMembersSchemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}],
+  blockObjects: [
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'cell',
+                      fields: [
+                        {
+                          name: 'value',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'block',
+                              decorators: [{name: 'strong'}, {name: 'code'}],
+                              annotations: [{name: 'link'}],
+                              lists: [{name: 'bullet'}],
+                              styles: [{name: 'normal'}, {name: 'h1'}],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+describe('Feature: members declared by the cell block', () => {
+  test('Scenario: cell-only members reach the union schema', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: cellMembersSchemaDefinition,
+      children: <cellMembersTable.Plugin />,
+    })
+
+    await vi.waitFor(() => {
+      const {schema, containers} = editor.getSnapshot().context
+      expect(getUnionSchema(schema, containers)).toEqual({
+        ...schema,
+        decorators: [
+          {name: 'strong', value: 'strong'},
+          {name: 'code', value: 'code'},
+        ],
+        annotations: [{name: 'link', fields: []}],
+        lists: [{name: 'bullet', value: 'bullet'}],
+        styles: [
+          {name: 'normal', value: 'normal', title: 'Normal'},
+          {name: 'h1', value: 'h1'},
+        ],
+      })
+    })
+  })
+
+  test('Scenario: the `code` shortcut toggles a cell-only decorator inside a cell', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const cellSpanPath = [
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'value',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: cellMembersSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: blockKey,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <cellMembersTable.Plugin />,
+    })
+
+    editor.send({type: 'focus'})
+    const selection = {
+      anchor: {path: cellSpanPath, offset: 0},
+      focus: {path: cellSpanPath, offset: 3},
+      backward: false,
+    }
+    editor.send({type: 'select', at: selection})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(selection)
+    })
+
+    await userEvent.keyboard("{ControlOrMeta>}'{/ControlOrMeta}")
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: blockKey,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: spanKey,
+                          text: 'foo',
+                          marks: ['code'],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
   })
 })
