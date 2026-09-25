@@ -7,7 +7,7 @@ description: How to backport a fix from `main` to a maintenance branch (`editor-
 
 ## Branch layout
 
-`main` carries the current major. Older majors live on maintenance branches named `editor-v<N>.x` (currently `editor-v6.x` and `editor-v7.x`). Each maintenance branch has its own working release pipeline: `release.yml` on that branch triggers on pushes to itself, and the changesets bot opens "Version Packages" PRs from `changeset-release/editor-v<N>.x`. Merging a backport PR that carries a changeset is all it takes; no manual publishing.
+`main` carries the current major, and the upcoming major is prereleased from `next` (see the `next-branch` skill). Older majors live on maintenance branches named `editor-v<N>.x` (currently `editor-v6.x` and `editor-v7.x`). Each maintenance branch has its own working release pipeline: `release.yml` on that branch triggers on pushes to itself, and the changesets bot opens "Version Packages" PRs from `changeset-release/editor-v<N>.x`. Merging a backport PR that carries a changeset is all it takes; no manual publishing.
 
 ## When to backport
 
