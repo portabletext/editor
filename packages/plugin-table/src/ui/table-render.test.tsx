@@ -5,6 +5,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {tableBehaviors} from '../plugin.table'
+import {diagDescribe} from './table-chrome'
 import {TableCell, Table, TableRow} from './table-render'
 
 const schemaDefinition = defineSchema({
@@ -105,70 +106,92 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     ],
   })
 
-  test('Scenario: the trash chip hides when the table scrolls out of view', async () => {
-    // Enough content below the table that the window can scroll it out.
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue: [
-        ...initialValue,
-        ...Array.from({length: 60}, (_, index) => paragraph(index)),
-      ],
-      children: <NodePlugin nodes={[tableContainer]} />,
-    })
-    editor.send({type: 'focus'})
+  test(
+    'Scenario: the trash chip hides when the table scrolls out of view',
+    {repeats: 4},
+    async () => {
+      console.log(
+        `[DIAG] ===== trash test start t=${performance.now().toFixed(1)} =====`,
+      )
+      // Enough content below the table that the window can scroll it out.
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition,
+        initialValue: [
+          ...initialValue,
+          ...Array.from({length: 60}, (_, index) => paragraph(index)),
+        ],
+        children: <NodePlugin nodes={[tableContainer]} />,
+      })
+      editor.send({type: 'focus'})
 
-    // A whole-row rectangle summons the row trash chip.
-    const point = (
-      cellKey: string,
-      blockKey: string,
-      spanKey: string,
-      offset: number,
-    ) => ({
-      path: [
-        {_key: 't0'},
-        'rows',
-        {_key: 'r0'},
-        'cells',
-        {_key: cellKey},
-        'value',
-        {_key: blockKey},
-        'children',
-        {_key: spanKey},
-      ],
-      offset,
-    })
-    editor.send({
-      type: 'select',
-      at: {
-        anchor: point('c00', 'b-c00', 's-c00', 0),
-        focus: point('c01', 'b-c01', 's-c01', 1),
-      },
-    })
-    await vi.waitFor(() => {
-      expect(
-        document.querySelectorAll('button[aria-label="Delete row"]').length,
-      ).toBe(1)
-    })
+      // A whole-row rectangle summons the row trash chip.
+      const point = (
+        cellKey: string,
+        blockKey: string,
+        spanKey: string,
+        offset: number,
+      ) => ({
+        path: [
+          {_key: 't0'},
+          'rows',
+          {_key: 'r0'},
+          'cells',
+          {_key: cellKey},
+          'value',
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset,
+      })
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: point('c00', 'b-c00', 's-c00', 0),
+          focus: point('c01', 'b-c01', 's-c01', 1),
+        },
+      })
+      await vi.waitFor(() => {
+        expect(
+          document.querySelectorAll('button[aria-label="Delete row"]').length,
+        ).toBe(1)
+      })
 
-    // Scroll the table far above the viewport: the chip must not float.
-    // It stays mounted (the anchoring keeps watching for its return) but
-    // invisible and inert.
-    window.scrollTo(0, 4000)
-    await vi.waitFor(() => {
-      const chip = document.querySelector('button[aria-label="Delete row"]')
-      expect(chip).not.toBeNull()
-      expect(getComputedStyle(chip as HTMLElement).visibility).toBe('hidden')
-    })
+      // Scroll the table far above the viewport: the chip must not float.
+      // It stays mounted (the anchoring keeps watching for its return) but
+      // invisible and inert.
+      const table = document.querySelector('table.pt-plugin-table')!
+      const stopTrashDiag = startScrollDiag('trash')
+      window.scrollTo(0, 4000)
+      await vi.waitFor(() => {
+        expect(table.getBoundingClientRect().bottom).toBeLessThan(0)
+      })
+      await vi.waitFor(() => {
+        const chip = document.querySelector('button[aria-label="Delete row"]')
+        console.log(
+          `[DIAG] trash tick t=${performance.now().toFixed(1)} scrollY=${window.scrollY} tableBottom=${table.getBoundingClientRect().bottom.toFixed(1)} chipVisibility=${chip ? getComputedStyle(chip).visibility : 'none'}`,
+        )
+        expect(table.getBoundingClientRect().bottom).toBeLessThan(0)
+        expect(chip).not.toBeNull()
+        expect(getComputedStyle(chip as HTMLElement).visibility).toBe('hidden')
+      })
 
-    // Scrolling back restores it: the selection never changed.
-    window.scrollTo(0, 0)
-    await vi.waitFor(() => {
-      const chip = document.querySelector('button[aria-label="Delete row"]')
-      expect(chip).not.toBeNull()
-      expect(getComputedStyle(chip as HTMLElement).visibility).toBe('visible')
-    })
-  })
+      stopTrashDiag()
+
+      // Scrolling back restores it: the selection never changed.
+      window.scrollTo(0, 0)
+      await vi.waitFor(() => {
+        expect(table.getBoundingClientRect().top).toBeGreaterThanOrEqual(0)
+      })
+      await vi.waitFor(() => {
+        const chip = document.querySelector('button[aria-label="Delete row"]')
+        expect(table.getBoundingClientRect().top).toBeGreaterThanOrEqual(0)
+        expect(chip).not.toBeNull()
+        expect(getComputedStyle(chip as HTMLElement).visibility).toBe('visible')
+      })
+    },
+  )
 
   test('Scenario: the trash chip follows its column when a structural edit shifts the bands', async () => {
     // The real stylesheet fixes the table's width (`width: 100%`,
@@ -265,36 +288,69 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     }
   })
 
-  test('Scenario: the open table menu closes when its trigger scrolls out of view', async () => {
-    const {editor, locator} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue: [
-        ...initialValue,
-        ...Array.from({length: 60}, (_, index) => paragraph(index)),
-      ],
-      children: <NodePlugin nodes={[tableContainer]} />,
-    })
-    editor.send({type: 'focus'})
-    window.scrollTo(0, 0)
+  test(
+    'Scenario: the open table menu closes when its trigger scrolls out of view',
+    {repeats: 4},
+    async () => {
+      console.log(
+        `[DIAG] ===== menu test start t=${performance.now().toFixed(1)} =====`,
+      )
+      const {editor, locator} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition,
+        initialValue: [
+          ...initialValue,
+          ...Array.from({length: 60}, (_, index) => paragraph(index)),
+        ],
+        children: <NodePlugin nodes={[tableContainer]} />,
+      })
+      editor.send({type: 'focus'})
+      window.scrollTo(0, 0)
 
-    // Reveal the trigger by hovering the table, then open the menu.
-    await userEvent.hover(
-      locator.element().querySelector('table.pt-plugin-table')!,
-    )
-    const trigger = document.querySelector(
-      'button[aria-label="Table options"]',
-    ) as HTMLButtonElement
-    await userEvent.click(trigger)
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('[role="menu"]').length).toBe(1)
-    })
+      // Reveal the trigger by hovering the table, then open the menu.
+      await userEvent.hover(
+        locator.element().querySelector('table.pt-plugin-table')!,
+      )
+      const trigger = document.querySelector(
+        'button[aria-label="Table options"]',
+      ) as HTMLButtonElement
+      console.log(
+        `[DIAG] menu test before click t=${performance.now().toFixed(1)} trigger=${diagDescribe(trigger)} triggerRect=${diagTestRect(trigger)} activeElement=${diagDescribe(document.activeElement)}`,
+      )
+      await userEvent.click(trigger)
+      await vi.waitFor(() => {
+        expect(document.querySelectorAll('[role="menu"]').length).toBe(1)
+      })
+      logMenuState('after-open', trigger)
 
-    window.scrollTo(0, 4000)
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('[role="menu"]').length).toBe(0)
-    })
-  })
+      const stopMenuDiag = startScrollDiag('menu')
+      const scrolledAt = performance.now()
+      window.scrollTo(0, 4000)
+      console.log(
+        `[DIAG] menu test scrollTo returned t=${performance.now().toFixed(1)} scrollY=${window.scrollY}`,
+      )
+      try {
+        await vi.waitFor(() => {
+          logMenuState('wait-offscreen', trigger, scrolledAt)
+          expect(trigger.getBoundingClientRect().bottom).toBeLessThan(0)
+        })
+        await vi.waitFor(
+          () => {
+            logMenuState('wait-closed', trigger, scrolledAt)
+            expect(trigger.getBoundingClientRect().bottom).toBeLessThan(0)
+            expect(document.querySelectorAll('[role="menu"]').length).toBe(0)
+          },
+          {timeout: 2000, interval: 50},
+        )
+        logMenuState('PASSED', trigger, scrolledAt)
+      } catch (error) {
+        logMenuState('FAILED', trigger, scrolledAt)
+        throw error
+      } finally {
+        stopMenuDiag()
+      }
+    },
+  )
 })
 
 describe('Feature: Per-Instance Theming Tokens', () => {
@@ -765,3 +821,53 @@ describe('Feature: Read-Only Table Chrome', () => {
     })
   })
 })
+
+function diagTestRect(element: Element): string {
+  const rect = element.getBoundingClientRect()
+  return `{top:${rect.top.toFixed(1)},bottom:${rect.bottom.toFixed(1)},left:${rect.left.toFixed(1)},right:${rect.right.toFixed(1)}}`
+}
+
+function logMenuState(label: string, trigger: HTMLElement, since?: number) {
+  const menus = Array.from(document.querySelectorAll('[role="menu"]'))
+  const now = performance.now()
+  console.log(
+    `[DIAG] menu tick ${label} t=${now.toFixed(1)}${since === undefined ? '' : ` sinceScroll=${(now - since).toFixed(1)}ms`} scrollY=${window.scrollY} scrollingElementTop=${document.scrollingElement?.scrollTop} scrollingElement=${document.scrollingElement?.tagName} triggerRect=${diagTestRect(trigger)} triggerConnected=${trigger.isConnected} triggerIsLive=${trigger === document.querySelector('button[aria-label="Table options"]')} ariaExpanded=${trigger.getAttribute('aria-expanded')} menuCount=${menus.length} menus=${menus
+      .map(
+        (menu) =>
+          `[visibility=${(menu as HTMLElement).style.visibility} left=${(menu as HTMLElement).style.left} top=${(menu as HTMLElement).style.top} parent=${menu.parentElement?.tagName}]`,
+      )
+      .join(
+        ',',
+      )} activeElement=${diagDescribe(document.activeElement)} hasFocus=${document.hasFocus()} visibilityState=${document.visibilityState} rafFrames=${diagRafFrames}`,
+  )
+}
+
+let diagRafFrames = 0
+
+function startScrollDiag(label: string): () => void {
+  const onWindowScroll = (event: Event) => {
+    console.log(
+      `[DIAG] ${label} scroll-event on=window(capture) t=${performance.now().toFixed(1)} target=${diagDescribe(event.target)} scrollY=${window.scrollY}`,
+    )
+  }
+  const onDocumentScroll = (event: Event) => {
+    console.log(
+      `[DIAG] ${label} scroll-event on=document(capture) t=${performance.now().toFixed(1)} target=${diagDescribe(event.target)} scrollY=${window.scrollY}`,
+    )
+  }
+  window.addEventListener('scroll', onWindowScroll, true)
+  document.addEventListener('scroll', onDocumentScroll, true)
+  diagRafFrames = 0
+  let frame = requestAnimationFrame(function tick() {
+    diagRafFrames++
+    frame = requestAnimationFrame(tick)
+  })
+  return () => {
+    window.removeEventListener('scroll', onWindowScroll, true)
+    document.removeEventListener('scroll', onDocumentScroll, true)
+    cancelAnimationFrame(frame)
+    console.log(
+      `[DIAG] ${label} scroll-diag stopped t=${performance.now().toFixed(1)} rafFrames=${diagRafFrames}`,
+    )
+  }
+}
