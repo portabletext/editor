@@ -156,6 +156,19 @@ export function subscribePatchGeneration({
       }
     }
 
+    if (
+      operation.type === 'insert' &&
+      operation.path.length === 1 &&
+      previousValue.length === 0 &&
+      editorIsEmpty
+    ) {
+      // The block this `insert` puts into the empty field (an undo restoring
+      // a deleted placeholder, say) looks like the local placeholder, but
+      // the host now holds it. Without the record, the next edit would
+      // insert it a second time.
+      editor.lastSyncedValue = editor.snapshot.context.value
+    }
+
     // Emit all patches
     if (patches.length > 0) {
       for (const patch of patches) {

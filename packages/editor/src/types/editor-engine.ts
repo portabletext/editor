@@ -86,7 +86,9 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * placeholder. Syncs that write nothing are not recorded: hosts mirror
    * `mutation.value` back as `update value`, and such an echo of the
    * editor's own state (its placeholder included) is not a claim that the
-   * value is persisted.
+   * value is persisted. Patch generation also records the value when this
+   * editor's own `insert` puts a pristine block into an empty field, since
+   * the host then holds that block.
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
   /**
