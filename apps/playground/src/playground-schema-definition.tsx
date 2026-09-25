@@ -393,8 +393,9 @@ export const playgroundSchemaDefinition = defineSchema({
       ],
     },
     // ARCHETYPE 4 - deep structural nesting + heterogeneous depth.
-    // table → row → cell. cell.content allows strong + em decorators,
-    // link annotation, normal style, bullet + number lists, no inline objects.
+    // table → row → cell. cell.content allows strong + em + code + kbd
+    // decorators (kbd is declared only here, not at the root), link
+    // annotation, normal style, bullet + number lists, no inline objects.
     // PLUS cell.content allows nested callout (different sub-schema
     // than cell). Tests deep traversal AND voting across multiple
     // sub-schemas at different depths.
@@ -436,6 +437,7 @@ export const playgroundSchemaDefinition = defineSchema({
                                 {title: 'Strong', name: 'strong'},
                                 {title: 'Emphasis', name: 'em'},
                                 {title: 'Code', name: 'code'},
+                                {title: 'Keyboard', name: 'kbd'},
                               ],
                               styles: [{title: 'Normal', name: 'normal'}],
                               annotations: [
