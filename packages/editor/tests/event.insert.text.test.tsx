@@ -2,7 +2,7 @@ import {isSpan} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {defineSchema, type Editor, type Path} from '../src'
 import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
@@ -490,4 +490,118 @@ describe('event.insert.text', () => {
       ])
     })
   })
+
+  test('Scenario: `insert.text` inserts at a pending DOM selection', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: barBlockKey,
+          _type: 'block',
+          children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    const fooPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
+    const barPath = [{_key: barBlockKey}, 'children', {_key: barSpanKey}]
+    const fooTextNode = getSpanTextNode(editor, fooPath)
+    const barTextNode = getSpanTextNode(editor, barPath)
+
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: barPath, offset: 3},
+        focus: {path: barPath, offset: 3},
+      },
+    })
+
+    await vi.waitFor(() => {
+      const domSelection = document.getSelection()
+      expect({
+        model: editor.getSnapshot().context.selection,
+        dom: {
+          anchorNode: domSelection?.anchorNode,
+          anchorOffset: domSelection?.anchorOffset,
+          focusNode: domSelection?.focusNode,
+          focusOffset: domSelection?.focusOffset,
+        },
+      }).toEqual({
+        model: {
+          anchor: {path: barPath, offset: 3},
+          focus: {path: barPath, offset: 3},
+          backward: false,
+        },
+        dom: {
+          anchorNode: barTextNode,
+          anchorOffset: 3,
+          focusNode: barTextNode,
+          focusOffset: 3,
+        },
+      })
+    })
+
+    document.getSelection()!.collapse(fooTextNode, 3)
+    document.dispatchEvent(new Event('selectionchange'))
+
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [
+            {_key: fooSpanKey, _type: 'span', text: 'foox', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: barBlockKey,
+          _type: 'block',
+          children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooPath, offset: 4},
+        focus: {path: fooPath, offset: 4},
+        backward: false,
+      })
+    })
+  })
 })
+
+function getSpanTextNode(editor: Editor, spanPath: Path): Node {
+  const snapshot = editor.getSnapshot()
+  const point = {path: spanPath, offset: 0}
+  const [spanNode] = editor.dom.getChildNodes({
+    ...snapshot,
+    context: {...snapshot.context, selection: {anchor: point, focus: point}},
+  })
+  const textNode = spanNode
+    ? document.createTreeWalker(spanNode, NodeFilter.SHOW_TEXT).nextNode()
+    : null
+
+  if (!textNode) {
+    throw new Error('Could not find the text node of the span')
+  }
+
+  return textNode
+}
