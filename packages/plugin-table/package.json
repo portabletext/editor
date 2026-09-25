@@ -65,7 +65,16 @@
     "check:types:watch": "tsc --watch",
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "pkg-utils watch",
-    "prepublishOnly": "turbo run build"
+    "prepublishOnly": "turbo run build",
+    "test": "vitest --run",
+    "test:browser": "vitest --run --project browser",
+    "test:browser:chromium": "vitest run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\"",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@floating-ui/dom": "catalog:",
