@@ -158,6 +158,11 @@ describe('Feature: `defineTable` with renamed containers', () => {
     editor.send({type: 'select', at: {anchor: point, focus: point}})
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
+      expect(document.activeElement).toBe(editor.dom.getEditorElement())
+      expect({
+        text: window.getSelection()?.focusNode?.textContent,
+        offset: window.getSelection()?.focusOffset,
+      }).toEqual({text: 'one', offset: 1})
     })
 
     await userEvent.keyboard('{Tab}')
@@ -800,6 +805,8 @@ describe('Feature: members declared by the cell block', () => {
     editor.send({type: 'select', at: selection})
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual(selection)
+      expect(document.activeElement).toBe(editor.dom.getEditorElement())
+      expect(window.getSelection()?.toString()).toBe('foo')
     })
 
     await userEvent.keyboard(
