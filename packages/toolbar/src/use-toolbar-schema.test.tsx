@@ -2,6 +2,7 @@ import {defineContainer} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {useEffect} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {
@@ -108,6 +109,104 @@ describe('useToolbarSchema', () => {
       'h2',
       'code',
     ])
+  })
+
+  test('Scenario: includes members declared by a container nested in another container', async () => {
+    const captures: Array<ReturnType<typeof useToolbarSchema>> = []
+    const onSchema = (schema: ReturnType<typeof useToolbarSchema>) => {
+      captures.push(schema)
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'value',
+                                type: 'array',
+                                of: [
+                                  {
+                                    type: 'block',
+                                    decorators: [
+                                      {name: 'strong'},
+                                      {name: 'code'},
+                                    ],
+                                    annotations: [{name: 'link'}],
+                                    lists: [{name: 'bullet'}],
+                                    styles: [{name: 'normal'}, {name: 'h1'}],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'table',
+                arrayField: 'rows',
+                of: [
+                  defineContainer({
+                    type: 'row',
+                    arrayField: 'cells',
+                    of: [defineContainer({type: 'cell', arrayField: 'value'})],
+                  }),
+                ],
+              }),
+            ]}
+          />
+          <ToolbarProbe onSchema={onSchema} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(captures.at(-1)).toEqual({
+        decorators: [
+          {name: 'strong', value: 'strong'},
+          {name: 'code', value: 'code'},
+        ],
+        annotations: [{name: 'link', fields: []}],
+        lists: [{name: 'bullet', value: 'bullet'}],
+        blockObjects: editor.getSnapshot().context.schema.blockObjects,
+        inlineObjects: [],
+        styles: [
+          {name: 'normal', value: 'normal', title: 'Normal'},
+          {name: 'h1', value: 'h1'},
+        ],
+      })
+    })
   })
 })
 

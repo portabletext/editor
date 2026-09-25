@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {Container} from '../renderers/renderer.types'
-import {resolveContainerField} from '../schema/resolve-containers'
+import {defineContainer, type Container} from '../renderers/renderer.types'
+import {resolveContainers} from '../schema/resolve-containers'
 import {getUnionSchema} from './get-union-schema'
 
 const testRender: Container['render'] = ({children}) => children
@@ -17,8 +17,7 @@ describe(getUnionSchema.name, () => {
 
     const union = getUnionSchema(schema, new Map())
 
-    expect(union.decorators.map((d) => d.name)).toEqual(['strong'])
-    expect(union.styles.map((s) => s.name)).toEqual(['normal', 'h1'])
+    expect(union).toEqual(schema)
   })
 
   test('merges container sub-schema members with root, deduped by name', () => {
@@ -62,50 +61,35 @@ describe(getUnionSchema.name, () => {
         ],
       }),
     )
-
-    const containers = new Map()
-    for (const container of [
-      {
-        kind: 'container',
+    const containers = resolveContainers(schema, [
+      defineContainer({
         type: 'callout',
         arrayField: 'content',
         render: testRender,
-      },
-      {
-        kind: 'container',
+      }),
+      defineContainer({
         type: 'code-block',
         arrayField: 'lines',
         render: testRender,
-      },
-    ] satisfies ReadonlyArray<Container>) {
-      const field = resolveContainerField(
-        schema,
-        container.type,
-        container.arrayField,
-      )
-      if (!field) {
-        throw new Error(
-          `field "${container.arrayField}" not found on type "${container.type}"`,
-        )
-      }
-      containers.set(container.type, {container, field})
-    }
+      }),
+    ])
 
     const union = getUnionSchema(schema, containers)
 
-    // 'strong' from root, 'em' from callout, 'code' from code-block
-    expect(union.decorators.map((d) => d.name)).toEqual([
-      'strong',
-      'em',
-      'code',
-    ])
-    // 'normal' synthesized at root, 'h1' root, 'callout-body' callout, 'monospace' code-block
-    expect(union.styles.map((s) => s.name)).toEqual([
-      'normal',
-      'h1',
-      'callout-body',
-      'monospace',
-    ])
+    expect(union).toEqual({
+      ...schema,
+      decorators: [
+        {name: 'strong', value: 'strong'},
+        {name: 'em', value: 'em'},
+        {name: 'code', value: 'code'},
+      ],
+      styles: [
+        {name: 'normal', value: 'normal', title: 'Normal'},
+        {name: 'h1', value: 'h1'},
+        {name: 'callout-body', value: 'callout-body'},
+        {name: 'monospace', value: 'monospace'},
+      ],
+    })
   })
 
   test('does not include sub-schema for unregistered containers', () => {
@@ -132,17 +116,12 @@ describe(getUnionSchema.name, () => {
       }),
     )
 
-    // No container registered for 'callout' - just an empty containers map.
     const union = getUnionSchema(schema, new Map())
 
-    // 'em' must NOT appear because the callout is not a registered container.
-    expect(union.decorators.map((d) => d.name)).toEqual(['strong'])
+    expect(union).toEqual(schema)
   })
 
   test('excludes structural containers whose field does not accept text blocks', () => {
-    // A table whose 'rows' field accepts only 'row' objects, whose 'cells'
-    // field accepts only 'cell' objects, and whose 'content' field finally
-    // accepts text blocks.
     const schema = compileSchema(
       defineSchema({
         blockObjects: [
@@ -188,44 +167,322 @@ describe(getUnionSchema.name, () => {
         ],
       }),
     )
-
-    const containers = new Map()
-    for (const container of [
-      {
-        kind: 'container',
+    const containers = resolveContainers(schema, [
+      defineContainer({
         type: 'table',
         arrayField: 'rows',
         render: testRender,
-      },
-      {kind: 'container', type: 'row', arrayField: 'cells', render: testRender},
-      {
-        kind: 'container',
-        type: 'cell',
-        arrayField: 'content',
-        render: testRender,
-      },
-    ] satisfies ReadonlyArray<Container>) {
-      const field = resolveContainerField(
-        schema,
-        container.type,
-        container.arrayField,
-      )
-      if (!field) {
-        throw new Error(
-          `field "${container.arrayField}" not found on type "${container.type}"`,
-        )
-      }
-      containers.set(container.type, {container, field})
-    }
+        of: [
+          defineContainer({
+            type: 'row',
+            arrayField: 'cells',
+            render: testRender,
+            of: [
+              defineContainer({
+                type: 'cell',
+                arrayField: 'content',
+                render: testRender,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ])
 
     const union = getUnionSchema(schema, containers)
 
-    // 'row' and 'cell' must NOT appear in the union: their containers
-    // (`table` accepting 'row' only, `row` accepting 'cell' only) do not
-    // accept text blocks. Only 'table' (declared at root) and the members
-    // reached through `cell` (which accepts text blocks) appear.
-    expect(union.blockObjects.map((b) => b.name)).toEqual(['table'])
-    // The cell's content sub-schema contributes the 'code' decorator.
-    expect(union.decorators.map((d) => d.name)).toEqual(['code'])
+    expect(union).toEqual({
+      ...schema,
+      decorators: [{name: 'code', value: 'code'}],
+    })
+  })
+
+  test('merges members declared by containers nested in another container', () => {
+    const schema = compileSchema(
+      defineSchema({
+        decorators: [{name: 'strong'}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {
+                                    type: 'block',
+                                    decorators: [
+                                      {name: 'strong'},
+                                      {name: 'code'},
+                                    ],
+                                    annotations: [{name: 'link'}],
+                                    lists: [{name: 'bullet'}],
+                                    styles: [{name: 'h1'}],
+                                    inlineObjects: [{name: 'mention'}],
+                                  },
+                                  {type: 'object', name: 'image', fields: []},
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block', decorators: [{name: 'em'}]}],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'table',
+        arrayField: 'rows',
+        render: testRender,
+        of: [
+          defineContainer({
+            type: 'row',
+            arrayField: 'cells',
+            render: testRender,
+            of: [
+              defineContainer({
+                type: 'cell',
+                arrayField: 'content',
+                render: testRender,
+              }),
+            ],
+          }),
+        ],
+      }),
+      defineContainer({
+        type: 'callout',
+        arrayField: 'content',
+        render: testRender,
+      }),
+    ])
+
+    const union = getUnionSchema(schema, containers)
+
+    expect(union).toEqual({
+      ...schema,
+      decorators: [
+        {name: 'strong', value: 'strong'},
+        {name: 'em', value: 'em'},
+        {name: 'code', value: 'code'},
+      ],
+      annotations: [{name: 'link', fields: []}],
+      lists: [{name: 'bullet', value: 'bullet'}],
+      styles: [
+        {name: 'normal', value: 'normal', title: 'Normal'},
+        {name: 'h1', value: 'h1'},
+      ],
+      inlineObjects: [{name: 'mention', fields: []}],
+      blockObjects: [...schema.blockObjects, {name: 'image', fields: []}],
+    })
+  })
+
+  test('keeps a later top-level container definition over a nested container definition of the same name', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {
+                                    type: 'block',
+                                    decorators: [
+                                      {name: 'code', title: 'Cell code'},
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {
+                    type: 'block',
+                    decorators: [{name: 'code', title: 'Callout code'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'table',
+        arrayField: 'rows',
+        render: testRender,
+        of: [
+          defineContainer({
+            type: 'row',
+            arrayField: 'cells',
+            render: testRender,
+            of: [
+              defineContainer({
+                type: 'cell',
+                arrayField: 'content',
+                render: testRender,
+              }),
+            ],
+          }),
+        ],
+      }),
+      defineContainer({
+        type: 'callout',
+        arrayField: 'content',
+        render: testRender,
+      }),
+    ])
+
+    const union = getUnionSchema(schema, containers)
+
+    expect(union).toEqual({
+      ...schema,
+      decorators: [{name: 'code', value: 'code', title: 'Callout code'}],
+    })
+  })
+
+  test('keeps the root definition over a nested container definition of the same name', () => {
+    const schema = compileSchema(
+      defineSchema({
+        decorators: [{name: 'strong', title: 'Root strong'}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {
+                                    type: 'block',
+                                    decorators: [
+                                      {name: 'strong', title: 'Cell strong'},
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const containers = resolveContainers(schema, [
+      defineContainer({
+        type: 'table',
+        arrayField: 'rows',
+        render: testRender,
+        of: [
+          defineContainer({
+            type: 'row',
+            arrayField: 'cells',
+            render: testRender,
+            of: [
+              defineContainer({
+                type: 'cell',
+                arrayField: 'content',
+                render: testRender,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ])
+
+    const union = getUnionSchema(schema, containers)
+
+    expect(union).toEqual({
+      ...schema,
+      decorators: [{name: 'strong', value: 'strong', title: 'Root strong'}],
+    })
   })
 })
