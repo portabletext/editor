@@ -1,30 +1,13 @@
-import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getLeaf} from '../traversal/get-leaf'
-import {getSibling} from '../traversal/get-sibling'
-import {getBlock} from '../traversal/is-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
-import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
-
-const shiftLeft = createKeyboardShortcut({
-  default: [
-    {
-      key: 'ArrowLeft',
-      shift: true,
-      meta: false,
-      ctrl: false,
-      alt: false,
-    },
-  ],
-})
 
 export const abstractKeyboardBehaviors = [
   /**
@@ -168,64 +151,6 @@ export const abstractKeyboardBehaviors = [
     },
     actions: [
       (_, {anchor, focus}) => [raise({type: 'select', at: {anchor, focus}})],
-    ],
-  }),
-
-  /**
-   * Fix edge case where Shift+ArrowLeft didn't reduce a selection hanging
-   * onto an empty text block.
-   */
-  defineBehavior({
-    on: 'keyboard.keydown',
-    guard: ({snapshot, event}) => {
-      if (!snapshot.context.selection || !shiftLeft.guard(event.originEvent)) {
-        return false
-      }
-
-      const focusTextBlock = getFocusTextBlock(snapshot)
-
-      if (!focusTextBlock) {
-        return false
-      }
-
-      const previousSibling = getSibling(snapshot, focusTextBlock.path, {
-        direction: 'previous',
-      })
-
-      if (!previousSibling) {
-        return false
-      }
-
-      const previousBlock = getBlock(snapshot, previousSibling.path)
-
-      if (!previousBlock) {
-        return false
-      }
-
-      const hanging = snapshot.context.selection.focus.offset === 0
-
-      if (hanging && isEmptyTextBlock(snapshot.context, focusTextBlock.node)) {
-        return {
-          previousBlock,
-          selection: snapshot.context.selection,
-        }
-      }
-
-      return false
-    },
-    actions: [
-      ({snapshot}, {previousBlock, selection}) => [
-        raise({
-          type: 'select',
-          at: {
-            anchor: selection.anchor,
-            focus: getBlockEndPoint({
-              context: snapshot.context,
-              block: previousBlock,
-            }),
-          },
-        }),
-      ],
     ],
   }),
 ]
