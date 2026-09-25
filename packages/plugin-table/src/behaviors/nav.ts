@@ -68,6 +68,10 @@ const shiftArrow = {
 
 type SelectionExtension = {at: NonNullable<EditorSelection>} | {stay: true}
 
+type VerticalMove =
+  | {kind: 'entry'; entry: NonNullable<EditorSelection>}
+  | {kind: 'edge'}
+
 export function createNavBehaviors(config: TableConfig) {
   return [
     // Tab: move to the start of the next cell, wrapping to the first cell of the
@@ -159,36 +163,21 @@ export function createNavBehaviors(config: TableConfig) {
         if (!focusOnVisualEdge(snapshot, dom, 'last')) {
           return false
         }
-        const rowBelow = getSibling(snapshot, position.row.path, {
-          direction: 'next',
-        })
-        if (!rowBelow) {
-          const siblingBelow = getSibling(snapshot, position.table.path, {
-            direction: 'next',
-          })
-          if (siblingBelow) {
-            // Native ArrowDown at the bottom row walks forward through the
-            // cells instead of exiting, so the plugin owns the move into
-            // the sibling below.
-            const at = blockEntrySelection(snapshot, dom, siblingBelow, 'first')
-            return at ? {at} : false
-          }
+        const move = resolveVerticalMove(
+          config,
+          snapshot,
+          dom,
+          position,
+          'down',
+        )
+        if (!move) {
+          return false
+        }
+        if (move.kind === 'edge') {
           // Nothing below the table: escape it, the way block objects do.
           return {escapeTablePath: position.table.path}
         }
-        const target = sameColumnCell(
-          snapshot,
-          position.cell,
-          position.row,
-          rowBelow,
-        )
-        const at =
-          target &&
-          cellEntrySelection(config, snapshot, dom, target.path, 'first')
-        if (!at) {
-          return false
-        }
-        return {at}
+        return {at: move.entry}
       },
       actions: [
         ({snapshot}, result) =>
@@ -225,36 +214,15 @@ export function createNavBehaviors(config: TableConfig) {
         if (!focusOnVisualEdge(snapshot, dom, 'first')) {
           return false
         }
-        const rowAbove = getSibling(snapshot, position.row.path, {
-          direction: 'previous',
-        })
-        if (!rowAbove) {
-          const siblingAbove = getSibling(snapshot, position.table.path, {
-            direction: 'previous',
-          })
-          if (siblingAbove) {
-            // Native ArrowUp at the top row walks backwards through the
-            // cells instead of exiting, so the plugin owns the move into
-            // the sibling above.
-            const at = blockEntrySelection(snapshot, dom, siblingAbove, 'last')
-            return at ? {at} : false
-          }
+        const move = resolveVerticalMove(config, snapshot, dom, position, 'up')
+        if (!move) {
+          return false
+        }
+        if (move.kind === 'edge') {
           // Nothing above the table: escape it, the way block objects do.
           return {escapeTablePath: position.table.path}
         }
-        const target = sameColumnCell(
-          snapshot,
-          position.cell,
-          position.row,
-          rowAbove,
-        )
-        const at =
-          target &&
-          cellEntrySelection(config, snapshot, dom, target.path, 'last')
-        if (!at) {
-          return false
-        }
-        return {at}
+        return {at: move.entry}
       },
       actions: [
         ({snapshot}, result) =>
@@ -311,8 +279,6 @@ function resolveSelectionExtension(
     return undefined
   }
   const exitEdge = direction === 'down' ? 'last' : 'first'
-  const entryEdge = direction === 'down' ? 'first' : 'last'
-  const siblingDirection = direction === 'down' ? 'next' : 'previous'
   const focusSnapshot = collapsedAt(snapshot, selection.focus)
   if (
     isEqualPaths(focusPosition.cell.path, anchorPosition.cell.path) &&
@@ -323,38 +289,61 @@ function resolveSelectionExtension(
   ) {
     return undefined
   }
-  const neighborRow = getSibling(snapshot, focusPosition.row.path, {
+  const move = resolveVerticalMove(
+    config,
+    focusSnapshot,
+    dom,
+    focusPosition,
+    direction,
+  )
+  if (!move) {
+    return undefined
+  }
+  if (move.kind === 'edge') {
+    return {stay: true}
+  }
+  return {at: {anchor: selection.anchor, focus: move.entry.focus}}
+}
+
+function resolveVerticalMove(
+  config: TableConfig,
+  focusSnapshot: EditorSnapshot,
+  dom: Dom,
+  position: {cell: Entry; row: Entry; table: Entry},
+  direction: 'up' | 'down',
+): VerticalMove | undefined {
+  const siblingDirection = direction === 'down' ? 'next' : 'previous'
+  const entryEdge = direction === 'down' ? 'first' : 'last'
+  const neighborRow = getSibling(focusSnapshot, position.row.path, {
     direction: siblingDirection,
   })
   if (!neighborRow) {
-    const siblingBlock = getSibling(snapshot, focusPosition.table.path, {
+    const siblingBlock = getSibling(focusSnapshot, position.table.path, {
       direction: siblingDirection,
     })
     if (!siblingBlock) {
-      return {stay: true}
+      return {kind: 'edge'}
     }
+    // Native vertical arrows at the outer row walk through the cells
+    // instead of exiting, so the plugin owns the move into the sibling.
     const entry = blockEntrySelection(
       focusSnapshot,
       dom,
       siblingBlock,
       entryEdge,
     )
-    return entry
-      ? {at: {anchor: selection.anchor, focus: entry.focus}}
-      : undefined
+    return entry ? {kind: 'entry', entry} : undefined
   }
   const target = sameColumnCell(
-    snapshot,
-    focusPosition.cell,
-    focusPosition.row,
+    focusSnapshot,
+    position.cell,
+    position.row,
     neighborRow,
   )
   const entry =
     target &&
     cellEntrySelection(config, focusSnapshot, dom, target.path, entryEdge)
-  return entry
-    ? {at: {anchor: selection.anchor, focus: entry.focus}}
-    : undefined
+  return entry ? {kind: 'entry', entry} : undefined
 }
 
 function collapsedAt(
