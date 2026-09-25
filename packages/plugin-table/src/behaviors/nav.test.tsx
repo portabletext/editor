@@ -4,6 +4,7 @@ import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {afterAll, beforeAll, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {getTableSelection} from '../get-table-selection'
 import {TablePlugin} from '../plugin.table'
 import {createTableGuards, defaultTableConfig} from '../table-config'
 
@@ -94,8 +95,20 @@ const wrappedValue = [
   },
 ]
 
+const threeRowValue = [
+  {
+    _type: 'table',
+    _key: 't0',
+    rows: [
+      {_type: 'row', _key: 'r0', cells: [cell('c00', 'A'), cell('c01', 'B')]},
+      {_type: 'row', _key: 'r1', cells: [cell('c10', 'C'), cell('c11', 'D')]},
+      {_type: 'row', _key: 'r2', cells: [cell('c20', 'E'), cell('c21', 'F')]},
+    ],
+  },
+]
+
 function spanPath(cellKey: string) {
-  const rowKey = cellKey.startsWith('c0') ? 'r0' : 'r1'
+  const rowKey = `r${cellKey.charAt(1)}`
   return [
     {_key: 't0'},
     'rows',
@@ -652,6 +665,307 @@ describe('table keyboard navigation', () => {
   })
 })
 
+describe('table keyboard selection extension', () => {
+  test('Shift+ArrowDown extends to the cell directly below (same column)', async () => {
+    const editor = await navFrom('c00', 1, 'Shift>}{ArrowDown}{/Shift')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [0, 0],
+      })
+    })
+    expect(editor.getSnapshot().context.selection?.anchor).toEqual({
+      path: spanPath('c00'),
+      offset: 1,
+    })
+  })
+
+  test('Shift+ArrowDown in the second column extends within that column', async () => {
+    const editor = await navFrom('c01', 1, 'Shift>}{ArrowDown}{/Shift')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [1, 1],
+      })
+    })
+  })
+
+  test('Shift+ArrowUp extends to the cell directly above (same column)', async () => {
+    const editor = await navFrom('c10', 0, 'Shift>}{ArrowUp}{/Shift')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [0, 0],
+      })
+    })
+    expect(editor.getSnapshot().context.selection?.anchor).toEqual({
+      path: spanPath('c10'),
+      offset: 0,
+    })
+  })
+
+  test('repeated Shift+ArrowDown grows the table selection a row at a time', async () => {
+    const editor = await navFrom(
+      'c00',
+      1,
+      'Shift>}{ArrowDown}{/Shift',
+      threeRowValue,
+    )
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [0, 0],
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 2],
+        colRange: [0, 0],
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [0, 0],
+      })
+    })
+    expect(editor.getSnapshot().context.selection?.anchor).toEqual({
+      path: spanPath('c00'),
+      offset: 1,
+    })
+  })
+
+  test('Shift+ArrowDown then Shift+ArrowUp shrinks back to the anchor cell', async () => {
+    const editor = await navFrom('c00', 1, 'Shift>}{ArrowDown}{/Shift')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [0, 0],
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 1},
+        focus: {path: spanPath('c00'), offset: 1},
+        backward: false,
+      })
+    })
+  })
+
+  test('Shift+ArrowDown in the bottom row extends into the block below', async () => {
+    const editor = await navFrom('c10', 1, 'Shift>}{ArrowDown}{/Shift', [
+      ...initialValue,
+      {
+        _type: 'block',
+        _key: 'b0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's0', text: '', marks: []}],
+      },
+    ] as typeof initialValue)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c10'), offset: 1},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+        backward: false,
+      })
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [cell('c00', 'A'), cell('c01', 'B')],
+          },
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [cell('c10', 'C'), cell('c11', 'D')],
+          },
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's0', text: '', marks: []}],
+      },
+    ])
+  })
+
+  test('Shift+ArrowUp in the top row extends into the block above', async () => {
+    const editor = await navFrom('c00', 0, 'Shift>}{ArrowUp}{/Shift', [
+      {
+        _type: 'block',
+        _key: 'b0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's0', text: '', marks: []}],
+      },
+      ...initialValue,
+    ] as typeof initialValue)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+        backward: true,
+      })
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's0', text: '', marks: []}],
+      },
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r0',
+            cells: [cell('c00', 'A'), cell('c01', 'B')],
+          },
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [cell('c10', 'C'), cell('c11', 'D')],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('Shift+ArrowDown in the bottom row with nothing below does nothing', async () => {
+    const editor = await navFrom('c10', 1, 'Shift>}{ArrowDown}{/Shift')
+    await userEvent.keyboard('x')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [cell('c00', 'A'), cell('c01', 'B')],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [cell('c10', 'Cx'), cell('c11', 'D')],
+            },
+          ],
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: spanPath('c10'), offset: 2},
+      focus: {path: spanPath('c10'), offset: 2},
+      backward: false,
+    })
+  })
+
+  test('Shift+ArrowUp in the top row with nothing above does nothing', async () => {
+    const editor = await navFrom('c01', 0, 'Shift>}{ArrowUp}{/Shift')
+    await userEvent.keyboard('x')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: 't0',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'r0',
+              cells: [cell('c00', 'A'), cell('c01', 'xB')],
+            },
+            {
+              _type: 'row',
+              _key: 'r1',
+              cells: [cell('c10', 'C'), cell('c11', 'D')],
+            },
+          ],
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: spanPath('c01'), offset: 1},
+      focus: {path: spanPath('c01'), offset: 1},
+      backward: false,
+    })
+  })
+
+  test('Shift+ArrowRight at the end of a cell extends to the next cell in the row', async () => {
+    const editor = await navFrom('c00', 1, 'Shift>}{ArrowRight}{/Shift')
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 0],
+        colRange: [0, 1],
+      })
+    })
+  })
+
+  test('Shift+ArrowDown and Shift+ArrowUp across multi-line cells move a whole row per press', async () => {
+    const editor = await navFrom('c00', 8, 'Shift>}{ArrowDown}{/Shift', [
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {_type: 'row', _key: 'r0', cells: [cell('c00', 'lorem\nlorem')]},
+          {_type: 'row', _key: 'r1', cells: [cell('c10', 'lorem\nlorem')]},
+          {_type: 'row', _key: 'r2', cells: [cell('c20', 'lorem\nlorem')]},
+        ],
+      },
+    ])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 8},
+        focus: {path: spanPath('c10'), offset: 2},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 8},
+        focus: {path: spanPath('c20'), offset: 2},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 8},
+        focus: {path: spanPath('c10'), offset: 8},
+        backward: false,
+      })
+    })
+  })
+})
+
 describe('table keyboard navigation across a wrapped cell', () => {
   let wrapStyle: HTMLStyleElement
 
@@ -692,6 +1006,38 @@ describe('table keyboard navigation across a wrapped cell', () => {
     })
   })
 
+  test('Shift+ArrowDown from an earlier line extends within the cell', async () => {
+    const editor = await navFrom(
+      'c00',
+      0,
+      'Shift>}{ArrowDown}{/Shift',
+      wrappedValue,
+    )
+    await vi.waitFor(() => {
+      expect(
+        editor.getSnapshot().context.selection?.focus.offset,
+      ).toBeGreaterThan(0)
+    })
+    expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
+    expect(getTableSelection(editor.getSnapshot())).toEqual(undefined)
+  })
+
+  test('Shift+ArrowDown from the last visual line extends to the cell below', async () => {
+    const editor = await navFrom(
+      'c00',
+      longText.length,
+      'Shift>}{ArrowDown}{/Shift',
+      wrappedValue,
+    )
+    await vi.waitFor(() => {
+      expect(getTableSelection(editor.getSnapshot())).toEqual({
+        tablePath: [{_key: 't0'}],
+        rowRange: [0, 1],
+        colRange: [0, 0],
+      })
+    })
+  })
+
   test('ArrowUp from a later line stays in the cell (passes through)', async () => {
     const editor = await navFrom(
       'c10',
@@ -713,8 +1059,21 @@ describe('table keyboard navigation preserves the caret column', () => {
       _type: 'table',
       _key: 't0',
       rows: [
-        {_type: 'row', _key: 'r0', cells: [cell('c00', 'abcdef')]},
-        {_type: 'row', _key: 'r1', cells: [cell('c10', 'abcdef')]},
+        {
+          _type: 'row',
+          _key: 'r0',
+          cells: [cell('c00', 'abcdef'), cell('c01', 'B')],
+        },
+        {
+          _type: 'row',
+          _key: 'r1',
+          cells: [cell('c10', 'abcdef'), cell('c11', 'D')],
+        },
+        {
+          _type: 'row',
+          _key: 'r2',
+          cells: [cell('c20', 'abcdef'), cell('c21', 'F')],
+        },
       ],
     },
   ]
@@ -725,6 +1084,135 @@ describe('table keyboard navigation preserves the caret column', () => {
       expect(editor.getSnapshot().context.selection?.focus).toEqual({
         path: spanPath('c10'),
         offset: 3,
+      })
+    })
+  })
+
+  test('Shift+ArrowDown moves the focus to the same column in the cell below', async () => {
+    const editor = await navFrom(
+      'c00',
+      3,
+      'Shift>}{ArrowDown}{/Shift',
+      columnValue,
+    )
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c10'), offset: 3},
+        backward: false,
+      })
+    })
+  })
+
+  test('repeated Shift+ArrowDown keeps the focus in the same column', async () => {
+    const editor = await navFrom(
+      'c00',
+      3,
+      'Shift>}{ArrowDown}{/Shift',
+      columnValue,
+    )
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c10'), offset: 3},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c20'), offset: 3},
+        backward: false,
+      })
+    })
+  })
+
+  test('Shift+ArrowUp moves the focus to the same column in the cell above', async () => {
+    const editor = await navFrom(
+      'c10',
+      2,
+      'Shift>}{ArrowUp}{/Shift',
+      columnValue,
+    )
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c10'), offset: 2},
+        focus: {path: spanPath('c00'), offset: 2},
+        backward: true,
+      })
+    })
+  })
+
+  test('Shift+ArrowUp back into a multi-line anchor cell lands on its last line', async () => {
+    const editor = await navFrom('c00', 3, 'Shift>}{ArrowDown}{/Shift', [
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {_type: 'row', _key: 'r0', cells: [cell('c00', 'abcdef\nabcdef')]},
+          {_type: 'row', _key: 'r1', cells: [cell('c10', 'abcdef')]},
+        ],
+      },
+    ])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c00'), offset: 10},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c10'), offset: 3},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c00'), offset: 10},
+        backward: false,
+      })
+    })
+  })
+
+  test('Shift+ArrowUp after Shift+ArrowRight in the cell below keeps the moved column', async () => {
+    const editor = await navFrom(
+      'c00',
+      3,
+      'Shift>}{ArrowDown}{/Shift',
+      columnValue,
+    )
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c10'), offset: 3},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowRight}{ArrowRight}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c10'), offset: 5},
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: spanPath('c00'), offset: 3},
+        focus: {path: spanPath('c00'), offset: 5},
+        backward: false,
       })
     })
   })
