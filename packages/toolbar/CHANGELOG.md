@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.0.16-next.0
+
+### Patch Changes
+
+- Updated dependencies [[`e52a9d2`](https://github.com/portabletext/editor/commit/e52a9d24b73c71dee09ad7b039dc3de9dd62db50)]:
+  - @portabletext/editor@9.0.0-next.0
+
 ## 9.0.15
 
 ### Patch Changes
