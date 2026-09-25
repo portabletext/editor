@@ -1,0 +1,181 @@
+name: Sync main into next
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  sync:
+    if: github.repository_owner == 'portabletext' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BRANCH: sync/main-into-next
+    steps:
+      # PRs and pushes made with `GITHUB_TOKEN` start `pull_request` runs that
+      # wait for manual approval. With the app token, checks start on their own.
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ vars.ECOSCRIPT_CLIENT_ID }}
+          private-key: ${{ secrets.ECOSCRIPT_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Pick the commit to merge
+        id: guard
+        run: |
+          skip() {
+            echo "Skipped: $1" >> "$GITHUB_STEP_SUMMARY"
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          has_pending_changesets() {
+            local files
+            files=$(git ls-tree -r --name-only "$1" -- .changeset/)
+            grep -E '\.md$' <<< "$files" | grep -qvE '(^|/)README\.md$'
+          }
+          if ! git rev-parse --verify --quiet refs/remotes/origin/next > /dev/null; then
+            skip "\`next\` does not exist."
+          fi
+          target=""
+          for commit in $(git rev-list --first-parent --max-count=500 origin/main); do
+            if ! has_pending_changesets "$commit"; then
+              target=$commit
+              break
+            fi
+          done
+          if [ -z "$target" ]; then
+            skip "No commit in the last 500 on \`main\` is free of pending changesets."
+          fi
+          if git merge-base --is-ancestor "$target" origin/next; then
+            skip "\`next\` already contains $target, the newest commit on \`main\` without pending changesets."
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "sync=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Git identity
+        if: steps.guard.outputs.sync == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+
+      - name: Merge the target into next
+        if: steps.guard.outputs.sync == 'true'
+        id: sync
+        env:
+          TARGET: ${{ steps.guard.outputs.target }}
+        run: |
+          recover() {
+            echo "recovery=$1" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          existing=""
+          base=origin/next
+          if git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" > /dev/null; then
+            existing=$(git rev-parse "refs/remotes/origin/$BRANCH")
+            base="origin/$BRANCH"
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          if [ -n "$existing" ]; then
+            if git merge-base --is-ancestor origin/next "$existing" &&
+              git merge-base --is-ancestor "$TARGET" "$existing"; then
+              echo "Unchanged: \`$BRANCH\` already contains \`next\` and $TARGET." >> "$GITHUB_STEP_SUMMARY"
+              echo "pr=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            bot=$(git config user.email)
+            manual=$(git log --format='%H %ce' "$existing" --not origin/next "$TARGET" | awk -v bot="$bot" '$2 != bot')
+            if [ -n "$manual" ]; then
+              recover manual
+            fi
+          fi
+          git checkout -B "$BRANCH" origin/next
+          if ! git merge --no-ff --no-commit "$TARGET"; then
+            git merge --abort
+            recover conflict
+          fi
+          git commit -m "chore: merge main into next"
+          if ! git push --force-with-lease="$BRANCH:$existing" origin "$BRANCH"; then
+            recover push
+          fi
+          echo "pr=true" >> "$GITHUB_OUTPUT"
+
+      - name: Report how to finish the sync by hand
+        if: steps.sync.outputs.recovery != ''
+        env:
+          REASON: ${{ steps.sync.outputs.recovery }}
+          BASE: ${{ steps.sync.outputs.base }}
+          TARGET: ${{ steps.guard.outputs.target }}
+        run: |
+          {
+            case "$REASON" in
+              conflict)
+                echo "## Merging \`main\` into \`next\` has conflicts"
+                echo
+                echo "Keep \`next\`'s versions (\`package.json\` \`version\` fields, changelog headings) and take \`main\`'s content."
+                ;;
+              manual)
+                echo "## \`$BRANCH\` has manual commits"
+                echo
+                echo "The branch has commits this workflow did not make, so the workflow left it alone. Update it by hand."
+                ;;
+              push)
+                echo "## Pushing \`$BRANCH\` was rejected"
+                echo
+                echo "The push error is in the log of the step above. Possible causes: someone pushed to \`$BRANCH\` during the run, or GitHub refused a workflow file (the app token has no \`workflows\` permission, and a clean merge can produce \`.github/workflows/\` contents that exist on neither branch). Push the merge by hand."
+                ;;
+            esac
+            echo
+            sed -e "s|@BASE@|$BASE|" -e "s|@TARGET@|$TARGET|" << 'EOF'
+          ```sh
+          git fetch origin
+          git worktree add -b sync/main-into-next \
+            ../editor-sync-main-into-next @BASE@
+          cd ../editor-sync-main-into-next
+          # if a merge stops on conflicts: resolve them, then
+          # `git add -A && git commit --no-edit`, then continue
+          git merge --no-edit origin/next
+          git merge --no-ff -m "chore: merge main into next" \
+            @TARGET@
+          git push origin sync/main-into-next
+          # if no sync PR is open:
+          gh pr create --base next --head sync/main-into-next \
+            --title "chore: merge main into next" \
+            --body 'Merge with "Create a merge commit".'
+          ```
+          EOF
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Syncing main into next needs a hand ($REASON). See the job summary."
+          exit 1
+
+      - name: Open or update the pull request
+        if: steps.sync.outputs.pr == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TITLE: "chore: merge main into next"
+          BODY: |
+            Brings the latest `main` release into `next`. Opened by `sync-next.yml` after each release.
+
+            Merge with **Create a merge commit**. Squash or rebase drops the merge, so `next` never records `main` as an ancestor and every later sync replays the same commits.
+        run: |
+          pr=$(gh pr list --head "$BRANCH" --base next --state open --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository == false)][0].number // empty')
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --body "$BODY"
+          else
+            gh pr create --head "$BRANCH" --base next --title "$TITLE" --body "$BODY"
+          fi
