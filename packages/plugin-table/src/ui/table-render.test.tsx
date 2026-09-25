@@ -154,9 +154,14 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     // Scroll the table far above the viewport: the chip must not float.
     // It stays mounted (the anchoring keeps watching for its return) but
     // invisible and inert.
+    const table = document.querySelector('table.pt-plugin-table')!
     window.scrollTo(0, 4000)
     await vi.waitFor(() => {
+      expect(table.getBoundingClientRect().bottom).toBeLessThan(0)
+    })
+    await vi.waitFor(() => {
       const chip = document.querySelector('button[aria-label="Delete row"]')
+      expect(table.getBoundingClientRect().bottom).toBeLessThan(0)
       expect(chip).not.toBeNull()
       expect(getComputedStyle(chip as HTMLElement).visibility).toBe('hidden')
     })
@@ -164,7 +169,11 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
     // Scrolling back restores it: the selection never changed.
     window.scrollTo(0, 0)
     await vi.waitFor(() => {
+      expect(table.getBoundingClientRect().top).toBeGreaterThanOrEqual(0)
+    })
+    await vi.waitFor(() => {
       const chip = document.querySelector('button[aria-label="Delete row"]')
+      expect(table.getBoundingClientRect().top).toBeGreaterThanOrEqual(0)
       expect(chip).not.toBeNull()
       expect(getComputedStyle(chip as HTMLElement).visibility).toBe('visible')
     })
@@ -292,6 +301,10 @@ describe('Feature: Scroll Clipping of Portaled Chrome', () => {
 
     window.scrollTo(0, 4000)
     await vi.waitFor(() => {
+      expect(trigger.getBoundingClientRect().bottom).toBeLessThan(0)
+    })
+    await vi.waitFor(() => {
+      expect(trigger.getBoundingClientRect().bottom).toBeLessThan(0)
       expect(document.querySelectorAll('[role="menu"]').length).toBe(0)
     })
   })
