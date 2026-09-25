@@ -1538,6 +1538,11 @@ export const Editable = forwardRef(
                       editor.composing = false
                     }
 
+                    if (!androidInputManagerRef.current && !editor.composing) {
+                      scheduleOnDOMSelectionChange.flush()
+                      onDOMSelectionChange.flush()
+                    }
+
                     if (
                       isEventHandled(event, attributes.onKeyDown) ||
                       editor.composing
@@ -1876,7 +1881,14 @@ export const Editable = forwardRef(
                     }
                   }
                 },
-                [readOnly, editor, editorActor, attributes.onKeyDown],
+                [
+                  readOnly,
+                  editor,
+                  editorActor,
+                  attributes.onKeyDown,
+                  onDOMSelectionChange,
+                  scheduleOnDOMSelectionChange,
+                ],
               )}
               onPaste={useCallback(
                 (event: React.ClipboardEvent<HTMLDivElement>) => {
