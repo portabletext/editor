@@ -103,11 +103,17 @@ export function subscribePatchGeneration({
       // Do nothing
     }
 
+    const editorLostAllBlocks =
+      previousValue.length > 0 &&
+      editor.snapshot.context.value.length === 0 &&
+      !(operation.type === 'unset' && operation.path.length === 0)
+
     // Unset the value if a operation made the editor empty
     if (
-      !editorWasEmpty &&
-      editorIsEmpty &&
-      ['set', 'unset', 'remove.text'].includes(operation.type)
+      (!editorWasEmpty &&
+        editorIsEmpty &&
+        ['set', 'unset', 'remove.text'].includes(operation.type)) ||
+      editorLostAllBlocks
     ) {
       patches = [...patches, unset([])]
     }
