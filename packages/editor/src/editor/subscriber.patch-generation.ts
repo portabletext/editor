@@ -1,17 +1,6 @@
-import {
-  insert,
-  set,
-  setIfMissing,
-  unset,
-  type Patch,
-} from '@portabletext/patches'
 import {subscribeToOperations} from '../engine/core/operation-channel'
-import {isEqualValues} from '../internal-utils/equality'
-import {
-  insertNodePatch,
-  textPatch,
-} from '../internal-utils/operation-to-patches'
-import {isEqualToEmptyEditor} from '../internal-utils/values'
+import {addFieldLifecyclePatches} from '../internal-utils/field-lifecycle-patches'
+import {operationToPatches} from '../internal-utils/operation-to-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
@@ -34,151 +23,36 @@ export function subscribePatchGeneration({
       return
     }
 
-    const operation = event.operation
-    // The pre-apply value is needed to figure out the `_key` of deleted
-    // nodes. The editor.snapshot.context.value would no longer contain
-    // that information if the node is already deleted.
-    const previousValue = event.beforeValue
-    let patches: Patch[] = []
+    const {initialValue, schema} = editorActor.getSnapshot().context
+    const {operation, beforeValue} = event
 
-    const snapshot = editorActor.getSnapshot()
-    const {initialValue, schema} = snapshot.context
+    const {patches, state} = addFieldLifecyclePatches(
+      {
+        lastSyncedValue: editor.lastSyncedValue,
+        valueUnsetEmitted: editor.valueUnsetEmitted,
+      },
+      {
+        operation,
+        beforeValue,
+        afterValue: editor.snapshot.context.value,
+        patches: operationToPatches(operation, {
+          beforeValue,
+          afterSnapshot: editor.snapshot,
+        }),
+      },
+      {schema, initialValue},
+    )
 
-    const editorWasEmpty =
-      previousValue.length === 1 &&
-      isEqualToEmptyEditor(initialValue, previousValue, schema) &&
-      // After this editor emits `unset([])`, its own stream must
-      // re-materialize the field before targeting it again, no matter what
-      // value sync recorded in between: a mirroring host's stale echo of
-      // the cleared state syncs as a genuine write and would otherwise
-      // pass the placeholder off as persisted content.
-      (editor.valueUnsetEmitted ||
-        !isEqualValues({schema}, editor.lastSyncedValue, previousValue))
+    editor.lastSyncedValue = state.lastSyncedValue
+    editor.valueUnsetEmitted = state.valueUnsetEmitted
 
-    const editorIsEmpty =
-      editor.snapshot.context.value.length === 1 &&
-      isEqualToEmptyEditor(
-        initialValue,
-        editor.snapshot.context.value,
-        schema,
-      ) &&
-      !isEqualValues(
-        {schema},
-        editor.lastSyncedValue,
-        editor.snapshot.context.value,
-      )
-
-    // If the editor was empty and now isn't, insert the placeholder into it.
-    if (
-      editorWasEmpty &&
-      !editorIsEmpty &&
-      operation.type !== 'set.selection'
-    ) {
-      patches.push(insert(previousValue, 'before', [0]))
-    }
-
-    switch (operation.type) {
-      case 'insert.text':
-        patches = [
-          ...patches,
-          ...textPatch(editor.snapshot, operation, previousValue),
-        ]
-        break
-      case 'remove.text':
-        patches = [
-          ...patches,
-          ...textPatch(editor.snapshot, operation, previousValue),
-        ]
-        break
-      case 'insert':
-        patches = [...patches, ...insertNodePatch(operation)]
-        break
-      case 'set':
-        patches = [...patches, set(operation.value, operation.path)]
-        break
-      case 'unset':
-        patches = [...patches, unset(operation.path)]
-        break
-      default:
-      // Do nothing
-    }
-
-    // Unset the value if a operation made the editor empty
-    if (
-      !editorWasEmpty &&
-      editorIsEmpty &&
-      ['set', 'unset', 'remove.text'].includes(operation.type)
-    ) {
-      patches = [...patches, unset([])]
-    }
-
-    // Prepend patches with setIfMissing if going from empty editor to something involving a patch.
-    if (editorWasEmpty && patches.length > 0) {
-      patches = [setIfMissing([], []), ...patches]
-      if (isEqualValues({schema}, editor.lastSyncedValue, previousValue)) {
-        // Rebuilding right over the recorded value proves the recording
-        // was a stale echo of the cleared state; keeping it would make the
-        // next became-empty transition skip its `unset([])`.
-        editor.lastSyncedValue = undefined
-      }
-    }
-
-    // Prepend patches with setIfMissing when a root `unset` earlier in this
-    // editor's emitted stream destroyed the field: the store cannot apply
-    // patches into a destroyed field until something rebuilds it, and these
-    // patches are neither the destroy nor the rebuild themselves.
-    const [firstPatch] = patches
-    if (
-      previousValue.length === 0 &&
-      editor.valueUnsetEmitted &&
-      firstPatch &&
-      !(
-        (firstPatch.type === 'unset' && firstPatch.path.length === 0) ||
-        ((firstPatch.type === 'setIfMissing' || firstPatch.type === 'set') &&
-          firstPatch.path.length === 0)
-      )
-    ) {
-      patches = [setIfMissing([], []), ...patches]
-    }
-
-    // The stream's own truth about whether the field is currently
-    // destroyed, derived after every prepend/append above has had its say:
-    // a root `unset` destroys it, a root `setIfMissing` or `set` rebuilds
-    // it, and nothing else changes the verdict.
     for (const patch of patches) {
-      if (patch.type === 'unset' && patch.path.length === 0) {
-        editor.valueUnsetEmitted = true
-      } else if (
-        (patch.type === 'setIfMissing' || patch.type === 'set') &&
-        patch.path.length === 0
-      ) {
-        editor.valueUnsetEmitted = false
-      }
-    }
-
-    if (
-      operation.type === 'insert' &&
-      operation.path.length === 1 &&
-      previousValue.length === 0 &&
-      editorIsEmpty
-    ) {
-      // The block this `insert` puts into the empty field (an undo restoring
-      // a deleted placeholder, say) looks like the local placeholder, but
-      // the host now holds it. Without the record, the next edit would
-      // insert it a second time.
-      editor.lastSyncedValue = editor.snapshot.context.value
-    }
-
-    // Emit all patches
-    if (patches.length > 0) {
-      for (const patch of patches) {
-        editorActor.send({
-          type: 'internal.patch',
-          patch: {...patch, origin: 'local'},
-          operationId: event.undoStepId,
-          value: editor.snapshot.context.value,
-        })
-      }
+      editorActor.send({
+        type: 'internal.patch',
+        patch: {...patch, origin: 'local'},
+        operationId: event.undoStepId,
+        value: editor.snapshot.context.value,
+      })
     }
   })
 }
