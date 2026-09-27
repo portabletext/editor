@@ -154,6 +154,12 @@
       }
     },
     {
+      "files": ["**/*.test.*", "**/*.spec.*"],
+      "rules": {
+        "pte/no-weak-value-assertions": "error"
+      }
+    },
+    {
       "files": ["packages/editor/**"],
       "rules": {
         "no-restricted-globals": [
