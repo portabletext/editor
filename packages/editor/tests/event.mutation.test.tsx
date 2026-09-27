@@ -8,7 +8,6 @@ import {page, userEvent, type Locator} from 'vitest/browser'
 import {
   EditorProvider,
   PortableTextEditable,
-  type EditorEmittedEvent,
   type MutationEvent,
   type Patch,
 } from '../src'
@@ -17,7 +16,8 @@ import {createTestEditor} from '../src/test/vitest'
 
 describe('event.mutation', () => {
   test('Scenario: Deferring mutation events when read-only', async () => {
-    const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+    const mutationsAfterFoo: Array<MutationEvent> = []
+    let fooMutationReceived = false
 
     let resolveFooMutation: () => void
     const fooMutationPromise = new Promise<void>((resolve) => {
@@ -28,15 +28,21 @@ describe('event.mutation', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            onEvent(event)
+            if (event.type !== 'mutation') {
+              return
+            }
+            if (fooMutationReceived) {
+              mutationsAfterFoo.push(event)
+              return
+            }
             if (
-              event.type === 'mutation' &&
               toTextspec({
                 schema: compileSchema(defineSchema({})),
                 value: event.value ?? [],
                 selection: null,
               }) === 'B: foo'
             ) {
+              fooMutationReceived = true
               resolveFooMutation()
             }
           }}
@@ -54,29 +60,24 @@ describe('event.mutation', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 250))
 
-    expect(onEvent).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'mutation',
-        value: [
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }),
-    )
+    expect(mutationsAfterFoo).toEqual([])
 
     editor.send({type: 'update readOnly', readOnly: false})
 
     await new Promise((resolve) => setTimeout(resolve, 250))
 
     await vi.waitFor(() => {
-      expect(onEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(mutationsAfterFoo).toEqual([
+        {
           type: 'mutation',
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foobar'))),
+            },
+          ],
           value: [
             {
               _type: 'block',
@@ -88,8 +89,8 @@ describe('event.mutation', () => {
               style: 'normal',
             },
           ],
-        }),
-      )
+        },
+      ])
     })
   })
 

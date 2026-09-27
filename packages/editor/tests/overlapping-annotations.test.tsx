@@ -14,37 +14,6 @@ import {getTextSelection} from '../test-utils/text-selection'
  * By default, annotations of the same type cannot overlap.
  */
 describe('overlapping annotations', () => {
-  const keyGenerator = createTestKeyGenerator()
-  const blockKey = keyGenerator()
-  const fooKey = keyGenerator()
-  const barKey = keyGenerator()
-  const bazKey = keyGenerator()
-  const commentKey = keyGenerator()
-  const value = [
-    {
-      _type: 'block',
-      _key: blockKey,
-      children: [
-        {
-          _type: 'span',
-          _key: fooKey,
-          text: 'foo ',
-        },
-        {
-          _type: 'span',
-          _key: barKey,
-          text: 'bar',
-          marks: [commentKey],
-        },
-        {
-          _type: 'span',
-          _key: bazKey,
-          text: ' baz',
-        },
-      ],
-      markDefs: [{_key: commentKey, _type: 'comment', text: 'Comment A'}],
-    },
-  ]
   const schemaDefinition = defineSchema({
     annotations: [
       {name: 'comment', fields: [{name: 'text', type: 'string'}]},
@@ -53,6 +22,7 @@ describe('overlapping annotations', () => {
   })
 
   test('default behavior', async () => {
+    const {keyGenerator, value} = createFixture()
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: value,
@@ -88,10 +58,11 @@ describe('overlapping annotations', () => {
 
       // And only Comment B is present
       expect(block.markDefs).toEqual([
-        expect.objectContaining({
+        {
+          _key: 'k9',
           _type: 'comment',
           text: 'Comment B',
-        }),
+        },
       ])
       expect(getTextMarks(editor.getSnapshot().context, 'o bar b')).toEqual(
         block.markDefs?.map((markDef) => markDef._key),
@@ -100,6 +71,7 @@ describe('overlapping annotations', () => {
   })
 
   test('allowing overlapping annotations', async () => {
+    const {keyGenerator, commentKey, value} = createFixture()
     const {editor} = await createTestEditor({
       children: (
         <BehaviorPlugin
@@ -146,10 +118,11 @@ describe('overlapping annotations', () => {
           _type: 'comment',
           text: 'Comment A',
         },
-        expect.objectContaining({
+        {
+          _key: 'k7',
           _type: 'comment',
           text: 'Comment B',
-        }),
+        },
       ])
 
       expect(getTextMarks(editor.getSnapshot().context, 'bar')).toEqual(
@@ -159,6 +132,7 @@ describe('overlapping annotations', () => {
   })
 
   test('manually configuring mutually exclusive annotations', async () => {
+    const {keyGenerator, value} = createFixture()
     const mutuallyExclusives: Record<string, string[]> = {
       link: ['comment'],
     }
@@ -226,10 +200,11 @@ describe('overlapping annotations', () => {
       }
 
       expect(block.markDefs).toEqual([
-        expect.objectContaining({
+        {
+          _key: 'k9',
           _type: 'link',
           href: 'https://portabletext.org',
-        }),
+        },
       ])
     })
 
@@ -255,15 +230,53 @@ describe('overlapping annotations', () => {
       }
 
       expect(block.markDefs).toEqual([
-        expect.objectContaining({
+        {
+          _key: 'k9',
           _type: 'link',
           href: 'https://portabletext.org',
-        }),
-        expect.objectContaining({
+        },
+        {
+          _key: 'k12',
           _type: 'link',
           href: 'https://sanity.io',
-        }),
+        },
       ])
     })
   })
 })
+
+function createFixture() {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const fooKey = keyGenerator()
+  const barKey = keyGenerator()
+  const bazKey = keyGenerator()
+  const commentKey = keyGenerator()
+  const value = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      children: [
+        {
+          _type: 'span',
+          _key: fooKey,
+          text: 'foo ',
+        },
+        {
+          _type: 'span',
+          _key: barKey,
+          text: 'bar',
+          marks: [commentKey],
+        },
+        {
+          _type: 'span',
+          _key: bazKey,
+          text: ' baz',
+        },
+      ],
+      markDefs: [{_key: commentKey, _type: 'comment', text: 'Comment A'}],
+    },
+  ]
+
+  return {keyGenerator, commentKey, value}
+}
