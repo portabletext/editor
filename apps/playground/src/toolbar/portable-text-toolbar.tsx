@@ -39,6 +39,7 @@ import {
   ImageIcon,
   InfoIcon,
   ItalicIcon,
+  KeyboardIcon,
   LinkIcon,
   ListIcon,
   ListOrderedIcon,
@@ -90,6 +91,13 @@ const extendDecorator: ExtendDecoratorSchemaType = (decorator) => {
       ...decorator,
       icon: CodeIcon,
       shortcut: code,
+    }
+  }
+
+  if (decorator.name === 'kbd') {
+    return {
+      ...decorator,
+      icon: KeyboardIcon,
     }
   }
 

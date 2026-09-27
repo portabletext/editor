@@ -65,6 +65,14 @@ export const table = defineTable({
                 </strong>
               ),
             }),
+            defineDecorator({
+              type: 'kbd',
+              render: ({children}) => (
+                <kbd className="font-mono text-sm bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded px-1.5 py-0.5 border border-b-2 border-gray-300 dark:border-gray-600 shadow-sm">
+                  {children}
+                </kbd>
+              ),
+            }),
             defineAnnotation({
               type: 'link',
               render: ({children}) => (

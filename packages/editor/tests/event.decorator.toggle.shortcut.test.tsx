@@ -120,4 +120,168 @@ describe('decorator shortcut guard', () => {
       ])
     })
   })
+
+  test('Scenario: the `code` shortcut toggles a decorator only a nested container declares', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const cellSpanPath = [
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'content',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'object',
+                    name: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'object',
+                            name: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {type: 'block', decorators: [{name: 'code'}]},
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: blockKey,
+                      _type: 'block',
+                      children: [
+                        {_key: spanKey, _type: 'span', text: 'foo', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'table',
+              arrayField: 'rows',
+              of: [
+                defineContainer({
+                  type: 'row',
+                  arrayField: 'cells',
+                  of: [defineContainer({type: 'cell', arrayField: 'content'})],
+                }),
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    const selection = {
+      anchor: {path: cellSpanPath, offset: 0},
+      focus: {path: cellSpanPath, offset: 3},
+      backward: false,
+    }
+    editor.send({type: 'select', at: selection})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(selection)
+    })
+
+    await userEvent.keyboard(
+      IS_MAC ? "{Meta>}'{/Meta}" : "{Control>}'{/Control}",
+    )
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: blockKey,
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: spanKey,
+                          _type: 'span',
+                          text: 'foo',
+                          marks: ['code'],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })

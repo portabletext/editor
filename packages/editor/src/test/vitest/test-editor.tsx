@@ -19,6 +19,11 @@ import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
 
+// The editable gets the `textbox` role only after the initial value has
+// synced in batches of 10 blocks per task, so a large value on a loaded
+// runner can take over a second.
+const editableTimeout = 5_000
+
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
   keyGenerator?: () => string
@@ -98,7 +103,7 @@ export async function createTestEditor(
       })
     : renderResult.locator.getByRole('textbox')
 
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await expect.element(locator, {timeout: editableTimeout}).toBeInTheDocument()
 
   return {
     editor: editorRef.current!,
@@ -213,8 +218,8 @@ export async function createTestEditors(
   const locator = page.getByTestId('editor-a')
   const locatorB = page.getByTestId('editor-b')
 
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-  await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
+  await expect.element(locator, {timeout: editableTimeout}).toBeInTheDocument()
+  await expect.element(locatorB, {timeout: editableTimeout}).toBeInTheDocument()
 
   return {
     editor: editorRef.current!,
