@@ -18,6 +18,7 @@ import type {ResolvedContainers} from '../schema/resolve-containers'
 type HistoryItem = {
   operations: EngineOperation[]
   timestamp: Date
+  lastUndoStepId: string | undefined
 }
 
 interface History {

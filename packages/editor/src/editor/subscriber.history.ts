@@ -26,7 +26,6 @@ export function subscribeHistory({
 }): () => void {
   let previousSnapshot: Array<PortableTextBlock> | undefined =
     editor.snapshot.context.value
-  let previousUndoStepId = editor.undoStepId
 
   subscriptions.push(() => {
     const subscription = editorActor.on('patches', ({patches, snapshot}) => {
@@ -80,11 +79,8 @@ export function subscribeHistory({
       return
     }
 
-    const currentUndoStepId = event.undoStepId
-
     if (!event.withHistory) {
       // If we are bypassing saving undo steps, then we can just move along.
-      previousUndoStepId = currentUndoStepId
       return
     }
 
@@ -99,7 +95,6 @@ export function subscribeHistory({
         operation.text.length === 0)
 
     if (isNoOp) {
-      previousUndoStepId = currentUndoStepId
       return
     }
 
@@ -113,8 +108,7 @@ export function subscribeHistory({
     editor.history.undos = createUndoSteps({
       steps: editor.history.undos,
       op: operation,
-      currentUndoStepId,
-      previousUndoStepId,
+      currentUndoStepId: event.undoStepId,
       operationsInProgress: event.operationsInProgress,
       isInNormalization: isInNormalization(event.context),
       selectionBeforeApply: event.beforeSelection,
@@ -125,7 +119,5 @@ export function subscribeHistory({
     while (editor.history.undos.length > UNDO_STEP_LIMIT) {
       editor.history.undos.shift()
     }
-
-    previousUndoStepId = currentUndoStepId
   })
 }

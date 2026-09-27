@@ -422,6 +422,855 @@ describe('event.history.undo', () => {
     })
   })
 
+  test('Scenario: A custom event opening with an ignored operation gets its own undo step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}, {name: 'blockquote'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{style: string}>({
+              on: 'custom.set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior<{style: string}>({
+              on: 'custom.remove nothing and set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'remove.text',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    offset: 0,
+                    text: '',
+                  }),
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set style', style: 'h1'})
+    editor.send({
+      type: 'custom.remove nothing and set style',
+      style: 'blockquote',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'blockquote',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: A custom event opening with an ignored operation and a selection change gets its own undo step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}, {name: 'blockquote'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{style: string}>({
+              on: 'custom.set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior<{at: EditorSelection; style: string}>({
+              on: 'custom.remove nothing, select and set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'remove.text',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    offset: 0,
+                    text: '',
+                  }),
+                  execute({type: 'select', at: event.at}),
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set style', style: 'h1'})
+    editor.send({
+      type: 'custom.remove nothing, select and set style',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+      style: 'blockquote',
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B style="blockquote": foo|',
+      )
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: A custom event of an ignored operation and a selection change groups like a selection change alone', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{style: string}>({
+              on: 'custom.set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior<{at: EditorSelection}>({
+              on: 'custom.remove nothing and select',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'remove.text',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    offset: 0,
+                    text: '',
+                  }),
+                  execute({type: 'select', at: event.at}),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set style', style: 'h1'})
+    editor.send({
+      type: 'custom.remove nothing and select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'h1',
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          backward: false,
+        },
+      })
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'h1',
+          },
+        ],
+        selection: null,
+      })
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        selection: null,
+      })
+    })
+  })
+
+  test('Scenario: A custom event of a selection change sent back to back with an edit gets its own undo step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{style: string}>({
+              on: 'custom.set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior<{at: EditorSelection}>({
+              on: 'custom.select',
+              actions: [({event}) => [execute({type: 'select', at: event.at})]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set style', style: 'h1'})
+    editor.send({
+      type: 'custom.select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'h1',
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          backward: false,
+        },
+      })
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'h1',
+          },
+        ],
+        selection: null,
+      })
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        selection: null,
+      })
+    })
+  })
+
+  test('Scenario: A custom event opening with a selection change after an earlier edit gets its own undo step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}, {name: 'blockquote'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{style: string}>({
+              on: 'custom.set style',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior<{at: EditorSelection; style: string}>({
+              on: 'custom.select and set style',
+              actions: [
+                ({event}) => [
+                  execute({type: 'select', at: event.at}),
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: event.style},
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set style', style: 'h1'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B style="h1": foo',
+      )
+    })
+
+    editor.send({
+      type: 'custom.select and set style',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+      style: 'blockquote',
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B style="blockquote": foo|',
+      )
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: An action set inserting text after an earlier edit merges into its undo step', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'f',
+              actions: [({event}) => [execute(event)]],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'b',
+              actions: [
+                () => [
+                  execute({type: 'insert.text', text: 'b'}),
+                  execute({type: 'insert.text', text: 'ar'}),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'f')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+    })
+
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fbar|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
+
+  test('Scenario: An action set removing text before an earlier removal merges into its undo step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{times: number}>({
+              on: 'custom.delete backward',
+              actions: [
+                ({event}) =>
+                  Array.from({length: event.times}, () =>
+                    execute({type: 'delete.backward', unit: 'character'}),
+                  ),
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 6,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 6,
+        },
+      },
+    })
+    editor.send({type: 'custom.delete backward', times: 1})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
+    })
+
+    editor.send({type: 'custom.delete backward', times: 2})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
+    })
+  })
+
+  test('Scenario: Ordinary typing between executed insertions keeps an undo step boundary', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'f',
+              actions: [({event}) => [execute(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'fof')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fof|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
+
+  test('Scenario: A custom selection change after mixed typing gets its own undo step', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'f',
+              actions: [({event}) => [execute(event)]],
+            }),
+            defineBehavior<{at: EditorSelection}>({
+              on: 'custom.select',
+              actions: [({event}) => [execute({type: 'select', at: event.at})]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'fo')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+
+    editor.send({
+      type: 'custom.select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |fo')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+  })
+
+  test('Scenario: Text typed as a new edit after an undo gets its own undo step', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'o',
+              actions: [({event}) => [execute(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'fo')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+    })
+
+    await userEvent.type(locator, 'o')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
+
+  test('Scenario: Text typed as a new edit after a redo gets its own undo step', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'o',
+              actions: [({event}) => [execute(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'fo')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+    })
+
+    await userEvent.type(locator, 'o')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
+
   test('Scenario: `forward` in one step, `raise` in another', async () => {
     const {editor, locator} = await createTestEditor({
       children: (
