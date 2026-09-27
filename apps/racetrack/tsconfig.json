@@ -1,11 +1,17 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
+  "extends": "@sanity/tsconfig/strictest",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "types": ["@vitest/browser-playwright", "node"],
+    "paths": {
+      "@portabletext/editor/test": [
+        "../../packages/editor/src/test/_exports/index.ts"
+      ],
+      "@portabletext/editor/test/vitest": [
+        "../../packages/editor/src/test/vitest/_exports/index.ts"
+      ]
     }
-  ]
+  },
+  "include": ["src", "tests", "vitest.config.ts"],
+  "exclude": ["node_modules", ".generated", ".runs"]
 }
