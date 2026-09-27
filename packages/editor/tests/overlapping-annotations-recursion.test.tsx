@@ -169,12 +169,10 @@ describe('preventOverlappingAnnotations recursion', () => {
     if (!isTextBlock(context, block)) {
       throw new Error('Block is not a text block')
     }
-    expect(block.markDefs).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({_type: 'link', href: 'https://a.example'}),
-        expect.objectContaining({_type: 'link', href: 'https://b.example'}),
-      ]),
-    )
+    expect(block.markDefs).toEqual([
+      {_key: keys.linkKey, _type: 'link', href: 'https://a.example'},
+      {_key: 'k6', _type: 'link', href: 'https://b.example'},
+    ])
   })
 
   test('`at` focus touching the start of an annotated span', async () => {

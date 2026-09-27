@@ -23,15 +23,20 @@ describe('event.insert.span', () => {
     await vi.waitFor(() => {
       if (editor) {
         expect(editor.getSnapshot().context.value).toEqual([
-          expect.objectContaining({
+          {
+            _key: 'k2',
+            _type: 'block',
             children: [
-              expect.objectContaining({
+              {
+                _key: 'k4',
                 _type: 'span',
                 text: 'foo',
                 marks: ['strong'],
-              }),
+              },
             ],
-          }),
+            markDefs: [],
+            style: 'normal',
+          },
         ])
       }
     })
