@@ -31,7 +31,7 @@ The workflow never overwrites human work on `sync/main-into-next`. If the branch
 
 It also stops when the merge conflicts, and when its push is rejected. The push error is in the job log. Two likely causes: someone pushed to the branch during the run (the lease caught it), or GitHub refused a workflow file (the app token has no `workflows` permission, and a clean merge can produce `.github/workflows/` contents that exist on neither branch).
 
-In all three cases the job summary carries the same commands, with the target filled in. For conflicts, keep `next`'s versions (the `version` fields in `package.json` files and the release headings in `CHANGELOG.md` files) and take `main`'s content. Finish in a dedicated worktree, based on `origin/sync/main-into-next` when the branch exists (so its work is kept) and on `origin/next` when it does not. Merge the current `next` first, so a branch that fell behind `next` catches up, then the target. `git worktree add -b` refuses to run when a local `sync/main-into-next` already exists, which protects unpushed work in it: reuse that branch, or delete it once it holds nothing worth keeping.
+In all three cases the report step prints the same commands, with the target filled in, to its own log and to the run summary. For conflicts, the report lists the conflicting files. Keep `next`'s side in the `version` fields of `package.json` files and the release headings of `CHANGELOG.md` files. Everywhere else, both sides changed on purpose, so combine them instead of picking one. Then run the root checks and the affected packages' tests before pushing: tests and lint rules from `main` can fail against `next`'s code even where Git merged cleanly. Finish in a dedicated worktree, based on `origin/sync/main-into-next` when the branch exists (so its work is kept) and on `origin/next` when it does not. Merge the current `next` first, so a branch that fell behind `next` catches up, then the target. `git worktree add -b` refuses to run when a local `sync/main-into-next` already exists, which protects unpushed work in it: reuse that branch, or delete it once it holds nothing worth keeping.
 
 ```sh
 git fetch origin
@@ -50,7 +50,7 @@ gh pr create --base next --head sync/main-into-next \
   --body 'Merge with "Create a merge commit".'
 ```
 
-`<target>` is the commit the job summary names, usually `origin/main` right after a release.
+`<target>` is the commit the report names, usually `origin/main` right after a release.
 
 ## Prerelease PRs
 
