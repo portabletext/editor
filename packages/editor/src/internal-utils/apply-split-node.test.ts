@@ -224,6 +224,50 @@ describe(applySplitNode.name, () => {
       backward: true,
     })
   })
+
+  test('a range ref released while the split moves the selection stays released', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const editor = createBareEditor(keyGenerator, [
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+      },
+    ])
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    editor.snapshot.context.selection = {
+      anchor: {path: spanPath, offset: 5},
+      focus: {path: spanPath, offset: 5},
+      backward: false,
+    }
+    const ref = rangeRef(editor, {
+      anchor: {path: spanPath, offset: 0},
+      focus: {path: spanPath, offset: 1},
+    })
+    subscribeToOperations(
+      editor,
+      (event) => {
+        if (event.operation.type === 'set.selection') {
+          ref.unref()
+        }
+      },
+      {phase: 'before'},
+    )
+
+    applySplitNode(editor, spanPath, 3)
+
+    expect(editor.snapshot.context.selection).toEqual({
+      anchor: {path: [{_key: blockKey}, 'children', {_key: 'k2'}], offset: 2},
+      focus: {path: [{_key: blockKey}, 'children', {_key: 'k2'}], offset: 2},
+      backward: false,
+    })
+    expect(ref.current).toEqual(null)
+    expect(editor.rangeRefs).toEqual(new Set())
+  })
 })
 
 function createBareEditor(
