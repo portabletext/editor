@@ -212,9 +212,9 @@ The decorator and annotation specs also run in `packages/editor/gherkin-tests/re
 - `packages/plugin-input-rule/`: input rules. Source `packages/plugin-input-rule/src/index.ts`, specs and tests in `packages/plugin-input-rule/src/`.
 - `packages/plugin-list-index/`: list item indexes. Source `packages/plugin-list-index/src/index.ts`, tests in `packages/plugin-list-index/src/`.
 - `packages/plugin-markdown-shortcuts/`: Markdown shortcuts. Source `packages/plugin-markdown-shortcuts/src/index.ts`, specs `packages/plugin-markdown-shortcuts/src/behavior.markdown.feature` and `packages/plugin-markdown-shortcuts/src/rule.markdown-link.feature`, tests in `packages/plugin-markdown-shortcuts/src/`.
-- `packages/plugin-one-line/`: single-line editor. Source `packages/plugin-one-line/src/plugin.one-line.tsx`, no tests.
+- `packages/plugin-one-line/`: single-text-block editor. Source `packages/plugin-one-line/src/plugin.one-line.tsx`, no tests.
 - `packages/plugin-paste-link/`: pasting links. Source `packages/plugin-paste-link/src/index.ts`, spec `packages/plugin-paste-link/src/paste-link.feature`, tests `packages/plugin-paste-link/src/paste-link.test.tsx`.
-- `packages/plugin-sdk-value/`: Sanity SDK document sync. Source `packages/plugin-sdk-value/src/index.ts`, tests in `packages/plugin-sdk-value/src/`.
+- `packages/plugin-sdk-value/`: Sanity SDK value sync, presence, and comments. Source `packages/plugin-sdk-value/src/index.ts`, tests in `packages/plugin-sdk-value/src/`.
 - `packages/plugin-table/`: tables. Source `packages/plugin-table/src/index.ts`, tests in `packages/plugin-table/src/`.
 - `packages/plugin-typeahead-picker/`: typeahead pickers. Source `packages/plugin-typeahead-picker/src/index.ts`, specs and tests in `packages/plugin-typeahead-picker/src/`.
 - `packages/plugin-typography/`: typographic input rules. Source `packages/plugin-typography/src/index.ts`, specs and tests in `packages/plugin-typography/src/`.
