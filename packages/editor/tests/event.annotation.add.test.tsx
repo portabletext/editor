@@ -1,6 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
@@ -648,6 +649,87 @@ describe('event.annotation.add', () => {
           },
         ])
       })
+    })
+  })
+
+  test('Scenario: Adding an annotation at an explicit range keeps a decorator toggled on at the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'em'}],
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+      },
+    })
+
+    editor.send({type: 'decorator.toggle', decorator: 'em'})
+
+    editor.send({
+      type: 'annotation.add',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+      annotation: {name: 'link', value: {href: 'https://sanity.io'}},
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: f[@link href="https://sanity.io":oob]a|r',
+      )
+    })
+
+    await userEvent.keyboard('baz')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'f', marks: []},
+            {_type: 'span', _key: 'k6', text: 'oob', marks: ['k4']},
+            {_type: 'span', _key: 'k5', text: 'a', marks: []},
+            {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            {_type: 'span', _key: 'k8', text: 'r', marks: []},
+          ],
+          markDefs: [{_key: 'k4', _type: 'link', href: 'https://sanity.io'}],
+          style: 'normal',
+        },
+      ])
     })
   })
 })
