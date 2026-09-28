@@ -10,7 +10,6 @@ import {
   EditorProvider,
   PortableTextEditable,
   type Editor,
-  type EditorEmittedEvent,
   type MutationEvent,
   type Patch,
 } from '../src'
@@ -227,7 +226,8 @@ describe('event.mutation', () => {
   })
 
   test('Scenario: mutations flush once the editor becomes editable again, even for edits made while still read-only', async () => {
-    const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+    const mutationsAfterFoo: Array<MutationEvent> = []
+    let fooMutationReceived = false
 
     let resolveFooMutation: () => void
     const fooMutationPromise = new Promise<void>((resolve) => {
@@ -238,15 +238,21 @@ describe('event.mutation', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            onEvent(event)
+            if (event.type !== 'mutation') {
+              return
+            }
+            if (fooMutationReceived) {
+              mutationsAfterFoo.push(event)
+              return
+            }
             if (
-              event.type === 'mutation' &&
               toTextspec({
                 schema: compileSchema(defineSchema({})),
                 value: event.value ?? [],
                 selection: null,
               }) === 'B: foo'
             ) {
+              fooMutationReceived = true
               resolveFooMutation()
             }
           }}
@@ -290,12 +296,12 @@ describe('event.mutation', () => {
     // flush to anchor this wait on instead.
     await new Promise((resolve) => setTimeout(resolve, 600))
 
-    expect(onEvent).not.toHaveBeenCalledWith(foobarMutation)
+    expect(mutationsAfterFoo).toEqual([])
 
     editor.send({type: 'update readOnly', readOnly: false})
 
     await vi.waitFor(() => {
-      expect(onEvent).toHaveBeenCalledWith(foobarMutation)
+      expect(mutationsAfterFoo).toEqual([foobarMutation])
     })
   })
 

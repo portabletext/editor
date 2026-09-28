@@ -1,18 +1,25 @@
+import {diffMatchPatch, insert, set, unset} from '@portabletext/patches'
 import {
   compileSchema,
   defineSchema,
   type PortableTextBlock,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {editorMachine} from '../editor/editor-machine'
 import {plugins} from '../engine-plugins/engine-plugins'
 import {createEditor} from '../engine/create-editor'
 import type {Node} from '../engine/interfaces/node'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'
-import {insertNodePatch, textPatch} from './operation-to-patches'
+import {
+  insertNodePatch,
+  operationToPatches,
+  textPatch,
+} from './operation-to-patches'
 
 function buildBlockIndexMap(
   schema: any,
@@ -99,23 +106,6 @@ describe(insertNodePatch.name, () => {
         position: 'before',
       },
     ])
-  })
-})
-
-describe('operationToPatches', () => {
-  beforeEach(() => {
-    editor.snapshot.context.value = createDefaultChildren()
-    buildIndexMaps(
-      {
-        schema: editor.snapshot.context.schema,
-        containers: editor.snapshot.context.containers,
-        value: editor.snapshot.context.value as Array<PortableTextBlock>,
-      },
-      {
-        blockIndexMap: editor.snapshot.blockIndexMap as Map<string, number>,
-      },
-    )
-    editor.onChange()
   })
 
   it('produce correct insert block patch', () => {
@@ -225,6 +215,23 @@ describe('operationToPatches', () => {
         type: 'insert',
       },
     ])
+  })
+})
+
+describe(textPatch.name, () => {
+  beforeEach(() => {
+    editor.snapshot.context.value = createDefaultChildren()
+    buildIndexMaps(
+      {
+        schema: editor.snapshot.context.schema,
+        containers: editor.snapshot.context.containers,
+        value: editor.snapshot.context.value as Array<PortableTextBlock>,
+      },
+      {
+        blockIndexMap: editor.snapshot.blockIndexMap as Map<string, number>,
+      },
+    )
+    editor.onChange()
   })
 
   it('produce correct insert text patch', () => {
@@ -409,3 +416,192 @@ describe('defensive setIfMissing patches', () => {
     })
   })
 })
+
+describe(operationToPatches.name, () => {
+  test('an `insert.text` patches the span text with the diff', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      operationToPatches(
+        {
+          type: 'insert.text',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+          text: 'bar',
+        },
+        {
+          beforeValue: [textBlock(blockKey, spanKey, 'foo')],
+          afterSnapshot: createTestSnapshot({
+            context: {schema, value: [textBlock(blockKey, spanKey, 'foobar')]},
+          }),
+        },
+      ),
+    ).toEqual([
+      diffMatchPatch('foo', 'foobar', [
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+        'text',
+      ]),
+    ])
+  })
+
+  test('a `remove.text` patches the span text with the diff', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      operationToPatches(
+        {
+          type: 'remove.text',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+          text: 'bar',
+        },
+        {
+          beforeValue: [textBlock(blockKey, spanKey, 'foobar')],
+          afterSnapshot: createTestSnapshot({
+            context: {schema, value: [textBlock(blockKey, spanKey, 'foo')]},
+          }),
+        },
+      ),
+    ).toEqual([
+      diffMatchPatch('foobar', 'foo', [
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+        'text',
+      ]),
+    ])
+  })
+
+  test('an `insert` inserts the node', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    expect(
+      operationToPatches(
+        {
+          type: 'insert',
+          path: [{_key: fooBlockKey}],
+          node: textBlock(barBlockKey, barSpanKey, 'bar'),
+          position: 'after',
+        },
+        {
+          beforeValue: [textBlock(fooBlockKey, fooSpanKey, 'foo')],
+          afterSnapshot: createTestSnapshot({
+            context: {
+              schema,
+              value: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                textBlock(barBlockKey, barSpanKey, 'bar'),
+              ],
+            },
+          }),
+        },
+      ),
+    ).toEqual([
+      insert([textBlock(barBlockKey, barSpanKey, 'bar')], 'after', [
+        {_key: fooBlockKey},
+      ]),
+    ])
+  })
+
+  test('a `set` sets the value at the path', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      operationToPatches(
+        {type: 'set', path: [{_key: blockKey}, 'style'], value: 'h1'},
+        {
+          beforeValue: [textBlock(blockKey, spanKey, 'foo')],
+          afterSnapshot: createTestSnapshot({
+            context: {
+              schema,
+              value: [{...textBlock(blockKey, spanKey, 'foo'), style: 'h1'}],
+            },
+          }),
+        },
+      ),
+    ).toEqual([set('h1', [{_key: blockKey}, 'style'])])
+  })
+
+  test('an `unset` unsets the path', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    expect(
+      operationToPatches(
+        {type: 'unset', path: [{_key: barBlockKey}]},
+        {
+          beforeValue: [
+            textBlock(fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(barBlockKey, barSpanKey, 'bar'),
+          ],
+          afterSnapshot: createTestSnapshot({
+            context: {
+              schema,
+              value: [textBlock(fooBlockKey, fooSpanKey, 'foo')],
+            },
+          }),
+        },
+      ),
+    ).toEqual([unset([{_key: barBlockKey}])])
+  })
+
+  test('a `set.selection` emits nothing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      operationToPatches(
+        {
+          type: 'set.selection',
+          properties: null,
+          newProperties: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 3,
+            },
+          },
+        },
+        {
+          beforeValue: [textBlock(blockKey, spanKey, 'foo')],
+          afterSnapshot: createTestSnapshot({
+            context: {schema, value: [textBlock(blockKey, spanKey, 'foo')]},
+          }),
+        },
+      ),
+    ).toEqual([])
+  })
+})
+
+function textBlock(
+  key: string,
+  spanKey: string,
+  text: string,
+): PortableTextTextBlock {
+  return {
+    _type: 'block',
+    _key: key,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}

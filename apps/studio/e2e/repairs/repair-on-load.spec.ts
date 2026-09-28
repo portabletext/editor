@@ -35,7 +35,6 @@ test.describe.serial('repair-on-load', () => {
     expect(repairTransactions).toHaveLength(1)
 
     const draft = await client.getDocument(`drafts.${id}`)
-    expect(draft).toBeDefined()
     const body = draft?.body as Array<{
       children: Array<{_key?: string; text: string}>
     }>

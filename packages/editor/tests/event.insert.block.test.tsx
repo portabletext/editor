@@ -927,9 +927,7 @@ describe('event.insert.block', () => {
             _key: normalBlockKey,
             _type: 'block',
             style: 'normal',
-            children: [
-              {_key: expect.any(String), _type: 'span', text: '', marks: []},
-            ],
+            children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
             markDefs: [],
           },
         ])
