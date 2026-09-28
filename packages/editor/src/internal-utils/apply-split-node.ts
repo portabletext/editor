@@ -150,12 +150,14 @@ export function applySplitNode(
         const {text: _text, ...properties} = node
         const afterText = node.text.slice(position)
         const newNode = {...properties, _key: newKey, text: afterText} as Node
-        editor.apply({
-          type: 'remove.text',
-          path,
-          offset: position,
-          text: afterText,
-        })
+        if (afterText.length > 0) {
+          editor.apply({
+            type: 'remove.text',
+            path,
+            offset: position,
+            text: afterText,
+          })
+        }
         editor.apply({
           type: 'insert',
           path,

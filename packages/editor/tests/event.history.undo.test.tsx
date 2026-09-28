@@ -422,6 +422,90 @@ describe('event.history.undo', () => {
     })
   })
 
+  test('Scenario: An empty `remove.text` starting an action set keeps its undo boundary', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({styles: [{name: 'h1'}, {name: 'h2'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'custom.set h1',
+              actions: [
+                () => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: 'h1'},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior({
+              on: 'custom.set h2',
+              actions: [
+                () => [
+                  execute({
+                    type: 'remove.text',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    offset: 0,
+                    text: '',
+                  }),
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: 'h2'},
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set h1'})
+    editor.send({type: 'custom.set h2'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h2',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+    })
+  })
+
   test('Scenario: `forward` in one step, `raise` in another', async () => {
     const {editor, locator} = await createTestEditor({
       children: (

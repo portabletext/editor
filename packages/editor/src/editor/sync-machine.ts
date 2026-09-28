@@ -1129,12 +1129,14 @@ function updateBlock({
                 )
               }
 
-              editorEngine.apply({
-                type: 'insert.text',
-                path,
-                offset: 0,
-                text: currentBlockChild.text,
-              })
+              if (currentBlockChild.text.length > 0) {
+                editorEngine.apply({
+                  type: 'insert.text',
+                  path,
+                  offset: 0,
+                  text: currentBlockChild.text,
+                })
+              }
 
               editorEngine.onChange()
             } else if (!isSpanNode) {
