@@ -127,6 +127,7 @@ jobs:
           BASE: ${{ steps.sync.outputs.base }}
           CONFLICTS: ${{ steps.sync.outputs.conflicts }}
           TARGET: ${{ steps.guard.outputs.target }}
+          SUMMARY_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           {
             case "$REASON" in
@@ -171,8 +172,8 @@ jobs:
             --body 'Merge with "Create a merge commit".'
           ```
           EOF
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::Syncing main into next needs a hand ($REASON). See the job summary."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "::error::Syncing main into next needs a hand ($REASON). The steps are in this step's log and on the run summary: $SUMMARY_URL"
           exit 1
 
       - name: Open or update the pull request
