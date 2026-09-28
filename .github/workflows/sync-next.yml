@@ -106,6 +106,11 @@ jobs:
           fi
           git checkout -B "$BRANCH" origin/next
           if ! git merge --no-ff --no-commit "$TARGET"; then
+            {
+              echo "conflicts<<CONFLICTS_EOF"
+              git diff --name-only --diff-filter=U
+              echo "CONFLICTS_EOF"
+            } >> "$GITHUB_OUTPUT"
             git merge --abort
             recover conflict
           fi
@@ -120,6 +125,7 @@ jobs:
         env:
           REASON: ${{ steps.sync.outputs.recovery }}
           BASE: ${{ steps.sync.outputs.base }}
+          CONFLICTS: ${{ steps.sync.outputs.conflicts }}
           TARGET: ${{ steps.guard.outputs.target }}
         run: |
           {
@@ -127,7 +133,13 @@ jobs:
               conflict)
                 echo "## Merging \`main\` into \`next\` has conflicts"
                 echo
-                echo "Keep \`next\`'s versions (\`package.json\` \`version\` fields, changelog headings) and take \`main\`'s content."
+                echo "These files conflict:"
+                echo
+                sed 's/.*/- `&`/' <<< "$CONFLICTS"
+                echo
+                echo "In \`package.json\` \`version\` fields and \`CHANGELOG.md\` release headings, keep \`next\`'s side. Everywhere else, both sides changed on purpose: combine them instead of picking one."
+                echo
+                echo "Before pushing, run the root checks and the affected packages' tests. Tests and lint rules from \`main\` can fail against \`next\`'s code even where Git merged cleanly."
                 ;;
               manual)
                 echo "## \`$BRANCH\` has manual commits"
