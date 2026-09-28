@@ -2,8 +2,8 @@ import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
-import {PatchesPlugin} from '../src/plugins/plugin.patches'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -162,7 +162,14 @@ describe('container normalization', () => {
       ],
       children: (
         <>
-          <PatchesPlugin patches={patches} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
           <NodePlugin nodes={tableContainers} />
         </>
       ),
@@ -296,7 +303,14 @@ describe('container normalization', () => {
       ],
       children: (
         <>
-          <PatchesPlugin patches={patches} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
           <NodePlugin nodes={calloutContainers} />
         </>
       ),
@@ -605,7 +619,14 @@ describe('container normalization', () => {
       ],
       children: (
         <>
-          <PatchesPlugin patches={patches} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
           <NodePlugin nodes={calloutContainers} />
         </>
       ),
@@ -1362,7 +1383,14 @@ describe('container normalization', () => {
       ],
       children: (
         <>
-          <PatchesPlugin patches={patches} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
           <NodePlugin nodes={calloutContainers} />
         </>
       ),
