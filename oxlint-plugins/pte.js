@@ -1,12 +1,37 @@
+const weakAsymmetricMatcherMessages = {
+  objectContaining:
+    'Use `toEqual` with the full literal object instead of `expect.objectContaining`.',
+  arrayContaining:
+    'Use `toEqual` with the full array in the order the code produces instead of `expect.arrayContaining`.',
+  any: 'Assert the literal value instead of `expect.any`: keys from `createTestKeyGenerator` are deterministic (`k0`, `k1`, ...).',
+  anything: 'Assert the literal value instead of `expect.anything`.',
+}
+
+const weakNegatedAsymmetricMatcherMessages = {
+  objectContaining:
+    'Use `toEqual` with the full literal object instead of `expect.not.objectContaining`.',
+  arrayContaining:
+    'Use `toEqual` with the full array in the order the code produces instead of `expect.not.arrayContaining`.',
+}
+
 const noWeakValueAssertions = {
   create(context) {
     return {
       CallExpression(node) {
         const callee = node.callee
         if (callee.type !== 'MemberExpression') return
-        if (callee.property.type !== 'Identifier') return
+        const methodName = getStaticPropertyName(callee)
+        if (methodName === undefined) return
 
-        const methodName = callee.property.name
+        const asymmetricMatcherMessage = getWeakAsymmetricMatcherMessage(
+          callee.object,
+          methodName,
+        )
+        if (asymmetricMatcherMessage) {
+          context.report({node, message: asymmetricMatcherMessage})
+          return
+        }
+
         if (methodName !== 'toMatchObject' && methodName !== 'toBeDefined')
           return
 
@@ -34,6 +59,38 @@ const noWeakValueAssertions = {
       },
     }
   },
+}
+
+function getWeakAsymmetricMatcherMessage(object, matcherName) {
+  if (object.type === 'Identifier' && object.name === 'expect') {
+    return Object.hasOwn(weakAsymmetricMatcherMessages, matcherName)
+      ? weakAsymmetricMatcherMessages[matcherName]
+      : undefined
+  }
+
+  if (
+    object.type === 'MemberExpression' &&
+    object.object.type === 'Identifier' &&
+    object.object.name === 'expect' &&
+    getStaticPropertyName(object) === 'not'
+  ) {
+    return Object.hasOwn(weakNegatedAsymmetricMatcherMessages, matcherName)
+      ? weakNegatedAsymmetricMatcherMessages[matcherName]
+      : undefined
+  }
+
+  return undefined
+}
+
+function getStaticPropertyName(memberExpression) {
+  const property = memberExpression.property
+  if (!memberExpression.computed) {
+    return property.type === 'Identifier' ? property.name : undefined
+  }
+  if (property.type === 'Literal' && typeof property.value === 'string') {
+    return property.value
+  }
+  return undefined
 }
 
 const FORBIDDEN_DATA_ATTRIBUTE = 'data-slate-editor'

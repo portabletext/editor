@@ -546,7 +546,10 @@ describe('table keyboard navigation', () => {
     expect(
       editor.getSnapshot().context.value?.map((block) => block._type),
     ).toEqual(['block', 'table', 'block'])
-  })
+    // The 23 key presses are each a round trip to the browser, and their
+    // cost scales with machine load: Firefox on a busy CI runner has
+    // measured 10-15 s, against vitest's 15 s default.
+  }, 60_000)
 
   test('repeated ArrowDown escapes reuse the block below instead of accumulating', async () => {
     const editor = await navFrom('c10', 1, 'ArrowDown')

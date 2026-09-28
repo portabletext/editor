@@ -12,9 +12,7 @@ describe('event.value changed', () => {
       initialValue: undefined,
     })
 
-    expect(onEvent).not.toHaveBeenCalledWith(
-      expect.objectContaining({type: 'value changed'}),
-    )
+    expect(onEvent.mock.calls).toEqual([[{type: 'ready'}]])
   })
 
   test('emits for "[]" initial value', async () => {

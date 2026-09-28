@@ -5,7 +5,13 @@
     "correctness": "off"
   },
   "rules": {
-    "pte/no-data-slate-editor": "error"
+    "pte/no-data-slate-editor": "error",
+    // Inverted because the rule's regexes have no look-ahead: only
+    // `.browser.test.*` files count as tests, and `^$` deliberately fails all.
+    "vitest/consistent-test-filename": [
+      "error",
+      {"allTestPattern": "\\.browser\\.test\\.[cm]?[jt]sx?$", "pattern": "^$"}
+    ]
   },
   "ignorePatterns": [
     "**/dist/**",
@@ -150,6 +156,12 @@
         "oxc/misrefactored-assign-op": "error",
         "vitest/no-duplicate-hooks": "error",
 
+        "pte/no-weak-value-assertions": "error"
+      }
+    },
+    {
+      "files": ["**/*.test.*", "**/*.spec.*"],
+      "rules": {
         "pte/no-weak-value-assertions": "error"
       }
     },

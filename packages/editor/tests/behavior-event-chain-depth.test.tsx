@@ -60,10 +60,13 @@ describe('event chain depth backstop', () => {
 
     // The editor is still intact and usable
     expect(editor.getSnapshot().context.value).toEqual([
-      expect.objectContaining({
+      {
+        _type: 'block',
         _key: blockKey,
-        children: [expect.objectContaining({text: 'foo'})],
-      }),
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
     ])
   })
 })

@@ -16,7 +16,7 @@ The file extension is the discriminator, never a `.browser` suffix:
 - `*.test-d.ts` is type-level, using `expectTypeOf` from vitest
 - `gherkin-tests/*.feature` + racejar for behavior specs (`Feature({featureText, stepDefinitions, parameterTypes})`)
 
-When scaffolding a new package, mirror `plugin-typeahead-picker`'s vitest config, not `plugin-sdk-value`.
+When scaffolding a new package, mirror `plugin-sdk-value`'s vitest config: a `browser` project including `src/**/*.test.tsx` and a `unit` project including `src/**/*.test.ts`.
 
 ## Harnesses
 
@@ -36,7 +36,9 @@ When scaffolding a new package, mirror `plugin-typeahead-picker`'s vitest config
 
 - Assert **complete literal values with `toEqual`**: the full value array, the full event array, the full operation objects. Deterministic keys make this possible. A full-value assertion pins ordering, count, and content at once, and drift shows up as a readable diff.
 - Do **not** build summarizer helpers (string transcripts, custom matchers, mapping functions) between the collected data and the assertion. The reader should see exactly what the editor emitted.
-- `expect.objectContaining` / `expect.any(String)` are last resorts for genuinely nondeterministic fields, used per-field, never to avoid writing out a value.
+- `expect.objectContaining`, `expect.arrayContaining`, `expect.any`, `expect.anything`, `toMatchObject`, and `toBeDefined` are banned. The `pte/no-weak-value-assertions` lint rule fails on them in every test file.
+- A field that looks variable is almost always a key. Build the editor with `createTestKeyGenerator` and assert the generated keys literally. Create the key generator and fixtures inside each test, so the keys a test sees never depend on which tests ran before it.
+- `expect.stringContaining` and `expect.stringMatching` stay allowed for error and warning text, where the full message would couple the test to its wording.
 - For value-shape assertions where the full tree is noise, use `toTextspec(editor.getSnapshot().context)` and assert the textspec string (`'B: foo bar|'`), which is itself a full-value assertion in compact notation.
 - Exact-sequence event tests (`EventListenerPlugin` collecting `EditorEmittedEvent`s) assert the whole sequence; do not filter event types out to make assertions easier.
 

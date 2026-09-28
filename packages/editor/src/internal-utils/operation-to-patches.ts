@@ -1,18 +1,46 @@
 import {
   diffMatchPatch,
   insert,
+  set,
   setIfMissing,
+  unset,
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {
+  EngineOperation,
   InsertOperation,
   InsertTextOperation,
   RemoveTextOperation,
 } from '../engine/interfaces/operation'
 import {getSpan} from '../traversal/get-span'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
+
+export function operationToPatches(
+  operation: EngineOperation,
+  {
+    beforeValue,
+    afterSnapshot,
+  }: {
+    beforeValue: Array<PortableTextBlock>
+    afterSnapshot: TraversalSnapshot
+  },
+): Array<Patch> {
+  switch (operation.type) {
+    case 'insert.text':
+    case 'remove.text':
+      return textPatch(afterSnapshot, operation, beforeValue)
+    case 'insert':
+      return insertNodePatch(operation)
+    case 'set':
+      return [set(operation.value, operation.path)]
+    case 'unset':
+      return [unset(operation.path)]
+    case 'set.selection':
+      return []
+  }
+}
 
 export function textPatch(
   snapshot: TraversalSnapshot,

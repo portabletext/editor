@@ -7,6 +7,7 @@ on:
     types: [opened, synchronize, reopened, edited]
 
 permissions:
+  contents: read
   pull-requests: read
 
 jobs:
@@ -25,5 +26,45 @@ jobs:
             echo "Found unsquashed fixup/squash/amend commits:"
             echo "$offenders"
             echo "Squash them with 'git rebase -i --autosquash' before merge."
+            exit 1
+          fi
+
+      - name: Check that each added changeset opens with a commit subject
+        env:
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changesets=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+            --jq '.[] | select(.status == "added") | .filename | select(test("^\\.changeset/[^/]+\\.md$")) | select(. != ".changeset/README.md")')
+
+          if [ -z "$changesets" ]; then
+            echo "No changesets added."
+            exit 0
+          fi
+
+          subjects=$(gh api "repos/$REPO/pulls/$PR_NUMBER/commits" --paginate \
+            --jq '.[] | .commit.message | split("\n")[0]')
+
+          failed=0
+          while IFS= read -r changeset; do
+            first_line=$(gh api "repos/$REPO/contents/$changeset?ref=$HEAD_SHA" \
+              -H "Accept: application/vnd.github.raw" \
+              | tr -d '\r' \
+              | awk 'NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+                     in_frontmatter { if ($0 == "---") in_frontmatter = 0; next }
+                     NF { print; exit }')
+
+            if ! grep -qxF -- "$first_line" <<< "$subjects"; then
+              echo "$changeset opens with a line that is not a commit subject in this PR:"
+              echo "  $first_line"
+              failed=1
+            fi
+          done <<< "$changesets"
+
+          if [ "$failed" -eq 1 ]; then
+            echo "Commit subjects in this PR:"
+            sed 's/^/  /' <<< "$subjects"
+            echo "The first line of a changeset repeats a commit subject verbatim."
             exit 1
           fi
