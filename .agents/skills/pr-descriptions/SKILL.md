@@ -172,8 +172,9 @@ the full text):
 - Claiming coverage the tests didn't actually run; say what was and wasn't
   exercised.
 - Self-assessments that restate the diff; generated-by footers.
-- The words "delta" (write "change") and "rides along"/"ride along" (write
-  "One additional change:") anywhere in artifact prose.
+- The words "delta" (write "change") and "rides along"/"ride along", and
+  labels such as "One additional change:", anywhere in artifact prose. Name
+  a secondary change in a plain sentence instead.
 - The investigation narrative leaking into the body: how the bug was found
   belongs wherever the work is tracked; the body describes the change.
 - Appending paragraphs as the PR evolves instead of rewriting the body.
