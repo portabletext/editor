@@ -76,3 +76,29 @@ Feature: Concurrent edits
     When the server receives Editor B's batch 1
     And Editor A receives Editor B's batch 1
     Then Editor A shows "B: yfoo| bar"
+
+  Scenario: Two editors fill an empty field at the same moment and end with two blocks
+    Given the document is "B: foo|"
+    When the block "foo" is deleted
+    Then Editor A shows "B: |"
+    And Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    Then the server has no field
+    When Editor A's batch 1 comes back
+    And Editor B receives Editor A's batch 1
+    Then Editor B shows "B: |"
+    When "x" is typed
+    Then Editor A shows "B: x|"
+    And Editor A has sent batch 2
+    When "y" is typed in Editor B
+    Then Editor B shows "B: y|"
+    And Editor B has sent batch 1
+    When the server receives Editor A's batch 2
+    And the server receives Editor B's batch 1
+    Then the server has "B: y;;B: x"
+    When Editor A's batch 2 comes back
+    And Editor A receives Editor B's batch 1
+    Then Editor A shows "B: y;;B: x|"
+    When Editor B receives Editor A's batch 2
+    And Editor B's batch 1 comes back
+    Then Editor B shows "B: y|;;B: x"

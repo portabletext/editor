@@ -54,6 +54,11 @@ describe(compileScenarios.name, () => {
         skipped: true,
         knownRed: "the model doesn't map the caret through remote text changes",
       },
+      {
+        name: 'Two editors fill an empty field at the same moment and end with two blocks',
+        skipped: false,
+        knownRed: undefined,
+      },
     ])
   })
 
