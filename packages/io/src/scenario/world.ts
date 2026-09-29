@@ -41,6 +41,7 @@ export type HeardEvent =
 
 export type NamedTransaction =
   | 'the other field'
+  | "the script's change"
   | 'the deletion'
   | 'the recreation'
 
@@ -159,6 +160,8 @@ export type WorldEditor = {
   checkedBatchCount: number
   /** The error count at the previous out-of-step or in-step check. */
   checkedErrorCount: number
+  /** The warning count at the previous `has been warned` check. */
+  checkedWarningCount: number
 }
 
 type Setup = {
@@ -555,6 +558,16 @@ export function createWorld() {
         server.changeOtherField(nameTransaction('the other field')),
       )
     },
+    setFieldByScript: (textspec: string) => {
+      const {server, network} = getSetup()
+      const {value} = parseTextspec(
+        {keyGenerator: documentKeyGenerator},
+        textspec,
+      )
+      network.publish(
+        server.setField(value, nameTransaction("the script's change")),
+      )
+    },
     deleteDocument: () => {
       const {server, network} = getSetup()
       network.publish(server.deleteDocument(nameTransaction('the deletion')))
@@ -621,6 +634,9 @@ export function createWorld() {
 
     type: (name: EditorName, text: string) => {
       getEditor(name).editor.type(text)
+    },
+    deleteBeforeCaret: (name: EditorName, text: string) => {
+      getEditor(name).editor.deleteBeforeCaret(text)
     },
     putCaretAfter: (name: EditorName, text: string) => {
       getEditor(name).editor.putCaretAfter(text)
@@ -689,7 +705,14 @@ function createWorldEditor({
   })
   editor.mount()
 
-  return {editor, host, heard, checkedBatchCount: 0, checkedErrorCount: 0}
+  return {
+    editor,
+    host,
+    heard,
+    checkedBatchCount: 0,
+    checkedErrorCount: 0,
+    checkedWarningCount: 0,
+  }
 }
 
 export function listenTo(editor: IoEditor): Heard {
@@ -744,6 +767,7 @@ export function listenTo(editor: IoEditor): Heard {
 
 const namedTransactionPrefixes: Record<NamedTransaction, string> = {
   'the other field': 'other-field',
+  "the script's change": 'script',
   'the deletion': 'deletion',
   'the recreation': 'recreation',
 }

@@ -1,5 +1,6 @@
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
+import concurrentEditsFeature from '../../gherkin-spec/concurrent-edits.feature?raw'
 import keysFeature from '../../gherkin-spec/keys.feature?raw'
 import lifecycleFeature from '../../gherkin-spec/lifecycle.feature?raw'
 import listenersFeature from '../../gherkin-spec/listeners.feature?raw'
@@ -12,6 +13,7 @@ import {stepDefinitions, type Context} from '../scenario/steps'
 import {createWorld} from '../scenario/world'
 
 const features = [
+  concurrentEditsFeature,
   keysFeature,
   lifecycleFeature,
   listenersFeature,

@@ -252,6 +252,34 @@ describe(createServer.name, () => {
     expect(server.copy()).toEqual({value, rev: 'r2'})
   })
 
+  test('setting the whole field records a whole-field set and moves the revision', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo')
+    const server = createServer({documentId: 'document', document: {value}})
+    const nextValue = parseTextspec({keyGenerator}, 'B: bar').value
+
+    const transaction = server.setField(nextValue, 't1')
+
+    expect(transaction).toEqual({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set(nextValue, [])],
+      batchIds: [],
+    })
+    expect(server.copy()).toEqual({value: nextValue, rev: 'r2'})
+    expect(server.getLog()).toEqual([{transaction, changesField: true}])
+  })
+
+  test('setting the whole field of a missing document throws', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const server = createServer({documentId: 'document', document: undefined})
+
+    expect(() =>
+      server.setField(parseTextspec({keyGenerator}, 'B: bar').value, 't1'),
+    ).toThrow('The document does not exist')
+  })
+
   test('deleting and recreating the document', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')

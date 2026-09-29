@@ -39,6 +39,11 @@ export type Server = {
   isRefused: (batchId: string) => boolean
   /** Records a transaction that changes only another field of the document. */
   changeOtherField: (transactionId: string) => ServerTransaction
+  /** Records a transaction that sets the whole field, as a script does. */
+  setField: (
+    value: Array<PortableTextBlock>,
+    transactionId: string,
+  ) => ServerTransaction
   deleteDocument: (transactionId: string) => ServerTransaction
   recreate: (
     value: Array<PortableTextBlock>,
@@ -125,6 +130,20 @@ export function createServer(initial: {
         {transactionId, patches: [], batchIds: []},
         nextRevision(),
         false,
+      )
+    },
+    setField: (nextValue, transactionId) => {
+      if (rev === undefined) {
+        throw new Error('The document does not exist')
+      }
+
+      const valueBefore = value
+      value = nextValue
+
+      return record(
+        {transactionId, patches: [set(nextValue, [])], batchIds: []},
+        nextRevision(),
+        JSON.stringify(valueBefore) !== JSON.stringify(value),
       )
     },
     deleteDocument: (transactionId) => {

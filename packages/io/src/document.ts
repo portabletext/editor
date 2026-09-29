@@ -82,6 +82,12 @@ export type Document = {
   toTextspec: (options?: {keys?: boolean}) => string
   setStyle: (style: string) => ActionResult
   type: (text: string) => ActionResult
+  /**
+   * Deletes text that ends at the caret within the caret's span, as a run of
+   * backspaces. Throws if the text isn't right before the caret. Undo doesn't
+   * revert it.
+   */
+  deleteBeforeCaret: (text: string) => ActionResult
   putCaretAfter: (text: string) => void
   insertBlock: (textspec: string) => ActionResult
   deleteBlock: (text: string) => ActionResult
@@ -265,6 +271,35 @@ export function createDocument(
         offset,
         text,
       },
+    }
+  }
+
+  function deleteBeforeCaret(text: string): ActionResult {
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
+    const {span, offset} = locateSpan(block, caret.offset)
+    const start = offset - text.length
+
+    if (text === '' || start < 0 || span.text.slice(start, offset) !== text) {
+      throw new Error(
+        `Expected "${text}" right before the caret, found "${span.text.slice(0, offset)}"`,
+      )
+    }
+
+    const nextText = span.text.slice(0, start) + span.text.slice(offset)
+    const path = [{_key: block._key}, 'children', {_key: span._key}, 'text']
+
+    value = replaceAt(value, blockIndex, {
+      ...block,
+      children: block.children.map((child) =>
+        child._key === span._key ? {...span, text: nextText} : child,
+      ),
+    })
+    caret = {blockKey: block._key, offset: caret.offset - text.length}
+
+    return {
+      patches: [diffMatchPatch(span.text, nextText, path)],
+      undoStep: undefined,
     }
   }
 
@@ -505,6 +540,7 @@ export function createDocument(
       }),
     setStyle,
     type,
+    deleteBeforeCaret,
     putCaretAfter,
     insertBlock,
     deleteBlock,

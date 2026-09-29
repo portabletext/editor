@@ -94,6 +94,18 @@ export const stepDefinitions = [
     },
   ),
   When(
+    'a script sets the field to {textspec}',
+    (context: Context, textspec: string) => {
+      context.world.setFieldByScript(textspec)
+    },
+  ),
+  When(
+    "{editor} receives the script's change",
+    (context: Context, name: EditorName) => {
+      context.world.deliverNamed(name, "the script's change")
+    },
+  ),
+  When(
     "{editor}'s batch {int} comes back",
     (context: Context, name: EditorName, batchNumber: number) => {
       context.world.deliverBatch(name, name, batchNumber)
@@ -293,6 +305,17 @@ export const stepDefinitions = [
       worldEditor.heard.errors.slice(worldEditor.checkedErrorCount),
     )
   }),
+  Then('{editor} has been warned', (context: Context, name: EditorName) => {
+    const worldEditor = context.world.getEditor(name)
+    const warningCount = worldEditor.heard.warnings.length
+
+    checkGreaterThan(
+      `The warnings ${name} has given`,
+      warningCount,
+      worldEditor.checkedWarningCount,
+    )
+    worldEditor.checkedWarningCount = warningCount
+  }),
   Then('the resync is refused', (context: Context) => {
     const resync = context.world.getLastResync()
     const {editor, heard} = context.world.getEditor(resync.editorName)
@@ -351,6 +374,11 @@ function userSteps() {
       text: '{string} is typed',
       run: (context: Context, name: EditorName, text: string) =>
         context.world.type(name, text),
+    },
+    {
+      text: '{string} is deleted before the caret',
+      run: (context: Context, name: EditorName, text: string) =>
+        context.world.deleteBeforeCaret(name, text),
     },
     {
       text: 'the caret is put after {string}',

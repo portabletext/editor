@@ -150,6 +150,50 @@ describe(createDocument.name, () => {
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
   })
 
+  test('deleting before the caret removes the text that ends at the caret and sends a text diff', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo bar|;;B: baz'),
+    )
+    const before = document.getValue()
+
+    const result = document.deleteBeforeCaret(' bar')
+
+    expect(result).toEqual({
+      patches: [
+        diffMatchPatch('foo bar', 'foo', [
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+          'text',
+        ]),
+      ],
+      undoStep: undefined,
+    })
+    expect(document.toTextspec()).toEqual('B: foo|;;B: baz')
+    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+  })
+
+  test('deleting text that is not right before the caret throws and changes nothing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo| bar'),
+    )
+
+    expect(() => document.deleteBeforeCaret('bar')).toThrow(
+      'Expected "bar" right before the caret, found "foo"',
+    )
+    expect(() => document.deleteBeforeCaret('xfoo')).toThrow(
+      'Expected "xfoo" right before the caret, found "foo"',
+    )
+    expect(() => document.deleteBeforeCaret('')).toThrow(
+      'Expected "" right before the caret, found "foo"',
+    )
+    expect(document.toTextspec()).toEqual('B: foo| bar')
+  })
+
   test('the caret is put after text found in one block', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createDocument(

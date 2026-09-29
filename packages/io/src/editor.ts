@@ -95,6 +95,7 @@ export type IoEditor = {
 
   setStyle: (style: string) => void
   type: (text: string) => void
+  deleteBeforeCaret: (text: string) => void
   putCaretAfter: (text: string) => void
   insertBlock: (textspec: string) => void
   deleteBlock: (text: string) => void
@@ -812,6 +813,7 @@ export function createIoEditor(options: {
     },
     setStyle: (style) => act(() => document.setStyle(style)),
     type: (text) => act(() => document.type(text)),
+    deleteBeforeCaret: (text) => act(() => document.deleteBeforeCaret(text)),
     putCaretAfter,
     insertBlock: (textspec) => act(() => document.insertBlock(textspec)),
     deleteBlock: (text) => act(() => document.deleteBlock(text)),

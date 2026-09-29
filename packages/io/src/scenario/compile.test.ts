@@ -1,4 +1,5 @@
 import {describe, expect, test} from 'vitest'
+import concurrentEditsFeature from '../../gherkin-spec/concurrent-edits.feature?raw'
 import listenersFeature from '../../gherkin-spec/listeners.feature?raw'
 import loadingAndEmptyFeature from '../../gherkin-spec/loading-and-empty.feature?raw'
 import {compileScenarios} from './compile'
@@ -24,6 +25,65 @@ describe(compileScenarios.name, () => {
         'Emptying the field sends a whole-field unset',
       ],
     })
+  })
+
+  test('marks skipped scenarios and reads what a known red one lacks', () => {
+    const {scenarios} = compileScenarios(concurrentEditsFeature)
+
+    expect(
+      scenarios.map(({name, skipped, knownRed}) => ({name, skipped, knownRed})),
+    ).toEqual([
+      {
+        name: 'Two editors type into the same block at once, and both keep their words',
+        skipped: false,
+        knownRed: undefined,
+      },
+      {
+        name: 'One editor deletes a repeated word while another types next to it, every screen converges, and the second copy is the one that goes',
+        skipped: false,
+        knownRed: undefined,
+      },
+      {
+        name: 'A script replaces the whole field while Editor A has unsent typing',
+        skipped: true,
+        knownRed:
+          'the model warns about unsent typing with no target only after a resync, not when a received transaction takes the target away',
+      },
+      {
+        name: 'The caret stays with its word while Editor B types before it',
+        skipped: true,
+        knownRed: "the model doesn't map the caret through remote text changes",
+      },
+    ])
+  })
+
+  test('a known red comment counts only on the line right above the scenario', () => {
+    const {scenarios} = compileScenarios(
+      [
+        'Feature: Free play',
+        '  # known red: the first',
+        '',
+        '  Scenario: foo',
+        '    Given the document is "B: foo|"',
+        '',
+        '  # known red: the second',
+        '  Scenario Outline: bar <text>',
+        '    Given the document is "B: <text>|"',
+        '',
+        '    Examples:',
+        '      | text |',
+        '      | bar  |',
+        '      | baz  |',
+      ].join('\n'),
+    )
+
+    expect(
+      scenarios.map(({name, skipped, knownRed}) => ({name, skipped, knownRed})),
+    ).toEqual([
+      {name: 'foo', skipped: false, knownRed: undefined},
+      {name: 'bar bar', skipped: false, knownRed: 'the second'},
+      {name: 'bar baz', skipped: false, knownRed: 'the second'},
+    ])
   })
 
   test('a scenario runs one step at a time to the end', async () => {
