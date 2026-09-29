@@ -44,6 +44,8 @@ export type Document = {
   /** The content on screen, the placeholder included. */
   getValue: () => Array<PortableTextBlock>
   getCaret: () => Caret
+  /** Puts the caret at a block key and offset. Throws if either is invalid. */
+  setCaret: (caret: Caret) => void
   getSelection: () => TextspecSelection
   /** The key of the placeholder block, while one is shown. */
   getPlaceholderKey: () => string | undefined
@@ -312,6 +314,7 @@ export function createDocument(
   return {
     getValue: () => value,
     getCaret: () => caret,
+    setCaret: placeCaret,
     getSelection,
     getPlaceholderKey: () => placeholderKey,
     setValue,
