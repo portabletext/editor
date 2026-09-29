@@ -853,6 +853,7 @@ describe(createIoEditor.name, () => {
       ],
       outOfStep: false,
       readOnly: false,
+      undoDepth: 2,
     })
 
     editor.mutationRejected({id: 'A-1'})
@@ -872,6 +873,7 @@ describe(createIoEditor.name, () => {
       held: [],
       outOfStep: true,
       readOnly: true,
+      undoDepth: 2,
     })
   })
 

@@ -85,6 +85,8 @@ export type EditorSnapshot = {
   }>
   outOfStep: boolean
   readOnly: boolean
+  /** How many of the editor's own changes undo can still revert. */
+  undoDepth: number
   sentBatches: Array<{
     number: number
     transactionId: string
@@ -341,6 +343,7 @@ export function createWorld() {
       })),
       outOfStep: ledger.outOfStep,
       readOnly: ledger.readOnly,
+      undoDepth: ledger.undoDepth,
       sentBatches: heard.mutations.map((batch, index) => ({
         number: index + 1,
         transactionId: host.getTransactionId(batch.id),

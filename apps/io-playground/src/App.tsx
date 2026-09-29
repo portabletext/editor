@@ -1,5 +1,10 @@
-import type {World} from '@portabletext/io'
+import type {EditorName, World} from '@portabletext/io'
 import {useState} from 'react'
+import {
+  applicableActions,
+  applicableNetworkActions,
+  editorPrompts,
+} from './applicable'
 import {DrawerView, OpenDetailsProvider, type Drawer} from './drawers'
 import {EditorPanel} from './editor-panel'
 import {FreePlayTab, useFreePlay} from './free-play-tab'
@@ -17,6 +22,15 @@ export function App() {
   const freePlay = useFreePlay()
   const world = tab === 'scenarios' ? scenarioRunner.world : freePlay.world
   const snapshot = world.snapshot()
+  const network = applicableNetworkActions(snapshot)
+  const promptsFor = (name: EditorName) => {
+    const held = network.links[name].held
+
+    return [
+      ...editorPrompts(applicableActions(snapshot, name)),
+      ...(held === undefined ? [] : [held]),
+    ]
+  }
   const [selection, setSelection] = useState<{
     world: World
     batchIds: Array<string>
@@ -91,12 +105,14 @@ export function App() {
             name="Editor A"
             editor={snapshot.editors?.['Editor A']}
             waitingCount={snapshot.network?.feeds['Editor A'].length ?? 0}
+            prompts={promptsFor('Editor A')}
           />
           <LinkPanel
             name="Editor A"
             editorSide="left"
             editor={snapshot.editors?.['Editor A']}
             network={snapshot.network}
+            applicability={network.links['Editor A']}
             onStep={onStep}
             onDeliver={onDeliver}
             selectedBatchIds={selectedBatchIds}
@@ -105,6 +121,7 @@ export function App() {
           <ServerPanel
             server={snapshot.server}
             now={snapshot.network?.now}
+            advanceClock={network.advanceClock}
             onStep={onStep}
             selectedRequests={selectedRequests}
             onReceiveSelected={receiveSelected}
@@ -114,6 +131,7 @@ export function App() {
             editorSide="right"
             editor={snapshot.editors?.['Editor B']}
             network={snapshot.network}
+            applicability={network.links['Editor B']}
             onStep={onStep}
             onDeliver={onDeliver}
             selectedBatchIds={selectedBatchIds}
@@ -123,6 +141,7 @@ export function App() {
             name="Editor B"
             editor={snapshot.editors?.['Editor B']}
             waitingCount={snapshot.network?.feeds['Editor B'].length ?? 0}
+            prompts={promptsFor('Editor B')}
           />
         </main>
 

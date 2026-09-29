@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState, type ReactNode} from 'react'
+import type {Applicability} from './applicable'
 import {definitionOf, revisionTitle, type ConceptName} from './concepts'
 
 const badgeTones = {
@@ -212,11 +213,14 @@ export function DetailsLink({
 export function Button({
   onClick,
   disabled,
+  suggested,
   title,
   children,
 }: {
   onClick: () => void
   disabled?: boolean
+  /** Rings the button when the state calls for it. */
+  suggested?: boolean
   title?: string
   children: ReactNode
 }) {
@@ -226,10 +230,47 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs whitespace-nowrap hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+      className={`rounded border border-gray-300 bg-white px-2 py-0.5 text-xs whitespace-nowrap hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:opacity-60 ${
+        suggested ? 'ring-2 ring-amber-400' : ''
+      }`}
     >
       {children}
     </button>
+  )
+}
+
+/** A button whose state comes from the protocol's applicability rules. */
+export function ActionButton({
+  applicability,
+  onClick,
+  children,
+}: {
+  applicability: Applicability
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <Button
+      onClick={onClick}
+      disabled={!applicability.enabled}
+      suggested={applicability.suggested !== undefined}
+      title={applicability.why ?? applicability.suggested}
+    >
+      {children}
+    </Button>
+  )
+}
+
+/** Prompts the state calls for, one per line. */
+export function Prompts({prompts}: {prompts: Array<string>}) {
+  return prompts.length === 0 ? null : (
+    <ul aria-label="suggestions" className="flex flex-col gap-0.5">
+      {prompts.map((prompt) => (
+        <li key={prompt} className="text-xs text-amber-700">
+          {prompt}
+        </li>
+      ))}
+    </ul>
   )
 }
 

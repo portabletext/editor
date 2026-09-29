@@ -15,6 +15,7 @@ import {
   ItemList,
   Label,
   plural,
+  Prompts,
   Revision,
   RevisionStep,
   Section,
@@ -26,11 +27,14 @@ export function EditorPanel({
   name,
   editor,
   waitingCount,
+  prompts,
 }: {
   name: EditorName
   editor: EditorSnapshot | undefined
   /** Transactions waiting in this editor's feed. */
   waitingCount: number
+  /** What the editor's state calls for. */
+  prompts: Array<string>
 }) {
   const flash = useFlash(JSON.stringify(editor ?? null))
 
@@ -62,6 +66,8 @@ export function EditorPanel({
           </>
         ) : null}
       </header>
+
+      <Prompts prompts={prompts} />
 
       {editor ? (
         <EditorDetails name={name} editor={editor} />

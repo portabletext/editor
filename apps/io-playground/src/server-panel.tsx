@@ -1,5 +1,6 @@
 import type {NetworkSnapshot, ServerSnapshot} from '@portabletext/io'
 import {useState} from 'react'
+import type {Applicability} from './applicable'
 import {useOpenDetails} from './drawers'
 import {quoted} from './gherkin'
 import {describeSource} from './narration'
@@ -24,6 +25,7 @@ type SaveRequest = NetworkSnapshot['saveRequests'][number]
 export function ServerPanel({
   server,
   now,
+  advanceClock,
   onStep,
   selectedRequests,
   onReceiveSelected,
@@ -31,6 +33,7 @@ export function ServerPanel({
   server: ServerSnapshot | null
   /** The virtual clock, in milliseconds. */
   now: number | undefined
+  advanceClock: Applicability
   /** Present in free play: runs a `When` step. */
   onStep: ((text: string) => void) | undefined
   /** Save requests picked to be received as one transaction. */
@@ -135,7 +138,11 @@ export function ServerPanel({
                   onClick={() =>
                     onStep('the wait for the missing transaction runs out')
                   }
-                  title="When the wait for the missing transaction runs out"
+                  suggested={advanceClock.suggested !== undefined}
+                  title={
+                    advanceClock.suggested ??
+                    'When the wait for the missing transaction runs out'
+                  }
                 >
                   advance 10 s
                 </Button>

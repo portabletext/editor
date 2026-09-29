@@ -9,7 +9,8 @@
     "check:types:watch": "tsc --watch --project tsconfig.app.json",
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "vitest --run"
   },
   "dependencies": {
     "@portabletext/io": "workspace:^",
@@ -23,6 +24,7 @@
     "@vitejs/plugin-react": "catalog:tooling",
     "tailwindcss": "catalog:tooling",
     "typescript": "catalog:tooling",
-    "vite": "catalog:tooling"
+    "vite": "catalog:tooling",
+    "vitest": "catalog:tooling"
   }
 }

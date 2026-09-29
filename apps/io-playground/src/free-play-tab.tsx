@@ -7,6 +7,11 @@ import {
 } from '@portabletext/io'
 import {useState} from 'react'
 import {
+  applicableActions,
+  editorPrompts,
+  type EditorApplicability,
+} from './applicable'
+import {
   formatScenario,
   formatSteps,
   inEditor,
@@ -17,7 +22,7 @@ import {
 } from './gherkin'
 import {narrateStep, type NarrationEntry} from './narration'
 import {NarrationLog} from './narration-log'
-import {Button, Section, TextInput} from './ui'
+import {ActionButton, Button, Prompts, Section, TextInput} from './ui'
 
 type Setup = {
   mode:
@@ -147,6 +152,7 @@ export function FreePlayTab({
   const [scenarioName, setScenarioName] = useState('Free play')
   const [copied, setCopied] = useState(false)
   const scenarioText = formatScenario(scenarioName, freePlay.log)
+  const snapshot = freePlay.world.snapshot()
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[1fr_1fr_1.2fr_1.2fr] gap-4">
@@ -154,6 +160,8 @@ export function FreePlayTab({
         <EditorControls
           key={name}
           name={name}
+          actions={applicableActions(snapshot, name)}
+          readOnly={snapshot.editors?.[name].readOnly ?? false}
           onStep={(text) => freePlay.perform('When', text)}
         />
       ))}
@@ -249,9 +257,13 @@ export function FreePlayTab({
 
 function EditorControls({
   name,
+  actions,
+  readOnly,
   onStep,
 }: {
   name: EditorName
+  actions: EditorApplicability
+  readOnly: boolean
   onStep: (text: string) => void
 }) {
   const [typed, setTyped] = useState('x')
@@ -259,25 +271,31 @@ function EditorControls({
   const [caretAfter, setCaretAfter] = useState('foo')
   const [insertedBlock, setInsertedBlock] = useState('B: bar')
   const [deletedBlock, setDeletedBlock] = useState('foo')
+  const [deletedText, setDeletedText] = useState('x')
   const suffix = inEditor(name)
 
   return (
     <Section title={name}>
       <div className="flex flex-col gap-1">
+        <Prompts prompts={editorPrompts(actions)} />
         <div className="flex items-center gap-1">
-          <Button onClick={() => onStep(`${quoted(typed)} is typed${suffix}`)}>
+          <ActionButton
+            applicability={actions.type}
+            onClick={() => onStep(`${quoted(typed)} is typed${suffix}`)}
+          >
             type
-          </Button>
+          </ActionButton>
           <TextInput value={typed} onChange={setTyped} />
         </div>
         <div className="flex items-center gap-1">
-          <Button
+          <ActionButton
+            applicability={actions['set style']}
             onClick={() =>
               onStep(`the style is set to ${quoted(style)}${suffix}`)
             }
           >
             set style
-          </Button>
+          </ActionButton>
           <select
             className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs"
             value={style}
@@ -291,61 +309,99 @@ function EditorControls({
           </select>
         </div>
         <div className="flex items-center gap-1">
-          <Button
+          <ActionButton
+            applicability={actions['put caret after']}
             onClick={() =>
               onStep(`the caret is put after ${quoted(caretAfter)}${suffix}`)
             }
           >
             put caret after
-          </Button>
+          </ActionButton>
           <TextInput value={caretAfter} onChange={setCaretAfter} />
         </div>
         <div className="flex items-center gap-1">
-          <Button
+          <ActionButton
+            applicability={actions['insert block']}
             onClick={() =>
               onStep(`the block ${quoted(insertedBlock)} is inserted${suffix}`)
             }
           >
             insert block
-          </Button>
+          </ActionButton>
           <TextInput value={insertedBlock} onChange={setInsertedBlock} />
         </div>
         <div className="flex items-center gap-1">
-          <Button
+          <ActionButton
+            applicability={actions['delete block']}
             onClick={() =>
               onStep(`the block ${quoted(deletedBlock)} is deleted${suffix}`)
             }
           >
             delete block
-          </Button>
+          </ActionButton>
           <TextInput value={deletedBlock} onChange={setDeletedBlock} />
         </div>
-        <div className="flex flex-wrap gap-1">
-          <Button onClick={() => onStep(`undo is performed${suffix}`)}>
-            undo
-          </Button>
-          <Button onClick={() => onStep(`${name} becomes read-only`)}>
-            read-only
-          </Button>
-          <Button onClick={() => onStep(`${name} is closed`)}>close</Button>
+        <div className="flex items-center gap-1">
+          <ActionButton
+            applicability={actions['delete before caret']}
+            onClick={() =>
+              onStep(
+                `${quoted(deletedText)} is deleted before the caret${suffix}`,
+              )
+            }
+          >
+            delete before caret
+          </ActionButton>
+          <TextInput value={deletedText} onChange={setDeletedText} />
         </div>
         <div className="flex flex-wrap gap-1">
-          <Button onClick={() => onStep(`${name} is resynced`)}>resync</Button>
-          <Button
+          <ActionButton
+            applicability={actions.undo}
+            onClick={() => onStep(`undo is performed${suffix}`)}
+          >
+            undo
+          </ActionButton>
+          <ActionButton
+            applicability={actions['read-only']}
+            onClick={() => onStep(`${name} becomes read-only`)}
+          >
+            read-only: {readOnly ? 'on' : 'off'}
+          </ActionButton>
+          <ActionButton
+            applicability={actions.close}
+            onClick={() => onStep(`${name} is closed`)}
+          >
+            {actions.close.enabled ? 'close' : 'closed'}
+          </ActionButton>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          <ActionButton
+            applicability={actions.resync}
+            onClick={() => onStep(`${name} is resynced`)}
+          >
+            resync
+          </ActionButton>
+          <ActionButton
+            applicability={actions['resync discarding']}
             onClick={() =>
               onStep(`${name} is resynced, discarding unsent changes`)
             }
           >
             resync, discarding
-          </Button>
-          <Button onClick={() => onStep(`${name} is loaded`)}>load</Button>
+          </ActionButton>
+          <ActionButton
+            applicability={actions.load}
+            onClick={() => onStep(`${name} is loaded`)}
+          >
+            load
+          </ActionButton>
           {name === 'Editor A' ? (
-            <Button
+            <ActionButton
+              applicability={actions['release claim']}
               onClick={() => onStep('the claim is released')}
-              title="The vocabulary releases Editor A's claim only"
             >
               release claim
-            </Button>
+            </ActionButton>
           ) : null}
         </div>
       </div>

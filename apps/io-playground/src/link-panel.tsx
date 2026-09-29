@@ -5,20 +5,21 @@ import type {
   TransactionSource,
 } from '@portabletext/io'
 import type {ReactNode} from 'react'
+import type {LinkApplicability} from './applicable'
 import {useOpenDetails} from './drawers'
 import {describeSource, isOwnFeedItem} from './narration'
 import {
+  ActionButton,
   Badge,
   Button,
   DetailsLink,
   Empty,
   Label,
   plural,
+  Prompts,
   RevisionStep,
   useFlash,
 } from './ui'
-
-type FeedItem = NetworkSnapshot['feeds'][EditorName][number]
 
 /**
  * The link between one editor and the server: save requests travel up
@@ -30,6 +31,7 @@ export function LinkPanel({
   editorSide,
   editor,
   network,
+  applicability,
   onStep,
   onDeliver,
   selectedBatchIds,
@@ -40,6 +42,7 @@ export function LinkPanel({
   editorSide: 'left' | 'right'
   editor: EditorSnapshot | undefined
   network: NetworkSnapshot | null
+  applicability: LinkApplicability
   /** Present in free play: runs a `When` step. */
   onStep: ((text: string) => void) | undefined
   /**
@@ -83,6 +86,9 @@ export function LinkPanel({
               </>
             }
           >
+            {onStep ? (
+              <Prompts prompts={applicability.towardServer.prompts} />
+            ) : null}
             {requests.length === 0 ? (
               <Empty>none waiting</Empty>
             ) : (
@@ -124,7 +130,12 @@ export function LinkPanel({
                     </span>
                     {onStep ? (
                       <div className="flex flex-wrap gap-1">
-                        <Button
+                        <ActionButton
+                          applicability={
+                            applicability.towardServer.saveRequests[
+                              request.batchId
+                            ] ?? {enabled: true}
+                          }
                           onClick={() =>
                             onStep(
                               request.final
@@ -134,7 +145,7 @@ export function LinkPanel({
                           }
                         >
                           server receives
-                        </Button>
+                        </ActionButton>
                         <button
                           type="button"
                           onClick={() =>
@@ -173,6 +184,9 @@ export function LinkPanel({
               </>
             }
           >
+            {onDeliver ? (
+              <Prompts prompts={applicability.towardEditor.prompts} />
+            ) : null}
             {replies.length === 0 ? null : (
               <div className={`flex flex-wrap gap-1.5 ${downwardOrder}`}>
                 {replies.map((reply) => (
@@ -188,7 +202,12 @@ export function LinkPanel({
                     </span>
                     {onDeliver ? (
                       <div>
-                        <Button
+                        <ActionButton
+                          applicability={
+                            applicability.towardEditor.replies[
+                              reply.batchId
+                            ] ?? {enabled: true}
+                          }
                           onClick={() =>
                             onDeliver(
                               `${name}'s batch ${reply.batchNumber} is rejected`,
@@ -196,7 +215,7 @@ export function LinkPanel({
                           }
                         >
                           deliver
-                        </Button>
+                        </ActionButton>
                       </div>
                     ) : null}
                   </Card>
@@ -208,8 +227,7 @@ export function LinkPanel({
               <Empty>no transactions waiting</Empty>
             ) : (
               <div className={`flex flex-wrap gap-1.5 ${downwardOrder}`}>
-                {feed.map((item, index) => {
-                  const blockedBy = earlierNamedItem(feed, index)
+                {feed.map((item) => {
                   const yours = isOwnFeedItem(item, name)
 
                   return (
@@ -240,19 +258,18 @@ export function LinkPanel({
                       </span>
                       {onDeliver ? (
                         <div>
-                          <Button
-                            disabled={blockedBy !== undefined}
-                            title={
-                              blockedBy === undefined
-                                ? undefined
-                                : `Deliver ${blockedBy} first: the steps name it the same way`
+                          <ActionButton
+                            applicability={
+                              applicability.towardEditor.feed[
+                                item.transactionId
+                              ] ?? {enabled: true}
                             }
                             onClick={() =>
                               onDeliver(deliveryStep(name, item.source))
                             }
                           >
                             deliver
-                          </Button>
+                          </ActionButton>
                         </div>
                       ) : null}
                     </Card>
@@ -335,29 +352,4 @@ function deliveryStep(receiver: EditorName, source: TransactionSource): string {
   return batch.name === receiver
     ? `${receiver}'s batch ${batch.batchNumber} comes back`
     : `${receiver} receives ${batch.name}'s batch ${batch.batchNumber}`
-}
-
-/**
- * A server change is delivered by name, and the name picks the earliest
- * waiting one, so a later one with the same name can't be delivered first.
- */
-function earlierNamedItem(
-  feed: Array<FeedItem>,
-  index: number,
-): string | undefined {
-  const item = feed[index]
-
-  if (item.source.type !== 'named') {
-    return undefined
-  }
-
-  const {name} = item.source
-  const earlier = feed
-    .slice(0, index)
-    .find(
-      (candidate) =>
-        candidate.source.type === 'named' && candidate.source.name === name,
-    )
-
-  return earlier?.transactionId
 }

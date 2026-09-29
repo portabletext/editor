@@ -76,6 +76,7 @@ describe(createWorld.name, () => {
           held: [],
           outOfStep: false,
           readOnly: false,
+          undoDepth: 2,
           sentBatches: [
             {
               number: 1,
@@ -135,6 +136,7 @@ describe(createWorld.name, () => {
           ],
           outOfStep: false,
           readOnly: false,
+          undoDepth: 1,
           sentBatches: [
             {
               number: 1,

@@ -68,6 +68,8 @@ export type IoEditorLedger = {
   >
   outOfStep: boolean
   readOnly: boolean
+  /** How many of the editor's own changes undo can still revert. */
+  undoDepth: number
 }
 
 export type IoEditor = {
@@ -795,6 +797,7 @@ export function createIoEditor(options: {
       })),
       outOfStep,
       readOnly,
+      undoDepth: history.length,
     }),
     on: (listener) => {
       listeners.add(listener)
