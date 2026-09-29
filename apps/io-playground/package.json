@@ -1,0 +1,28 @@
+{
+  "name": "io-playground",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
+    "check:types:watch": "tsc --watch --project tsconfig.app.json",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@portabletext/io": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:tooling",
+    "@types/react": "catalog:tooling",
+    "@types/react-dom": "catalog:tooling",
+    "@vitejs/plugin-react": "catalog:tooling",
+    "tailwindcss": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling"
+  }
+}
