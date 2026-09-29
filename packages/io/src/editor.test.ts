@@ -313,6 +313,97 @@ describe(createIoEditor.name, () => {
     })
   })
 
+  test('undo leaves a style another writer set after the editor in the same transaction', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+    const path = [{_key: 'd-k0'}, 'style']
+
+    editor.setStyle('h2')
+    editor.mutationSent({id: 'A-1', transactionId: 'A-1+B-1'})
+    editor.transaction({
+      transactionId: 'A-1+B-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h2', path), set('h1', path)],
+    })
+    editor.undo()
+
+    expect(editor.document.toTextspec()).toEqual('H1: foo|')
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        patches: [set('h2', path)],
+        value: [
+          {
+            _type: 'block',
+            _key: 'd-k0',
+            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
+            style: 'h2',
+          },
+        ],
+      },
+    ])
+  })
+
+  test('undoing two confirmed style changes puts back each style in turn while the first undo is in flight', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+
+    editor.setStyle('h2')
+    editor.setStyle('h1')
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.transaction({
+      transactionId: 'A-2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[1].patches,
+    })
+    editor.undo()
+
+    expect(editor.document.toTextspec()).toEqual('H2: foo|')
+
+    editor.undo()
+
+    expect(editor.document.toTextspec()).toEqual('B: foo|')
+  })
+
+  test('undoing typing deletes the typed text where another writer moved it', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    editor.type('x')
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.transaction({
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [diffMatchPatch('foox', 'yfoox', textPath)],
+    })
+    editor.undo()
+
+    expect(editor.document.toTextspec()).toEqual('B: yfoo|')
+    expect(heard.mutations[1]).toEqual({
+      id: 'A-2',
+      patches: [diffMatchPatch('yfoox', 'yfoo', textPath)],
+      value: [
+        {
+          _type: 'block',
+          _key: 'd-k0',
+          children: [{_type: 'span', _key: 'd-k1', text: 'yfoo', marks: []}],
+          style: 'normal',
+        },
+      ],
+    })
+  })
+
   test("undoing the first keystroke into an empty field deletes the text and keeps another writer's content", () => {
     const {editor, heard} = createLoadedEditor(undefined)
     const textPath = [{_key: 'a-k0'}, 'children', {_key: 'a-k1'}, 'text']
@@ -397,6 +488,74 @@ describe(createIoEditor.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
+    })
+    editor.undo()
+
+    expect(editor.document.toTextspec()).toEqual('B: foo|;;B: bar')
+    expect(heard.mutations).toEqual([
+      {id: 'A-1', patches: [unset([{_key: 'd-k2'}])], value: [fooBlock]},
+      {
+        id: 'A-2',
+        patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
+        value: [fooBlock, barBlock],
+      },
+    ])
+  })
+
+  test('undoing a delete puts the block back as another writer changed it while the delete was in flight', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;H1: bar',
+    ).value
+
+    editor.deleteBlock('bar')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'd-k2'}, 'style'])],
+    })
+    editor.undo()
+
+    expect(editor.document.toTextspec()).toEqual('B: foo|;;H1: bar')
+
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+
+    expect(heard.mutations).toEqual([
+      {id: 'A-1', patches: [unset([{_key: 'd-k2'}])], value: [fooBlock]},
+      {
+        id: 'A-2',
+        patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
+        value: [fooBlock, barBlock],
+      },
+    ])
+  })
+
+  test('undoing a confirmed delete puts the block back as the base held it just before the delete', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B: bar',
+    ).value
+
+    editor.deleteBlock('bar')
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.transaction({
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [set('h1', [{_key: 'd-k2'}, 'style'])],
     })
     editor.undo()
 
@@ -768,6 +927,7 @@ describe(createIoEditor.name, () => {
       patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
     })
     editor.resync({value: undefined, rev: 'r2'})
+    editor.load({value: undefined, rev: 'r2'})
     editor.type('x')
     editor.setStyle('h1')
     editor.insertBlock('B: bar')
@@ -778,6 +938,7 @@ describe(createIoEditor.name, () => {
     expect(heard.warnings).toEqual([
       'Ignored transaction "t1" after the editor unmounted',
       'Ignored a resync after the editor unmounted',
+      'Ignored a load after the editor unmounted',
       'Ignored an action after the editor unmounted',
       'Ignored an action after the editor unmounted',
       'Ignored an action after the editor unmounted',

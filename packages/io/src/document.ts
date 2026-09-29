@@ -35,7 +35,7 @@ export type Caret = {blockKey: string; offset: number}
 
 /**
  * What an action did, in terms undo can check against the content at undo
- * time: text typed into a span at an offset, a block's style replaced, a
+ * time: text typed into a span at an offset, a block's style set, a
  * block inserted, or a block deleted next to its siblings.
  */
 export type UndoStep =
@@ -46,7 +46,7 @@ export type UndoStep =
       offset: number
       text: string
     }
-  | {type: 'styled'; blockKey: string; previousStyle: string | undefined}
+  | {type: 'styled'; blockKey: string; style: string}
   | {type: 'inserted'; blockKey: string}
   | {
       type: 'deleted'
@@ -86,8 +86,8 @@ export type Document = {
   insertBlock: (textspec: string) => ActionResult
   deleteBlock: (text: string) => ActionResult
   /**
-   * Removes typed text if it is still in its span at its offset. Returns no
-   * patches when it isn't.
+   * Removes typed text from its span, at the occurrence nearest its offset.
+   * Returns no patches when the span no longer holds the text.
    */
   deleteText: (typed: Extract<UndoStep, {type: 'typed'}>) => Array<Patch>
   /** Returns no patches when the block is gone. */
@@ -199,7 +199,7 @@ export function createDocument(
       undoStep: {
         type: 'styled',
         blockKey: block._key,
-        previousStyle: block.style,
+        style,
       },
     }
   }
@@ -281,18 +281,19 @@ export function createDocument(
     )
     const span = block.children[spanIndex]
 
-    if (
-      spanIndex === -1 ||
-      !isSpan({schema}, span) ||
-      span.text.slice(typed.offset, typed.offset + typed.text.length) !==
-        typed.text
-    ) {
+    if (spanIndex === -1 || !isSpan({schema}, span)) {
+      return []
+    }
+
+    const typedOffset = findNearest(span.text, typed.text, typed.offset)
+
+    if (typedOffset === undefined) {
       return []
     }
 
     const nextText =
-      span.text.slice(0, typed.offset) +
-      span.text.slice(typed.offset + typed.text.length)
+      span.text.slice(0, typedOffset) +
+      span.text.slice(typedOffset + typed.text.length)
     const spanStart = block.children
       .slice(0, spanIndex)
       .reduce(
@@ -300,7 +301,7 @@ export function createDocument(
           length + (isSpan({schema}, child) ? child.text.length : 0),
         0,
       )
-    const deletionStart = spanStart + typed.offset
+    const deletionStart = spanStart + typedOffset
 
     value = replaceAt(value, blockIndex, {
       ...block,
@@ -682,6 +683,30 @@ function locateSpan(
   throw new Error(
     `Offset ${blockOffset} is past the end of block "${block._key}"`,
   )
+}
+
+/**
+ * The start of the occurrence of `search` in `text` nearest `offset`, looking
+ * after the offset first at each distance.
+ */
+function findNearest(
+  text: string,
+  search: string,
+  offset: number,
+): number | undefined {
+  for (
+    let distance = 0;
+    distance <= Math.max(offset, text.length);
+    distance++
+  ) {
+    for (const candidate of [offset + distance, offset - distance]) {
+      if (candidate >= 0 && text.startsWith(search, candidate)) {
+        return candidate
+      }
+    }
+  }
+
+  return undefined
 }
 
 function replaceAt<TItem>(

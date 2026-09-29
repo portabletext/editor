@@ -47,6 +47,40 @@ describe(createPassThroughHost.name, () => {
     expect(editor.document.toTextspec()).toEqual('H2: foo|')
   })
 
+  test('a transaction delivered late is dropped when a transaction the editor held links it to the resync copy', () => {
+    const {editor, host, heard, clock, feed, serverCopy} =
+      createHostedEditor('B: foo|')
+    const firstTransaction: Transaction = {
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    }
+    const secondTransaction: Transaction = {
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [set('h2', [{_key: 'd-k0'}, 'style'])],
+    }
+
+    feed.push(firstTransaction)
+    host.forward(secondTransaction)
+    serverCopy.current = {
+      value: parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        'H2: foo',
+      ).value,
+      rev: 'r3',
+    }
+    host.resync({discardUnsent: false})
+    host.forward(firstTransaction)
+    clock.advance(10_000)
+
+    expect(heard.errors).toEqual([])
+    expect(editor.getBase().rev).toEqual('r3')
+    expect(editor.document.toTextspec()).toEqual('H2: foo|')
+  })
+
   test('a transaction that skips ahead after the load reaches the editor', () => {
     const {editor, host, heard} = createHostedEditor('B: foo|')
 

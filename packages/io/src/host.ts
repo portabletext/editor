@@ -30,6 +30,15 @@ export type PassThroughHost = {
  * `resultRev` is the copy's revision, and the host drops them when they
  * arrive. The model's feed can deliver out of order, so arrival order can't
  * tell a covered transaction from one that skipped ahead.
+ *
+ * The host also remembers every transaction it has seen, forwarded or
+ * dropped, as a link from its `previousRev` to its `resultRev`. A copy at
+ * revision `R` covers `R` and every revision reachable backwards from it
+ * through known links. A transaction arriving later whose `resultRev` is
+ * covered is dropped, and its `previousRev` becomes covered too. A late
+ * covered transaction that neither the subscription nor a known link ties to
+ * the copy can't be told from one that skipped ahead, so it is forwarded, and
+ * the editor holds it for 10 s before it reports `out of order`.
  */
 export function createPassThroughHost({
   editor,
@@ -47,6 +56,8 @@ export function createPassThroughHost({
   let untakenBatchId: string | undefined
   let heldFinalBatch: MutationBatch | undefined
   let coveredTransactionIds = new Set<string>()
+  let coveredRevs = new Set<string>()
+  const previousRevs = new Map<string, string | undefined>()
 
   editor.on((event) => {
     if (event.type !== 'mutation') {
@@ -79,6 +90,8 @@ export function createPassThroughHost({
       return copy
     }
 
+    coveredRevs = revsUpTo(copy.rev)
+
     const buffered = subscription()
     const lastCoveredIndex = buffered.findLastIndex(
       (transaction) => transaction.resultRev === copy.rev,
@@ -90,6 +103,28 @@ export function createPassThroughHost({
     )
 
     return copy
+  }
+
+  function revsUpTo(rev: string | undefined): Set<string> {
+    const revs = new Set<string>()
+    let current = rev
+
+    while (current !== undefined && !revs.has(current)) {
+      revs.add(current)
+      current = previousRevs.get(current)
+    }
+
+    return revs
+  }
+
+  function isCovered(transaction: Transaction): boolean {
+    const coveredById = coveredTransactionIds.delete(transaction.transactionId)
+
+    return (
+      coveredById ||
+      (transaction.resultRev !== undefined &&
+        coveredRevs.has(transaction.resultRev))
+    )
   }
 
   return {
@@ -107,7 +142,15 @@ export function createPassThroughHost({
       editor.mutationSent({id: batchId, transactionId})
     },
     forward: (transaction) => {
-      if (coveredTransactionIds.delete(transaction.transactionId)) {
+      if (transaction.resultRev !== undefined) {
+        previousRevs.set(transaction.resultRev, transaction.previousRev)
+      }
+
+      if (isCovered(transaction)) {
+        if (transaction.previousRev !== undefined) {
+          coveredRevs.add(transaction.previousRev)
+        }
+
         return
       }
 

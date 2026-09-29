@@ -80,17 +80,20 @@ type SentBatch = {
 
 type HeldTransaction = {transaction: Transaction; arrivedAt: number}
 
-/**
- * The base's style for a block, or `undefined` when the base has no such
- * block.
- */
-type BaseStyle = {style: string | undefined} | undefined
+/** A block's style, or `undefined` when there is no such block. */
+type BlockStyle = {style: string | undefined} | undefined
 
 type HistoryEntry = {
   step: UndoStep
   batchId: string | undefined
-  /** The base's style for the block at the action, reset at the change's echo. */
-  baseStyle: BaseStyle
+  /** How many patches of the entry's batch come before the action's own. */
+  patchOffset: number
+  /**
+   * The base's version of the step's block just before the change took
+   * effect there, captured when the change's transaction applied. `undefined`
+   * while the change is unconfirmed.
+   */
+  confirmed: {blockBefore: PortableTextBlock | undefined} | undefined
 }
 
 /**
@@ -157,6 +160,11 @@ export function createIoEditor(options: {
   }
 
   function load(incoming: Load) {
+    if (status === 'unmounted') {
+      warn('Ignored a load after the editor unmounted')
+      return
+    }
+
     if (!options.claimLoad || status !== 'loading') {
       throw new Error('`load` is only accepted while the first load is claimed')
     }
@@ -347,7 +355,7 @@ export function createIoEditor(options: {
       })
     }
 
-    moveHistoryUnder(confirmedBatchIds, nextValue)
+    captureBlocksBefore(confirmedBatchIds)
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
       (batch) => !confirmedBatchIds.has(batch.id),
@@ -360,36 +368,40 @@ export function createIoEditor(options: {
     return true
   }
 
+  /** Runs before the base takes the transaction that confirms the batches. */
+  function captureBlocksBefore(confirmedBatchIds: Set<string>) {
+    history = history.map((entry) =>
+      entry.batchId !== undefined && confirmedBatchIds.has(entry.batchId)
+        ? {...entry, confirmed: {blockBefore: blockUnder(entry)}}
+        : entry,
+    )
+  }
+
   /**
-   * A confirmed change is now part of the base, so the base's style for its
-   * block is its own from here on. What the base held just before is what
-   * the change replaced, if another writer moved it since the action.
+   * The step's block in the base with the editor's own unconfirmed changes
+   * from before the action applied: what the action changed, as far as the
+   * base goes.
    */
-  function moveHistoryUnder(
-    confirmedBatchIds: Set<string>,
-    nextValue: Array<PortableTextBlock> | undefined,
-  ) {
-    history = history.map((entry) => {
-      if (
-        entry.step.type !== 'styled' ||
-        entry.batchId === undefined ||
-        !confirmedBatchIds.has(entry.batchId)
-      ) {
-        return entry
-      }
+  function blockUnder(entry: HistoryEntry): PortableTextBlock | undefined {
+    const batches = [
+      ...unconfirmedBatches(),
+      {id: undefined, patches: pending.flat()},
+    ]
+    const batchIndex = batches.findIndex((batch) => batch.id === entry.batchId)
 
-      const styleBefore = baseStyleOf(base.value, entry.step.blockKey)
-      const previousStyle =
-        styleBefore !== undefined && !isEqual(styleBefore, entry.baseStyle)
-          ? styleBefore.style
-          : entry.step.previousStyle
+    if (batchIndex === -1) {
+      return undefined
+    }
 
-      return {
-        ...entry,
-        step: {...entry.step, previousStyle},
-        baseStyle: baseStyleOf(nextValue, entry.step.blockKey),
-      }
-    })
+    const patchesBefore = [
+      ...batches.slice(0, batchIndex).flatMap((batch) => batch.patches),
+      ...batches[batchIndex].patches.slice(0, entry.patchOffset),
+    ]
+
+    return findBlock(
+      applyWithContentLakeSemantics(base.value, patchesBefore),
+      stepBlockKey(entry.step),
+    )
   }
 
   function fail(error: ErrorEvent): false {
@@ -476,7 +488,8 @@ export function createIoEditor(options: {
         {
           step: result.undoStep,
           batchId: undefined,
-          baseStyle: baseStyleOf(base.value, stepBlockKey(result.undoStep)),
+          patchOffset: pending.flat().length,
+          confirmed: undefined,
         },
       ]
     }
@@ -502,35 +515,50 @@ export function createIoEditor(options: {
       case 'typed':
         return document.deleteText(step)
       case 'styled': {
-        const style = styleUnder(entry, step)
-        const block = document
-          .getValue()
-          .find((candidate) => candidate._key === step.blockKey)
+        const block = findBlock(document.getValue(), step.blockKey)
 
-        return block === undefined || block.style === style
+        if (block === undefined) {
+          return []
+        }
+
+        const restored = styleToRestore(entry, step, block)
+
+        return restored === undefined || block.style === restored.style
           ? []
-          : document.setBlockStyle(step.blockKey, style)
+          : document.setBlockStyle(step.blockKey, restored.style)
       }
       case 'inserted':
         return document.deleteBlockByKey(step.blockKey)
-      case 'deleted':
-        return document.restoreBlock(step)
+      case 'deleted': {
+        const block = entry.confirmed
+          ? entry.confirmed.blockBefore
+          : blockUnder(entry)
+
+        return block === undefined
+          ? []
+          : document.restoreBlock({...step, block})
+      }
     }
   }
 
   /**
-   * The style the base holds under the change: the base's own when another
-   * writer moved it since the change, else what the change replaced.
+   * Once the change is confirmed, a style on screen other than the one it set
+   * means another writer changed the style after it, and undo leaves it. The
+   * screen, not the base alone, since the editor's own later changes are
+   * undone first and may still be unconfirmed.
    */
-  function styleUnder(
+  function styleToRestore(
     entry: HistoryEntry,
     step: Extract<UndoStep, {type: 'styled'}>,
-  ): string | undefined {
-    const current = baseStyleOf(base.value, step.blockKey)
+    screenBlock: PortableTextBlock,
+  ): BlockStyle {
+    if (!entry.confirmed) {
+      return styleOf(blockUnder(entry))
+    }
 
-    return current === undefined || isEqual(current, entry.baseStyle)
-      ? step.previousStyle
-      : current.style
+    return styleOf(screenBlock)?.style === step.style
+      ? styleOf(entry.confirmed.blockBefore)
+      : undefined
   }
 
   function canEdit(): boolean {
@@ -642,16 +670,19 @@ export function createIoEditor(options: {
   }
 
   function deriveScreen(): Array<PortableTextBlock> | undefined {
-    const unconfirmedPatches = [
+    return applyWithContentLakeSemantics(base.value, [
+      ...unconfirmedBatches().flatMap((batch) => batch.patches),
+      ...pending.flat(),
+    ])
+  }
+
+  /** Sent batches the base doesn't hold yet, in the order they were sent. */
+  function unconfirmedBatches(): Array<SentBatch> {
+    return [
       ...echoedAwaitingBase,
       ...(inFlight ? [inFlight] : []),
       ...(rejected ? [rejected] : []),
-    ].flatMap((batch) => batch.patches)
-
-    return applyWithContentLakeSemantics(base.value, [
-      ...unconfirmedPatches,
-      ...pending.flat(),
-    ])
+    ]
   }
 
   function rekeyPendingInserts(): Map<string, string> {
@@ -746,12 +777,14 @@ function stepBlockKey(step: UndoStep): string {
   return step.type === 'deleted' ? step.block._key : step.blockKey
 }
 
-function baseStyleOf(
+function findBlock(
   value: Array<PortableTextBlock> | undefined,
   blockKey: string,
-): BaseStyle {
-  const block = value?.find((candidate) => candidate._key === blockKey)
+): PortableTextBlock | undefined {
+  return value?.find((candidate) => candidate._key === blockKey)
+}
 
+function styleOf(block: PortableTextBlock | undefined): BlockStyle {
   if (!block) {
     return undefined
   }

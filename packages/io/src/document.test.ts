@@ -102,7 +102,7 @@ describe(createDocument.name, () => {
 
     expect(result).toEqual({
       patches: [set('h1', [{_key: 'k2'}, 'style'])],
-      undoStep: {type: 'styled', blockKey: 'k2', previousStyle: 'normal'},
+      undoStep: {type: 'styled', blockKey: 'k2', style: 'h1'},
     })
     expect(document.toTextspec()).toEqual('B: foo;;H1: ba|r')
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
@@ -384,7 +384,7 @@ describe(createDocument.name, () => {
 })
 
 describe('reverting a change', () => {
-  test('typed text is deleted while it is still at its offset, and the caret moves back', () => {
+  test('typed text is deleted while its span still holds it, and the caret moves back', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createDocument(
       {keyGenerator},
