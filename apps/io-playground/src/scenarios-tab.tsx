@@ -164,16 +164,30 @@ export function ScenariosTab({
         >
           {features.map((feature, featureIndex) => (
             <optgroup key={feature.feature} label={feature.feature}>
-              {feature.scenarios.map((candidate, scenarioIndex) => (
+              {feature.scenarios.map((candidate, scenarioIndex) =>
+                candidate.knownRed === undefined ? (
+                  <option
+                    key={scenarioIndex}
+                    value={`${featureIndex}:${scenarioIndex}`}
+                  >
+                    {candidate.name}
+                  </option>
+                ) : null,
+              )}
+            </optgroup>
+          ))}
+          {knownRedScenarios.length > 0 ? (
+            <optgroup label="Known red">
+              {knownRedScenarios.map(({featureIndex, scenarioIndex, name}) => (
                 <option
-                  key={scenarioIndex}
+                  key={`${featureIndex}:${scenarioIndex}`}
                   value={`${featureIndex}:${scenarioIndex}`}
                 >
-                  {candidate.name}
+                  {name}
                 </option>
               ))}
             </optgroup>
-          ))}
+          ) : null}
         </select>
         <Button onClick={runner.nextStep} disabled={running || finished}>
           next step
@@ -192,6 +206,12 @@ export function ScenariosTab({
           )
         ) : null}
       </div>
+
+      {scenario.knownRed ? (
+        <p className="text-sm text-red-700">
+          Expected to fail: {scenario.knownRed}
+        </p>
+      ) : null}
 
       {runner.deliveryError ? (
         <p className="font-mono text-xs text-red-700">{runner.deliveryError}</p>
@@ -236,6 +256,14 @@ export function ScenariosTab({
     </div>
   )
 }
+
+const knownRedScenarios = features.flatMap((feature, featureIndex) =>
+  feature.scenarios.flatMap((candidate, scenarioIndex) =>
+    candidate.knownRed === undefined
+      ? []
+      : [{featureIndex, scenarioIndex, name: candidate.name}],
+  ),
+)
 
 function StepItem({
   current,

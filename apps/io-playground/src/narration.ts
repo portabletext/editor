@@ -393,6 +393,11 @@ function narrateServer({
             `Another field changed on the server as ${transaction.id}: ${revisions}, and this field stayed the same.`,
           )
           break
+        case "the script's change":
+          sentences.push(
+            `A script set the whole field on the server as ${transaction.id}: ${revisions}, to ${after.value === null ? 'no field' : `\`${after.value}\``}.`,
+          )
+          break
         case 'the deletion':
           sentences.push(
             `The document was deleted on the server as ${transaction.id}: ${revisions}.`,

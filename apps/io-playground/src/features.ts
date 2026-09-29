@@ -1,4 +1,5 @@
 import {compileScenarios} from '@portabletext/io'
+import concurrentEditsFeature from '@portabletext/io/gherkin-spec/concurrent-edits.feature?raw'
 import keysFeature from '@portabletext/io/gherkin-spec/keys.feature?raw'
 import lifecycleFeature from '@portabletext/io/gherkin-spec/lifecycle.feature?raw'
 import listenersFeature from '@portabletext/io/gherkin-spec/listeners.feature?raw'
@@ -10,6 +11,7 @@ import sendingAndConfirmingFeature from '@portabletext/io/gherkin-spec/sending-a
 export const features = [
   sendingAndConfirmingFeature,
   otherEditorsFeature,
+  concurrentEditsFeature,
   outOfStepAndResyncFeature,
   keysFeature,
   loadingAndEmptyFeature,
