@@ -1,5 +1,5 @@
 import {createWorld, type World} from '@portabletext/io'
-import {useState} from 'react'
+import {useEffect, useRef, useState, type ReactNode} from 'react'
 import {features} from './features'
 import {runStep} from './gherkin'
 import {narrateStep, type NarrationEntry} from './narration'
@@ -150,7 +150,7 @@ export function ScenariosTab({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="sticky -top-4 z-10 -mx-4 -mt-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pt-4 pb-2">
         <select
           className="max-w-full rounded border border-gray-300 bg-white px-1.5 py-0.5 text-sm"
           value={`${runner.featureIndex}:${runner.scenarioIndex}`}
@@ -203,9 +203,10 @@ export function ScenariosTab({
           const current = index === results.length && !finished
 
           return (
-            <li
+            <StepItem
               key={index}
-              className={`rounded px-2 py-0.5 ${
+              current={current}
+              className={`scroll-mt-14 rounded px-2 py-0.5 ${
                 result?.status === 'passed'
                   ? 'bg-green-50 text-green-800'
                   : result?.status === 'failed'
@@ -219,13 +220,37 @@ export function ScenariosTab({
               {result?.status === 'failed' ? (
                 <div className="pl-4 whitespace-pre-wrap">{result.message}</div>
               ) : null}
-            </li>
+            </StepItem>
           )
         })}
       </ol>
 
       <NarrationLog entries={runner.narration} />
     </div>
+  )
+}
+
+function StepItem({
+  current,
+  className,
+  children,
+}: {
+  current: boolean
+  className: string
+  children: ReactNode
+}) {
+  const element = useRef<HTMLLIElement>(null)
+
+  useEffect(() => {
+    if (current) {
+      element.current?.scrollIntoView({block: 'nearest'})
+    }
+  }, [current])
+
+  return (
+    <li ref={element} className={className}>
+      {children}
+    </li>
   )
 }
 
