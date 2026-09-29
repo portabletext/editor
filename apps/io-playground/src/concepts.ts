@@ -1,0 +1,138 @@
+export const concepts = [
+  {
+    name: 'change',
+    definition: 'Something a user does, like typing or setting a style.',
+  },
+  {
+    name: 'batch',
+    definition:
+      'A group of changes an editor sends off to be saved, numbered per editor.',
+  },
+  {
+    name: 'save request',
+    definition:
+      "A batch on its way from an editor's host to the server, waiting for the server to receive it.",
+  },
+  {
+    name: 'save reply',
+    definition:
+      "The server's answer to a save request, accepted or rejected, and only a rejection changes what the editor does.",
+  },
+  {
+    name: 'transaction',
+    definition:
+      'One entry on the feed: what the server saved in one go, carrying one or more batches or a change made on the server.',
+  },
+  {
+    name: 'feed',
+    definition:
+      "The server's list of transactions in order, which every editor receives one at a time.",
+  },
+  {
+    name: 'revision',
+    definition:
+      "The server's version number for the document, which every transaction moves one step forward.",
+  },
+  {
+    name: 'screen',
+    definition:
+      'What the editor shows the user right now, its own unconfirmed changes included.',
+  },
+  {
+    name: 'base',
+    definition:
+      "The editor's copy of what the server has, at the revision of the last transaction it applied.",
+  },
+  {
+    name: 'in flight',
+    definition:
+      'The one batch the editor has sent and waits to see come back on the feed.',
+  },
+  {
+    name: 'pending',
+    definition:
+      'Changes made while a batch is in flight, waiting to go out together as the next batch.',
+  },
+  {
+    name: 'confirmed',
+    definition:
+      "The editor's batch came back on the feed, so the editor knows the batch is on the server and where it sits among everyone's changes.",
+  },
+  {
+    name: 'held',
+    definition:
+      "A transaction from the feed that doesn't start at the base's revision, kept aside until the missing one before it arrives.",
+  },
+  {
+    name: 'held echo',
+    definition:
+      "The editor's own batch that came back inside a held transaction, confirmed once that transaction applies.",
+  },
+  {
+    name: 'rejected',
+    definition:
+      'The server refused the batch and the host said so, and the editor sends nothing more until a resync.',
+  },
+  {
+    name: 'out of step',
+    definition:
+      'The editor reported that it no longer matches the server and stopped applying the feed until a resync.',
+  },
+  {
+    name: 'resync',
+    definition:
+      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top.',
+  },
+  {
+    name: 'read-only',
+    definition: 'The editor refuses user changes but keeps applying the feed.',
+  },
+  {
+    name: 'error',
+    definition:
+      "An event the editor emits when it can't apply the feed, which puts it out of step.",
+  },
+  {
+    name: 'warning',
+    definition:
+      "An event the editor emits when something looks wrong but it can carry on, like a batch that hasn't come back in time.",
+  },
+] as const
+
+export type ConceptName = (typeof concepts)[number]['name']
+
+export function definitionOf(name: ConceptName): string {
+  return concepts.find((concept) => concept.name === name)?.definition ?? ''
+}
+
+export function revisionTitle(rev: string | null): string {
+  return rev === null
+    ? "no revision: the document doesn't exist on the server"
+    : `revision ${rev}, the server's version number for the document`
+}
+
+export const notationRules = [
+  {
+    notation: 'B: foo',
+    meaning: 'A normal text block. `H1: foo` is a heading.',
+  },
+  {notation: 'B: |', meaning: 'One empty block.'},
+  {
+    notation: '|',
+    meaning:
+      'The caret. A check that writes one compares the selection, and the server never has one.',
+  },
+  {
+    notation: ';;',
+    meaning: 'Separates blocks in single-line form, as in `B: foo|;;B: bar`.',
+  },
+  {
+    notation: '_key',
+    meaning:
+      'Names a block\'s key, as in `B _key="k9": baz`. A check compares keys only when it names them.',
+  },
+  {
+    notation: '\\|',
+    meaning: 'How the caret is written inside a Gherkin Examples table.',
+  },
+]

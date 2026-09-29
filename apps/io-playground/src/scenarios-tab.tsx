@@ -2,6 +2,8 @@ import {createWorld, type World} from '@portabletext/io'
 import {useState} from 'react'
 import {features} from './features'
 import {runStep} from './gherkin'
+import {narrateStep, type NarrationEntry} from './narration'
+import {NarrationLog} from './narration-log'
 import {Button} from './ui'
 
 type StepResult = {status: 'passed'} | {status: 'failed'; message: string}
@@ -11,6 +13,7 @@ type ScenarioRun = {
   scenarioIndex: number
   world: World
   results: Array<StepResult>
+  narration: Array<NarrationEntry>
   running: boolean
   deliveryError: string | null
 }
@@ -32,22 +35,42 @@ export function useScenarioRunner() {
 
     const {world} = run
     const results = [...run.results]
+    const narration = [...run.narration]
+    const actions = actionSteps(scenario.steps)
     const publish = (running: boolean) =>
       setRun((current) =>
         current.world === world
-          ? {...current, results: [...results], running}
+          ? {
+              ...current,
+              results: [...results],
+              narration: [...narration],
+              running,
+            }
           : current,
       )
 
     for (const step of scenario.steps.slice(results.length)) {
+      const before = world.snapshot()
+      const narrateNow = () =>
+        narration.push(
+          ...narrateStep({
+            step: `${step.keyword} ${step.text}`,
+            isAction: actions[results.length - 1] ?? false,
+            before,
+            after: world.snapshot(),
+          }),
+        )
+
       try {
         await step.run(world)
         results.push({status: 'passed'})
+        narrateNow()
       } catch (error) {
         results.push({
           status: 'failed',
           message: error instanceof Error ? error.message : String(error),
         })
+        narrateNow()
         break
       }
 
@@ -64,6 +87,7 @@ export function useScenarioRunner() {
 
   function deliver(text: string): boolean {
     const {world} = run
+    const before = world.snapshot()
     let deliveryError: string | null = null
 
     try {
@@ -72,8 +96,21 @@ export function useScenarioRunner() {
       deliveryError = `When ${text}: ${error instanceof Error ? error.message : String(error)}`
     }
 
+    const entries = narrateStep({
+      step: `When ${text}`,
+      isAction: true,
+      before,
+      after: world.snapshot(),
+    })
+
     setRun((current) =>
-      current.world === world ? {...current, deliveryError} : current,
+      current.world === world
+        ? {
+            ...current,
+            deliveryError,
+            narration: [...current.narration, ...entries],
+          }
+        : current,
     )
 
     return deliveryError === null
@@ -85,6 +122,7 @@ export function useScenarioRunner() {
     scenarioIndex: run.scenarioIndex,
     scenario,
     results: run.results,
+    narration: run.narration,
     running: run.running,
     finished,
     deliveryError: run.deliveryError,
@@ -185,6 +223,8 @@ export function ScenariosTab({
           )
         })}
       </ol>
+
+      <NarrationLog entries={runner.narration} />
     </div>
   )
 }
@@ -197,7 +237,24 @@ function freshRun(selection: {
     ...selection,
     world: createWorld(),
     results: [],
+    narration: [],
     running: false,
     deliveryError: null,
   }
+}
+
+/**
+ * Whether each step is an action: `When`, or an `And` or `But` that
+ * continues one.
+ */
+function actionSteps(steps: Array<{keyword: string}>): Array<boolean> {
+  let lastPrimaryKeyword = ''
+
+  return steps.map((step) => {
+    if (step.keyword !== 'And' && step.keyword !== 'But') {
+      lastPrimaryKeyword = step.keyword
+    }
+
+    return lastPrimaryKeyword === 'When'
+  })
 }

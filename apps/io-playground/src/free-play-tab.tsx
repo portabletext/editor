@@ -15,6 +15,8 @@ import {
   type LoggedStep,
   type StepKeyword,
 } from './gherkin'
+import {narrateStep, type NarrationEntry} from './narration'
+import {NarrationLog} from './narration-log'
 import {Button, Section, TextInput} from './ui'
 
 type Setup = {
@@ -29,6 +31,7 @@ type Setup = {
 type FreePlay = {
   world: World
   log: Array<LoggedStep>
+  narration: Array<NarrationEntry>
   error: string | null
 }
 
@@ -56,17 +59,31 @@ export function useFreePlay() {
   const [freePlay, setFreePlay] = useState<FreePlay>(() => startFreePlay(setup))
 
   function perform(keyword: StepKeyword, text: string): boolean {
+    const {world} = freePlay
+    const before = world.snapshot()
+    const narrateNow = () =>
+      narrateStep({
+        step: `${keyword} ${text}`,
+        isAction: keyword === 'When',
+        before,
+        after: world.snapshot(),
+      })
+
     try {
-      runStep(freePlay.world, {keyword, text})
+      runStep(world, {keyword, text})
+      const entries = narrateNow()
       setFreePlay((current) => ({
         ...current,
         log: [...current.log, {keyword, text}],
+        narration: [...current.narration, ...entries],
         error: null,
       }))
       return true
     } catch (error) {
+      const entries = narrateNow()
       setFreePlay((current) => ({
         ...current,
+        narration: [...current.narration, ...entries],
         error: `${keyword} ${text}: ${error instanceof Error ? error.message : String(error)}`,
       }))
       return false
@@ -107,6 +124,7 @@ export function useFreePlay() {
   return {
     world: freePlay.world,
     log: freePlay.log,
+    narration: freePlay.narration,
     error: freePlay.error,
     setup,
     setSetup,
@@ -216,6 +234,8 @@ export function FreePlayTab({
             {formatSteps(freePlay.log).join('\n')}
           </pre>
         </Section>
+
+        <NarrationLog entries={freePlay.narration} />
       </div>
     </div>
   )
@@ -330,18 +350,29 @@ function EditorControls({
 function startFreePlay(setup: Setup): FreePlay {
   const world = createWorld()
   const log: Array<LoggedStep> = []
+  const narration: Array<NarrationEntry> = []
 
   try {
     for (const text of setupSteps(setup)) {
+      const before = world.snapshot()
       runStep(world, {keyword: 'Given', text})
       log.push({keyword: 'Given', text})
+      narration.push(
+        ...narrateStep({
+          step: `Given ${text}`,
+          isAction: false,
+          before,
+          after: world.snapshot(),
+        }),
+      )
     }
 
-    return {world, log, error: null}
+    return {world, log, narration, error: null}
   } catch (error) {
     return {
       world,
       log,
+      narration,
       error: `Setup: ${error instanceof Error ? error.message : String(error)}`,
     }
   }
