@@ -29,16 +29,18 @@ export function Section({
   title,
   concept,
   suffix,
+  className = '',
   children,
 }: {
   title: string
   concept?: ConceptName
   /** Shown after the title and its info mark. */
   suffix?: ReactNode
+  className?: string
   children: ReactNode
 }) {
   return (
-    <section aria-label={title} className="flex flex-col gap-1">
+    <section aria-label={title} className={`flex flex-col gap-1 ${className}`}>
       <h3 className="flex flex-wrap items-center gap-1 text-xs font-semibold text-gray-500">
         {title}
         {concept ? <InfoMark concept={concept} /> : null}

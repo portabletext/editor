@@ -145,7 +145,7 @@ export function FreePlayTab({
   const scenarioText = formatScenario(scenarioName, freePlay.log)
 
   return (
-    <div className="grid grid-cols-[1fr_1fr_1.2fr] gap-4">
+    <div className="grid h-full min-h-0 grid-cols-[1fr_1fr_1.2fr_1.2fr] gap-4">
       {editorNames.map((name) => (
         <EditorControls
           key={name}
@@ -154,7 +154,7 @@ export function FreePlayTab({
         />
       ))}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex min-h-0 flex-col gap-2">
         <Section title="Setup">
           <div className="flex flex-wrap items-center gap-1">
             <select
@@ -208,7 +208,7 @@ export function FreePlayTab({
           </div>
         </Section>
 
-        <Section title="Gherkin log">
+        <Section title="Gherkin log" className="min-h-0 flex-1">
           <div className="flex flex-wrap items-center gap-1">
             <TextInput
               value={scenarioName}
@@ -230,11 +230,13 @@ export function FreePlayTab({
           {freePlay.error ? (
             <p className="font-mono text-xs text-red-700">{freePlay.error}</p>
           ) : null}
-          <pre className="rounded bg-white p-2 font-mono text-xs ring-1 ring-gray-200">
+          <pre className="min-h-0 flex-1 overflow-auto rounded bg-white p-2 font-mono text-xs ring-1 ring-gray-200">
             {formatSteps(freePlay.log).join('\n')}
           </pre>
         </Section>
+      </div>
 
+      <div className="min-h-0 overflow-auto">
         <NarrationLog entries={freePlay.narration} />
       </div>
     </div>
