@@ -107,7 +107,14 @@ export function applicableActions(
           : enabled,
     'close': editor.status === 'unmounted' ? disabled(whyUnmounted) : enabled,
     'resync': {...resync, ...resyncSuggestion(editorName, editor, resync)},
-    'resync discarding': resync,
+    'resync discarding': resync.enabled
+      ? editor.pending.length === 0
+        ? disabled('nothing unsent to discard')
+        : {
+            ...resync,
+            why: `the user's choice: load the saved version and throw away ${editor.pending.length} unsent change(s)`,
+          }
+      : resync,
     'load':
       editor.status === 'unmounted'
         ? disabled(whyUnmounted)

@@ -28,7 +28,7 @@ describe(applicableActions.name, () => {
       'read-only': {enabled: true},
       'close': {enabled: true},
       'resync': {enabled: true},
-      'resync discarding': {enabled: true},
+      'resync discarding': {enabled: false, why: 'nothing unsent to discard'},
       'load': {
         enabled: false,
         why: 'load is only accepted while the first load is claimed',
@@ -88,7 +88,11 @@ describe(applicableActions.name, () => {
   test('a rejected batch suggests a resync', () => {
     const actions = applicableActions(
       worldSnapshot({
-        editorA: editorSnapshot({rejected: batch(1), undoDepth: 1}),
+        editorA: editorSnapshot({
+          rejected: batch(1),
+          pending: [batch(2)],
+          undoDepth: 1,
+        }),
       }),
       'Editor A',
     )
@@ -108,7 +112,10 @@ describe(applicableActions.name, () => {
         suggested:
           "Editor A's batch 1 was rejected: sending is blocked until a resync",
       },
-      'resync discarding': {enabled: true},
+      'resync discarding': {
+        enabled: true,
+        why: "the user's choice: load the saved version and throw away 1 unsent change(s)",
+      },
       'load': {
         enabled: false,
         why: 'load is only accepted while the first load is claimed',
@@ -181,7 +188,7 @@ describe(applicableActions.name, () => {
       },
       'close': {enabled: true},
       'resync': {enabled: true},
-      'resync discarding': {enabled: true},
+      'resync discarding': {enabled: false, why: 'nothing unsent to discard'},
       'load': {
         enabled: false,
         why: 'load is only accepted while the first load is claimed',

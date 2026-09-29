@@ -45,7 +45,7 @@ Feature: Sending and confirming
     When the server receives Editor A's batch 2
     Then the server has "H1: foox"
 
-  Scenario Outline: A rejected batch stops sending until a resync, which <keeps or discards> the unsent changes
+  Scenario: A rejected batch stops sending until a resync, which keeps the unsent changes
     When the style is set to "h1"
     Then Editor A shows "H1: foo|"
     And Editor A has sent batch 1
@@ -60,11 +60,20 @@ Feature: Sending and confirming
     When "z" is typed
     Then Editor A shows "H1: fooyz|"
     And Editor A has sent nothing new
-    When Editor A <resync>
-    Then Editor A shows "<state>"
-    And Editor A has sent <sent>
+    When Editor A is resynced
+    Then Editor A shows "B: fooyz|"
+    And Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    Then the server has "B: fooyz"
 
-    Examples:
-      | keeps or discards | resync                                 | state      | sent        |
-      | keeps             | is resynced                            | B: fooyz\| | batch 2     |
-      | discards          | is resynced, discarding unsent changes | B: foo\|   | nothing new |
+  Scenario: Loading the saved version discards the unsent changes, because the user asked for it
+    When the style is set to "h1"
+    Then Editor A has sent batch 1
+    When "y" is typed
+    Then Editor A shows "H1: fooy|"
+    When the server refuses Editor A's batch 1
+    And Editor A's batch 1 is rejected
+    Then Editor A has sent nothing new
+    When Editor A is resynced, discarding unsent changes
+    Then Editor A shows "B: foo|"
+    And Editor A has sent nothing new

@@ -81,7 +81,7 @@ export const concepts = [
   {
     name: 'resync',
     definition:
-      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top.',
+      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top. Only when a person asks to load the saved version are the unsent changes thrown away.',
   },
   {
     name: 'read-only',

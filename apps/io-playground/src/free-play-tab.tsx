@@ -387,7 +387,7 @@ function EditorControls({
               onStep(`${name} is resynced, discarding unsent changes`)
             }
           >
-            resync, discarding
+            load saved version (discard unsent)
           </ActionButton>
           <ActionButton
             applicability={actions.load}
