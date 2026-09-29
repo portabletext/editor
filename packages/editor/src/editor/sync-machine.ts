@@ -32,6 +32,7 @@ import {
   isEqualChild,
   isEqualValues,
 } from '../internal-utils/equality'
+import {isUnsavedPlaceholder} from '../internal-utils/field-lifecycle-patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toEngineBlock} from '../internal-utils/values'
@@ -67,6 +68,7 @@ const syncValueCallback: CallbackLogicFunction<
   SyncValueEvent,
   {
     context: {
+      initialValue: Array<PortableTextBlock> | undefined
       keyGenerator: () => string
       previousValue: Array<PortableTextBlock> | undefined
       readOnly: boolean
@@ -387,6 +389,7 @@ export const syncMachine = setup({
         input: ({context}) => {
           return {
             context: {
+              initialValue: context.initialValue,
               keyGenerator: context.keyGenerator,
               previousValue: context.previousValue,
               readOnly: context.readOnly,
@@ -446,6 +449,7 @@ async function updateValue({
   value,
 }: {
   context: {
+    initialValue: Array<PortableTextBlock> | undefined
     keyGenerator: () => string
     previousValue: Array<PortableTextBlock> | undefined
     readOnly: boolean
@@ -469,7 +473,14 @@ async function updateValue({
     ? 'initial-sync'
     : 'update-value'
 
-  if (!value || value.length === 0) {
+  if (
+    (!value || value.length === 0) &&
+    !isUnsavedPlaceholder(
+      editorEngine,
+      editorEngine.snapshot.context.value,
+      context,
+    )
+  ) {
     clearEditor({
       editorEngine,
       doneSyncing,
