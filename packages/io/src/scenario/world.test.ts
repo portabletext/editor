@@ -1,3 +1,4 @@
+import {diffMatchPatch, set} from '@portabletext/patches'
 import {describe, expect, test} from 'vitest'
 import {createWorld} from './world'
 
@@ -25,22 +26,64 @@ describe(createWorld.name, () => {
     world.deliverNamed('Editor B', 'the other field')
     world.type('Editor A', 'y')
 
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const stylePath = [{_key: 'd-k0'}, 'style']
+
     expect(world.snapshot()).toEqual({
       editors: {
         'Editor A': {
           id: 'A',
           status: 'ready',
           screen: 'B: fooxy|',
-          base: {textspec: 'B: foo', rev: 'r1'},
-          inFlight: {batchNumber: 1, transactionId: 'A-1', patchCount: 1},
+          blocks: [
+            {
+              _type: 'block',
+              _key: 'd-k0',
+              children: [
+                {_key: 'd-k1', _type: 'span', text: 'fooxy', marks: []},
+              ],
+              style: 'normal',
+            },
+          ],
+          base: {
+            textspec: 'B: foo',
+            blocks: [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_key: 'd-k1', _type: 'span', text: 'foo', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            rev: 'r1',
+          },
+          inFlight: {
+            batchNumber: 1,
+            transactionId: 'A-1',
+            patchCount: 1,
+            patches: [diffMatchPatch('foo', 'foox', textPath)],
+          },
           rejected: null,
           echoed: [],
-          pending: [{patchCount: 1}],
+          pending: [
+            {
+              patchCount: 1,
+              patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+            },
+          ],
           held: [],
           outOfStep: false,
           readOnly: false,
           sentBatches: [
-            {number: 1, transactionId: 'A-1', patchCount: 1, final: false},
+            {
+              number: 1,
+              transactionId: 'A-1',
+              patchCount: 1,
+              patches: [diffMatchPatch('foo', 'foox', textPath)],
+              final: false,
+            },
           ],
           events: [
             {type: 'change', origin: 'local', patchCount: 1},
@@ -51,8 +94,34 @@ describe(createWorld.name, () => {
           id: 'B',
           status: 'ready',
           screen: 'H1: foo|',
-          base: {textspec: 'B: foo', rev: 'r1'},
-          inFlight: {batchNumber: 1, transactionId: 'B-1', patchCount: 1},
+          blocks: [
+            {
+              _type: 'block',
+              _key: 'd-k0',
+              children: [{_key: 'd-k1', _type: 'span', text: 'foo', marks: []}],
+              style: 'h1',
+            },
+          ],
+          base: {
+            textspec: 'B: foo',
+            blocks: [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_key: 'd-k1', _type: 'span', text: 'foo', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            rev: 'r1',
+          },
+          inFlight: {
+            batchNumber: 1,
+            transactionId: 'B-1',
+            patchCount: 1,
+            patches: [set('h1', stylePath)],
+          },
           rejected: null,
           echoed: [],
           pending: [],
@@ -61,18 +130,33 @@ describe(createWorld.name, () => {
               transactionId: 'other-field-1',
               previousRev: 'r2',
               resultRev: 'r3',
+              patches: [],
             },
           ],
           outOfStep: false,
           readOnly: false,
           sentBatches: [
-            {number: 1, transactionId: 'B-1', patchCount: 1, final: false},
+            {
+              number: 1,
+              transactionId: 'B-1',
+              patchCount: 1,
+              patches: [set('h1', stylePath)],
+              final: false,
+            },
           ],
           events: [{type: 'change', origin: 'local', patchCount: 1}],
         },
       },
       server: {
         value: 'B: foox',
+        blocks: [
+          {
+            _type: 'block',
+            _key: 'd-k0',
+            children: [{_key: 'd-k1', _type: 'span', text: 'foox', marks: []}],
+            style: 'normal',
+          },
+        ],
         rev: 'r3',
         transactions: [
           {
@@ -81,6 +165,7 @@ describe(createWorld.name, () => {
             resultRev: 'r2',
             batchIds: ['A-1'],
             patchCount: 1,
+            patches: [diffMatchPatch('foo', 'foox', textPath)],
             noop: false,
             source: {
               type: 'batches',
@@ -93,6 +178,7 @@ describe(createWorld.name, () => {
             resultRev: 'r3',
             batchIds: [],
             patchCount: 0,
+            patches: [],
             noop: true,
             source: {type: 'named', name: 'the other field'},
           },
@@ -106,6 +192,7 @@ describe(createWorld.name, () => {
             batchNumber: 1,
             final: false,
             patchCount: 1,
+            patches: [set('h1', stylePath)],
           },
         ],
         replies: [
@@ -122,7 +209,9 @@ describe(createWorld.name, () => {
               transactionId: 'A-1',
               previousRev: 'r1',
               resultRev: 'r2',
+              batchIds: ['A-1'],
               patchCount: 1,
+              patches: [diffMatchPatch('foo', 'foox', textPath)],
               source: {
                 type: 'batches',
                 batches: [{name: 'Editor A', batchNumber: 1}],
@@ -132,7 +221,9 @@ describe(createWorld.name, () => {
               transactionId: 'other-field-1',
               previousRev: 'r2',
               resultRev: 'r3',
+              batchIds: [],
               patchCount: 0,
+              patches: [],
               source: {type: 'named', name: 'the other field'},
             },
           ],
@@ -141,7 +232,9 @@ describe(createWorld.name, () => {
               transactionId: 'A-1',
               previousRev: 'r1',
               resultRev: 'r2',
+              batchIds: ['A-1'],
               patchCount: 1,
+              patches: [diffMatchPatch('foo', 'foox', textPath)],
               source: {
                 type: 'batches',
                 batches: [{name: 'Editor A', batchNumber: 1}],

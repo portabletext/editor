@@ -61,7 +61,7 @@ export type IoEditorLedger = {
   inFlight: IoEditorSentBatch | undefined
   rejected: IoEditorSentBatch | undefined
   echoed: Array<IoEditorSentBatch>
-  pending: Array<{patchCount: number}>
+  pending: Array<{patchCount: number; patches: Array<Patch>}>
   held: Array<
     Pick<Transaction, 'transactionId' | 'previousRev' | 'resultRev'> & {
       arrivedAt: number
@@ -780,7 +780,10 @@ export function createIoEditor(options: {
       inFlight: inFlight ? describeSentBatch(inFlight) : undefined,
       rejected: rejected ? describeSentBatch(rejected) : undefined,
       echoed: echoedAwaitingBase.map(describeSentBatch),
-      pending: pending.map((patches) => ({patchCount: patches.length})),
+      pending: pending.map((patches) => ({
+        patchCount: patches.length,
+        patches,
+      })),
       held: held.map(({transaction, arrivedAt}) => ({
         transactionId: transaction.transactionId,
         previousRev: transaction.previousRev,

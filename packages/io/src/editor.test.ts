@@ -728,6 +728,7 @@ describe(createIoEditor.name, () => {
 
   test('`inspect` reports the batch in flight, the rejected one, pending changes and held transactions', () => {
     const {editor, clock} = createLoadedEditor('B: foo|')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 
     editor.type('x')
     editor.type('y')
@@ -743,7 +744,12 @@ describe(createIoEditor.name, () => {
       inFlight: {id: 'A-1', transactionId: 'A-1', patchCount: 1},
       rejected: undefined,
       echoed: [],
-      pending: [{patchCount: 1}],
+      pending: [
+        {
+          patchCount: 1,
+          patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+        },
+      ],
       held: [
         {
           transactionId: 't2',
@@ -764,7 +770,12 @@ describe(createIoEditor.name, () => {
       inFlight: undefined,
       rejected: {id: 'A-1', transactionId: 'A-1', patchCount: 1},
       echoed: [],
-      pending: [{patchCount: 1}],
+      pending: [
+        {
+          patchCount: 1,
+          patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+        },
+      ],
       held: [],
       outOfStep: true,
       readOnly: true,

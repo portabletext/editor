@@ -1,3 +1,4 @@
+import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {formatTextspec, parseTextspec} from '../document'
@@ -55,6 +56,7 @@ export type BatchSnapshot = {
   batchNumber: number
   transactionId: string | null
   patchCount: number
+  patches: Array<Patch>
 }
 
 export type EditorSnapshot = {
@@ -62,16 +64,23 @@ export type EditorSnapshot = {
   status: IoEditorStatus
   /** What the editor shows, with the caret. */
   screen: string
-  base: {textspec: string | null; rev: string | null}
+  /** What the editor shows, as blocks, the placeholder included. */
+  blocks: Array<PortableTextBlock>
+  base: {
+    textspec: string | null
+    blocks: Array<PortableTextBlock> | null
+    rev: string | null
+  }
   inFlight: BatchSnapshot | null
   rejected: BatchSnapshot | null
   /** Batches that came back and wait behind a held transaction. */
   echoed: Array<BatchSnapshot>
-  pending: Array<{patchCount: number}>
+  pending: Array<{patchCount: number; patches: Array<Patch>}>
   held: Array<{
     transactionId: string
     previousRev: string | null
     resultRev: string | null
+    patches: Array<Patch>
   }>
   outOfStep: boolean
   readOnly: boolean
@@ -79,6 +88,7 @@ export type EditorSnapshot = {
     number: number
     transactionId: string
     patchCount: number
+    patches: Array<Patch>
     final: boolean
   }>
   events: Array<HeardEvent>
@@ -87,6 +97,8 @@ export type EditorSnapshot = {
 export type ServerSnapshot = {
   /** The field as textspec, `null` when there is no field. */
   value: string | null
+  /** The field as blocks, `null` when there is no field. */
+  blocks: Array<PortableTextBlock> | null
   rev: string | null
   transactions: Array<{
     id: string
@@ -94,6 +106,7 @@ export type ServerSnapshot = {
     resultRev: string | null
     batchIds: Array<string>
     patchCount: number
+    patches: Array<Patch>
     noop: boolean
     source: TransactionSource
   }>
@@ -106,6 +119,7 @@ export type NetworkSnapshot = {
     batchNumber: number
     final: boolean
     patchCount: number
+    patches: Array<Patch>
   }>
   replies: Array<{
     editor: EditorName
@@ -119,7 +133,9 @@ export type NetworkSnapshot = {
       transactionId: string
       previousRev: string | null
       resultRev: string | null
+      batchIds: Array<string>
       patchCount: number
+      patches: Array<Patch>
       source: TransactionSource
     }>
   >
@@ -319,20 +335,24 @@ export function createWorld() {
 
   function snapshotEditor(name: EditorName): EditorSnapshot {
     const {editor, host, heard} = getEditor(name)
+    const {server} = getSetup()
     const ledger = editor.inspect()
     const base = editor.getBase()
     const describeBatch = (batch: IoEditorSentBatch): BatchSnapshot => ({
       batchNumber: locateBatch(batch.id).batchNumber,
       transactionId: batch.transactionId ?? null,
       patchCount: batch.patchCount,
+      patches: getBatch(name, locateBatch(batch.id).batchNumber).patches,
     })
 
     return {
       id: name === 'Editor A' ? 'A' : 'B',
       status: editor.getStatus(),
       screen: editor.document.toTextspec(),
+      blocks: editor.document.getValue(),
       base: {
         textspec: base.value === undefined ? null : formatTextspec(base.value),
+        blocks: base.value ?? null,
         rev: base.rev ?? null,
       },
       inFlight: ledger.inFlight ? describeBatch(ledger.inFlight) : null,
@@ -343,6 +363,7 @@ export function createWorld() {
         transactionId: transaction.transactionId,
         previousRev: transaction.previousRev ?? null,
         resultRev: transaction.resultRev ?? null,
+        patches: server.getTransaction(transaction.transactionId).patches,
       })),
       outOfStep: ledger.outOfStep,
       readOnly: ledger.readOnly,
@@ -350,6 +371,7 @@ export function createWorld() {
         number: index + 1,
         transactionId: host.getTransactionId(batch.id),
         patchCount: batch.patches.length,
+        patches: batch.patches,
         final: batch.final === true,
       })),
       events: [...heard.events],
@@ -367,7 +389,9 @@ export function createWorld() {
       transactionId: transaction.transactionId,
       previousRev: transaction.previousRev ?? null,
       resultRev: transaction.resultRev ?? null,
+      batchIds: [...transaction.batchIds],
       patchCount: transaction.patches.length,
+      patches: transaction.patches,
       source: describeSource(transaction),
     })
 
@@ -378,6 +402,7 @@ export function createWorld() {
       },
       server: {
         value: copy.value === undefined ? null : formatTextspec(copy.value),
+        blocks: copy.value ?? null,
         rev: copy.rev ?? null,
         transactions: server.getLog().map(({transaction, changesField}) => ({
           id: transaction.transactionId,
@@ -385,6 +410,7 @@ export function createWorld() {
           resultRev: transaction.resultRev ?? null,
           batchIds: [...transaction.batchIds],
           patchCount: transaction.patches.length,
+          patches: transaction.patches,
           noop: !changesField,
           source: describeSource(transaction),
         })),
@@ -396,6 +422,7 @@ export function createWorld() {
           batchNumber: locateBatch(batch.id).batchNumber,
           final: batch.final === true,
           patchCount: batch.patches.length,
+          patches: batch.patches,
         })),
         replies: network.getReplies().map((reply) => ({
           editor: toEditorName(reply.editorId),
