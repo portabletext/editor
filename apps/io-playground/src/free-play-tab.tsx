@@ -55,7 +55,7 @@ export function useFreePlay() {
   })
   const [freePlay, setFreePlay] = useState<FreePlay>(() => startFreePlay(setup))
 
-  function perform(keyword: StepKeyword, text: string) {
+  function perform(keyword: StepKeyword, text: string): boolean {
     try {
       runStep(freePlay.world, {keyword, text})
       setFreePlay((current) => ({
@@ -63,11 +63,13 @@ export function useFreePlay() {
         log: [...current.log, {keyword, text}],
         error: null,
       }))
+      return true
     } catch (error) {
       setFreePlay((current) => ({
         ...current,
         error: `${keyword} ${text}: ${error instanceof Error ? error.message : String(error)}`,
       }))
+      return false
     }
   }
 

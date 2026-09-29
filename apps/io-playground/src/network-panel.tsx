@@ -13,10 +13,16 @@ type FeedItem = NetworkSnapshot['feeds'][EditorName][number]
 export function NetworkPanel({
   network,
   onStep,
+  onDeliver,
 }: {
   network: NetworkSnapshot | null
   /** Present in free play: runs a `When` step. */
   onStep: ((text: string) => void) | undefined
+  /**
+   * Present in free play and after a scenario is done: runs a delivery
+   * `When` step and tells whether it succeeded.
+   */
+  onDeliver: ((text: string) => boolean) | undefined
 }) {
   const [selectedBatchIds, setSelectedBatchIds] = useState<Array<string>>([])
 
@@ -164,6 +170,22 @@ export function NetworkPanel({
 
       {editorNames.map((receiver) => (
         <Section key={receiver} title={`Feed to ${receiver}`}>
+          {onDeliver ? (
+            <div>
+              <Button
+                disabled={network.feeds[receiver].length === 0}
+                onClick={() => {
+                  for (const item of network.feeds[receiver]) {
+                    if (!onDeliver(deliveryStep(receiver, item.source))) {
+                      break
+                    }
+                  }
+                }}
+              >
+                deliver all
+              </Button>
+            </div>
+          ) : null}
           {network.feeds[receiver].length === 0 ? (
             <Empty>none waiting</Empty>
           ) : (
@@ -183,7 +205,7 @@ export function NetworkPanel({
                         · {describeSource(item.source)}
                       </span>
                     </span>
-                    {onStep ? (
+                    {onDeliver ? (
                       <Button
                         disabled={blockedBy !== undefined}
                         title={
@@ -192,7 +214,7 @@ export function NetworkPanel({
                             : `Deliver ${blockedBy} first: the steps name it the same way`
                         }
                         onClick={() =>
-                          onStep(deliveryStep(receiver, item.source))
+                          onDeliver(deliveryStep(receiver, item.source))
                         }
                       >
                         deliver

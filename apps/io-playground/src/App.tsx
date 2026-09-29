@@ -17,6 +17,12 @@ export function App() {
     tab === 'free play'
       ? (text: string) => freePlay.perform('When', text)
       : undefined
+  const onDeliver =
+    tab === 'free play'
+      ? (text: string) => freePlay.perform('When', text)
+      : scenarioRunner.finished && !scenarioRunner.running
+        ? scenarioRunner.deliver
+        : undefined
 
   return (
     <div className="flex h-screen flex-col">
@@ -25,17 +31,23 @@ export function App() {
           <EditorPanel
             name="Editor A"
             editor={snapshot.editors?.['Editor A']}
+            waitingCount={snapshot.network?.feeds['Editor A'].length ?? 0}
           />
         </Column>
         <Column>
           <ServerPanel server={snapshot.server} onStep={onStep} />
           <hr className="border-gray-200" />
-          <NetworkPanel network={snapshot.network} onStep={onStep} />
+          <NetworkPanel
+            network={snapshot.network}
+            onStep={onStep}
+            onDeliver={onDeliver}
+          />
         </Column>
         <Column>
           <EditorPanel
             name="Editor B"
             editor={snapshot.editors?.['Editor B']}
+            waitingCount={snapshot.network?.feeds['Editor B'].length ?? 0}
           />
         </Column>
       </main>

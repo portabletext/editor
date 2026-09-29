@@ -1,6 +1,7 @@
 import {createWorld, type World} from '@portabletext/io'
 import {useState} from 'react'
 import {features} from './features'
+import {runStep} from './gherkin'
 import {Button} from './ui'
 
 type StepResult = {status: 'passed'} | {status: 'failed'; message: string}
@@ -11,6 +12,7 @@ type ScenarioRun = {
   world: World
   results: Array<StepResult>
   running: boolean
+  deliveryError: string | null
 }
 
 export function useScenarioRunner() {
@@ -60,6 +62,23 @@ export function useScenarioRunner() {
     publish(false)
   }
 
+  function deliver(text: string): boolean {
+    const {world} = run
+    let deliveryError: string | null = null
+
+    try {
+      runStep(world, {keyword: 'When', text})
+    } catch (error) {
+      deliveryError = `When ${text}: ${error instanceof Error ? error.message : String(error)}`
+    }
+
+    setRun((current) =>
+      current.world === world ? {...current, deliveryError} : current,
+    )
+
+    return deliveryError === null
+  }
+
   return {
     world: run.world,
     featureIndex: run.featureIndex,
@@ -68,6 +87,8 @@ export function useScenarioRunner() {
     results: run.results,
     running: run.running,
     finished,
+    deliveryError: run.deliveryError,
+    deliver,
     select: (selection: {featureIndex: number; scenarioIndex: number}) =>
       setRun(freshRun(selection)),
     reset: () =>
@@ -134,6 +155,10 @@ export function ScenariosTab({
         ) : null}
       </div>
 
+      {runner.deliveryError ? (
+        <p className="font-mono text-xs text-red-700">{runner.deliveryError}</p>
+      ) : null}
+
       <ol className="flex flex-col font-mono text-xs">
         {scenario.steps.map((step, index) => {
           const result = results[index]
@@ -168,5 +193,11 @@ function freshRun(selection: {
   featureIndex: number
   scenarioIndex: number
 }): ScenarioRun {
-  return {...selection, world: createWorld(), results: [], running: false}
+  return {
+    ...selection,
+    world: createWorld(),
+    results: [],
+    running: false,
+    deliveryError: null,
+  }
 }

@@ -9,9 +9,12 @@ import {Badge, Empty, ItemList, Notation, plural, Section} from './ui'
 export function EditorPanel({
   name,
   editor,
+  waitingCount,
 }: {
   name: EditorName
   editor: EditorSnapshot | undefined
+  /** Transactions waiting in this editor's feed. */
+  waitingCount: number
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -30,6 +33,9 @@ export function EditorPanel({
             >
               {editor.status}
             </Badge>
+            {waitingCount > 0 ? (
+              <Badge tone="amber">{waitingCount} waiting</Badge>
+            ) : null}
             {editor.readOnly ? <Badge tone="blue">read-only</Badge> : null}
             {editor.outOfStep ? <Badge tone="red">out of step</Badge> : null}
           </>
