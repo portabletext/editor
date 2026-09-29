@@ -149,8 +149,8 @@ export function ScenariosTab({
   const {scenario, results, running, finished} = runner
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="sticky -top-4 z-10 -mx-4 -mt-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pt-4 pb-2">
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <select
           className="max-w-full rounded border border-gray-300 bg-white px-1.5 py-0.5 text-sm"
           value={`${runner.featureIndex}:${runner.scenarioIndex}`}
@@ -197,35 +197,42 @@ export function ScenariosTab({
         <p className="font-mono text-xs text-red-700">{runner.deliveryError}</p>
       ) : null}
 
-      <ol className="flex flex-col font-mono text-xs">
-        {scenario.steps.map((step, index) => {
-          const result = results[index]
-          const current = index === results.length && !finished
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+        <ol className="min-h-0 overflow-auto font-mono text-xs">
+          {scenario.steps.map((step, index) => {
+            const result = results[index]
+            const current = index === results.length && !finished
 
-          return (
-            <StepItem
-              key={index}
-              current={current}
-              className={`scroll-mt-14 rounded px-2 py-0.5 ${
-                result?.status === 'passed'
-                  ? 'bg-green-50 text-green-800'
-                  : result?.status === 'failed'
-                    ? 'bg-red-50 text-red-800'
-                    : current
-                      ? 'bg-yellow-100'
-                      : 'text-gray-600'
-              }`}
-            >
-              <span className="font-semibold">{step.keyword}</span> {step.text}
-              {result?.status === 'failed' ? (
-                <div className="pl-4 whitespace-pre-wrap">{result.message}</div>
-              ) : null}
-            </StepItem>
-          )
-        })}
-      </ol>
+            return (
+              <StepItem
+                key={index}
+                current={current}
+                className={`rounded px-2 py-0.5 ${
+                  result?.status === 'passed'
+                    ? 'bg-green-50 text-green-800'
+                    : result?.status === 'failed'
+                      ? 'bg-red-50 text-red-800'
+                      : current
+                        ? 'bg-yellow-100'
+                        : 'text-gray-600'
+                }`}
+              >
+                <span className="font-semibold">{step.keyword}</span>{' '}
+                {step.text}
+                {result?.status === 'failed' ? (
+                  <div className="pl-4 whitespace-pre-wrap">
+                    {result.message}
+                  </div>
+                ) : null}
+              </StepItem>
+            )
+          })}
+        </ol>
 
-      <NarrationLog entries={runner.narration} />
+        <div className="min-h-0 overflow-auto">
+          <NarrationLog entries={runner.narration} />
+        </div>
+      </div>
     </div>
   )
 }

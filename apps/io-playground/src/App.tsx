@@ -137,7 +137,11 @@ export function App() {
               </button>
             ))}
           </nav>
-          <div className="min-h-0 flex-1 overflow-auto p-4">
+          <div
+            className={`min-h-0 flex-1 p-4 ${
+              tab === 'scenarios' ? 'overflow-hidden' : 'overflow-auto'
+            }`}
+          >
             {tab === 'scenarios' ? (
               <ScenariosTab runner={scenarioRunner} />
             ) : (

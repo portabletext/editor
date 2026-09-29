@@ -10,7 +10,7 @@ export function NarrationLog({entries}: {entries: Array<NarrationEntry>}) {
   )
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({block: 'nearest'})
+    endRef.current?.scrollIntoView({block: 'end'})
   }, [sentenceCount])
 
   return (
