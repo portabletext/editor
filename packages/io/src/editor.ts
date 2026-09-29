@@ -112,6 +112,8 @@ type HeldTransaction = {transaction: Transaction; arrivedAt: number}
 /** A block's style, or `undefined` when there is no such block. */
 type BlockStyle = {style: string | undefined} | undefined
 
+const placeholderStyle: BlockStyle = {style: 'normal'}
+
 type HistoryEntry = {
   step: UndoStep
   batchId: string | undefined
@@ -568,7 +570,9 @@ export function createIoEditor(options: {
    * Once the change is confirmed, a style on screen other than the one it set
    * means another writer changed the style after it, and undo leaves it. The
    * screen, not the base alone, since the editor's own later changes are
-   * undone first and may still be unconfirmed.
+   * undone first and may still be unconfirmed. A block the base didn't have
+   * before the change came from the placeholder in the same action, so its
+   * style before the change is the placeholder's.
    */
   function styleToRestore(
     entry: HistoryEntry,
@@ -576,11 +580,11 @@ export function createIoEditor(options: {
     screenBlock: PortableTextBlock,
   ): BlockStyle {
     if (!entry.confirmed) {
-      return styleOf(blockUnder(entry))
+      return styleOf(blockUnder(entry)) ?? placeholderStyle
     }
 
     return styleOf(screenBlock)?.style === step.style
-      ? styleOf(entry.confirmed.blockBefore)
+      ? (styleOf(entry.confirmed.blockBefore) ?? placeholderStyle)
       : undefined
   }
 
@@ -683,8 +687,14 @@ export function createIoEditor(options: {
 
     if (caretBlockKey !== undefined) {
       // The old key now names another writer's block, so the caret would
-      // follow the key into it.
-      document.setCaret({blockKey: caretBlockKey, offset: caret.offset})
+      // follow the key into it. When the re-keyed insert lost its target, the
+      // caret's block is gone and the caret goes where a vanished block's
+      // caret goes.
+      document.setCaret(
+        after.some((block) => block._key === caretBlockKey)
+          ? {blockKey: caretBlockKey, offset: caret.offset}
+          : {blockKey: after[0]._key, offset: 0},
+      )
     }
 
     if (!isEqual(before, after)) {

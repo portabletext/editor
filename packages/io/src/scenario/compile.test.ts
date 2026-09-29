@@ -115,6 +115,39 @@ describe(compileScenarios.name, () => {
     expect(world.snapshot().editors?.['Editor A'].screen).toEqual('H1: foox|')
   })
 
+  test('an empty list on the server is checked apart from no field', async () => {
+    const {scenarios} = compileScenarios(
+      [
+        'Feature: Free play',
+        '  Scenario: foo',
+        '    Given the server has an empty list',
+        '    And an editor that claims the first load',
+        '    When Editor A is loaded',
+        '    Then the server has an empty list',
+        '    And the server has no field',
+      ].join('\n'),
+    )
+    const world = createWorld()
+    const outcomes: Array<string> = []
+
+    for (const step of scenarios[0].steps) {
+      try {
+        await step.run(world)
+        outcomes.push('passed')
+      } catch (error) {
+        outcomes.push(error instanceof Error ? error.message : String(error))
+      }
+    }
+
+    expect(outcomes).toEqual([
+      'passed',
+      'passed',
+      'passed',
+      'passed',
+      `The server's field: expected "no field", got "an empty list"`,
+    ])
+  })
+
   test('a wrong expectation fails at its own step', async () => {
     const [scenario] = compileScenarios(
       listenersFeature.replace(

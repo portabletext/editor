@@ -109,6 +109,30 @@ describe(createDocument.name, () => {
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
   })
 
+  test('setting the h3 style works, and the notation reads and writes it', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo|'),
+    )
+
+    document.setStyle('h3')
+
+    expect(document.toTextspec()).toEqual('H3: foo|')
+    expect(parseTextspec({keyGenerator}, 'H3: foo')).toEqual({
+      value: [
+        {
+          _type: 'block',
+          _key: 'k2',
+          children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          style: 'h3',
+        },
+      ],
+      caret: undefined,
+    })
+    expect(formatTextspec(document.getValue())).toEqual('H3: foo')
+  })
+
   test('setting an unknown style throws', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createDocument(

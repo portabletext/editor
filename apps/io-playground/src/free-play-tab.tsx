@@ -111,8 +111,12 @@ export function useFreePlay() {
             ? 'the server has no document'
             : 'the server has no field',
         )
-      } else if (server.value !== '') {
-        checks.push(`the server has ${quoted(server.value)}`)
+      } else {
+        checks.push(
+          server.value === ''
+            ? 'the server has an empty list'
+            : `the server has ${quoted(server.value)}`,
+        )
       }
     }
 

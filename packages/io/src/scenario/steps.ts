@@ -196,6 +196,11 @@ export const stepDefinitions = [
     checkEqual("The server's field", describeField(copy.value), 'no field')
     checkNotEqual("The server's revision", copy.rev, undefined)
   }),
+  Then('the server has an empty list', (context: Context) => {
+    const copy = context.world.getServer().copy()
+
+    checkEqual("The server's field", describeField(copy.value), 'an empty list')
+  }),
   Then(
     'every block in {editor} has a unique key',
     (context: Context, name: EditorName) => {
@@ -420,7 +425,11 @@ function userSteps() {
 }
 
 function describeField(value: Array<PortableTextBlock> | undefined): string {
-  return value === undefined ? 'no field' : formatTextspec(value)
+  if (value === undefined) {
+    return 'no field'
+  }
+
+  return value.length === 0 ? 'an empty list' : formatTextspec(value)
 }
 
 function duplicateOrMissingKeys(

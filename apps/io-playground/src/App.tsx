@@ -1,3 +1,4 @@
+import type {World} from '@portabletext/io'
 import {useState} from 'react'
 import {DrawerView, OpenDetailsProvider, type Drawer} from './drawers'
 import {EditorPanel} from './editor-panel'
@@ -12,11 +13,15 @@ type Tab = 'scenarios' | 'free play'
 export function App() {
   const [tab, setTab] = useState<Tab>('scenarios')
   const [drawer, setDrawer] = useState<Drawer | null>(null)
-  const [selectedBatchIds, setSelectedBatchIds] = useState<Array<string>>([])
   const scenarioRunner = useScenarioRunner()
   const freePlay = useFreePlay()
   const world = tab === 'scenarios' ? scenarioRunner.world : freePlay.world
   const snapshot = world.snapshot()
+  const [selection, setSelection] = useState<{
+    world: World
+    batchIds: Array<string>
+  } | null>(null)
+  const selectedBatchIds = selection?.world === world ? selection.batchIds : []
   const onStep =
     tab === 'free play'
       ? (text: string) => freePlay.perform('When', text)
@@ -33,16 +38,17 @@ export function App() {
   )
 
   function toggleSelected(batchId: string) {
-    setSelectedBatchIds((current) =>
-      current.includes(batchId)
-        ? current.filter((candidate) => candidate !== batchId)
+    setSelection({
+      world,
+      batchIds: selectedBatchIds.includes(batchId)
+        ? selectedBatchIds.filter((candidate) => candidate !== batchId)
         : [
-            ...current.filter((candidate) =>
+            ...selectedBatchIds.filter((candidate) =>
               saveRequests.some((request) => request.batchId === candidate),
             ),
             batchId,
           ],
-    )
+    })
   }
 
   function receiveSelected() {
@@ -52,7 +58,7 @@ export function App() {
       return
     }
 
-    setSelectedBatchIds([])
+    setSelection(null)
     onStep(
       `the server receives ${first.editor}'s batch ${first.batchNumber} and ${second.editor}'s batch ${second.batchNumber} as one transaction`,
     )

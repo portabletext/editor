@@ -370,6 +370,73 @@ describe(createIoEditor.name, () => {
     expect(editor.document.toTextspec()).toEqual('B: foo|')
   })
 
+  test('undoing a style set on the placeholder keeps the block and puts back the normal style', () => {
+    const {editor, heard} = createLoadedEditor(undefined)
+    const path = [{_key: 'a-k0'}, 'style']
+
+    editor.setStyle('h1')
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.undo()
+
+    expect(editor.document.toTextspec({keys: true})).toEqual('B _key="a-k0": |')
+    expect(editor.document.getPlaceholderKey()).toEqual(undefined)
+    expect(heard.mutations[1]).toEqual({
+      id: 'A-2',
+      patches: [set('normal', path)],
+      value: [
+        {
+          _type: 'block',
+          _key: 'a-k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'a-k1', text: '', marks: []}],
+        },
+      ],
+    })
+  })
+
+  test('undoing a style set on the placeholder before the block is sent puts back the normal style in the same batch', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+    const placeholder = {
+      _type: 'block',
+      _key: 'a-k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'a-k3', text: '', marks: []}],
+    }
+    const path = [{_key: 'a-k2'}, 'style']
+
+    editor.deleteBlock('foo')
+    editor.setStyle('h1')
+    editor.undo()
+
+    expect(editor.document.toTextspec({keys: true})).toEqual('B _key="a-k2": |')
+    expect(editor.document.getPlaceholderKey()).toEqual(undefined)
+
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+
+    expect(heard.mutations[1]).toEqual({
+      id: 'A-2',
+      patches: [
+        setIfMissing([], []),
+        insert([placeholder], 'before', [0]),
+        set('h1', path),
+        set('normal', path),
+      ],
+      value: [placeholder],
+    })
+  })
+
   test('undoing typing deletes the typed text where another writer moved it', () => {
     const {editor, heard} = createLoadedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
@@ -682,6 +749,32 @@ describe(createIoEditor.name, () => {
         ],
       },
     ])
+  })
+
+  test('a re-keyed pending insert whose target another writer deleted leaves the caret where the document puts it', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
+    const bazBlock = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('b-')},
+      'B _key="k9": baz',
+    ).value[0]
+
+    editor.type('x')
+    editor.insertBlock('B _key="k9": qux')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [
+        unset([{_key: 'd-k0'}]),
+        insert([bazBlock], 'after', [{_key: 'd-k2'}]),
+      ],
+    })
+
+    expect(heard.errors).toEqual([])
+    expect(editor.getBase().rev).toEqual('r2')
+    expect(editor.document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k2": |bar;;B _key="k9": baz',
+    )
   })
 
   test('a rejected batch stays on screen while the feed keeps applying', () => {

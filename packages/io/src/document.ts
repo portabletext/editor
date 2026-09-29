@@ -24,7 +24,7 @@ import {
 import {parse} from '@textspec/notation'
 
 const schema = compileSchema(
-  defineSchema({styles: [{name: 'h1'}, {name: 'h2'}]}),
+  defineSchema({styles: [{name: 'h1'}, {name: 'h2'}, {name: 'h3'}]}),
 )
 
 /**
