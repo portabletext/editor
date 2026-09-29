@@ -293,6 +293,30 @@ describe(createServer.name, () => {
     expect(server.getTransaction('t2')).toEqual(recreation)
   })
 
+  test('the log marks the transactions that left the field as it was', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'H1: foo')
+    const server = createServer({documentId: 'document', document: {value}})
+
+    const unchanged = server.receive(
+      {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]},
+      't1',
+    )
+    const changed = server.receive(
+      {id: 'b2', patches: [set('h2', [{_key: 'k0'}, 'style'])]},
+      't2',
+    )
+    const otherField = server.changeOtherField('t3')
+    const deletion = server.deleteDocument('t4')
+
+    expect(server.getLog()).toEqual([
+      {transaction: unchanged, changesField: false},
+      {transaction: changed, changesField: true},
+      {transaction: otherField, changesField: false},
+      {transaction: deletion, changesField: true},
+    ])
+  })
+
   test('a copy does not share content with the server', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')

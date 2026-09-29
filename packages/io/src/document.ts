@@ -618,6 +618,21 @@ export function comparableTextspec(
 }
 
 /**
+ * Content as one line of textspec, without a caret. Empty content is an empty
+ * string.
+ */
+export function formatTextspec(
+  value: Array<PortableTextBlock>,
+  options?: {keys?: boolean},
+): string {
+  return serializeTextspec({
+    value,
+    selection: null,
+    keys: options?.keys ?? false,
+  })
+}
+
+/**
  * Whether a batch turns the placeholder into content: it starts with a
  * whole-field `setIfMissing` followed by an `insert`.
  */

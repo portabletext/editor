@@ -42,11 +42,41 @@ export type IoEditorEvent =
   | {type: 'warning'; message: string}
   | {type: 'ready'}
 
+/**
+ * A batch the editor has sent and the base doesn't hold yet. `transactionId`
+ * is `undefined` until the host reports `mutation sent`.
+ */
+export type IoEditorSentBatch = {
+  id: string
+  transactionId: string | undefined
+  patchCount: number
+}
+
+/**
+ * The editor's protocol state, for display. `echoed` are batches whose
+ * transaction came back but waits in `held` behind a missing one, and
+ * `pending` holds one entry per local change not sent yet.
+ */
+export type IoEditorLedger = {
+  inFlight: IoEditorSentBatch | undefined
+  rejected: IoEditorSentBatch | undefined
+  echoed: Array<IoEditorSentBatch>
+  pending: Array<{patchCount: number}>
+  held: Array<
+    Pick<Transaction, 'transactionId' | 'previousRev' | 'resultRev'> & {
+      arrivedAt: number
+    }
+  >
+  outOfStep: boolean
+  readOnly: boolean
+}
+
 export type IoEditor = {
   /** The content on screen and the caret. */
   document: Document
   getStatus: () => IoEditorStatus
   getBase: () => Load
+  inspect: () => IoEditorLedger
   on: (listener: (event: IoEditorEvent) => void) => () => void
 
   /**
@@ -746,6 +776,20 @@ export function createIoEditor(options: {
     document,
     getStatus: () => status,
     getBase: () => base,
+    inspect: () => ({
+      inFlight: inFlight ? describeSentBatch(inFlight) : undefined,
+      rejected: rejected ? describeSentBatch(rejected) : undefined,
+      echoed: echoedAwaitingBase.map(describeSentBatch),
+      pending: pending.map((patches) => ({patchCount: patches.length})),
+      held: held.map(({transaction, arrivedAt}) => ({
+        transactionId: transaction.transactionId,
+        previousRev: transaction.previousRev,
+        resultRev: transaction.resultRev,
+        arrivedAt,
+      })),
+      outOfStep,
+      readOnly,
+    }),
     on: (listener) => {
       listeners.add(listener)
       return () => {
@@ -770,6 +814,14 @@ export function createIoEditor(options: {
     deleteBlock: (text) => act(() => document.deleteBlock(text)),
     undo,
     close,
+  }
+}
+
+function describeSentBatch(batch: SentBatch): IoEditorSentBatch {
+  return {
+    id: batch.id,
+    transactionId: batch.transactionId,
+    patchCount: batch.patches.length,
   }
 }
 

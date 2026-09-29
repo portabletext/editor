@@ -13,6 +13,7 @@ import {
   createDocument,
   createsBlock,
   emptiesField,
+  formatTextspec,
   parseTextspec,
 } from './document'
 
@@ -757,6 +758,19 @@ describe('the placeholder', () => {
 
     expect(document.getPlaceholderKey()).toEqual('k4')
     expect(document.toTextspec({keys: true})).toEqual('B _key="k4": |')
+  })
+})
+
+describe(formatTextspec.name, () => {
+  test('writes content on one line, with keys on request and empty content as an empty string', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo;;H1: bar|')
+
+    expect([
+      formatTextspec(value),
+      formatTextspec(value, {keys: true}),
+      formatTextspec([]),
+    ]).toEqual(['B: foo;;H1: bar', 'B _key="k0": foo;;H1 _key="k2": bar', ''])
   })
 })
 

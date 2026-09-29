@@ -9,8 +9,8 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {parseTextspec} from './document'
 import {createIoEditor} from './editor'
-import {createNetwork} from './test/network'
-import {listenTo} from './test/world'
+import {createNetwork} from './fakes/network'
+import {listenTo} from './scenario/world'
 
 describe(createIoEditor.name, () => {
   test('held transactions are applied in chain order once the missing one arrives', () => {
@@ -724,6 +724,51 @@ describe(createIoEditor.name, () => {
         ],
       },
     ])
+  })
+
+  test('`inspect` reports the batch in flight, the rejected one, pending changes and held transactions', () => {
+    const {editor, clock} = createLoadedEditor('B: foo|')
+
+    editor.type('x')
+    editor.type('y')
+    clock.advance(500)
+    editor.transaction({
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [],
+    })
+
+    expect(editor.inspect()).toEqual({
+      inFlight: {id: 'A-1', transactionId: 'A-1', patchCount: 1},
+      rejected: undefined,
+      echoed: [],
+      pending: [{patchCount: 1}],
+      held: [
+        {
+          transactionId: 't2',
+          previousRev: 'r2',
+          resultRev: 'r3',
+          arrivedAt: 500,
+        },
+      ],
+      outOfStep: false,
+      readOnly: false,
+    })
+
+    editor.mutationRejected({id: 'A-1'})
+    editor.updateReadOnly(true)
+    clock.advance(10_000)
+
+    expect(editor.inspect()).toEqual({
+      inFlight: undefined,
+      rejected: {id: 'A-1', transactionId: 'A-1', patchCount: 1},
+      echoed: [],
+      pending: [{patchCount: 1}],
+      held: [],
+      outOfStep: true,
+      readOnly: true,
+    })
   })
 
   test('a rejection for a batch that already came back is ignored with a warning', () => {

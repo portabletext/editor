@@ -305,6 +305,40 @@ importers:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
 
+  apps/io-playground:
+    dependencies:
+      '@portabletext/io':
+        specifier: workspace:^
+        version: link:../../packages/io
+      react:
+        specifier: 'catalog:'
+        version: 19.2.8
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.8(react@19.2.8)
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: catalog:tooling
+        version: 4.3.3(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: catalog:tooling
+        version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.7)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+      tailwindcss:
+        specifier: catalog:tooling
+        version: 4.3.3
+      typescript:
+        specifier: catalog:tooling
+        version: 7.0.2
+      vite:
+        specifier: catalog:tooling
+        version: 8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
+
   apps/playground:
     dependencies:
       '@floating-ui/react-dom':
@@ -731,6 +765,12 @@ importers:
 
   packages/io:
     dependencies:
+      '@cucumber/gherkin':
+        specifier: ^41.0.0
+        version: 41.0.0
+      '@cucumber/messages':
+        specifier: ^34.0.1
+        version: 34.0.1
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
@@ -743,13 +783,13 @@ importers:
       '@textspec/notation':
         specifier: ^1.0.2
         version: 1.0.2
+      racejar:
+        specifier: workspace:^
+        version: link:../racejar
     devDependencies:
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.1.0
-      racejar:
-        specifier: workspace:*
-        version: link:../racejar
       typescript:
         specifier: catalog:tooling
         version: 7.0.2
@@ -22846,7 +22886,7 @@ snapshots:
     dependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      vitest: 4.1.11(@types/node@24.12.2)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-istanbul@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@27.2.0)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+      vitest: 4.1.11(@types/node@20.19.25)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-istanbul@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@27.2.0)(vite@8.3.0(@types/node@20.19.25)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
     optionalDependencies:
       '@types/react': 19.2.17
       '@types/react-dom': 19.2.3(@types/react@19.2.17)

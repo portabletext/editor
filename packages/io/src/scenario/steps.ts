@@ -1,10 +1,20 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {Given, Then, When} from 'racejar'
-import {expect} from 'vitest'
-import {comparableTextspec, createsBlock, emptiesField} from '../document'
+import {
+  comparableTextspec,
+  createsBlock,
+  emptiesField,
+  formatTextspec,
+} from '../document'
 import type {IoEditorStatus} from '../editor'
+import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference} from './parameter-types'
-import type {EditorName, ServerCopyName, World} from './world'
+import {
+  heldTransactionTimeout,
+  type EditorName,
+  type ServerCopyName,
+  type World,
+} from './world'
 
 export type Context = {world: World}
 
@@ -111,7 +121,7 @@ export const stepDefinitions = [
     },
   ),
   When('the wait for the missing transaction runs out', (context: Context) => {
-    context.world.runOutHeldTransactionWait()
+    context.world.advanceClock(heldTransactionTimeout)
   }),
 
   When(
@@ -136,16 +146,16 @@ export const stepDefinitions = [
     },
   ),
   When('{editor} is loaded', (context: Context, name: EditorName) => {
-    context.world.getEditor(name).host.load()
+    context.world.load(name)
   }),
   When('the claim is released', (context: Context) => {
-    context.world.getEditor('Editor A').editor.releaseClaim()
+    context.world.releaseClaim('Editor A')
   }),
   When('{editor} becomes read-only', (context: Context, name: EditorName) => {
-    context.world.getEditor(name).editor.updateReadOnly(true)
+    context.world.becomeReadOnly(name)
   }),
   When('{editor} is closed', (context: Context, name: EditorName) => {
-    context.world.getEditor(name).editor.close()
+    context.world.close(name)
   }),
 
   Then(
@@ -157,7 +167,7 @@ export const stepDefinitions = [
         textspec,
       )
 
-      expect(actual).toEqual(expected)
+      checkEqual(`What ${name} shows`, actual, expected)
     },
   ),
   Then('the server has {textspec}', (context: Context, textspec: string) => {
@@ -166,39 +176,43 @@ export const stepDefinitions = [
       textspec,
     )
 
-    expect(actual).toEqual(expected)
+    checkEqual('What the server has', actual, expected)
   }),
   Then('the server has no document', (context: Context) => {
-    expect(context.world.getServer().copy()).toEqual({
-      value: undefined,
-      rev: undefined,
-    })
+    const copy = context.world.getServer().copy()
+
+    checkEqual("The server's field", describeField(copy.value), 'no field')
+    checkEqual("The server's revision", copy.rev, undefined)
   }),
   Then('the server has no field', (context: Context) => {
     const copy = context.world.getServer().copy()
 
-    expect(copy.value).toEqual(undefined)
-    expect(copy.rev).not.toEqual(undefined)
+    checkEqual("The server's field", describeField(copy.value), 'no field')
+    checkNotEqual("The server's revision", copy.rev, undefined)
   }),
   Then(
     'every block in {editor} has a unique key',
     (context: Context, name: EditorName) => {
       const value = context.world.getEditor(name).editor.document.getValue()
 
-      expect(duplicateOrMissingKeys(value)).toEqual([])
+      checkEmpty(`Key problems in ${name}`, duplicateOrMissingKeys(value))
     },
   ),
   Then('every block on the server has a unique key', (context: Context) => {
     const value = context.world.getServer().copy().value ?? []
 
-    expect(duplicateOrMissingKeys(value)).toEqual([])
+    checkEmpty('Key problems on the server', duplicateOrMissingKeys(value))
   }),
   Then(
     '{editor} has sent batch {int}',
     (context: Context, name: EditorName, batchNumber: number) => {
       const worldEditor = context.world.getEditor(name)
 
-      expect(worldEditor.heard.mutations.length).toEqual(batchNumber)
+      checkEqual(
+        `The batches ${name} has sent`,
+        worldEditor.heard.mutations.length,
+        batchNumber,
+      )
       worldEditor.checkedBatchCount = batchNumber
     },
   ),
@@ -207,7 +221,9 @@ export const stepDefinitions = [
     (context: Context, name: EditorName) => {
       const worldEditor = context.world.getEditor(name)
 
-      expect(worldEditor.heard.mutations.length).toEqual(
+      checkEqual(
+        `The batches ${name} has sent`,
+        worldEditor.heard.mutations.length,
         worldEditor.checkedBatchCount,
       )
     },
@@ -217,32 +233,42 @@ export const stepDefinitions = [
     (context: Context, name: EditorName) => {
       const worldEditor = context.world.getEditor(name)
 
-      expect(worldEditor.heard.mutations.at(-1)?.final).toEqual(true)
+      checkEqual(
+        `Whether ${name}'s last batch is final`,
+        worldEditor.heard.mutations.at(-1)?.final,
+        true,
+      )
       worldEditor.checkedBatchCount = worldEditor.heard.mutations.length
     },
   ),
   Then(
     "{editor}'s batch {int} creates the block",
     (context: Context, name: EditorName, batchNumber: number) => {
-      expect(
+      checkEqual(
+        `Whether ${name}'s batch ${batchNumber} creates the block`,
         createsBlock(context.world.getBatch(name, batchNumber).patches),
-      ).toEqual(true)
+        true,
+      )
     },
   ),
   Then(
     "{editor}'s batch {int} does not create a block",
     (context: Context, name: EditorName, batchNumber: number) => {
-      expect(
+      checkEqual(
+        `Whether ${name}'s batch ${batchNumber} creates a block`,
         createsBlock(context.world.getBatch(name, batchNumber).patches),
-      ).toEqual(false)
+        false,
+      )
     },
   ),
   Then(
     "{editor}'s batch {int} empties the field",
     (context: Context, name: EditorName, batchNumber: number) => {
-      expect(
+      checkEqual(
+        `Whether ${name}'s batch ${batchNumber} empties the field`,
         emptiesField(context.world.getBatch(name, batchNumber).patches),
-      ).toEqual(true)
+        true,
+      )
     },
   ),
   Then(
@@ -251,41 +277,70 @@ export const stepDefinitions = [
       const worldEditor = context.world.getEditor(name)
       const errorCount = worldEditor.heard.errors.length
 
-      expect(errorCount).toBeGreaterThan(worldEditor.checkedErrorCount)
+      checkGreaterThan(
+        `The errors ${name} has reported`,
+        errorCount,
+        worldEditor.checkedErrorCount,
+      )
       worldEditor.checkedErrorCount = errorCount
     },
   ),
   Then('{editor} is in step', (context: Context, name: EditorName) => {
     const worldEditor = context.world.getEditor(name)
 
-    expect(
+    checkEmpty(
+      `New errors from ${name}`,
       worldEditor.heard.errors.slice(worldEditor.checkedErrorCount),
-    ).toEqual([])
+    )
   }),
   Then('the resync is refused', (context: Context) => {
     const resync = context.world.getLastResync()
     const {editor, heard} = context.world.getEditor(resync.editorName)
 
-    expect(heard.warnings.length).toBeGreaterThan(resync.warningCount)
-    expect(editor.document.toTextspec({keys: true})).toEqual(resync.screen)
-    expect(heard.mutations.length).toEqual(resync.batchCount)
+    checkGreaterThan(
+      `The warnings ${resync.editorName} has given`,
+      heard.warnings.length,
+      resync.warningCount,
+    )
+    checkEqual(
+      `What ${resync.editorName} shows`,
+      editor.document.toTextspec({keys: true}),
+      resync.screen,
+    )
+    checkEqual(
+      `The batches ${resync.editorName} has sent`,
+      heard.mutations.length,
+      resync.batchCount,
+    )
   }),
   Then(
     "{editor}'s status is {status}",
     (context: Context, name: EditorName, status: IoEditorStatus) => {
-      expect(context.world.getEditor(name).editor.getStatus()).toEqual(status)
+      checkEqual(
+        `${name}'s status`,
+        context.world.getEditor(name).editor.getStatus(),
+        status,
+      )
     },
   ),
   Then(
     '{editor} has emitted {int} change(s)',
     (context: Context, name: EditorName, count: number) => {
-      expect(context.world.getEditor(name).heard.changes.length).toEqual(count)
+      checkEqual(
+        `The changes ${name} has emitted`,
+        context.world.getEditor(name).heard.changes.length,
+        count,
+      )
     },
   ),
   Then(
     '{editor} has emitted no change',
     (context: Context, name: EditorName) => {
-      expect(context.world.getEditor(name).heard.changes).toEqual([])
+      checkEqual(
+        `The changes ${name} has emitted`,
+        context.world.getEditor(name).heard.changes.length,
+        0,
+      )
     },
   ),
 ]
@@ -295,27 +350,27 @@ function userSteps() {
     {
       text: '{string} is typed',
       run: (context: Context, name: EditorName, text: string) =>
-        context.world.getEditor(name).editor.type(text),
+        context.world.type(name, text),
     },
     {
       text: 'the caret is put after {string}',
       run: (context: Context, name: EditorName, text: string) =>
-        context.world.getEditor(name).editor.putCaretAfter(text),
+        context.world.putCaretAfter(name, text),
     },
     {
       text: 'the style is set to {style}',
       run: (context: Context, name: EditorName, style: string) =>
-        context.world.getEditor(name).editor.setStyle(style),
+        context.world.setStyle(name, style),
     },
     {
       text: 'the block {textspec} is inserted',
       run: (context: Context, name: EditorName, textspec: string) =>
-        context.world.getEditor(name).editor.insertBlock(textspec),
+        context.world.insertBlock(name, textspec),
     },
     {
       text: 'the block {string} is deleted',
       run: (context: Context, name: EditorName, text: string) =>
-        context.world.getEditor(name).editor.deleteBlock(text),
+        context.world.deleteBlock(name, text),
     },
   ]
 
@@ -331,15 +386,19 @@ function userSteps() {
       ),
     ]),
     When('undo is performed', (context: Context) => {
-      context.world.getEditor('Editor A').editor.undo()
+      context.world.undo('Editor A')
     }),
     When(
       'undo is performed in {editor}',
       (context: Context, name: EditorName) => {
-        context.world.getEditor(name).editor.undo()
+        context.world.undo(name)
       },
     ),
   ]
+}
+
+function describeField(value: Array<PortableTextBlock> | undefined): string {
+  return value === undefined ? 'no field' : formatTextspec(value)
 }
 
 function duplicateOrMissingKeys(

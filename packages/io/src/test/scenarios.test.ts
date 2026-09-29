@@ -7,9 +7,9 @@ import loadingAndEmptyFeature from '../../gherkin-spec/loading-and-empty.feature
 import otherEditorsFeature from '../../gherkin-spec/other-editors.feature?raw'
 import outOfStepAndResyncFeature from '../../gherkin-spec/out-of-step-and-resync.feature?raw'
 import sendingAndConfirmingFeature from '../../gherkin-spec/sending-and-confirming.feature?raw'
-import {parameterTypes} from './parameter-types'
-import {stepDefinitions, type Context} from './steps'
-import {createWorld} from './world'
+import {parameterTypes} from '../scenario/parameter-types'
+import {stepDefinitions, type Context} from '../scenario/steps'
+import {createWorld} from '../scenario/world'
 
 const features = [
   keysFeature,

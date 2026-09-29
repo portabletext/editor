@@ -3,9 +3,9 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {parseTextspec} from './document'
 import {createIoEditor} from './editor'
+import {createNetwork} from './fakes/network'
 import {createPassThroughHost} from './host'
-import {createNetwork} from './test/network'
-import {listenTo} from './test/world'
+import {listenTo} from './scenario/world'
 import type {Load, MutationBatch, Transaction} from './types'
 
 describe(createPassThroughHost.name, () => {

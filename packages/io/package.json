@@ -7,6 +7,11 @@
   "author": "Sanity.io <hello@sanity.io>",
   "type": "module",
   "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./gherkin-spec/*": "./gherkin-spec/*",
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "check:types": "tsc",
     "check:types:watch": "tsc --watch",
@@ -15,14 +20,16 @@
     "test:unit:watch": "vitest --project unit"
   },
   "dependencies": {
+    "@cucumber/gherkin": "^41.0.0",
+    "@cucumber/messages": "^34.0.1",
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/test": "workspace:^",
-    "@textspec/notation": "^1.0.2"
+    "@textspec/notation": "^1.0.2",
+    "racejar": "workspace:^"
   },
   "devDependencies": {
     "@sanity/tsconfig": "catalog:tooling",
-    "racejar": "workspace:*",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling"

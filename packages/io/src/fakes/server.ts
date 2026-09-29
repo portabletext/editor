@@ -46,6 +46,11 @@ export type Server = {
   ) => ServerTransaction
   copy: () => ServerCopy
   getTransactions: () => Array<ServerTransaction>
+  /**
+   * Every transaction in the order it was recorded, with whether it changed
+   * the field.
+   */
+  getLog: () => Array<{transaction: ServerTransaction; changesField: boolean}>
   getTransaction: (transactionId: string) => ServerTransaction
 }
 
@@ -61,6 +66,7 @@ export function createServer(initial: {
   let value: Array<PortableTextBlock> | undefined
   let rev: string | undefined
   const transactions: Array<ServerTransaction> = []
+  const log: Array<{transaction: ServerTransaction; changesField: boolean}> = []
   const refusedBatchIds = new Set<string>()
 
   if (initial.document) {
@@ -70,6 +76,7 @@ export function createServer(initial: {
 
   function receiveBatches(batches: Array<SavedBatch>, transactionId: string) {
     const patches = batches.flatMap((batch) => batch.patches)
+    const valueBefore = value
     value = applyWithContentLakeSemantics(value, patches)
 
     return record(
@@ -79,15 +86,18 @@ export function createServer(initial: {
         batchIds: batches.map((batch) => batch.id),
       },
       nextRevision(),
+      JSON.stringify(valueBefore) !== JSON.stringify(value),
     )
   }
 
   function record(
     transaction: Omit<ServerTransaction, 'previousRev' | 'resultRev'>,
     resultRev: string | undefined,
+    changesField: boolean,
   ): ServerTransaction {
     const recorded = {...transaction, previousRev: rev, resultRev}
     transactions.push(recorded)
+    log.push({transaction: recorded, changesField})
     rev = resultRev
     return recorded
   }
@@ -111,18 +121,24 @@ export function createServer(initial: {
         throw new Error('The document does not exist')
       }
 
-      return record({transactionId, patches: [], batchIds: []}, nextRevision())
+      return record(
+        {transactionId, patches: [], batchIds: []},
+        nextRevision(),
+        false,
+      )
     },
     deleteDocument: (transactionId) => {
       if (rev === undefined) {
         throw new Error('The document does not exist')
       }
 
+      const valueBefore = value
       value = undefined
 
       return record(
         {transactionId, patches: [unset([])], batchIds: []},
         undefined,
+        valueBefore !== undefined,
       )
     },
     recreate: (nextValue, transactionId) => {
@@ -135,10 +151,12 @@ export function createServer(initial: {
       return record(
         {transactionId, patches: [set(nextValue, [])], batchIds: []},
         nextRevision(),
+        true,
       )
     },
     copy: () => ({value: structuredClone(value), rev}),
     getTransactions: () => transactions,
+    getLog: () => log,
     getTransaction: (transactionId) => {
       const transaction = transactions.find(
         (candidate) => candidate.transactionId === transactionId,
