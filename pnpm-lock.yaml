@@ -740,6 +740,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@textspec/notation':
+        specifier: ^1.0.2
+        version: 1.0.2
     devDependencies:
       '@sanity/tsconfig':
         specifier: catalog:tooling

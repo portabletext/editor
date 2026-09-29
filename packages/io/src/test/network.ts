@@ -17,6 +17,8 @@ export type Reply = {
 export type NetworkReceiver = {
   receiveTransaction: (transaction: ServerTransaction) => void
   receiveReply: (reply: Reply) => void
+  /** The server has taken this editor's save request for a batch. */
+  receiveSaveTaken: (batchId: string) => void
 }
 
 export type VirtualClock = {
@@ -35,6 +37,7 @@ export type Network<TBatch extends SavedBatch> = {
   connect: (editorId: string, receiver: NetworkReceiver) => void
   send: (editorId: string, batch: TBatch) => void
   getSaveRequests: () => Array<SaveRequest<TBatch>>
+  /** Removes the request and tells the sending editor, if it is connected. */
   takeSaveRequest: (batchId: string) => SaveRequest<TBatch>
   queueReply: (reply: Reply) => void
   getReplies: () => Array<Reply>
@@ -87,6 +90,7 @@ export function createNetwork<
       }
 
       saveRequests = saveRequests.filter((candidate) => candidate !== request)
+      receivers.get(request.editorId)?.receiveSaveTaken(batchId)
 
       return request
     },

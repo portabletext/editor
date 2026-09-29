@@ -102,11 +102,10 @@ describe(createDocument.name, () => {
 
     expect(result).toEqual({
       patches: [set('h1', [{_key: 'k2'}, 'style'])],
-      inversePatches: [set('normal', [{_key: 'k2'}, 'style'])],
+      undoStep: {type: 'styled', blockKey: 'k2', previousStyle: 'normal'},
     })
     expect(document.toTextspec()).toEqual('B: foo;;H1: ba|r')
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
-    expect(applyAll(document.getValue(), result.inversePatches)).toEqual(before)
   })
 
   test('setting an unknown style throws', () => {
@@ -138,18 +137,16 @@ describe(createDocument.name, () => {
           'text',
         ]),
       ],
-      inversePatches: [
-        diffMatchPatch('foxyo', 'foo', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-      ],
+      undoStep: {
+        type: 'typed',
+        blockKey: 'k0',
+        spanKey: 'k1',
+        offset: 2,
+        text: 'xy',
+      },
     })
     expect(document.toTextspec()).toEqual('B: foxy|o;;B: bar')
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
-    expect(applyAll(document.getValue(), result.inversePatches)).toEqual(before)
   })
 
   test('the caret is put after text found in one block', () => {
@@ -208,13 +205,12 @@ describe(createDocument.name, () => {
           [{_key: 'k0'}],
         ),
       ],
-      inversePatches: [unset([{_key: 'k9'}])],
+      undoStep: {type: 'inserted', blockKey: 'k9'},
     })
     expect(document.toTextspec({keys: true})).toEqual(
       'B _key="k0": foo;;B _key="k9": baz|;;B _key="k2": bar',
     )
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
-    expect(applyAll(document.getValue(), result.inversePatches)).toEqual(before)
   })
 
   test('an inserted block without a named key gets a generated one', () => {
@@ -241,7 +237,7 @@ describe(createDocument.name, () => {
           [{_key: 'k0'}],
         ),
       ],
-      inversePatches: [unset([{_key: 'k2'}])],
+      undoStep: {type: 'inserted', blockKey: 'k2'},
     })
     expect(document.toTextspec()).toEqual('B: foo;;H2: baz|')
   })
@@ -258,27 +254,23 @@ describe(createDocument.name, () => {
 
     expect(result).toEqual({
       patches: [unset([{_key: 'k2'}])],
-      inversePatches: [
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k2',
-              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
-              style: 'normal',
-            },
-          ],
-          'after',
-          [{_key: 'k0'}],
-        ),
-      ],
+      undoStep: {
+        type: 'deleted',
+        block: {
+          _type: 'block',
+          _key: 'k2',
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          style: 'normal',
+        },
+        previousKey: 'k0',
+        nextKey: 'k4',
+      },
     })
     expect(document.toTextspec()).toEqual('B: foo|;;B: baz')
     expect(applyAll(before, result.patches)).toEqual(document.getValue())
-    expect(applyAll(document.getValue(), result.inversePatches)).toEqual(before)
   })
 
-  test('deleting the first block puts it back before its next sibling on undo', () => {
+  test('deleting the first block records that it had no previous sibling', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createDocument(
       {keyGenerator},
@@ -290,23 +282,20 @@ describe(createDocument.name, () => {
 
     expect(result).toEqual({
       patches: [unset([{_key: 'k0'}])],
-      inversePatches: [
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k0',
-              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-              style: 'normal',
-            },
-          ],
-          'before',
-          [{_key: 'k2'}],
-        ),
-      ],
+      undoStep: {
+        type: 'deleted',
+        block: {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          style: 'normal',
+        },
+        previousKey: undefined,
+        nextKey: 'k2',
+      },
     })
     expect(document.toTextspec()).toEqual('B: |bar')
-    expect(applyAll(document.getValue(), result.inversePatches)).toEqual(before)
+    expect(applyAll(before, result.patches)).toEqual(document.getValue())
   })
 
   test('deleting another block leaves the caret where it is', () => {
@@ -336,6 +325,37 @@ describe(createDocument.name, () => {
     )
   })
 
+  test('an inserted block whose key a sibling has gets a new key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B _key="k9": foo|'),
+    )
+
+    const result = document.insertBlock('B _key="k9": bar')
+
+    expect(result).toEqual({
+      patches: [
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k2',
+              children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+              style: 'normal',
+            },
+          ],
+          'after',
+          [{_key: 'k9'}],
+        ),
+      ],
+      undoStep: {type: 'inserted', blockKey: 'k2'},
+    })
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="k9": foo;;B _key="k2": bar|',
+    )
+  })
+
   test('new content keeps the caret in its block, clamped to the text', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createDocument(
@@ -360,6 +380,146 @@ describe(createDocument.name, () => {
     document.setValue(parseTextspec({keyGenerator}, 'B _key="k0": foo').value)
 
     expect(document.toTextspec()).toEqual('B: |foo')
+  })
+})
+
+describe('reverting a change', () => {
+  test('typed text is deleted while it is still at its offset, and the caret moves back', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: fooxy|'),
+    )
+    const typed = {
+      type: 'typed' as const,
+      blockKey: 'k0',
+      spanKey: 'k1',
+      offset: 3,
+      text: 'x',
+    }
+
+    expect(document.deleteText(typed)).toEqual([
+      diffMatchPatch('fooxy', 'fooy', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+    ])
+    expect(document.toTextspec()).toEqual('B: fooy|')
+    expect(document.deleteText(typed)).toEqual([])
+    expect(document.deleteText({...typed, spanKey: 'k8'})).toEqual([])
+    expect(document.deleteText({...typed, blockKey: 'k9'})).toEqual([])
+    expect(document.toTextspec()).toEqual('B: fooy|')
+  })
+
+  test("a block's style is set or removed, and a gone block is left alone", () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'H1: foo|'),
+    )
+
+    expect(document.setBlockStyle('k0', 'h2')).toEqual([
+      set('h2', [{_key: 'k0'}, 'style']),
+    ])
+    expect(document.setBlockStyle('k0', undefined)).toEqual([
+      unset([{_key: 'k0'}, 'style']),
+    ])
+    expect(document.getValue()).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+    expect(document.setBlockStyle('k9', 'h1')).toEqual([])
+  })
+
+  test('a block deleted by key empties the field when it was the last, and a gone block is left alone', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo|;;B: bar'),
+    )
+
+    expect(document.deleteBlockByKey('k9')).toEqual([])
+    expect(document.deleteBlockByKey('k2')).toEqual([unset([{_key: 'k2'}])])
+    expect(document.deleteBlockByKey('k0')).toEqual([
+      unset([{_key: 'k0'}]),
+      unset([]),
+    ])
+    expect(document.getPlaceholderKey()).toEqual('k4')
+  })
+
+  test('a deleted block goes back after its previous sibling, else before its next one, else first', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar;;B: baz')
+    const [fooBlock, barBlock, bazBlock] = value
+    const document = createDocument({keyGenerator}, {value: [bazBlock]})
+
+    expect(
+      document.restoreBlock({
+        type: 'deleted',
+        block: barBlock,
+        previousKey: fooBlock._key,
+        nextKey: bazBlock._key,
+      }),
+    ).toEqual([insert([barBlock], 'before', [{_key: bazBlock._key}])])
+    expect(
+      document.restoreBlock({
+        type: 'deleted',
+        block: fooBlock,
+        previousKey: 'k9',
+        nextKey: 'k8',
+      }),
+    ).toEqual([insert([fooBlock], 'before', [{_key: barBlock._key}])])
+    expect(document.toTextspec()).toEqual('B: foo;;B: bar;;B: |baz')
+
+    document.deleteBlockByKey(bazBlock._key)
+
+    expect(
+      document.restoreBlock({
+        type: 'deleted',
+        block: bazBlock,
+        previousKey: barBlock._key,
+        nextKey: undefined,
+      }),
+    ).toEqual([insert([bazBlock], 'after', [{_key: barBlock._key}])])
+    expect(document.toTextspec()).toEqual('B: foo;;B: bar|;;B: baz')
+  })
+
+  test('a deleted block is not put back while its key is on screen', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo|;;B: bar')
+    const document = createDocument({keyGenerator}, {value})
+
+    expect(
+      document.restoreBlock({
+        type: 'deleted',
+        block: value[1],
+        previousKey: value[0]._key,
+        nextKey: undefined,
+      }),
+    ).toEqual([])
+    expect(document.getValue()).toEqual(value)
+  })
+
+  test('a deleted block put back into an empty field replaces the placeholder', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const [block] = parseTextspec({keyGenerator}, 'B: foo').value
+    const document = createDocument({keyGenerator}, {value: undefined})
+
+    expect(
+      document.restoreBlock({
+        type: 'deleted',
+        block,
+        previousKey: undefined,
+        nextKey: undefined,
+      }),
+    ).toEqual([setIfMissing([], []), insert([block], 'before', [0])])
+    expect(document.getPlaceholderKey()).toEqual(undefined)
+    expect(document.getValue()).toEqual([block])
   })
 })
 
@@ -421,25 +581,19 @@ describe('the placeholder', () => {
           'text',
         ]),
       ],
-      inversePatches: [
-        diffMatchPatch('x', '', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-        unset([{_key: 'k0'}]),
-        unset([]),
-      ],
+      undoStep: {
+        type: 'typed',
+        blockKey: 'k0',
+        spanKey: 'k1',
+        offset: 0,
+        text: 'x',
+      },
     })
     expect(createsBlock(firstResult.patches)).toEqual(true)
     expect(document.getPlaceholderKey()).toEqual(undefined)
     expect(document.toTextspec()).toEqual('B: x|')
     expect(applyAll(undefined, firstResult.patches)).toEqual(
       document.getValue(),
-    )
-    expect(applyAll(document.getValue(), firstResult.inversePatches)).toEqual(
-      undefined,
     )
 
     const secondResult = document.type('y')
@@ -453,14 +607,13 @@ describe('the placeholder', () => {
           'text',
         ]),
       ],
-      inversePatches: [
-        diffMatchPatch('xy', 'x', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-      ],
+      undoStep: {
+        type: 'typed',
+        blockKey: 'k0',
+        spanKey: 'k1',
+        offset: 1,
+        text: 'y',
+      },
     })
     expect(createsBlock(secondResult.patches)).toEqual(false)
   })
@@ -556,27 +709,22 @@ describe('the placeholder', () => {
 
     expect(deleteResult).toEqual({
       patches: [unset([{_key: 'k0'}]), unset([])],
-      inversePatches: [
-        setIfMissing([], []),
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k0',
-              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-              style: 'normal',
-            },
-          ],
-          'before',
-          [0],
-        ),
-      ],
+      undoStep: {
+        type: 'deleted',
+        block: {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          style: 'normal',
+        },
+        previousKey: undefined,
+        nextKey: undefined,
+      },
     })
     expect(emptiesField(deleteResult.patches)).toEqual(true)
     expect(document.getPlaceholderKey()).toEqual('k2')
     expect(document.toTextspec({keys: true})).toEqual('B _key="k2": |')
     expect(applyAll(before, deleteResult.patches)).toEqual(undefined)
-    expect(applyAll(undefined, deleteResult.inversePatches)).toEqual(before)
 
     const typeResult = document.type('x')
 
@@ -588,7 +736,7 @@ describe('the placeholder', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createDocument({keyGenerator}, {value: undefined})
 
-    expect(document.deleteBlock('')).toEqual({patches: [], inversePatches: []})
+    expect(document.deleteBlock('')).toEqual({patches: [], undoStep: undefined})
     expect(document.getPlaceholderKey()).toEqual('k0')
   })
 
@@ -649,6 +797,18 @@ describe(comparableTextspec.name, () => {
     })
   })
 
+  test('compares a named key that looks like a generated one', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B _key="k9": foo')
+
+    expect(
+      comparableTextspec({value, selection: null}, 'B _key="expected-k0": foo'),
+    ).toEqual({
+      actual: 'B: foo',
+      expected: 'B _key="expected-k0": foo',
+    })
+  })
+
   test('shows every block that carries a named key', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec(
@@ -705,11 +865,8 @@ describe(comparableTextspec.name, () => {
 
 describe(createsBlock.name, () => {
   test('needs a whole-field setIfMissing followed by an insert', () => {
-    const block = {
-      _type: 'block',
-      _key: 'k0',
-      children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-    }
+    const keyGenerator = createTestKeyGenerator()
+    const [block] = parseTextspec({keyGenerator}, 'B: ').value
 
     expect(
       createsBlock([setIfMissing([], []), insert([block], 'before', [0])]),
@@ -717,7 +874,7 @@ describe(createsBlock.name, () => {
     expect(createsBlock([insert([block], 'before', [0])])).toEqual(false)
     expect(
       createsBlock([
-        setIfMissing([], [{_key: 'k0'}, 'children']),
+        setIfMissing([], [{_key: block._key}, 'children']),
         insert([block], 'before', [0]),
       ]),
     ).toEqual(false)
@@ -727,7 +884,10 @@ describe(createsBlock.name, () => {
 
 describe(emptiesField.name, () => {
   test('needs a whole-field unset', () => {
-    expect(emptiesField([unset([{_key: 'k0'}]), unset([])])).toEqual(true)
-    expect(emptiesField([unset([{_key: 'k0'}])])).toEqual(false)
+    const keyGenerator = createTestKeyGenerator()
+    const [block] = parseTextspec({keyGenerator}, 'B: foo').value
+
+    expect(emptiesField([unset([{_key: block._key}]), unset([])])).toEqual(true)
+    expect(emptiesField([unset([{_key: block._key}])])).toEqual(false)
   })
 })

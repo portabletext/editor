@@ -198,7 +198,7 @@ export const stepDefinitions = [
     (context: Context, name: EditorName, batchNumber: number) => {
       const worldEditor = context.world.getEditor(name)
 
-      expect(worldEditor.editor.sentBatches.length).toEqual(batchNumber)
+      expect(worldEditor.heard.mutations.length).toEqual(batchNumber)
       worldEditor.checkedBatchCount = batchNumber
     },
   ),
@@ -207,7 +207,7 @@ export const stepDefinitions = [
     (context: Context, name: EditorName) => {
       const worldEditor = context.world.getEditor(name)
 
-      expect(worldEditor.editor.sentBatches.length).toEqual(
+      expect(worldEditor.heard.mutations.length).toEqual(
         worldEditor.checkedBatchCount,
       )
     },
@@ -215,9 +215,10 @@ export const stepDefinitions = [
   Then(
     '{editor} has sent a final batch',
     (context: Context, name: EditorName) => {
-      expect(
-        context.world.getEditor(name).editor.sentBatches.at(-1)?.final,
-      ).toEqual(true)
+      const worldEditor = context.world.getEditor(name)
+
+      expect(worldEditor.heard.mutations.at(-1)?.final).toEqual(true)
+      worldEditor.checkedBatchCount = worldEditor.heard.mutations.length
     },
   ),
   Then(
@@ -248,7 +249,7 @@ export const stepDefinitions = [
     '{editor} reports that it is out of step',
     (context: Context, name: EditorName) => {
       const worldEditor = context.world.getEditor(name)
-      const errorCount = worldEditor.editor.errors.length
+      const errorCount = worldEditor.heard.errors.length
 
       expect(errorCount).toBeGreaterThan(worldEditor.checkedErrorCount)
       worldEditor.checkedErrorCount = errorCount
@@ -258,16 +259,16 @@ export const stepDefinitions = [
     const worldEditor = context.world.getEditor(name)
 
     expect(
-      worldEditor.editor.errors.slice(worldEditor.checkedErrorCount),
+      worldEditor.heard.errors.slice(worldEditor.checkedErrorCount),
     ).toEqual([])
   }),
   Then('the resync is refused', (context: Context) => {
     const resync = context.world.getLastResync()
-    const {editor} = context.world.getEditor(resync.editorName)
+    const {editor, heard} = context.world.getEditor(resync.editorName)
 
-    expect(editor.warnings.length).toBeGreaterThan(resync.warningCount)
+    expect(heard.warnings.length).toBeGreaterThan(resync.warningCount)
     expect(editor.document.toTextspec({keys: true})).toEqual(resync.screen)
-    expect(editor.sentBatches.length).toEqual(resync.batchCount)
+    expect(heard.mutations.length).toEqual(resync.batchCount)
   }),
   Then(
     "{editor}'s status is {status}",
@@ -278,21 +279,17 @@ export const stepDefinitions = [
   Then(
     '{editor} has emitted {int} change(s)',
     (context: Context, name: EditorName, count: number) => {
-      expect(context.world.getEditor(name).editor.changes.length).toEqual(count)
+      expect(context.world.getEditor(name).heard.changes.length).toEqual(count)
     },
   ),
   Then(
     '{editor} has emitted no change',
     (context: Context, name: EditorName) => {
-      expect(context.world.getEditor(name).editor.changes).toEqual([])
+      expect(context.world.getEditor(name).heard.changes).toEqual([])
     },
   ),
 ]
 
-/**
- * Each user step twice: on Editor A when no editor is named, and on the named
- * editor.
- */
 function userSteps() {
   const actions = [
     {

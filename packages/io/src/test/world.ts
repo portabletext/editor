@@ -3,7 +3,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {parseTextspec} from '../document'
 import {createIoEditor, type IoEditor} from '../editor'
 import {createPassThroughHost, type PassThroughHost} from '../host'
-import type {MutationBatch} from '../types'
+import type {ChangeEvent, ErrorEvent, MutationBatch} from '../types'
 import {createNetwork, type Network} from './network'
 import {createServer, type Server} from './server'
 
@@ -11,9 +11,21 @@ export type EditorName = 'Editor A' | 'Editor B'
 
 export type ServerCopyName = 'no document' | 'no field' | 'an empty list'
 
+/**
+ * What the editor's listeners received, recorded from the moment it was
+ * created.
+ */
+export type Heard = {
+  mutations: Array<MutationBatch>
+  changes: Array<ChangeEvent>
+  errors: Array<ErrorEvent>
+  warnings: Array<string>
+}
+
 export type WorldEditor = {
   editor: IoEditor
   host: PassThroughHost
+  heard: Heard
   /** The batch count at the previous `has sent` check. */
   checkedBatchCount: number
   /** The error count at the previous out-of-step or in-step check. */
@@ -49,14 +61,6 @@ export function createWorld() {
   let lastResync: ResyncAttempt | undefined
   const namedTransactionIds = new Map<string, string>()
 
-  function getSetup(): Setup {
-    if (!setup) {
-      throw new Error('No editors yet')
-    }
-
-    return setup
-  }
-
   function startEditors({claimLoad}: {claimLoad: boolean}): Setup {
     const server = createServer({
       documentId: 'document',
@@ -83,29 +87,14 @@ export function createWorld() {
     return setup
   }
 
-  function getEditor(name: EditorName): WorldEditor {
-    return getSetup().editors[name]
-  }
-
-  function getBatch(name: EditorName, batchNumber: number): MutationBatch {
-    const batch = getEditor(name).editor.sentBatches[batchNumber - 1]
-
-    if (!batch) {
-      throw new Error(`${name} has not sent batch ${batchNumber}`)
-    }
-
-    return batch
-  }
-
   function publishReceived(
     batches: Array<{name: EditorName; batch: MutationBatch}>,
     transactionId: string,
   ) {
     const {server, network} = getSetup()
-    const [first, second] = batches.map(({batch}) => {
-      network.takeSaveRequest(batch.id)
-      return batch
-    })
+    const [first, second] = batches.map(
+      ({batch}) => network.takeSaveRequest(batch.id).batch,
+    )
     const transaction = second
       ? server.receiveAsOne(first, second, transactionId)
       : server.receive(first, transactionId)
@@ -119,18 +108,6 @@ export function createWorld() {
         outcome: 'accepted',
       })
     }
-  }
-
-  function transactionCarrying(batchId: string): string {
-    const transaction = getSetup()
-      .server.getTransactions()
-      .find((candidate) => candidate.batchIds.includes(batchId))
-
-    if (!transaction) {
-      throw new Error(`The server has not received batch "${batchId}"`)
-    }
-
-    return transaction.transactionId
   }
 
   function deliverReply(
@@ -153,9 +130,43 @@ export function createWorld() {
     network.deliverReply(batch.id)
   }
 
+  function getBatch(name: EditorName, batchNumber: number): MutationBatch {
+    const batch = getEditor(name).heard.mutations[batchNumber - 1]
+
+    if (!batch) {
+      throw new Error(`${name} has not sent batch ${batchNumber}`)
+    }
+
+    return batch
+  }
+
+  function getEditor(name: EditorName): WorldEditor {
+    return getSetup().editors[name]
+  }
+
+  function transactionCarrying(batchId: string): string {
+    const transaction = getSetup()
+      .server.getTransactions()
+      .find((candidate) => candidate.batchIds.includes(batchId))
+
+    if (!transaction) {
+      throw new Error(`The server has not received batch "${batchId}"`)
+    }
+
+    return transaction.transactionId
+  }
+
   function recordNamedTransaction(name: string, transactionId: string) {
     namedTransactionIds.set(name, transactionId)
     return transactionId
+  }
+
+  function getSetup(): Setup {
+    if (!setup) {
+      throw new Error('No editors yet')
+    }
+
+    return setup
   }
 
   return {
@@ -221,7 +232,7 @@ export function createWorld() {
       )
     },
     receiveFinal: (name: EditorName) => {
-      const batch = getEditor(name).editor.sentBatches.at(-1)
+      const batch = getEditor(name).heard.mutations.at(-1)
 
       if (!batch?.final) {
         throw new Error(`${name} has not sent a final batch`)
@@ -319,12 +330,12 @@ export function createWorld() {
     reject: (name: EditorName, batchNumber: number) =>
       deliverReply(name, batchNumber, 'rejected'),
     resync: (name: EditorName, {discardUnsent}: {discardUnsent: boolean}) => {
-      const {editor, host} = getEditor(name)
+      const {editor, host, heard} = getEditor(name)
       lastResync = {
         editorName: name,
-        warningCount: editor.warnings.length,
+        warningCount: heard.warnings.length,
         screen: editor.document.toTextspec({keys: true}),
-        batchCount: editor.sentBatches.length,
+        batchCount: heard.mutations.length,
       }
       host.resync({discardUnsent})
     },
@@ -355,10 +366,12 @@ function createWorldEditor({
     clock: network.clock,
     claimLoad,
   })
+  const heard = listenTo(editor)
   const host = createPassThroughHost({
     editor,
     save: (batch) => network.send(name, batch),
     fetchCopy: () => server.copy(),
+    subscription: () => network.getFeed(name),
   })
 
   network.connect(name, {
@@ -367,7 +380,40 @@ function createWorldEditor({
       reply.outcome === 'accepted'
         ? host.reportAccepted(reply.batchId)
         : host.reportRejected(reply.batchId),
+    receiveSaveTaken: host.reportSaveTaken,
+  })
+  editor.mount()
+
+  return {editor, host, heard, checkedBatchCount: 0, checkedErrorCount: 0}
+}
+
+export function listenTo(editor: IoEditor): Heard {
+  const heard: Heard = {mutations: [], changes: [], errors: [], warnings: []}
+
+  editor.on((event) => {
+    switch (event.type) {
+      case 'mutation': {
+        const {type: _type, ...batch} = event
+        heard.mutations.push(batch)
+        break
+      }
+      case 'change': {
+        const {type: _type, ...change} = event
+        heard.changes.push(change)
+        break
+      }
+      case 'error': {
+        const {type: _type, ...error} = event
+        heard.errors.push(error)
+        break
+      }
+      case 'warning':
+        heard.warnings.push(event.message)
+        break
+      case 'ready':
+        break
+    }
   })
 
-  return {editor, host, checkedBatchCount: 0, checkedErrorCount: 0}
+  return heard
 }

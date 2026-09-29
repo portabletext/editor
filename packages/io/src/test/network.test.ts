@@ -36,6 +36,27 @@ describe(createNetwork.name, () => {
     )
   })
 
+  test('taking a save request tells the editor that sent it', () => {
+    const network = createNetwork()
+    const taken: Array<{editorId: string; batchId: string}> = []
+
+    for (const editorId of ['A', 'B']) {
+      network.connect(editorId, {
+        receiveTransaction: () => {},
+        receiveReply: () => {},
+        receiveSaveTaken: (batchId) => {
+          taken.push({editorId, batchId})
+        },
+      })
+    }
+
+    network.send('A', {id: 'a1', patches: []})
+    network.send('B', {id: 'b1', patches: []})
+    network.takeSaveRequest('b1')
+
+    expect(taken).toEqual([{editorId: 'B', batchId: 'b1'}])
+  })
+
   test('replies reach the sending editor in the order the caller delivers them', () => {
     const network = createNetwork()
     const received: Array<{editorId: string; reply: Reply}> = []
@@ -46,6 +67,7 @@ describe(createNetwork.name, () => {
         receiveReply: (reply) => {
           received.push({editorId, reply})
         },
+        receiveSaveTaken: () => {},
       })
     }
 
@@ -96,6 +118,7 @@ describe(createNetwork.name, () => {
           received.push({editorId, transactionId: transaction.transactionId})
         },
         receiveReply: () => {},
+        receiveSaveTaken: () => {},
       })
     }
 
@@ -122,7 +145,11 @@ describe(createNetwork.name, () => {
 
   test('an editor that connects late gets only later transactions', () => {
     const network = createNetwork()
-    const receiver = {receiveTransaction: () => {}, receiveReply: () => {}}
+    const receiver = {
+      receiveTransaction: () => {},
+      receiveReply: () => {},
+      receiveSaveTaken: () => {},
+    }
     const transaction: ServerTransaction = {
       transactionId: 't1',
       previousRev: 'r1',

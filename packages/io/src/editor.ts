@@ -1,7 +1,17 @@
 import {set, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {applyWithContentLakeSemantics, resolvePath} from './content-lake'
-import {createDocument, type ActionResult, type Document} from './document'
+import {
+  applyWithContentLakeSemantics,
+  hasTarget,
+  resolvePath,
+} from './content-lake'
+import {
+  createDocument,
+  generateUniqueKey,
+  type ActionResult,
+  type Document,
+  type UndoStep,
+} from './document'
 import type {
   ChangeEvent,
   ErrorEvent,
@@ -15,6 +25,7 @@ import type {
 } from './types'
 
 const heldTransactionTimeout = 10_000
+const livenessTimeout = 10_000
 
 export type Clock = {
   now: () => number
@@ -28,6 +39,7 @@ export type IoEditorEvent =
   | ({type: 'mutation'} & MutationBatch)
   | ({type: 'change'} & ChangeEvent)
   | ({type: 'error'} & ErrorEvent)
+  | {type: 'warning'; message: string}
   | {type: 'ready'}
 
 export type IoEditor = {
@@ -37,6 +49,11 @@ export type IoEditor = {
   getBase: () => Load
   on: (listener: (event: IoEditorEvent) => void) => () => void
 
+  /**
+   * Ends the first commit. An editor that doesn't claim the first load
+   * becomes ready here.
+   */
+  mount: () => void
   load: (load: Load) => void
   releaseClaim: () => void
   resync: (resync: Resync) => void
@@ -53,11 +70,6 @@ export type IoEditor = {
   deleteBlock: (text: string) => void
   undo: () => void
   close: () => void
-
-  sentBatches: Array<MutationBatch>
-  changes: Array<ChangeEvent>
-  errors: Array<ErrorEvent>
-  warnings: Array<string>
 }
 
 type SentBatch = {
@@ -67,6 +79,19 @@ type SentBatch = {
 }
 
 type HeldTransaction = {transaction: Transaction; arrivedAt: number}
+
+/**
+ * The base's style for a block, or `undefined` when the base has no such
+ * block.
+ */
+type BaseStyle = {style: string | undefined} | undefined
+
+type HistoryEntry = {
+  step: UndoStep
+  batchId: string | undefined
+  /** The base's style for the block at the action, reset at the change's echo. */
+  baseStyle: BaseStyle
+}
 
 /**
  * The editor side of the pass-through protocol. Batch IDs are the editor's
@@ -82,12 +107,9 @@ export function createIoEditor(options: {
   const listeners = new Set<(event: IoEditorEvent) => void>()
   const document = createDocument({keyGenerator}, {value: undefined})
   const emittedBatchIds = new Set<string>()
-  const sentBatches: Array<MutationBatch> = []
-  const changes: Array<ChangeEvent> = []
-  const errors: Array<ErrorEvent> = []
-  const warnings: Array<string> = []
 
-  let status: IoEditorStatus = options.claimLoad ? 'loading' : 'ready'
+  let status: IoEditorStatus = 'loading'
+  let mounted = false
   let base: Load = {value: undefined, rev: undefined}
   let readOnly = false
   let outOfStep = false
@@ -97,8 +119,10 @@ export function createIoEditor(options: {
   let echoedAwaitingBase: Array<SentBatch> = []
   let pending: Array<Array<Patch>> = []
   let held: Array<HeldTransaction> = []
+  let history: Array<HistoryEntry> = []
   let cancelHeldTimeout: (() => void) | undefined
-  let undoSteps: Array<Array<Patch>> = []
+  let cancelInFlightWarning: (() => void) | undefined
+  let cancelLoadWarning: (() => void) | undefined
 
   function emit(event: IoEditorEvent) {
     for (const listener of listeners) {
@@ -107,11 +131,33 @@ export function createIoEditor(options: {
   }
 
   function warn(message: string) {
-    warnings.push(message)
+    emit({type: 'warning', message})
+  }
+
+  function mount() {
+    if (mounted) {
+      throw new Error('The editor is already mounted')
+    }
+
+    mounted = true
+
+    if (!options.claimLoad) {
+      becomeReady()
+      return
+    }
+
+    if (status === 'loading') {
+      cancelLoadWarning = clock.schedule(livenessTimeout, () => {
+        cancelLoadWarning = undefined
+        warn(
+          `The claimed first load hasn't arrived after ${livenessTimeout} ms`,
+        )
+      })
+    }
   }
 
   function load(incoming: Load) {
-    if (status !== 'loading') {
+    if (!options.claimLoad || status !== 'loading') {
       throw new Error('`load` is only accepted while the first load is claimed')
     }
 
@@ -122,18 +168,25 @@ export function createIoEditor(options: {
   }
 
   function releaseClaim() {
-    if (status === 'loading') {
+    if (options.claimLoad && status === 'loading') {
       becomeReady()
     }
   }
 
   function becomeReady() {
+    cancelLoadWarning?.()
+    cancelLoadWarning = undefined
     status = 'ready'
     emit({type: 'ready'})
     flush()
   }
 
   function resync(incoming: Resync) {
+    if (status === 'unmounted') {
+      warn('Ignored a resync after the editor unmounted')
+      return
+    }
+
     if (status === 'loading') {
       throw new Error('`resync` is not accepted before the editor is ready')
     }
@@ -149,7 +202,7 @@ export function createIoEditor(options: {
     rejected = undefined
     echoedAwaitingBase = []
     outOfStep = false
-    undoSteps = []
+    history = []
     releaseHeld()
 
     if (incoming.discardUnsent) {
@@ -157,11 +210,38 @@ export function createIoEditor(options: {
     }
 
     queueKeyRepair(incoming.value)
+    warnAboutUnappliedPending()
     updateScreen()
     flush()
   }
 
+  function warnAboutUnappliedPending() {
+    let value = base.value
+    let unapplied = 0
+
+    for (const patch of pending.flat()) {
+      if (!hasTarget(value, patch)) {
+        unapplied++
+      }
+
+      value = applyWithContentLakeSemantics(value, [patch])
+    }
+
+    if (unapplied > 0) {
+      warn(
+        `${unapplied} unsent patches had no target after the resync and did nothing`,
+      )
+    }
+  }
+
   function transaction(incoming: Transaction) {
+    if (status === 'unmounted') {
+      warn(
+        `Ignored transaction "${incoming.transactionId}" after the editor unmounted`,
+      )
+      return
+    }
+
     if (status === 'loading') {
       throw new Error(
         '`transaction` is not accepted before the editor is ready',
@@ -196,6 +276,7 @@ export function createIoEditor(options: {
     if (inFlight && inFlight.transactionId === transactionId) {
       echoedAwaitingBase = [...echoedAwaitingBase, inFlight]
       inFlight = undefined
+      stopInFlightWarning()
     }
   }
 
@@ -214,18 +295,15 @@ export function createIoEditor(options: {
   }
 
   function applyTransaction(incoming: Transaction): boolean {
-    const ownBatches = echoedAwaitingBase.filter(
-      (batch) => batch.transactionId === incoming.transactionId,
-    )
-    const ownPatchIndexes = findOwnPatchIndexes(incoming.patches, ownBatches)
-    const otherPatches = incoming.patches.filter(
-      (_patch, index) => !ownPatchIndexes.has(index),
+    const confirmedBatchIds = new Set(
+      echoedAwaitingBase
+        .filter((batch) => batch.transactionId === incoming.transactionId)
+        .map((batch) => batch.id),
     )
     let nextValue = base.value
 
-    for (const [index, patch] of incoming.patches.entries()) {
+    for (const patch of incoming.patches) {
       if (
-        !ownPatchIndexes.has(index) &&
         patch.type === 'insert' &&
         insertCollides(patch, keysAmongSiblings(nextValue, patch.path))
       ) {
@@ -249,12 +327,14 @@ export function createIoEditor(options: {
 
     const unconfirmedKeys = insertedBlockKeys(
       [
-        ...echoedAwaitingBase.filter((batch) => !ownBatches.includes(batch)),
+        ...echoedAwaitingBase.filter(
+          (batch) => !confirmedBatchIds.has(batch.id),
+        ),
         ...(inFlight ? [inFlight] : []),
         ...(rejected ? [rejected] : []),
       ].flatMap((batch) => batch.patches),
     )
-    const collidingPatch = otherPatches.find(
+    const collidingPatch = incoming.patches.find(
       (patch) =>
         patch.type === 'insert' && insertCollides(patch, unconfirmedKeys),
     )
@@ -267,11 +347,11 @@ export function createIoEditor(options: {
       })
     }
 
+    moveHistoryUnder(confirmedBatchIds, nextValue)
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
-      (batch) => !ownBatches.includes(batch),
+      (batch) => !confirmedBatchIds.has(batch.id),
     )
-    rebaseUndoSteps(otherPatches)
 
     if (incoming.patches.length > 0) {
       updateScreen()
@@ -280,10 +360,41 @@ export function createIoEditor(options: {
     return true
   }
 
+  /**
+   * A confirmed change is now part of the base, so the base's style for its
+   * block is its own from here on. What the base held just before is what
+   * the change replaced, if another writer moved it since the action.
+   */
+  function moveHistoryUnder(
+    confirmedBatchIds: Set<string>,
+    nextValue: Array<PortableTextBlock> | undefined,
+  ) {
+    history = history.map((entry) => {
+      if (
+        entry.step.type !== 'styled' ||
+        entry.batchId === undefined ||
+        !confirmedBatchIds.has(entry.batchId)
+      ) {
+        return entry
+      }
+
+      const styleBefore = baseStyleOf(base.value, entry.step.blockKey)
+      const previousStyle =
+        styleBefore !== undefined && !isEqual(styleBefore, entry.baseStyle)
+          ? styleBefore.style
+          : entry.step.previousStyle
+
+      return {
+        ...entry,
+        step: {...entry.step, previousStyle},
+        baseStyle: baseStyleOf(nextValue, entry.step.blockKey),
+      }
+    })
+  }
+
   function fail(error: ErrorEvent): false {
     outOfStep = true
     releaseHeld()
-    errors.push(error)
     emit({type: 'error', ...error})
     return false
   }
@@ -345,6 +456,7 @@ export function createIoEditor(options: {
 
     rejected = inFlight
     inFlight = undefined
+    stopInFlightWarning()
   }
 
   function act(run: () => ActionResult) {
@@ -353,28 +465,80 @@ export function createIoEditor(options: {
     }
 
     const result = run()
-    commitLocalChange(result.patches)
 
-    if (result.patches.length > 0) {
-      undoSteps = [...undoSteps, result.inversePatches]
-    }
-  }
-
-  function undo() {
-    const inversePatches = undoSteps.at(-1)
-
-    if (!canEdit() || !inversePatches) {
+    if (result.patches.length === 0) {
       return
     }
 
-    undoSteps = undoSteps.slice(0, -1)
-    document.setValue(
-      applyWithContentLakeSemantics(getContent(), inversePatches),
-    )
-    commitLocalChange(inversePatches)
+    if (result.undoStep) {
+      history = [
+        ...history,
+        {
+          step: result.undoStep,
+          batchId: undefined,
+          baseStyle: baseStyleOf(base.value, stepBlockKey(result.undoStep)),
+        },
+      ]
+    }
+
+    commitLocalChange(result.patches)
+  }
+
+  function undo() {
+    const entry = history.at(-1)
+
+    if (!canEdit() || !entry) {
+      return
+    }
+
+    history = history.slice(0, -1)
+    commitLocalChange(revert(entry))
+  }
+
+  function revert(entry: HistoryEntry): Array<Patch> {
+    const {step} = entry
+
+    switch (step.type) {
+      case 'typed':
+        return document.deleteText(step)
+      case 'styled': {
+        const style = styleUnder(entry, step)
+        const block = document
+          .getValue()
+          .find((candidate) => candidate._key === step.blockKey)
+
+        return block === undefined || block.style === style
+          ? []
+          : document.setBlockStyle(step.blockKey, style)
+      }
+      case 'inserted':
+        return document.deleteBlockByKey(step.blockKey)
+      case 'deleted':
+        return document.restoreBlock(step)
+    }
+  }
+
+  /**
+   * The style the base holds under the change: the base's own when another
+   * writer moved it since the change, else what the change replaced.
+   */
+  function styleUnder(
+    entry: HistoryEntry,
+    step: Extract<UndoStep, {type: 'styled'}>,
+  ): string | undefined {
+    const current = baseStyleOf(base.value, step.blockKey)
+
+    return current === undefined || isEqual(current, entry.baseStyle)
+      ? step.previousStyle
+      : current.style
   }
 
   function canEdit(): boolean {
+    if (status === 'unmounted') {
+      warn('Ignored an action after the editor unmounted')
+      return false
+    }
+
     if (status !== 'ready') {
       throw new Error(`The editor is ${status}`)
     }
@@ -388,7 +552,7 @@ export function createIoEditor(options: {
     }
 
     pending = [...pending, patches]
-    recordChange({operations: patches, origin: 'local'})
+    emit({type: 'change', operations: patches, origin: 'local'})
     flush()
   }
 
@@ -403,6 +567,9 @@ export function createIoEditor(options: {
 
     status = 'unmounted'
     releaseHeld()
+    stopInFlightWarning()
+    cancelLoadWarning?.()
+    cancelLoadWarning = undefined
   }
 
   function flush() {
@@ -425,7 +592,9 @@ export function createIoEditor(options: {
 
     pending = []
     emittedBatchIds.add(batch.id)
-    sentBatches.push(batch)
+    history = history.map((entry) =>
+      entry.batchId === undefined ? {...entry, batchId: batch.id} : entry,
+    )
 
     if (!final) {
       inFlight = {
@@ -433,9 +602,24 @@ export function createIoEditor(options: {
         patches: batch.patches,
         transactionId: undefined,
       }
+      startInFlightWarning(batch.id, livenessTimeout, clock.now())
     }
 
     emit({type: 'mutation', ...batch})
+  }
+
+  function startInFlightWarning(batchId: string, delay: number, since: number) {
+    cancelInFlightWarning = clock.schedule(delay, () => {
+      warn(
+        `Batch "${batchId}" has been in flight for ${clock.now() - since} ms without coming back`,
+      )
+      startInFlightWarning(batchId, delay * 2, since)
+    })
+  }
+
+  function stopInFlightWarning() {
+    cancelInFlightWarning?.()
+    cancelInFlightWarning = undefined
   }
 
   function updateScreen() {
@@ -453,7 +637,7 @@ export function createIoEditor(options: {
     }
 
     if (!isEqual(before, after)) {
-      recordChange({operations: [set(after, [])], origin: 'remote'})
+      emit({type: 'change', operations: [set(after, [])], origin: 'remote'})
     }
   }
 
@@ -472,15 +656,19 @@ export function createIoEditor(options: {
 
   function rekeyPendingInserts(): Map<string, string> {
     const baseKeys = new Set(
-      (base.value ?? []).flatMap((block) =>
-        typeof block._key === 'string' ? [block._key] : [],
-      ),
+      (base.value ?? []).flatMap((block) => itemKey(block)),
     )
+    const pendingInsertKeys = insertedBlockKeys(pending.flat())
+    const takenKeys = new Set([
+      ...baseKeys,
+      ...pendingInsertKeys,
+      ...document.getValue().map((block) => block._key),
+    ])
     const newKeys = new Map<string, string>()
 
-    for (const key of insertedBlockKeys(pending.flat())) {
+    for (const key of pendingInsertKeys) {
       if (baseKeys.has(key)) {
-        newKeys.set(key, keyGenerator())
+        newKeys.set(key, generateUniqueKey(keyGenerator, takenKeys))
       }
     }
 
@@ -491,28 +679,12 @@ export function createIoEditor(options: {
     pending = pending.map((patches) =>
       patches.map((patch) => renameBlockKeys(patch, newKeys)),
     )
-    undoSteps = undoSteps.map((patches) =>
-      patches.map((patch) => renameBlockKeys(patch, newKeys)),
-    )
+    history = history.map((entry) => ({
+      ...entry,
+      step: renameStepKeys(entry.step, newKeys),
+    }))
 
     return newKeys
-  }
-
-  function rebaseUndoSteps(otherPatches: Array<Patch>) {
-    for (const otherPatch of otherPatches) {
-      if (otherPatch.type !== 'set' && otherPatch.type !== 'unset') {
-        continue
-      }
-
-      undoSteps = undoSteps.map((patches) =>
-        patches.map((patch) =>
-          (patch.type === 'set' || patch.type === 'unset') &&
-          isEqual(patch.path, otherPatch.path)
-            ? otherPatch
-            : patch,
-        ),
-      )
-    }
   }
 
   function queueKeyRepair(value: Array<PortableTextBlock> | undefined) {
@@ -524,15 +696,19 @@ export function createIoEditor(options: {
     }
   }
 
-  function recordChange(change: ChangeEvent) {
-    changes.push(change)
-    emit({type: 'change', ...change})
-  }
-
   function getContent(): Array<PortableTextBlock> | undefined {
     return document.getPlaceholderKey() === undefined
       ? document.getValue()
       : undefined
+  }
+
+  function putCaretAfter(text: string) {
+    if (status === 'unmounted') {
+      warn('Ignored an action after the editor unmounted')
+      return
+    }
+
+    document.putCaretAfter(text)
   }
 
   return {
@@ -545,6 +721,7 @@ export function createIoEditor(options: {
         listeners.delete(listener)
       }
     },
+    mount,
     load,
     releaseClaim,
     resync,
@@ -557,47 +734,31 @@ export function createIoEditor(options: {
     },
     setStyle: (style) => act(() => document.setStyle(style)),
     type: (text) => act(() => document.type(text)),
-    putCaretAfter: (text) => document.putCaretAfter(text),
+    putCaretAfter,
     insertBlock: (textspec) => act(() => document.insertBlock(textspec)),
     deleteBlock: (text) => act(() => document.deleteBlock(text)),
     undo,
     close,
-    sentBatches,
-    changes,
-    errors,
-    warnings,
   }
 }
 
-/**
- * The indexes of a transaction's patches that are this editor's own batches:
- * each batch's patches, found as one contiguous run.
- */
-function findOwnPatchIndexes(
-  patches: Array<Patch>,
-  ownBatches: Array<SentBatch>,
-): Set<number> {
-  const indexes = new Set<number>()
+function stepBlockKey(step: UndoStep): string {
+  return step.type === 'deleted' ? step.block._key : step.blockKey
+}
 
-  for (const batch of ownBatches) {
-    const start = patches.findIndex(
-      (_patch, index) =>
-        !indexes.has(index) &&
-        batch.patches.every((batchPatch, offset) =>
-          isEqual(patches[index + offset], batchPatch),
-        ),
-    )
+function baseStyleOf(
+  value: Array<PortableTextBlock> | undefined,
+  blockKey: string,
+): BaseStyle {
+  const block = value?.find((candidate) => candidate._key === blockKey)
 
-    if (start === -1) {
-      continue
-    }
-
-    for (let offset = 0; offset < batch.patches.length; offset++) {
-      indexes.add(start + offset)
-    }
+  if (!block) {
+    return undefined
   }
 
-  return indexes
+  const style: unknown = block.style
+
+  return {style: typeof style === 'string' ? style : undefined}
 }
 
 function keysAmongSiblings(
@@ -611,10 +772,20 @@ function keysAmongSiblings(
   )
 }
 
+/**
+ * Whether an insert brings a key that is already taken, or brings the same
+ * key twice.
+ */
 function insertCollides(patch: Patch, keys: Set<string>): boolean {
+  if (patch.type !== 'insert') {
+    return false
+  }
+
+  const insertedKeys = patch.items.flatMap((item) => itemKey(item))
+
   return (
-    patch.type === 'insert' &&
-    patch.items.some((item) => itemKey(item).some((key) => keys.has(key)))
+    new Set(insertedKeys).size < insertedKeys.length ||
+    insertedKeys.some((key) => keys.has(key))
   )
 }
 
@@ -655,39 +826,68 @@ function renameBlockKeys(patch: Patch, newKeys: Map<string, string>): Patch {
   return {...patch, path: renamedPath}
 }
 
+function renameStepKeys(
+  step: UndoStep,
+  newKeys: Map<string, string>,
+): UndoStep {
+  const rename = (key: string | undefined) =>
+    key === undefined ? undefined : (newKeys.get(key) ?? key)
+
+  if (step.type === 'deleted') {
+    return {
+      ...step,
+      block: {...step.block, _key: rename(step.block._key) ?? step.block._key},
+      previousKey: rename(step.previousKey),
+      nextKey: rename(step.nextKey),
+    }
+  }
+
+  return {...step, blockKey: rename(step.blockKey) ?? step.blockKey}
+}
+
 /**
  * Repairs missing and duplicate keys among blocks and among each block's
  * children, keeping the first of each duplicate. Index paths address the
- * blocks, since a missing or duplicate key can't.
+ * nodes, since a missing or duplicate key can't. New keys collide with no
+ * key anywhere in the value.
  */
 function repairKeys(
   value: Array<PortableTextBlock> | undefined,
   keyGenerator: () => string,
 ): Array<Patch> {
   const patches: Array<Patch> = []
+  const takenKeys = new Set(
+    (value ?? []).flatMap((block) => [
+      ...itemKey(block),
+      ...childrenOf(block).flatMap((child) => itemKey(child)),
+    ]),
+  )
   const blockKeys = new Set<string>()
 
   for (const [blockIndex, block] of (value ?? []).entries()) {
     const [blockKey] = itemKey(block)
 
     if (blockKey === undefined || blockKeys.has(blockKey)) {
-      patches.push(set(keyGenerator(), [blockIndex, '_key']))
+      patches.push(
+        set(generateUniqueKey(keyGenerator, takenKeys), [blockIndex, '_key']),
+      )
     } else {
       blockKeys.add(blockKey)
     }
 
-    const children: unknown = Reflect.get(block, 'children')
     const childKeys = new Set<string>()
 
-    for (const [childIndex, child] of (Array.isArray(children)
-      ? children
-      : []
-    ).entries()) {
+    for (const [childIndex, child] of childrenOf(block).entries()) {
       const [childKey] = itemKey(child)
 
       if (childKey === undefined || childKeys.has(childKey)) {
         patches.push(
-          set(keyGenerator(), [blockIndex, 'children', childIndex, '_key']),
+          set(generateUniqueKey(keyGenerator, takenKeys), [
+            blockIndex,
+            'children',
+            childIndex,
+            '_key',
+          ]),
         )
       } else {
         childKeys.add(childKey)
@@ -696,6 +896,12 @@ function repairKeys(
   }
 
   return patches
+}
+
+function childrenOf(block: PortableTextBlock): Array<unknown> {
+  const children: unknown = Reflect.get(block, 'children')
+
+  return Array.isArray(children) ? children : []
 }
 
 function itemKey(item: unknown): Array<string> {
