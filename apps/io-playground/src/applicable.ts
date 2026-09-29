@@ -33,14 +33,20 @@ export type LinkApplicability = {
     prompts: Array<string>
     /** By batch ID. */
     saveRequests: Record<string, Applicability>
+    /** Receiving a save request and losing its reply, by batch ID. */
+    loseReply: Record<string, Applicability>
   }
   towardEditor: {
     prompts: Array<string>
     /** By batch ID. */
     replies: Record<string, Applicability>
+    /** Retrying the save whose reply was lost, by batch ID. */
+    lostReplies: Record<string, Applicability>
     /** By transaction ID. */
     feed: Record<string, Applicability>
   }
+  /** The host telling the editor its listener missed transactions. */
+  feedLost: Applicability
   /** The prompt when the editor holds a transaction that doesn't connect. */
   held: string | undefined
 }
@@ -107,14 +113,16 @@ export function applicableActions(
           : enabled,
     'close': editor.status === 'unmounted' ? disabled(whyUnmounted) : enabled,
     'resync': {...resync, ...resyncSuggestion(editorName, editor, resync)},
-    'resync discarding': resync.enabled
-      ? editor.pending.length === 0
-        ? disabled('nothing unsent to discard')
-        : {
-            ...resync,
-            why: `the user's choice: load the saved version and throw away ${editor.pending.length} unsent change(s)`,
-          }
-      : resync,
+    'resync discarding': !resync.enabled
+      ? resync
+      : editor.inFlight
+        ? disabled('the steps discard only when no batch is in flight')
+        : editor.pending.length === 0
+          ? disabled('nothing unsent to discard')
+          : {
+              enabled: true,
+              why: `the user's choice: load the saved version and throw away ${editor.pending.length} unsent change(s)`,
+            },
     'load':
       editor.status === 'unmounted'
         ? disabled(whyUnmounted)
@@ -174,7 +182,10 @@ function resyncApplicability(editor: EditorSnapshot): Applicability {
   }
 
   return editor.inFlight
-    ? disabled('resync is refused while a batch is in flight')
+    ? {
+        enabled: true,
+        why: `batch ${editor.inFlight.batchNumber} is in flight: the host looks up in the transaction history whether it landed, and the resync carries that outcome`,
+      }
     : enabled
 }
 
@@ -188,7 +199,11 @@ function resyncSuggestion(
   }
 
   if (editor.outOfStep) {
-    return {suggested: `${editorName} is out of step: resync to recover`}
+    return {
+      suggested: editor.inFlight
+        ? `${editorName} is out of step: resync with the outcome of batch ${editor.inFlight.batchNumber} to recover`
+        : `${editorName} is out of step: resync to recover`,
+    }
   }
 
   if (editor.rejected) {
@@ -234,6 +249,8 @@ function linkApplicability(
     network?.saveRequests.filter((request) => request.editor === name) ?? []
   const replies =
     network?.replies.filter((reply) => reply.editor === name) ?? []
+  const lostReplies =
+    network?.lostReplies.filter((reply) => reply.editor === name) ?? []
   const feed = network?.feeds[name] ?? []
 
   const firstRequest = requests.at(0)
@@ -244,6 +261,13 @@ function linkApplicability(
   const firstReply = replies.at(0)
   const replyPrompt = firstReply
     ? `${name}'s batch ${firstReply.batchNumber} was refused: deliver the rejection`
+    : undefined
+
+  const firstRetryable = lostReplies.find(
+    (reply) => editor?.inFlight?.batchNumber === reply.batchNumber,
+  )
+  const lostReplyPrompt = firstRetryable
+    ? `the save reply for ${name}'s batch ${firstRetryable.batchNumber} was lost: retry it with the same transaction ID`
     : undefined
 
   const held = editor ? heldPrompt(editor, feed) : undefined
@@ -263,10 +287,21 @@ function linkApplicability(
             : enabled,
         ]),
       ),
+      loseReply: Object.fromEntries(
+        requests.map((request) => [
+          request.batchId,
+          request.final
+            ? disabled('a final batch gets no reply')
+            : {
+                enabled: true,
+                why: 'the server saves it, but the host never hears back',
+              },
+        ]),
+      ),
     },
     towardEditor: {
       prompts: unique(
-        [replyPrompt, held ?? suggestedFeed?.suggested].filter(
+        [replyPrompt, lostReplyPrompt, held ?? suggestedFeed?.suggested].filter(
           (prompt) => prompt !== undefined,
         ),
       ),
@@ -280,10 +315,46 @@ function linkApplicability(
             : enabled,
         ]),
       ),
+      lostReplies: Object.fromEntries(
+        lostReplies.map((reply) => [
+          reply.batchId,
+          reply === firstRetryable && lostReplyPrompt !== undefined
+            ? {enabled: true, suggested: lostReplyPrompt}
+            : editor?.inFlight?.batchNumber === reply.batchNumber
+              ? enabled
+              : disabled(
+                  `batch ${reply.batchNumber} isn't in flight anymore: the host knows what became of it`,
+                ),
+        ]),
+      ),
       feed: feedEntries,
     },
+    feedLost: feedLostApplicability(editor),
     held,
   }
+}
+
+function feedLostApplicability(
+  editor: EditorSnapshot | undefined,
+): Applicability {
+  if (!editor) {
+    return disabled('there are no editors yet')
+  }
+
+  if (editor.status === 'unmounted') {
+    return disabled(whyUnmounted)
+  }
+
+  if (editor.status === 'loading') {
+    return disabled('the feed starts once the editor is ready')
+  }
+
+  return editor.outOfStep
+    ? disabled('the editor is out of step already: resync')
+    : {
+        enabled: true,
+        why: "the host's listener reconnected or may have missed transactions",
+      }
 }
 
 /**

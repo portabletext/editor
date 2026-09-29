@@ -45,6 +45,14 @@ export type Network<TBatch extends SavedBatch> = {
   queueReply: (reply: Reply) => void
   getReplies: () => Array<Reply>
   deliverReply: (batchId: string) => void
+  /**
+   * The server took and saved the batch, but its host never heard back, so
+   * the host can't tell whether the save landed.
+   */
+  loseReply: (reply: Reply) => void
+  getLostReplies: () => Array<Reply>
+  /** Removes the lost reply, as when the host retries the save. */
+  takeLostReply: (batchId: string) => Reply
   /** Appends the transaction to the feed of every connected editor. */
   publish: (transaction: ServerTransaction) => void
   getFeed: (editorId: string) => Array<ServerTransaction>
@@ -62,6 +70,7 @@ export function createNetwork<
   const feeds = new Map<string, Array<ServerTransaction>>()
   let saveRequests: Array<SaveRequest<TBatch>> = []
   let replies: Array<Reply> = []
+  let lostReplies: Array<Reply> = []
 
   function getReceiver(editorId: string) {
     const receiver = receivers.get(editorId)
@@ -110,6 +119,31 @@ export function createNetwork<
 
       replies = replies.filter((candidate) => candidate !== reply)
       getReceiver(reply.editorId).receiveReply(reply)
+    },
+    loseReply: (reply) => {
+      if (
+        lostReplies.some((candidate) => candidate.batchId === reply.batchId)
+      ) {
+        throw new Error(
+          `The reply for batch "${reply.batchId}" is lost already`,
+        )
+      }
+
+      lostReplies = [...lostReplies, reply]
+    },
+    getLostReplies: () => lostReplies,
+    takeLostReply: (batchId) => {
+      const reply = lostReplies.find(
+        (candidate) => candidate.batchId === batchId,
+      )
+
+      if (!reply) {
+        throw new Error(`No lost reply for batch "${batchId}"`)
+      }
+
+      lostReplies = lostReplies.filter((candidate) => candidate !== reply)
+
+      return reply
     },
     publish: (transaction) => {
       for (const [editorId, feed] of feeds) {

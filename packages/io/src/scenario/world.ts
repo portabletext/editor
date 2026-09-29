@@ -1,4 +1,4 @@
-import type {Patch} from '@portabletext/patches'
+import {unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {formatTextspec, parseTextspec} from '../document'
@@ -7,6 +7,7 @@ import {
   type IoEditor,
   type IoEditorSentBatch,
   type IoEditorStatus,
+  type IoEditorSync,
 } from '../editor'
 import {createNetwork, type Network} from '../fakes/network'
 import {
@@ -15,7 +16,12 @@ import {
   type ServerTransaction,
 } from '../fakes/server'
 import {createPassThroughHost, type PassThroughHost} from '../host'
-import type {ChangeEvent, ErrorEvent, MutationBatch} from '../types'
+import type {
+  ChangeEvent,
+  ErrorEvent,
+  MutationBatch,
+  WorkDropped,
+} from '../types'
 
 export type EditorName = 'Editor A' | 'Editor B'
 
@@ -30,13 +36,15 @@ export type Heard = {
   changes: Array<ChangeEvent>
   errors: Array<ErrorEvent>
   warnings: Array<string>
-  /** Changes, errors and warnings in the order they were heard. */
+  workDropped: Array<WorkDropped>
+  /** Changes, errors, dropped work and warnings in the order they were heard. */
   events: Array<HeardEvent>
 }
 
 export type HeardEvent =
   | {type: 'change'; origin: ChangeEvent['origin']; patchCount: number}
-  | ({type: 'error'} & Pick<ErrorEvent, 'reason' | 'transactionId'>)
+  | ({type: 'error'} & ErrorEvent)
+  | ({type: 'work dropped'; patchCount: number} & WorkDropped)
   | {type: 'warning'; message: string}
 
 export type NamedTransaction =
@@ -55,7 +63,8 @@ export type TransactionSource =
 
 export type BatchSnapshot = {
   batchNumber: number
-  transactionId: string | null
+  /** Every transaction ID the host reported for the batch. */
+  transactionIds: Array<string>
   patchCount: number
   patches: Array<Patch>
 }
@@ -63,6 +72,7 @@ export type BatchSnapshot = {
 export type EditorSnapshot = {
   id: string
   status: IoEditorStatus
+  sync: IoEditorSync
   /** What the editor shows, with the caret. */
   screen: string
   /** What the editor shows, as blocks, the placeholder included. */
@@ -113,6 +123,11 @@ export type ServerSnapshot = {
     noop: boolean
     source: TransactionSource
   }>
+  /** Save requests refused with a 409 because their transaction ID exists. */
+  duplicates: Array<{
+    transactionId: string
+    batches: Array<{name: EditorName; batchNumber: number}>
+  }>
 }
 
 export type NetworkSnapshot = {
@@ -125,6 +140,12 @@ export type NetworkSnapshot = {
     patches: Array<Patch>
   }>
   replies: Array<{
+    editor: EditorName
+    batchId: string
+    batchNumber: number
+  }>
+  /** Saves the server took whose reply never reached the host. */
+  lostReplies: Array<{
     editor: EditorName
     batchId: string
     batchNumber: number
@@ -163,6 +184,8 @@ export type WorldEditor = {
   checkedErrorCount: number
   /** The warning count at the previous `has been warned` check. */
   checkedWarningCount: number
+  /** The dropped-work count at the previous `told work was dropped` check. */
+  checkedWorkDroppedCount: number
 }
 
 type Setup = {
@@ -316,7 +339,7 @@ export function createWorld() {
     const base = editor.getBase()
     const describeBatch = (batch: IoEditorSentBatch): BatchSnapshot => ({
       batchNumber: locateBatch(batch.id).batchNumber,
-      transactionId: batch.transactionId ?? null,
+      transactionIds: batch.transactionIds,
       patchCount: batch.patchCount,
       patches: getBatch(name, locateBatch(batch.id).batchNumber).patches,
     })
@@ -324,6 +347,7 @@ export function createWorld() {
     return {
       id: name === 'Editor A' ? 'A' : 'B',
       status: editor.getStatus(),
+      sync: editor.getSync(),
       screen: editor.document.toTextspec(),
       blocks: editor.document.getValue(),
       base: {
@@ -391,6 +415,10 @@ export function createWorld() {
           noop: !changesField,
           source: describeSource(transaction),
         })),
+        duplicates: server.getDuplicates().map((duplicate) => ({
+          transactionId: duplicate.transactionId,
+          batches: duplicate.batchIds.map((batchId) => locateBatch(batchId)),
+        })),
       },
       network: {
         saveRequests: network.getSaveRequests().map(({editorId, batch}) => ({
@@ -402,6 +430,11 @@ export function createWorld() {
           patches: batch.patches,
         })),
         replies: network.getReplies().map((reply) => ({
+          editor: toEditorName(reply.editorId),
+          batchId: reply.batchId,
+          batchNumber: locateBatch(reply.batchId).batchNumber,
+        })),
+        lostReplies: network.getLostReplies().map((reply) => ({
           editor: toEditorName(reply.editorId),
           batchId: reply.batchId,
           batchNumber: locateBatch(reply.batchId).batchNumber,
@@ -514,6 +547,32 @@ export function createWorld() {
 
       publishReceived(batches, transactionId)
     },
+    rewriteAsWholeFieldUnset: (name: EditorName, batchNumber: number) => {
+      const {server, network} = getSetup()
+      const batch = getBatch(name, batchNumber)
+      network.takeSaveRequest(batch.id)
+      network.publish(
+        server.receive(
+          {id: batch.id, patches: [unset([])]},
+          getEditor(name).host.getTransactionId(batch.id),
+        ),
+      )
+    },
+    loseReply: (name: EditorName, batchNumber: number) => {
+      const batch = getBatch(name, batchNumber)
+
+      if (batch.final) {
+        throw new Error(`${name}'s batch ${batchNumber} is final: no reply`)
+      }
+
+      transactionCarrying(batch.id)
+      getSetup().network.loseReply({editorId: name, batchId: batch.id})
+    },
+    retry: (name: EditorName, batchNumber: number) => {
+      const batch = getBatch(name, batchNumber)
+      getSetup().network.takeLostReply(batch.id)
+      getEditor(name).host.retry(batch.id)
+    },
     refuse: (name: EditorName, batchNumber: number) => {
       const {server, network} = getSetup()
       const batch = getBatch(name, batchNumber)
@@ -592,7 +651,10 @@ export function createWorld() {
 
       network.deliverReply(batch.id)
     },
-    resync: (name: EditorName, {discardUnsent}: {discardUnsent: boolean}) => {
+    resync: (
+      name: EditorName,
+      {discardUnsent, outcomeOf}: {discardUnsent: boolean; outcomeOf?: number},
+    ) => {
       const {editor, host, heard} = getEditor(name)
       lastResync = {
         editorName: name,
@@ -600,7 +662,15 @@ export function createWorld() {
         screen: editor.document.toTextspec({keys: true}),
         batchCount: heard.mutations.length,
       }
-      host.resync({discardUnsent})
+      host.resync({
+        discardUnsent,
+        ...(outcomeOf === undefined
+          ? {}
+          : {outcomeOf: getBatch(name, outcomeOf).id}),
+      })
+    },
+    feedLost: (name: EditorName) => {
+      getEditor(name).host.feedLost()
     },
     load: (name: EditorName) => {
       getEditor(name).host.load()
@@ -668,6 +738,16 @@ function createWorldEditor({
   const host = createPassThroughHost({
     editor,
     save: (batch) => network.send(name, batch),
+    resubmit: (batch, transactionId) => {
+      const result = server.submit(batch, transactionId)
+
+      if (result.type === 'saved') {
+        network.publish(result.transaction)
+      }
+
+      return result.type
+    },
+    hasTransaction: server.hasTransaction,
     fetchCopy: () => server.copy(),
     subscription: () => network.getFeed(name),
   })
@@ -686,6 +766,7 @@ function createWorldEditor({
     checkedBatchCount: 0,
     checkedErrorCount: 0,
     checkedWarningCount: 0,
+    checkedWorkDroppedCount: 0,
   }
 }
 
@@ -695,6 +776,7 @@ export function listenTo(editor: IoEditor): Heard {
     changes: [],
     errors: [],
     warnings: [],
+    workDropped: [],
     events: [],
   }
 
@@ -718,12 +800,16 @@ export function listenTo(editor: IoEditor): Heard {
       case 'error': {
         const {type: _type, ...error} = event
         heard.errors.push(error)
+        heard.events.push({type: 'error', ...error})
+        break
+      }
+      case 'work dropped': {
+        const {type: _type, ...workDropped} = event
+        heard.workDropped.push(workDropped)
         heard.events.push({
-          type: 'error',
-          reason: error.reason,
-          ...(error.transactionId === undefined
-            ? {}
-            : {transactionId: error.transactionId}),
+          type: 'work dropped',
+          patchCount: workDropped.patches.length,
+          ...workDropped,
         })
         break
       }

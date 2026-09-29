@@ -39,8 +39,6 @@ Feature: Concurrent edits
     And Editor B's batch 1 comes back
     Then Editor B shows "B: copy hi"
 
-  # known red: the model warns about unsent typing with no target only after a resync, not when a received transaction takes the target away
-  @skip
   Scenario: A script replaces the whole field while Editor A has unsent typing
     Given the document is "B: foo|"
     When "x" is typed
@@ -54,6 +52,7 @@ Feature: Concurrent edits
     When Editor A receives the script's change
     Then Editor A shows "B: bar"
     And Editor A has been warned
+    And Editor A has been told work was dropped
     When the server receives Editor A's batch 1
     Then the server has "B: bar"
     When Editor A's batch 1 comes back

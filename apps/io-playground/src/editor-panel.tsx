@@ -58,11 +58,15 @@ export function EditorPanel({
             >
               {editor.status}
             </Badge>
+            <Label concept="sync">
+              <span aria-label={`sync: ${editor.sync}`}>
+                <Badge tone={syncTones[editor.sync]}>{editor.sync}</Badge>
+              </span>
+            </Label>
             {waitingCount > 0 ? (
               <Badge tone="amber">{waitingCount} waiting</Badge>
             ) : null}
             {editor.readOnly ? <Badge tone="blue">read-only</Badge> : null}
-            {editor.outOfStep ? <Badge tone="red">out of step</Badge> : null}
           </>
         ) : null}
       </header>
@@ -97,7 +101,7 @@ function EditorDetails({
         })
       }
     >
-      batch {batch.batchNumber} → {batch.transactionId ?? '?'} ·{' '}
+      batch {batch.batchNumber} → {describeTransactionIds(batch)} ·{' '}
       {plural(batch.patchCount, 'patch')}
     </DetailsLink>
   )
@@ -240,7 +244,18 @@ function EditorDetails({
             {editor.events.map((event, index) => (
               <li key={index} className={eventTone(event)}>
                 <Label concept={event.type}>{event.type}</Label>{' '}
-                {describeEvent(event)}
+                {event.type === 'error' || event.type === 'work dropped' ? (
+                  <DetailsLink
+                    label={`Details of ${name}'s event ${index + 1}`}
+                    onClick={() =>
+                      openDetails({type: 'event', editor: name, index})
+                    }
+                  >
+                    {describeEvent(event)}
+                  </DetailsLink>
+                ) : (
+                  describeEvent(event)
+                )}
               </li>
             ))}
           </ItemList>
@@ -269,12 +284,27 @@ function LedgerRow({
   )
 }
 
+const syncTones = {
+  'synced': 'green',
+  'saving': 'blue',
+  'blocked': 'red',
+  'out of step': 'amber',
+} as const
+
+function describeTransactionIds(batch: BatchSnapshot): string {
+  return batch.transactionIds.length === 0
+    ? '?'
+    : batch.transactionIds.join(' / ')
+}
+
 function describeEvent(event: HeardEvent): string {
   switch (event.type) {
     case 'change':
       return `· ${event.origin} · ${plural(event.patchCount, 'patch')}`
     case 'error':
       return `· ${event.reason}${event.transactionId === undefined ? '' : ` · ${event.transactionId}`}`
+    case 'work dropped':
+      return `· ${event.reason} · ${plural(event.patchCount, 'patch')}`
     case 'warning':
       return `· ${event.message}`
   }
@@ -286,6 +316,8 @@ function eventTone(event: HeardEvent): string {
       return 'text-gray-700'
     case 'error':
       return 'text-red-700'
+    case 'work dropped':
+      return 'text-orange-700'
     case 'warning':
       return 'text-amber-700'
   }

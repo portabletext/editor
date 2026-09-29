@@ -224,6 +224,42 @@ describe(createServer.name, () => {
     })
   })
 
+  test('a save request with a transaction ID the history lists is refused with a 409 and changes nothing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo')
+    const server = createServer({documentId: 'document', document: {value}})
+    const batch = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
+
+    const first = server.submit(batch, 't1')
+    const retry = server.submit(batch, 't1')
+
+    expect({first, retry}).toEqual({
+      first: {
+        type: 'saved',
+        transaction: {
+          transactionId: 't1',
+          previousRev: 'r1',
+          resultRev: 'r2',
+          patches: [set('h1', [{_key: 'k0'}, 'style'])],
+          batchIds: ['b1'],
+        },
+      },
+      retry: {type: 'duplicate'},
+    })
+    expect(server.getTransactions().length).toEqual(1)
+    expect(server.getDuplicates()).toEqual([
+      {transactionId: 't1', batchIds: ['b1']},
+    ])
+    expect([server.hasTransaction('t1'), server.hasTransaction('t2')]).toEqual([
+      true,
+      false,
+    ])
+    expect(server.copy().rev).toEqual('r2')
+    expect(() => server.receive(batch, 't1')).toThrow(
+      'Transaction "t1" already exists',
+    )
+  })
+
   test('a refused batch records nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')

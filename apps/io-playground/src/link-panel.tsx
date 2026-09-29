@@ -14,6 +14,7 @@ import {
   Button,
   DetailsLink,
   Empty,
+  InfoMark,
   Label,
   plural,
   Prompts,
@@ -43,8 +44,8 @@ export function LinkPanel({
   editor: EditorSnapshot | undefined
   network: NetworkSnapshot | null
   applicability: LinkApplicability
-  /** Present in free play: runs a `When` step. */
-  onStep: ((text: string) => void) | undefined
+  /** Present in free play: runs a `When` step and tells whether it succeeded. */
+  onStep: ((text: string) => boolean) | undefined
   /**
    * Present in free play and after a scenario is done: runs a delivery
    * `When` step and tells whether it succeeded.
@@ -58,8 +59,10 @@ export function LinkPanel({
     network?.saveRequests.filter((request) => request.editor === name) ?? []
   const replies =
     network?.replies.filter((reply) => reply.editor === name) ?? []
+  const lostReplies =
+    network?.lostReplies.filter((reply) => reply.editor === name) ?? []
   const feed = network?.feeds[name] ?? []
-  const flash = useFlash(JSON.stringify({requests, replies, feed}))
+  const flash = useFlash(JSON.stringify({requests, replies, lostReplies, feed}))
   const openDetails = useOpenDetails()
   const towardServer = editorSide === 'left' ? '→' : '←'
   const towardEditor = editorSide === 'left' ? '←' : '→'
@@ -157,6 +160,26 @@ export function LinkPanel({
                         >
                           refuse
                         </button>
+                        <ActionButton
+                          applicability={
+                            applicability.towardServer.loseReply[
+                              request.batchId
+                            ] ?? {enabled: true}
+                          }
+                          onClick={() => {
+                            if (
+                              onStep(
+                                `the server receives ${name}'s batch ${request.batchNumber}`,
+                              )
+                            ) {
+                              onStep(
+                                `the save reply for ${name}'s batch ${request.batchNumber} is lost`,
+                              )
+                            }
+                          }}
+                        >
+                          lose reply
+                        </ActionButton>
                       </div>
                     ) : null}
                   </Card>
@@ -223,6 +246,45 @@ export function LinkPanel({
               </div>
             )}
 
+            {lostReplies.length === 0 ? null : (
+              <div className={`flex flex-wrap gap-1.5 ${downwardOrder}`}>
+                {lostReplies.map((reply) => (
+                  <Card
+                    key={reply.batchId}
+                    label={`lost save reply for ${name}'s batch ${reply.batchNumber}`}
+                  >
+                    <span className="flex flex-wrap items-center gap-1">
+                      <Badge tone="amber">reply lost</Badge>
+                      <InfoMark concept="lost reply" />
+                    </span>
+                    <span className="text-gray-500">
+                      batch {reply.batchNumber} →{' '}
+                      {editor?.sentBatches[reply.batchNumber - 1]
+                        ?.transactionId ?? reply.batchId}
+                    </span>
+                    {onStep ? (
+                      <div>
+                        <ActionButton
+                          applicability={
+                            applicability.towardEditor.lostReplies[
+                              reply.batchId
+                            ] ?? {enabled: true}
+                          }
+                          onClick={() =>
+                            onStep(
+                              `${name}'s batch ${reply.batchNumber} is retried`,
+                            )
+                          }
+                        >
+                          retry
+                        </ActionButton>
+                      </div>
+                    ) : null}
+                  </Card>
+                ))}
+              </div>
+            )}
+
             {feed.length === 0 ? (
               <Empty>no transactions waiting</Empty>
             ) : (
@@ -280,8 +342,16 @@ export function LinkPanel({
 
             {onDeliver ? (
               <div
-                className={`flex ${editorSide === 'left' ? 'justify-start' : 'justify-end'}`}
+                className={`flex gap-1 ${editorSide === 'left' ? 'justify-start' : 'justify-end'}`}
               >
+                {onStep ? (
+                  <ActionButton
+                    applicability={applicability.feedLost}
+                    onClick={() => onStep(`${name}'s feed is lost`)}
+                  >
+                    feed lost
+                  </ActionButton>
+                ) : null}
                 <Button
                   disabled={feed.length === 0}
                   onClick={() => {

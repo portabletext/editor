@@ -33,6 +33,7 @@ Feature: Out of step and resync
     Then Editor A shows "B: foo|"
     When the wait for the missing transaction runs out
     Then Editor A reports that it is out of step
+    And Editor A's sync is "out of step"
     And Editor A shows "B: foo|"
     When Editor A receives Editor B's batch 1
     Then Editor A shows "B: foo|"
@@ -145,3 +146,65 @@ Feature: Out of step and resync
     When Editor A receives Editor B's batch 1
     Then Editor A shows "H1: fooxy|"
     And Editor A is in step
+
+  Scenario: The feed is lost while a batch is in flight, and the batch had landed
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    Then the server has "B: foox"
+    When Editor A's feed is lost
+    Then Editor A has been warned
+    And Editor A's sync is "out of step"
+    When "y" is typed
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent nothing new
+    When Editor A is resynced with the outcome of batch 1
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent batch 2
+    And Editor A's sync is "saving"
+    When Editor A's batch 1 comes back
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent nothing new
+    When the server receives Editor A's batch 2
+    Then the server has "B: fooxy"
+    When Editor A's batch 2 comes back
+    Then Editor A shows "B: fooxy|"
+    And Editor A is in step
+    And Editor A's sync is "synced"
+
+  Scenario: The feed is lost while a batch is in flight, and the batch had not landed
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When Editor A's feed is lost
+    And "y" is typed
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent nothing new
+    When the server refuses Editor A's batch 1
+    Then the server has "B: foo"
+    When Editor A is resynced with the outcome of batch 1
+    Then Editor A shows "B: fooy|"
+    And Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    Then the server has "B: fooy"
+    When Editor A's batch 2 comes back
+    Then Editor A shows "B: fooy|"
+    And Editor A is in step
+    And Editor A's sync is "synced"
+
+  Scenario: A host that rewrites a keyed removal as a whole-field unset is caught when the echo comes back
+    Given the document is "B: foo|;;B: bar"
+    When the block "bar" is deleted
+    Then Editor A shows "B: foo|"
+    And Editor A has sent batch 1
+    When the host rewrites Editor A's batch 1 as a whole-field unset
+    Then the server has no field
+    When Editor A's batch 1 comes back
+    Then Editor A reports that it is out of step
+    And Editor A's sync is "out of step"
+    And Editor A shows "B: foo|"
+    When Editor A is resynced
+    Then Editor A shows "B: |"
+    And Editor A is in step
+    And Editor A's sync is "synced"

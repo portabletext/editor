@@ -162,6 +162,7 @@ export function FreePlayTab({
           name={name}
           actions={applicableActions(snapshot, name)}
           readOnly={snapshot.editors?.[name].readOnly ?? false}
+          inFlightBatchNumber={snapshot.editors?.[name].inFlight?.batchNumber}
           onStep={(text) => freePlay.perform('When', text)}
         />
       ))}
@@ -259,11 +260,14 @@ function EditorControls({
   name,
   actions,
   readOnly,
+  inFlightBatchNumber,
   onStep,
 }: {
   name: EditorName
   actions: EditorApplicability
   readOnly: boolean
+  /** The batch whose outcome a resync carries. */
+  inFlightBatchNumber: number | undefined
   onStep: (text: string) => void
 }) {
   const [typed, setTyped] = useState('x')
@@ -377,9 +381,17 @@ function EditorControls({
         <div className="flex flex-wrap gap-1">
           <ActionButton
             applicability={actions.resync}
-            onClick={() => onStep(`${name} is resynced`)}
+            onClick={() =>
+              onStep(
+                inFlightBatchNumber === undefined
+                  ? `${name} is resynced`
+                  : `${name} is resynced with the outcome of batch ${inFlightBatchNumber}`,
+              )
+            }
           >
-            resync
+            {inFlightBatchNumber === undefined
+              ? 'resync'
+              : `resync with outcome of batch ${inFlightBatchNumber}`}
           </ActionButton>
           <ActionButton
             applicability={actions['resync discarding']}

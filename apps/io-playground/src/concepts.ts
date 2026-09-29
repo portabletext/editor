@@ -81,7 +81,22 @@ export const concepts = [
   {
     name: 'resync',
     definition:
-      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top. Only when a person asks to load the saved version are the unsent changes thrown away.',
+      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top. Only when a person asks to load the saved version are the unsent changes thrown away. While a batch is in flight, the host first looks up in the transaction history whether it landed and passes that outcome along, and the editor lets go of the batch.',
+  },
+  {
+    name: 'sync',
+    definition:
+      "Whether the user's work is saved: synced when everything came back, saving while a batch is in flight or changes are pending, blocked after a rejection and out of step after an error or a lost feed, both until a resync.",
+  },
+  {
+    name: 'feed lost',
+    definition:
+      "The host's listener reconnected or may have missed transactions, so it tells the editor, which goes out of step until a resync.",
+  },
+  {
+    name: 'lost reply',
+    definition:
+      'The server saved the batch but the host never heard back. The host retries with the same transaction ID: the server refuses a transaction ID it already has (a 409) and changes nothing, so the batch lands once.',
   },
   {
     name: 'read-only',
@@ -90,7 +105,12 @@ export const concepts = [
   {
     name: 'error',
     definition:
-      "An event the editor emits when it can't apply the feed, which puts it out of step.",
+      "An event the editor emits when it can't trust its copy of the server anymore, which puts it out of step: a transaction is missing, a key collides, a patch can't be applied, or its own batch came back rewritten (echo mismatch).",
+  },
+  {
+    name: 'work dropped',
+    definition:
+      "An event the editor emits when it gives up on the user's unsent changes: their target is gone, or the editor closed while sending was blocked.",
   },
   {
     name: 'warning',

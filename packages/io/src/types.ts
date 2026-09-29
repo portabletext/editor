@@ -37,12 +37,28 @@ export type Load = {
   rev: string | undefined
 }
 
-export type Resync = Load & {discardUnsent?: true}
+/**
+ * `outcomes` says, by batch ID, whether a batch the editor sent is in the
+ * copy (`'applied'`) or will never be saved (`'not applied'`).
+ */
+export type Resync = Load & {
+  discardUnsent?: true
+  outcomes?: Record<string, 'applied' | 'not applied'>
+}
 
 export type ErrorEvent = {
-  reason: 'out of order' | 'duplicate key' | 'patch failed'
+  reason: 'out of order' | 'duplicate key' | 'patch failed' | 'echo mismatch'
   transactionId?: string
   patch?: Patch
+}
+
+/**
+ * The user's own unsent work the editor gave up on: pending changes with no
+ * target, or pending changes dropped on close while sending was blocked.
+ */
+export type WorkDropped = {
+  patches: Array<Patch>
+  reason: 'no target' | 'closed while blocked'
 }
 
 /**

@@ -16,6 +16,14 @@ export type ServerTransaction = {
   batchIds: Array<string>
 }
 
+/**
+ * The answer to a save request: saved as a new transaction, or refused with
+ * a 409 `transactionAlreadyExistsError` because the transaction ID is taken.
+ */
+export type SubmitResult =
+  | {type: 'saved'; transaction: ServerTransaction}
+  | {type: 'duplicate'}
+
 export type ServerCopy = {
   value: Array<PortableTextBlock> | undefined
   rev: string | undefined
@@ -25,9 +33,20 @@ export type Server = {
   documentId: string
   /**
    * Applies the batch and records a transaction, whether or not anything
-   * changed. Creates the document if it doesn't exist.
+   * changed. Creates the document if it doesn't exist. Throws when the
+   * transaction ID is taken.
    */
   receive: (batch: SavedBatch, transactionId: string) => ServerTransaction
+  /**
+   * Saves the batch as `receive` does, unless the transaction ID is taken:
+   * then it changes nothing and answers 409, as Content Lake does for a
+   * retried request.
+   */
+  submit: (batch: SavedBatch, transactionId: string) => SubmitResult
+  /** Whether the document's transaction history lists the ID. */
+  hasTransaction: (transactionId: string) => boolean
+  /** The save requests refused with a 409, in the order they arrived. */
+  getDuplicates: () => Array<{transactionId: string; batchIds: Array<string>}>
   /** Applies both batches and records them as one transaction. */
   receiveAsOne: (
     batchA: SavedBatch,
@@ -73,13 +92,24 @@ export function createServer(initial: {
   const transactions: Array<ServerTransaction> = []
   const log: Array<{transaction: ServerTransaction; changesField: boolean}> = []
   const refusedBatchIds = new Set<string>()
+  const duplicates: Array<{transactionId: string; batchIds: Array<string>}> = []
 
   if (initial.document) {
     value = initial.document.value
     rev = nextRevision()
   }
 
+  function hasTransaction(transactionId: string) {
+    return transactions.some(
+      (transaction) => transaction.transactionId === transactionId,
+    )
+  }
+
   function receiveBatches(batches: Array<SavedBatch>, transactionId: string) {
+    if (hasTransaction(transactionId)) {
+      throw new Error(`Transaction "${transactionId}" already exists`)
+    }
+
     const patches = batches.flatMap((batch) => batch.patches)
     const valueBefore = value
     value = applyWithContentLakeSemantics(value, patches)
@@ -115,6 +145,19 @@ export function createServer(initial: {
   return {
     documentId: initial.documentId,
     receive: (batch, transactionId) => receiveBatches([batch], transactionId),
+    submit: (batch, transactionId) => {
+      if (hasTransaction(transactionId)) {
+        duplicates.push({transactionId, batchIds: [batch.id]})
+        return {type: 'duplicate'}
+      }
+
+      return {
+        type: 'saved',
+        transaction: receiveBatches([batch], transactionId),
+      }
+    },
+    hasTransaction,
+    getDuplicates: () => duplicates,
     receiveAsOne: (batchA, batchB, transactionId) =>
       receiveBatches([batchA, batchB], transactionId),
     refuse: (batchId) => {

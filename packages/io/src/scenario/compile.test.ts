@@ -45,9 +45,8 @@ describe(compileScenarios.name, () => {
       },
       {
         name: 'A script replaces the whole field while Editor A has unsent typing',
-        skipped: true,
-        knownRed:
-          'the model warns about unsent typing with no target only after a resync, not when a received transaction takes the target away',
+        skipped: false,
+        knownRed: undefined,
       },
       {
         name: 'The caret stays with its word while Editor B types before it',

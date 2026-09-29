@@ -70,6 +70,12 @@ function narrate(before: WorldSnapshot, after: WorldSnapshot): Array<string> {
         after: after.editors[name],
         beforeNetwork: before.network,
         afterNetwork: after.network,
+        beforeDuplicates: before.server.duplicates.filter((duplicate) =>
+          duplicate.batches.some((batch) => batch.name === name),
+        ),
+        afterDuplicates: after.server.duplicates.filter((duplicate) =>
+          duplicate.batches.some((batch) => batch.name === name),
+        ),
       }),
     )
   }
@@ -98,12 +104,16 @@ function narrateEditor({
   after,
   beforeNetwork,
   afterNetwork,
+  beforeDuplicates,
+  afterDuplicates,
 }: {
   name: EditorName
   before: EditorSnapshot
   after: EditorSnapshot
   beforeNetwork: NetworkSnapshot
   afterNetwork: NetworkSnapshot
+  beforeDuplicates: ServerSnapshot['duplicates']
+  afterDuplicates: ServerSnapshot['duplicates']
 }): Array<string> {
   const sentences: Array<string> = []
   const newBatches = after.sentBatches.slice(before.sentBatches.length)
@@ -161,6 +171,39 @@ function narrateEditor({
         `${name} got the rejection for batch ${reply.batchNumber}.`,
       )
     }
+  }
+
+  for (const reply of afterNetwork.lostReplies) {
+    if (
+      reply.editor === name &&
+      !beforeNetwork.lostReplies.some(
+        (candidate) => candidate.batchId === reply.batchId,
+      )
+    ) {
+      sentences.push(
+        `The save reply for ${name}'s batch ${reply.batchNumber} was lost: the server saved it, but ${name}'s host never heard back.`,
+      )
+    }
+  }
+
+  for (const reply of beforeNetwork.lostReplies) {
+    if (
+      reply.editor !== name ||
+      afterNetwork.lostReplies.some(
+        (candidate) => candidate.batchId === reply.batchId,
+      )
+    ) {
+      continue
+    }
+
+    const transactionId =
+      after.sentBatches[reply.batchNumber - 1]?.transactionId ?? reply.batchId
+
+    sentences.push(
+      afterDuplicates.length > beforeDuplicates.length
+        ? `${name}'s host retried batch ${reply.batchNumber} with the same transaction ID, ${transactionId}: the server already has it and refused the retry with a 409, so the batch landed once.`
+        : `${name}'s host retried batch ${reply.batchNumber} with the same transaction ID, ${transactionId}.`,
+    )
   }
 
   for (const item of deliveredItems) {
@@ -290,6 +333,15 @@ function narrateEditor({
       parts.push(`let go of the rejected batch ${before.rejected.batchNumber}`)
     }
 
+    if (
+      before.inFlight &&
+      after.inFlight?.batchNumber !== before.inFlight.batchNumber
+    ) {
+      parts.push(
+        `let go of batch ${before.inFlight.batchNumber}, in flight, by the outcome the host looked up in the transaction history`,
+      )
+    }
+
     if (before.outOfStep && !after.outOfStep) {
       parts.push('is back in step')
     }
@@ -346,6 +398,18 @@ function narrateEditor({
       sentences.push(
         `${name} reported ${event.reason}${
           event.transactionId === undefined ? '' : ` on ${event.transactionId}`
+        }.`,
+      )
+    }
+
+    if (event.type === 'work dropped') {
+      sentences.push(
+        `${name} dropped ${plural(event.patchCount, 'unsent change')}: ${
+          event.reason === 'no target'
+            ? event.patchCount === 1
+              ? 'its target is gone'
+              : 'their targets are gone'
+            : 'it closed while sending was blocked'
         }.`,
       )
     }

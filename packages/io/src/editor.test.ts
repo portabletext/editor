@@ -834,7 +834,7 @@ describe(createIoEditor.name, () => {
     })
 
     expect(editor.inspect()).toEqual({
-      inFlight: {id: 'A-1', transactionId: 'A-1', patchCount: 1},
+      inFlight: {id: 'A-1', transactionIds: ['A-1'], patchCount: 1},
       rejected: undefined,
       echoed: [],
       pending: [
@@ -862,7 +862,7 @@ describe(createIoEditor.name, () => {
 
     expect(editor.inspect()).toEqual({
       inFlight: undefined,
-      rejected: {id: 'A-1', transactionId: 'A-1', patchCount: 1},
+      rejected: {id: 'A-1', transactionIds: ['A-1'], patchCount: 1},
       echoed: [],
       pending: [
         {
@@ -1049,7 +1049,7 @@ describe(createIoEditor.name, () => {
     ])
   })
 
-  test('a resync warns about unsent changes that no longer have a target', () => {
+  test('a resync reports unsent changes that no longer have a target as dropped work', () => {
     const {editor, heard} = createLoadedEditor('B: foo;;B: bar|')
     const [fooBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
@@ -1064,7 +1064,327 @@ describe(createIoEditor.name, () => {
     expect(heard.warnings).toEqual([
       '1 unsent patches had no target after the resync and did nothing',
     ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [
+          diffMatchPatch('barx', 'barxy', [
+            {_key: 'd-k2'},
+            'children',
+            {_key: 'd-k3'},
+            'text',
+          ]),
+        ],
+        reason: 'no target',
+      },
+    ])
     expect(editor.document.toTextspec()).toEqual('B: |foo')
+  })
+
+  test('a transaction that takes the target of unsent changes away reports them as dropped work once', () => {
+    const {editor, heard} = createLoadedEditor('B: foo;;B: bar|')
+    const textPath = [{_key: 'd-k2'}, 'children', {_key: 'd-k3'}, 'text']
+
+    editor.type('x')
+    editor.type('y')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [unset([{_key: 'd-k2'}])],
+    })
+    editor.transaction({
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    })
+
+    expect(heard.warnings).toEqual([
+      '1 unsent patches had no target after transaction "t1" and did nothing',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [diffMatchPatch('barx', 'barxy', textPath)],
+        reason: 'no target',
+      },
+    ])
+    expect(editor.inspect().pending).toEqual([
+      {
+        patchCount: 1,
+        patches: [diffMatchPatch('barx', 'barxy', textPath)],
+      },
+    ])
+    expect(editor.document.toTextspec()).toEqual('H1: |foo')
+  })
+
+  test('closing while sending is blocked reports the unsent changes as dropped work', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+
+    editor.type('x')
+    editor.mutationRejected({id: 'A-1'})
+    editor.type('y')
+    editor.close()
+
+    expect(heard.warnings).toEqual([
+      '1 unsent change(s) dropped on close: sending was blocked by the rejection of batch A-1',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [
+          diffMatchPatch('foox', 'fooxy', [
+            {_key: 'd-k0'},
+            'children',
+            {_key: 'd-k1'},
+            'text',
+          ]),
+        ],
+        reason: 'closed while blocked',
+      },
+    ])
+    expect(heard.mutations.map((batch) => batch.id)).toEqual(['A-1'])
+  })
+
+  test('a second `mutation sent` with another transaction ID warns, and either ID confirms the batch', () => {
+    const results = ['A-1', 'retry-1'].map((transactionId) => {
+      const {editor, heard} = createLoadedEditor('B: foo|')
+
+      editor.type('x')
+      editor.mutationSent({id: 'A-1', transactionId: 'retry-1'})
+      const inFlightBefore = editor.inspect().inFlight
+      editor.type('y')
+      editor.transaction({
+        transactionId,
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: heard.mutations[0].patches,
+      })
+
+      return {
+        inFlightBefore,
+        inFlightAfter: editor.inspect().inFlight,
+        warnings: heard.warnings,
+        screen: editor.document.toTextspec(),
+      }
+    })
+
+    expect(results).toEqual(
+      ['A-1', 'retry-1'].map(() => ({
+        inFlightBefore: {
+          id: 'A-1',
+          transactionIds: ['A-1', 'retry-1'],
+          patchCount: 1,
+        },
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-2'], patchCount: 1},
+        warnings: [
+          '`mutation sent` names transaction "retry-1" for batch "A-1", already sent as "A-1": a retry must reuse the transaction ID',
+        ],
+        screen: 'B: fooxy|',
+      })),
+    )
+  })
+
+  test('a lost feed puts the editor out of step with a warning, and it still notes its own echo', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+
+    editor.type('x')
+    editor.feedLost()
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    })
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+
+    expect({
+      errors: heard.errors,
+      warnings: heard.warnings,
+      sync: editor.getSync(),
+      screen: editor.document.toTextspec(),
+      rev: editor.getBase().rev,
+      inFlight: editor.inspect().inFlight,
+    }).toEqual({
+      errors: [],
+      warnings: [
+        'The feed was lost: applying no more transactions until a resync',
+      ],
+      sync: 'out of step',
+      screen: 'B: foox|',
+      rev: 'r1',
+      inFlight: undefined,
+    })
+  })
+
+  test('a resync while a batch is in flight is refused without its outcome, and with it drops the batch and re-applies the pending changes', () => {
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const results = (
+      [
+        ['applied', 'B: foox'],
+        ['not applied', 'B: foo'],
+      ] as const
+    ).map(([outcome, copy]) => {
+      const {editor, heard} = createLoadedEditor('B: foo|')
+      const {value} = parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        copy,
+      )
+
+      editor.type('x')
+      editor.type('y')
+      editor.resync({value, rev: 'r2'})
+      const screenAfterRefusal = editor.document.toTextspec()
+      editor.resync({value, rev: 'r2', outcomes: {'A-1': outcome}})
+
+      return {
+        screenAfterRefusal,
+        warnings: heard.warnings,
+        screen: editor.document.toTextspec(),
+        rev: editor.getBase().rev,
+        batches: heard.mutations.map(({id, patches}) => ({id, patches})),
+        inFlight: editor.inspect().inFlight,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        screenAfterRefusal: 'B: fooxy|',
+        warnings: [
+          'Refused a resync while batch "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
+        ],
+        screen: 'B: fooxy|',
+        rev: 'r2',
+        batches: [
+          {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
+          {id: 'A-2', patches: [diffMatchPatch('foox', 'fooxy', textPath)]},
+        ],
+        inFlight: {id: 'A-2', transactionIds: ['A-2'], patchCount: 1},
+      },
+      {
+        screenAfterRefusal: 'B: fooxy|',
+        warnings: [
+          'Refused a resync while batch "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
+        ],
+        screen: 'B: fooy|',
+        rev: 'r2',
+        batches: [
+          {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
+          {id: 'A-2', patches: [diffMatchPatch('foox', 'fooxy', textPath)]},
+        ],
+        inFlight: {id: 'A-2', transactionIds: ['A-2'], patchCount: 1},
+      },
+    ])
+  })
+
+  test('an own echo with a set above a path the batch touched is an echo mismatch, and one with a patch on another block is not', () => {
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const otherBlockPatch = set('h1', [{_key: 'd-k2'}, 'style'])
+    const ancestorPatch = set(
+      {_type: 'block', _key: 'd-k0', children: [], style: 'normal'},
+      [{_key: 'd-k0'}],
+    )
+    const results = [otherBlockPatch, ancestorPatch].map((extraPatch) => {
+      const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
+
+      editor.type('x')
+      editor.transaction({
+        transactionId: 'A-1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: [extraPatch, diffMatchPatch('foo', 'foox', textPath)],
+      })
+
+      return {
+        errors: heard.errors,
+        sync: editor.getSync(),
+        screen: editor.document.toTextspec(),
+        rev: editor.getBase().rev,
+        inFlight: editor.inspect().inFlight,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        errors: [],
+        sync: 'synced',
+        screen: 'B: foox|;;H1: bar',
+        rev: 'r2',
+        inFlight: undefined,
+      },
+      {
+        errors: [
+          {
+            reason: 'echo mismatch',
+            transactionId: 'A-1',
+            patch: ancestorPatch,
+          },
+        ],
+        sync: 'out of step',
+        screen: 'B: foox|;;B: bar',
+        rev: 'r1',
+        inFlight: undefined,
+      },
+    ])
+  })
+
+  test('sync is saving while work is unsaved, blocked after a rejection and out of step after an error, each until a resync', () => {
+    const {editor, heard} = createLoadedEditor('B: foo|')
+    const syncs = [editor.getSync()]
+
+    editor.type('x')
+    syncs.push(editor.getSync())
+    editor.type('y')
+    syncs.push(editor.getSync())
+    editor.transaction({
+      transactionId: 'A-1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    syncs.push(editor.getSync())
+    editor.transaction({
+      transactionId: 'A-2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[1].patches,
+    })
+    syncs.push(editor.getSync())
+    editor.type('z')
+    editor.type('w')
+    editor.mutationRejected({id: 'A-3'})
+    syncs.push(editor.getSync())
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: [set('x', [{_key: 'd-k0'}, 'style', 'name'])],
+    })
+    syncs.push(editor.getSync())
+    editor.resync({value: editor.getBase().value, rev: 'r3'})
+    syncs.push(editor.getSync())
+    editor.transaction({
+      transactionId: 'A-4',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: heard.mutations[3].patches,
+    })
+    syncs.push(editor.getSync())
+
+    expect(syncs).toEqual([
+      'synced',
+      'saving',
+      'saving',
+      'saving',
+      'synced',
+      'blocked',
+      'out of step',
+      'saving',
+      'synced',
+    ])
   })
 
   test('inputs after unmounting are ignored with a warning', () => {

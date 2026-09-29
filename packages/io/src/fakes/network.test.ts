@@ -92,6 +92,23 @@ describe(createNetwork.name, () => {
     expect(network.getReplies()).toEqual([])
   })
 
+  test('a lost reply waits until the host retries the save', () => {
+    const network = createNetwork()
+    const reply: Reply = {editorId: 'A', batchId: 'a1'}
+
+    network.loseReply(reply)
+
+    expect(network.getLostReplies()).toEqual([reply])
+    expect(() => network.loseReply(reply)).toThrow(
+      'The reply for batch "a1" is lost already',
+    )
+    expect(network.takeLostReply('a1')).toEqual(reply)
+    expect(network.getLostReplies()).toEqual([])
+    expect(() => network.takeLostReply('a1')).toThrow(
+      'No lost reply for batch "a1"',
+    )
+  })
+
   test('each editor receives its feed in the order the caller delivers it', () => {
     const network = createNetwork()
     const received: Array<{editorId: string; transactionId: string}> = []

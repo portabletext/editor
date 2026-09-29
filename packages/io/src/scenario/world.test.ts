@@ -34,6 +34,7 @@ describe(createWorld.name, () => {
         'Editor A': {
           id: 'A',
           status: 'ready',
+          sync: 'saving',
           screen: 'B: fooxy|',
           blocks: [
             {
@@ -61,7 +62,7 @@ describe(createWorld.name, () => {
           },
           inFlight: {
             batchNumber: 1,
-            transactionId: 'A-1',
+            transactionIds: ['A-1'],
             patchCount: 1,
             patches: [diffMatchPatch('foo', 'foox', textPath)],
           },
@@ -94,6 +95,7 @@ describe(createWorld.name, () => {
         'Editor B': {
           id: 'B',
           status: 'ready',
+          sync: 'saving',
           screen: 'H1: foo|',
           blocks: [
             {
@@ -119,7 +121,7 @@ describe(createWorld.name, () => {
           },
           inFlight: {
             batchNumber: 1,
-            transactionId: 'B-1',
+            transactionIds: [],
             patchCount: 1,
             patches: [set('h1', stylePath)],
           },
@@ -185,6 +187,7 @@ describe(createWorld.name, () => {
             source: {type: 'named', name: 'the other field'},
           },
         ],
+        duplicates: [],
       },
       network: {
         saveRequests: [
@@ -198,6 +201,7 @@ describe(createWorld.name, () => {
           },
         ],
         replies: [],
+        lostReplies: [],
         feeds: {
           'Editor A': [
             {

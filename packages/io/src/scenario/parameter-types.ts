@@ -1,5 +1,5 @@
 import {createParameterType} from 'racejar'
-import type {IoEditorStatus} from '../editor'
+import type {IoEditorStatus, IoEditorSync} from '../editor'
 import type {EditorName, ServerCopyName} from './world'
 
 export type BatchReference = {name: EditorName; batchNumber: number}
@@ -36,5 +36,9 @@ export const parameterTypes = [
   createParameterType<Exclude<IoEditorStatus, 'unmounted'>>({
     name: 'status',
     matcher: /"(loading|ready)"/,
+  }),
+  createParameterType<IoEditorSync>({
+    name: 'sync',
+    matcher: /"(synced|saving|blocked|out of step)"/,
   }),
 ]

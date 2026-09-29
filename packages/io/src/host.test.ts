@@ -102,6 +102,111 @@ describe(createPassThroughHost.name, () => {
     expect(editor.document.toTextspec()).toEqual('H2: foo|')
   })
 
+  test('`mutation sent` names the batch once, when the server takes the request, with the transaction it was folded into', () => {
+    const {editor, host, heard} = createHostedEditor('B: foo|')
+
+    editor.type('x')
+
+    expect(editor.inspect().inFlight?.transactionIds).toEqual([])
+
+    host.mapToTransaction('A-1', 'A-1+B-1')
+    host.reportSaveTaken('A-1')
+
+    expect(editor.inspect().inFlight?.transactionIds).toEqual(['A-1+B-1'])
+    expect(heard.warnings).toEqual([])
+  })
+
+  test('a retry re-sends the save request with the transaction ID the batch was first sent as', () => {
+    const results = [true, false].map((landed) => {
+      const {editor, host, heard, resubmitted, transactionHistory} =
+        createHostedEditor('B: foo|')
+
+      editor.type('x')
+      host.reportSaveTaken('A-1')
+
+      if (landed) {
+        transactionHistory.add('A-1')
+      }
+
+      return {
+        answer: host.retry('A-1'),
+        resubmitted,
+        warnings: heard.warnings,
+        transactionIds: editor.inspect().inFlight?.transactionIds,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        answer: 'duplicate',
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-1'}],
+        warnings: [],
+        transactionIds: ['A-1'],
+      },
+      {
+        answer: 'saved',
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-1'}],
+        warnings: [],
+        transactionIds: ['A-1'],
+      },
+    ])
+  })
+
+  test('a resync naming the batch in flight passes its outcome from the transaction history', () => {
+    const results = (
+      [
+        [true, 'B: foox'],
+        [false, 'B: foo'],
+      ] as const
+    ).map(([landed, copy]) => {
+      const {editor, host, heard, serverCopy, transactionHistory} =
+        createHostedEditor('B: foo|')
+      const outcomes: Array<unknown> = []
+
+      editor.type('x')
+      host.reportSaveTaken('A-1')
+      editor.type('y')
+
+      if (landed) {
+        transactionHistory.add('A-1')
+      }
+
+      serverCopy.current = {
+        value: parseTextspec({keyGenerator: createTestKeyGenerator('d-')}, copy)
+          .value,
+        rev: landed ? 'r2' : 'r1',
+      }
+      const resync = editor.resync
+      editor.resync = (incoming) => {
+        outcomes.push(incoming.outcomes)
+        resync(incoming)
+      }
+      host.resync({discardUnsent: false, outcomeOf: 'A-1'})
+
+      return {
+        outcomes,
+        warnings: heard.warnings,
+        screen: editor.document.toTextspec(),
+        inFlight: editor.inspect().inFlight?.id,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        outcomes: [{'A-1': 'applied'}],
+        warnings: [],
+        screen: 'B: fooxy|',
+        inFlight: 'A-2',
+      },
+      {
+        outcomes: [{'A-1': 'not applied'}],
+        warnings: [],
+        screen: 'B: fooy|',
+        inFlight: 'A-2',
+      },
+    ])
+  })
+
   test('the final batch is saved once the save request of the batch in flight is taken', () => {
     const {editor, host, saved} = createHostedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
@@ -198,9 +303,22 @@ function createHostedEditor(textspec: string) {
   const serverCopy: {current: Load} = {current: {value, rev: 'r1'}}
   const feed: Array<Transaction> = []
   const saved: Array<MutationBatch> = []
+  const resubmitted: Array<{batchId: string; transactionId: string}> = []
+  const transactionHistory = new Set<string>()
   const host = createPassThroughHost({
     editor,
     save: (batch) => saved.push(batch),
+    resubmit: (batch, transactionId) => {
+      resubmitted.push({batchId: batch.id, transactionId})
+
+      if (transactionHistory.has(transactionId)) {
+        return 'duplicate'
+      }
+
+      transactionHistory.add(transactionId)
+      return 'saved'
+    },
+    hasTransaction: (transactionId) => transactionHistory.has(transactionId),
     fetchCopy: () => serverCopy.current,
     subscription: () => feed,
   })
@@ -212,5 +330,15 @@ function createHostedEditor(textspec: string) {
     editor.document.setCaret(caret)
   }
 
-  return {editor, host, heard, clock, feed, saved, serverCopy}
+  return {
+    editor,
+    host,
+    heard,
+    clock,
+    feed,
+    saved,
+    serverCopy,
+    resubmitted,
+    transactionHistory,
+  }
 }

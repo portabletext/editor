@@ -6,7 +6,7 @@ import {
   emptiesField,
   formatTextspec,
 } from '../document'
-import type {IoEditorStatus} from '../editor'
+import type {IoEditorStatus, IoEditorSync} from '../editor'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference} from './parameter-types'
 import {
@@ -70,6 +70,27 @@ export const stepDefinitions = [
       context.world.refuse(name, batchNumber)
     },
   ),
+  When(
+    "the host rewrites {editor}'s batch {int} as a whole-field unset",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      context.world.rewriteAsWholeFieldUnset(name, batchNumber)
+    },
+  ),
+  When(
+    "the save reply for {editor}'s batch {int} is lost",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      context.world.loseReply(name, batchNumber)
+    },
+  ),
+  When(
+    "{editor}'s batch {int} is retried",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      context.world.retry(name, batchNumber)
+    },
+  ),
+  When("{editor}'s feed is lost", (context: Context, name: EditorName) => {
+    context.world.feedLost(name)
+  }),
   When(
     'another field of the document is changed on the server',
     (context: Context) => {
@@ -145,6 +166,12 @@ export const stepDefinitions = [
   When('{editor} is resynced', (context: Context, name: EditorName) => {
     context.world.resync(name, {discardUnsent: false})
   }),
+  When(
+    '{editor} is resynced with the outcome of batch {int}',
+    (context: Context, name: EditorName, batchNumber: number) => {
+      context.world.resync(name, {discardUnsent: false, outcomeOf: batchNumber})
+    },
+  ),
   When(
     '{editor} is resynced, discarding unsent changes',
     (context: Context, name: EditorName) => {
@@ -315,6 +342,51 @@ export const stepDefinitions = [
     )
     worldEditor.checkedWarningCount = warningCount
   }),
+  Then(
+    '{editor} has been told work was dropped',
+    (context: Context, name: EditorName) => {
+      const worldEditor = context.world.getEditor(name)
+      const workDroppedCount = worldEditor.heard.workDropped.length
+
+      checkGreaterThan(
+        `The dropped work ${name} has reported`,
+        workDroppedCount,
+        worldEditor.checkedWorkDroppedCount,
+      )
+      worldEditor.checkedWorkDroppedCount = workDroppedCount
+    },
+  ),
+  Then(
+    "the retry of {editor}'s batch {int} was refused as a duplicate",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      const batchId = context.world.getBatch(name, batchNumber).id
+
+      checkEqual(
+        `Whether the server refused a retry of ${name}'s batch ${batchNumber} as a duplicate`,
+        context.world
+          .getServer()
+          .getDuplicates()
+          .some((duplicate) => duplicate.batchIds.includes(batchId)),
+        true,
+      )
+    },
+  ),
+  Then(
+    "the server has saved {editor}'s batch {int} once",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      const batchId = context.world.getBatch(name, batchNumber).id
+
+      checkEqual(
+        `The transactions carrying ${name}'s batch ${batchNumber}`,
+        context.world
+          .getServer()
+          .getTransactions()
+          .filter((transaction) => transaction.batchIds.includes(batchId))
+          .length,
+        1,
+      )
+    },
+  ),
   Then('the resync is refused', (context: Context) => {
     const resync = context.world.getLastResync()
     const {editor, heard} = context.world.getEditor(resync.editorName)
@@ -342,6 +414,16 @@ export const stepDefinitions = [
         `${name}'s status`,
         context.world.getEditor(name).editor.getStatus(),
         status,
+      )
+    },
+  ),
+  Then(
+    "{editor}'s sync is {sync}",
+    (context: Context, name: EditorName, sync: IoEditorSync) => {
+      checkEqual(
+        `${name}'s sync`,
+        context.world.getEditor(name).editor.getSync(),
+        sync,
       )
     },
   ),

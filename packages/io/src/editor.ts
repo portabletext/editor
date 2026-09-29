@@ -21,6 +21,7 @@ import type {
   MutationSent,
   Resync,
   Transaction,
+  WorkDropped,
 } from './types'
 
 const heldTransactionTimeout = 10_000
@@ -34,20 +35,28 @@ export type Clock = {
 
 export type IoEditorStatus = 'loading' | 'ready' | 'unmounted'
 
+/**
+ * Whether the user's work is saved: `'saving'` while a batch is in flight or
+ * changes are pending, `'blocked'` after a rejection and `'out of step'` after
+ * an error or a lost feed, both until the next resync.
+ */
+export type IoEditorSync = 'synced' | 'saving' | 'blocked' | 'out of step'
+
 export type IoEditorEvent =
   | ({type: 'mutation'} & MutationBatch)
   | ({type: 'change'} & ChangeEvent)
   | ({type: 'error'} & ErrorEvent)
+  | ({type: 'work dropped'} & WorkDropped)
   | {type: 'warning'; message: string}
   | {type: 'ready'}
 
 /**
- * A batch the editor has sent and the base doesn't hold yet. `transactionId`
- * is `undefined` until the host reports `mutation sent`.
+ * A batch the editor has sent and the base doesn't hold yet.
+ * `transactionIds` is empty until the host reports `mutation sent`.
  */
 export type IoEditorSentBatch = {
   id: string
-  transactionId: string | undefined
+  transactionIds: Array<string>
   patchCount: number
 }
 
@@ -76,6 +85,7 @@ export type IoEditor = {
   /** The content on screen and the caret. */
   document: Document
   getStatus: () => IoEditorStatus
+  getSync: () => IoEditorSync
   getBase: () => Load
   inspect: () => IoEditorLedger
   on: (listener: (event: IoEditorEvent) => void) => () => void
@@ -91,6 +101,7 @@ export type IoEditor = {
   transaction: (transaction: Transaction) => void
   mutationSent: (mutationSent: MutationSent) => void
   mutationRejected: (mutationRejected: MutationRejected) => void
+  feedLost: () => void
   updateReadOnly: (readOnly: boolean) => void
 
   setStyle: (style: string) => void
@@ -106,7 +117,8 @@ export type IoEditor = {
 type SentBatch = {
   id: string
   patches: Array<Patch>
-  transactionId: string | undefined
+  /** Every transaction ID the host reported for the batch. */
+  transactionIds: Set<string>
 }
 
 type HeldTransaction = {transaction: Transaction; arrivedAt: number}
@@ -159,6 +171,7 @@ export function createIoEditor(options: {
   let cancelHeldTimeout: (() => void) | undefined
   let cancelInFlightWarning: (() => void) | undefined
   let cancelLoadWarning: (() => void) | undefined
+  const droppedPatches = new WeakSet<Patch>()
 
   function emit(event: IoEditorEvent) {
     for (const listener of listeners) {
@@ -232,14 +245,16 @@ export function createIoEditor(options: {
       throw new Error('`resync` is not accepted before the editor is ready')
     }
 
-    if (inFlight) {
+    if (inFlight && incoming.outcomes?.[inFlight.id] === undefined) {
       warn(
-        `Refused a resync while batch "${inFlight.id}" is in flight: wait until it comes back or is rejected`,
+        `Refused a resync while batch "${inFlight.id}" is in flight: wait until it comes back or is rejected, or say what became of it`,
       )
       return
     }
 
     base = {value: incoming.value, rev: incoming.rev}
+    inFlight = undefined
+    stopInFlightWarning()
     rejected = undefined
     echoedAwaitingBase = []
     outOfStep = false
@@ -251,27 +266,36 @@ export function createIoEditor(options: {
     }
 
     queueKeyRepair(incoming.value)
-    warnAboutUnappliedPending()
     updateScreen()
+    reportDroppedPending('the resync')
     flush()
   }
 
-  function warnAboutUnappliedPending() {
-    let value = base.value
-    let unapplied = 0
+  /**
+   * Reports each pending patch that has no target on the screen being built,
+   * once. The patches stay pending and go out, as no-ops, with the next batch.
+   */
+  function reportDroppedPending(after: string) {
+    let value = applyWithContentLakeSemantics(
+      base.value,
+      unconfirmedBatches().flatMap((batch) => batch.patches),
+    )
+    const dropped: Array<Patch> = []
 
     for (const patch of pending.flat()) {
-      if (!hasTarget(value, patch)) {
-        unapplied++
+      if (!hasTarget(value, patch) && !droppedPatches.has(patch)) {
+        droppedPatches.add(patch)
+        dropped.push(patch)
       }
 
       value = applyWithContentLakeSemantics(value, [patch])
     }
 
-    if (unapplied > 0) {
+    if (dropped.length > 0) {
       warn(
-        `${unapplied} unsent patches had no target after the resync and did nothing`,
+        `${dropped.length} unsent patches had no target after ${after} and did nothing`,
       )
+      emit({type: 'work dropped', patches: dropped, reason: 'no target'})
     }
   }
 
@@ -289,7 +313,17 @@ export function createIoEditor(options: {
       )
     }
 
+    const mismatch = outOfStep ? undefined : echoMismatch(incoming)
+
     noteOwnTransaction(incoming.transactionId)
+
+    if (mismatch) {
+      fail({
+        reason: 'echo mismatch',
+        transactionId: incoming.transactionId,
+        patch: mismatch,
+      })
+    }
 
     if (outOfStep) {
       flush()
@@ -313,8 +347,31 @@ export function createIoEditor(options: {
     flush()
   }
 
+  /**
+   * A `set` or `unset` in the editor's own echo that the editor didn't send,
+   * above a path its batch touched: the host widened the batch. Other patches
+   * can't overwrite the batch's work, and patches at the same path or
+   * elsewhere can be other writers' batches folded into the same transaction.
+   */
+  function echoMismatch(incoming: Transaction): Patch | undefined {
+    if (!inFlight?.transactionIds.has(incoming.transactionId)) {
+      return undefined
+    }
+
+    const sentPatches = inFlight.patches
+
+    return incoming.patches.find(
+      (patch) =>
+        (patch.type === 'set' || patch.type === 'unset') &&
+        !sentPatches.some((sentPatch) => isEqual(sentPatch, patch)) &&
+        sentPatches.some((sentPatch) =>
+          isAncestorPath(patch.path, sentPatch.path),
+        ),
+    )
+  }
+
   function noteOwnTransaction(transactionId: string) {
-    if (inFlight && inFlight.transactionId === transactionId) {
+    if (inFlight?.transactionIds.has(transactionId)) {
       echoedAwaitingBase = [...echoedAwaitingBase, inFlight]
       inFlight = undefined
       stopInFlightWarning()
@@ -338,7 +395,7 @@ export function createIoEditor(options: {
   function applyTransaction(incoming: Transaction): boolean {
     const confirmedBatchIds = new Set(
       echoedAwaitingBase
-        .filter((batch) => batch.transactionId === incoming.transactionId)
+        .filter((batch) => batch.transactionIds.has(incoming.transactionId))
         .map((batch) => batch.id),
     )
     let nextValue = base.value
@@ -396,6 +453,7 @@ export function createIoEditor(options: {
 
     if (incoming.patches.length > 0) {
       updateScreen()
+      reportDroppedPending(`transaction "${incoming.transactionId}"`)
     }
 
     return true
@@ -477,9 +535,45 @@ export function createIoEditor(options: {
       return
     }
 
-    if (inFlight?.id === incoming.id) {
-      inFlight = {...inFlight, transactionId: incoming.transactionId}
+    if (
+      inFlight?.id !== incoming.id ||
+      inFlight.transactionIds.has(incoming.transactionId)
+    ) {
+      return
     }
+
+    if (inFlight.transactionIds.size > 0) {
+      warn(
+        `\`mutation sent\` names transaction "${incoming.transactionId}" for batch "${incoming.id}", already sent as ${[
+          ...inFlight.transactionIds,
+        ]
+          .map((transactionId) => `"${transactionId}"`)
+          .join(', ')}: a retry must reuse the transaction ID`,
+      )
+    }
+
+    inFlight = {
+      ...inFlight,
+      transactionIds: new Set([
+        ...inFlight.transactionIds,
+        incoming.transactionId,
+      ]),
+    }
+  }
+
+  function feedLost() {
+    if (status === 'unmounted') {
+      warn('Ignored `feed lost` after the editor unmounted')
+      return
+    }
+
+    if (status === 'loading') {
+      throw new Error('`feed lost` is not accepted before the editor is ready')
+    }
+
+    outOfStep = true
+    releaseHeld()
+    warn('The feed was lost: applying no more transactions until a resync')
   }
 
   function mutationRejected(incoming: MutationRejected) {
@@ -623,6 +717,11 @@ export function createIoEditor(options: {
         warn(
           `${pending.length} unsent change(s) dropped on close: sending was blocked by the rejection of batch ${rejected.id}`,
         )
+        emit({
+          type: 'work dropped',
+          patches: pending.flat(),
+          reason: 'closed while blocked',
+        })
         pending = []
       } else {
         emitBatch({final: true})
@@ -664,7 +763,7 @@ export function createIoEditor(options: {
       inFlight = {
         id: batch.id,
         patches: batch.patches,
-        transactionId: undefined,
+        transactionIds: new Set(),
       }
       startInFlightWarning(batch.id, livenessTimeout, clock.now())
     }
@@ -750,7 +849,15 @@ export function createIoEditor(options: {
     }
 
     pending = pending.map((patches) =>
-      patches.map((patch) => renameBlockKeys(patch, newKeys)),
+      patches.map((patch) => {
+        const renamed = renameBlockKeys(patch, newKeys)
+
+        if (droppedPatches.has(patch)) {
+          droppedPatches.add(renamed)
+        }
+
+        return renamed
+      }),
     )
     history = history.map((entry) => ({
       ...entry,
@@ -767,6 +874,18 @@ export function createIoEditor(options: {
       warn(`Repaired ${repairPatches.length} missing or duplicate keys`)
       pending = [repairPatches, ...pending]
     }
+  }
+
+  function getSync(): IoEditorSync {
+    if (outOfStep) {
+      return 'out of step'
+    }
+
+    if (rejected) {
+      return 'blocked'
+    }
+
+    return inFlight || pending.length > 0 ? 'saving' : 'synced'
   }
 
   function getContent(): Array<PortableTextBlock> | undefined {
@@ -787,6 +906,7 @@ export function createIoEditor(options: {
   return {
     document,
     getStatus: () => status,
+    getSync,
     getBase: () => base,
     inspect: () => ({
       inFlight: inFlight ? describeSentBatch(inFlight) : undefined,
@@ -819,6 +939,7 @@ export function createIoEditor(options: {
     transaction,
     mutationSent,
     mutationRejected,
+    feedLost,
     updateReadOnly: (nextReadOnly) => {
       readOnly = nextReadOnly
     },
@@ -836,9 +957,17 @@ export function createIoEditor(options: {
 function describeSentBatch(batch: SentBatch): IoEditorSentBatch {
   return {
     id: batch.id,
-    transactionId: batch.transactionId,
+    transactionIds: [...batch.transactionIds],
     patchCount: batch.patches.length,
   }
+}
+
+/** Whether `ancestor` is a strict prefix of `path`. */
+function isAncestorPath(ancestor: Patch['path'], path: Patch['path']): boolean {
+  return (
+    ancestor.length < path.length &&
+    ancestor.every((segment, index) => isEqual(segment, path[index]))
+  )
 }
 
 function stepBlockKey(step: UndoStep): string {

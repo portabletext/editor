@@ -13,15 +13,32 @@ export type PassThroughHost = {
   /** The server has taken the save request for a batch. */
   reportSaveTaken: (batchId: string) => void
   reportRejected: (batchId: string) => void
+  /**
+   * Re-sends a batch's save request with the transaction ID it was first sent
+   * as. A 409 means the earlier attempt landed, and a save means it hadn't:
+   * either way the echo confirms the batch, so the host does nothing more.
+   */
+  retry: (batchId: string) => 'saved' | 'duplicate'
+  /** The listener reconnected or may have missed transactions. */
+  feedLost: () => void
   load: () => void
-  resync: (options: {discardUnsent: boolean}) => void
+  /**
+   * `outcomeOf` names the batch in flight, whose outcome the host looks up
+   * in the document's transaction history and passes along.
+   */
+  resync: (options: {discardUnsent: boolean; outcomeOf?: string}) => void
 }
 
 /**
  * Forwards the feed to the editor as it arrives, saves each batch as the
  * transaction named by its batch ID, and fetches the server's copy for `load`
- * and `resync`. Waiting for the batch in flight before a resync is the
- * caller's job.
+ * and `resync`. Waiting for the batch in flight before a resync, or naming it
+ * so the host looks up its outcome, is the caller's job.
+ *
+ * The host sends `mutation sent` when the server takes the save request, the
+ * last moment before the save, so a step can still fold two waiting batches
+ * into one transaction and each batch is named once. A real host decides the
+ * transaction before the request leaves and names it then.
  *
  * `subscription` returns what the host's feed subscription holds but hasn't
  * delivered yet, in server order. The host subscribes before it fetches a
@@ -42,15 +59,26 @@ export type PassThroughHost = {
 export function createPassThroughHost({
   editor,
   save,
+  resubmit,
+  hasTransaction,
   fetchCopy,
   subscription,
 }: {
   editor: IoEditor
   save: (batch: MutationBatch) => void
+  /** Sends a save request again and answers whether it saved. */
+  resubmit: (
+    batch: MutationBatch,
+    transactionId: string,
+  ) => 'saved' | 'duplicate'
+  /** Whether the document's transaction history lists the ID. */
+  hasTransaction: (transactionId: string) => boolean
   fetchCopy: () => Load
   subscription: () => Array<Pick<Transaction, 'transactionId' | 'resultRev'>>
 }): PassThroughHost {
   const transactionIds = new Map<string, string>()
+  const batches = new Map<string, MutationBatch>()
+  const unnamedBatchIds = new Set<string>()
   let inFlightBatchId: string | undefined
   let untakenBatchId: string | undefined
   let heldFinalBatch: MutationBatch | undefined
@@ -65,6 +93,7 @@ export function createPassThroughHost({
 
     const {type: _type, ...batch} = event
     transactionIds.set(batch.id, batch.id)
+    batches.set(batch.id, batch)
 
     if (batch.final) {
       if (untakenBatchId === undefined) {
@@ -76,7 +105,7 @@ export function createPassThroughHost({
       return
     }
 
-    editor.mutationSent({id: batch.id, transactionId: batch.id})
+    unnamedBatchIds.add(batch.id)
     inFlightBatchId = batch.id
     untakenBatchId = batch.id
     save(batch)
@@ -126,19 +155,24 @@ export function createPassThroughHost({
     )
   }
 
+  function getTransactionId(batchId: string): string {
+    const transactionId = transactionIds.get(batchId)
+
+    if (transactionId === undefined) {
+      throw new Error(`No batch "${batchId}" was saved`)
+    }
+
+    return transactionId
+  }
+
   return {
-    getTransactionId: (batchId) => {
-      const transactionId = transactionIds.get(batchId)
-
-      if (transactionId === undefined) {
-        throw new Error(`No batch "${batchId}" was saved`)
-      }
-
-      return transactionId
-    },
+    getTransactionId,
     mapToTransaction: (batchId, transactionId) => {
       transactionIds.set(batchId, transactionId)
-      editor.mutationSent({id: batchId, transactionId})
+
+      if (!unnamedBatchIds.has(batchId)) {
+        editor.mutationSent({id: batchId, transactionId})
+      }
     },
     forward: (transaction) => {
       if (transaction.resultRev !== undefined) {
@@ -168,6 +202,13 @@ export function createPassThroughHost({
       })
     },
     reportSaveTaken: (batchId) => {
+      if (unnamedBatchIds.delete(batchId)) {
+        editor.mutationSent({
+          id: batchId,
+          transactionId: getTransactionId(batchId),
+        })
+      }
+
       if (batchId !== untakenBatchId) {
         return
       }
@@ -187,13 +228,39 @@ export function createPassThroughHost({
 
       editor.mutationRejected({id: batchId})
     },
+    retry: (batchId) => {
+      const batch = batches.get(batchId)
+
+      if (!batch || batch.final) {
+        throw new Error(`No batch "${batchId}" to retry`)
+      }
+
+      return resubmit(batch, getTransactionId(batchId))
+    },
+    feedLost: () => {
+      editor.feedLost()
+    },
     load: () => {
       editor.load(fetchCoveredCopy())
     },
-    resync: ({discardUnsent}) => {
+    resync: ({discardUnsent, outcomeOf}) => {
+      const outcomes =
+        outcomeOf === undefined
+          ? undefined
+          : {
+              [outcomeOf]: hasTransaction(getTransactionId(outcomeOf))
+                ? ('applied' as const)
+                : ('not applied' as const),
+            }
+
+      if (outcomeOf !== undefined && outcomeOf === inFlightBatchId) {
+        inFlightBatchId = undefined
+      }
+
       editor.resync({
         ...fetchCoveredCopy(),
         ...(discardUnsent ? {discardUnsent: true as const} : {}),
+        ...(outcomes ? {outcomes} : {}),
       })
     },
   }

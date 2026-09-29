@@ -6,6 +6,7 @@ export type {
   IoEditorLedger,
   IoEditorSentBatch,
   IoEditorStatus,
+  IoEditorSync,
 } from './editor'
 export {createPassThroughHost} from './host'
 export type {PassThroughHost} from './host'
@@ -18,6 +19,7 @@ export type {
   MutationSent,
   Resync,
   Transaction,
+  WorkDropped,
 } from './types'
 
 export type {
@@ -32,6 +34,7 @@ export type {
   Server,
   ServerCopy,
   ServerTransaction,
+  SubmitResult,
 } from './fakes/server'
 
 export {

@@ -24,6 +24,7 @@ import {
 export type DetailsSelection =
   | {type: 'batch'; editor: EditorName; batchNumber: number}
   | {type: 'pending'; editor: EditorName; index: number}
+  | {type: 'event'; editor: EditorName; index: number}
   | {type: 'transaction'; transactionId: string}
 
 export type Drawer =
@@ -131,6 +132,8 @@ function Details({
       return <BatchDetails selection={selection} snapshot={snapshot} />
     case 'pending':
       return <PendingDetails selection={selection} snapshot={snapshot} />
+    case 'event':
+      return <EventDetails selection={selection} snapshot={snapshot} />
     case 'transaction':
       return <TransactionDetails selection={selection} snapshot={snapshot} />
   }
@@ -166,7 +169,13 @@ function BatchDetails({
   )
     ? 'a save request, waiting for the server to receive it'
     : editor.inFlight?.batchNumber === batch.number
-      ? 'in flight: saved, waiting to come back on the feed'
+      ? snapshot.network.lostReplies.some(
+          (reply) =>
+            reply.editor === selection.editor &&
+            reply.batchNumber === batch.number,
+        )
+        ? 'in flight: saved, but the reply was lost, so the host may retry it'
+        : 'in flight: saved, waiting to come back on the feed'
       : editor.rejected?.batchNumber === batch.number
         ? 'rejected'
         : editor.echoed.some((echoed) => echoed.batchNumber === batch.number)
@@ -223,6 +232,78 @@ function PendingDetails({
       <PatchesView patches={change.patches} />
     </>
   )
+}
+
+function EventDetails({
+  selection,
+  snapshot,
+}: {
+  selection: Extract<DetailsSelection, {type: 'event'}>
+  snapshot: WorldSnapshot
+}) {
+  const event = snapshot.editors?.[selection.editor].events[selection.index]
+
+  if (event?.type === 'error') {
+    return (
+      <>
+        <h3 className="flex items-center gap-1 text-sm font-semibold">
+          {selection.editor}'s error <InfoMark concept="error" />
+        </h3>
+        <Fields
+          fields={[
+            ['reason', event.reason],
+            ['transactionId', event.transactionId ?? 'none'],
+            ['means', errorMeanings[event.reason]],
+          ]}
+        />
+        {event.patch === undefined ? null : (
+          <section aria-label="offending patch" className="flex flex-col gap-1">
+            <h4 className="text-xs font-semibold text-gray-500">
+              {event.reason === 'echo mismatch'
+                ? 'the patch the editor never sent, above a path its batch touched'
+                : 'the patch'}
+            </h4>
+            <JsonView value={event.patch} />
+          </section>
+        )}
+      </>
+    )
+  }
+
+  if (event?.type === 'work dropped') {
+    return (
+      <>
+        <h3 className="flex items-center gap-1 text-sm font-semibold">
+          {selection.editor}'s dropped work <InfoMark concept="work dropped" />
+        </h3>
+        <Fields
+          fields={[
+            ['reason', event.reason],
+            [
+              'means',
+              event.reason === 'no target'
+                ? 'the unsent changes had nowhere to go: their target is gone'
+                : 'the editor closed while sending was blocked by a rejection',
+            ],
+            ['patches', plural(event.patchCount, 'patch')],
+          ]}
+        />
+        <PatchesView patches={event.patches} />
+      </>
+    )
+  }
+
+  return <Empty>This event isn't in the current world.</Empty>
+}
+
+const errorMeanings = {
+  'out of order':
+    "a transaction didn't connect to the base revision within 10 s, so one is missing",
+  'duplicate key':
+    'a remote insert brought a key the editor already has or has sent',
+  'patch failed': "a patch from the host couldn't be evaluated at all",
+  'echo mismatch':
+    "the editor's own transaction came back with a patch it never sent, above a path its batch touched: the host widened its work",
 }
 
 function TransactionDetails({
