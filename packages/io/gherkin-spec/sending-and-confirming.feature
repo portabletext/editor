@@ -61,11 +61,14 @@ Feature: Sending and confirming
     When Editor A's batch 1 is rejected
     Then Editor A has sent nothing new
     And Editor A shows "H1: fooy|"
+    When "z" is typed
+    Then Editor A shows "H1: fooyz|"
+    And Editor A has sent nothing new
     When Editor A <resync>
     Then Editor A shows "<state>"
     And Editor A has sent <sent>
 
     Examples:
-      | keeps or discards | resync                                 | state     | sent        |
-      | keeps             | is resynced                            | B: fooy\| | batch 2     |
-      | discards          | is resynced, discarding unsent changes | B: foo\|  | nothing new |
+      | keeps or discards | resync                                 | state      | sent        |
+      | keeps             | is resynced                            | B: fooyz\| | batch 2     |
+      | discards          | is resynced, discarding unsent changes | B: foo\|   | nothing new |

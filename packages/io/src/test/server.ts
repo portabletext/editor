@@ -68,21 +68,6 @@ export function createServer(initial: {
     rev = nextRevision()
   }
 
-  function nextRevision() {
-    revisionCounter++
-    return `r${revisionCounter}`
-  }
-
-  function record(
-    transaction: Omit<ServerTransaction, 'previousRev' | 'resultRev'>,
-    resultRev: string | undefined,
-  ): ServerTransaction {
-    const recorded = {...transaction, previousRev: rev, resultRev}
-    transactions.push(recorded)
-    rev = resultRev
-    return recorded
-  }
-
   function receiveBatches(batches: Array<SavedBatch>, transactionId: string) {
     const patches = batches.flatMap((batch) => batch.patches)
     value = applyWithContentLakeSemantics(value, patches)
@@ -95,6 +80,21 @@ export function createServer(initial: {
       },
       nextRevision(),
     )
+  }
+
+  function record(
+    transaction: Omit<ServerTransaction, 'previousRev' | 'resultRev'>,
+    resultRev: string | undefined,
+  ): ServerTransaction {
+    const recorded = {...transaction, previousRev: rev, resultRev}
+    transactions.push(recorded)
+    rev = resultRev
+    return recorded
+  }
+
+  function nextRevision() {
+    revisionCounter++
+    return `r${revisionCounter}`
   }
 
   return {

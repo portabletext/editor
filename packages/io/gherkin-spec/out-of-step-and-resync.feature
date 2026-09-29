@@ -40,6 +40,19 @@ Feature: Out of step and resync
     Then Editor A shows "H2: foo|"
     And Editor A is in step
 
+  Scenario: A transaction the resync copy already covers is dropped by the host
+    Given the document is "B: foo|"
+    When the style is set to "h1" in Editor B
+    Then Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    Then the server has "H1: foo"
+    When Editor A is resynced
+    Then Editor A shows "H1: foo|"
+    When Editor A receives Editor B's batch 1
+    And the wait for the missing transaction runs out
+    Then Editor A is in step
+    And Editor A shows "H1: foo|"
+
   Scenario: A transaction that touches only another field moves the revision and changes nothing
     Given the document is "B: foo|"
     When "x" is typed
@@ -113,4 +126,23 @@ Feature: Out of step and resync
     Then the server has "B: bar"
     When Editor A receives the recreation
     Then Editor A shows "B: bar"
+    And Editor A is in step
+
+  Scenario: An echo that skips ahead is held, confirms the batch, and keeps the typing on screen
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A shows "B: foox|"
+    And Editor A has sent batch 1
+    When the style is set to "h1" in Editor B
+    Then Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And the server receives Editor A's batch 1
+    Then the server has "H1: foox"
+    When Editor A's batch 1 comes back
+    Then Editor A shows "B: foox|"
+    When "y" is typed
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent batch 2
+    When Editor A receives Editor B's batch 1
+    Then Editor A shows "H1: fooxy|"
     And Editor A is in step

@@ -75,23 +75,29 @@ Feature: Other editors
     When "x" is typed
     Then Editor A shows "B: foox|"
     And Editor A has sent batch 1
+    When "y" is typed
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent nothing new
     When the server receives Editor A's batch 1
     And Editor A's batch 1 comes back
+    Then Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    And Editor A's batch 2 comes back
     Then Editor A has sent nothing new
     When the style is set to "h1" in Editor B
     Then Editor B shows "H1: foo|"
     And Editor B has sent batch 1
     When the server receives Editor B's batch 1
-    Then the server has "H1: foox"
+    Then the server has "H1: fooxy"
     When Editor A receives Editor B's batch 1
-    Then Editor A shows "H1: foox|"
+    Then Editor A shows "H1: fooxy|"
     When undo is performed
-    Then Editor A shows "H1: foo|"
-    And Editor A has sent batch 2
-    When the server receives Editor A's batch 2
-    Then the server has "H1: foo"
-    When Editor A's batch 2 comes back
+    Then Editor A shows "H1: foox|"
+    And Editor A has sent batch 3
+    When the server receives Editor A's batch 3
+    Then the server has "H1: foox"
+    When Editor A's batch 3 comes back
     And Editor A is resynced
     And undo is performed
-    Then Editor A shows "H1: foo|"
+    Then Editor A shows "H1: foox|"
     And Editor A has sent nothing new

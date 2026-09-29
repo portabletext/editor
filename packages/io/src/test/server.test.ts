@@ -115,12 +115,7 @@ describe(createServer.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo;;B _key="k9": baz')
     const server = createServer({documentId: 'document', document: {value}})
-    const barBlock = {
-      _type: 'block',
-      _key: 'k9',
-      children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
-      style: 'normal',
-    }
+    const [barBlock] = parseTextspec({keyGenerator}, 'B _key="k9": bar').value
 
     server.receive(
       {id: 'b1', patches: [insert([barBlock], 'after', [{_key: 'k9'}])]},
@@ -149,13 +144,8 @@ describe(createServer.name, () => {
 
   test('a batch for a missing document creates it', () => {
     const server = createServer({documentId: 'document', document: undefined})
-    const placeholder = {
-      _type: 'block',
-      _key: 'k0',
-      style: 'normal',
-      markDefs: [],
-      children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-    }
+    const keyGenerator = createTestKeyGenerator()
+    const [placeholder] = parseTextspec({keyGenerator}, 'B: ').value
     const patches = [
       setIfMissing([], []),
       insert([placeholder], 'before', [0]),
@@ -176,9 +166,8 @@ describe(createServer.name, () => {
         {
           _type: 'block',
           _key: 'k0',
-          style: 'normal',
-          markDefs: [],
           children: [{_type: 'span', _key: 'k1', text: 'x', marks: []}],
+          style: 'normal',
         },
       ],
       rev: 'r1',
