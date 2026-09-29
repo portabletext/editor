@@ -1,0 +1,181 @@
+import type {SavedBatch, ServerTransaction} from './server'
+
+export type SaveRequest<TBatch extends SavedBatch> = {
+  editorId: string
+  batch: TBatch
+}
+
+export type Reply = {
+  editorId: string
+  batchId: string
+  outcome: 'accepted' | 'rejected'
+}
+
+/**
+ * What an editor's host receives from the network.
+ */
+export type NetworkReceiver = {
+  receiveTransaction: (transaction: ServerTransaction) => void
+  receiveReply: (reply: Reply) => void
+}
+
+export type VirtualClock = {
+  now: () => number
+  /**
+   * Moves time forward and runs every scheduled callback that falls due, in
+   * due order.
+   */
+  advance: (milliseconds: number) => void
+  /** Returns a function that cancels the callback. */
+  schedule: (delay: number, callback: () => void) => () => void
+}
+
+export type Network<TBatch extends SavedBatch> = {
+  clock: VirtualClock
+  connect: (editorId: string, receiver: NetworkReceiver) => void
+  send: (editorId: string, batch: TBatch) => void
+  getSaveRequests: () => Array<SaveRequest<TBatch>>
+  takeSaveRequest: (batchId: string) => SaveRequest<TBatch>
+  queueReply: (reply: Reply) => void
+  getReplies: () => Array<Reply>
+  deliverReply: (batchId: string) => void
+  /** Appends the transaction to the feed of every connected editor. */
+  publish: (transaction: ServerTransaction) => void
+  getFeed: (editorId: string) => Array<ServerTransaction>
+  deliver: (editorId: string, transactionId: string) => void
+}
+
+/**
+ * Queues between the editors' hosts and the server. Nothing moves until a
+ * caller takes or delivers it, in whatever order the caller asks for.
+ */
+export function createNetwork<
+  TBatch extends SavedBatch = SavedBatch,
+>(): Network<TBatch> {
+  const receivers = new Map<string, NetworkReceiver>()
+  const feeds = new Map<string, Array<ServerTransaction>>()
+  let saveRequests: Array<SaveRequest<TBatch>> = []
+  let replies: Array<Reply> = []
+
+  function getReceiver(editorId: string) {
+    const receiver = receivers.get(editorId)
+
+    if (!receiver) {
+      throw new Error(`No editor "${editorId}" is connected`)
+    }
+
+    return receiver
+  }
+
+  return {
+    clock: createVirtualClock(),
+    connect: (editorId, receiver) => {
+      receivers.set(editorId, receiver)
+      feeds.set(editorId, [])
+    },
+    send: (editorId, batch) => {
+      saveRequests = [...saveRequests, {editorId, batch}]
+    },
+    getSaveRequests: () => saveRequests,
+    takeSaveRequest: (batchId) => {
+      const request = saveRequests.find(
+        (candidate) => candidate.batch.id === batchId,
+      )
+
+      if (!request) {
+        throw new Error(`No save request for batch "${batchId}"`)
+      }
+
+      saveRequests = saveRequests.filter((candidate) => candidate !== request)
+
+      return request
+    },
+    queueReply: (reply) => {
+      replies = [...replies, reply]
+    },
+    getReplies: () => replies,
+    deliverReply: (batchId) => {
+      const reply = replies.find((candidate) => candidate.batchId === batchId)
+
+      if (!reply) {
+        throw new Error(`No reply for batch "${batchId}"`)
+      }
+
+      replies = replies.filter((candidate) => candidate !== reply)
+      getReceiver(reply.editorId).receiveReply(reply)
+    },
+    publish: (transaction) => {
+      for (const [editorId, feed] of feeds) {
+        feeds.set(editorId, [...feed, transaction])
+      }
+    },
+    getFeed: (editorId) => {
+      const feed = feeds.get(editorId)
+
+      if (!feed) {
+        throw new Error(`No editor "${editorId}" is connected`)
+      }
+
+      return feed
+    },
+    deliver: (editorId, transactionId) => {
+      const feed = feeds.get(editorId) ?? []
+      const transaction = feed.find(
+        (candidate) => candidate.transactionId === transactionId,
+      )
+
+      if (!transaction) {
+        throw new Error(
+          `No transaction "${transactionId}" waiting for editor "${editorId}"`,
+        )
+      }
+
+      feeds.set(
+        editorId,
+        feed.filter((candidate) => candidate !== transaction),
+      )
+      getReceiver(editorId).receiveTransaction(transaction)
+    },
+  }
+}
+
+function createVirtualClock(): VirtualClock {
+  let now = 0
+  let nextTimerId = 0
+  let timers: Array<{id: number; dueAt: number; callback: () => void}> = []
+
+  return {
+    now: () => now,
+    advance: (milliseconds) => {
+      const target = now + milliseconds
+
+      while (true) {
+        const [nextTimer] = timers
+          .filter((timer) => timer.dueAt <= target)
+          .sort(
+            (timerA, timerB) =>
+              timerA.dueAt - timerB.dueAt || timerA.id - timerB.id,
+          )
+
+        if (!nextTimer) {
+          break
+        }
+
+        timers = timers.filter((timer) => timer !== nextTimer)
+        now = nextTimer.dueAt
+        nextTimer.callback()
+      }
+
+      now = target
+    },
+    schedule: (delay, callback) => {
+      const timer = {id: nextTimerId, dueAt: now + delay, callback}
+      nextTimerId++
+      timers = [...timers, timer]
+
+      return () => {
+        timers = timers.filter((candidate) => candidate !== timer)
+      }
+    },
+  }
+}
