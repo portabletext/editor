@@ -35,8 +35,6 @@ Feature: Other editors
     When the server receives <first save>
     And the server receives <second save>
     Then the server has "<server>"
-    When Editor A's batch 1 is accepted
-    Then Editor A shows "H2: foo|"
     When <first>
     Then Editor A shows "<after first>"
     When <second>

@@ -3,7 +3,7 @@ Feature: Sending and confirming
   Background:
     Given the document is "B: foo|"
 
-  Scenario: Queued changes wait for the batch's echo, not its acceptance
+  Scenario: Queued changes wait for the batch's echo
     When "x" is typed
     Then Editor A shows "B: foox|"
     And Editor A has sent batch 1
@@ -13,8 +13,7 @@ Feature: Sending and confirming
     And Editor A has sent nothing new
     When the server receives Editor A's batch 1
     Then the server has "B: foox"
-    When Editor A's batch 1 is accepted
-    Then Editor A has sent nothing new
+    And Editor A has sent nothing new
     When Editor A's batch 1 comes back
     Then Editor A has sent batch 2
     When the server receives Editor A's batch 2
@@ -37,9 +36,6 @@ Feature: Sending and confirming
     And Editor A has sent nothing new
     When the server receives Editor A's batch 1
     Then the server has "H1: foo"
-    When Editor A's batch 1 is accepted
-    Then Editor A shows "H1: foox|"
-    And Editor A has sent nothing new
     When Editor A receives Editor B's batch 1
     Then Editor A shows "H1: foox|"
     And Editor A has sent nothing new

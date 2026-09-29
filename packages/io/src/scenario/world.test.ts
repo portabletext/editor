@@ -195,14 +195,7 @@ describe(createWorld.name, () => {
             patches: [set('h1', stylePath)],
           },
         ],
-        replies: [
-          {
-            editor: 'Editor A',
-            batchId: 'A-1',
-            batchNumber: 1,
-            outcome: 'accepted',
-          },
-        ],
+        replies: [],
         feeds: {
           'Editor A': [
             {

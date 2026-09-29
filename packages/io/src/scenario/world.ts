@@ -126,7 +126,6 @@ export type NetworkSnapshot = {
     editor: EditorName
     batchId: string
     batchNumber: number
-    outcome: 'accepted' | 'rejected'
   }>
   feeds: Record<
     EditorName,
@@ -236,34 +235,6 @@ export function createWorld() {
       : server.receive(first, transactionId)
 
     network.publish(transaction)
-
-    for (const {name, batch} of batches) {
-      network.queueReply({
-        editorId: name,
-        batchId: batch.id,
-        outcome: 'accepted',
-      })
-    }
-  }
-
-  function deliverReply(
-    name: EditorName,
-    batchNumber: number,
-    outcome: 'accepted' | 'rejected',
-  ) {
-    const {network} = getSetup()
-    const batch = getBatch(name, batchNumber)
-    const reply = network
-      .getReplies()
-      .find((candidate) => candidate.batchId === batch.id)
-
-    if (reply?.outcome !== outcome) {
-      throw new Error(
-        `No "${outcome}" reply is waiting for ${name}'s batch ${batchNumber}`,
-      )
-    }
-
-    network.deliverReply(batch.id)
   }
 
   function getBatch(name: EditorName, batchNumber: number): MutationBatch {
@@ -431,7 +402,6 @@ export function createWorld() {
           editor: toEditorName(reply.editorId),
           batchId: reply.batchId,
           batchNumber: locateBatch(reply.batchId).batchNumber,
-          outcome: reply.outcome,
         })),
         feeds: {
           'Editor A': network.getFeed('Editor A').map(describeFeedItem),
@@ -546,11 +516,7 @@ export function createWorld() {
       const batch = getBatch(name, batchNumber)
       network.takeSaveRequest(batch.id)
       server.refuse(batch.id)
-      network.queueReply({
-        editorId: name,
-        batchId: batch.id,
-        outcome: 'rejected',
-      })
+      network.queueReply({editorId: name, batchId: batch.id})
     },
     changeOtherField: () => {
       const {server, network} = getSetup()
@@ -611,10 +577,18 @@ export function createWorld() {
       getSetup().network.clock.advance(milliseconds)
     },
 
-    accept: (name: EditorName, batchNumber: number) =>
-      deliverReply(name, batchNumber, 'accepted'),
-    reject: (name: EditorName, batchNumber: number) =>
-      deliverReply(name, batchNumber, 'rejected'),
+    reject: (name: EditorName, batchNumber: number) => {
+      const {network} = getSetup()
+      const batch = getBatch(name, batchNumber)
+
+      if (!network.getReplies().some((reply) => reply.batchId === batch.id)) {
+        throw new Error(
+          `No rejection is waiting for ${name}'s batch ${batchNumber}`,
+        )
+      }
+
+      network.deliverReply(batch.id)
+    },
     resync: (name: EditorName, {discardUnsent}: {discardUnsent: boolean}) => {
       const {editor, host, heard} = getEditor(name)
       lastResync = {
@@ -697,10 +671,7 @@ function createWorldEditor({
 
   network.connect(name, {
     receiveTransaction: host.forward,
-    receiveReply: (reply) =>
-      reply.outcome === 'accepted'
-        ? host.reportAccepted(reply.batchId)
-        : host.reportRejected(reply.batchId),
+    receiveReply: (reply) => host.reportRejected(reply.batchId),
     receiveSaveTaken: host.reportSaveTaken,
   })
   editor.mount()

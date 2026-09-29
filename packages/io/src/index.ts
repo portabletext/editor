@@ -13,7 +13,6 @@ export type {
   ChangeEvent,
   ErrorEvent,
   Load,
-  MutationAccepted,
   MutationBatch,
   MutationRejected,
   MutationSent,

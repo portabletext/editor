@@ -5,10 +5,13 @@ export type SaveRequest<TBatch extends SavedBatch> = {
   batch: TBatch
 }
 
+/**
+ * A save reply. The server replies only when it refuses a batch: a batch it
+ * saves is confirmed by its transaction coming back on the feed.
+ */
 export type Reply = {
   editorId: string
   batchId: string
-  outcome: 'accepted' | 'rejected'
 }
 
 /**

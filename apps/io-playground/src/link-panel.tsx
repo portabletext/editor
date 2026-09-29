@@ -22,7 +22,7 @@ type FeedItem = NetworkSnapshot['feeds'][EditorName][number]
 
 /**
  * The link between one editor and the server: save requests travel up
- * toward the server, save replies and the feed travel down toward the editor.
+ * toward the server, rejections and the feed travel down toward the editor.
  * Cards sit oldest nearest the party that takes them next.
  */
 export function LinkPanel({
@@ -163,7 +163,7 @@ export function LinkPanel({
                     {towardEditor} {name}
                   </span>
                 ) : null}
-                <Label concept="save reply">save replies</Label> and the{' '}
+                <Label concept="rejection">rejections</Label> and the{' '}
                 <Label concept="feed">feed</Label>
                 {editorSide === 'right' ? (
                   <span aria-hidden="true">
@@ -178,15 +178,10 @@ export function LinkPanel({
                 {replies.map((reply) => (
                   <Card
                     key={reply.batchId}
-                    label={`save reply for ${name}'s batch ${reply.batchNumber}`}
+                    label={`rejection for ${name}'s batch ${reply.batchNumber}`}
                   >
                     <span>
-                      reply:{' '}
-                      <Badge
-                        tone={reply.outcome === 'accepted' ? 'green' : 'red'}
-                      >
-                        {reply.outcome}
-                      </Badge>
+                      <Badge tone="red">rejected</Badge>
                     </span>
                     <span className="text-gray-500">
                       batch {reply.batchNumber}
@@ -196,7 +191,7 @@ export function LinkPanel({
                         <Button
                           onClick={() =>
                             onDeliver(
-                              `${name}'s batch ${reply.batchNumber} is ${reply.outcome}`,
+                              `${name}'s batch ${reply.batchNumber} is rejected`,
                             )
                           }
                         >

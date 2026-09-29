@@ -111,8 +111,7 @@ Feature: Out of step and resync
     Then the resync is refused
     And Editor A shows "B: fooxy|"
     And Editor A has sent nothing new
-    When Editor A's batch 1 is accepted
-    And Editor A's batch 1 comes back
+    When Editor A's batch 1 comes back
     Then Editor A has sent batch 2
 
   Scenario: A deleted and recreated document doesn't put the editor out of step

@@ -16,7 +16,6 @@ import type {
   ChangeEvent,
   ErrorEvent,
   Load,
-  MutationAccepted,
   MutationBatch,
   MutationRejected,
   MutationSent,
@@ -89,7 +88,6 @@ export type IoEditor = {
   resync: (resync: Resync) => void
   transaction: (transaction: Transaction) => void
   mutationSent: (mutationSent: MutationSent) => void
-  mutationAccepted: (mutationAccepted: MutationAccepted) => void
   mutationRejected: (mutationRejected: MutationRejected) => void
   updateReadOnly: (readOnly: boolean) => void
 
@@ -480,12 +478,6 @@ export function createIoEditor(options: {
     }
   }
 
-  function mutationAccepted(incoming: MutationAccepted) {
-    if (!emittedBatchIds.has(incoming.id)) {
-      warn(`\`mutation accepted\` for unknown batch "${incoming.id}"`)
-    }
-  }
-
   function mutationRejected(incoming: MutationRejected) {
     if (!emittedBatchIds.has(incoming.id)) {
       warn(`\`mutation rejected\` for unknown batch "${incoming.id}"`)
@@ -806,7 +798,6 @@ export function createIoEditor(options: {
     resync,
     transaction,
     mutationSent,
-    mutationAccepted,
     mutationRejected,
     updateReadOnly: (nextReadOnly) => {
       readOnly = nextReadOnly

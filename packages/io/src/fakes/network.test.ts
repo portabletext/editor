@@ -71,24 +71,22 @@ describe(createNetwork.name, () => {
       })
     }
 
-    network.queueReply({editorId: 'A', batchId: 'a1', outcome: 'accepted'})
-    network.queueReply({editorId: 'B', batchId: 'b1', outcome: 'rejected'})
+    network.queueReply({editorId: 'A', batchId: 'a1'})
+    network.queueReply({editorId: 'B', batchId: 'b1'})
     network.deliverReply('b1')
 
-    expect(network.getReplies()).toEqual([
-      {editorId: 'A', batchId: 'a1', outcome: 'accepted'},
-    ])
+    expect(network.getReplies()).toEqual([{editorId: 'A', batchId: 'a1'}])
 
     network.deliverReply('a1')
 
     expect(received).toEqual([
       {
         editorId: 'B',
-        reply: {editorId: 'B', batchId: 'b1', outcome: 'rejected'},
+        reply: {editorId: 'B', batchId: 'b1'},
       },
       {
         editorId: 'A',
-        reply: {editorId: 'A', batchId: 'a1', outcome: 'accepted'},
+        reply: {editorId: 'A', batchId: 'a1'},
       },
     ])
     expect(network.getReplies()).toEqual([])

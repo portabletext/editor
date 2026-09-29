@@ -149,20 +149,16 @@ function narrateEditor({
       continue
     }
 
-    if (reply.outcome === 'accepted') {
-      sentences.push(
-        `${name} got the save reply for batch ${reply.batchNumber}: accepted, which on its own changes nothing.`,
-      )
-    } else if (
+    if (
       after.rejected?.batchNumber === reply.batchNumber &&
       before.rejected?.batchNumber !== reply.batchNumber
     ) {
       sentences.push(
-        `${name} got the save reply for batch ${reply.batchNumber}: rejected, so ${name} sends nothing more until a resync.`,
+        `${name} got the rejection for batch ${reply.batchNumber}, so ${name} sends nothing more until a resync.`,
       )
     } else {
       sentences.push(
-        `${name} got the save reply for batch ${reply.batchNumber}: rejected.`,
+        `${name} got the rejection for batch ${reply.batchNumber}.`,
       )
     }
   }
@@ -423,7 +419,6 @@ function narrateServer({
     const refused = afterNetwork.replies.some(
       (reply) =>
         reply.batchId === request.batchId &&
-        reply.outcome === 'rejected' &&
         !beforeNetwork.replies.some(
           (candidate) => candidate.batchId === request.batchId,
         ),
@@ -431,7 +426,7 @@ function narrateServer({
 
     if (refused) {
       sentences.push(
-        `The server refused ${request.editor}'s batch ${request.batchNumber}, and a rejected save reply is on its way back.`,
+        `The server refused ${request.editor}'s batch ${request.batchNumber}, and a rejection is on its way back.`,
       )
     }
   }

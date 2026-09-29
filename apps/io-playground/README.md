@@ -1,6 +1,6 @@
 # I/O protocol playground
 
-An interactive view of `@portabletext/io`: Editor A, the link to the server, the server, the link to Editor B, and Editor B, side by side. Save requests, save replies and feed transactions sit as cards in the links until you deliver them, so a race is played by choosing the order.
+An interactive view of `@portabletext/io`: Editor A, the link to the server, the server, the link to Editor B, and Editor B, side by side. Save requests, rejections and feed transactions sit as cards in the links until you deliver them, so a race is played by choosing the order.
 
 Every value opens to its Portable Text blocks, every batch and transaction to its patches. Each label has a one-sentence explanation behind its "i", and the Concepts button lists them all. After every step a narration says what happened in plain words.
 

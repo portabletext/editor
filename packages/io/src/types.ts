@@ -28,8 +28,6 @@ export type MutationSent = {id: string; transactionId: string}
 
 export type MutationRejected = {id: string}
 
-export type MutationAccepted = {id: string}
-
 /**
  * The server's copy of the field and the document revision it is at. `rev`
  * is `undefined` when the document doesn't exist.

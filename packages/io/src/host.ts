@@ -12,7 +12,6 @@ export type PassThroughHost = {
   forward: (transaction: Transaction) => void
   /** The server has taken the save request for a batch. */
   reportSaveTaken: (batchId: string) => void
-  reportAccepted: (batchId: string) => void
   reportRejected: (batchId: string) => void
   load: () => void
   resync: (options: {discardUnsent: boolean}) => void
@@ -180,9 +179,6 @@ export function createPassThroughHost({
         heldFinalBatch = undefined
         save(finalBatch)
       }
-    },
-    reportAccepted: (batchId) => {
-      editor.mutationAccepted({id: batchId})
     },
     reportRejected: (batchId) => {
       if (batchId === inFlightBatchId) {

@@ -137,12 +137,6 @@ export const stepDefinitions = [
   }),
 
   When(
-    "{editor}'s batch {int} is accepted",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.accept(name, batchNumber)
-    },
-  ),
-  When(
     "{editor}'s batch {int} is rejected",
     (context: Context, name: EditorName, batchNumber: number) => {
       context.world.reject(name, batchNumber)

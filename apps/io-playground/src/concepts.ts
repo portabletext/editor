@@ -14,9 +14,9 @@ export const concepts = [
       "A batch on its way from an editor's host to the server, waiting for the server to receive it.",
   },
   {
-    name: 'save reply',
+    name: 'rejection',
     definition:
-      "The server's answer to a save request, accepted or rejected, and only a rejection changes what the editor does.",
+      'The server refused the batch and the host says so. A save that went well has no reply the editor needs: its transaction coming back is the confirmation.',
   },
   {
     name: 'transaction',
