@@ -1,23 +1,35 @@
-import {Given, Then} from 'racejar'
+import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {expect} from 'vitest'
+import keysFeature from '../../gherkin-spec/keys.feature?raw'
+import lifecycleFeature from '../../gherkin-spec/lifecycle.feature?raw'
+import listenersFeature from '../../gherkin-spec/listeners.feature?raw'
+import loadingAndEmptyFeature from '../../gherkin-spec/loading-and-empty.feature?raw'
+import otherEditorsFeature from '../../gherkin-spec/other-editors.feature?raw'
+import outOfStepAndResyncFeature from '../../gherkin-spec/out-of-step-and-resync.feature?raw'
+import sendingAndConfirmingFeature from '../../gherkin-spec/sending-and-confirming.feature?raw'
+import {parameterTypes} from './parameter-types'
+import {stepDefinitions, type Context} from './steps'
+import {createWorld} from './world'
 
-type Context = {
-  documentText: string
+const features = [
+  keysFeature,
+  lifecycleFeature,
+  listenersFeature,
+  loadingAndEmptyFeature,
+  otherEditorsFeature,
+  outOfStepAndResyncFeature,
+  sendingAndConfirmingFeature,
+]
+
+for (const featureText of features) {
+  Feature({
+    featureText,
+    hooks: [
+      Before((context: Context) => {
+        context.world = createWorld()
+      }),
+    ],
+    stepDefinitions,
+    parameterTypes,
+  })
 }
-
-Feature({
-  featureText: `
-    Feature: Wiring
-      Scenario: A step runs
-        Given the document is "B: foo|"
-        Then the document text is "B: foo|"`,
-  stepDefinitions: [
-    Given('the document is {string}', (context: Context, text: string) => {
-      context.documentText = text
-    }),
-    Then('the document text is {string}', (context: Context, text: string) => {
-      expect(context.documentText).toEqual(text)
-    }),
-  ],
-})
