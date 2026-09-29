@@ -619,7 +619,14 @@ export function createIoEditor(options: {
     }
 
     if (pending.length > 0) {
-      emitBatch({final: true})
+      if (rejected) {
+        warn(
+          `${pending.length} unsent change(s) dropped on close: sending was blocked by the rejection of batch ${rejected.id}`,
+        )
+        pending = []
+      } else {
+        emitBatch({final: true})
+      }
     }
 
     status = 'unmounted'

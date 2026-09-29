@@ -32,3 +32,18 @@ Feature: Lifecycle
     Then the server has "B: foox"
     When the server receives Editor A's final batch
     Then the server has "B: fooxy"
+
+  Scenario: Closing while sending is blocked sends nothing, and the unsent changes are dropped with a warning
+    When "x" is typed
+    Then Editor A shows "B: foox|"
+    And Editor A has sent batch 1
+    When the server refuses Editor A's batch 1
+    And Editor A's batch 1 is rejected
+    Then Editor A has sent nothing new
+    When "y" is typed
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent nothing new
+    When Editor A is closed
+    Then Editor A has sent nothing new
+    And Editor A has been warned
+    And the server has "B: foo"
