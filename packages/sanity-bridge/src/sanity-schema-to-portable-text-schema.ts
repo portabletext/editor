@@ -186,6 +186,7 @@ function sanitySchemaTypeToSchema(
     ancestors: new Map<string, number>(),
     distinctAncestorCount: 0,
     memo: new Map<SchemaType, OfDefinition>(),
+    activeAnonymousObjects: new Set<SchemaType>(),
     inFlight: new Map<unknown, Array<number>>(),
     rootBlockObjects: new Set<SchemaType>(blockObjectTypes),
   }
@@ -273,24 +274,31 @@ type Conversion = {
    * were naturally reentrant, an inner scope's end never removed the
    * name from the outer scope. A plain shared `Set` is not (`delete`
    * clobbers the outer scope), so scopes increment and decrement
-   * counts instead. `distinctAncestorCount` tracks the set size the
-   * in-flight state comparison needs.
+   * counts instead. `distinctAncestorCount` tracks the set size, one
+   * half of `recursionStateSize`.
    */
   ancestors: Map<string, number>
   distinctAncestorCount: number
   memo: Map<SchemaType, OfDefinition>
   /**
+   * Anonymous object member instances (name `object`) whose expansion is
+   * on the active path. Every anonymous inline object shares the name
+   * `object`, so the ancestor names cannot tell a nested anonymous object
+   * from a cycle. Only re-entering the same instance is one.
+   */
+  activeAnonymousObjects: Set<SchemaType>
+  /**
    * Inline-object and annotation instances whose field expansion is
-   * currently in flight, each with the ancestor-set sizes at their
+   * currently in flight, each with the `recursionStateSize` at their
    * in-flight entries. The recursive implementation re-expanded such
-   * instances unconditionally; that terminates while every re-entry
-   * grows the ancestor set (richer ancestors cut the inner expansion
-   * earlier) and recurses forever exactly when the recursion state
-   * repeats, same instance, same ancestor set. Ancestors grow
+   * instances unconditionally. That terminates while every re-entry
+   * grows the recursion state (richer ancestors and active anonymous
+   * objects cut the inner expansion earlier) and recurses forever
+   * exactly when the recursion state repeats: same instance, same
+   * ancestor names, same active anonymous objects. Both sets grow
    * monotonically along a branch, so "same instance at the same or
-   * smaller ancestor-set size" identifies the repeated state, and
-   * cutting there changes output only for schemas that previously
-   * overflowed the stack.
+   * smaller state size" identifies the repeated state, and cutting
+   * there changes output only for schemas that recursed forever.
    */
   inFlight: Map<unknown, Array<number>>
   /**
@@ -332,6 +340,18 @@ function popAncestor(conversion: Conversion, name: string): void {
 
 function hasAncestor(conversion: Conversion, name: string): boolean {
   return (conversion.ancestors.get(name) ?? 0) > 0
+}
+
+/**
+ * Distinct anonymous objects all push the one ancestor name `object`, so
+ * the ancestor count alone misses descending into a new anonymous
+ * instance. Counting the active instances too makes the size grow on
+ * every step that changes what the expansion below can produce.
+ */
+function recursionStateSize(conversion: Conversion): number {
+  return (
+    conversion.distinctAncestorCount + conversion.activeAnonymousObjects.size
+  )
 }
 
 function drain(conversion: Conversion): void {
@@ -377,21 +397,22 @@ function buildFields(
   const work = () => {
     if (inFlightKey !== undefined) {
       const entrySizes = conversion.inFlight.get(inFlightKey)
-      const ancestorCount = conversion.distinctAncestorCount
+      const stateSize = recursionStateSize(conversion)
       if (
         entrySizes !== undefined &&
         entrySizes.length > 0 &&
-        ancestorCount <= entrySizes[entrySizes.length - 1]!
+        stateSize <= entrySizes[entrySizes.length - 1]!
       ) {
-        // The recursion state (this instance, this ancestor set) is
-        // already in flight on the current branch: the recursive
-        // implementation looped forever here. Leave the fields empty.
+        // The recursion state (this instance, these ancestor names,
+        // these active anonymous objects) is already in flight on the
+        // current branch, so expanding would repeat forever. Leave the
+        // fields empty.
         return
       }
       if (entrySizes === undefined) {
-        conversion.inFlight.set(inFlightKey, [ancestorCount])
+        conversion.inFlight.set(inFlightKey, [stateSize])
       } else {
-        entrySizes.push(ancestorCount)
+        entrySizes.push(stateSize)
       }
       conversion.work.push(() => {
         const sizes = conversion.inFlight.get(inFlightKey)
@@ -477,18 +498,19 @@ function scheduleOfMember(
     return
   }
 
-  // If this member has fields and isn't already in the ancestor chain,
-  // emit an INLINE declaration (`type: 'object'` + name + fields). If the
-  // type is in the ancestor chain (cycle) or has no fields, emit a bare
-  // REFERENCE (just `type: <name>`).
+  // A member with fields emits an INLINE declaration (`type: 'object'` +
+  // name + fields). A member without fields, or a named member whose name
+  // is already in the ancestor chain (cycle), emits a bare REFERENCE (just
+  // `type: <name>`). Anonymous members cut on instance identity below.
   const hasFields =
     memberType.jsonType === 'object' &&
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
+  const isAnonymousObject = memberType.name === 'object'
 
   if (
     !hasFields ||
-    hasAncestor(conversion, memberType.name) ||
+    (!isAnonymousObject && hasAncestor(conversion, memberType.name)) ||
     conversion.rootBlockObjects.has(memberType)
   ) {
     // Bare reference. The editor's resolver looks up `memberType.name`
@@ -502,15 +524,28 @@ function scheduleOfMember(
     return
   }
 
+  if (conversion.activeAnonymousObjects.has(memberType)) {
+    // No name a bare reference could resolve, and a bare `{type: 'object'}`
+    // reads as an inline object without fields, so the cut is an inline
+    // declaration with an empty field list.
+    target[index] = {
+      type: 'object',
+      name: memberType.name,
+      ...(memberType.title ? {title: memberType.title} : {}),
+      fields: [],
+    }
+    return
+  }
+
   // Each distinct member instance is expanded exactly once per conversion;
   // every later position that reaches the same instance shares the first
   // expansion. Keyed by instance (not name) so that same-named but
   // structurally different inline declarations keep their own shapes.
   // The memo entry lands before the subtree drains, which is
-  // output-neutral: any path re-entering this instance mid-expansion
-  // carries its name in the ancestor set and cuts to a bare reference
-  // before the memo is consulted, and every other position runs after
-  // this subtree has fully drained (exact DFS order).
+  // output-neutral: any path re-entering this instance mid-expansion is
+  // cut above before the memo is consulted (by name for a named member,
+  // by instance for an anonymous one), and every other position runs
+  // after this subtree has fully drained (exact DFS order).
   const memoized = conversion.memo.get(memberType)
   if (memoized) {
     target[index] = memoized
@@ -528,6 +563,12 @@ function scheduleOfMember(
   conversion.memo.set(memberType, definition)
   target[index] = definition
 
+  if (isAnonymousObject) {
+    conversion.activeAnonymousObjects.add(memberType)
+    conversion.work.push(() =>
+      conversion.activeAnonymousObjects.delete(memberType),
+    )
+  }
   pushAncestor(conversion, memberType.name)
   conversion.work.push(() => popAncestor(conversion, memberType.name))
   for (let fieldIndex = fields.length - 1; fieldIndex >= 0; fieldIndex--) {
