@@ -105,7 +105,9 @@ Marks join the same `nodes` array as your other registrations, mounted through o
 
 ## Lists
 
-Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Visual nesting comes from CSS, and list numbering comes from [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index). We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
+Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Visual nesting comes from CSS, and list numbering comes from [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index).
+
+A common setup has your text-block render put the list information on its wrapper, `data-list-item` from `node.listItem`, `data-level` from `node.level`, and `data-list-index` from the plugin's `useListIndex`, and lets CSS draw markers and indentation from those attributes. The plugin's README walks through the render and the CSS, and the [basic example](https://github.com/portabletext/editor/tree/main/examples/basic) shows the complete setup, including [a stylesheet](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) that numbers each level in its own style.
 
 ## Placeholder text
 
