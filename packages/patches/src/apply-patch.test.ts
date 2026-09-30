@@ -1,7 +1,7 @@
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test} from 'vitest'
 import applyPatch, {applyAll} from './applyPatch'
-import {insert, setIfMissing} from './patches'
+import {diffMatchPatch, insert, set, setIfMissing, unset} from './patches'
 
 describe(applyPatch.name, () => {
   const keyGenerator = createTestKeyGenerator()
@@ -607,6 +607,63 @@ describe(applyAll.name, () => {
   describe('applying patches to null', () => {
     test('setIfMissing on null does NOT apply (null is a valid value)', () => {
       expect(applyAll(null, [setIfMissing([], [])])).toEqual(null)
+    })
+  })
+
+  describe('a deep patch whose parent is missing is a no-op, as on the server', () => {
+    test('set on a keyed item when the field is undefined', () => {
+      expect(applyAll(undefined, [set('h1', [{_key: 'k0'}, 'style'])])).toEqual(
+        undefined,
+      )
+    })
+
+    test('unset of a keyed item when the field is undefined', () => {
+      expect(applyAll(undefined, [unset([{_key: 'k0'}])])).toEqual(undefined)
+    })
+
+    test('insert before an index when the field is undefined', () => {
+      const block = {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: ''}],
+      }
+
+      expect(applyAll(undefined, [insert([block], 'before', [0])])).toEqual(
+        undefined,
+      )
+    })
+
+    test('diffMatchPatch on a keyed span when the field is undefined', () => {
+      expect(
+        applyAll(undefined, [
+          diffMatchPatch('Hello', 'Hello there', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ]),
+      ).toEqual(undefined)
+    })
+
+    test('a later patch in the same list still applies', () => {
+      const block = {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: ''}],
+      }
+
+      expect(
+        applyAll(undefined, [
+          set('h1', [{_key: 'k9'}, 'style']),
+          setIfMissing([], []),
+          insert([block], 'before', [0]),
+        ]),
+      ).toEqual([block])
+    })
+
+    test('a deep patch into null is a no-op too', () => {
+      expect(applyAll(null, [set('h1', [{_key: 'k0'}, 'style'])])).toEqual(null)
     })
   })
 })
