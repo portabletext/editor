@@ -3,6 +3,7 @@ import {
   compileSchema,
   defineSchema,
   type PortableTextBlock,
+  type PortableTextObject,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
@@ -18,6 +19,7 @@ import {buildIndexMaps} from './build-index-maps'
 import {
   insertNodePatch,
   operationToPatches,
+  setNodePatch,
   textPatch,
 } from './operation-to-patches'
 
@@ -603,5 +605,151 @@ function textBlock(
     children: [{_type: 'span', _key: spanKey, text, marks: []}],
     markDefs: [],
     style: 'normal',
+  }
+}
+
+describe(setNodePatch.name, () => {
+  test('Scenario: Creating an absent `markDefs` property emits a `setIfMissing`', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+        },
+        [textBlockWithMarkDefs({blockKey, spanKey, markDefs: undefined})],
+      ),
+    ).toEqual([
+      {
+        type: 'setIfMissing',
+        path: [{_key: blockKey}, 'markDefs'],
+        value: [],
+      },
+    ])
+  })
+
+  test('Scenario: Setting an existing `markDefs` property passes through as a plain set', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const linkKey = keyGenerator()
+
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+        },
+        [
+          textBlockWithMarkDefs({
+            blockKey,
+            spanKey,
+            markDefs: [
+              {_key: linkKey, _type: 'link', href: 'https://example.com'},
+            ],
+          }),
+        ],
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: [{_key: blockKey}, 'markDefs'],
+        value: [],
+      },
+    ])
+  })
+
+  test('Scenario: Setting a non-empty array on an absent property passes through as a plain set', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const linkKey = keyGenerator()
+
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [{_key: linkKey, _type: 'link', href: 'https://example.com'}],
+        },
+        [textBlockWithMarkDefs({blockKey, spanKey, markDefs: undefined})],
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: [{_key: blockKey}, 'markDefs'],
+        value: [{_key: linkKey, _type: 'link', href: 'https://example.com'}],
+      },
+    ])
+  })
+
+  test('Scenario: Block missing from the pre-apply value passes through as a plain set', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const otherBlockKey = keyGenerator()
+
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: otherBlockKey}, 'markDefs'],
+          value: [],
+        },
+        [textBlockWithMarkDefs({blockKey, spanKey, markDefs: undefined})],
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: [{_key: otherBlockKey}, 'markDefs'],
+        value: [],
+      },
+    ])
+  })
+
+  test('Scenario: Paths not ending in `markDefs` pass through as plain sets', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      setNodePatch(
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'style'],
+          value: 'h1',
+        },
+        [textBlockWithMarkDefs({blockKey, spanKey, markDefs: []})],
+      ),
+    ).toEqual([
+      {
+        type: 'set',
+        path: [{_key: blockKey}, 'style'],
+        value: 'h1',
+      },
+    ])
+  })
+})
+
+function textBlockWithMarkDefs({
+  blockKey,
+  spanKey,
+  markDefs,
+}: {
+  blockKey: string
+  spanKey: string
+  markDefs: Array<PortableTextObject> | undefined
+}): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    style: 'normal',
+    ...(markDefs === undefined ? {} : {markDefs}),
   }
 }

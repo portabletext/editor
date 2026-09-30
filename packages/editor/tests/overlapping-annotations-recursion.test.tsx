@@ -170,8 +170,8 @@ describe('preventOverlappingAnnotations recursion', () => {
       throw new Error('Block is not a text block')
     }
     expect(block.markDefs).toEqual([
-      {_key: keys.linkKey, _type: 'link', href: 'https://a.example'},
       {_key: 'k6', _type: 'link', href: 'https://b.example'},
+      {_key: keys.linkKey, _type: 'link', href: 'https://a.example'},
     ])
   })
 

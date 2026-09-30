@@ -187,19 +187,27 @@
       "origin": "local"
     },
     {
-      "type": "set",
+      "type": "setIfMissing",
       "path": [
         {
           "_key": "kA"
         },
         "markDefs"
       ],
-      "value": [
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
         {
-          "_type": "link",
-          "_key": "link1",
-          "href": "https://a.example"
+          "_key": "kA"
         },
+        "markDefs",
+        0
+      ],
+      "position": "before",
+      "items": [
         {
           "_type": "link",
           "_key": "k2",

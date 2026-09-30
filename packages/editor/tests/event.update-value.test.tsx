@@ -761,7 +761,7 @@ describe('event.update value', () => {
         {
           type: 'patch',
           patch: {
-            type: 'set',
+            type: 'setIfMissing',
             origin: 'local',
             path: [{_key: 'k2'}, 'markDefs'],
             value: [],
@@ -794,7 +794,7 @@ describe('event.update value', () => {
               value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
             },
             {
-              type: 'set',
+              type: 'setIfMissing',
               origin: 'local',
               path: [{_key: 'k2'}, 'markDefs'],
               value: [],

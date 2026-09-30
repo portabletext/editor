@@ -129,17 +129,6 @@
       "origin": "local"
     },
     {
-      "type": "set",
-      "path": [
-        {
-          "_key": "kA"
-        },
-        "markDefs"
-      ],
-      "value": [],
-      "origin": "local"
-    },
-    {
       "type": "setIfMissing",
       "path": [
         {

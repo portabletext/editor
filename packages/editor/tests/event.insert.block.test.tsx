@@ -497,7 +497,7 @@ describe('event.insert.block', () => {
         },
         {
           origin: 'local',
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: 'k2'}, 'markDefs'],
           value: [],
         },
@@ -596,7 +596,7 @@ describe('event.insert.block', () => {
         },
         {
           origin: 'local',
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: 'k2'}, 'markDefs'],
           value: [],
         },
@@ -1664,8 +1664,8 @@ describe('event.insert.block', () => {
             {_type: 'span', _key: 'k5', text: 'baz', marks: ['k6']},
           ],
           markDefs: [
-            {_type: 'link', _key: 'link1', href: 'https://a.example'},
             {_type: 'link', _key: 'k6', href: 'https://b.example'},
+            {_type: 'link', _key: 'link1', href: 'https://a.example'},
           ],
           style: 'normal',
         },

@@ -89,8 +89,8 @@ describe(useMutuallyExclusiveAnnotation.name, () => {
             {_key: bazKey, _type: 'span', text: ' baz', marks: []},
           ],
           markDefs: [
-            {_key: linkKey, _type: 'link', href: 'https://example.com'},
             {_key: 'k7', _type: 'comment', text: 'a comment'},
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
           ],
           style: 'normal',
         },
@@ -168,8 +168,8 @@ describe(useMutuallyExclusiveAnnotation.name, () => {
             {_key: 'k5', _type: 'span', text: ' baz', marks: []},
           ],
           markDefs: [
-            {_key: 'k4', _type: 'comment', text: 'first'},
             {_key: 'k6', _type: 'comment', text: 'second'},
+            {_key: 'k4', _type: 'comment', text: 'first'},
           ],
           style: 'normal',
         },

@@ -1,4 +1,5 @@
 import {pointRef} from '../engine/editor/point-ref'
+import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
@@ -794,13 +795,13 @@ function mergeBlock(
   const endMarkDefs = renamedBlock.markDefs?.filter(
     (markDef) => !dedupedMarkDefKeys.includes(markDef._key),
   )
-  if (Array.isArray(endMarkDefs) && endMarkDefs.length > 0) {
-    const oldDefs = startBlock.node.markDefs ?? []
-    applyNodeProperties(
-      editor,
-      {markDefs: [...oldDefs, ...endMarkDefs]},
-      startBlockPath,
-    )
+  for (const endMarkDef of endMarkDefs ?? []) {
+    editor.apply({
+      type: 'insert',
+      path: [...startBlockPath, 'markDefs', 0],
+      position: 'before',
+      node: endMarkDef as unknown as Node,
+    })
   }
   applyMergeNode(editor, endBlockPath, startBlock.node.children.length)
 }

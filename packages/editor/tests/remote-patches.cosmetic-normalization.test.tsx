@@ -823,9 +823,8 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
           origin: 'local',
         },
         {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
+          type: 'unset',
+          path: [{_key: blockKey}, 'markDefs', {_key: 'm0'}],
           origin: 'local',
         },
       ])
@@ -839,9 +838,8 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
           origin: 'local',
         },
         {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
+          type: 'unset',
+          path: [{_key: blockKey}, 'markDefs', {_key: 'm0'}],
           origin: 'local',
         },
       ])

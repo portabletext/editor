@@ -91,14 +91,16 @@
       "origin": "local"
     },
     {
-      "type": "set",
+      "type": "unset",
       "path": [
         {
           "_key": "k0"
         },
-        "markDefs"
+        "markDefs",
+        {
+          "_key": "k2"
+        }
       ],
-      "value": [],
       "origin": "local"
     }
   ],

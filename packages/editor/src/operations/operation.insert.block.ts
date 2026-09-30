@@ -17,7 +17,6 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
 import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
-import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {deleteRange} from '../internal-utils/delete-range'
@@ -480,13 +479,14 @@ function mergeTextBlockFragment(args: {
     endBlock,
   })
 
-  applyNodeProperties(
-    editor,
-    {
-      markDefs: [...(endBlock.markDefs ?? []), ...(adjustedMarkDefs ?? [])],
-    },
-    endBlockPath,
-  )
+  for (const adjustedMarkDef of adjustedMarkDefs ?? []) {
+    editor.apply({
+      type: 'insert',
+      path: [...endBlockPath, 'markDefs', 0],
+      position: 'before',
+      node: adjustedMarkDef as unknown as Node,
+    })
+  }
 
   const atPathRef = pathRef(editor, at.path)
 
