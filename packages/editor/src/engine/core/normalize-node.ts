@@ -31,12 +31,20 @@ import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {hasRemoteFrame} from './apply-context'
+import {
+  carryTouchThroughRekey,
+  inheritRightEdge,
+  isPairTouched,
+  touchRemovalBoundary,
+} from './touched-paths'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
   entry,
+  options,
 ) => {
   const [node, path] = entry
+  const touched = options?.touched
   const nodeRecord = node as Record<string, unknown>
 
   /**
@@ -63,16 +71,18 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     const children = getChildren(editor.snapshot, path)
 
     for (let i = 0; i < children.length - 1; i++) {
-      const {node: child} = children[i]!
+      const {node: child, path: childPath} = children[i]!
       const {node: nextNode, path: nextChildPath} = children[i + 1]!
 
       if (
         isSpan({schema: editor.snapshot.context.schema}, child) &&
         isSpan({schema: editor.snapshot.context.schema}, nextNode) &&
         child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
-        nextNode.marks?.every((mark) => child.marks?.includes(mark))
+        nextNode.marks?.every((mark) => child.marks?.includes(mark)) &&
+        isPairTouched(touched, childPath, nextChildPath)
       ) {
         debug.normalization('merging spans with same marks')
+        inheritRightEdge(touched, childPath, nextChildPath)
         applyMergeNode(editor, nextChildPath, child.text.length)
         return
       }
@@ -116,6 +126,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (!hasUsableKey(nodeRecord['_key']) && path.length > 0) {
     const newKey = editor.snapshot.context.keyGenerator()
     debug.normalization('Setting missing key on node')
+    const index = getSiblingIndex(editor, path, node)
 
     editor.apply({
       type: 'set',
@@ -123,6 +134,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       value: newKey,
       inverse: {type: 'unset', path: [...path, '_key']},
     })
+    carryTouchThroughRekey(
+      touched,
+      path.slice(0, -1),
+      {key: nodeRecord['_key'], index},
+      newKey,
+    )
     return
   }
 
@@ -204,6 +221,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               value: key,
             },
           })
+          carryTouchThroughRekey(
+            touched,
+            numericPath.slice(0, -1),
+            {key, index: duplicateIndexOfKey},
+            newKey,
+          )
           return
         }
 
@@ -477,6 +500,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
                 value: key,
               },
             })
+            carryTouchThroughRekey(
+              touched,
+              [...path, arrayFieldName],
+              {key, index: i},
+              newKey,
+            )
             return
           }
         }
@@ -536,11 +565,25 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           isSpan({schema: editor.snapshot.context.schema}, prev) &&
           // Only this merge/empty-drop arm defers; the inline-object
           // bracketing below is a repair and keeps running.
-          !hasRemoteFrame(editor.applyContext)
+          !hasRemoteFrame(editor.applyContext) &&
+          isPairTouched(
+            touched,
+            [...path, 'children', {_key: prev._key}],
+            childPath,
+          )
         ) {
+          const prevPath = [...path, 'children', {_key: prev._key}]
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
+            const next: Node | undefined = element.children[n + 1]
             editor.apply({type: 'unset', path: childPath})
+            if (next) {
+              touchRemovalBoundary(touched, prevPath, [
+                ...path,
+                'children',
+                {_key: next._key},
+              ])
+            }
             const refetched = getTextBlock(editor.snapshot, path)?.node
             if (!refetched) {
               return
@@ -548,8 +591,15 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             element = refetched
             n--
           } else if (prev.text === '') {
-            const prevPath = [...path, 'children', {_key: prev._key}]
+            const beforePrev: Node | undefined = element.children[n - 2]
             editor.apply({type: 'unset', path: prevPath})
+            if (beforePrev) {
+              touchRemovalBoundary(
+                touched,
+                [...path, 'children', {_key: beforePrev._key}],
+                childPath,
+              )
+            }
             const refetched = getTextBlock(editor.snapshot, path)?.node
             if (!refetched) {
               return
@@ -557,6 +607,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             element = refetched
             n--
           } else if (textEquals(child, prev, {loose: true})) {
+            inheritRightEdge(touched, prevPath, childPath)
             applyMergeNode(editor, childPath, prev.text.length)
             const refetched = getTextBlock(editor.snapshot, path)?.node
             if (!refetched) {
@@ -605,4 +656,20 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     return
   }
+}
+
+function getSiblingIndex(
+  editor: Editor,
+  path: Path,
+  node: Editor | Node,
+): number {
+  const segment = path.at(-1)
+
+  if (typeof segment === 'number') {
+    return segment
+  }
+
+  return getChildren(editor.snapshot, parentPath(path)).findIndex(
+    (sibling) => sibling.node === node,
+  )
 }
