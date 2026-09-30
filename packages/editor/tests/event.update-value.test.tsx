@@ -2016,13 +2016,6 @@ describe('event.update value', () => {
 })
 
 describe('event.update value: adjacent same-mark spans', () => {
-  // Regression: the engine merges adjacent same-mark spans on load, so its
-  // state diverges from the stored value. A subsequent `update value` with
-  // the stored (split) shape walked the children against a pre-loop engine
-  // snapshot: each replaced child was unset, and the next iteration then
-  // anchored its insert on that just-unset sibling, throwing
-  // `Cannot apply an "insert" operation ... because the sibling was not
-  // found.` and killing the sync actor.
   const splitValue = [
     {
       _key: 'b0',
@@ -2053,14 +2046,11 @@ describe('event.update value: adjacent same-mark spans', () => {
       expect(editor.getSnapshot().context.value).toEqual(splitValue)
     })
 
-    // A local edit dirties the block: the three adjacent `strong` spans
-    // merge as fallout, and the engine's shape now diverges from the
-    // stored one.
     editor.send({
       type: 'select',
       at: {
-        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's4'}], offset: 1},
-        focus: {path: [{_key: 'b0'}, 'children', {_key: 's4'}], offset: 1},
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's2'}], offset: 2},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's2'}], offset: 2},
       },
     })
     editor.send({type: 'insert.text', text: '!'})
@@ -2071,8 +2061,8 @@ describe('event.update value: adjacent same-mark spans', () => {
           _key: 'b0',
           _type: 'block',
           children: [
-            {_key: 's1', _type: 'span', text: 'C1C2C3', marks: ['strong']},
-            {_key: 's4', _type: 'span', text: 'D!', marks: []},
+            {_key: 's1', _type: 'span', text: 'C1C2!C3', marks: ['strong']},
+            {_key: 's4', _type: 'span', text: 'D', marks: []},
             {_key: 's5', _type: 'span', text: 'E', marks: ['em']},
           ],
           markDefs: [],
@@ -2141,12 +2131,6 @@ describe('event.update value: adjacent same-mark spans', () => {
 })
 
 describe('event.update value: auto-resolved invalid blocks', () => {
-  // Regression: `validateValue` auto-resolutions (e.g. minting a missing
-  // child `_key`) were emitted as outbound patches while the *raw* block
-  // proceeded into the engine. The engine ended up holding the un-repaired
-  // shape (a keyless child), diverging from the document that received the
-  // minted key, and the next sync against that invalid engine state killed
-  // the sync silently.
   const keylessChildBlock = {
     _key: 'b0',
     _type: 'block',

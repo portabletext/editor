@@ -2,6 +2,7 @@ import {isTextBlock} from '@portabletext/schema'
 import {getNode} from '../../traversal/get-node'
 import {getNodes} from '../../traversal/get-nodes'
 import {hasNode} from '../../traversal/has-node'
+import {buildTouchedPaths} from '../core/touched-paths'
 import {getDirtyPathKey} from '../core/update-dirty-paths'
 import type {DirtyPathEntry} from '../interfaces/dirty-path-entry'
 import type {Editor} from '../interfaces/editor'
@@ -66,6 +67,8 @@ export function normalize(
     return
   }
 
+  const touched = buildTouchedPaths(editor, getDirtyPaths(editor))
+
   withoutNormalizing(editor, () => {
     /*
       Fix dirty elements with no children.
@@ -97,7 +100,10 @@ export function normalize(
         ) {
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
-            editor.normalizeNode([entry.node, entry.path], {operation})
+            editor.normalizeNode([entry.node, entry.path], {
+              operation,
+              touched,
+            })
           } finally {
             editor.applyContext.pop()
           }
@@ -139,7 +145,10 @@ export function normalize(
       if (dirtyPath.length === 0) {
         editor.applyContext.push(Object.freeze({kind: 'normalization'}))
         try {
-          editor.normalizeNode([editor, dirtyPath], {operation})
+          editor.normalizeNode([editor, dirtyPath], {
+            operation,
+            touched,
+          })
         } finally {
           editor.applyContext.pop()
         }
@@ -148,7 +157,10 @@ export function normalize(
         if (entry) {
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
-            editor.normalizeNode([entry.node, entry.path], {operation})
+            editor.normalizeNode([entry.node, entry.path], {
+              operation,
+              touched,
+            })
           } finally {
             editor.applyContext.pop()
           }

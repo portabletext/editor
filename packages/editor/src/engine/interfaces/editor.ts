@@ -12,6 +12,23 @@ import type {Range} from './range'
 import type {RangeRef} from './range-ref'
 
 /**
+ * What the local operations before a normalization pass touched, built from
+ * the dirty entries at the start of the pass, as a tree keyed by resolved
+ * path segment: keyed segments for nodes with a usable `_key`, sibling
+ * indices for nodes without one. `touched` marks a node the operations
+ * inserted or changed, and `rightEdge` starts equal to it. `boundaries` maps
+ * a child to the next sibling a removal made it adjacent to. Span merges
+ * update `rightEdge` and `boundaries`, and key repairs copy a subtree to the
+ * repaired node's keyed segment.
+ */
+export type TouchedPaths = {
+  touched: boolean
+  rightEdge: boolean
+  children?: Map<string, TouchedPaths>
+  boundaries?: Map<string, string>
+}
+
+/**
  * The `Editor` interface stores all the state of a editor. It is extended
  * by plugins that wish to add their own helpers and implement new behaviors.
  */
@@ -38,6 +55,7 @@ export interface BaseEditor {
     entry: [Editor | Node, Path],
     options?: {
       operation?: EngineOperation
+      touched?: TouchedPaths
     },
   ) => void
   onChange: (options?: {operation?: EngineOperation}) => void

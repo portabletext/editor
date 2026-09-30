@@ -41,11 +41,11 @@ describe('normalization', () => {
       type: 'select',
       at: {
         anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
           offset: 3,
         },
         focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
           offset: 3,
         },
       },
@@ -59,9 +59,9 @@ describe('normalization', () => {
           children: [
             {
               ...block.children[0],
-              text: 'foobar',
+              text: 'foobar!',
             },
-            {...block.children[2], text: 'baz!'},
+            block.children[2],
           ],
         },
       ])
@@ -97,11 +97,11 @@ describe('normalization', () => {
       type: 'select',
       at: {
         anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
           offset: 3,
         },
         focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
           offset: 3,
         },
       },
@@ -115,9 +115,9 @@ describe('normalization', () => {
           children: [
             {
               ...block.children[0],
-              text: 'foobar',
+              text: 'foobar!',
             },
-            {...block.children[2], text: 'baz!'},
+            block.children[2],
           ],
         },
       ])

@@ -580,12 +580,12 @@ describe('event.operation', () => {
       type: 'select',
       at: {
         anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
-          offset: 3,
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}],
+          offset: 1,
         },
         focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
-          offset: 3,
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}],
+          offset: 1,
         },
       },
     })
@@ -599,8 +599,8 @@ describe('event.operation', () => {
         {
           ...initialBlock,
           children: [
-            {...initialBlock.children[0], text: 'foobar'},
-            {...initialBlock.children[2], text: 'baz!'},
+            {...initialBlock.children[0], text: 'f!oobar'},
+            initialBlock.children[2],
           ],
         },
       ])
