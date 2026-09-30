@@ -1,4 +1,5 @@
 import {
+  compileSchema,
   getSubSchema,
   type FieldDefinition,
   type OfDefinition,
@@ -433,6 +434,401 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
             ],
           },
         ],
+      },
+    ])
+  })
+
+  test('compiled schema with an anonymous object nested inside an anonymous object unfolds fully', () => {
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block'}),
+        defineArrayMember({
+          type: 'object',
+          name: 'table',
+          fields: [
+            defineField({
+              type: 'array',
+              name: 'rows',
+              of: [
+                defineArrayMember({
+                  type: 'object',
+                  fields: [
+                    defineField({
+                      type: 'array',
+                      name: 'cells',
+                      of: [
+                        defineArrayMember({
+                          type: 'object',
+                          fields: [
+                            defineField({type: 'string', name: 'content'}),
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+
+    expect(schema.blockObjects).toEqual([
+      {
+        name: 'table',
+        title: 'Table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            title: 'Rows',
+            of: [
+              {
+                type: 'object',
+                name: 'object',
+                title: 'Object',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    title: 'Cells',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'object',
+                        title: 'Object',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'string',
+                            title: 'Content',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(compileSchema(schema).blockObjects).toEqual([
+      {
+        name: 'table',
+        title: 'Table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            title: 'Rows',
+            of: [
+              {
+                type: 'object',
+                name: 'object',
+                title: 'Object',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    title: 'Cells',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'object',
+                        title: 'Object',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'string',
+                            title: 'Content',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('compiled schema with an anonymous object that contains itself through a named array type unfolds until the recursion is detected', () => {
+    const rowsType = defineType({
+      type: 'array',
+      name: 'rows',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            defineField({type: 'string', name: 'label'}),
+            defineField({type: 'rows', name: 'children'}),
+          ],
+        }),
+      ],
+    })
+    const tableType = defineType({
+      type: 'object',
+      name: 'table',
+      fields: [defineField({type: 'rows', name: 'rows'})],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block'}),
+        defineArrayMember({type: 'table'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, tableType, rowsType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+
+    expect(schema.blockObjects).toEqual([
+      {
+        name: 'table',
+        title: 'Table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            title: 'Rows',
+            of: [
+              {
+                type: 'object',
+                name: 'object',
+                title: 'Object',
+                fields: [
+                  {
+                    name: 'label',
+                    type: 'string',
+                    title: 'Label',
+                  },
+                  {
+                    name: 'children',
+                    type: 'array',
+                    title: 'Children',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'object',
+                        title: 'Object',
+                        fields: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(compileSchema(schema).blockObjects).toEqual([
+      {
+        name: 'table',
+        title: 'Table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            title: 'Rows',
+            of: [
+              {
+                type: 'object',
+                name: 'object',
+                title: 'Object',
+                fields: [
+                  {
+                    name: 'label',
+                    type: 'string',
+                    title: 'Label',
+                  },
+                  {
+                    name: 'children',
+                    type: 'array',
+                    title: 'Children',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'object',
+                        title: 'Object',
+                        fields: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('compiled schema with an annotation that contains itself through distinct anonymous objects unfolds until an anonymous object repeats', () => {
+    const noteContentType = defineType({
+      type: 'array',
+      name: 'noteContent',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          marks: {annotations: [{type: 'note'}]},
+        }),
+      ],
+    })
+    const noteType = defineType({
+      type: 'object',
+      name: 'note',
+      fields: [
+        defineField({type: 'string', name: 'label'}),
+        defineField({
+          type: 'array',
+          name: 'items',
+          of: [
+            defineArrayMember({
+              type: 'object',
+              fields: [defineField({type: 'noteContent', name: 'content'})],
+            }),
+          ],
+        }),
+      ],
+    })
+    const tableType = defineType({
+      type: 'object',
+      name: 'table',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'rows',
+          of: [
+            defineArrayMember({
+              type: 'object',
+              fields: [defineField({type: 'noteContent', name: 'content'})],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block'}),
+        defineArrayMember({type: 'table'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [noteContentType, noteType, tableType, portableTextType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+
+    expect(schema.blockObjects[0]?.fields[0]).toEqual({
+      name: 'rows',
+      type: 'array',
+      title: 'Rows',
+      of: [
+        {
+          type: 'object',
+          name: 'object',
+          title: 'Object',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  ...defaultBlockOfMember,
+                  annotations: [
+                    {
+                      name: 'note',
+                      title: 'Note',
+                      fields: [
+                        {name: 'label', type: 'string', title: 'Label'},
+                        {
+                          name: 'items',
+                          type: 'array',
+                          title: 'Items',
+                          of: [
+                            {
+                              type: 'object',
+                              name: 'object',
+                              title: 'Object',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  title: 'Content',
+                                  of: [
+                                    {
+                                      ...defaultBlockOfMember,
+                                      annotations: [
+                                        {
+                                          name: 'note',
+                                          title: 'Note',
+                                          fields: [
+                                            {
+                                              name: 'label',
+                                              type: 'string',
+                                              title: 'Label',
+                                            },
+                                            {
+                                              name: 'items',
+                                              type: 'array',
+                                              title: 'Items',
+                                              of: [
+                                                {
+                                                  type: 'object',
+                                                  name: 'object',
+                                                  title: 'Object',
+                                                  fields: [],
+                                                },
+                                              ],
+                                            },
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    expect(compileSchema(schema).annotations).toEqual([
+      {
+        name: 'link',
+        title: 'Link',
+        fields: [{name: 'href', type: 'string', title: 'Link'}],
       },
     ])
   })
