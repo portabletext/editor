@@ -269,7 +269,56 @@ describe(portableTextToMarkdown.name, () => {
             _type: 'code',
             _key: 'c1',
             language: 'js',
-            code: 'one\n\ntwo\n\n\nthree',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'l1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'ls1', text: 'one', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'l2',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'ls2', text: '', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'l3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'ls3', text: 'two', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'l4',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'ls4', text: '', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'l5',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'ls5', text: '', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'l6',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'ls6', text: 'three', marks: []},
+                ],
+              },
+            ],
           },
         ]),
       ).toEqual('```js\none\n\ntwo\n\n\nthree\n```')
@@ -278,7 +327,22 @@ describe(portableTextToMarkdown.name, () => {
     test('an empty block next to a code fence emits no blank lines', () => {
       expect(
         portableTextToMarkdown([
-          {_type: 'code', _key: 'c1', language: 'js', code: 'const a = 1'},
+          {
+            _type: 'code',
+            _key: 'c1',
+            language: 'js',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'l1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'ls1', text: 'const a = 1', marks: []},
+                ],
+              },
+            ],
+          },
           {
             _type: 'block',
             _key: 'e1',
@@ -540,7 +604,27 @@ describe(portableTextToMarkdown.name, () => {
                   _type: 'list-item',
                   _key: 'li1',
                   content: [
-                    {_type: 'code', _key: 'c1', code: 'foo', language: 'js'},
+                    {
+                      _type: 'code',
+                      _key: 'c1',
+                      language: 'js',
+                      lines: [
+                        {
+                          _type: 'block',
+                          _key: 'l1',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'ls1',
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
                   ],
                 },
                 {
@@ -587,7 +671,22 @@ describe(portableTextToMarkdown.name, () => {
                       {_type: 'span', _key: 'es1', text: '', marks: []},
                     ],
                   },
-                  {_type: 'code', _key: 'c1', code: 'foo', language: 'js'},
+                  {
+                    _type: 'code',
+                    _key: 'c1',
+                    language: 'js',
+                    lines: [
+                      {
+                        _type: 'block',
+                        _key: 'l1',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'ls1', text: 'foo', marks: []},
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
             ],
@@ -611,7 +710,20 @@ describe(portableTextToMarkdown.name, () => {
           listItem: 'bullet',
           level: 1,
         },
-        {_type: 'code', _key: 'k2', code: 'foo', language: 'js'},
+        {
+          _type: 'code',
+          _key: 'k2',
+          language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+            },
+          ],
+        },
       ])
     })
 
@@ -637,7 +749,22 @@ describe(portableTextToMarkdown.name, () => {
                       {_type: 'span', _key: 'es1', text: '', marks: []},
                     ],
                   },
-                  {_type: 'code', _key: 'c1', code: 'foo', language: 'js'},
+                  {
+                    _type: 'code',
+                    _key: 'c1',
+                    language: 'js',
+                    lines: [
+                      {
+                        _type: 'block',
+                        _key: 'l1',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'ls1', text: 'foo', marks: []},
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
             ],
@@ -658,7 +785,20 @@ describe(portableTextToMarkdown.name, () => {
           listItem: 'bullet',
           level: 1,
         },
-        {_type: 'code', _key: 'k2', code: 'foo', language: 'js'},
+        {
+          _type: 'code',
+          _key: 'k2',
+          language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+            },
+          ],
+        },
       ])
     })
 
@@ -2538,7 +2678,11 @@ describe(portableTextToMarkdown.name, () => {
           portableTextToMarkdown(portableText, {
             types: {
               code: ({value}) =>
-                `\`\`\`${value.language}\n${value.code}\n\`\`\``,
+                `\`\`\`${value.language}\n${value.lines
+                  .map((line: PortableTextBlock) =>
+                    line.children.map((child) => child.text).join(''),
+                  )
+                  .join('\n')}\n\`\`\``,
             },
           }),
         ).toBe(markdownOut)
@@ -2550,22 +2694,21 @@ describe(portableTextToMarkdown.name, () => {
           schema: compileSchema(
             defineSchema({
               blockObjects: [
-                {name: 'code', fields: [{name: 'code', type: 'string'}]},
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'lines', type: 'array', of: [{type: 'block'}]},
+                  ],
+                },
               ],
             }),
           ),
         })
 
-        expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              code: ({value}) => `\`\`\`\n${value.code}\n\`\`\``,
-            },
-          }),
-        ).toBe(markdownOut)
+        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
       })
 
-      test('no code field', () => {
+      test('no `lines` field', () => {
         const markdownOut = "const foo = 'bar'"
         const portableText = markdownToPortableText(markdownIn, {
           schema: compileSchema(
@@ -2577,13 +2720,7 @@ describe(portableTextToMarkdown.name, () => {
           ),
         })
 
-        expect(
-          portableTextToMarkdown(portableText, {
-            types: {
-              code: ({value}) => `\`\`\`\n${value.code}\n\`\`\``,
-            },
-          }),
-        ).toBe(markdownOut)
+        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
       })
     })
 
@@ -2602,18 +2739,762 @@ describe(portableTextToMarkdown.name, () => {
       })
     })
 
-    test('malformed code value (no `code` field) falls back to fenced JSON', () => {
+    test('`lines` render one per line, raw and unescaped', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'ts',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'const foo = 1', marks: []},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'l2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls2', text: '', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'l3',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'ls3',
+                text: '  **foo** # bar [baz](x) \\*',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        [
+          '```ts',
+          'const foo = 1',
+          '',
+          '  **foo** # bar [baz](x) \\*',
+          '```',
+        ].join('\n'),
+      )
+    })
+
+    test('a fence round-trips through `lines` with blank lines, indentation, and markdown-looking text intact', () => {
       const keyGenerator = createTestKeyGenerator()
-      const value = {_type: 'code', _key: keyGenerator(), language: 'js'}
+      const markdown = [
+        '```md',
+        '# foo',
+        '',
+        '',
+        '    - bar',
+        '> *baz*',
+        '```',
+      ].join('\n')
+      const portableText = markdownToPortableText(markdown, {keyGenerator})
+
+      expect(portableText).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          language: 'md',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k2', text: '# foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k5',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k8', text: '    - bar', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k9',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k10', text: '> *baz*', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+
+    test('a fence ending in an empty line round-trips through `lines`', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['```js', 'foo', '', '```'].join('\n')
+      const portableText = markdownToPortableText(markdown, {keyGenerator})
+
+      expect(portableText).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            },
+          ],
+        },
+      ])
+      expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+
+    test('code with fence lines gets a fence one backtick longer and round-trips to the identical value', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = [
+        {
+          _type: 'code',
+          _key: keyGenerator(),
+          language: 'md',
+          lines: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: '```js', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: '```', marks: []},
+              ],
+            },
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(value)
+
+      expect(markdown).toBe(
+        ['````md', '```js', 'foo', '```', '````'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual(value)
+    })
+
+    test('a code line of five backticks gets a six-backtick fence', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'code',
+        _key: keyGenerator(),
+        language: undefined,
+        lines: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: '`````', marks: []},
+            ],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['``````', '`````', '``````'].join('\n'),
+      )
+    })
+
+    test('a fence line indented three spaces still lengthens the fence', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {
+        _type: 'code',
+        _key: keyGenerator(),
+        language: undefined,
+        lines: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: '   ``` ', marks: []},
+            ],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['````', '   ``` ', '````'].join('\n'),
+      )
+    })
+
+    test('a fence line after a tab inside a callout still lengthens the fence', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const codeKey = keyGenerator()
+      const lineKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const value = {
+        _type: 'callout',
+        _key: keyGenerator(),
+        tone: 'note',
+        content: [
+          {
+            _type: 'code',
+            _key: codeKey,
+            language: 'md',
+            lines: [
+              {
+                _type: 'block',
+                _key: lineKey,
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: spanKey, text: '\t```', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['> [!NOTE]', '> ````md', '> \t```', '> ````'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a `language` containing a backtick falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'j`s',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
 
       expect(portableTextToMarkdown([value])).toBe(
         ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
     })
 
-    test('malformed code value (`code` is not a string) falls back to fenced JSON', () => {
+    test('empty `lines` fall back to fenced JSON and round-trip', () => {
+      const value = {_type: 'code', _key: 'c1', language: 'js', lines: []}
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('malformed code value (`lines` is not an array) falls back to fenced JSON', () => {
       const keyGenerator = createTestKeyGenerator()
-      const value = {_type: 'code', _key: keyGenerator(), code: 42}
+      const value = {
+        _type: 'code',
+        _key: keyGenerator(),
+        language: 'js',
+        lines: 'foo',
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('a value with a `code` string and no `lines` renders as a `json:object` fence and parses back unchanged', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'code', _key: 'c1', language: 'js', code: 'foo'}
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {_type: 'code', _key: 'c1', language: 'js', code: 'foo'},
+      ])
+    })
+
+    test('a stray `code` string next to valid `lines` is ignored', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+        code: 'bar',
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```js', 'foo', '```'].join('\n'),
+      )
+    })
+
+    test('a line whose span carries marks falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo', marks: ['strong']},
+            ],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('a line holding a `null` child falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [null],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('a line holding a `null` mark definition falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [null],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('a line carrying `markDefs` falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [
+              {_type: 'link', _key: 'a1', href: 'https://example.com'},
+            ],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('a line with several unmarked spans falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo', marks: []},
+              {_type: 'span', _key: 'ls2', text: ' bar', marks: []},
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a line with an `h1` style falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'h1',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a line with an extra block field falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            listItem: 'bullet',
+            level: 1,
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a line whose span has an extra field falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo', marks: [], foo: 'bar'},
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('line text containing a line feed falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo\nbar', marks: []},
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('line text containing a carriage return falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo\rbar', marks: []},
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('line text containing a CRLF falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo\r\nbar', marks: []},
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('line text containing a NUL falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo\0bar', marks: []},
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a line whose `_type` is not `block` falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'codeLine',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('malformed code value (a line is not a text block) falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+          {_type: 'image', _key: 'i1', src: 'https://example.com/bar.png'},
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('malformed code value (a line holds an inline object) falls back to fenced JSON', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'ls1', text: 'foo', marks: []},
+              {_type: 'stockTicker', _key: 't1', symbol: 'BAR'},
+            ],
+          },
+        ],
+      }
+
+      expect(portableTextToMarkdown([value])).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+    })
+
+    test('malformed code value (no `lines`) falls back to fenced JSON', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const value = {_type: 'code', _key: keyGenerator(), language: 'js'}
 
       expect(portableTextToMarkdown([value])).toBe(
         ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
@@ -2625,8 +3506,23 @@ describe(portableTextToMarkdown.name, () => {
       const value = {
         _type: 'code',
         _key: keyGenerator(),
-        code: "const foo = 'bar'",
         language: {foo: 1},
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'ls1',
+                text: "const foo = 'bar'",
+                marks: [],
+              },
+            ],
+          },
+        ],
       }
 
       expect(portableTextToMarkdown([value])).toBe(
@@ -2634,18 +3530,196 @@ describe(portableTextToMarkdown.name, () => {
       )
     })
 
-    test('`language` containing newlines does not inject a line into the code body', () => {
+    test('a `language` with a leading space falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: ' ts',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a `language` with a trailing space falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'ts ',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a `language` with a line break falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'js\nalert(1)',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a line without `style`, `markDefs`, or `marks` renders as code and reparses with the defaults', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const codeKey = keyGenerator()
+      const lineKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const markdown = portableTextToMarkdown([
+        {
+          _type: 'code',
+          _key: codeKey,
+          language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: lineKey,
+              children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+            },
+          ],
+        },
+      ])
+
+      expect(markdown).toBe(['```js', 'foo', '```'].join('\n'))
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'code',
+          _key: codeKey,
+          language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: lineKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a line with `null` `marks` or `markDefs` falls back to fenced JSON and round-trips', () => {
       const keyGenerator = createTestKeyGenerator()
       const value = {
         _type: 'code',
         _key: keyGenerator(),
-        code: "const foo = 'bar'",
-        language: 'js\nalert(1)',
+        language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: null,
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'bar', marks: null},
+            ],
+          },
+        ],
       }
+      const markdown = portableTextToMarkdown([value])
 
-      expect(portableTextToMarkdown([value])).toBe(
-        ['```', "const foo = 'bar'", '```'].join('\n'),
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
+    })
+
+    test('a `language` with a NUL falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'j\0s',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'ls1', text: 'foo', marks: []}],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
     })
   })
 
@@ -3511,7 +4585,36 @@ describe(portableTextToMarkdown.name, () => {
                       _type: 'code',
                       _key: keyGenerator(),
                       language: 'js',
-                      code: 'const x = 1\nconst y = 2',
+                      lines: [
+                        {
+                          _type: 'block',
+                          _key: 'l1',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'ls1',
+                              text: 'const x = 1',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {
+                          _type: 'block',
+                          _key: 'l2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'ls2',
+                              text: 'const y = 2',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
                     },
                   ],
                 },
@@ -5211,8 +6314,18 @@ describe(portableTextToMarkdown.name, () => {
     const codeValue = {
       _type: 'code',
       _key: 'code1',
-      code: "const foo = 'bar'",
       language: 'js',
+      lines: [
+        {
+          _type: 'block',
+          _key: 'l1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'ls1', text: "const foo = 'bar'", marks: []},
+          ],
+        },
+      ],
     }
     const horizontalRuleValue = {_type: 'horizontal-rule', _key: 'hr1'}
     const htmlValue = {
@@ -5695,28 +6808,38 @@ describe(portableTextToMarkdown.name, () => {
       ])
     })
 
-    test('a code block whose `language` is `json:object` drops the language instead of becoming an object', () => {
-      const keyGenerator = createTestKeyGenerator()
-      const value = [
-        {
-          _type: 'code',
-          _key: 'c1',
-          language: 'json:object',
-          code: '{"_type": "x", "a": 1}',
-        },
-      ]
-      expect(portableTextToMarkdown(value)).toBe(
-        ['```', '{"_type": "x", "a": 1}', '```'].join('\n'),
+    test('a code block whose `language` is `json:object` falls back to fenced JSON and round-trips', () => {
+      const value = {
+        _type: 'code',
+        _key: 'c1',
+        language: 'json:object',
+        lines: [
+          {
+            _type: 'block',
+            _key: 'l1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'ls1',
+                text: '{"_type": "x", "a": 1}',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      }
+      const markdown = portableTextToMarkdown([value])
+
+      expect(markdown).toBe(
+        ['```json:object', JSON.stringify(value, null, 2), '```'].join('\n'),
       )
       expect(
-        markdownToPortableText(portableTextToMarkdown(value), {keyGenerator}),
-      ).toEqual([
-        {
-          _type: 'code',
-          _key: 'k0',
-          code: '{"_type": "x", "a": 1}',
-        },
-      ])
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([value])
     })
 
     test('an unknown block object inside a table cell uses the inline carrier and survives', () => {

@@ -10,6 +10,7 @@ import {
   type ReconciliationKeyPath,
   type ReconciliationReport,
 } from './apply-markdown-edit'
+import {defaultCodeObjectDefinition} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 
@@ -27,15 +28,7 @@ const schema = compileSchema(
     styles: [{name: 'normal'}, {name: 'h2'}, {name: 'lead'}],
     decorators: [{name: 'strong'}, {name: 'highlight'}],
     lists: [{name: 'bullet'}],
-    blockObjects: [
-      {
-        name: 'code',
-        fields: [
-          {name: 'language', type: 'string'},
-          {name: 'code', type: 'string'},
-        ],
-      },
-    ],
+    blockObjects: [defaultCodeObjectDefinition],
   }),
 )
 
@@ -129,7 +122,20 @@ function generateStored(
         _type: 'code',
         _key: keyGenerator(),
         language: 'js',
-        code: sentence(random),
+        lines: Array.from({length: 1 + Math.floor(random() * 3)}, () => ({
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: sentence(random),
+              marks: [],
+            },
+          ],
+        })),
       } as unknown as PortableTextBlock
     }
     if (roll < 0.45) {

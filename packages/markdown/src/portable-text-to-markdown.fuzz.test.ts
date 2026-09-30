@@ -472,8 +472,23 @@ function buildGatedValue(
       return {
         _type: 'code',
         _key: keyGenerator(),
-        code: "const foo = 'bar'",
         language: 'js',
+        lines: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: "const foo = 'bar'",
+                marks: [],
+              },
+            ],
+          },
+        ],
       }
     case 'horizontal-rule':
       return {_type: 'horizontal-rule', _key: keyGenerator()}

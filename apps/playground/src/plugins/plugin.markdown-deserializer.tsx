@@ -20,9 +20,9 @@ export function MarkdownDeserializerPlugin() {
             keyGenerator: snapshot.context.keyGenerator,
             html: {inline: 'skip'},
             types: {
-              // Map md→pt's flat `{_type:'code', code:'a\nb\nc', language?}` into
-              // the playground's editable code-block container shape. Each source
-              // line becomes its own text block inside `lines`.
+              // The playground's code type is `code-block`, not `code`, so the
+              // default matcher would degrade fences to text. This matcher gets
+              // the fence's raw `{language, code}` and builds `lines` itself.
               code: ({context, value, isInline}) => {
                 if (isInline) {
                   return undefined

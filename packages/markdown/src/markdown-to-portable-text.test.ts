@@ -1675,12 +1675,27 @@ describe(markdownToPortableText.name, () => {
           {
             _key: 'k2',
             _type: 'code',
-            code: 'const foo = "bar"',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k4',
+                    text: 'const foo = "bar"',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
           },
           {
-            _key: 'k3',
+            _key: 'k5',
             _type: 'block',
-            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
             markDefs: [],
             style: 'normal',
             listItem: 'number',
@@ -1778,14 +1793,98 @@ describe(markdownToPortableText.name, () => {
           {
             _key: 'k2',
             _type: 'code',
-            code: 'find wooden spoon\nuncover pot\nstir\ncover pot\nbalance wooden spoon precariously on pot handle\nwait 10 minutes\ngoto first step (or shut off burner when done)',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k4',
+                    text: 'find wooden spoon',
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k6', text: 'uncover pot', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k7',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k8', text: 'stir', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k9',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k10', text: 'cover pot', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k11',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k12',
+                    text: 'balance wooden spoon precariously on pot handle',
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k13',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k14',
+                    text: 'wait 10 minutes',
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k15',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k16',
+                    text: 'goto first step (or shut off burner when done)',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
           },
           {
-            _key: 'k3',
+            _key: 'k17',
             _type: 'block',
             children: [
               {
-                _key: 'k4',
+                _key: 'k18',
                 _type: 'span',
                 text: 'Do not bump wooden spoon or it will fall.',
                 marks: [],
@@ -1883,13 +1982,28 @@ describe(markdownToPortableText.name, () => {
           {
             _key: 'k2',
             _type: 'code',
-            code: 'const foo = "bar"',
             language: 'js',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k4',
+                    text: 'const foo = "bar"',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
           },
           {
-            _key: 'k3',
+            _key: 'k5',
             _type: 'block',
-            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
             markDefs: [],
             style: 'normal',
             listItem: 'number',
@@ -1965,13 +2079,41 @@ describe(markdownToPortableText.name, () => {
           {
             _key: 'k2',
             _type: 'code',
-            code: 'line1\nline2\nline3',
             language: 'js',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k4', text: 'line1', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k6', text: 'line2', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k7',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k8', text: 'line3', marks: []},
+                ],
+              },
+            ],
           },
           {
-            _key: 'k3',
+            _key: 'k9',
             _type: 'block',
-            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            children: [{_type: 'span', _key: 'k10', text: 'bar', marks: []}],
             markDefs: [],
             style: 'normal',
             listItem: 'number',
@@ -2307,19 +2449,29 @@ describe(markdownToPortableText.name, () => {
         {
           _key: 'k2',
           _type: 'code',
-          code: 'const x = 1',
           language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k4', text: 'const x = 1', marks: []},
+              ],
+            },
+          ],
         },
         {
-          _key: 'k4',
+          _key: 'k6',
           _type: 'image',
           src: 'https://example.com/image.png',
           alt: 'alt',
         },
         {
-          _key: 'k5',
+          _key: 'k7',
           _type: 'block',
-          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          children: [{_type: 'span', _key: 'k8', text: 'bar', marks: []}],
           markDefs: [],
           style: 'normal',
           listItem: 'number',
@@ -2363,14 +2515,24 @@ describe(markdownToPortableText.name, () => {
         {
           _key: 'k4',
           _type: 'code',
-          code: 'const x = 1',
           language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k6', text: 'const x = 1', marks: []},
+              ],
+            },
+          ],
         },
         {
-          _key: 'k5',
+          _key: 'k7',
           _type: 'block',
           children: [
-            {_type: 'span', _key: 'k6', text: 'after code', marks: []},
+            {_type: 'span', _key: 'k8', text: 'after code', marks: []},
           ],
           markDefs: [],
           style: 'normal',
@@ -2501,22 +2663,37 @@ describe(markdownToPortableText.name, () => {
         {
           _key: 'k2',
           _type: 'code',
-          code: 'const foo = "bar"',
           language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k4',
+                  text: 'const foo = "bar"',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
         {
-          _key: 'k3',
+          _key: 'k5',
           _type: 'block',
-          children: [{_type: 'span', _key: 'k4', text: 'after', marks: []}],
+          children: [{_type: 'span', _key: 'k6', text: 'after', marks: []}],
           markDefs: [],
           style: 'normal',
           listItem: 'number',
           level: 1,
         },
         {
-          _key: 'k5',
+          _key: 'k7',
           _type: 'block',
-          children: [{_type: 'span', _key: 'k6', text: 'second', marks: []}],
+          children: [{_type: 'span', _key: 'k8', text: 'second', marks: []}],
           markDefs: [],
           style: 'normal',
           listItem: 'number',
@@ -2548,8 +2725,23 @@ describe(markdownToPortableText.name, () => {
         {
           _key: 'k2',
           _type: 'code',
-          code: 'const foo = "bar"',
           language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k4',
+                  text: 'const foo = "bar"',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -2629,13 +2821,23 @@ describe(markdownToPortableText.name, () => {
         {
           _key: 'k4',
           _type: 'code',
-          code: 'const x = 1',
           language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k6', text: 'const x = 1', marks: []},
+              ],
+            },
+          ],
         },
         {
-          _key: 'k5',
+          _key: 'k7',
           _type: 'block',
-          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          children: [{_type: 'span', _key: 'k8', text: 'bar', marks: []}],
           markDefs: [],
           style: 'normal',
           listItem: 'number',
@@ -3144,6 +3346,33 @@ describe(markdownToPortableText.name, () => {
 
   describe('code block', () => {
     describe('default definition', () => {
+      test('declares `language` and `lines` of plain text blocks', () => {
+        expect(
+          defaultSchema.blockObjects.find(
+            (blockObject) => blockObject.name === 'code',
+          ),
+        ).toEqual({
+          name: 'code',
+          fields: [
+            {name: 'language', type: 'string'},
+            {
+              name: 'lines',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [],
+                  decorators: [],
+                  annotations: [],
+                  lists: [],
+                  inlineObjects: [],
+                },
+              ],
+            },
+          ],
+        })
+      })
+
       test('one line', () => {
         const keyGenerator = createTestKeyGenerator()
         const markdown = ['```js', `const foo = 'bar'`, '```'].join('\n')
@@ -3151,8 +3380,23 @@ describe(markdownToPortableText.name, () => {
           {
             _type: 'code',
             _key: 'k0',
-            code: `const foo = 'bar'`,
             language: 'js',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k2',
+                    text: "const foo = 'bar'",
+                    marks: [],
+                  },
+                ],
+              },
+            ],
           },
         ])
       })
@@ -3169,11 +3413,420 @@ describe(markdownToPortableText.name, () => {
           {
             _type: 'code',
             _key: 'k0',
-            code: `const foo = 'bar'\nconst bar = 'baz'`,
             language: 'js',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k2',
+                    text: "const foo = 'bar'",
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k4',
+                    text: "const bar = 'baz'",
+                    marks: [],
+                  },
+                ],
+              },
+            ],
           },
         ])
       })
+
+      test('each line becomes a text block holding the literal line', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = [
+          '```ts',
+          'const foo = 1',
+          '  if (foo) {',
+          '',
+          '**foo** # bar [baz](x)',
+          '```',
+        ].join('\n')
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _type: 'code',
+            _key: 'k0',
+            language: 'ts',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k2',
+                    text: 'const foo = 1',
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k4',
+                    text: '  if (foo) {',
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'k7',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k8',
+                    text: '**foo** # bar [baz](x)',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+
+      test('an indented code block becomes lines without a language', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['    foo()', '      bar()'].join('\n')
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _type: 'code',
+            _key: 'k0',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo()', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k4', text: '  bar()', marks: []},
+                ],
+              },
+            ],
+          },
+        ])
+      })
+
+      test('a trailing newline inside the fence becomes a final empty line', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['```ts', 'foo', '', '```'].join('\n')
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _type: 'code',
+            _key: 'k0',
+            language: 'ts',
+            lines: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('a `code` type with only a string `code` field degrades the fence to text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: {degradations: Array<Degradation>}) => void>()
+      const markdown = ['```js', 'foo', '', '  bar', '```'].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              blockObjects: [
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'language', type: 'string'},
+                    {name: 'code', type: 'string'},
+                  ],
+                },
+              ],
+            }),
+          ),
+          onDegradation,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n\n  bar', marks: []},
+          ],
+        },
+      ])
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'code-block-to-text',
+          message:
+            '`js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
+          line: 1,
+          snippet: 'foo',
+        },
+      ])
+    })
+
+    test('a `code` type declaring both `code` and `lines` gets `lines` and no `code` string', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['```js', 'foo', 'bar', '```'].join('\n')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              blockObjects: [
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'language', type: 'string'},
+                    {name: 'code', type: 'string'},
+                    {
+                      name: 'lines',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'block',
+                          styles: [],
+                          decorators: [],
+                          annotations: [],
+                          lists: [],
+                          inlineObjects: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            }),
+          ),
+        }),
+      ).toEqual([
+        {
+          _type: 'code',
+          _key: 'k0',
+          language: 'js',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a `lines` field that is not an array degrades the fence to text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: {degradations: Array<Degradation>}) => void>()
+      const markdown = ['```js', 'foo', 'bar', '```'].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              blockObjects: [
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'language', type: 'string'},
+                    {name: 'lines', type: 'string'},
+                    {name: 'code', type: 'string'},
+                  ],
+                },
+              ],
+            }),
+          ),
+          onDegradation,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+        },
+      ])
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'code-block-to-text',
+          message:
+            '`js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
+          line: 1,
+          snippet: 'foo',
+        },
+      ])
+    })
+
+    test('a `lines` array without a block member degrades the fence to text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: {degradations: Array<Degradation>}) => void>()
+      const markdown = ['```js', 'foo', 'bar', '```'].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              blockObjects: [
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'language', type: 'string'},
+                    {
+                      name: 'lines',
+                      type: 'array',
+                      of: [{type: 'object', name: 'record', fields: []}],
+                    },
+                    {name: 'code', type: 'string'},
+                  ],
+                },
+              ],
+            }),
+          ),
+          onDegradation,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+        },
+      ])
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'code-block-to-text',
+          message:
+            '`js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
+          line: 1,
+          snippet: 'foo',
+        },
+      ])
+    })
+
+    test('a `lines` array without `of` degrades the fence to text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: {degradations: Array<Degradation>}) => void>()
+      const markdown = ['```js', 'foo', 'bar', '```'].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              blockObjects: [
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'language', type: 'string'},
+                    {name: 'lines', type: 'array'},
+                  ],
+                },
+              ],
+            }),
+          ),
+          onDegradation,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+        },
+      ])
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'code-block-to-text',
+          message:
+            '`js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
+          line: 1,
+          snippet: 'foo',
+        },
+      ])
     })
 
     test('custom definition', () => {
@@ -3298,7 +3951,12 @@ describe(markdownToPortableText.name, () => {
           schema: compileSchema(
             defineSchema({
               blockObjects: [
-                {name: 'code', fields: [{name: 'code', type: 'string'}]},
+                {
+                  name: 'code',
+                  fields: [
+                    {name: 'lines', type: 'array', of: [{type: 'block'}]},
+                  ],
+                },
               ],
             }),
           ),
@@ -3307,7 +3965,22 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: `const foo = 'bar'`,
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: "const foo = 'bar'",
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -3327,11 +4000,11 @@ describe(markdownToPortableText.name, () => {
       ).toEqual([
         {
           _type: 'block',
-          _key: 'k1',
+          _key: 'k0',
           children: [
             {
               _type: 'span',
-              _key: 'k2',
+              _key: 'k1',
               text: "const foo = 'bar'",
               marks: [],
             },
@@ -3349,7 +4022,22 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: 'const foo = "bar"',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: 'const foo = "bar"',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -5613,7 +6301,7 @@ describe(markdownToPortableText.name, () => {
         ),
       ).toEqual([
         {
-          _key: 'k7',
+          _key: 'k9',
           _type: 'list',
           items: [
             {
@@ -5637,21 +6325,36 @@ describe(markdownToPortableText.name, () => {
                 {
                   _key: 'k3',
                   _type: 'code',
-                  code: 'const x = 1',
                   language: 'ts',
+                  lines: [
+                    {
+                      _type: 'block',
+                      _key: 'k4',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k5',
+                          text: 'const x = 1',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
             },
             {
-              _key: 'k4',
+              _key: 'k6',
               _type: 'list-item',
               content: [
                 {
-                  _key: 'k5',
+                  _key: 'k7',
                   _type: 'block',
                   children: [
                     {
-                      _key: 'k6',
+                      _key: 'k8',
                       _type: 'span',
                       marks: [],
                       text: 'two',
@@ -6329,7 +7032,7 @@ describe(markdownToPortableText.name, () => {
         ),
       ).toEqual([
         {
-          _key: 'k3',
+          _key: 'k5',
           _type: 'blockquote',
           content: [
             {
@@ -6350,7 +7053,22 @@ describe(markdownToPortableText.name, () => {
               _key: 'k2',
               _type: 'code',
               language: 'js',
-              code: "console.log('hi')",
+              lines: [
+                {
+                  _type: 'block',
+                  _key: 'k3',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k4',
+                      text: "console.log('hi')",
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -6534,8 +7252,23 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: '{"_type": "product",',
           language: 'json:object',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: '{"_type": "product",',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -6549,8 +7282,23 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: '{"sku": "abc-123"}',
           language: 'json:object',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: '{"sku": "abc-123"}',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -6691,8 +7439,23 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: '[{"_type": "product"}]',
           language: 'json:object',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: '[{"_type": "product"}]',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -6927,7 +7690,7 @@ describe(markdownToPortableText.name, () => {
         {
           type: 'code-block-to-text',
           message:
-            '`js` code block became plain text: the schema has no `code` block object',
+            '`js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
           line: 1,
           snippet: 'code',
         },
@@ -6997,7 +7760,7 @@ describe(markdownToPortableText.name, () => {
           {
             type: 'code-block-to-text',
             message:
-              '`js` code block became plain text: the schema has no `code` block object',
+              '`js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
             line: 5,
             snippet: 'code',
           },
@@ -7006,7 +7769,7 @@ describe(markdownToPortableText.name, () => {
           'Markdown could not be converted without loss:',
           '- line 1: `#` heading became a normal paragraph: the schema has no `h1` style ("foo")',
           '- line 3: Removed bold formatting, kept the text: the schema has no `strong` decorator ("bar")',
-          '- line 5: `js` code block became plain text: the schema has no `code` block object ("code")',
+          '- line 5: `js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks ("code")',
         ].join('\n'),
       })
     })
@@ -7223,7 +7986,7 @@ describe(markdownToPortableText.name, () => {
         {
           type: 'code-block-to-text',
           message:
-            'Code block became plain text: the schema has no `code` block object',
+            'Code block became plain text: the schema has no `code` block object with a `lines` array of text blocks',
           line: 1,
           snippet: 'const foo = "bar"',
         },
@@ -8999,7 +9762,7 @@ describe(markdownToPortableText.name, () => {
         'Markdown could not be converted without loss:',
         '- line 1: `#` heading became a normal paragraph: the schema has no `h1` style ("foo")',
         '- line 3: Removed bold formatting, kept the text: the schema has no `strong` decorator ("bar")',
-        '- line 5: `js` code block became plain text: the schema has no `code` block object ("code")',
+        '- line 5: `js` code block became plain text: the schema has no `code` block object with a `lines` array of text blocks ("code")',
       ].join('\n')
 
       const run = () =>
@@ -9435,8 +10198,23 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: '{"_type": "product",',
           language: 'json:object',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: '{"_type": "product",',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
 
@@ -9465,8 +10243,23 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'code',
           _key: 'k0',
-          code: '{"sku": "abc-123"}',
           language: 'json:object',
+          lines: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: '{"sku": "abc-123"}',
+                  marks: [],
+                },
+              ],
+            },
+          ],
         },
       ])
 

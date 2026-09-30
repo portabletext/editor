@@ -73,8 +73,8 @@ export const degradationMessage = {
 
   'code-block-to-text': (language: string | undefined): string =>
     language
-      ? `\`${language}\` code block became plain text: the schema has no \`code\` block object`
-      : `Code block became plain text: the schema has no \`code\` block object`,
+      ? `\`${language}\` code block became plain text: the schema has no \`code\` block object with a \`lines\` array of text blocks`
+      : `Code block became plain text: the schema has no \`code\` block object with a \`lines\` array of text blocks`,
 
   'horizontal-rule-to-text':
     'Horizontal rule became the text `---`: the schema has no `horizontal-rule` block object',
