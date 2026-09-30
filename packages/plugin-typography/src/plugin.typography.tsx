@@ -55,12 +55,25 @@ const defaultRuleConfig = [
 
 type RuleName = (typeof defaultRuleConfig)[number]['name']
 
+type DisableableRuleName<TEnabledRuleName extends RuleName> = [
+  Exclude<RuleName, TEnabledRuleName>,
+] extends [never]
+  ? RuleName
+  : Exclude<RuleName, TEnabledRuleName>
+
+type DefaultDisabledRuleName<TEnabledRuleName extends RuleName> = [
+  Exclude<RuleName, TEnabledRuleName>,
+] extends [never]
+  ? RuleName
+  : never
+
 /**
  * @public
  */
 export type TypographyPluginProps<
-  TEnabledRuleName extends RuleName = never,
-  TDisabledRuleName extends Exclude<RuleName, TEnabledRuleName> = never,
+  TEnabledRuleName extends RuleName = RuleName,
+  TDisabledRuleName extends DisableableRuleName<TEnabledRuleName> =
+    DefaultDisabledRuleName<TEnabledRuleName>,
 > = {
   guard?: InputRuleGuard
   /**
@@ -86,7 +99,7 @@ export type TypographyPluginProps<
   /**
    * Disable specific rules (subtractive from preset).
    * Use this to disable rules that would otherwise be enabled by the preset.
-   * Cannot contain rules that are in the `enable` array (TypeScript will enforce this).
+   * A rule listed in both `enable` and `disable` is disabled.
    *
    * @example
    * ```tsx
@@ -101,8 +114,9 @@ export type TypographyPluginProps<
  * @public
  */
 export function TypographyPlugin<
-  TEnabledRuleName extends RuleName = never,
-  TDisabledRuleName extends Exclude<RuleName, TEnabledRuleName> = never,
+  TEnabledRuleName extends RuleName = RuleName,
+  TDisabledRuleName extends DisableableRuleName<TEnabledRuleName> =
+    DefaultDisabledRuleName<TEnabledRuleName>,
 >(props: TypographyPluginProps<TEnabledRuleName, TDisabledRuleName>) {
   const {preset = 'default', enable = [], disable = [], guard} = props
 
