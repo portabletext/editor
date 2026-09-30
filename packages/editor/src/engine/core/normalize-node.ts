@@ -9,7 +9,6 @@ import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {applyNodeProperties} from '../../internal-utils/apply-node-properties'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
-import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {hasUsableKey} from '../../paths/node-segment'
 import {serializePath} from '../../paths/serialize-path'
@@ -338,8 +337,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     !hasRemoteFrame(editor.applyContext) &&
     isTextBlock({schema: editor.snapshot.context.schema}, node)
   ) {
-    const newMarkDefs = (node.markDefs || []).filter((def) => {
-      return node.children.find((child) => {
+    const unusedMarkDefs = (node.markDefs || []).filter((def) => {
+      return !node.children.find((child) => {
         return (
           isSpan({schema: editor.snapshot.context.schema}, child) &&
           Array.isArray(child.marks) &&
@@ -348,9 +347,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       })
     })
 
-    if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
+    if (unusedMarkDefs.length > 0) {
       debug.normalization('removing markDef not in use')
-      applyNodeProperties(editor, {markDefs: newMarkDefs}, path)
+      for (const unusedMarkDef of unusedMarkDefs) {
+        editor.apply({
+          type: 'unset',
+          path: [...path, 'markDefs', {_key: unusedMarkDef._key}],
+        })
+      }
       return
     }
   }

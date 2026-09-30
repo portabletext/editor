@@ -296,7 +296,7 @@ describe('Collaborative editing', () => {
           value: [],
         },
         {
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },
@@ -1120,7 +1120,7 @@ describe('Collaborative editing', () => {
           'text',
         ]),
         {
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },
@@ -1263,7 +1263,7 @@ describe('Collaborative editing', () => {
           value: [],
         },
         {
-          type: 'set',
+          type: 'setIfMissing',
           path: [{_key: blockKey}, 'markDefs'],
           value: [],
         },

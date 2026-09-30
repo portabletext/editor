@@ -353,7 +353,7 @@ describe('event.block.unset', () => {
 
       expect(patches).toEqual([
         unset([{_key: textBlockKey}, 'markDefs']),
-        set([], [{_key: textBlockKey}, 'markDefs']),
+        setIfMissing([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
   })
@@ -435,7 +435,7 @@ describe('event.block.unset', () => {
           [{_key: 'k0'}],
         ),
         unset([{_key: 'k0'}]),
-        set([], [{_key: textBlockKey}, 'markDefs']),
+        setIfMissing([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
 

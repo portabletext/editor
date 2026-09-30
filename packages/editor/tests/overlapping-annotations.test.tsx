@@ -114,20 +114,21 @@ describe('overlapping annotations', () => {
 
       expect(block.markDefs).toEqual([
         {
-          _key: commentKey,
-          _type: 'comment',
-          text: 'Comment A',
-        },
-        {
           _key: 'k7',
           _type: 'comment',
           text: 'Comment B',
         },
+        {
+          _key: commentKey,
+          _type: 'comment',
+          text: 'Comment A',
+        },
       ])
 
-      expect(getTextMarks(editor.getSnapshot().context, 'bar')).toEqual(
-        block.markDefs?.map((markDef) => markDef._key),
-      )
+      expect(getTextMarks(editor.getSnapshot().context, 'bar')).toEqual([
+        commentKey,
+        'k7',
+      ])
     })
   })
 
@@ -231,14 +232,14 @@ describe('overlapping annotations', () => {
 
       expect(block.markDefs).toEqual([
         {
-          _key: 'k9',
-          _type: 'link',
-          href: 'https://portabletext.org',
-        },
-        {
           _key: 'k12',
           _type: 'link',
           href: 'https://sanity.io',
+        },
+        {
+          _key: 'k9',
+          _type: 'link',
+          href: 'https://portabletext.org',
         },
       ])
     })

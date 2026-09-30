@@ -900,8 +900,6 @@ describe(createPlaceholderBlock.name, () => {
         unset([{_key: imageKeyA}]),
         unset([]),
         setIfMissing([], []),
-        set([], [{_key: 'k4'}, 'markDefs']),
-        setIfMissing([], []),
         insert(
           [
             {

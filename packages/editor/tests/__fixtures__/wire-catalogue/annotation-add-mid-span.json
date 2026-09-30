@@ -20,14 +20,27 @@
   ],
   "patches": [
     {
-      "type": "set",
+      "type": "setIfMissing",
       "path": [
         {
           "_key": "k0"
         },
         "markDefs"
       ],
-      "value": [
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "markDefs",
+        0
+      ],
+      "position": "before",
+      "items": [
         {
           "_type": "link",
           "_key": "k4",

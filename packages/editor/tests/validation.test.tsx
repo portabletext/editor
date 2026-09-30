@@ -202,7 +202,7 @@ describe('Value validation', () => {
         {
           type: 'patch',
           patch: {
-            type: 'set',
+            type: 'setIfMissing',
             origin: 'local',
             path: [{_key: 'k0'}, 'markDefs'],
             value: [],
@@ -235,7 +235,7 @@ describe('Value validation', () => {
               value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
             },
             {
-              type: 'set',
+              type: 'setIfMissing',
               origin: 'local',
               path: [{_key: 'k0'}, 'markDefs'],
               value: [],
@@ -480,7 +480,7 @@ describe('Value validation', () => {
         {
           type: 'patch',
           patch: {
-            type: 'set',
+            type: 'setIfMissing',
             origin: 'local',
             path: [{_key: blockKey}, 'markDefs'],
             value: [],
@@ -519,7 +519,7 @@ describe('Value validation', () => {
               value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
             },
             {
-              type: 'set',
+              type: 'setIfMissing',
               origin: 'local',
               path: [{_key: blockKey}, 'markDefs'],
               value: [],
@@ -715,7 +715,7 @@ describe('Value validation', () => {
         {
           type: 'patch',
           patch: {
-            type: 'set',
+            type: 'setIfMissing',
             origin: 'local',
             path: [{_key: 'k2'}, 'markDefs'],
             value: [],
@@ -748,7 +748,7 @@ describe('Value validation', () => {
               value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
             },
             {
-              type: 'set',
+              type: 'setIfMissing',
               origin: 'local',
               path: [{_key: 'k2'}, 'markDefs'],
               value: [],

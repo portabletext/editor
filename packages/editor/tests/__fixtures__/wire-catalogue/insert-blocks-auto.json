@@ -8,17 +8,6 @@
   ],
   "patches": [
     {
-      "type": "set",
-      "path": [
-        {
-          "_key": "k0"
-        },
-        "markDefs"
-      ],
-      "value": [],
-      "origin": "local"
-    },
-    {
       "type": "setIfMissing",
       "path": [
         {
@@ -110,7 +99,7 @@
       "origin": "local"
     },
     {
-      "type": "set",
+      "type": "setIfMissing",
       "path": [
         {
           "_key": "k6"

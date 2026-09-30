@@ -405,8 +405,8 @@ describe('Feature: block merge renames colliding keys', () => {
             {_type: 'span', _key: 'k5', text: ' baz', marks: []},
           ],
           markDefs: [
-            {_type: 'link', _key: 'link1', href: 'https://a.example'},
             {_type: 'link', _key: 'k2', href: 'https://b.example'},
+            {_type: 'link', _key: 'link1', href: 'https://a.example'},
           ],
           style: 'normal',
         },
@@ -546,12 +546,6 @@ describe('Feature: block merge renames colliding keys', () => {
         origin: 'local',
       },
       {type: 'unset', path: [{_key: 'kB'}], origin: 'local'},
-      {
-        type: 'set',
-        path: [{_key: 'kA'}, 'markDefs'],
-        value: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
-        origin: 'local',
-      },
       {
         type: 'setIfMissing',
         path: [{_key: 'kA'}, 'children'],
@@ -714,12 +708,6 @@ describe('Feature: block merge renames colliding keys', () => {
         origin: 'local',
       },
       {type: 'unset', path: [{_key: 'kB'}], origin: 'local'},
-      {
-        type: 'set',
-        path: [{_key: 'kA'}, 'markDefs'],
-        value: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
-        origin: 'local',
-      },
       {
         type: 'setIfMissing',
         path: [{_key: 'kA'}, 'children'],
@@ -1033,8 +1021,8 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
           {_type: 'span', _key: 'k4', text: ' baz', marks: []},
         ],
         markDefs: [
-          {_type: 'link', _key: 'link1', href: 'https://a.example'},
           {_type: 'link', _key: 'k2', href: 'https://b.example'},
+          {_type: 'link', _key: 'link1', href: 'https://a.example'},
         ],
         style: 'normal',
       },

@@ -17,17 +17,6 @@
       "origin": "local"
     },
     {
-      "type": "set",
-      "path": [
-        {
-          "_key": "k0"
-        },
-        "markDefs"
-      ],
-      "value": [],
-      "origin": "local"
-    },
-    {
       "type": "setIfMissing",
       "path": [
         {

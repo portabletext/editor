@@ -182,7 +182,7 @@ function isEqualSpans(a: ChildLike, b: ChildLike): boolean {
   return isEqualProps(a, b, ['_key', '_type', 'text', 'marks'])
 }
 
-export function isEqualMarkDefs(
+function isEqualMarkDefs(
   a: Array<PortableTextObject>,
   b: Array<PortableTextObject>,
 ): boolean {

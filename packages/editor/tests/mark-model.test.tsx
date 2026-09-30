@@ -208,14 +208,14 @@ describe('mark model', () => {
             ],
             markDefs: [
               {
-                _key: 'fde1fd54b544',
-                _type: 'link',
-                url: '1',
-              },
-              {
                 _key: '7b6d3d5de30c',
                 _type: 'link',
                 url: '2',
+              },
+              {
+                _key: 'fde1fd54b544',
+                _type: 'link',
+                url: '1',
               },
             ],
             style: 'normal',

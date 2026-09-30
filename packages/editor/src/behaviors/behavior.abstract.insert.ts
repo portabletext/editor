@@ -9,6 +9,8 @@ import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-objec
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {parseMarkDefs} from '../utils/parse-blocks'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -594,24 +596,28 @@ export const abstractInsertBehaviors = [
           _key: snapshot.context.keyGenerator(),
           ...annotation.value,
         })) ?? []
+      const parsedMarkDefs = focusTextBlock
+        ? parseMarkDefs({
+            schema: getPathSubSchema(snapshot, focusTextBlock.path),
+            keyGenerator: snapshot.context.keyGenerator,
+            markDefs,
+            profile: 'strict',
+          }).markDefs
+        : []
 
-      return {markDefs, focusTextBlock}
+      return {markDefs, parsedMarkDefs, focusTextBlock}
     },
     actions: [
-      ({snapshot, event}, {markDefs, focusTextBlock}) => [
+      ({snapshot, event}, {markDefs, parsedMarkDefs, focusTextBlock}) => [
         ...(focusTextBlock
-          ? [
+          ? parsedMarkDefs.map((markDef) =>
               raise({
-                type: 'block.set',
-                at: focusTextBlock.path,
-                props: {
-                  markDefs: [
-                    ...(focusTextBlock.node.markDefs ?? []),
-                    ...markDefs,
-                  ],
-                },
+                type: 'insert',
+                at: [...focusTextBlock.path, 'markDefs', 0],
+                value: markDef,
+                position: 'before',
               }),
-            ]
+            )
           : []),
         raise({
           type: 'insert.child',

@@ -1,6 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {getNode} from '../traversal/get-node'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {parseMarkDefs} from '../utils/parse-blocks'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -27,28 +29,33 @@ export const abstractAnnotationBehaviors = [
         return false
       }
 
-      const block = blockEntry.node
+      const markDef = blockEntry.node.markDefs?.find(
+        (markDef) => markDef._key === markDefKey,
+      )
 
-      const updatedMarkDefs = block.markDefs?.map((markDef) => {
-        if (markDef._key === markDefKey) {
-          return {
-            ...markDef,
-            ...event.props,
-          }
-        }
+      if (!markDef) {
+        return false
+      }
 
-        return markDef
-      })
+      const {_key, ...fields} = event.props
 
-      return {blockPath: blockEntry.path, updatedMarkDefs}
+      const [updatedMarkDef] = parseMarkDefs({
+        schema: getPathSubSchema(snapshot, blockEntry.path),
+        keyGenerator: snapshot.context.keyGenerator,
+        markDefs: [{...markDef, ...fields}],
+        profile: 'strict',
+      }).markDefs
+
+      return {
+        markDefPath: [...blockEntry.path, 'markDefs', {_key: markDefKey}],
+        updatedMarkDef,
+      }
     },
     actions: [
-      (_, {blockPath, updatedMarkDefs}) => [
-        raise({
-          type: 'block.set',
-          at: blockPath,
-          props: {markDefs: updatedMarkDefs},
-        }),
+      (_, {markDefPath, updatedMarkDef}) => [
+        updatedMarkDef
+          ? raise({type: 'set', at: markDefPath, value: updatedMarkDef})
+          : raise({type: 'unset', at: markDefPath}),
       ],
     ],
   }),

@@ -117,16 +117,6 @@ describe('event.operation', () => {
     await vi.waitFor(() => {
       expect(operations).toEqual([
         {
-          type: 'set',
-          path: [{_key: fooBlockKey}, 'markDefs'],
-          value: [],
-          inverse: {
-            type: 'set',
-            path: [{_key: fooBlockKey}, 'markDefs'],
-            value: [],
-          },
-        },
-        {
           type: 'insert',
           path: fooSpanPath,
           node: {_type: 'span', _key: 'k6', text: '', marks: []},
