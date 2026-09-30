@@ -6,6 +6,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {applyMarkdownEdit} from './apply-markdown-edit'
+import {defaultCodeObjectDefinition} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 
 /**
@@ -24,15 +25,7 @@ const schema = compileSchema(
     decorators: [{name: 'strong'}, {name: 'em'}, {name: 'highlight'}],
     lists: [{name: 'bullet'}, {name: 'number'}],
     annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
-    blockObjects: [
-      {
-        name: 'code',
-        fields: [
-          {name: 'language', type: 'string'},
-          {name: 'code', type: 'string'},
-        ],
-      },
-    ],
+    blockObjects: [defaultCodeObjectDefinition],
   }),
 )
 
@@ -404,7 +397,15 @@ function makeUnit(
       _type: 'code',
       _key: blockKey,
       language: 'js',
-      code: tokens[0]!.value,
+      lines: [
+        {
+          _type: 'block',
+          _key: nextKey('l'),
+          style: 'normal',
+          markDefs: [],
+          children: [span(nextKey, tokens[0]!.value, [])],
+        },
+      ],
     } as unknown as PortableTextBlock
     return {kind: 'code', index, block, blockKey, tokens, outcome: 'unchanged'}
   }
@@ -952,8 +953,10 @@ function textOf(node: Record<string, unknown>): string | undefined {
       )
       .join('')
   }
-  if (typeof node['code'] === 'string') {
-    return node['code'] as string
+  if (Array.isArray(node['lines'])) {
+    return (node['lines'] as Array<Record<string, unknown>>)
+      .map((line) => textOf(line) ?? '')
+      .join('\n')
   }
   if (typeof node['note'] === 'string') {
     return node['note'] as string

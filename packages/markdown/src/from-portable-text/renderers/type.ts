@@ -16,36 +16,88 @@ import {wrapInCodeSpan} from './marks'
  */
 export const DefaultCodeBlockRenderer: PortableTextTypeRenderer<{
   _type: 'code'
-  code: string
   language: string | undefined
+  lines: Array<PortableTextBlock>
 }> = (options) => {
-  if (!isCodeShaped(options.value)) {
+  const code = readCode(options.value)
+  const language = readLanguage(options.value.language)
+  if (code === undefined || language === undefined) {
     return DefaultUnknownTypeRenderer(options)
   }
-  return `\`\`\`${normalizeLanguage(options.value.language)}\n${options.value.code}\n\`\`\``
+  const fence = '`'.repeat(Math.max(3, longestLineStartBacktickRun(code) + 1))
+  return `${fence}${language}\n${code}\n${fence}`
 }
 
-function isCodeShaped(value: unknown): value is {code: string} {
-  return typeof (value as {code?: unknown} | null)?.code === 'string'
+function longestLineStartBacktickRun(code: string): number {
+  let longest = 0
+  for (const match of code.matchAll(/^[ \t]*(`+)/gm)) {
+    longest = Math.max(longest, match[1]?.length ?? 0)
+  }
+  return longest
 }
 
-/**
- * A fence info string is everything after the opening fence on the same
- * line, so a real `language` can never contain a newline, and the parser
- * only ever produces a string. Junk in this optional field should not send
- * an otherwise valid code block to the fenced-JSON path, so it is treated
- * as absent instead of guarded.
- */
-function normalizeLanguage(language: unknown): string {
-  if (typeof language !== 'string' || language.includes('\n')) {
+function readCode(value: unknown): string | undefined {
+  const lines = (value as {lines?: unknown} | null)?.lines
+
+  if (!Array.isArray(lines) || lines.length === 0) {
+    return undefined
+  }
+  const texts = lines.map(readLineText)
+  if (texts.some((text) => text === undefined)) {
+    return undefined
+  }
+  return texts.join('\n')
+}
+
+const codeLineFields = new Set([
+  '_type',
+  '_key',
+  'style',
+  'markDefs',
+  'children',
+])
+const codeLineSpanFields = new Set(['_type', '_key', 'text', 'marks'])
+
+function readLineText(line: unknown): string | undefined {
+  if (
+    !isTypedObject(line) ||
+    line._type !== 'block' ||
+    !Object.keys(line).every((field) => codeLineFields.has(field)) ||
+    (line['style'] !== undefined && line['style'] !== 'normal') ||
+    !isAbsentOrEmpty(line['markDefs']) ||
+    !Array.isArray(line['children']) ||
+    line['children'].length !== 1
+  ) {
+    return undefined
+  }
+  const span: unknown = line['children'][0]
+  if (
+    !isTypedObject(span) ||
+    span._type !== 'span' ||
+    !Object.keys(span).every((field) => codeLineSpanFields.has(field)) ||
+    typeof span['text'] !== 'string' ||
+    !isAbsentOrEmpty(span['marks']) ||
+    /[\n\r\0]/.test(span['text'])
+  ) {
+    return undefined
+  }
+  return span['text']
+}
+
+function isAbsentOrEmpty(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.length === 0)
+}
+
+function readLanguage(language: unknown): string | undefined {
+  if (typeof language !== 'string') {
     return ''
   }
-  if (language === 'json:object') {
-    // `json:object` is reserved as the object carrier: a code block
-    // emitting it as its info string would re-parse as the embedded
-    // object whenever its content happens to be typed JSON, destroying
-    // the code block. The language degrades to absent instead.
-    return ''
+  if (
+    language !== language.trim() ||
+    /[`\n\r\0]/.test(language) ||
+    language === 'json:object'
+  ) {
+    return undefined
   }
   return language
 }

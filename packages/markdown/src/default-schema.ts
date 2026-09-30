@@ -100,7 +100,20 @@ export const defaultCodeObjectDefinition = {
   name: 'code',
   fields: [
     {name: 'language', type: 'string'},
-    {name: 'code', type: 'string'},
+    {
+      name: 'lines',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [],
+          decorators: [],
+          annotations: [],
+          lists: [],
+          inlineObjects: [],
+        },
+      ],
+    },
   ],
 } as const satisfies BlockObjectDefinition
 

@@ -102,7 +102,7 @@ Converting Markdown to Portable Text and back isn't a lossless mirror:
 5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`. [`applyMarkdownEdit`](#applymarkdownedit) restores stored keys after an edit.
 6. A hard break and a `\n` in a span's text are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
-The named exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint; a `code` object with the reserved language `json:object` loses that language on serialization; and span text ending in `json:object` directly before a code-marked span holding a typed JSON object binds into an inline object on reparse.
+The named exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint; and span text ending in `json:object` directly before a code-marked span holding a typed JSON object binds into an inline object on reparse.
 
 See [Markdown round-tripping](https://www.portabletext.org/conversion/markdown-round-tripping/) on the docs site for the full contract and worked examples.
 
@@ -195,14 +195,14 @@ Out of the box, the library includes sensible defaults for both. Customize them 
 
 The default schema includes the following definitions:
 
-| Type            | Values                                                                                                                                                                                                                                                                       |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                                                                   |
-| `lists`         | `'number'`, `'bullet'`, `'task'`                                                                                                                                                                                                                                             |
-| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                                                             |
-| `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                                                       |
-| `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (the canonical nested shape, see [Default behavior](#default-behavior)), `'callout'` (fields: `'tone'`, `'content'`) |
-| `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                                                                                                              |
+| Type            | Values                                                                                                                                                                                                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                                                                    |
+| `lists`         | `'number'`, `'bullet'`, `'task'`                                                                                                                                                                                                                                              |
+| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                                                              |
+| `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                                                        |
+| `blockObjects`  | `'code'` (fields: `'language'`, `'lines'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (the canonical nested shape, see [Default behavior](#default-behavior)), `'callout'` (fields: `'tone'`, `'content'`) |
+| `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                                                                                                               |
 
 To use a custom Schema, import `compileSchema` and `defineSchema` from `@portabletext/schema`:
 
@@ -271,10 +271,39 @@ The default image matcher requires the schema type to have a `'src'` field. If y
 
 **Code** is handled based on the Markdown syntax:
 
-- Fenced code blocks (` ``` `) become `'code'` block objects with `language` and `code` fields
+- Fenced code blocks (` ``` `) become `'code'` block objects with a `language` field and `lines`, one text block per line of code
 - Inline code (`` ` ``) applies the `'code'` decorator to a span
 
-The default code block matcher requires the schema type to have a `'code'` field. If your `'code'` type doesn't include this field, the matcher returns `undefined`.
+The default code block matcher requires the schema's `'code'` type to have a `'lines'` array field whose `of` includes a block, like the default schema's:
+
+```ts
+defineSchema({
+  blockObjects: [
+    {
+      name: 'code',
+      fields: [
+        {name: 'language', type: 'string'},
+        {
+          name: 'lines',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              styles: [],
+              decorators: [],
+              annotations: [],
+              lists: [],
+              inlineObjects: [],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+```
+
+Each line of code becomes one text block in `lines`, holding the line's literal text in a single unmarked span. If your `'code'` type doesn't include this field (a string `'code'` field is not enough), the matcher returns `undefined` and the fence becomes plain text. A `types.code` matcher you register replaces the default and receives `{language, code}`: the fence's language (`undefined` when it has none) and its raw text as one string.
 
 **Links** support optional titles using `[text](url "title")` syntax. The title is captured in the `'title'` field of the `'link'` annotation.
 
@@ -598,16 +627,18 @@ portableTextToMarkdown(blocks, {
 })
 ```
 
-| Renderer                          | Expected value                                         | Output                 |
-| --------------------------------- | ------------------------------------------------------ | ---------------------- |
-| `DefaultBlockquoteObjectRenderer` | `{content: PortableTextBlock[]}`                       | `> content`            |
-| `DefaultCalloutRenderer`          | `{tone: string, content: PortableTextBlock[]}`         | `> [!TYPE]\n> content` |
-| `DefaultCodeBlockRenderer`        | `{code: string, language?: string}`                    | ` ```lang\ncode\n``` ` |
-| `DefaultHorizontalRuleRenderer`   | (no fields required)                                   | `---`                  |
-| `DefaultHtmlRenderer`             | `{html: string}`                                       | Raw HTML               |
-| `DefaultImageRenderer`            | `{src: string, alt?: string, title?: string}`          | `![alt](src "title")`  |
-| `DefaultListRenderer`             | `{kind: 'bullet' \| 'number' \| 'task', items: [...]}` | Markdown list          |
-| `DefaultTableRenderer`            | `{rows: [...], headerRows?: number}`                   | Markdown table         |
+| Renderer                          | Expected value                                         | Output                                |
+| --------------------------------- | ------------------------------------------------------ | ------------------------------------- |
+| `DefaultBlockquoteObjectRenderer` | `{content: PortableTextBlock[]}`                       | `> content`                           |
+| `DefaultCalloutRenderer`          | `{tone: string, content: PortableTextBlock[]}`         | `> [!TYPE]\n> content`                |
+| `DefaultCodeBlockRenderer`        | `{lines: PortableTextBlock[], language?: string}`      | Fenced code block, one line per block |
+| `DefaultHorizontalRuleRenderer`   | (no fields required)                                   | `---`                                 |
+| `DefaultHtmlRenderer`             | `{html: string}`                                       | Raw HTML                              |
+| `DefaultImageRenderer`            | `{src: string, alt?: string, title?: string}`          | `![alt](src "title")`                 |
+| `DefaultListRenderer`             | `{kind: 'bullet' \| 'number' \| 'task', items: [...]}` | Markdown list                         |
+| `DefaultTableRenderer`            | `{rows: [...], headerRows?: number}`                   | Markdown table                        |
+
+`DefaultCodeBlockRenderer` writes each line's text raw, without escaping. A `code` value without a `lines` array, like one that holds its code in a `code` string, renders as a `json:object` fence and reparses unchanged. So does any value whose content the fence can't carry: a line that isn't a `normal` block holding one unmarked span and no other fields (a `null` `marks` or `markDefs` included), line text with a line break or NUL, an empty `lines` array, or a `language` with a backtick, a line break, a NUL, surrounding spaces, or the value `json:object`. A line without `style`, `markDefs`, or `marks` comes back with the defaults, and an empty or non-string `language` comes back absent.
 
 #### What renderers receive
 
@@ -693,8 +724,8 @@ const schema = compileSchema(
       {
         name: 'code',
         fields: [
-          {name: 'code', type: 'string'},
           {name: 'language', type: 'string'},
+          {name: 'lines', type: 'array', of: [{type: 'block'}]},
         ],
       },
     ],
@@ -806,7 +837,7 @@ Keys follow the edit the way they would in an editor, and when the evidence is u
 #### What keeps its key
 
 - Unchanged and moved blocks. Repeated content pairs in order.
-- A block rewritten in place, like typing over it. Style changes count as rewrites, and an edited table cell keeps the whole table's keys.
+- A block rewritten in place, like typing over it. Style changes count as rewrites. An edited table cell keeps the whole table's keys, and an edited code line keeps the code block's and the line's keys.
 - A split keeps the key on the first non-empty fragment, like pressing enter; a merge keeps the first block's key, like pressing backspace. A soft-wrap join is a merge.
 - A typo fix lands as a text change on the same span, and editing a link's URL keeps its annotation key. Two identical annotations in one block (the same link twice, say) pair in order, like any repeated content.
 - A `json:object` payload keeps the `_key` it carries, unless the payload matches stored content, which keeps the stored key: editing markdown cannot re-key existing content.

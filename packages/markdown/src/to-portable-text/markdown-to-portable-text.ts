@@ -200,21 +200,54 @@ type Options = {
   }
 }
 
-const codeBlockMatcher: ObjectMatcher<
-  ExtractValue<typeof defaultCodeObjectDefinition>
-> = ({context, value, isInline}) => {
-  const defaultMatcher = buildObjectMatcher(defaultCodeObjectDefinition)
-  const codeObject = defaultMatcher({context, value, isInline})
+const codeBlockMatcher: ObjectMatcher<{
+  language: string | undefined
+  code: string
+}> = ({context, value, isInline}) => {
+  const schemaCollection = isInline
+    ? context.schema.inlineObjects
+    : context.schema.blockObjects
+  const schemaDefinition = schemaCollection.find(
+    (item) => item.name === defaultCodeObjectDefinition.name,
+  )
 
-  if (!codeObject) {
+  const linesField = schemaDefinition?.fields.find(
+    (field) => field.name === 'lines',
+  )
+
+  if (
+    linesField?.type !== 'array' ||
+    !linesField.of?.some((member) => member.type === 'block')
+  ) {
     return undefined
   }
 
-  if (!('code' in codeObject)) {
-    return undefined
-  }
+  const codeKey = context.keyGenerator()
+  const lines = value.code
+    .split('\n')
+    .map((text) => buildCodeLine(text, context.keyGenerator))
 
-  return codeObject
+  return buildObjectMatcher(defaultCodeObjectDefinition)({
+    context: {...context, keyGenerator: () => codeKey},
+    value: {language: value.language, lines},
+    isInline,
+  })
+}
+
+function buildCodeLine(
+  text: string,
+  keyGenerator: () => string,
+): PortableTextTextBlock {
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+  }
 }
 
 const imageBlockMatcher: ObjectMatcher<

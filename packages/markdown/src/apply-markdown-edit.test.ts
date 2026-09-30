@@ -1327,19 +1327,213 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
-  test('an edited code block keeps its key', () => {
+  test('editing one code line keeps the code block key and every line key', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
-      {_type: 'code', _key: 'code1', language: 'js', code: 'const a = 1'},
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        lines: [
+          block('l1', 'ls1', 'function foo() {'),
+          block('l2', 'ls2', '  return 1'),
+          block('l3', 'ls3', '}'),
+        ],
+      },
     ]
-    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
-      'a = 1',
-      'a = 2',
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual('```js\nfunction foo() {\n  return 1\n}\n```')
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('return 1', 'return 2'), {
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        lines: [
+          block('l1', 'ls1', 'function foo() {'),
+          block('l2', 'ls2', '  return 2'),
+          block('l3', 'ls3', '}'),
+        ],
+      },
+    ])
+  })
+
+  test('a stored code block with a fence line survives an edit elsewhere unchanged', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'md',
+        lines: [block('l1', 'ls1', '```'), block('l2', 'ls2', 'bar')],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual('foo\n\n````md\n```\nbar\n````')
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('foo', 'fop'), {
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([
+      block('b1', 's1', 'fop'),
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'md',
+        lines: [block('l1', 'ls1', '```'), block('l2', 'ls2', 'bar')],
+      },
+    ])
+  })
+
+  test('editing a line of a code block with a fence line keeps the code block key and every line key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'md',
+        lines: [
+          block('l1', 'ls1', '```'),
+          block('l2', 'ls2', 'bar'),
+          block('l3', 'ls3', '```'),
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual('````md\n```\nbar\n```\n````')
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('bar', 'baz'), {
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'md',
+        lines: [
+          block('l1', 'ls1', '```'),
+          block('l2', 'ls2', 'baz'),
+          block('l3', 'ls3', '```'),
+        ],
+      },
+    ])
+  })
+
+  test('editing a code line restores the `code` and `filename` fields markdown does not express', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        filename: 'foo.js',
+        code: 'stale',
+        lines: [block('l1', 'ls1', 'foo'), block('l2', 'ls2', 'bar')],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual('```js\nfoo\nbar\n```')
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('bar', 'baz'), {
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        filename: 'foo.js',
+        code: 'stale',
+        lines: [block('l1', 'ls1', 'foo'), block('l2', 'ls2', 'baz')],
+      },
+    ])
+  })
+
+  test('a stored code block without `lines` survives an edit elsewhere unchanged', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'code', _key: 'code1', language: 'js', code: 'bar'},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual(
+      [
+        'foo',
+        '',
+        '```json:object',
+        JSON.stringify(stored[1], null, 2),
+        '```',
+      ].join('\n'),
     )
     expect(
-      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+      applyMarkdownEdit(stored, markdown.replace('foo', 'fop'), {
+        deserialize: {keyGenerator},
+      }),
     ).toEqual([
-      {_type: 'code', _key: 'code1', language: 'js', code: 'const a = 2'},
+      block('b1', 's1', 'fop'),
+      {_type: 'code', _key: 'code1', language: 'js', code: 'bar'},
+    ])
+  })
+
+  test('an edit inside the `json:object` fence of a code block without `lines` writes through', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'code', _key: 'code1', language: 'js', code: 'bar'},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('"bar"', '"baz"'), {
+        deserialize: {keyGenerator},
+      }),
+    ).toEqual([
+      block('b1', 's1', 'foo'),
+      {_type: 'code', _key: 'code1', language: 'js', code: 'baz'},
+    ])
+  })
+
+  test('a line inserted among repeated identical code lines re-keys the repeats, the accepted trade', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        lines: [
+          block('l1', 'ls1', 'function foo() {'),
+          block('l2', 'ls2', '}'),
+          block('l3', 'ls3', 'function bar() {'),
+          block('l4', 'ls4', '}'),
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toEqual(
+      '```js\nfunction foo() {\n}\nfunction bar() {\n}\n```',
+    )
+    expect(
+      applyMarkdownEdit(
+        stored,
+        markdown.replace('foo() {\n', 'foo() {\n  return 1\n'),
+        {deserialize: {keyGenerator}},
+      ),
+    ).toEqual([
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        lines: [
+          block('l1', 'ls1', 'function foo() {'),
+          block('k3', 'k4', '  return 1'),
+          block('k5', 'k6', '}'),
+          block('l3', 'ls3', 'function bar() {'),
+          block('k9', 'k10', '}'),
+        ],
+      },
     ])
   })
 
@@ -1962,7 +2156,12 @@ describe(applyMarkdownEdit.name, () => {
   test('a field the markdown expresses stays removed when the edit removes it', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
-      {_type: 'code', _key: 'code1', language: 'js', code: 'const a = 1'},
+      {
+        _type: 'code',
+        _key: 'code1',
+        language: 'js',
+        lines: [block('l1', 'ls1', 'const a = 1')],
+      },
     ]
     const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
       '```js',
@@ -1970,7 +2169,13 @@ describe(applyMarkdownEdit.name, () => {
     )
     expect(
       applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
-    ).toEqual([{_type: 'code', _key: 'code1', code: 'const a = 1'}])
+    ).toEqual([
+      {
+        _type: 'code',
+        _key: 'code1',
+        lines: [block('l1', 'ls1', 'const a = 1')],
+      },
+    ])
   })
 
   test('callout content keeps its style through the quote-syntax round trip', () => {
@@ -2081,7 +2286,7 @@ describe(applyMarkdownEdit.name, () => {
           {
             name: 'code',
             fields: [
-              {name: 'code', type: 'string'},
+              {name: 'lines', type: 'array', of: [{type: 'block'}]},
               {name: 'sprog', type: 'string'},
             ],
           },
@@ -2089,11 +2294,17 @@ describe(applyMarkdownEdit.name, () => {
       }),
     )
     const stored = [
-      {_type: 'code', _key: 'c1', code: 'const a = 1', sprog: 'js'},
+      {
+        _type: 'code',
+        _key: 'c1',
+        lines: [block('l1', 'ls1', 'const a = 1')],
+        sprog: 'js',
+      },
     ]
     const markdown = portableTextToMarkdown(structuredClone(stored), {
       schema,
     }).replace('```\n', '```typescript\n')
+    expect(markdown).toEqual('```typescript\nconst a = 1\n```')
     expect(
       applyMarkdownEdit(stored, markdown, {
         schema,
