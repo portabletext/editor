@@ -1,5 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {getDirtyPaths} from '../../paths/get-dirty-paths'
+import {getDirtyPaths, getRemovalAdjacency} from '../../paths/get-dirty-paths'
 import {getSibling} from '../../traversal/get-sibling'
 import {getSpan} from '../../traversal/get-span'
 import {normalize} from '../editor/normalize'
@@ -11,6 +11,7 @@ import {pathEquals} from '../path/path-equals'
 import {transformRangeRef} from '../range-ref/transform-range-ref'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import type {WithEditorFirstArg} from '../utils/types'
+import {hasRemoteFrame, isInNormalization} from './apply-context'
 import {applyOperation} from './apply-operation'
 import {createOperationEvent, emitOperationEvent} from './operation-channel'
 import {updateDirtyPaths} from './update-dirty-paths'
@@ -38,12 +39,28 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     transformRangeRef(ref, op, editor.snapshot.context)
   }
 
+  const removalAdjacency = getRemovalAdjacency(editor.snapshot, op)
+
   // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op)
 
-  updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
+  const dirtyPaths = getDirtyPaths(editor.snapshot.context, op)
+
+  if (removalAdjacency) {
+    dirtyPaths.push(removalAdjacency)
+  }
+
+  updateDirtyPaths(
+    editor,
+    dirtyPaths,
+    hasRemoteFrame(editor.applyContext)
+      ? 'remote'
+      : isInNormalization(editor.applyContext)
+        ? 'normalization'
+        : 'local',
+  )
 
   editor.operations.push(op)
   normalize(editor, {

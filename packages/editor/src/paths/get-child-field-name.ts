@@ -23,18 +23,47 @@ export function getChildFieldName(
   },
   path: Path,
 ): string | undefined {
-  let nodeChildren = getNodeChildren(context, {value: context.value})
-  let currentParent: RegisteredContainer | undefined = nodeChildren?.parent
+  const lastSegment = path[path.length - 1]
 
-  for (let i = 0; i < path.length; i++) {
-    if (!nodeChildren) {
-      return undefined
+  if (lastSegment === undefined || typeof lastSegment === 'string') {
+    return undefined
+  }
+
+  return resolveNodeChildren(context, path)?.nodeChildren?.fieldName
+}
+
+/**
+ * Returns `undefined` when `path` does not resolve, and `{nodeChildren:
+ * undefined}` when it resolves to a leaf. The empty path resolves to the
+ * document value.
+ */
+export function resolveNodeChildren(
+  context: {
+    schema: EditorSchema
+    containers: Containers
+    value: Array<Node>
+  },
+  path: Path,
+):
+  | {
+      nodeChildren:
+        | {
+            children: Array<Node>
+            fieldName: string
+            parent: RegisteredContainer | undefined
+          }
+        | undefined
     }
+  | undefined {
+  let nodeChildren = getNodeChildren(context, {value: context.value})
 
-    const segment = path[i]
-
+  for (const segment of path) {
     if (typeof segment === 'string') {
       continue
+    }
+
+    if (!nodeChildren) {
+      return undefined
     }
 
     let node: Node | undefined
@@ -49,14 +78,8 @@ export function getChildFieldName(
       return undefined
     }
 
-    if (i === path.length - 1) {
-      const targetInfo = getNodeChildren(context, node, currentParent)
-      return targetInfo?.fieldName
-    }
-
-    nodeChildren = getNodeChildren(context, node, currentParent)
-    currentParent = nodeChildren?.parent
+    nodeChildren = getNodeChildren(context, node, nodeChildren.parent)
   }
 
-  return undefined
+  return {nodeChildren}
 }

@@ -1,8 +1,9 @@
 import {isTextBlock} from '@portabletext/schema'
-import {serializePath} from '../../paths/serialize-path'
 import {getNode} from '../../traversal/get-node'
 import {getNodes} from '../../traversal/get-nodes'
 import {hasNode} from '../../traversal/has-node'
+import {getDirtyPathKey} from '../core/update-dirty-paths'
+import type {DirtyPathEntry} from '../interfaces/dirty-path-entry'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
@@ -22,11 +23,22 @@ export function normalize(
     return editor.dirtyPathKeys
   }
 
-  const popDirtyPath = (editor: Editor): Path => {
-    const path = getDirtyPaths(editor).pop()!
-    const key = serializePath(path)
-    getDirtyPathKeys(editor).delete(key)
-    return path
+  // How many leading ledger entries the `shouldNormalize` projection has
+  // seen. `updateDirtyPaths` only appends, so a pop can only shrink it.
+  let synced = 0
+
+  const popDirtyPath = (editor: Editor): DirtyPathEntry => {
+    const entry = getDirtyPaths(editor).pop()!
+    getDirtyPathKeys(editor).delete(getDirtyPathKey(entry))
+    synced = Math.min(synced, getDirtyPaths(editor).length)
+    return entry
+  }
+
+  const dropAdjacencyEntries = (editor: Editor) => {
+    const dirtyPaths = getDirtyPaths(editor)
+    while (dirtyPaths.at(-1)?.kind === 'adjacency') {
+      popDirtyPath(editor)
+    }
   }
 
   if (!isNormalizing(editor)) {
@@ -34,16 +46,23 @@ export function normalize(
   }
 
   if (force) {
-    const allPaths = Array.from(
+    const allEntries = Array.from(
       getNodes(editor.snapshot),
-      (entry) => entry.path,
+      (entry): DirtyPathEntry => ({
+        path: entry.path,
+        kind: 'node',
+        origin: 'force',
+      }),
     )
-    const allPathKeys = new Set(allPaths.map((p) => serializePath(p)))
-    editor.dirtyPaths = allPaths
-    editor.dirtyPathKeys = allPathKeys
+    editor.dirtyPaths = allEntries
+    editor.dirtyPathKeys = new Map(
+      allEntries.map((entry) => [getDirtyPathKey(entry), entry]),
+    )
   }
 
-  if (getDirtyPaths(editor).length === 0) {
+  if (!getDirtyPaths(editor).some((entry) => entry.kind !== 'adjacency')) {
+    getDirtyPaths(editor).length = 0
+    getDirtyPathKeys(editor).clear()
     return
   }
 
@@ -53,8 +72,8 @@ export function normalize(
       editor.normalizeNode() does fix this, but some normalization fixes also require it to work.
       Running an initial pass avoids the catch-22 race condition.
     */
-    for (const dirtyPath of getDirtyPaths(editor)) {
-      if (dirtyPath.length === 0) {
+    for (const {path: dirtyPath, kind} of getDirtyPaths(editor)) {
+      if (kind === 'adjacency' || dirtyPath.length === 0) {
         continue
       }
 
@@ -86,7 +105,17 @@ export function normalize(
       }
     }
 
-    let dirtyPaths = getDirtyPaths(editor)
+    // `shouldNormalize` sees plain paths, without adjacency entries. The
+    // projection is extended wherever the ledger may have grown: before
+    // `shouldNormalize`, after it (a callback may apply operations), and
+    // after each visit.
+    const dirtyPaths: Path[] = []
+    const sync = () => {
+      dropAdjacencyEntries(editor)
+      pushNodePaths(getDirtyPaths(editor), synced, dirtyPaths)
+      synced = getDirtyPaths(editor).length
+    }
+    sync()
     const initialDirtyPathsLength = dirtyPaths.length
     let iteration = 0
 
@@ -102,7 +131,9 @@ export function normalize(
         return
       }
 
-      const dirtyPath = popDirtyPath(editor)
+      sync()
+      dirtyPaths.pop()
+      const dirtyPath = popDirtyPath(editor).path
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
       if (dirtyPath.length === 0) {
@@ -124,7 +155,24 @@ export function normalize(
         }
       }
       iteration++
-      dirtyPaths = getDirtyPaths(editor)
+      sync()
     }
+
+    getDirtyPaths(editor).length = 0
+    getDirtyPathKeys(editor).clear()
   })
+}
+
+function pushNodePaths(
+  entries: Array<DirtyPathEntry>,
+  start: number,
+  paths: Array<Path>,
+) {
+  for (let index = start; index < entries.length; index++) {
+    const entry = entries[index]!
+
+    if (entry.kind !== 'adjacency') {
+      paths.push(entry.path)
+    }
+  }
 }
