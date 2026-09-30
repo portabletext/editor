@@ -1,5 +1,30 @@
 # @portabletext/markdown
 
+## 2.5.0
+
+### Minor Changes
+
+- [#3346](https://github.com/portabletext/editor/pull/3346) [`7c4a0c7`](https://github.com/portabletext/editor/commit/7c4a0c78c09387982a8eb94c06c504658c50f14c) Thanks [@christianhg](https://github.com/christianhg)! - feat: report where and why the round trip failed when `applyMarkdownEdit` skips key matching
+  
+  When the stored value cannot survive its own serialize→parse round trip, the skipped `ReconciliationReport` now carries `mismatch`: a `type` (`'type-changed'`, `'text-changed'`, or `'block-count-changed'`), a `storedPath` to the node where the round trip first goes wrong, a readable `message`, and an optional `snippet` of the text that came back. A custom renderer that writes an inline object as `[[foo]]` reports:
+  
+  ```ts
+  {
+    keyMatching: 'skipped',
+    reason: 'round-trip-mismatch',
+    mismatch: {
+      type: 'text-changed',
+      storedPath: [{_key: 'b2'}, 'children', {_key: 'w1'}],
+      message:
+        "The block's text came back different, starting at the `wikilink` inline object",
+      snippet: '[[foo]]',
+    },
+    renamedKeys: [],
+  }
+  ```
+  
+  Unlike the other paths in the report, `storedPath` addresses the stored value you passed in, not the returned value. Match on `type`, not `message`: the message can change between releases.
+
 ## 2.4.0
 
 ### Minor Changes
