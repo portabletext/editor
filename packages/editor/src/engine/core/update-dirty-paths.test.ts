@@ -440,7 +440,217 @@ describe('dirty path origin', () => {
   })
 })
 
+describe('dirty path resolution', () => {
+  test('resolving a wide insert reads each sibling list once', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editor = createBareEditor(keyGenerator, [
+      textBlock(keyGenerator, ['foo']),
+    ])
+    const blockKey = keyGenerator()
+    const spanCount = 4000
+    const children = Array.from({length: spanCount}, (_, index) => ({
+      _type: 'span',
+      _key: keyGenerator(),
+      text: `${index}`,
+      marks: [],
+    }))
+    let siblingScans = 0
+    const countedChildren = new Proxy(children, {
+      get(target, property, receiver) {
+        if (
+          property === 'find' ||
+          property === 'findIndex' ||
+          property === 'indexOf' ||
+          property === Symbol.iterator
+        ) {
+          siblingScans++
+        }
+        return Reflect.get(target, property, receiver)
+      },
+    })
+
+    editor.apply({
+      type: 'insert',
+      path: [{_key: 'k0'}],
+      node: {
+        _type: 'block',
+        _key: blockKey,
+        children: countedChildren,
+        markDefs: [],
+        style: 'normal',
+      },
+      position: 'after',
+    })
+
+    const entries = editor.dirtyPaths.filter(
+      (entry) => entry.kind === 'descendant',
+    )
+    expect(entries).toHaveLength(spanCount)
+    expect(
+      entries.every((entry) => typeof entry.path.at(-1) !== 'number'),
+    ).toBe(true)
+    expect(siblingScans).toBeLessThanOrEqual(2)
+  })
+
+  test('an index-addressed operation dirties keyed paths, and index paths only for keyless nodes', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const barKey = keyGenerator()
+    const editor = createBareEditor(keyGenerator, [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', text: 'foo', marks: []},
+          {_type: 'span', _key: barKey, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+
+    editor.apply({
+      type: 'insert.text',
+      path: [0, 'children', 1],
+      offset: 3,
+      text: 'baz',
+    })
+    editor.apply({
+      type: 'insert.text',
+      path: [0, 'children', 0],
+      offset: 3,
+      text: 'qux',
+    })
+
+    expect(editor.dirtyPaths).toEqual([
+      {path: [], kind: 'ancestor', origin: 'local'},
+      {path: [{_key: 'k0'}], kind: 'ancestor', origin: 'local'},
+      {
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        kind: 'node',
+        origin: 'local',
+      },
+      {path: [{_key: 'k0'}, 'children', 0], kind: 'node', origin: 'local'},
+    ])
+  })
+
+  test('an inserted block whose spans share a `_key` keeps one entry per span', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editor = createBareEditor(keyGenerator, [
+      textBlock(keyGenerator, ['foo']),
+    ])
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    editor.apply({
+      type: 'insert',
+      path: [{_key: 'k0'}],
+      node: {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanKey, text: 'bar', marks: []},
+          {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      position: 'after',
+    })
+
+    expect(editor.dirtyPaths).toEqual([
+      {path: [], kind: 'ancestor', origin: 'local'},
+      {path: [{_key: 'k0'}], kind: 'neighbour', origin: 'local'},
+      {path: [{_key: 'k2'}], kind: 'node', origin: 'local'},
+      {
+        path: [{_key: 'k2'}, 'children', 0],
+        kind: 'descendant',
+        origin: 'local',
+      },
+      {
+        path: [{_key: 'k2'}, 'children', 1],
+        kind: 'descendant',
+        origin: 'local',
+      },
+    ])
+  })
+
+  test('an index-addressed node removal records the adjacency by key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editor = createBareEditor(keyGenerator, [
+      textBlock(keyGenerator, ['foo', 'bar', 'baz']),
+    ])
+
+    editor.apply({type: 'unset', path: [0, 'children', 1]})
+
+    expect(editor.dirtyPaths).toEqual([
+      {path: [], kind: 'ancestor', origin: 'local'},
+      {path: [{_key: 'k0'}], kind: 'ancestor', origin: 'local'},
+      {
+        path: [{_key: 'k0'}],
+        kind: 'adjacency',
+        adjacency: {
+          previous: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          next: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+        },
+        origin: 'local',
+      },
+    ])
+  })
+})
+
 describe(normalize.name, () => {
+  test('a node an index-addressed operation dirtied is visited after a later operation shifts its index', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const xKey = keyGenerator()
+    const editor = createBareEditor(keyGenerator, [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+          {_type: 'span', _key: barKey, text: 'bar', marks: []},
+          {_type: 'span', _key: bazKey, text: 'baz', marks: []},
+          {_type: 'span', _key: xKey, text: 'X', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    const visits: Array<Path> = []
+
+    editor.normalizeNode = ([, path]) => {
+      visits.push(path)
+    }
+    setNormalizing(editor, true)
+
+    withoutNormalizing(editor, () => {
+      editor.apply({
+        type: 'insert.text',
+        path: [{_key: blockKey}, 'children', 3],
+        offset: 1,
+        text: '!',
+      })
+      editor.apply({
+        type: 'insert',
+        path: [{_key: blockKey}, 'children', 0],
+        node: {_type: 'span', _key: keyGenerator(), text: 'Y', marks: ['em']},
+        position: 'before',
+      })
+    })
+
+    expect(visits).toEqual([
+      [{_key: 'k0'}, 'children', {_key: 'k5'}],
+      [{_key: 'k0'}, 'children', {_key: 'k4'}],
+      [{_key: 'k0'}],
+      [],
+    ])
+  })
+
   test('an operation applied inside `shouldNormalize` is visited in the same order as before', () => {
     const keyGenerator = createTestKeyGenerator()
     const editor = createBareEditor(keyGenerator, [
@@ -722,33 +932,26 @@ describe(normalize.name, () => {
     expect(shouldNormalizeCalls).toEqual([
       {
         iteration: 0,
-        initialDirtyPathsLength: 4,
+        initialDirtyPathsLength: 3,
         dirtyPaths: [
           [],
           [{_key: 'k0'}],
-          [{_key: 'k0'}, 'children', 0],
           [{_key: 'k0'}, 'children', {_key: 'k2'}],
         ],
       },
       {
         iteration: 1,
-        initialDirtyPathsLength: 4,
-        dirtyPaths: [[], [{_key: 'k0'}], [{_key: 'k0'}, 'children', 0]],
-      },
-      {
-        iteration: 2,
-        initialDirtyPathsLength: 4,
+        initialDirtyPathsLength: 3,
         dirtyPaths: [[], [{_key: 'k0'}]],
       },
       {
-        iteration: 3,
-        initialDirtyPathsLength: 4,
+        iteration: 2,
+        initialDirtyPathsLength: 3,
         dirtyPaths: [[]],
       },
     ])
     expect(visits).toEqual([
       [{_key: 'k0'}],
-      [{_key: 'k0'}, 'children', {_key: 'k2'}],
       [{_key: 'k0'}, 'children', {_key: 'k2'}],
       [{_key: 'k0'}],
       [],

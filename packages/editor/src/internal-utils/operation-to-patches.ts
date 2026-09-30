@@ -90,7 +90,18 @@ export function insertNodePatch(
   ]
 }
 
-export function toKeyedPatchPath(value: unknown, path: Path): Path {
+/**
+ * Counts of each `_key` per array, so a caller resolving many paths against
+ * the same value (the dirty paths of one operation) counts every array once.
+ * `null` marks an array that holds a non-object, which no key can address.
+ */
+export type KeyCountCache = Map<Array<unknown>, Map<string, number> | null>
+
+export function toKeyedPatchPath(
+  value: unknown,
+  path: Path,
+  keyCounts?: KeyCountCache,
+): Path {
   if (!path.some((segment) => typeof segment === 'number')) {
     return path
   }
@@ -104,7 +115,7 @@ export function toKeyedPatchPath(value: unknown, path: Path): Path {
       const element = elements[segment]
       const key = isRecord(element) ? element['_key'] : undefined
       keyedPath.push(
-        hasUsableKey(key) && isAddressableByKey(elements, key)
+        hasUsableKey(key) && isAddressableByKey(elements, key, keyCounts)
           ? {_key: key}
           : segment,
       )
@@ -134,15 +145,31 @@ export function toKeyedPatchPath(value: unknown, path: Path): Path {
   return keyedPath
 }
 
-function isAddressableByKey(elements: Array<unknown>, key: string): boolean {
-  let count = 0
+function isAddressableByKey(
+  elements: Array<unknown>,
+  key: string,
+  keyCounts?: KeyCountCache,
+): boolean {
+  const cached = keyCounts?.get(elements)
+
+  if (cached !== undefined) {
+    return cached?.get(key) === 1
+  }
+
+  let counts: Map<string, number> | null = new Map()
+
   for (const element of elements) {
     if (!isRecord(element)) {
-      return false
+      counts = null
+      break
     }
-    if (element['_key'] === key) {
-      count++
+    const elementKey = element['_key']
+    if (hasUsableKey(elementKey)) {
+      counts.set(elementKey, (counts.get(elementKey) ?? 0) + 1)
     }
   }
-  return count === 1
+
+  keyCounts?.set(elements, counts)
+
+  return counts?.get(key) === 1
 }
