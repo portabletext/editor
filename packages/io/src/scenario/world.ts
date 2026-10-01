@@ -341,13 +341,13 @@ export function createWorld() {
 
   /** The feed carries the transaction, and so does each sender's save reply. */
   function publishSaved(
-    batches: Array<{name: EditorName}>,
+    batches: Array<{name: EditorName; batch: MutationBatch}>,
     transaction: ServerTransaction,
   ) {
     getSetup().network.publish(transaction)
 
-    for (const {name} of batches) {
-      getEditor(name).host.reportSaved(transaction)
+    for (const {name, batch} of batches) {
+      getEditor(name).host.reportSaved(batch.id, transaction)
     }
   }
 
@@ -636,7 +636,7 @@ export function createWorld() {
       const batch = getBatch(name, batchNumber)
       network.takeSaveRequest(batch.id)
       publishSaved(
-        [{name}],
+        [{name, batch}],
         server.receive(
           {id: batch.id, patches: [unset([])]},
           getEditor(name).host.getTransactionId(batch.id),

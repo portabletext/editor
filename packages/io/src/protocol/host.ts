@@ -49,7 +49,7 @@ export type PassThroughHost = {
    * The server saved a batch as this transaction. Only a self-confirming host
    * passes it on: any other host waits for it on the feed.
    */
-  reportSaved: (transaction: Transaction) => void
+  reportSaved: (batchId: string, transaction: Transaction) => void
   /**
    * A batch's save request failed. A permanent failure is reported to the
    * editor as `mutation rejected`, and a transient one is retried.
@@ -360,8 +360,8 @@ export function createPassThroughHost({
       }
     },
     forward,
-    reportSaved: (transaction) => {
-      if (selfConfirming) {
+    reportSaved: (batchId, transaction) => {
+      if (selfConfirming && !getBatch(batchId).final) {
         forward(transaction)
       }
     },

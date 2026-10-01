@@ -436,7 +436,7 @@ describe(createPassThroughHost.name, () => {
 
       document.type('x')
       host.reportSaveTaken('A-1')
-      host.reportSaved({
+      host.reportSaved('A-1', {
         transactionId: 'A-t1',
         previousRev: 'r1',
         resultRev: 'r2',
@@ -454,6 +454,29 @@ describe(createPassThroughHost.name, () => {
       {sync: 'synced', rev: 'r2', inFlight: undefined},
       {sync: 'saving', rev: 'r1', inFlight: 'A-1'},
     ])
+  })
+
+  test('a self-confirming host passes on no answer for the final batch', () => {
+    const {editor, document, host, heard} = createHostedEditor('B: foo|', {
+      selfConfirming: true,
+    })
+
+    document.type('x')
+    host.reportSaveTaken('A-1')
+    document.type('y')
+    document.close()
+    host.reportSaved('A-2', {
+      transactionId: 'A-t2',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[1].patches,
+    })
+
+    expect({
+      final: heard.mutations[1].final,
+      warnings: heard.warnings,
+      rev: editor.getBase().rev,
+    }).toEqual({final: true, warnings: [], rev: 'r1'})
   })
 
   test('the final batch is saved once the save request of the batch in flight is taken', () => {
