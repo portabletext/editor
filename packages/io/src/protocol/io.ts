@@ -462,9 +462,9 @@ export function createIo(options: {
       }
     }
 
-    const baseFromValue = 'value' in incoming
+    const valueFromPatches = nextValue
 
-    if (baseFromValue) {
+    if ('value' in incoming) {
       nextValue = incoming.value
     }
 
@@ -520,7 +520,7 @@ export function createIo(options: {
         underneath: incoming.patches,
         ownPatches,
         unconfirmedPatches,
-        baseFromValue,
+        valueFromPatches,
       })
       reportDroppedPending(`transaction "${incoming.transactionId}"`)
     }
@@ -993,22 +993,24 @@ export function createIo(options: {
    * `authorInstructions`). A transaction that left the working copy as it
    * was goes out with no `patches`: its `underneath` is what the editor's
    * history needs, since a remote change under a local one shows nowhere on
-   * screen. A base taken from the transaction's `value` can differ from the
-   * old one in ways the patches don't say, so whatever the instructions
-   * leave different from the working copy is lined up after them.
+   * screen. The instructions are authored against the working copy over
+   * `valueFromPatches`, the base the patches alone make, so a transaction
+   * with `value` gets the same instructions as one without. A base taken
+   * from the transaction's `value` can differ from that in ways the patches
+   * don't say, and that difference is lined up after them.
    */
   function applyToEditor({
     screenBefore,
     underneath,
     ownPatches,
     unconfirmedPatches,
-    baseFromValue,
+    valueFromPatches,
   }: {
     screenBefore: Array<PortableTextBlock> | undefined
     underneath: Array<Patch>
     ownPatches: Array<Patch>
     unconfirmedPatches: Array<Patch>
-    baseFromValue: boolean
+    valueFromPatches: Array<PortableTextBlock> | undefined
   }) {
     const screen = deriveScreen()
 
@@ -1017,20 +1019,22 @@ export function createIo(options: {
       return
     }
 
+    const screenFromPatches = deriveScreen(valueFromPatches)
     const instructions = authorInstructions({
       shown: screenBefore,
-      wanted: screen,
+      wanted: screenFromPatches,
       patches: withoutPatches(underneath, ownPatches),
       unlanded: [...unconfirmedPatches, ...pending.flat()],
     })
-    const shown = applyWithContentLakeSemantics(screenBefore, instructions)
 
     editor.send({
       type: 'apply',
-      patches:
-        baseFromValue && !isEqual(shown, screen)
-          ? [...instructions, ...lineUpList(shown ?? [], screen ?? [], [])]
-          : instructions,
+      patches: isEqual(screenFromPatches, screen)
+        ? instructions
+        : [
+            ...instructions,
+            ...lineUpList(screenFromPatches ?? [], screen ?? [], []),
+          ],
       underneath,
     })
   }
@@ -1039,8 +1043,10 @@ export function createIo(options: {
    * The working copy as the editor holds it: blocks that aren't objects are
    * left out.
    */
-  function deriveScreen(): Array<PortableTextBlock> | undefined {
-    const workingCopy = applyWithContentLakeSemantics(base.value, [
+  function deriveScreen(
+    baseValue: Array<PortableTextBlock> | undefined = base.value,
+  ): Array<PortableTextBlock> | undefined {
+    const workingCopy = applyWithContentLakeSemantics(baseValue, [
       ...unconfirmedBatches().flatMap((batch) => batch.patches),
       ...pending.flat(),
     ])
@@ -1138,7 +1144,7 @@ export function createIo(options: {
     getStatus: () => status,
     getSync,
     getBase: () => base,
-    getWorkingCopy: deriveScreen,
+    getWorkingCopy: () => deriveScreen(),
     inspect: () => ({
       inFlight: inFlight ? describeSentBatch(inFlight) : undefined,
       rejected: rejected ? describeSentBatch(rejected) : undefined,
@@ -1414,15 +1420,20 @@ function generateUniqueKey(
 /**
  * The instructions that take the editor's tree from `shown` to `wanted` for
  * other writers' `patches`, given the `unlanded` work the editor had on top
- * of the base. A patch on a place no unlanded patch touched is forwarded as
- * it is. A patch on a block unlanded work touched becomes a `set` of the
- * block from `wanted` (or an `unset` when `wanted` lost it), since the
- * server applied the editor's work after the patch and the screen applied
- * it before. An insert into or removal from a list unlanded work also
- * inserted into or removed from becomes the list lined up against `wanted`
- * key by key, since two inserts at one place land in different orders on
- * the two sides. A patch on the whole field, or by index, while there is
- * unlanded work lines up the whole field.
+ * of the base, decided per list (the block list, or a block's `children`).
+ * A list is lined up against `wanted` key by key when the patches insert
+ * into it, remove from it or change a key in it while unlanded work touched
+ * it (changed its items or anything in them), and whenever the patches
+ * change a key in it: none of the patches on that list is forwarded, since
+ * a later patch can depend on an earlier one (an insert after a new key, a
+ * block removed and inserted again elsewhere). A patch on the whole field,
+ * or by index, while there is unlanded work lines up the block list.
+ *
+ * On a list that isn't lined up, a patch on a place no unlanded patch
+ * touched is forwarded as it is, and a patch on a block unlanded work
+ * touched becomes a `set` of the block from `wanted` (or an `unset` when
+ * `wanted` lost it), since the server applied the editor's work after the
+ * patch and the screen applied it before.
  *
  * The forwarded patches go first: they touch nothing the rest lines up, and
  * a forwarded patch into a block a later instruction inserts does nothing,
@@ -1440,36 +1451,41 @@ function authorInstructions({
   unlanded: Array<Patch>
 }): Array<Patch> {
   const touched = touchedPlaces(unlanded)
+  const places = patches.map((patch) => ({patch, place: placeOf(patch)}))
+  const lineUpBlockList = places.some(
+    ({place}) =>
+      (place.type === 'field' && unlanded.length > 0) ||
+      (place.type === 'block list' &&
+        (place.change === 'key' ||
+          (place.change === 'membership' && touched.blockList))),
+  )
+  const linedUpChildLists = new Set(
+    places.flatMap(({place}) =>
+      place.type === 'child list' &&
+      (place.change === 'key' ||
+        (place.change === 'membership' &&
+          touched.childLists.has(place.blockKey)))
+        ? [place.blockKey]
+        : [],
+    ),
+  )
   const forwarded: Array<Patch> = []
   const conflictingBlocks = new Set<string>()
-  const conflictingChildLists = new Set<string>()
-  let fieldConflicts = false
 
-  for (const patch of patches) {
-    const place = placeOf(patch)
-
+  for (const {patch, place} of places) {
     if (place.type === 'field' || touched.field) {
-      if (unlanded.length > 0) {
-        fieldConflicts = true
-      } else {
+      if (unlanded.length === 0) {
         forwarded.push(patch)
       }
+    } else if (place.type === 'block list' && lineUpBlockList) {
+      continue
     } else if (
-      place.type === 'list' &&
-      (place.blockKey === undefined
-        ? touched.blockList
-        : touched.childLists.has(place.blockKey))
+      place.type === 'child list' &&
+      linedUpChildLists.has(place.blockKey)
     ) {
-      if (place.blockKey === undefined) {
-        fieldConflicts = true
-      } else {
-        conflictingChildLists.add(place.blockKey)
-      }
-    } else if (
-      place.subjectKey !== undefined &&
-      touched.blocks.has(place.subjectKey)
-    ) {
-      conflictingBlocks.add(place.subjectKey)
+      continue
+    } else if (touched.blocks.has(place.blockKey)) {
+      conflictingBlocks.add(place.blockKey)
     } else {
       forwarded.push(patch)
     }
@@ -1478,7 +1494,7 @@ function authorInstructions({
   const current = applyWithContentLakeSemantics(shown, forwarded) ?? []
   const target = wanted ?? []
 
-  if (fieldConflicts) {
+  if (lineUpBlockList || touched.field) {
     return [...forwarded, ...lineUpList(current, target, [])]
   }
 
@@ -1486,7 +1502,7 @@ function authorInstructions({
 
   for (const blockKey of new Set([
     ...conflictingBlocks,
-    ...conflictingChildLists,
+    ...linedUpChildLists,
   ])) {
     const shownBlock = findBlock(current, blockKey)
     const wantedBlock = findBlock(target, blockKey)
@@ -1518,46 +1534,84 @@ function authorInstructions({
 
 /**
  * Where a patch acts: the whole `field` (a path that is empty or starts
- * with an index), a `list` it inserts into or removes from (the block list,
- * or the `children` of `blockKey`), or a `block`. `subjectKey` is the block
- * the patch acts on or under, which for the block list is only the block an
- * `unset` removes.
+ * with an index), the `block list` (a block, or a field of a block outside
+ * its keyed children), or the `child list` of `blockKey` (a keyed child, or
+ * anything under one). `change` says whether the patch changes the list's
+ * `membership` (an insert into it, or an `unset` of one of its items) or
+ * an item's `key` (a patch on its `_key`, or a `set` of the item whose
+ * value has another `_key`).
  */
 function placeOf(
   patch: Patch,
 ):
   | {type: 'field'}
-  | {type: 'list'; blockKey: string | undefined; subjectKey: string | undefined}
-  | {type: 'block'; subjectKey: string} {
-  const [head, field] = patch.path
+  | {type: 'block list'; blockKey: string; change: ListChange}
+  | {type: 'child list'; blockKey: string; change: ListChange} {
+  const [head, field, childSegment] = patch.path
   const blockKey = keyOf(head)
 
   if (blockKey === undefined) {
     return {type: 'field'}
   }
 
-  const isListChange = patch.type === 'insert' || patch.type === 'unset'
+  const childKey = field === 'children' ? keyOf(childSegment) : undefined
 
-  if (isListChange && patch.path.length === 1) {
+  if (childKey === undefined) {
     return {
-      type: 'list',
-      blockKey: undefined,
-      subjectKey: patch.type === 'unset' ? blockKey : undefined,
+      type: 'block list',
+      blockKey,
+      change: listChangeOf(patch, 1, blockKey),
     }
   }
 
-  if (isListChange && patch.path.length === 3 && field === 'children') {
-    return {type: 'list', blockKey, subjectKey: blockKey}
+  return {
+    type: 'child list',
+    blockKey,
+    change: listChangeOf(patch, 3, childKey),
+  }
+}
+
+type ListChange = 'membership' | 'key' | undefined
+
+/**
+ * What a patch does to the list whose item is at `itemDepth` in its path,
+ * the item keyed `key`.
+ */
+function listChangeOf(
+  patch: Patch,
+  itemDepth: number,
+  key: string,
+): ListChange {
+  const {path} = patch
+
+  if (
+    path.length === itemDepth &&
+    (patch.type === 'insert' || patch.type === 'unset')
+  ) {
+    return 'membership'
   }
 
-  return {type: 'block', subjectKey: blockKey}
+  if (path.length === itemDepth + 1 && path[itemDepth] === '_key') {
+    return 'key'
+  }
+
+  if (
+    path.length === itemDepth &&
+    patch.type === 'set' &&
+    key !== itemKey(patch.value)[0]
+  ) {
+    return 'key'
+  }
+
+  return undefined
 }
 
 /**
- * The places unlanded work touched: the whole `field`, the block list, the
- * `children` lists it inserted into or removed from, and the blocks it
- * acted on or under. Removing a block from the block list touches the list
- * only: a patch under the removed block finds nothing on either side.
+ * The places unlanded work touched: the whole `field`; the block list, by
+ * any patch on or under a block; the `children` lists, by any patch on or
+ * under one of their children; and the blocks it acted on or under for
+ * anything but their removal. A patch under a removed block finds nothing
+ * on either side.
  */
 function touchedPlaces(unlanded: Array<Patch>): {
   field: boolean
@@ -1577,12 +1631,16 @@ function touchedPlaces(unlanded: Array<Patch>): {
 
     if (place.type === 'field') {
       touched.field = true
-    } else if (place.type === 'block') {
-      touched.blocks.add(place.subjectKey)
-    } else if (place.blockKey === undefined) {
-      touched.blockList = true
-    } else {
+      continue
+    }
+
+    touched.blockList = true
+
+    if (place.type === 'child list') {
       touched.childLists.add(place.blockKey)
+    }
+
+    if (place.type === 'child list' || place.change !== 'membership') {
       touched.blocks.add(place.blockKey)
     }
   }

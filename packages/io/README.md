@@ -35,12 +35,12 @@ io listens to `change` (a local one carries the action's patches, which io books
 
 ### `apply`
 
-`apply` carries keyed instructions for the editor's tree in `patches`, and the transaction's patches as they moved the base in `underneath`. io authors the instructions from its working copy (the base, then the batch in flight, then pending changes) before and after the transaction:
+`apply` carries keyed instructions for the editor's tree in `patches`, and the transaction's patches as they moved the base in `underneath`. io authors the instructions from its working copy (the base, then the batch in flight, then pending changes) before and after the transaction, deciding per list (the block list or a block's `children`):
 
 1. The editor's own patches in its echo apply nothing: they are on screen already.
-2. Another writer's patch on a place that no unlanded work (the batch in flight or pending changes) touched is forwarded as it is, so the editor can move the caret by it.
-3. A patch on a block unlanded work also touched becomes a `set` of the whole block from the new working copy. The server applied the editor's work after the patch, and the screen applied it before.
-4. An insert into or removal from a list (the block list or a block's `children`) that unlanded work also inserted into or removed from becomes the list lined up against the new working copy key by key: keyed `unset`s, keyed `insert`s next to a sibling the list has by then, and a `set` of an item that stays but differs. Two inserts after the same block land in different orders on the two sides.
+2. A list is lined up when the transaction inserts into it, removes from it or changes a key in it, and unlanded work (the batch in flight or pending changes) also touched it, by inserting, removing or changing anything in its items. It is also lined up whenever the transaction changes a key in it. Every patch of the transaction on that list is replaced by one line-up against the new working copy, key by key: keyed `unset`s, keyed `insert`s next to a sibling the list has by then, and a `set` of an item that stays but differs. None of them is forwarded on its own, since a later patch can depend on an earlier one: an insert after a new key, or a block removed and inserted again elsewhere. Two inserts after the same block land in different orders on the two sides.
+3. On a list that isn't lined up, another writer's patch on a place no unlanded work touched is forwarded as it is, so the editor can move the caret by it.
+4. On a list that isn't lined up, a patch on a block unlanded work also touched becomes a `set` of the whole block from the new working copy. The server applied the editor's work after the patch, and the screen applied it before.
 
 A transaction that moved the base and left the working copy as it was comes with empty `patches`, for the editor's history. The instructions are for the editor's tree only and never reach the server.
 
@@ -50,7 +50,7 @@ The model's undo ledger stands in for the editor's history until that design is 
 
 ### `transaction.value`
 
-A transaction may carry `value`, the field as the server holds it after the transaction, from the listener's result. io then takes it as the new base instead of applying the transaction's patches to the old one. The patches still travel: io checks them for duplicate keys and failures, authors `apply` from them, and matches them against its batch for the echo check. Whatever the instructions leave apart from the new working copy, because the server's copy changed in a way the patches don't say, is lined up after them, key by key.
+A transaction may carry `value`, the field as the server holds it after the transaction, from the listener's result. io then takes it as the new base instead of applying the transaction's patches to the old one. The patches still travel: io checks them for duplicate keys and failures, authors `apply` from them, and matches them against its batch for the echo check. io authors the instructions against the working copy the patches alone make, so they are the same with `value` or without, and lines up whatever `value` changed beyond the patches after them, key by key.
 
 `createWorld({serverCopyOnTransactions: true})`, or the step `Given transactions that carry the server's copy`, has the network deliver every transaction with the server's copy after it, and the host pass it on. The test runner runs every feature in both modes, a `describe` per mode.
 

@@ -527,6 +527,180 @@ describe(createIo.name, () => {
     ])
   })
 
+  test('Scenario: a transaction that moves the block the editor typed in, by removing it and inserting its key after another block, lines up the block list, with `value` or without', () => {
+    const results = [false, true].map((carriesValue) => {
+      const {editor, document, received, treeMismatches} =
+        createLoadedEditor('B: foo|;;B: bar')
+      const [fooBlock] = parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        'B: foo',
+      ).value
+      const patches = [
+        unset([{_key: 'd-k0'}]),
+        insert([fooBlock], 'after', [{_key: 'd-k2'}]),
+      ]
+
+      document.type('x')
+      editor.transaction({
+        transactionId: 't1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches,
+        ...(carriesValue
+          ? {
+              value: applyWithContentLakeSemantics(
+                editor.getBase().value,
+                patches,
+              ),
+            }
+          : {}),
+      })
+
+      return {
+        apply: received.at(-1),
+        screen: document.toTextspec({keys: true}),
+        treeMismatches,
+      }
+    })
+    const expected = {
+      apply: {
+        type: 'apply',
+        patches: [
+          unset([{_key: 'd-k0'}]),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'd-k2'}],
+          ),
+        ],
+        underneath: [
+          unset([{_key: 'd-k0'}]),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'd-k2'}],
+          ),
+        ],
+      },
+      screen: 'B _key="d-k2": |bar;;B _key="d-k0": foox',
+      treeMismatches: [],
+    }
+
+    expect(results).toEqual([expected, expected])
+  })
+
+  test('Scenario: a transaction that changes the key of the block the editor typed in and inserts a block after the new key lines up the block list, with `value` or without', () => {
+    const results = [false, true].map((carriesValue) => {
+      const {editor, document, received, treeMismatches} =
+        createLoadedEditor('B: foo|;;B: bar')
+      const [quxBlock] = parseTextspec(
+        {keyGenerator: createTestKeyGenerator('b-')},
+        'B: qux',
+      ).value
+      const patches = [
+        set('k9', [{_key: 'd-k0'}, '_key']),
+        insert([quxBlock], 'after', [{_key: 'k9'}]),
+      ]
+
+      document.type('x')
+      editor.transaction({
+        transactionId: 't1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches,
+        ...(carriesValue
+          ? {
+              value: applyWithContentLakeSemantics(
+                editor.getBase().value,
+                patches,
+              ),
+            }
+          : {}),
+      })
+
+      return {
+        apply: received.at(-1),
+        screen: document.toTextspec({keys: true}),
+        treeMismatches,
+      }
+    })
+    const expected = {
+      apply: {
+        type: 'apply',
+        patches: [
+          unset([{_key: 'd-k0'}]),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'k9',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'before',
+            [{_key: 'd-k2'}],
+          ),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'b-k0',
+                children: [
+                  {_type: 'span', _key: 'b-k1', text: 'qux', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'k9'}],
+          ),
+        ],
+        underneath: [
+          set('k9', [{_key: 'd-k0'}, '_key']),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'b-k0',
+                children: [
+                  {_type: 'span', _key: 'b-k1', text: 'qux', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'k9'}],
+          ),
+        ],
+      },
+      screen: 'B _key="k9": foo;;B _key="b-k0": qux;;B _key="d-k2": |bar',
+      treeMismatches: [],
+    }
+
+    expect(results).toEqual([expected, expected])
+  })
+
   test('undo puts back the style another writer set underneath', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const path = [{_key: 'd-k0'}, 'style']
@@ -2092,6 +2266,7 @@ function createLoadedEditor(textspec: string | undefined) {
     io: editor,
     heard,
     received,
+    treeMismatches,
   } = createEditorWithIo({
     id: 'A',
     keyGenerator: createTestKeyGenerator('a-'),
@@ -2109,5 +2284,5 @@ function createLoadedEditor(textspec: string | undefined) {
     document.setCaret(caret)
   }
 
-  return {editor, document, clock, heard, received}
+  return {editor, document, clock, heard, received, treeMismatches}
 }

@@ -127,11 +127,13 @@ export type EditorEventForIo =
  * do to the tree, keyed instructions io authors from its working copy, and
  * `underneath` is the transaction's patches, for history. The editor's own
  * patches in the transaction are left out, another writer's patch on a
- * place the editor's unsaved work didn't touch comes as it is, a block both
- * touched comes as a `set` of the block, and a list both inserted into or
- * removed from comes lined up key by key. A transaction that moved the
- * base and left the screen as it was comes with no `patches`, so its
- * `underneath` still reaches the editor's history.
+ * place the editor's unsaved work didn't touch comes as it is, and a block
+ * both touched comes as a `set` of the block. A list the transaction
+ * inserted into, removed from or re-keyed comes lined up key by key when
+ * the editor's unsaved work touched it too, and always when a key changed.
+ * A transaction that moved the base and left the screen as it was comes
+ * with no `patches`, so its `underneath` still reaches the editor's
+ * history.
  */
 export type EditorMessageForIo =
   | {type: 'load'; value: Array<PortableTextBlock> | undefined}
