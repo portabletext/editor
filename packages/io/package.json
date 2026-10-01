@@ -26,6 +26,7 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/test": "workspace:^",
+    "@sanity/diff-match-patch": "catalog:",
     "@textspec/notation": "^1.0.2",
     "racejar": "workspace:^"
   },

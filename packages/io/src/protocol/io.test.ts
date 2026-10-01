@@ -418,6 +418,76 @@ describe(createIo.name, () => {
     })
   })
 
+  test('undoing typing deletes the repeated word where it was typed, not the one the patch names', () => {
+    const {editor, document, heard} = createLoadedEditor('B: |foofoo')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('foo')
+    editor.transaction({
+      transactionId: 'A-t1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.transaction({
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [diffMatchPatch('foofoofoo', 'foobarfoofoo', textPath)],
+    })
+    editor.undo()
+
+    expect(document.toTextspec()).toEqual('B: |barfoofoo')
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [diffMatchPatch('foofoo', 'foofoofoo', textPath)],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-t2',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            path: textPath,
+            value: '@@ -1,11 +1,8 @@\n-foo\n barfoofo\n',
+          },
+        ],
+      },
+    ])
+  })
+
+  test('undoing typing deletes the typed word where a later local deletion moved it', () => {
+    const {editor, document, heard} = createLoadedEditor('B: xyz|foofoo')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('foo')
+    document.putCaretAfter('xyz')
+    document.deleteBeforeCaret('xyz')
+    editor.transaction({
+      transactionId: 'A-t1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.transaction({
+      transactionId: 'A-t2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[1].patches,
+    })
+    editor.transaction({
+      transactionId: 't3',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: [diffMatchPatch('foofoofoo', 'foobarfoofoo', textPath)],
+    })
+    editor.undo()
+
+    expect(document.toTextspec()).toEqual('B: |barfoofoo')
+  })
+
   test("undoing the first keystroke into an empty field deletes the text and keeps another writer's content", () => {
     const {editor, document, heard} = createLoadedEditor(undefined)
     const textPath = [{_key: 'a-k0'}, 'children', {_key: 'a-k1'}, 'text']

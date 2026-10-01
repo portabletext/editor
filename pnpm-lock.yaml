@@ -783,6 +783,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@sanity/diff-match-patch':
+        specifier: 'catalog:'
+        version: 3.2.1
       '@textspec/notation':
         specifier: ^1.0.2
         version: 1.0.2

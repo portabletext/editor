@@ -76,4 +76,4 @@ pnpm --filter @portabletext/io test:unit
 
 ## Not modeled
 
-Batching by time (a change is sent as soon as nothing is in flight), keyed instructions in `apply` (io sends a whole-value `set`), operations in `change` events (the model carries patches as a stand-in), redo, and selection beyond a caret in one block.
+Batching by time (a change is sent as soon as nothing is in flight), keyed instructions in `apply` (io sends a whole-value `set`), operations in `change` events (the model carries patches as a stand-in, and a text operation is a `diffMatchPatch` built at the offset the user acted at, so it keeps the position the saved patch loses), redo, and selection beyond a caret in one block.

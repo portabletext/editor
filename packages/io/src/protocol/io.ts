@@ -1,6 +1,4 @@
 import {
-  applyAll,
-  diffMatchPatch,
   insert,
   set,
   setIfMissing,
@@ -13,6 +11,7 @@ import {
   hasTarget,
   resolvePath,
 } from './content-lake'
+import {mapOffsetThrough, textEditPatch, textEditsOf} from './text-edits'
 import type {
   EditorForIo,
   ErrorEvent,
@@ -203,7 +202,7 @@ export function createIo(options: {
   editor.on('closing', close)
   editor.on('change', (event) => {
     if (event.origin === 'local') {
-      takeLocalChange(event.patches)
+      takeLocalChange(event)
     }
   })
 
@@ -476,8 +475,16 @@ export function createIo(options: {
     }
 
     const screenBefore = deriveScreen()
+    const valueBefore = base.value
 
     captureBlocksBefore(confirmedBatchIds)
+    mapStepsThrough(
+      incoming.patches,
+      valueBefore,
+      echoedAwaitingBase
+        .filter((batch) => confirmedBatchIds.has(batch.id))
+        .flatMap((batch) => batch.patches),
+    )
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
       (batch) => !confirmedBatchIds.has(batch.id),
@@ -489,6 +496,53 @@ export function createIo(options: {
     }
 
     return true
+  }
+
+  /**
+   * Moves each typing step's offset past the text that `patches` inserted or
+   * deleted before it in its span, applying them to `valueBefore` in turn.
+   * `ownPatches` are the editor's own and move no step: its own work was in
+   * the working copy already.
+   */
+  function mapStepsThrough(
+    patches: Array<Patch>,
+    valueBefore: Array<PortableTextBlock> | undefined,
+    ownPatches: Array<Patch>,
+  ) {
+    const unmatchedOwnPatches = [...ownPatches]
+    let value = valueBefore
+
+    for (const patch of patches) {
+      const ownIndex = unmatchedOwnPatches.findIndex((ownPatch) =>
+        isEqual(ownPatch, patch),
+      )
+      const text = resolvePath(value, patch.path)
+
+      if (ownIndex !== -1) {
+        unmatchedOwnPatches.splice(ownIndex, 1)
+      } else if (patch.type === 'diffMatchPatch' && typeof text === 'string') {
+        const edits = textEditsOf(patch.value, text)
+
+        history = history.map((entry) =>
+          entry.step.type === 'typed' &&
+          isEqual(patch.path, typedPath(entry.step))
+            ? {
+                ...entry,
+                step: {
+                  ...entry.step,
+                  offset: mapOffsetThrough(entry.step.offset, edits),
+                },
+              }
+            : entry,
+        )
+      }
+
+      try {
+        value = applyWithContentLakeSemantics(value, [patch])
+      } catch {
+        return
+      }
+    }
   }
 
   /** Runs before the base takes the transaction that confirms the batches. */
@@ -631,17 +685,28 @@ export function createIo(options: {
 
   /**
    * Books a local change as pending and records what undo needs to revert
-   * it, unless the change is an undo's own revert.
+   * it, unless the change is an undo's own revert. The steps already
+   * recorded move with the text the change inserted or deleted before them.
    */
-  function takeLocalChange(patches: Array<Patch>) {
+  function takeLocalChange({
+    operations,
+    patches,
+  }: {
+    operations: Array<Patch>
+    patches: Array<Patch>
+  }) {
     if (status !== 'ready' || patches.length === 0) {
       return
     }
 
+    const screenBefore = deriveScreen()
+
+    mapStepsThrough(operations, screenBefore, [])
+
     if (reverting) {
       reverting.applied = true
     } else {
-      const step = undoStepOf(patches, deriveScreen())
+      const step = undoStepOf(operations, screenBefore)
 
       if (step) {
         history = [
@@ -998,10 +1063,10 @@ function describeSentBatch(batch: SentBatch): IoSentBatch {
 }
 
 /**
- * What undo needs to revert a local change, read from its patches and the
+ * What undo needs to revert a local change, read from its operations and the
  * working copy before it. Typing, a style, an insert and a delete are steps,
- * and deleting text isn't. A text diff that grows the span is typing, at the
- * start of the inserted run as the diff places it.
+ * and deleting text isn't. A text operation that inserts one run of text is
+ * typing, at the offset the operation names.
  */
 function undoStepOf(
   patches: Array<Patch>,
@@ -1063,17 +1128,11 @@ function undoStepOf(
     return undefined
   }
 
-  const nextText = applyAll(text, [{...patch, path: []}])
-  const offset = commonPrefixLength(text, nextText)
+  const edits = textEditsOf(patch.value, text)
+  const [edit] = edits
 
-  return nextText.length > text.length
-    ? {
-        type: 'typed',
-        blockKey,
-        spanKey,
-        offset,
-        text: nextText.slice(offset, offset + nextText.length - text.length),
-      }
+  return edits.length === 1 && edit.type === 'insert'
+    ? {type: 'typed', blockKey, spanKey, offset: edit.offset, text: edit.text}
     : undefined
 }
 
@@ -1119,12 +1178,16 @@ function deleteTyped(
   }
 
   return [
-    diffMatchPatch(
+    textEditPatch(
       text,
-      text.slice(0, typedOffset) + text.slice(typedOffset + typed.text.length),
-      [{_key: typed.blockKey}, 'children', {_key: typed.spanKey}, 'text'],
+      {offset: typedOffset, deleteLength: typed.text.length},
+      typedPath(typed),
     ),
   ]
+}
+
+function typedPath(typed: Extract<UndoStep, {type: 'typed'}>): Patch['path'] {
+  return [{_key: typed.blockKey}, 'children', {_key: typed.spanKey}, 'text']
 }
 
 /**
@@ -1201,20 +1264,6 @@ function findNearest(
   }
 
   return undefined
-}
-
-function commonPrefixLength(textA: string, textB: string): number {
-  let length = 0
-
-  while (
-    length < textA.length &&
-    length < textB.length &&
-    textA[length] === textB[length]
-  ) {
-    length++
-  }
-
-  return length
 }
 
 function keyOf(segment: Patch['path'][number] | undefined): string | undefined {

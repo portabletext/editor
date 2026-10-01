@@ -23,6 +23,7 @@ import {
   type TextspecSelection,
 } from '@portabletext/test'
 import {parse} from '@textspec/notation'
+import {textEditPatch} from '../protocol/text-edits'
 import type {
   EditorEventForIo,
   EditorForIo,
@@ -41,6 +42,15 @@ export type Caret = {blockKey: string; offset: number}
 
 /** `'loading'` until the first commit ends with `mount`. */
 export type FakeDocumentStatus = 'loading' | 'ready' | 'unmounted'
+
+/**
+ * What a user action did: `operations` with the positions it acted at, and
+ * the `patches` that save it. Typing and deleting text differ: a patch is
+ * computed from the text before and after, as the editor computes it, so
+ * typing `foo` before `foofoo` saves as an insertion at the end, while the
+ * operation says the start.
+ */
+type LocalEdit = {operations: Array<Patch>; patches: Array<Patch>}
 
 /**
  * The fake editor. It satisfies `EditorForIo`: every user action that
@@ -139,15 +149,18 @@ export function createFakeDocument(
     return !readOnly
   }
 
-  function act(run: () => Array<Patch>) {
+  function act(run: () => Array<Patch> | LocalEdit) {
     if (!canAct()) {
       return
     }
 
-    const patches = run()
+    const result = run()
+    const {operations, patches} = Array.isArray(result)
+      ? {operations: result, patches: result}
+      : result
 
     if (patches.length > 0) {
-      emit({type: 'change', origin: 'local', operations: patches, patches})
+      emit({type: 'change', origin: 'local', operations, patches})
     }
   }
 
@@ -297,7 +310,7 @@ export function createFakeDocument(
     return patches
   }
 
-  function type(text: string): Array<Patch> {
+  function type(text: string): LocalEdit {
     const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
     const block = getTextBlock(value[blockIndex]).block
     const {span, offset} = locateSpan(block, caret.offset)
@@ -306,6 +319,10 @@ export function createFakeDocument(
     const patches = withPlaceholderCreation([
       diffMatchPatch(span.text, nextText, path),
     ])
+    const operations = [
+      ...patches.slice(0, -1),
+      textEditPatch(span.text, {offset, insertText: text}, path),
+    ]
 
     value = replaceAt(value, blockIndex, {
       ...block,
@@ -315,10 +332,10 @@ export function createFakeDocument(
     })
     caret = {blockKey: block._key, offset: caret.offset + text.length}
 
-    return patches
+    return {operations, patches}
   }
 
-  function deleteBeforeCaret(text: string): Array<Patch> {
+  function deleteBeforeCaret(text: string): LocalEdit {
     const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
     const block = getTextBlock(value[blockIndex]).block
     const {span, offset} = locateSpan(block, caret.offset)
@@ -341,7 +358,16 @@ export function createFakeDocument(
     })
     caret = {blockKey: block._key, offset: caret.offset - text.length}
 
-    return [diffMatchPatch(span.text, nextText, path)]
+    return {
+      operations: [
+        textEditPatch(
+          span.text,
+          {offset: start, deleteLength: text.length},
+          path,
+        ),
+      ],
+      patches: [diffMatchPatch(span.text, nextText, path)],
+    }
   }
 
   function putCaretAfter(text: string) {

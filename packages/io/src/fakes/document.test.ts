@@ -732,6 +732,46 @@ describe('the editor seam', () => {
     ])
   })
 
+  test('typing or deleting a repeated word names its offset in the operation, while the patch is computed from the text before and after', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: |foofoo'),
+    )
+    const textPath = [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text']
+    const events = listen(document)
+
+    document.type('foo')
+    document.deleteBeforeCaret('foo')
+
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'diffMatchPatch',
+            path: textPath,
+            value: '@@ -1,6 +1,9 @@\n+foo\n foofoo\n',
+          },
+        ],
+        patches: [diffMatchPatch('foofoo', 'foofoofoo', textPath)],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'diffMatchPatch',
+            path: textPath,
+            value: '@@ -1,9 +1,6 @@\n-foo\n foofoo\n',
+          },
+        ],
+        patches: [diffMatchPatch('foofoofoo', 'foofoo', textPath)],
+      },
+    ])
+  })
+
   test('a listener hears only the event type it listens to, until it unsubscribes', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createFakeDocument(
