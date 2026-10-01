@@ -1747,6 +1747,119 @@ describe(createIo.name, () => {
     expect(editor.getWorkingCopy()).toEqual(document.getValue())
   })
 
+  test("Scenario: a transaction that leaves a text block's child without `_key` or `_type` is invalid content", () => {
+    const childPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}]
+    const results = [
+      unset([...childPath, '_key']),
+      unset([...childPath, '_type']),
+    ].map((patch) => {
+      const {editor, heard} = createLoadedEditor('B: foo|')
+
+      editor.transaction({
+        transactionId: 't1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: [patch],
+      })
+
+      return {errors: heard.errors, sync: editor.getSync()}
+    })
+
+    expect(results).toEqual([
+      {
+        errors: [{reason: 'invalid content', transactionId: 't1'}],
+        sync: 'out of step',
+      },
+      {
+        errors: [{reason: 'invalid content', transactionId: 't1'}],
+        sync: 'out of step',
+      },
+    ])
+  })
+
+  test('Scenario: an unsent span and a remote span keyed alike in the same block put the editor out of step, and the resync gives the unsent span a new key', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const spanPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}]
+    const localSpan = {_type: 'span', _key: 'k9', text: 'bar', marks: []}
+    const remoteSpan = {_type: 'span', _key: 'k9', text: 'baz', marks: []}
+    const remoteInsert = insert([remoteSpan], 'after', spanPath)
+
+    document.type('x')
+    document.applyLocalEdit([insert([localSpan], 'after', spanPath)])
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remoteInsert],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1', patch: remoteInsert},
+    ])
+
+    editor.resync({
+      value: [
+        {
+          _type: 'block',
+          _key: 'd-k0',
+          children: [
+            {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+            remoteSpan,
+          ],
+          style: 'normal',
+        },
+      ],
+      rev: 'r3',
+      outcomes: {'A-1': 'applied'},
+    })
+
+    expect(heard.mutations.slice(1)).toEqual([
+      {
+        id: 'A-2',
+        transactionId: 'A-t2',
+        patches: [insert([{...localSpan, _key: 'a-k2'}], 'after', spanPath)],
+      },
+    ])
+    expect(document.getValue()).toEqual([
+      {
+        _type: 'block',
+        _key: 'd-k0',
+        children: [
+          {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+          {_type: 'span', _key: 'a-k2', text: 'bar', marks: []},
+          remoteSpan,
+        ],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test('Scenario: a remote span keyed like an unconfirmed block is no collision', () => {
+    const {editor, document, heard, treeMismatches} =
+      createLoadedEditor('B: foo|')
+    const remoteSpan = {_type: 'span', _key: 'k9', text: 'baz', marks: []}
+
+    document.insertBlock('B _key="k9": bar')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [
+        insert([remoteSpan], 'after', [
+          {_key: 'd-k0'},
+          'children',
+          {_key: 'd-k1'},
+        ]),
+      ],
+    })
+
+    expect(heard.errors).toEqual([])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k0": foobaz;;B _key="k9": bar|',
+    )
+    expect(treeMismatches).toEqual([])
+  })
+
   test('a batch in flight without its echo warns after 10 seconds, then with backoff', () => {
     const {editor, document, clock, heard} = createLoadedEditor('B: foo|')
 

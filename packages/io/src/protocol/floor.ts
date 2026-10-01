@@ -5,8 +5,9 @@ import type {Load} from './types'
  * The floor: the shapes the editor cannot hold at all. A block is below it
  * when it isn't an object, has no `_key` or `_type`, is a text block
  * (`_type: 'block'`) whose `children` isn't a non-empty array of objects, or
- * is a text block with a span (`_type: 'span'`) whose `text` isn't a string.
- * Content Lake stores all of these.
+ * is a text block with a child that has no `_key` or `_type`, or a span
+ * (`_type: 'span'`) whose `text` isn't a string. Content Lake stores all of
+ * these.
  */
 export function isBelowFloor(block: unknown): boolean {
   if (!isObject(block) || !hasName(block, '_key') || !hasName(block, '_type')) {
@@ -22,7 +23,10 @@ export function isBelowFloor(block: unknown): boolean {
   return (
     !isNonEmptyArrayOfObjects(children) ||
     children.some(
-      (child) => child['_type'] === 'span' && typeof child['text'] !== 'string',
+      (child) =>
+        !hasName(child, '_key') ||
+        !hasName(child, '_type') ||
+        (child['_type'] === 'span' && typeof child['text'] !== 'string'),
     )
   )
 }

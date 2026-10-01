@@ -475,7 +475,7 @@ export function createIo(options: {
       })
     }
 
-    const unconfirmedKeys = insertedBlockKeys(
+    const unconfirmedLists = insertedKeysByList(
       [
         ...echoedAwaitingBase.filter(
           (batch) => !confirmedBatchIds.has(batch.id),
@@ -487,7 +487,12 @@ export function createIo(options: {
     const collidingPatch =
       incoming.patches.find(
         (patch) =>
-          patch.type === 'insert' && insertCollides(patch, unconfirmedKeys),
+          patch.type === 'insert' &&
+          insertCollides(
+            patch,
+            unconfirmedLists.get(listId(patch.path.slice(0, -1)))?.keys ??
+              new Set(),
+          ),
       ) ?? patchTakingPendingKey(incoming.patches)
 
     if (collidingPatch) {
@@ -530,18 +535,19 @@ export function createIo(options: {
   }
 
   /**
-   * The first of `patches` after which the base has a block key that a
-   * pending insert also inserts and the base didn't have before. Applied
-   * work is never re-keyed in place: the resync re-keys the pending insert.
+   * The first of `patches` after which a list of the base (the block list
+   * or a block's `children`) has a key that a pending insert into that list
+   * also inserts and the list didn't have before. Applied work is never
+   * re-keyed in place: the resync re-keys the pending insert.
    */
   function patchTakingPendingKey(patches: Array<Patch>): Patch | undefined {
-    const pendingKeys = insertedBlockKeys(pending.flat())
-    const keysBefore = new Set(
-      (base.value ?? []).flatMap((block) => itemKey(block)),
+    const pendingLists = [...insertedKeysByList(pending.flat()).values()]
+    const keysBefore = pendingLists.map(
+      ({listPath}) => new Set(keysInList(base.value, listPath)),
     )
     let value = base.value
 
-    if (pendingKeys.size === 0) {
+    if (pendingLists.length === 0) {
       return undefined
     }
 
@@ -549,9 +555,9 @@ export function createIo(options: {
       value = applyWithContentLakeSemantics(value, [patch])
 
       if (
-        (value ?? []).some((block) =>
-          itemKey(block).some(
-            (key) => pendingKeys.has(key) && !keysBefore.has(key),
+        pendingLists.some(({listPath, keys}, index) =>
+          keysInList(value, listPath).some(
+            (key) => keys.has(key) && !keysBefore[index].has(key),
           ),
         )
       ) {
@@ -1070,36 +1076,43 @@ export function createIo(options: {
   }
 
   /**
-   * Gives each pending insert whose key the base has a new key, in its
-   * later patches too. Only a resync does this: history is clear by then.
+   * Gives each pending insert whose key its list in the base has a new key,
+   * in its later patches too. Only a resync does this: history is clear by
+   * then.
    */
   function rekeyPendingInserts(
     screenBefore: Array<PortableTextBlock> | undefined,
   ) {
-    const baseKeys = new Set(
-      (base.value ?? []).flatMap((block) => itemKey(block)),
-    )
-    const pendingInsertKeys = insertedBlockKeys(pending.flat())
+    const pendingLists = [...insertedKeysByList(pending.flat()).values()]
     const takenKeys = new Set([
-      ...baseKeys,
-      ...pendingInsertKeys,
-      ...(screenBefore ?? []).map((block) => block._key),
+      ...keysInValue(base.value),
+      ...keysInValue(screenBefore),
+      ...pendingLists.flatMap(({keys}) => [...keys]),
     ])
-    const newKeys = new Map<string, string>()
+    const renames = pendingLists.flatMap(({listPath, keys}) => {
+      const keysThere = new Set(keysInList(base.value, listPath))
+      const newKeys = new Map<string, string>()
 
-    for (const key of pendingInsertKeys) {
-      if (baseKeys.has(key)) {
-        newKeys.set(key, generateUniqueKey(keyGenerator, takenKeys))
+      for (const key of keys) {
+        if (keysThere.has(key)) {
+          newKeys.set(key, generateUniqueKey(keyGenerator, takenKeys))
+        }
       }
-    }
 
-    if (newKeys.size === 0) {
+      return newKeys.size > 0 ? [{listPath, newKeys}] : []
+    })
+
+    if (renames.length === 0) {
       return
     }
 
+    const childListsFirst = renames.toSorted(
+      (renameA, renameB) => renameB.listPath.length - renameA.listPath.length,
+    )
+
     pending = pending.map((patches) =>
       patches.map((patch) => {
-        const renamed = renameBlockKeys(patch, newKeys)
+        const renamed = childListsFirst.reduce(renameKeys, patch)
 
         if (droppedPatches.has(patch)) {
           droppedPatches.add(renamed)
@@ -1931,34 +1944,92 @@ function insertCollides(patch: Patch, keys: Set<string>): boolean {
   )
 }
 
-function insertedBlockKeys(patches: Array<Patch>): Set<string> {
-  return new Set(
-    patches.flatMap((patch) =>
-      patch.type === 'insert' && patch.path.length === 1
-        ? patch.items.flatMap((item) => itemKey(item))
-        : [],
-    ),
+/**
+ * The keys `patches` insert, by the list they insert into (the block list,
+ * or a block's `children`), keyed by `listId`.
+ */
+function insertedKeysByList(
+  patches: Array<Patch>,
+): Map<string, {listPath: Patch['path']; keys: Set<string>}> {
+  const lists = new Map<string, {listPath: Patch['path']; keys: Set<string>}>()
+
+  for (const patch of patches) {
+    if (patch.type !== 'insert') {
+      continue
+    }
+
+    const listPath = patch.path.slice(0, -1)
+    const list = lists.get(listId(listPath)) ?? {listPath, keys: new Set()}
+
+    for (const item of patch.items) {
+      for (const key of itemKey(item)) {
+        list.keys.add(key)
+      }
+    }
+
+    lists.set(listId(listPath), list)
+  }
+
+  return lists
+}
+
+function listId(listPath: Patch['path']): string {
+  return JSON.stringify(listPath)
+}
+
+function keysInList(
+  value: Array<PortableTextBlock> | undefined,
+  listPath: Patch['path'],
+): Array<string> {
+  const list = resolvePath(value, listPath)
+
+  return Array.isArray(list) ? list.flatMap((item) => itemKey(item)) : []
+}
+
+/** Every key of the blocks and their children. */
+function keysInValue(
+  value: Array<PortableTextBlock> | undefined,
+): Array<string> {
+  return (value ?? []).flatMap((block) =>
+    isObject(block)
+      ? [
+          ...itemKey(block),
+          ...childrenOf(block).flatMap((child) => itemKey(child)),
+        ]
+      : [],
   )
 }
 
-function renameBlockKeys(patch: Patch, newKeys: Map<string, string>): Patch {
-  const [head, ...tail] = patch.path
+/**
+ * Renames the keys of `newKeys` in the list at `listPath`: in the items an
+ * insert into the list brings, and in a path through one of its items.
+ */
+function renameKeys(
+  patch: Patch,
+  {listPath, newKeys}: {listPath: Patch['path']; newKeys: Map<string, string>},
+): Patch {
+  const depth = listPath.length
+  const inList =
+    patch.path.length > depth &&
+    listPath.every((segment, index) => isEqual(segment, patch.path[index]))
+  const itemSegmentKey = inList ? keyOf(patch.path[depth]) : undefined
   const renamedPath =
-    typeof head === 'object' && !Array.isArray(head) && newKeys.has(head._key)
-      ? [{_key: newKeys.get(head._key) ?? head._key}, ...tail]
+    itemSegmentKey !== undefined && newKeys.has(itemSegmentKey)
+      ? [
+          ...patch.path.slice(0, depth),
+          {_key: newKeys.get(itemSegmentKey) ?? itemSegmentKey},
+          ...patch.path.slice(depth + 1),
+        ]
       : patch.path
 
-  if (patch.type === 'insert' && patch.path.length === 1) {
+  if (patch.type === 'insert' && inList && patch.path.length === depth + 1) {
     return {
       ...patch,
       path: renamedPath,
       items: patch.items.map((item) => {
         const [key] = itemKey(item)
 
-        return key !== undefined &&
-          newKeys.has(key) &&
-          typeof item === 'object' &&
-          !Array.isArray(item)
+        return key !== undefined && newKeys.has(key) && isObject(item)
           ? {...item, _key: newKeys.get(key) ?? key}
           : item
       }),
