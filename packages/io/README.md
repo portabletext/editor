@@ -64,7 +64,7 @@ src/
 
 The step vocabulary lives in `src/scenario/steps.ts`, and `src/scenario/world.ts` wires two editors, two hosts, one server and the network together. Each editor is a fake document with io attached. Happenings are `When` steps (a user types, the server receives a batch, the feed delivers a transaction, the host resyncs). The user's actions drive the fake document directly, and undo goes to io, which holds the ledger. Checks are `Then` steps, and every check observes the editor from the outside: what it shows, what it has sent, what listeners heard, what the server has.
 
-The fake document and the real editor both satisfy `EditorForIo`, so the same feature files run against either by swapping what the world constructs for each editor: the fake document today, the real editor with io attached later.
+The fake document satisfies `EditorForIo`, and the real editor is meant to satisfy it once it exposes `apply` and `closing`. Then the same feature files run against either by swapping what the world constructs for each editor: the fake document today, the real editor with io attached later.
 
 ## Running
 
@@ -76,4 +76,4 @@ pnpm --filter @portabletext/io test:unit
 
 ## Not modeled
 
-Batching by time (a change is sent as soon as nothing is in flight), keyed instructions in `apply` (io sends a whole-value `set`), operations in `change` events (the model carries patches as a stand-in, and a text operation is a `diffMatchPatch` built at the offset the user acted at, so it keeps the position the saved patch loses), redo, and selection beyond a caret in one block.
+Batching by time (a change is sent as soon as nothing is in flight), keyed instructions in `apply` (io sends a whole-value `set`), operations in `change` events (the model carries patches as a stand-in, and a text operation is a `diffMatchPatch` built at the offset the user acted at, so it keeps the position the saved patch loses), redo, selection beyond a caret in one block, `transaction.value` (the field's server value a host may send with each transaction, so the editor takes the base from the server instead of mirroring it), repair keys derived from the revision and the path (io mints them from its key generator), and the floor for malformed content with its `invalid content` error (the reason is in `ErrorEvent`, and nothing emits it).
