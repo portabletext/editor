@@ -127,6 +127,7 @@ export default defineConfig({
                 {slug: 'editor/guides', label: 'Overview'},
                 {slug: 'editor/guides/custom-rendering'},
                 {slug: 'editor/guides/render-lists'},
+                {slug: 'editor/guides/drag-and-drop'},
                 {slug: 'editor/guides/customize-toolbar'},
                 {slug: 'editor/guides/create-behavior'},
                 {slug: 'editor/guides/behavior-cheat-sheet'},
