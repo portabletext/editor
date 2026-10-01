@@ -1,4 +1,4 @@
-import {unset, type Patch} from '@portabletext/patches'
+import {set, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {
@@ -15,6 +15,7 @@ import {
   type Server,
   type ServerTransaction,
 } from '../fakes/server'
+import {applyWithContentLakeSemantics} from '../protocol/content-lake'
 import {
   createPassThroughHost,
   type PassThroughHost,
@@ -84,8 +85,21 @@ export type TreeMismatch = {
 export type NamedTransaction =
   | 'the other field'
   | "the script's change"
+  | "the script's corruption"
   | 'the deletion'
   | 'the recreation'
+
+/**
+ * A change that leaves a block below the floor: without its `_key` or
+ * `_type`, with `children` that is a string, with its first span's `text` a
+ * number, or replaced by a string.
+ */
+export type Corruption =
+  | {type: 'no key'}
+  | {type: 'no type'}
+  | {type: 'children'; children: string}
+  | {type: 'span text'; text: number}
+  | {type: 'string'; value: string}
 
 /**
  * What a transaction carries: batches sent by the editors, or a change made
@@ -461,7 +475,8 @@ export function createWorld() {
       screen: document.toTextspec(),
       blocks: document.getValue(),
       base: {
-        textspec: base.value === undefined ? null : formatTextspec(base.value),
+        textspec:
+          base.value === undefined ? null : formatStoredTextspec(base.value),
         blocks: base.value ?? null,
         rev: base.rev ?? null,
       },
@@ -512,7 +527,8 @@ export function createWorld() {
         'Editor B': snapshotEditor('Editor B'),
       },
       server: {
-        value: copy.value === undefined ? null : formatTextspec(copy.value),
+        value:
+          copy.value === undefined ? null : formatStoredTextspec(copy.value),
         blocks: copy.value ?? null,
         rev: copy.rev ?? null,
         transactions: server.getLog().map(({transaction, changesField}) => ({
@@ -634,16 +650,19 @@ export function createWorld() {
         ).value,
       }
     },
-    removeServerBlockKey: () => {
-      const [block, ...rest] = initialDocument?.value ?? []
-
-      if (!block || rest.length > 0) {
-        throw new Error('Expected the server to have one block')
+    /** Changes the server's document before anyone loads it. */
+    corruptServerBlock: (key: string, corruption: Corruption) => {
+      if (setup) {
+        throw new Error('The editors are set up already')
       }
 
-      const keylessBlock = {...block}
-      Reflect.deleteProperty(keylessBlock, '_key')
-      initialDocument = {value: [keylessBlock]}
+      const value = initialDocument?.value
+      initialDocument = {
+        value: applyWithContentLakeSemantics(
+          value,
+          corruptionPatches(value, key, corruption),
+        ),
+      }
     },
     startEditors,
 
@@ -719,6 +738,15 @@ export function createWorld() {
       )
       network.publish(
         server.setField(value, nameTransaction("the script's change")),
+      )
+    },
+    corruptByScript: (key: string, corruption: Corruption) => {
+      const {server, network} = getSetup()
+      network.publish(
+        server.patchField(
+          corruptionPatches(server.copy().value, key, corruption),
+          nameTransaction("the script's corruption"),
+        ),
       )
     },
     deleteDocument: () => {
@@ -1066,8 +1094,66 @@ function findTreeMismatch(
 const namedTransactionPrefixes: Record<NamedTransaction, string> = {
   'the other field': 'other-field',
   "the script's change": 'script',
+  "the script's corruption": 'corruption',
   'the deletion': 'deletion',
   'the recreation': 'recreation',
+}
+
+/**
+ * Stored content as one line of textspec, with each block textspec can't
+ * spell, below the floor, written as its JSON instead.
+ */
+function formatStoredTextspec(value: Array<PortableTextBlock>): string {
+  return value
+    .map((block) => {
+      try {
+        return formatTextspec([block])
+      } catch {
+        return JSON.stringify(block)
+      }
+    })
+    .join(';;')
+}
+
+/** The patches a script sends to corrupt the block with the key. */
+function corruptionPatches(
+  value: Array<PortableTextBlock> | undefined,
+  key: string,
+  corruption: Corruption,
+): Array<Patch> {
+  const block = value?.find((candidate) => candidate._key === key)
+  const path = [{_key: key}]
+
+  if (!block) {
+    throw new Error(`The server has no block "${key}"`)
+  }
+
+  switch (corruption.type) {
+    case 'no key':
+      return [unset([...path, '_key'])]
+    case 'no type':
+      return [unset([...path, '_type'])]
+    case 'children':
+      return [set(corruption.children, [...path, 'children'])]
+    case 'span text': {
+      const children: unknown = Reflect.get(block, 'children')
+      const [span]: Array<unknown> = Array.isArray(children) ? children : []
+      const spanKey: unknown =
+        typeof span === 'object' && span !== null
+          ? Reflect.get(span, '_key')
+          : undefined
+
+      if (typeof spanKey !== 'string') {
+        throw new Error(`The server's block "${key}" has no keyed span`)
+      }
+
+      return [
+        set(corruption.text, [...path, 'children', {_key: spanKey}, 'text']),
+      ]
+    }
+    case 'string':
+      return [set(corruption.value, path)]
+  }
 }
 
 function toEditorName(editorId: string): EditorName {

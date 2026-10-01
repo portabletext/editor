@@ -12,12 +12,14 @@ import type {RequestFailure} from '../protocol/host'
 import type {
   ChangeEvent,
   EditorMessageForIo,
+  ErrorEvent,
   WorkDropped,
 } from '../protocol/types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference, ExpectedSync} from './parameter-types'
 import {
   heldTransactionTimeout,
+  type Corruption,
   type EditorName,
   type ServerCopyName,
   type World,
@@ -46,9 +48,12 @@ export const stepDefinitions = [
       context.world.serverHasEmptyBlock(key)
     },
   ),
-  Given("the server's block has no key", (context: Context) => {
-    context.world.removeServerBlockKey()
-  }),
+  Given(
+    "the server's block {key} {corruption}",
+    (context: Context, key: string, corruption: Corruption) => {
+      context.world.corruptServerBlock(key, corruption)
+    },
+  ),
   Given('the editors are in their first commit', (context: Context) => {
     context.world.startEditors()
   }),
@@ -142,6 +147,18 @@ export const stepDefinitions = [
     },
   ),
   When(
+    "a script changes the server's block {key} so it {corruption}",
+    (context: Context, key: string, corruption: Corruption) => {
+      context.world.corruptByScript(key, corruption)
+    },
+  ),
+  When(
+    "{editor} receives the script's corruption",
+    (context: Context, name: EditorName) => {
+      context.world.deliverNamed(name, "the script's corruption")
+    },
+  ),
+  When(
     "{editor}'s batch {int} comes back",
     (context: Context, name: EditorName, batchNumber: number) => {
       context.world.deliverBatch(name, name, batchNumber)
@@ -226,11 +243,23 @@ export const stepDefinitions = [
   ),
   Then('the server has {textspec}', (context: Context, textspec: string) => {
     const {actual, expected} = comparableTextspec(
-      {value: context.world.getServer().copy().value ?? [], selection: null},
+      {
+        value: (context.world.getServer().copy().value ?? []).filter(isObject),
+        selection: null,
+      },
       textspec,
     )
 
-    checkEqual('What the server has', actual, expected)
+    checkEqual('What the server has, blocks that are objects', actual, expected)
+  }),
+  Then('the server has a block that is not an object', (context: Context) => {
+    checkEqual(
+      'Whether the server has a block that is not an object',
+      (context.world.getServer().copy().value ?? []).some(
+        (block) => !isObject(block),
+      ),
+      true,
+    )
   }),
   Then('the server has no document', (context: Context) => {
     const copy = context.world.getServer().copy()
@@ -342,6 +371,24 @@ export const stepDefinitions = [
         worldEditor.checkedErrorCount,
       )
       worldEditor.checkedErrorCount = errorCount
+    },
+  ),
+  Then(
+    '{editor} reports that it is out of step, with reason {errorReason}',
+    (context: Context, name: EditorName, reason: ErrorEvent['reason']) => {
+      const worldEditor = context.world.getEditor(name)
+      const {errors} = worldEditor.heard
+
+      checkEqual(
+        `The reasons of the errors ${name} has reported since the last check`,
+        JSON.stringify(
+          errors
+            .slice(worldEditor.checkedErrorCount)
+            .map((error) => error.reason),
+        ),
+        JSON.stringify([reason]),
+      )
+      worldEditor.checkedErrorCount = errors.length
     },
   ),
   Then('{editor} is in step', (context: Context, name: EditorName) => {
@@ -762,6 +809,10 @@ function blockText(block: PortableTextBlock): string {
         })
         .join('')
     : ''
+}
+
+function isObject(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function describeField(value: Array<PortableTextBlock> | undefined): string {

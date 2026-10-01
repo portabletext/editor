@@ -63,6 +63,14 @@ export type Server = {
   getNextFailure: () => RequestFailure | undefined
   /** Records a transaction that changes only another field of the document. */
   changeOtherField: (transactionId: string) => ServerTransaction
+  /**
+   * Applies the patches to the field and records a transaction, as a script
+   * does, whatever they leave behind.
+   */
+  patchField: (
+    patches: Array<Patch>,
+    transactionId: string,
+  ) => ServerTransaction
   /** Records a transaction that sets the whole field, as a script does. */
   setField: (
     value: Array<PortableTextBlock>,
@@ -188,6 +196,20 @@ export function createFakeServer(initial: {
         {transactionId, patches: [], batchIds: []},
         nextRevision(),
         false,
+      )
+    },
+    patchField: (patches, transactionId) => {
+      if (rev === undefined) {
+        throw new Error('The document does not exist')
+      }
+
+      const valueBefore = value
+      value = applyWithContentLakeSemantics(value, patches)
+
+      return record(
+        {transactionId, patches, batchIds: []},
+        nextRevision(),
+        JSON.stringify(valueBefore) !== JSON.stringify(value),
       )
     },
     setField: (nextValue, transactionId) => {

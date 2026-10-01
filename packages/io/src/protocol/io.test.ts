@@ -10,6 +10,7 @@ import {describe, expect, test} from 'vitest'
 import {parseTextspec} from '../fakes/document'
 import {createFakeNetwork} from '../fakes/network'
 import {createEditorWithIo} from '../scenario/world'
+import {applyWithContentLakeSemantics} from './content-lake'
 import {createIo} from './io'
 import type {EditorMessageForIo} from './types'
 
@@ -1431,6 +1432,63 @@ describe(createIo.name, () => {
         patches: [set('16a962f0', [1, '_key'])],
       },
     ])
+  })
+
+  test('a load below the floor is repaired against the stored array, by key where the key holds and by index where it does not', () => {
+    const {clock} = createFakeNetwork()
+    const {
+      document,
+      io: editor,
+      heard,
+    } = createEditorWithIo({
+      id: 'A',
+      keyGenerator: createTestKeyGenerator('a-'),
+      clock,
+    })
+    const value = applyWithContentLakeSemantics(
+      parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        'B: foo;;B: bar;;B _key="k5": baz',
+      ).value,
+      [
+        set('oops', [0]),
+        unset([1, '_key']),
+        unset([1, '_type']),
+        set('oops', [1, 'children']),
+        unset([{_key: 'k5'}, 'children', 0, '_key']),
+        unset([{_key: 'k5'}, 'children', 0, '_type']),
+        set(42, [{_key: 'k5'}, 'children', 0, 'text']),
+      ],
+    )
+
+    editor.load({value, rev: 'r1'})
+    document.mount()
+
+    expect(heard.warnings).toEqual([
+      'Left out 1 blocks that are not objects',
+      'Repaired 6 places below the floor or with missing or duplicate keys',
+    ])
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [
+          set('51491b98', [1, '_key']),
+          set('block', [1, '_type']),
+          set(
+            [{_type: 'span', _key: '9d1e3ce5', text: '', marks: []}],
+            [1, 'children'],
+          ),
+          set('2b73c14a', [{_key: 'k5'}, 'children', 0, '_key']),
+          set('span', [{_key: 'k5'}, 'children', 0, '_type']),
+          set('', [{_key: 'k5'}, 'children', 0, 'text']),
+        ],
+      },
+    ])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="51491b98": |;;B _key="k5": ',
+    )
+    expect(editor.getWorkingCopy()).toEqual(document.getValue())
   })
 
   test('a batch in flight without its echo warns after 10 seconds, then with backoff', () => {

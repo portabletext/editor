@@ -11,6 +11,7 @@ import {
   hasTarget,
   resolvePath,
 } from './content-lake'
+import {blocksForEditor, isBelowFloor, repairToFloor} from './floor'
 import {mapOffsetThrough, textEditPatch, textEditsOf} from './text-edits'
 import type {
   EditorForIo,
@@ -85,8 +86,9 @@ export type Io = {
   getSync: () => IoSync
   getBase: () => Load
   /**
-   * The base with the unconfirmed batches and the pending changes applied:
-   * what the editor shows, the placeholder aside.
+   * The base with the unconfirmed batches and the pending changes applied,
+   * without the blocks that aren't objects: what the editor shows, the
+   * placeholder aside.
    */
   getWorkingCopy: () => Array<PortableTextBlock> | undefined
   inspect: () => IoLedger
@@ -173,9 +175,9 @@ type HistoryEntry = {
  * IDs never share one. The proposed transaction IDs come from the same
  * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
  * editor's `id`. `keyGenerator` mints the new keys a resync gives pending
- * inserts whose keys the copy has. Keys io mints to repair a received value come from the
- * value's revision and the repaired node's path instead (see
- * `mintRepairKey`).
+ * inserts whose keys the copy has. Keys io mints to repair a received value
+ * come from the value's revision and the repaired node's path instead (see
+ * `repairToFloor`).
  * `applyLocalEdit` is the model's seam for undo, outside `EditorForIo`: it
  * applies patches to the editor as the user's own edit, which the editor
  * reports as a local `change`, or refuses while read-only.
@@ -247,7 +249,7 @@ export function createIo(options: {
 
     base = {value: incoming.value, rev: incoming.rev}
     pending = []
-    queueKeyRepair(incoming)
+    queueFloorRepair(incoming)
     editor.send({type: 'load', value: deriveScreen()})
   }
 
@@ -292,7 +294,7 @@ export function createIo(options: {
       pending = []
     }
 
-    queueKeyRepair(incoming)
+    queueFloorRepair(incoming)
     rekeyPendingInserts(screenBefore)
     editor.send({type: 'resync', value: deriveScreen()})
 
@@ -458,6 +460,13 @@ export function createIo(options: {
           patch,
         })
       }
+    }
+
+    if (touchedBlocks(base.value, nextValue).some(isBelowFloor)) {
+      return fail({
+        reason: 'invalid content',
+        transactionId: incoming.transactionId,
+      })
     }
 
     const unconfirmedKeys = insertedBlockKeys(
@@ -993,11 +1002,19 @@ export function createIo(options: {
     })
   }
 
+  /**
+   * The working copy as the editor holds it: blocks that aren't objects are
+   * left out.
+   */
   function deriveScreen(): Array<PortableTextBlock> | undefined {
-    return applyWithContentLakeSemantics(base.value, [
+    const workingCopy = applyWithContentLakeSemantics(base.value, [
       ...unconfirmedBatches().flatMap((batch) => batch.patches),
       ...pending.flat(),
     ])
+
+    return workingCopy === undefined
+      ? undefined
+      : blocksForEditor(workingCopy).blocks
   }
 
   /** Sent batches the base doesn't hold yet, in the order they were sent. */
@@ -1050,11 +1067,24 @@ export function createIo(options: {
     )
   }
 
-  function queueKeyRepair(incoming: Load) {
-    const repairPatches = repairKeys(incoming)
+  /**
+   * Books the repairs that bring a received whole value up to the floor as
+   * the editor's own pending work, ahead of the rest.
+   */
+  function queueFloorRepair(incoming: Load) {
+    const repairPatches = repairToFloor(incoming)
+    const leftOutCount =
+      (incoming.value ?? []).length -
+      blocksForEditor(incoming.value ?? []).blocks.length
+
+    if (leftOutCount > 0) {
+      warn(`Left out ${leftOutCount} blocks that are not objects`)
+    }
 
     if (repairPatches.length > 0) {
-      warn(`Repaired ${repairPatches.length} missing or duplicate keys`)
+      warn(
+        `Repaired ${repairPatches.length} places below the floor or with missing or duplicate keys`,
+      )
       pending = [repairPatches, ...pending]
     }
   }
@@ -1656,6 +1686,29 @@ function withoutPatches(
   })
 }
 
+/**
+ * The blocks of `after` that `before` has no equal of, each block of
+ * `before` matching one equal block of `after`.
+ */
+function touchedBlocks(
+  before: Array<PortableTextBlock> | undefined,
+  after: Array<PortableTextBlock> | undefined,
+): Array<PortableTextBlock> {
+  const unmatched = [...(before ?? [])]
+
+  return (after ?? []).filter((block) => {
+    const index = unmatched.findIndex((candidate) => isEqual(candidate, block))
+
+    if (index === -1) {
+      return true
+    }
+
+    unmatched.splice(index, 1)
+
+    return false
+  })
+}
+
 /** Whether `ancestor` is a strict prefix of `path`. */
 function isAncestorPath(ancestor: Patch['path'], path: Patch['path']): boolean {
   return (
@@ -1748,94 +1801,6 @@ function renameBlockKeys(patch: Patch, newKeys: Map<string, string>): Patch {
   }
 
   return {...patch, path: renamedPath}
-}
-
-/**
- * Repairs missing and duplicate keys among blocks and among each block's
- * children, keeping the first of each duplicate. Index paths address the
- * nodes, since a missing or duplicate key can't. New keys come from the
- * revision and the node's path, and collide with no key anywhere in the
- * value.
- */
-function repairKeys({value, rev}: Load): Array<Patch> {
-  const patches: Array<Patch> = []
-  const takenKeys = new Set(
-    (value ?? []).flatMap((block) => [
-      ...itemKey(block),
-      ...childrenOf(block).flatMap((child) => itemKey(child)),
-    ]),
-  )
-  const blockKeys = new Set<string>()
-
-  for (const [blockIndex, block] of (value ?? []).entries()) {
-    const [blockKey] = itemKey(block)
-
-    if (blockKey === undefined || blockKeys.has(blockKey)) {
-      patches.push(
-        set(mintRepairKey(rev, [blockIndex], takenKeys), [blockIndex, '_key']),
-      )
-    } else {
-      blockKeys.add(blockKey)
-    }
-
-    const childKeys = new Set<string>()
-
-    for (const [childIndex, child] of childrenOf(block).entries()) {
-      const [childKey] = itemKey(child)
-
-      if (childKey === undefined || childKeys.has(childKey)) {
-        patches.push(
-          set(
-            mintRepairKey(rev, [blockIndex, 'children', childIndex], takenKeys),
-            [blockIndex, 'children', childIndex, '_key'],
-          ),
-        )
-      } else {
-        childKeys.add(childKey)
-      }
-    }
-  }
-
-  return patches
-}
-
-/**
- * The key a repair gives the node at `path` in the value received at
- * `rev`: the 32-bit FNV-1a hash of `<rev>/<path segments joined by "/">`,
- * as eight hex digits, with `#<attempt>` appended to the input for each
- * attempt whose key is taken. An `undefined` revision hashes as the empty
- * string. Every editor that repairs the same defect of the same revision
- * mints the same key, so their repairs agree instead of racing. Marks the
- * key as taken.
- */
-function mintRepairKey(
-  rev: string | undefined,
-  path: Array<string | number>,
-  takenKeys: Set<string>,
-): string {
-  const input = [rev ?? '', ...path].join('/')
-  let attempt = 0
-  let key = fnv1a(input)
-
-  while (takenKeys.has(key)) {
-    attempt++
-    key = fnv1a(`${input}#${attempt}`)
-  }
-
-  takenKeys.add(key)
-
-  return key
-}
-
-function fnv1a(input: string): string {
-  let hash = 0x811c9dc5
-
-  for (let index = 0; index < input.length; index++) {
-    hash ^= input.charCodeAt(index)
-    hash = Math.imul(hash, 0x01000193) >>> 0
-  }
-
-  return hash.toString(16).padStart(8, '0')
 }
 
 function childrenOf(block: PortableTextBlock): Array<unknown> {

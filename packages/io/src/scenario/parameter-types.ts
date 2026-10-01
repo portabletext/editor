@@ -2,8 +2,8 @@ import {createParameterType} from 'racejar'
 import type {FakeDocumentStatus} from '../fakes/document'
 import type {RequestFailure} from '../protocol/host'
 import type {IoSync} from '../protocol/io'
-import type {WorkDropped} from '../protocol/types'
-import type {EditorName, ServerCopyName} from './world'
+import type {ErrorEvent, WorkDropped} from '../protocol/types'
+import type {Corruption, EditorName, ServerCopyName} from './world'
 
 export type BatchReference = {name: EditorName; batchNumber: number}
 
@@ -70,6 +70,35 @@ export const parameterTypes = [
       }
 
       return status
+    },
+  }),
+  createParameterType<ErrorEvent['reason']>({
+    name: 'errorReason',
+    matcher:
+      /"(out of order|duplicate key|patch failed|echo mismatch|invalid content)"/,
+  }),
+  createParameterType<Corruption>({
+    name: 'corruption',
+    matcher:
+      /(has no key)|(has no type)|has children "([^"]*)"|has a span whose text is (\d+)|is the string "([^"]*)"/,
+    transform: (noKey, noType, children, text, string) => {
+      if (noKey !== undefined) {
+        return {type: 'no key'}
+      }
+
+      if (noType !== undefined) {
+        return {type: 'no type'}
+      }
+
+      if (children !== undefined) {
+        return {type: 'children', children}
+      }
+
+      if (text !== undefined) {
+        return {type: 'span text', text: Number.parseInt(text, 10)}
+      }
+
+      return {type: 'string', value: string}
     },
   }),
   createParameterType<WorkDropped['reason']>({

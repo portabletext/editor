@@ -28,6 +28,7 @@ export {
 } from './scenario/world'
 export type {
   BatchSnapshot,
+  Corruption,
   EditorName,
   EditorSnapshot,
   Heard,

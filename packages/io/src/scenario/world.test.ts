@@ -247,6 +247,27 @@ describe(createWorld.name, () => {
     })
   })
 
+  test("a snapshot writes stored blocks textspec can't spell as JSON", () => {
+    const world = createWorld()
+
+    world.serverHas('B _key="k1": foo;;B _key="k2": bar')
+    world.corruptServerBlock('k1', {type: 'string', value: 'oops'})
+    world.corruptServerBlock('k2', {type: 'no type'})
+    world.startEditors()
+    world.load('Editor A')
+
+    const snapshot = world.snapshot()
+
+    expect({
+      server: snapshot.server?.value,
+      base: snapshot.editors?.['Editor A'].base.textspec,
+    }).toEqual({
+      server:
+        '"oops";;{"_key":"k2","children":[{"_key":"d-k1","_type":"span","text":"bar","marks":[]}],"style":"normal"}',
+      base: '"oops";;{"_key":"k2","children":[{"_key":"d-k1","_type":"span","text":"bar","marks":[]}],"style":"normal"}',
+    })
+  })
+
   test("an editor's tree apart from io's working copy is reported for the moment it happened and for every step it lasts", () => {
     const world = createWorld()
 

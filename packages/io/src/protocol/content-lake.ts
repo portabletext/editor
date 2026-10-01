@@ -13,9 +13,11 @@ import type {PortableTextBlock} from '@portabletext/schema'
  * existing array, but throws when a path runs into a missing field, so those
  * patches are skipped here. A `set` through a string, number or boolean
  * replaces it with the structure the rest of the path names, and any other
- * patch through one selects nothing. A `diffMatchPatch` on anything but a
- * string fails, as does one on a missing field that isn't keyed. Duplicate
- * keys are stored as sent.
+ * patch through one selects nothing. A `set` replaces an object or a list
+ * with whatever it carries, a string or a number included, which
+ * `applyAll` refuses. A `diffMatchPatch` on anything but a string fails, as
+ * does one on a missing field that isn't keyed. Duplicate keys are stored
+ * as sent.
  */
 export function applyWithContentLakeSemantics(
   value: Array<PortableTextBlock> | undefined,
@@ -56,6 +58,14 @@ function applyPatch(
         ])
   }
 
+  if (patch.type === 'set' && patch.path.length > 0) {
+    const target = resolvePath(value, patch.path)
+
+    if (isOfOtherKind(target, patch.value)) {
+      return replaceAt(value, patch.path, patch.value)
+    }
+  }
+
   if (patch.type === 'diffMatchPatch') {
     const target = resolvePath(value, patch.path)
     const last = patch.path.at(-1)
@@ -72,6 +82,60 @@ function applyPatch(
   }
 
   return applyAll(value, [patch])
+}
+
+/**
+ * Whether `target` is an object or a list and `replacement` isn't the same
+ * kind, which `applyAll` refuses to `set`.
+ */
+function isOfOtherKind(target: unknown, replacement: unknown): boolean {
+  if (typeof target !== 'object' || target === null) {
+    return false
+  }
+
+  return Array.isArray(target)
+    ? !Array.isArray(replacement)
+    : typeof replacement !== 'object' ||
+        replacement === null ||
+        Array.isArray(replacement)
+}
+
+/**
+ * Replaces the item or field at `path` in its parent, and sets the parent,
+ * which keeps its kind, in its place.
+ */
+function replaceAt(
+  value: Array<PortableTextBlock> | undefined,
+  path: Path,
+  replacement: unknown,
+): Array<PortableTextBlock> | undefined {
+  const parentPath = path.slice(0, -1)
+  const parent = resolvePath(value, parentPath)
+  const last = path[path.length - 1]
+  let nextParent: unknown
+
+  if (Array.isArray(parent)) {
+    const index =
+      typeof last === 'number'
+        ? last
+        : parent.findIndex(
+            (item: unknown) =>
+              typeof last === 'object' &&
+              !Array.isArray(last) &&
+              typeof item === 'object' &&
+              item !== null &&
+              Reflect.get(item, '_key') === last._key,
+          )
+    nextParent = parent.map((item: unknown, itemIndex) =>
+      itemIndex === index ? replacement : item,
+    )
+  } else if (typeof parent === 'object' && parent !== null) {
+    nextParent = {...parent, [String(last)]: replacement}
+  }
+
+  return parentPath.length === 0
+    ? applyAll(value, [set(nextParent, [])])
+    : applyPatch(value, set(nextParent, parentPath))
 }
 
 /**

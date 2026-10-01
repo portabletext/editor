@@ -54,6 +54,30 @@ describe(applyWithContentLakeSemantics.name, () => {
     ).toEqual(value)
   })
 
+  test('a `set` replaces an object or a list with a value of another kind', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar')
+
+    expect(
+      applyWithContentLakeSemantics(value, [
+        set('oops', [{_key: 'k2'}]),
+        set('oops', [{_key: 'k0'}, 'children']),
+      ]),
+    ).toEqual([
+      {_type: 'block', _key: 'k0', children: 'oops', style: 'normal'},
+      'oops',
+    ])
+    expect(
+      applyWithContentLakeSemantics(value, [
+        set(42, [1]),
+        set(['x'], [{_key: 'k0'}, 'children', {_key: 'k1'}]),
+      ]),
+    ).toEqual([
+      {_type: 'block', _key: 'k0', children: [['x']], style: 'normal'},
+      42,
+    ])
+  })
+
   test('a `diffMatchPatch` on anything but a string fails, unless its keyed target is missing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')

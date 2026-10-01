@@ -340,6 +340,45 @@ describe(createFakeServer.name, () => {
     expect(server.getLog()).toEqual([{transaction, changesField: true}])
   })
 
+  test("a script's patches are stored whatever they leave behind, as Content Lake stores them", () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar;;B: baz')
+    const server = createFakeServer({documentId: 'document', document: {value}})
+    const patches = [
+      unset([{_key: 'k0'}, '_key']),
+      unset([1, '_type']),
+      set(42, [1, 'children', {_key: 'k3'}, 'text']),
+      set('oops', [{_key: 'k4'}, 'children']),
+      set('oops', [{_key: 'k4'}]),
+    ]
+
+    const transaction = server.patchField(patches, 't1')
+
+    expect(transaction).toEqual({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches,
+      batchIds: [],
+    })
+    expect(server.copy()).toEqual({
+      value: [
+        {
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          style: 'normal',
+        },
+        {
+          _key: 'k2',
+          children: [{_type: 'span', _key: 'k3', text: 42, marks: []}],
+          style: 'normal',
+        },
+        'oops',
+      ],
+      rev: 'r2',
+    })
+  })
+
   test('setting the whole field of a missing document throws', () => {
     const keyGenerator = createTestKeyGenerator()
     const server = createFakeServer({
