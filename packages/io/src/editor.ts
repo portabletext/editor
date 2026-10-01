@@ -716,7 +716,7 @@ export function createIoEditor(options: {
     }
 
     pending = [...pending, patches]
-    emit({type: 'change', operations: patches, origin: 'local'})
+    emit({type: 'change', origin: 'local', operations: patches, patches})
     flush()
   }
 
@@ -820,7 +820,7 @@ export function createIoEditor(options: {
     }
 
     if (!isEqual(before, after)) {
-      emit({type: 'change', operations: [set(after, [])], origin: 'remote'})
+      emit({type: 'change', origin: 'remote', operations: [set(after, [])]})
     }
   }
 

@@ -64,11 +64,12 @@ export type WorkDropped = {
 }
 
 /**
- * The model carries patches as a stand-in for the editor's operations: the
- * action's patches for a local change, and a whole-value `set` for a
- * re-derived screen.
+ * `operations` carries patches as the model's stand-in for the editor's
+ * operations: the action's patches for a local change, and a whole-value
+ * `set` for a re-derived screen. A local change's `patches` are the patches
+ * that will go into its batch. A remote change has nothing to save, so it
+ * carries no `patches`.
  */
-export type ChangeEvent = {
-  operations: Array<Patch>
-  origin: 'local' | 'remote'
-}
+export type ChangeEvent =
+  | {origin: 'local'; operations: Array<Patch>; patches: Array<Patch>}
+  | {origin: 'remote'; operations: Array<Patch>}

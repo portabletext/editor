@@ -106,6 +106,7 @@ describe(compileScenarios.name, () => {
       'When "x" is typed',
       'Then Editor A has emitted 1 change',
       'And Editor A has sent batch 1',
+      "And Editor A's change 1 carries the patches of batch 1",
       "When the server receives Editor A's batch 1",
       "And Editor A's batch 1 comes back",
       'Then Editor A has emitted 1 change',
@@ -115,6 +116,7 @@ describe(compileScenarios.name, () => {
       "And Editor A receives Editor B's batch 1",
       'Then Editor A shows "H1: foox|"',
       'And Editor A has emitted 2 changes',
+      "And Editor A's change 2 carries no patches",
     ])
     expect(world.snapshot().editors?.['Editor A'].screen).toEqual('H1: foox|')
   })
@@ -173,7 +175,7 @@ describe(compileScenarios.name, () => {
     }
 
     expect(outcomes).toEqual([
-      ...Array.from({length: 12}, () => 'passed'),
+      ...Array.from({length: 13}, () => 'passed'),
       'What Editor A shows: expected "H1: foo|", got "H1: foox|"',
     ])
   })

@@ -7,6 +7,7 @@ import {
   formatTextspec,
 } from '../document'
 import type {IoEditorStatus, IoEditorSync} from '../editor'
+import type {ChangeEvent} from '../types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference} from './parameter-types'
 import {
@@ -480,6 +481,33 @@ export const stepDefinitions = [
     },
   ),
   Then(
+    "{editor}'s change {int} carries the patches of batch {int}",
+    (
+      context: Context,
+      name: EditorName,
+      changeNumber: number,
+      batchNumber: number,
+    ) => {
+      const change = getChange(context, name, changeNumber)
+
+      checkEqual(
+        `The patches ${name}'s change ${changeNumber} carries`,
+        JSON.stringify(change.origin === 'local' ? change.patches : undefined),
+        JSON.stringify(context.world.getBatch(name, batchNumber).patches),
+      )
+    },
+  ),
+  Then(
+    "{editor}'s change {int} carries no patches",
+    (context: Context, name: EditorName, changeNumber: number) => {
+      checkEqual(
+        `Whether ${name}'s change ${changeNumber} carries patches`,
+        'patches' in getChange(context, name, changeNumber),
+        false,
+      )
+    },
+  ),
+  Then(
     '{editor} has emitted no change',
     (context: Context, name: EditorName) => {
       checkEqual(
@@ -546,6 +574,20 @@ function userSteps() {
       },
     ),
   ]
+}
+
+function getChange(
+  context: Context,
+  name: EditorName,
+  changeNumber: number,
+): ChangeEvent {
+  const change = context.world.getEditor(name).heard.changes[changeNumber - 1]
+
+  if (!change) {
+    throw new Error(`${name} has not emitted change ${changeNumber}`)
+  }
+
+  return change
 }
 
 function describeField(value: Array<PortableTextBlock> | undefined): string {
