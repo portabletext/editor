@@ -20,6 +20,7 @@ import {
   createPassThroughHost,
   type PassThroughHost,
   type RequestFailure,
+  type SaveAnswer,
 } from '../protocol/host'
 import {
   createIo,
@@ -32,8 +33,12 @@ import type {
   ChangeEvent,
   EditorMessageForIo,
   ErrorEvent,
+  Load,
   MutationBatch,
+  MutationRejected,
   MutationSent,
+  Resync,
+  Transaction,
   WorkDropped,
 } from '../protocol/types'
 
@@ -69,6 +74,32 @@ export type HeardEvent =
   | ({type: 'error'} & ErrorEvent)
   | ({type: 'work dropped'; patchCount: number} & WorkDropped)
   | {type: 'warning'; message: string}
+
+/**
+ * A message on an editor's path, recorded in the order it passed: io and its
+ * host talking, io sending the editor content, and the host sending a save
+ * request again to find out what became of it. A `transaction` says whether
+ * the host had it from the feed or from the answer to its own save.
+ */
+export type PathMessage =
+  | ({route: 'io to host'; type: 'mutation'} & MutationBatch)
+  | ({route: 'host to io'; type: 'mutation sent'} & MutationSent)
+  | ({route: 'host to io'; type: 'mutation rejected'} & MutationRejected)
+  | ({
+      route: 'host to io'
+      type: 'transaction'
+      via: 'feed' | 'save reply'
+    } & Transaction)
+  | {route: 'host to io'; type: 'feed lost'}
+  | ({route: 'host to io'; type: 'load'} & Load)
+  | ({route: 'host to io'; type: 'resync'} & Resync)
+  | ({route: 'io to editor'} & EditorMessageForIo)
+  | {
+      route: 'host to server'
+      type: 're-submit'
+      transactionId: string
+      answer: SaveAnswer
+    }
 
 /**
  * A moment an editor's tree differed from io's working copy: right after
@@ -119,6 +150,7 @@ export type BatchSnapshot = {
 
 export type EditorSnapshot = {
   id: string
+  host: HostShape
   status: FakeDocumentStatus
   sync: IoSync
   /** What the editor shows, with the caret. */
@@ -153,6 +185,7 @@ export type EditorSnapshot = {
     final: boolean
   }>
   events: Array<HeardEvent>
+  messages: Array<PathMessage>
 }
 
 export type ServerSnapshot = {
@@ -214,6 +247,8 @@ export type NetworkSnapshot = {
       source: TransactionSource
     }>
   >
+  /** Whether each transaction reaches the hosts with the server's copy. */
+  carriesServerCopy: boolean
   now: number
 }
 
@@ -236,6 +271,8 @@ export type WorldEditor = {
   mutationsSent: Array<MutationSent>
   /** Every message io sent the editor. */
   received: Array<EditorMessageForIo>
+  /** Every message on the editor's path, in order. */
+  messages: Array<PathMessage>
   /**
    * The moments the editor's tree differed from io's working copy, since the
    * last `takeTreeMismatches`.
@@ -470,7 +507,7 @@ export function createWorld(
   }
 
   function snapshotEditor(name: EditorName): EditorSnapshot {
-    const {document, io, host, heard} = getEditor(name)
+    const {document, io, host, heard, messages} = getEditor(name)
     const {server} = getSetup()
     const ledger = io.inspect()
     const base = io.getBase()
@@ -483,6 +520,7 @@ export function createWorld(
 
     return {
       id: name === 'Editor A' ? 'A' : 'B',
+      host: hostShape,
       status: document.getStatus(),
       sync: io.getSync(),
       screen: document.toTextspec(),
@@ -514,6 +552,7 @@ export function createWorld(
         final: batch.final === true,
       })),
       events: [...heard.events],
+      messages: [...messages],
     }
   }
 
@@ -584,6 +623,7 @@ export function createWorld(
           'Editor A': network.getFeed('Editor A').map(describeFeedItem),
           'Editor B': network.getFeed('Editor B').map(describeFeedItem),
         },
+        carriesServerCopy: serverCopyOnTransactions,
         now: network.clock.now(),
       },
     }
@@ -928,30 +968,74 @@ function createWorldEditor({
   network: Network<MutationBatch>
   hostShape: HostShape
 }): WorldEditor {
-  const {document, io, heard, received, treeMismatches} = createEditorWithIo({
-    id: name === 'Editor A' ? 'A' : 'B',
-    keyGenerator: createTestKeyGenerator(name === 'Editor A' ? 'a-' : 'b-'),
-    clock: network.clock,
-  })
+  const {document, io, heard, received, messages, treeMismatches} =
+    createEditorWithIo({
+      id: name === 'Editor A' ? 'A' : 'B',
+      keyGenerator: createTestKeyGenerator(name === 'Editor A' ? 'a-' : 'b-'),
+      clock: network.clock,
+    })
   const mutationsSent: Array<MutationSent> = []
-  const host = createPassThroughHost({
+  let arrivingVia: 'feed' | 'save reply' = 'feed'
+  const passThroughHost = createPassThroughHost({
     io: {
       ...io,
+      load: (load) => {
+        messages.push({route: 'host to io', type: 'load', ...load})
+        io.load(load)
+      },
+      resync: (resync) => {
+        messages.push({route: 'host to io', type: 'resync', ...resync})
+        io.resync(resync)
+      },
+      transaction: (transaction) => {
+        messages.push({
+          route: 'host to io',
+          type: 'transaction',
+          via: arrivingVia,
+          ...transaction,
+        })
+        io.transaction(transaction)
+      },
       mutationSent: (mutationSent) => {
         mutationsSent.push(mutationSent)
+        messages.push({
+          route: 'host to io',
+          type: 'mutation sent',
+          ...mutationSent,
+        })
         io.mutationSent(mutationSent)
+      },
+      mutationRejected: (mutationRejected) => {
+        messages.push({
+          route: 'host to io',
+          type: 'mutation rejected',
+          ...mutationRejected,
+        })
+        io.mutationRejected(mutationRejected)
+      },
+      feedLost: () => {
+        messages.push({route: 'host to io', type: 'feed lost'})
+        io.feedLost()
       },
     },
     save: (batch) => network.send(name, batch),
     resubmit: (request) => {
       const result = server.submit(request.batches, request.transactionId)
+      const answer: SaveAnswer =
+        result.type === 'saved' ? {type: 'saved'} : result
 
       if (result.type === 'saved') {
         network.publish(result.transaction)
-        return {type: 'saved'}
       }
 
-      return result
+      messages.push({
+        route: 'host to server',
+        type: 're-submit',
+        transactionId: request.transactionId,
+        answer,
+      })
+
+      return answer
     },
     hasTransaction: server.hasTransaction,
     fetchCopy: () => server.copy(),
@@ -959,6 +1043,18 @@ function createWorldEditor({
     foldBatches: hostShape === 'folding',
     selfConfirming: hostShape === 'self-confirming',
   })
+  const host: PassThroughHost = {
+    ...passThroughHost,
+    reportSaved: (batchId, transaction) => {
+      arrivingVia = 'save reply'
+
+      try {
+        passThroughHost.reportSaved(batchId, transaction)
+      } finally {
+        arrivingVia = 'feed'
+      }
+    },
+  }
 
   network.connect(
     name,
@@ -976,6 +1072,7 @@ function createWorldEditor({
     heard,
     mutationsSent,
     received,
+    messages,
     treeMismatches,
     checkedBatchCount: 0,
     checkedErrorCount: 0,
@@ -989,7 +1086,8 @@ function createWorldEditor({
  * keys from the same generator, and what their listeners heard. The document
  * is listened to before the editor side attaches, so a change is heard
  * before the batch it leads to. `received` records every message io sends
- * the document, and `treeMismatches` every moment, right after one of those
+ * the document, `messages` those and every batch io emits, in order, and
+ * `treeMismatches` every moment, right after one of those
  * messages or a local change io has booked, that the document's tree
  * differs from io's working copy.
  */
@@ -1006,6 +1104,7 @@ export function createEditorWithIo({
   io: Io
   heard: Heard
   received: Array<EditorMessageForIo>
+  messages: Array<PathMessage>
   treeMismatches: Array<Omit<TreeMismatch, 'editor'>>
 } {
   const heard: Heard = {
@@ -1029,6 +1128,7 @@ export function createEditorWithIo({
   })
 
   const received: Array<EditorMessageForIo> = []
+  const messages: Array<PathMessage> = []
   const treeMismatches: Array<Omit<TreeMismatch, 'editor'>> = []
   const recordTreeMismatch = (after: TreeMismatch['after']) => {
     const mismatch = findTreeMismatch({document, io}, after)
@@ -1043,6 +1143,7 @@ export function createEditorWithIo({
       on: document.on,
       send: (message) => {
         received.push(message)
+        messages.push({route: 'io to editor', ...message})
         document.send(message)
         recordTreeMismatch(message.type)
       },
@@ -1063,6 +1164,7 @@ export function createEditorWithIo({
       case 'mutation': {
         const {type: _type, ...batch} = event
         heard.mutations.push(batch)
+        messages.push({route: 'io to host', type: 'mutation', ...batch})
         break
       }
       case 'error': {
@@ -1088,7 +1190,7 @@ export function createEditorWithIo({
     }
   })
 
-  return {document, io, heard, received, treeMismatches}
+  return {document, io, heard, received, messages, treeMismatches}
 }
 
 /**

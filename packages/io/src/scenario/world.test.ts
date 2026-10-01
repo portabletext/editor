@@ -33,6 +33,7 @@ describe(createWorld.name, () => {
       editors: {
         'Editor A': {
           id: 'A',
+          host: 'plain',
           status: 'ready',
           sync: 'saving',
           screen: 'B: fooxy|',
@@ -91,9 +92,48 @@ describe(createWorld.name, () => {
             {type: 'change', origin: 'local', patchCount: 1},
             {type: 'change', origin: 'local', patchCount: 1},
           ],
+          messages: [
+            {
+              route: 'host to io',
+              type: 'load',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'd-k0',
+                  children: [
+                    {_key: 'd-k1', _type: 'span', text: 'foo', marks: []},
+                  ],
+                  style: 'normal',
+                },
+              ],
+              rev: 'r1',
+            },
+            {
+              route: 'io to editor',
+              type: 'load',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'd-k0',
+                  children: [
+                    {_key: 'd-k1', _type: 'span', text: 'foo', marks: []},
+                  ],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              route: 'io to host',
+              type: 'mutation',
+              id: 'A-1',
+              transactionId: 'A-t1',
+              patches: [diffMatchPatch('foo', 'foox', textPath)],
+            },
+          ],
         },
         'Editor B': {
           id: 'B',
+          host: 'plain',
           status: 'ready',
           sync: 'saving',
           screen: 'H1: foo|',
@@ -149,6 +189,53 @@ describe(createWorld.name, () => {
             },
           ],
           events: [{type: 'change', origin: 'local', patchCount: 1}],
+          messages: [
+            {
+              route: 'host to io',
+              type: 'load',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'd-k0',
+                  children: [
+                    {_key: 'd-k1', _type: 'span', text: 'foo', marks: []},
+                  ],
+                  style: 'normal',
+                },
+              ],
+              rev: 'r1',
+            },
+            {
+              route: 'io to editor',
+              type: 'load',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'd-k0',
+                  children: [
+                    {_key: 'd-k1', _type: 'span', text: 'foo', marks: []},
+                  ],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              route: 'io to host',
+              type: 'mutation',
+              id: 'B-1',
+              transactionId: 'B-t1',
+              patches: [set('h1', stylePath)],
+            },
+            {
+              route: 'host to io',
+              type: 'transaction',
+              via: 'feed',
+              transactionId: 'other-field-1',
+              previousRev: 'r2',
+              resultRev: 'r3',
+              patches: [],
+            },
+          ],
         },
       },
       server: {
@@ -242,9 +329,86 @@ describe(createWorld.name, () => {
             },
           ],
         },
+        carriesServerCopy: false,
         now: 0,
       },
     })
+  })
+
+  test('a self-confirming host forwards the transaction its save answers with', () => {
+    const world = createWorld()
+
+    world.setHostShape('self-confirming')
+    world.documentIs('B: foo|')
+    world.type('Editor A', 'x')
+    world.receive('Editor A', 1)
+
+    expect(
+      world.snapshot().editors?.['Editor A'].messages.map((message) =>
+        message.type === 'transaction'
+          ? {
+              route: message.route,
+              type: message.type,
+              via: message.via,
+              transactionId: message.transactionId,
+            }
+          : {route: message.route, type: message.type},
+      ),
+    ).toEqual([
+      {route: 'host to io', type: 'load'},
+      {route: 'io to editor', type: 'load'},
+      {route: 'io to host', type: 'mutation'},
+      {
+        route: 'host to io',
+        type: 'transaction',
+        via: 'save reply',
+        transactionId: 'A-t1',
+      },
+      {route: 'io to editor', type: 'apply'},
+    ])
+  })
+
+  test('a resync after `feed lost` re-submits the batch in flight, and the 409 is on the path', () => {
+    const world = createWorld()
+
+    world.documentIs('B: foo|')
+    world.type('Editor A', 'x')
+    world.receive('Editor A', 1)
+    world.feedLost('Editor A')
+    world.resync('Editor A', {discardUnsent: false, outcomeOf: 1})
+
+    expect(
+      world
+        .snapshot()
+        .editors?.['Editor A'].messages.slice(3)
+        .map((message) =>
+          message.type === 're-submit'
+            ? message
+            : message.type === 'resync' && message.route === 'host to io'
+              ? {
+                  route: message.route,
+                  type: message.type,
+                  rev: message.rev,
+                  outcomes: message.outcomes,
+                }
+              : {route: message.route, type: message.type},
+        ),
+    ).toEqual([
+      {route: 'host to io', type: 'feed lost'},
+      {
+        route: 'host to server',
+        type: 're-submit',
+        transactionId: 'A-t1',
+        answer: {type: 'duplicate'},
+      },
+      {
+        route: 'host to io',
+        type: 'resync',
+        rev: 'r2',
+        outcomes: {'A-1': 'applied'},
+      },
+      {route: 'io to editor', type: 'resync'},
+    ])
   })
 
   test("a snapshot writes stored blocks textspec can't spell as JSON", () => {

@@ -37,6 +37,7 @@ export type {
   HostShape,
   NamedTransaction,
   NetworkSnapshot,
+  PathMessage,
   ServerCopyName,
   ServerSnapshot,
   TransactionSource,
