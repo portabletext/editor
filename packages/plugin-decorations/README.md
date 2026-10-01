@@ -10,6 +10,8 @@ npm install @portabletext/plugin-decorations
 
 ## Usage
 
+The [Decorate content guide](https://www.portabletext.org/editor/guides/decorate-content/) walks through highlights, comments, live positions, and presence carets.
+
 `useDecorationLayer` registers a layer of decorations with the editor and returns a handle for reading their live, edit-adjusted positions and reacting to `moved`/`content-changed`/`lost` events. Layers from different parts of an app compose: each renders independently, and removing one never touches another:
 
 ```tsx
