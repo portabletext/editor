@@ -259,6 +259,228 @@ describe(createIo.name, () => {
     ])
   })
 
+  test('a remote patch on a block no unsaved work touched reaches the editor as it is', () => {
+    const {editor, document, received} = createLoadedEditor('B: foo;;B: bar|')
+    const fooTextPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const remotePatch = diffMatchPatch('foo', 'yfoo', fooTextPath)
+
+    document.type('x')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remotePatch],
+    })
+
+    expect(document.toTextspec()).toEqual('B: yfoo;;B: barx|')
+    expect(received.slice(1)).toEqual([
+      {type: 'apply', patches: [remotePatch], underneath: [remotePatch]},
+    ])
+  })
+
+  test("the editor's own echo applies nothing, and a transaction that mixes it with another writer's patch on another block applies only that patch", () => {
+    const {editor, document, heard, received} =
+      createLoadedEditor('B: foo|;;B: bar')
+    const remotePatch = set('h1', [{_key: 'd-k2'}, 'style'])
+
+    document.type('x')
+    editor.transaction({
+      transactionId: 'A-t1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    document.type('y')
+    editor.transaction({
+      transactionId: 'A-t2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [...heard.mutations[1].patches, remotePatch],
+    })
+
+    expect(document.toTextspec()).toEqual('B: fooxy|;;H1: bar')
+    expect(received.slice(1)).toEqual([
+      {type: 'apply', patches: [], underneath: heard.mutations[0].patches},
+      {
+        type: 'apply',
+        patches: [remotePatch],
+        underneath: [...heard.mutations[1].patches, remotePatch],
+      },
+    ])
+  })
+
+  test("a remote patch on a block the editor's unsaved work also touched becomes a `set` of the block from the working copy", () => {
+    const {editor, document, received} = createLoadedEditor('B: foo|')
+    const remotePatch = diffMatchPatch('foo', 'foox', [
+      {_key: 'd-k0'},
+      'children',
+      {_key: 'd-k1'},
+      'text',
+    ])
+
+    document.setStyle('h2')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remotePatch],
+    })
+
+    expect(document.toTextspec()).toEqual('H2: foo|x')
+    expect(received.slice(1)).toEqual([
+      {
+        type: 'apply',
+        patches: [
+          set(
+            {
+              _type: 'block',
+              _key: 'd-k0',
+              children: [
+                {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+              ],
+              style: 'h2',
+            },
+            [{_key: 'd-k0'}],
+          ),
+        ],
+        underneath: [remotePatch],
+      },
+    ])
+  })
+
+  test("a remote insert after the block the editor's unsaved insert went after lines up in the server's order", () => {
+    const {editor, document, heard, received} = createLoadedEditor('B: foo|')
+    const [barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('b-')},
+      'B: bar',
+    ).value
+    const remotePatch = insert([barBlock], 'after', [{_key: 'd-k0'}])
+
+    document.insertBlock('B: baz')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remotePatch],
+    })
+
+    expect(document.toTextspec()).toEqual('B: foo;;B: baz|;;B: bar')
+    expect(received.slice(1)).toEqual([
+      {
+        type: 'apply',
+        patches: [insert([barBlock], 'after', [{_key: 'a-k2'}])],
+        underneath: [remotePatch],
+      },
+    ])
+
+    editor.transaction({
+      transactionId: 'A-t1',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+
+    expect(editor.getBase().value).toEqual(document.getValue())
+  })
+
+  test("a remote span inserted after the span the editor's unsaved span went after lines up in the server's order", () => {
+    const {editor, document, received} = createLoadedEditor('B: foo|')
+    const spanPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}]
+    const spanKeyGenerator = createTestKeyGenerator('s-')
+    const barSpan = {
+      _type: 'span',
+      _key: spanKeyGenerator(),
+      text: 'bar',
+      marks: [],
+    }
+    const bazSpan = {
+      _type: 'span',
+      _key: spanKeyGenerator(),
+      text: 'baz',
+      marks: [],
+    }
+    const remotePatch = insert([bazSpan], 'after', spanPath)
+
+    document.applyLocalEdit([insert([barSpan], 'after', spanPath)])
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remotePatch],
+    })
+
+    expect(document.getValue()).toEqual([
+      {
+        _type: 'block',
+        _key: 'd-k0',
+        children: [
+          {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+          barSpan,
+          bazSpan,
+        ],
+        style: 'normal',
+      },
+    ])
+    expect(received.slice(1)).toEqual([
+      {
+        type: 'apply',
+        patches: [
+          insert([bazSpan], 'after', [
+            {_key: 'd-k0'},
+            'children',
+            {_key: 's-k0'},
+          ]),
+        ],
+        underneath: [remotePatch],
+      },
+    ])
+  })
+
+  test('a remote removal of the block an unsent insert went after removes both from the screen', () => {
+    const {editor, document, heard, received} =
+      createLoadedEditor('B: foo|;;B: bar')
+    const remotePatch = unset([{_key: 'd-k0'}])
+
+    document.type('x')
+    document.insertBlock('B: baz')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remotePatch],
+    })
+
+    expect(document.toTextspec()).toEqual('B: |bar')
+    expect(received.slice(1)).toEqual([
+      {
+        type: 'apply',
+        patches: [unset([{_key: 'd-k0'}]), unset([{_key: 'a-k2'}])],
+        underneath: [remotePatch],
+      },
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'a-k2',
+                children: [
+                  {_type: 'span', _key: 'a-k3', text: 'baz', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'd-k0'}],
+          ),
+        ],
+        reason: 'no target',
+      },
+    ])
+  })
+
   test('undo puts back the style another writer set underneath', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const path = [{_key: 'd-k0'}, 'style']
@@ -540,7 +762,7 @@ describe(createIo.name, () => {
     })
     editor.undo()
 
-    expect(document.toTextspec()).toEqual('B: |barfoofoo')
+    expect(document.toTextspec()).toEqual('B: bar|foofoo')
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
@@ -787,7 +1009,7 @@ describe(createIo.name, () => {
     })
     editor.undo()
 
-    expect(document.toTextspec()).toEqual('B: |qux;;B: bar;;B: baz')
+    expect(document.toTextspec()).toEqual('B: qux|;;B: bar;;B: baz')
 
     editor.transaction({
       transactionId: 'A-t1',
@@ -832,7 +1054,7 @@ describe(createIo.name, () => {
     })
     editor.undo()
 
-    expect(document.toTextspec()).toEqual('B: bar;;B: |qux')
+    expect(document.toTextspec()).toEqual('B: bar;;B: qux|')
 
     editor.transaction({
       transactionId: 'A-t1',
@@ -984,7 +1206,7 @@ describe(createIo.name, () => {
     })
     editor.undo()
 
-    expect(document.toTextspec()).toEqual('B: |foo')
+    expect(document.toTextspec()).toEqual('B: foo|')
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
@@ -1385,7 +1607,7 @@ describe(createIo.name, () => {
         patches: [diffMatchPatch('barx', 'barxy', textPath)],
       },
     ])
-    expect(document.toTextspec()).toEqual('H1: |foo')
+    expect(document.toTextspec()).toEqual('H1: foo|')
   })
 
   test('closing while sending is blocked reports the unsent changes as dropped work', () => {
@@ -1792,6 +2014,7 @@ function createLoadedEditor(textspec: string | undefined) {
     document,
     io: editor,
     heard,
+    received,
   } = createEditorWithIo({
     id: 'A',
     keyGenerator: createTestKeyGenerator('a-'),
@@ -1809,5 +2032,5 @@ function createLoadedEditor(textspec: string | undefined) {
     document.setCaret(caret)
   }
 
-  return {editor, document, clock, heard}
+  return {editor, document, clock, heard, received}
 }

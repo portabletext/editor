@@ -481,22 +481,27 @@ export function createIo(options: {
 
     const screenBefore = deriveScreen()
     const valueBefore = base.value
+    const ownPatches = echoedAwaitingBase
+      .filter((batch) => confirmedBatchIds.has(batch.id))
+      .flatMap((batch) => batch.patches)
+    const unconfirmedPatches = unconfirmedBatches().flatMap(
+      (batch) => batch.patches,
+    )
 
     captureBlocksBefore(confirmedBatchIds)
-    mapStepsThrough(
-      incoming.patches,
-      valueBefore,
-      echoedAwaitingBase
-        .filter((batch) => confirmedBatchIds.has(batch.id))
-        .flatMap((batch) => batch.patches),
-    )
+    mapStepsThrough(incoming.patches, valueBefore, ownPatches)
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
       (batch) => !confirmedBatchIds.has(batch.id),
     )
 
     if (incoming.patches.length > 0) {
-      applyToEditor(screenBefore, incoming.patches)
+      applyToEditor({
+        screenBefore,
+        underneath: incoming.patches,
+        ownPatches,
+        unconfirmedPatches,
+      })
       reportDroppedPending(`transaction "${incoming.transactionId}"`)
     }
 
@@ -911,17 +916,29 @@ export function createIo(options: {
   }
 
   /**
-   * Sends the editor a transaction's effect. A pending insert re-keyed
-   * because the base now has its key goes first, as a keyed `_key` set, so
-   * the editor's caret stays with its block. A transaction that left the
-   * working copy as it was goes out with no `patches`: its `underneath` is
-   * what the editor's history needs, since a remote change under a local one
-   * shows nowhere on screen.
+   * Sends the editor a transaction's effect as keyed instructions for its
+   * tree, authored from the working copy before and after the transaction.
+   * A pending insert re-keyed because the base now has its key goes first,
+   * as a keyed `_key` set, so the editor's caret stays with its block. The
+   * editor's own patches in the transaction are already on screen. Work that
+   * was unconfirmed when the transaction arrived, `unconfirmedPatches` and
+   * the pending changes, decides how the rest arrive (see
+   * `authorInstructions`). A transaction that left the working copy as it
+   * was goes out with no `patches`: its `underneath` is what the editor's
+   * history needs, since a remote change under a local one shows nowhere on
+   * screen.
    */
-  function applyToEditor(
-    screenBefore: Array<PortableTextBlock> | undefined,
-    underneath: Array<Patch>,
-  ) {
+  function applyToEditor({
+    screenBefore,
+    underneath,
+    ownPatches,
+    unconfirmedPatches,
+  }: {
+    screenBefore: Array<PortableTextBlock> | undefined
+    underneath: Array<Patch>
+    ownPatches: Array<Patch>
+    unconfirmedPatches: Array<Patch>
+  }) {
     const newKeys = rekeyPendingInserts(screenBefore)
     const screen = deriveScreen()
 
@@ -930,13 +947,20 @@ export function createIo(options: {
       return
     }
 
+    const renames = [...newKeys].map(([oldKey, newKey]) =>
+      set(newKey, [{_key: oldKey}, '_key']),
+    )
+
     editor.send({
       type: 'apply',
       patches: [
-        ...[...newKeys].map(([oldKey, newKey]) =>
-          set(newKey, [{_key: oldKey}, '_key']),
-        ),
-        set(screen ?? [], []),
+        ...renames,
+        ...authorInstructions({
+          shown: applyWithContentLakeSemantics(screenBefore, renames),
+          wanted: screen,
+          patches: withoutPatches(underneath, ownPatches),
+          unlanded: [...unconfirmedPatches, ...pending.flat()],
+        }),
       ],
       underneath,
     })
@@ -1297,6 +1321,314 @@ function generateUniqueKey(
   takenKeys.add(key)
 
   return key
+}
+
+/**
+ * The instructions that take the editor's tree from `shown` to `wanted` for
+ * other writers' `patches`, given the `unlanded` work the editor had on top
+ * of the base. A patch on a place no unlanded patch touched is forwarded as
+ * it is. A patch on a block unlanded work touched becomes a `set` of the
+ * block from `wanted` (or an `unset` when `wanted` lost it), since the
+ * server applied the editor's work after the patch and the screen applied
+ * it before. An insert into or removal from a list unlanded work also
+ * inserted into or removed from becomes the list lined up against `wanted`
+ * key by key, since two inserts at one place land in different orders on
+ * the two sides. A patch on the whole field, or by index, while there is
+ * unlanded work lines up the whole field.
+ *
+ * The forwarded patches go first: they touch nothing the rest lines up, and
+ * a forwarded patch into a block a later instruction inserts does nothing,
+ * as the block arrives from `wanted` with it applied.
+ */
+function authorInstructions({
+  shown,
+  wanted,
+  patches,
+  unlanded,
+}: {
+  shown: Array<PortableTextBlock> | undefined
+  wanted: Array<PortableTextBlock> | undefined
+  patches: Array<Patch>
+  unlanded: Array<Patch>
+}): Array<Patch> {
+  const touched = touchedPlaces(unlanded)
+  const forwarded: Array<Patch> = []
+  const conflictingBlocks = new Set<string>()
+  const conflictingChildLists = new Set<string>()
+  let fieldConflicts = false
+
+  for (const patch of patches) {
+    const place = placeOf(patch)
+
+    if (place.type === 'field' || touched.field) {
+      if (unlanded.length > 0) {
+        fieldConflicts = true
+      } else {
+        forwarded.push(patch)
+      }
+    } else if (
+      place.type === 'list' &&
+      (place.blockKey === undefined
+        ? touched.blockList
+        : touched.childLists.has(place.blockKey))
+    ) {
+      if (place.blockKey === undefined) {
+        fieldConflicts = true
+      } else {
+        conflictingChildLists.add(place.blockKey)
+      }
+    } else if (
+      place.subjectKey !== undefined &&
+      touched.blocks.has(place.subjectKey)
+    ) {
+      conflictingBlocks.add(place.subjectKey)
+    } else {
+      forwarded.push(patch)
+    }
+  }
+
+  const current = applyWithContentLakeSemantics(shown, forwarded) ?? []
+  const target = wanted ?? []
+
+  if (fieldConflicts) {
+    return [...forwarded, ...lineUpList(current, target, [])]
+  }
+
+  const fixes: Array<Patch> = []
+
+  for (const blockKey of new Set([
+    ...conflictingBlocks,
+    ...conflictingChildLists,
+  ])) {
+    const shownBlock = findBlock(current, blockKey)
+    const wantedBlock = findBlock(target, blockKey)
+
+    if (wantedBlock === undefined) {
+      fixes.push(...(shownBlock ? [unset([{_key: blockKey}])] : []))
+    } else if (shownBlock === undefined) {
+      return [...forwarded, ...lineUpList(current, target, [])]
+    } else if (
+      !conflictingBlocks.has(blockKey) &&
+      isEqual(
+        {...shownBlock, children: undefined},
+        {...wantedBlock, children: undefined},
+      )
+    ) {
+      fixes.push(
+        ...lineUpList(childrenOf(shownBlock), childrenOf(wantedBlock), [
+          {_key: blockKey},
+          'children',
+        ]),
+      )
+    } else if (!isEqual(shownBlock, wantedBlock)) {
+      fixes.push(set(wantedBlock, [{_key: blockKey}]))
+    }
+  }
+
+  return [...forwarded, ...fixes]
+}
+
+/**
+ * Where a patch acts: the whole `field` (a path that is empty or starts
+ * with an index), a `list` it inserts into or removes from (the block list,
+ * or the `children` of `blockKey`), or a `block`. `subjectKey` is the block
+ * the patch acts on or under, which for the block list is only the block an
+ * `unset` removes.
+ */
+function placeOf(
+  patch: Patch,
+):
+  | {type: 'field'}
+  | {type: 'list'; blockKey: string | undefined; subjectKey: string | undefined}
+  | {type: 'block'; subjectKey: string} {
+  const [head, field] = patch.path
+  const blockKey = keyOf(head)
+
+  if (blockKey === undefined) {
+    return {type: 'field'}
+  }
+
+  const isListChange = patch.type === 'insert' || patch.type === 'unset'
+
+  if (isListChange && patch.path.length === 1) {
+    return {
+      type: 'list',
+      blockKey: undefined,
+      subjectKey: patch.type === 'unset' ? blockKey : undefined,
+    }
+  }
+
+  if (isListChange && patch.path.length === 3 && field === 'children') {
+    return {type: 'list', blockKey, subjectKey: blockKey}
+  }
+
+  return {type: 'block', subjectKey: blockKey}
+}
+
+/**
+ * The places unlanded work touched: the whole `field`, the block list, the
+ * `children` lists it inserted into or removed from, and the blocks it
+ * acted on or under. Removing a block from the block list touches the list
+ * only: a patch under the removed block finds nothing on either side.
+ */
+function touchedPlaces(unlanded: Array<Patch>): {
+  field: boolean
+  blockList: boolean
+  childLists: Set<string>
+  blocks: Set<string>
+} {
+  const touched = {
+    field: false,
+    blockList: false,
+    childLists: new Set<string>(),
+    blocks: new Set<string>(),
+  }
+
+  for (const patch of unlanded) {
+    const place = placeOf(patch)
+
+    if (place.type === 'field') {
+      touched.field = true
+    } else if (place.type === 'block') {
+      touched.blocks.add(place.subjectKey)
+    } else if (place.blockKey === undefined) {
+      touched.blockList = true
+    } else {
+      touched.childLists.add(place.blockKey)
+      touched.blocks.add(place.blockKey)
+    }
+  }
+
+  return touched
+}
+
+/**
+ * Keyed instructions that line `shown` up with `wanted`, the list at
+ * `listPath`: the longest run of keys in the same order on both sides stays,
+ * every other shown item is removed, every other wanted item is inserted
+ * next to a keyed sibling that is there by then, and an item that stays but
+ * differs is `set`. A list with a missing or repeated key gets a `set` of the
+ * whole list, and an empty one gets its items by index.
+ */
+function lineUpList(
+  shown: Array<unknown>,
+  wanted: Array<unknown>,
+  listPath: Patch['path'],
+): Array<Patch> {
+  const shownKeys = shown.map((item) => itemKey(item)[0])
+  const wantedKeys = wanted.map((item) => itemKey(item)[0])
+
+  if (!hasUniqueKeys(shownKeys) || !hasUniqueKeys(wantedKeys)) {
+    return [set(wanted, listPath)]
+  }
+
+  if (shown.length === 0) {
+    return wanted.length === 0
+      ? []
+      : [setIfMissing([], listPath), insert(wanted, 'before', [...listPath, 0])]
+  }
+
+  const stays = new Set(longestCommonRun(shownKeys, wantedKeys))
+  const itemPath = (key: string) => [...listPath, {_key: key}]
+  const firstStaying = wantedKeys.find((key) => stays.has(key))
+
+  if (firstStaying === undefined) {
+    return [
+      ...(wanted.length > 0
+        ? [insert(wanted, 'before', itemPath(shownKeys[0]))]
+        : []),
+      ...shownKeys.map((key) => unset(itemPath(key))),
+    ]
+  }
+
+  const removals = shownKeys
+    .filter((key) => !stays.has(key))
+    .map((key) => unset(itemPath(key)))
+  const inserts = wanted.flatMap((item, index) => {
+    if (stays.has(wantedKeys[index])) {
+      return []
+    }
+
+    const previousKey = wantedKeys[index - 1]
+
+    return previousKey === undefined
+      ? [insert([item], 'before', itemPath(firstStaying))]
+      : [insert([item], 'after', itemPath(previousKey))]
+  })
+  const sets = wanted.flatMap((item, index) => {
+    const key = wantedKeys[index]
+
+    return stays.has(key) && !isEqual(shown[shownKeys.indexOf(key)], item)
+      ? [set(item, itemPath(key))]
+      : []
+  })
+
+  return [...removals, ...inserts, ...sets]
+}
+
+function hasUniqueKeys(keys: Array<string | undefined>): keys is Array<string> {
+  return (
+    keys.every((key) => key !== undefined) && new Set(keys).size === keys.length
+  )
+}
+
+/** The longest sequence of keys that appears in both lists in order. */
+function longestCommonRun(
+  keysA: Array<string>,
+  keysB: Array<string>,
+): Array<string> {
+  const lengths = Array.from({length: keysA.length + 1}, () =>
+    Array.from({length: keysB.length + 1}, () => 0),
+  )
+
+  for (let indexA = keysA.length - 1; indexA >= 0; indexA--) {
+    for (let indexB = keysB.length - 1; indexB >= 0; indexB--) {
+      lengths[indexA][indexB] =
+        keysA[indexA] === keysB[indexB]
+          ? lengths[indexA + 1][indexB + 1] + 1
+          : Math.max(lengths[indexA + 1][indexB], lengths[indexA][indexB + 1])
+    }
+  }
+
+  const run: Array<string> = []
+  let indexA = 0
+  let indexB = 0
+
+  while (indexA < keysA.length && indexB < keysB.length) {
+    if (keysA[indexA] === keysB[indexB]) {
+      run.push(keysA[indexA])
+      indexA++
+      indexB++
+    } else if (lengths[indexA + 1][indexB] >= lengths[indexA][indexB + 1]) {
+      indexA++
+    } else {
+      indexB++
+    }
+  }
+
+  return run
+}
+
+/**
+ * `patches` without `removed`, each removed patch matching one equal patch.
+ */
+function withoutPatches(
+  patches: Array<Patch>,
+  removed: Array<Patch>,
+): Array<Patch> {
+  const unmatched = [...removed]
+
+  return patches.filter((patch) => {
+    const index = unmatched.findIndex((candidate) => isEqual(candidate, patch))
+
+    if (index === -1) {
+      return true
+    }
+
+    unmatched.splice(index, 1)
+
+    return false
+  })
 }
 
 /** Whether `ancestor` is a strict prefix of `path`. */

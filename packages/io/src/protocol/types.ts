@@ -115,13 +115,16 @@ export type EditorEventForIo =
  * `load` is the first content, accepted only during the first commit, and
  * `resync` a fresh copy: both are whole values, matched to the tree by key.
  * `apply` is one transaction's effect on the content: `patches` is what to
- * do to the tree, and `underneath` is the transaction's patches, for
- * history. For now `patches` is a whole-value `set` (path `[]`), after a
- * keyed `set` of `_key` for each of the editor's unsaved blocks io gave a
- * new key, so the caret stays with its block. Group B replaces the
- * whole-value `set` with keyed instructions. A transaction that moved the
- * base and left the screen as it was comes with no `patches`, so its
- * `underneath` still reaches the editor's history.
+ * do to the tree, keyed instructions io authors from its working copy, and
+ * `underneath` is the transaction's patches, for history. The editor's own
+ * patches in the transaction are left out, another writer's patch on a
+ * place the editor's unsaved work didn't touch comes as it is, a block both
+ * touched comes as a `set` of the block, and a list both inserted into or
+ * removed from comes lined up key by key. A keyed `set` of `_key` for each
+ * of the editor's unsaved blocks io gave a new key goes first, so the caret
+ * stays with its block. A transaction that moved the base and left the
+ * screen as it was comes with no `patches`, so its `underneath` still
+ * reaches the editor's history.
  */
 export type EditorMessageForIo =
   | {type: 'load'; value: Array<PortableTextBlock> | undefined}
