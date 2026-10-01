@@ -14,7 +14,11 @@ import {
   type Server,
   type ServerTransaction,
 } from '../fakes/server'
-import {createPassThroughHost, type PassThroughHost} from '../protocol/host'
+import {
+  createPassThroughHost,
+  type PassThroughHost,
+  type RequestFailure,
+} from '../protocol/host'
 import {
   createIo,
   type Clock,
@@ -144,6 +148,8 @@ export type ServerSnapshot = {
     transactionId: string
     batches: Array<{name: EditorName; batchNumber: number}>
   }>
+  /** The failure the next save request meets, if a step injected one. */
+  nextFailure: RequestFailure | null
 }
 
 export type NetworkSnapshot = {
@@ -155,10 +161,12 @@ export type NetworkSnapshot = {
     patchCount: number
     patches: Array<Patch>
   }>
+  /** Replies that say a save request failed, with the failure. */
   replies: Array<{
     editor: EditorName
     batchId: string
     batchNumber: number
+    status: RequestFailure
   }>
   /** Saves the server took whose reply never reached the host. */
   lostReplies: Array<{
@@ -273,7 +281,8 @@ export function createWorld() {
    * The server takes the save requests first, so a host that forms the
    * request at that moment has formed it before the save. The server gets
    * the request as the first batch's host formed it, and answers a 409 when
-   * a re-submit saved it already.
+   * a re-submit saved it already. A failed request sends each sender a reply
+   * with the failure.
    */
   function publishReceived(
     batches: Array<{name: EditorName; batch: MutationBatch}>,
@@ -290,6 +299,16 @@ export function createWorld() {
 
     if (result.type === 'saved') {
       publishSaved(batches, result.transaction)
+    }
+
+    if (result.type === 'failed') {
+      for (const {name, batch} of batches) {
+        network.queueReply({
+          editorId: name,
+          batchId: batch.id,
+          status: result.status,
+        })
+      }
     }
   }
 
@@ -482,6 +501,7 @@ export function createWorld() {
           transactionId: duplicate.transactionId,
           batches: duplicate.batchIds.map((batchId) => locateBatch(batchId)),
         })),
+        nextFailure: server.getNextFailure() ?? null,
       },
       network: {
         saveRequests: network.getSaveRequests().map(({editorId, batch}) => ({
@@ -496,6 +516,7 @@ export function createWorld() {
           editor: toEditorName(reply.editorId),
           batchId: reply.batchId,
           batchNumber: locateBatch(reply.batchId).batchNumber,
+          status: reply.status,
         })),
         lostReplies: network.getLostReplies().map((reply) => ({
           editor: toEditorName(reply.editorId),
@@ -630,12 +651,8 @@ export function createWorld() {
       getSetup().network.takeLostReply(batch.id)
       getEditor(name).host.retry(batch.id)
     },
-    refuse: (name: EditorName, batchNumber: number) => {
-      const {server, network} = getSetup()
-      const batch = getBatch(name, batchNumber)
-      network.takeSaveRequest(batch.id)
-      server.refuse(batch.id)
-      network.queueReply({editorId: name, batchId: batch.id})
+    failNextRequest: (status: RequestFailure) => {
+      getSetup().server.failNextRequest(status)
     },
     changeOtherField: () => {
       const {server, network} = getSetup()
@@ -696,13 +713,13 @@ export function createWorld() {
       getSetup().network.clock.advance(milliseconds)
     },
 
-    reject: (name: EditorName, batchNumber: number) => {
+    deliverReply: (name: EditorName, batchNumber: number) => {
       const {network} = getSetup()
       const batch = getBatch(name, batchNumber)
 
       if (!network.getReplies().some((reply) => reply.batchId === batch.id)) {
         throw new Error(
-          `No rejection is waiting for ${name}'s batch ${batchNumber}`,
+          `No reply is waiting for ${name}'s batch ${batchNumber}`,
         )
       }
 
@@ -805,9 +822,10 @@ function createWorldEditor({
 
       if (result.type === 'saved') {
         network.publish(result.transaction)
+        return {type: 'saved'}
       }
 
-      return result.type
+      return result
     },
     hasTransaction: server.hasTransaction,
     fetchCopy: () => server.copy(),
@@ -820,7 +838,7 @@ function createWorldEditor({
     name,
     {
       receiveTransaction: host.forward,
-      receiveReply: (reply) => host.reportRejected(reply.batchId),
+      receiveReply: (reply) => host.reportFailure(reply.batchId, reply.status),
       receiveSaveTaken: host.reportSaveTaken,
     },
     {listening: hostShape !== 'self-confirming'},

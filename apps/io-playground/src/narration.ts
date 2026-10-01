@@ -172,11 +172,11 @@ function narrateEditor({
       before.rejected?.batchNumber !== reply.batchNumber
     ) {
       sentences.push(
-        `${name} got the rejection for batch ${reply.batchNumber}, so ${name} sends nothing more until a resync.`,
+        `${name}'s host got the ${reply.status} for batch ${reply.batchNumber} and reported the rejection, so ${name} sends nothing more until a resync.`,
       )
     } else {
       sentences.push(
-        `${name} got the rejection for batch ${reply.batchNumber}.`,
+        `${name}'s host got the ${reply.status} for batch ${reply.batchNumber}.`,
       )
     }
   }
@@ -490,7 +490,7 @@ function narrateServer({
   }
 
   for (const request of beforeNetwork.saveRequests) {
-    const refused = afterNetwork.replies.some(
+    const failure = afterNetwork.replies.find(
       (reply) =>
         reply.batchId === request.batchId &&
         !beforeNetwork.replies.some(
@@ -498,9 +498,9 @@ function narrateServer({
         ),
     )
 
-    if (refused) {
+    if (failure) {
       sentences.push(
-        `The server refused ${request.editor}'s batch ${request.batchNumber}, and a rejection is on its way back.`,
+        `The request for ${request.editor}'s batch ${request.batchNumber} failed with ${failure.status}, and the reply is on its way back.`,
       )
     }
   }

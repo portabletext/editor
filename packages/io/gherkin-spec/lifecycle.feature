@@ -37,8 +37,9 @@ Feature: Lifecycle
     When "x" is typed
     Then Editor A shows "B: foox|"
     And Editor A has sent batch 1
-    When the server refuses Editor A's batch 1
-    And Editor A's batch 1 is rejected
+    When the server's next request fails with 404
+    And the server receives Editor A's batch 1
+    And the save reply for Editor A's batch 1 arrives
     Then Editor A has sent nothing new
     When "y" is typed
     Then Editor A shows "B: fooxy|"

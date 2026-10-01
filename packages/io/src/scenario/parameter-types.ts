@@ -1,5 +1,6 @@
 import {createParameterType} from 'racejar'
 import type {FakeDocumentStatus} from '../fakes/document'
+import type {RequestFailure} from '../protocol/host'
 import type {IoSync} from '../protocol/io'
 import type {WorkDropped} from '../protocol/types'
 import type {EditorName, ServerCopyName} from './world'
@@ -11,6 +12,15 @@ export type BatchReference = {name: EditorName; batchNumber: number}
  * a scenario that expects it is known red.
  */
 export type ExpectedSync = IoSync | 'stalled'
+
+const requestFailures = new Map<string, RequestFailure>([
+  ['400', 400],
+  ['403', 403],
+  ['404', 404],
+  ['500', 500],
+  ['503', 503],
+  ['a network error', 'network error'],
+])
 
 export const parameterTypes = [
   createParameterType<EditorName>({
@@ -48,6 +58,19 @@ export const parameterTypes = [
   createParameterType<ExpectedSync>({
     name: 'sync',
     matcher: /"(synced|saving|blocked|out of step|stalled)"/,
+  }),
+  createParameterType<RequestFailure>({
+    name: 'failure',
+    matcher: /(400|403|404|500|503|a network error)/,
+    transform: (failure) => {
+      const status = requestFailures.get(failure)
+
+      if (status === undefined) {
+        throw new Error(`Unknown request failure "${failure}"`)
+      }
+
+      return status
+    },
   }),
   createParameterType<WorkDropped['reason']>({
     name: 'dropReason',

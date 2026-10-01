@@ -16,7 +16,7 @@ export const concepts = [
   {
     name: 'rejection',
     definition:
-      'The server refused the batch and the host says so. A save that went well has no reply the editor needs: its transaction coming back is the confirmation.',
+      'The save request failed for good (a 400, 403 or 404) and the host says so. A failure that may pass (a 500, 503 or a network error) is retried with the same request instead. A save that went well has no reply the editor needs: its transaction coming back is the confirmation.',
   },
   {
     name: 'transaction',

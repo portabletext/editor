@@ -1,3 +1,4 @@
+import type {RequestFailure} from '../protocol/host'
 import type {SavedBatch, ServerTransaction} from './server'
 
 export type SaveRequest<TBatch extends SavedBatch> = {
@@ -6,8 +7,7 @@ export type SaveRequest<TBatch extends SavedBatch> = {
 }
 
 /**
- * A save reply. The server replies only when it refuses a batch: a batch it
- * saves is confirmed by its transaction coming back on the feed.
+ * A save reply for a batch's request.
  */
 export type Reply = {
   editorId: string
@@ -15,11 +15,18 @@ export type Reply = {
 }
 
 /**
+ * A save reply that says the request failed. A batch the server saves is
+ * confirmed by its transaction coming back on the feed, so only a failure
+ * travels back as a reply the host acts on.
+ */
+export type FailureReply = Reply & {status: RequestFailure}
+
+/**
  * What an editor's host receives from the network.
  */
 export type NetworkReceiver = {
   receiveTransaction: (transaction: ServerTransaction) => void
-  receiveReply: (reply: Reply) => void
+  receiveReply: (reply: FailureReply) => void
   /** The server has taken this editor's save request for a batch. */
   receiveSaveTaken: (batchId: string) => void
 }
@@ -50,8 +57,8 @@ export type Network<TBatch extends SavedBatch> = {
   getSaveRequests: () => Array<SaveRequest<TBatch>>
   /** Removes the request and tells the sending editor, if it is connected. */
   takeSaveRequest: (batchId: string) => SaveRequest<TBatch>
-  queueReply: (reply: Reply) => void
-  getReplies: () => Array<Reply>
+  queueReply: (reply: FailureReply) => void
+  getReplies: () => Array<FailureReply>
   deliverReply: (batchId: string) => void
   /**
    * The server took and saved the batch, but its host never heard back, so
@@ -78,7 +85,7 @@ export function createFakeNetwork<
   const feeds = new Map<string, Array<ServerTransaction>>()
   const deafEditorIds = new Set<string>()
   let saveRequests: Array<SaveRequest<TBatch>> = []
-  let replies: Array<Reply> = []
+  let replies: Array<FailureReply> = []
   let lostReplies: Array<Reply> = []
 
   function getReceiver(editorId: string) {

@@ -252,12 +252,12 @@ function linkApplicability(
 
   const firstRequest = requests.at(0)
   const requestPrompt = firstRequest
-    ? `${name}'s ${firstRequest.final ? 'final batch' : `batch ${firstRequest.batchNumber}`} is waiting: the server receives it, or refuses it`
+    ? `${name}'s ${firstRequest.final ? 'final batch' : `batch ${firstRequest.batchNumber}`} is waiting: the server receives it, or the request fails`
     : undefined
 
   const firstReply = replies.at(0)
   const replyPrompt = firstReply
-    ? `${name}'s batch ${firstReply.batchNumber} was refused: deliver the rejection`
+    ? `${name}'s batch ${firstReply.batchNumber} failed with ${firstReply.status}: deliver the reply`
     : undefined
 
   const firstRetryable = lostReplies.find(

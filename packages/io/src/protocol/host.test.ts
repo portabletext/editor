@@ -4,7 +4,7 @@ import {describe, expect, test} from 'vitest'
 import {parseTextspec} from '../fakes/document'
 import {createFakeNetwork} from '../fakes/network'
 import {createEditorWithIo, createWorld} from '../scenario/world'
-import {createPassThroughHost} from './host'
+import {createPassThroughHost, type RequestFailure} from './host'
 import type {Load, MutationBatch, MutationSent, Transaction} from './types'
 
 describe(createPassThroughHost.name, () => {
@@ -197,16 +197,73 @@ describe(createPassThroughHost.name, () => {
 
     expect(results).toEqual([
       {
-        answer: 'duplicate',
+        answer: {type: 'duplicate'},
         resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
         transactionIds: ['A-t1'],
       },
       {
-        answer: 'saved',
+        answer: {type: 'saved'},
         resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
         transactionIds: ['A-t1'],
+      },
+    ])
+  })
+
+  test('a permanent failure is reported as `mutation rejected`, and a transient one is retried with the same request until it is answered', () => {
+    const results = (
+      [[400], [403], [404], [500], [503], ['network error', 503]] as const
+    ).map(([failure, ...retryFailures]) => {
+      const {editor, document, host, heard, resubmitted, failures} =
+        createHostedEditor('B: foo|')
+
+      document.type('x')
+      host.reportSaveTaken('A-1')
+      failures.push(...retryFailures)
+      host.reportFailure('A-1', failure)
+
+      return {
+        failure,
+        sync: editor.getSync(),
+        rejected: editor.inspect().rejected,
+        resubmitted,
+        warnings: heard.warnings,
+      }
+    })
+    const rejected = {
+      sync: 'blocked',
+      rejected: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+      resubmitted: [],
+      warnings: [],
+    }
+    const retried = {
+      sync: 'saving',
+      rejected: undefined,
+      warnings: [],
+    }
+
+    expect(results).toEqual([
+      {failure: 400, ...rejected},
+      {failure: 403, ...rejected},
+      {failure: 404, ...rejected},
+      {
+        failure: 500,
+        ...retried,
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
+      },
+      {
+        failure: 503,
+        ...retried,
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
+      },
+      {
+        failure: 'network error',
+        ...retried,
+        resubmitted: [
+          {batchIds: ['A-1'], transactionId: 'A-t1'},
+          {batchIds: ['A-1'], transactionId: 'A-t1'},
+        ],
       },
     ])
   })
@@ -250,6 +307,7 @@ describe(createPassThroughHost.name, () => {
         },
       ],
       duplicates: [{transactionId: 'A-1', batches: [batch]}],
+      nextFailure: null,
     })
   })
 
@@ -295,6 +353,7 @@ describe(createPassThroughHost.name, () => {
         },
       ],
       duplicates: [{transactionId: 'A-1+B-1', batches: [batchA, batchB]}],
+      nextFailure: null,
     })
   })
 
@@ -302,7 +361,7 @@ describe(createPassThroughHost.name, () => {
     const cases = [
       {outcomeMethod: 'resubmit', server: 'landed'},
       {outcomeMethod: 'resubmit', server: 'never arrived'},
-      {outcomeMethod: 'resubmit', server: 'refused'},
+      {outcomeMethod: 'resubmit', server: 'fails with 404'},
       {outcomeMethod: 'history', server: 'landed'},
       {outcomeMethod: 'history', server: 'never arrived'},
     ] as const
@@ -313,7 +372,7 @@ describe(createPassThroughHost.name, () => {
         host,
         heard,
         transactionHistory,
-        refusedBatchIds,
+        failures,
         resubmitted,
       } = createHostedEditor('B: foo|', {outcomeMethod})
       const outcomes: Array<unknown> = []
@@ -326,8 +385,8 @@ describe(createPassThroughHost.name, () => {
         transactionHistory.add('A-t1')
       }
 
-      if (server === 'refused') {
-        refusedBatchIds.add('A-1')
+      if (server === 'fails with 404') {
+        failures.push(404)
       }
 
       const resync = editor.resync
@@ -481,7 +540,7 @@ function createHostedEditor(
   const resubmitted: Array<{batchIds: Array<string>; transactionId: string}> =
     []
   const transactionHistory = new Set<string>()
-  const refusedBatchIds = new Set<string>()
+  const failures: Array<RequestFailure> = []
   const mutationsSent: Array<MutationSent> = []
   const {mutationSent} = editor
   editor.mutationSent = (incoming) => {
@@ -497,16 +556,18 @@ function createHostedEditor(
         transactionId,
       })
 
-      if (batches.some((batch) => refusedBatchIds.has(batch.id))) {
-        return 'refused'
+      const failure = failures.shift()
+
+      if (failure !== undefined) {
+        return {type: 'failed', status: failure}
       }
 
       if (transactionHistory.has(transactionId)) {
-        return 'duplicate'
+        return {type: 'duplicate'}
       }
 
       transactionHistory.add(transactionId)
-      return 'saved'
+      return {type: 'saved'}
     },
     hasTransaction: (transactionId) => transactionHistory.has(transactionId),
     fetchCopy: () => serverCopy.current,
@@ -534,7 +595,7 @@ function createHostedEditor(
     serverCopy,
     resubmitted,
     transactionHistory,
-    refusedBatchIds,
+    failures,
     mutationsSent,
   }
 }

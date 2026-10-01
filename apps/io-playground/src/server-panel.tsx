@@ -57,6 +57,11 @@ export function ServerPanel({
             <Revision rev={server.rev} />
           </span>
         ) : null}
+        {server && server.nextFailure !== null ? (
+          <span className="text-xs text-red-700">
+            next request fails with {server.nextFailure}
+          </span>
+        ) : null}
       </header>
 
       {server ? (

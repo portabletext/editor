@@ -71,9 +71,10 @@ Feature: Sending and confirming
     When "y" is typed
     Then Editor A shows "H1: fooy|"
     And Editor A has sent nothing new
-    When the server refuses Editor A's batch 1
+    When the server's next request fails with 400
+    And the server receives Editor A's batch 1
     Then the server has "B: foo"
-    When Editor A's batch 1 is rejected
+    When the save reply for Editor A's batch 1 arrives
     Then Editor A has sent nothing new
     And Editor A shows "H1: fooy|"
     And Editor A's sync is "blocked"
@@ -93,8 +94,9 @@ Feature: Sending and confirming
     Then Editor A has sent batch 1
     When "y" is typed
     Then Editor A shows "H1: fooy|"
-    When the server refuses Editor A's batch 1
-    And Editor A's batch 1 is rejected
+    When the server's next request fails with 403
+    And the server receives Editor A's batch 1
+    And the save reply for Editor A's batch 1 arrives
     Then Editor A has sent nothing new
     When Editor A is resynced, discarding unsent changes
     Then Editor A shows "B: foo|"
@@ -115,6 +117,23 @@ Feature: Sending and confirming
     Then Editor A shows "B: foox|"
     And Editor A's sync is "synced"
     And the server has saved Editor A's batch 1 once
+
+  Scenario: A request that fails with a 503 is retried with the same transaction ID, and the batch lands once
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When the server's next request fails with 503
+    And the server receives Editor A's batch 1
+    Then the server has "B: foo"
+    When the save reply for Editor A's batch 1 arrives
+    Then the server has "B: foox"
+    And Editor A's sync is "saving"
+    And Editor A has sent nothing new
+    When Editor A's batch 1 comes back
+    Then Editor A shows "B: foox|"
+    And Editor A's sync is "synced"
+    And the server has saved Editor A's batch 1 once
+    And the server saved Editor A's batch 1 under the transaction ID it proposed
 
   Scenario: A host with no listener and one writer confirms each batch itself with the transaction its save answers with
     Given hosts that confirm each batch themselves

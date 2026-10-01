@@ -188,6 +188,7 @@ describe(createWorld.name, () => {
           },
         ],
         duplicates: [],
+        nextFailure: null,
       },
       network: {
         saveRequests: [

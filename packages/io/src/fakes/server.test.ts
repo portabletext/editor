@@ -269,35 +269,33 @@ describe(createFakeServer.name, () => {
     )
   })
 
-  test('a refused batch records nothing', () => {
+  test('an injected failure fails the next request only, whatever it carries, and records nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
     const server = createFakeServer({documentId: 'document', document: {value}})
+    const batch = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
 
-    server.refuse('b1')
+    server.failNextRequest(503)
+    const failed = server.submit([batch], 't1')
+    const failedCopy = server.copy()
+    const retried = server.submit([batch], 't1')
 
-    expect(server.isRefused('b1')).toEqual(true)
-    expect(server.isRefused('b2')).toEqual(false)
-    expect(server.getTransactions()).toEqual([])
-    expect(server.copy()).toEqual({value, rev: 'r1'})
-  })
-
-  test('a refused batch submitted again is refused again and records nothing', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createFakeServer({documentId: 'document', document: {value}})
-
-    server.refuse('b1')
-
-    expect(
-      server.submit(
-        [{id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}],
-        't1',
-      ),
-    ).toEqual({type: 'refused'})
-    expect(server.getTransactions()).toEqual([])
+    expect({failed, failedCopy, retried}).toEqual({
+      failed: {type: 'failed', status: 503},
+      failedCopy: {value, rev: 'r1'},
+      retried: {
+        type: 'saved',
+        transaction: {
+          transactionId: 't1',
+          previousRev: 'r1',
+          resultRev: 'r2',
+          patches: [set('h1', [{_key: 'k0'}, 'style'])],
+          batchIds: ['b1'],
+        },
+      },
+    })
     expect(server.getDuplicates()).toEqual([])
-    expect(server.copy()).toEqual({value, rev: 'r1'})
+    expect(server.getNextFailure()).toEqual(undefined)
   })
 
   test('a change to another field moves the revision with no field patches', () => {

@@ -1,6 +1,6 @@
 import {set} from '@portabletext/patches'
 import {describe, expect, test} from 'vitest'
-import {createFakeNetwork, type Reply} from './network'
+import {createFakeNetwork, type FailureReply, type Reply} from './network'
 import type {ServerTransaction} from './server'
 
 describe(createFakeNetwork.name, () => {
@@ -59,7 +59,7 @@ describe(createFakeNetwork.name, () => {
 
   test('replies reach the sending editor in the order the caller delivers them', () => {
     const network = createFakeNetwork()
-    const received: Array<{editorId: string; reply: Reply}> = []
+    const received: Array<{editorId: string; reply: FailureReply}> = []
 
     for (const editorId of ['A', 'B']) {
       network.connect(editorId, {
@@ -71,22 +71,24 @@ describe(createFakeNetwork.name, () => {
       })
     }
 
-    network.queueReply({editorId: 'A', batchId: 'a1'})
-    network.queueReply({editorId: 'B', batchId: 'b1'})
+    network.queueReply({editorId: 'A', batchId: 'a1', status: 400})
+    network.queueReply({editorId: 'B', batchId: 'b1', status: 503})
     network.deliverReply('b1')
 
-    expect(network.getReplies()).toEqual([{editorId: 'A', batchId: 'a1'}])
+    expect(network.getReplies()).toEqual([
+      {editorId: 'A', batchId: 'a1', status: 400},
+    ])
 
     network.deliverReply('a1')
 
     expect(received).toEqual([
       {
         editorId: 'B',
-        reply: {editorId: 'B', batchId: 'b1'},
+        reply: {editorId: 'B', batchId: 'b1', status: 503},
       },
       {
         editorId: 'A',
-        reply: {editorId: 'A', batchId: 'a1'},
+        reply: {editorId: 'A', batchId: 'a1', status: 400},
       },
     ])
     expect(network.getReplies()).toEqual([])

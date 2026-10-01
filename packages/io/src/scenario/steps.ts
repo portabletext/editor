@@ -7,6 +7,7 @@ import {
   formatTextspec,
 } from '../fakes/document'
 import type {FakeDocumentStatus} from '../fakes/document'
+import type {RequestFailure} from '../protocol/host'
 import type {ChangeEvent, WorkDropped} from '../protocol/types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference, ExpectedSync} from './parameter-types'
@@ -69,9 +70,9 @@ export const stepDefinitions = [
     },
   ),
   When(
-    "the server refuses {editor}'s batch {int}",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.refuse(name, batchNumber)
+    "the server's next request fails with {failure}",
+    (context: Context, failure: RequestFailure) => {
+      context.world.failNextRequest(failure)
     },
   ),
   When(
@@ -165,9 +166,9 @@ export const stepDefinitions = [
   }),
 
   When(
-    "{editor}'s batch {int} is rejected",
+    "the save reply for {editor}'s batch {int} arrives",
     (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.reject(name, batchNumber)
+      context.world.deliverReply(name, batchNumber)
     },
   ),
   When('{editor} is resynced', (context: Context, name: EditorName) => {

@@ -326,13 +326,13 @@ describe(applicableNetworkActions.name, () => {
     expect(network.links['Editor A']).toEqual({
       towardServer: {
         prompts: [
-          "Editor A's batch 1 is waiting: the server receives it, or refuses it",
+          "Editor A's batch 1 is waiting: the server receives it, or the request fails",
         ],
         saveRequests: {
           'A-1': {
             enabled: true,
             suggested:
-              "Editor A's batch 1 is waiting: the server receives it, or refuses it",
+              "Editor A's batch 1 is waiting: the server receives it, or the request fails",
           },
         },
         loseReply: {
@@ -348,12 +348,14 @@ describe(applicableNetworkActions.name, () => {
     })
   })
 
-  test('a waiting rejection suggests delivering it', () => {
+  test('a waiting failure reply suggests delivering it', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
         editorA: editorSnapshot({inFlight: batch(1)}),
         network: networkSnapshot({
-          replies: [{editor: 'Editor A', batchId: 'A-1', batchNumber: 1}],
+          replies: [
+            {editor: 'Editor A', batchId: 'A-1', batchNumber: 1, status: 400},
+          ],
         }),
       }),
     )
@@ -361,11 +363,11 @@ describe(applicableNetworkActions.name, () => {
     expect(network.links['Editor A']).toEqual({
       towardServer: {prompts: [], saveRequests: {}, loseReply: {}},
       towardEditor: {
-        prompts: ["Editor A's batch 1 was refused: deliver the rejection"],
+        prompts: ["Editor A's batch 1 failed with 400: deliver the reply"],
         replies: {
           'A-1': {
             enabled: true,
-            suggested: "Editor A's batch 1 was refused: deliver the rejection",
+            suggested: "Editor A's batch 1 failed with 400: deliver the reply",
           },
         },
         lostReplies: {},
@@ -592,6 +594,7 @@ function worldSnapshot({
       rev: 'r1',
       transactions: [],
       duplicates: [],
+      nextFailure: null,
     },
     network,
   }

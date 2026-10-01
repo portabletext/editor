@@ -9,7 +9,12 @@ export type {
   IoSync,
 } from './protocol/io'
 export {createPassThroughHost} from './protocol/host'
-export type {PassThroughHost} from './protocol/host'
+export type {
+  FrozenRequest,
+  PassThroughHost,
+  RequestFailure,
+  SaveAnswer,
+} from './protocol/host'
 export type {
   ChangeEvent,
   EditorEventForIo,

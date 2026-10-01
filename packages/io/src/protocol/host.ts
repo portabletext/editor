@@ -11,6 +11,23 @@ export type FrozenRequest = {
   readonly batches: ReadonlyArray<MutationBatch>
 }
 
+/**
+ * Why a save request failed: an HTTP status, or a network error before any
+ * answer. A 400, 403 or 404 means the server will never save the request,
+ * and the others that a later attempt may.
+ */
+export type RequestFailure = 400 | 403 | 404 | 500 | 503 | 'network error'
+
+/**
+ * The answer to a save request: saved, refused with a 409
+ * `transactionAlreadyExistsError` because the transaction ID is taken, or
+ * failed.
+ */
+export type SaveAnswer =
+  | {type: 'saved'}
+  | {type: 'duplicate'}
+  | {type: 'failed'; status: RequestFailure}
+
 export type PassThroughHost = {
   /**
    * The transaction a batch is saved as, or the one it proposes while a
@@ -33,13 +50,19 @@ export type PassThroughHost = {
    * passes it on: any other host waits for it on the feed.
    */
   reportSaved: (transaction: Transaction) => void
-  reportRejected: (batchId: string) => void
   /**
-   * Re-sends the request a batch was saved in, as it was formed. A 409 means
-   * the earlier attempt landed, and a save means it hadn't: either way the
-   * echo confirms the batch, so the host does nothing more.
+   * A batch's save request failed. A permanent failure is reported to the
+   * editor as `mutation rejected`, and a transient one is retried.
    */
-  retry: (batchId: string) => 'saved' | 'duplicate' | 'refused'
+  reportFailure: (batchId: string, status: RequestFailure) => void
+  /**
+   * Re-sends the request a batch was saved in, as it was formed, again after
+   * each transient failure. A 409 means the earlier attempt landed, and a
+   * save means it hadn't: either way the echo confirms the batch, so the host
+   * does nothing more. A permanent failure is reported as
+   * `mutation rejected`.
+   */
+  retry: (batchId: string) => SaveAnswer
   /** The listener reconnected or may have missed transactions. */
   feedLost: () => void
   load: () => void
@@ -73,12 +96,12 @@ export type PassThroughHost = {
  * confirms the batch, and sees no other transactions.
  *
  * The host keeps every request it formed, so it can send it again, whole and
- * under the same transaction ID: to retry after a lost reply, and to find out
- * what became of the batch in flight before a resync. By default (`outcomeMethod: 'resubmit'`) it finds
- * the outcome by re-submitting the request under the same transaction ID: a
- * 409 means the batch had landed, a save means it hadn't and now has, both
- * `'applied'`, and a refusal for good means `'not applied'`. With
- * `outcomeMethod: 'history'` it asks the document's transaction history
+ * under the same transaction ID: to retry after a lost reply or a transient
+ * failure, and to find out what became of the batch in flight before a
+ * resync. By default (`outcomeMethod: 'resubmit'`) it finds the outcome by
+ * re-submitting the request: a 409 means the batch had landed, a save means
+ * it hadn't and now has, both `'applied'`, and a permanent failure means
+ * `'not applied'`. With `outcomeMethod: 'history'` it asks the document's transaction history
  * whether the transaction ID is there instead. A lookup while the request is
  * still in transit can answer `'not applied'` for a batch that lands a moment
  * later, which re-submitting can't.
@@ -113,7 +136,7 @@ export function createPassThroughHost({
   io: Io
   save: (batch: MutationBatch) => void
   /** Sends a save request again and answers whether it saved. */
-  resubmit: (request: FrozenRequest) => 'saved' | 'duplicate' | 'refused'
+  resubmit: (request: FrozenRequest) => SaveAnswer
   /** Whether the document's transaction history lists the ID. */
   hasTransaction: (transactionId: string) => boolean
   fetchCopy: () => Load
@@ -233,12 +256,34 @@ export function createPassThroughHost({
     })
   }
 
-  function resubmitBatch(batchId: string): 'saved' | 'duplicate' | 'refused' {
+  function resubmitBatch(batchId: string): SaveAnswer {
     if (getBatch(batchId).final) {
       throw new Error(`No batch "${batchId}" to send again`)
     }
 
-    return resubmit(getRequest(batchId))
+    return resubmitUntilAnswered(batchId)
+  }
+
+  function resubmitUntilAnswered(batchId: string): SaveAnswer {
+    let answer = resubmit(getRequest(batchId))
+
+    while (answer.type === 'failed' && !isPermanent(answer.status)) {
+      answer = resubmit(getRequest(batchId))
+    }
+
+    return answer
+  }
+
+  function reject(batchId: string) {
+    if (getBatch(batchId).final) {
+      return
+    }
+
+    if (batchId === inFlightBatchId) {
+      inFlightBatchId = undefined
+    }
+
+    io.mutationRejected({id: batchId})
   }
 
   function findOutcome(batchId: string): 'applied' | 'not applied' {
@@ -248,7 +293,7 @@ export function createPassThroughHost({
         : 'not applied'
     }
 
-    return resubmitBatch(batchId) === 'refused' ? 'not applied' : 'applied'
+    return resubmitBatch(batchId).type === 'failed' ? 'not applied' : 'applied'
   }
 
   function getBatch(batchId: string): MutationBatch {
@@ -335,14 +380,23 @@ export function createPassThroughHost({
         save(finalBatch)
       }
     },
-    reportRejected: (batchId) => {
-      if (batchId === inFlightBatchId) {
-        inFlightBatchId = undefined
+    reportFailure: (batchId, status) => {
+      if (
+        isPermanent(status) ||
+        resubmitUntilAnswered(batchId).type === 'failed'
+      ) {
+        reject(batchId)
+      }
+    },
+    retry: (batchId) => {
+      const answer = resubmitBatch(batchId)
+
+      if (answer.type === 'failed') {
+        reject(batchId)
       }
 
-      io.mutationRejected({id: batchId})
+      return answer
     },
-    retry: resubmitBatch,
     feedLost: () => {
       io.feedLost()
     },
@@ -366,6 +420,10 @@ export function createPassThroughHost({
       })
     },
   }
+}
+
+function isPermanent(status: RequestFailure): boolean {
+  return status === 400 || status === 403 || status === 404
 }
 
 function freezeRequest(request: FrozenRequest): FrozenRequest {

@@ -149,17 +149,28 @@ export function LinkPanel({
                         >
                           server receives
                         </ActionButton>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onStep(
-                              `the server refuses ${name}'s batch ${request.batchNumber}`,
-                            )
-                          }
-                          className="text-xs text-red-700 underline hover:text-red-900"
-                        >
-                          refuse
-                        </button>
+                        {([400, 503] as const).map((failure) => (
+                          <button
+                            key={failure}
+                            type="button"
+                            onClick={() => {
+                              if (
+                                onStep(
+                                  `the server's next request fails with ${failure}`,
+                                )
+                              ) {
+                                onStep(
+                                  request.final
+                                    ? `the server receives ${name}'s final batch`
+                                    : `the server receives ${name}'s batch ${request.batchNumber}`,
+                                )
+                              }
+                            }}
+                            className="text-xs text-red-700 underline hover:text-red-900"
+                          >
+                            fail ({failure})
+                          </button>
+                        ))}
                         <ActionButton
                           applicability={
                             applicability.towardServer.loseReply[
@@ -197,7 +208,7 @@ export function LinkPanel({
                     {towardEditor} {name}
                   </span>
                 ) : null}
-                <Label concept="rejection">rejections</Label> and the{' '}
+                <Label concept="rejection">failed saves</Label> and the{' '}
                 <Label concept="feed">feed</Label>
                 {editorSide === 'right' ? (
                   <span aria-hidden="true">
@@ -215,10 +226,10 @@ export function LinkPanel({
                 {replies.map((reply) => (
                   <Card
                     key={reply.batchId}
-                    label={`rejection for ${name}'s batch ${reply.batchNumber}`}
+                    label={`failure reply for ${name}'s batch ${reply.batchNumber}`}
                   >
                     <span>
-                      <Badge tone="red">rejected</Badge>
+                      <Badge tone="red">failed: {reply.status}</Badge>
                     </span>
                     <span className="text-gray-500">
                       batch {reply.batchNumber}
@@ -233,7 +244,7 @@ export function LinkPanel({
                           }
                           onClick={() =>
                             onDeliver(
-                              `${name}'s batch ${reply.batchNumber} is rejected`,
+                              `the save reply for ${name}'s batch ${reply.batchNumber} arrives`,
                             )
                           }
                         >

@@ -181,9 +181,11 @@ Feature: Out of step and resync
     And "y" is typed
     Then Editor A shows "B: fooxy|"
     And Editor A has sent nothing new
-    When the server refuses Editor A's batch 1
+    When the server's next request fails with 404
+    And the server receives Editor A's batch 1
     Then the server has "B: foo"
-    When Editor A is resynced with the outcome of batch 1
+    When the server's next request fails with 404
+    And Editor A is resynced with the outcome of batch 1
     Then Editor A shows "B: fooxy|"
     And Editor A has sent batch 2
     When the server receives Editor A's batch 2

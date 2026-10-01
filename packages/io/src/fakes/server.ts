@@ -1,6 +1,7 @@
 import {set, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {applyWithContentLakeSemantics} from '../protocol/content-lake'
+import type {RequestFailure} from '../protocol/host'
 
 /**
  * A batch as the server sees it: the batch ID and its patches, scoped to the
@@ -19,12 +20,12 @@ export type ServerTransaction = {
 /**
  * The answer to a save request: saved as a new transaction, refused with a
  * 409 `transactionAlreadyExistsError` because the transaction ID is taken, or
- * refused for good because the server refused the batch.
+ * failed with the failure the test injected.
  */
 export type SubmitResult =
   | {type: 'saved'; transaction: ServerTransaction}
   | {type: 'duplicate'}
-  | {type: 'refused'}
+  | {type: 'failed'; status: RequestFailure}
 
 export type ServerCopy = {
   value: Array<PortableTextBlock> | undefined
@@ -42,8 +43,8 @@ export type Server = {
   /**
    * Saves a request's batches as one transaction, as `receive` does for one,
    * unless the transaction ID is taken: then it changes nothing and answers
-   * 409, as Content Lake does for a retried request. A request carrying a
-   * batch the server refused is refused again.
+   * 409, as Content Lake does for a retried request. A request that meets an
+   * injected failure changes nothing and fails with it.
    */
   submit: (
     batches: ReadonlyArray<SavedBatch>,
@@ -53,9 +54,13 @@ export type Server = {
   hasTransaction: (transactionId: string) => boolean
   /** The save requests refused with a 409, in the order they arrived. */
   getDuplicates: () => Array<{transactionId: string; batchIds: Array<string>}>
-  /** Refuses the batch for good. Nothing is recorded. */
-  refuse: (batchId: string) => void
-  isRefused: (batchId: string) => boolean
+  /**
+   * Makes the next request `submit` gets fail with the status, whatever it
+   * carries.
+   */
+  failNextRequest: (status: RequestFailure) => void
+  /** The failure the next request meets, if one is injected. */
+  getNextFailure: () => RequestFailure | undefined
   /** Records a transaction that changes only another field of the document. */
   changeOtherField: (transactionId: string) => ServerTransaction
   /** Records a transaction that sets the whole field, as a script does. */
@@ -91,7 +96,7 @@ export function createFakeServer(initial: {
   let rev: string | undefined
   const transactions: Array<ServerTransaction> = []
   const log: Array<{transaction: ServerTransaction; changesField: boolean}> = []
-  const refusedBatchIds = new Set<string>()
+  let nextFailure: RequestFailure | undefined
   const duplicates: Array<{transactionId: string; batchIds: Array<string>}> = []
 
   if (initial.document) {
@@ -149,8 +154,10 @@ export function createFakeServer(initial: {
     documentId: initial.documentId,
     receive: (batch, transactionId) => receiveBatches([batch], transactionId),
     submit: (batches, transactionId) => {
-      if (batches.some((batch) => refusedBatchIds.has(batch.id))) {
-        return {type: 'refused'}
+      if (nextFailure !== undefined) {
+        const status = nextFailure
+        nextFailure = undefined
+        return {type: 'failed', status}
       }
 
       if (hasTransaction(transactionId)) {
@@ -168,10 +175,10 @@ export function createFakeServer(initial: {
     },
     hasTransaction,
     getDuplicates: () => duplicates,
-    refuse: (batchId) => {
-      refusedBatchIds.add(batchId)
+    failNextRequest: (status) => {
+      nextFailure = status
     },
-    isRefused: (batchId) => refusedBatchIds.has(batchId),
+    getNextFailure: () => nextFailure,
     changeOtherField: (transactionId) => {
       if (rev === undefined) {
         throw new Error('The document does not exist')
