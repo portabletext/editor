@@ -17,11 +17,21 @@ type Tab = 'scenarios' | 'free play'
 
 export function App() {
   const [tab, setTab] = useState<Tab>('scenarios')
-  const [drawer, setDrawer] = useState<Drawer | null>(null)
+  const [drawerState, setDrawerState] = useState<{
+    world: World
+    drawer: Drawer
+  } | null>(null)
   const scenarioRunner = useScenarioRunner()
   const freePlay = useFreePlay()
   const world = tab === 'scenarios' ? scenarioRunner.world : freePlay.world
   const snapshot = world.snapshot()
+  const drawer = drawerState?.world === world ? drawerState.drawer : null
+  const setDrawer = (
+    next: Drawer | null | ((current: Drawer | null) => Drawer | null),
+  ) => {
+    const resolved = typeof next === 'function' ? next(drawer) : next
+    setDrawerState(resolved === null ? null : {world, drawer: resolved})
+  }
   const network = applicableNetworkActions(snapshot)
   const promptsFor = (name: EditorName) => {
     const held = network.links[name].held

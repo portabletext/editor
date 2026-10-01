@@ -241,7 +241,7 @@ function EventDetails({
   selection: Extract<DetailsSelection, {type: 'event'}>
   snapshot: WorldSnapshot
 }) {
-  const event = snapshot.editors?.[selection.editor].events[selection.index]
+  const event = snapshot.editors?.[selection.editor]?.events[selection.index]
 
   if (event?.type === 'error') {
     return (
