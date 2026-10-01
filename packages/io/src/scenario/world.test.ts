@@ -469,4 +469,35 @@ describe(createWorld.name, () => {
       },
     ])
   })
+
+  test('Scenario: a placeholder that is no longer one empty text block is a tree apart from an empty working copy', () => {
+    const world = createWorld()
+
+    world.serverHasCopy('an empty list')
+    world.startEditors()
+    world.load('Editor A')
+    world.endFirstCommit('Editor A')
+
+    expect(world.takeTreeMismatches()).toEqual([])
+
+    world
+      .getEditor('Editor A')
+      .document.getValue()
+      .splice(0, 1, {
+        _type: 'block',
+        _key: 'a-k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'a-k1', text: 'hidden', marks: []}],
+      })
+
+    expect(world.takeTreeMismatches()).toEqual([
+      {
+        editor: 'Editor A',
+        after: 'the step',
+        tree: 'B _key="a-k0": hidden',
+        workingCopy: '',
+      },
+    ])
+  })
 })

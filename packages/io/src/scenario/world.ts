@@ -1195,8 +1195,10 @@ export function createEditorWithIo({
 
 /**
  * The editor's tree and io's working copy, when they differ. No field and an
- * empty list are the same tree, the placeholder. An editor that has closed
- * has no tree to compare.
+ * empty list are the same tree, the placeholder: one empty text block with
+ * the key the document reports for it. Anything else the document shows
+ * while it reports a placeholder is compared as content. An editor that has
+ * closed has no tree to compare.
  */
 function findTreeMismatch(
   {document, io}: {document: FakeDocument; io: Io},
@@ -1206,8 +1208,12 @@ function findTreeMismatch(
     return undefined
   }
 
+  const value = document.getValue()
+  const placeholderKey = document.getPlaceholderKey()
   const tree =
-    document.getPlaceholderKey() === undefined ? document.getValue() : []
+    placeholderKey !== undefined && isPlaceholder(value, placeholderKey)
+      ? []
+      : value
   const workingCopy = io.getWorkingCopy() ?? []
 
   return isEqual(tree, workingCopy)
@@ -1217,6 +1223,27 @@ function findTreeMismatch(
         tree: formatTextspec(tree, {keys: true}),
         workingCopy: formatTextspec(workingCopy, {keys: true}),
       }
+}
+
+function isPlaceholder(
+  value: Array<PortableTextBlock>,
+  placeholderKey: string,
+): boolean {
+  const [block, ...rest] = value
+  const children: unknown = block ? Reflect.get(block, 'children') : undefined
+  const [child]: Array<unknown> = Array.isArray(children) ? children : []
+
+  return (
+    rest.length === 0 &&
+    block?._key === placeholderKey &&
+    block._type === 'block' &&
+    Array.isArray(children) &&
+    children.length === 1 &&
+    typeof child === 'object' &&
+    child !== null &&
+    Reflect.get(child, '_type') === 'span' &&
+    Reflect.get(child, 'text') === ''
+  )
 }
 
 const namedTransactionPrefixes: Record<NamedTransaction, string> = {
