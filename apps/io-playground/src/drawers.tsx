@@ -283,7 +283,9 @@ function EventDetails({
               'means',
               event.reason === 'no target'
                 ? 'the unsent changes had nowhere to go: their target is gone'
-                : 'the editor closed while sending was blocked by a rejection',
+                : event.reason === 'rejected'
+                  ? 'the resync dropped the batch the server refused'
+                  : 'the editor closed while sending was blocked by a rejection',
             ],
             ['patches', plural(event.patchCount, 'patch')],
           ]}
@@ -304,6 +306,8 @@ const errorMeanings = {
   'patch failed': "a patch from the host couldn't be evaluated at all",
   'echo mismatch':
     "the editor's own transaction came back with a patch it never sent, above a path its batch touched: the host widened its work",
+  'invalid content':
+    "a transaction left content the editor can't show: a block without a key or type, children that aren't a list of spans, or text that isn't a string",
 }
 
 function TransactionDetails({

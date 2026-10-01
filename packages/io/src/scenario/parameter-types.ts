@@ -1,5 +1,6 @@
 import {createParameterType} from 'racejar'
 import type {IoEditorStatus, IoEditorSync} from '../editor'
+import type {WorkDropped} from '../types'
 import type {EditorName, ServerCopyName} from './world'
 
 export type BatchReference = {name: EditorName; batchNumber: number}
@@ -40,5 +41,9 @@ export const parameterTypes = [
   createParameterType<IoEditorSync>({
     name: 'sync',
     matcher: /"(synced|saving|blocked|out of step)"/,
+  }),
+  createParameterType<WorkDropped['reason']>({
+    name: 'dropReason',
+    matcher: /"(no target|closed while blocked|rejected)"/,
   }),
 ]

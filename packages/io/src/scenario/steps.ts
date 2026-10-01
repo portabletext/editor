@@ -7,7 +7,7 @@ import {
   formatTextspec,
 } from '../document'
 import type {IoEditorStatus, IoEditorSync} from '../editor'
-import type {ChangeEvent} from '../types'
+import type {ChangeEvent, WorkDropped} from '../types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference} from './parameter-types'
 import {
@@ -358,6 +358,22 @@ export const stepDefinitions = [
         worldEditor.checkedWorkDroppedCount,
       )
       worldEditor.checkedWorkDroppedCount = workDroppedCount
+    },
+  ),
+  Then(
+    '{editor} has been told work was dropped, with reason {dropReason}',
+    (context: Context, name: EditorName, reason: WorkDropped['reason']) => {
+      const worldEditor = context.world.getEditor(name)
+      const {workDropped} = worldEditor.heard
+
+      checkEqual(
+        `Whether ${name} has reported dropped work with reason "${reason}"`,
+        workDropped
+          .slice(worldEditor.checkedWorkDroppedCount)
+          .some((dropped) => dropped.reason === reason),
+        true,
+      )
+      worldEditor.checkedWorkDroppedCount = workDropped.length
     },
   ),
   Then(

@@ -338,7 +338,7 @@ function narrateEditor({
       after.inFlight?.batchNumber !== before.inFlight.batchNumber
     ) {
       parts.push(
-        `let go of batch ${before.inFlight.batchNumber}, in flight, by the outcome the host looked up in the transaction history`,
+        `let go of batch ${before.inFlight.batchNumber}, in flight, by the outcome the host found: in the copy if it landed, back with the unsent changes if it didn't`,
       )
     }
 
@@ -409,7 +409,9 @@ function narrateEditor({
             ? event.patchCount === 1
               ? 'its target is gone'
               : 'their targets are gone'
-            : 'it closed while sending was blocked'
+            : event.reason === 'rejected'
+              ? 'the resync dropped the rejected batch'
+              : 'it closed while sending was blocked'
         }.`,
       )
     }

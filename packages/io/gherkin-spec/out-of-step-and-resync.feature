@@ -184,12 +184,12 @@ Feature: Out of step and resync
     When the server refuses Editor A's batch 1
     Then the server has "B: foo"
     When Editor A is resynced with the outcome of batch 1
-    Then Editor A shows "B: fooy|"
+    Then Editor A shows "B: fooxy|"
     And Editor A has sent batch 2
     When the server receives Editor A's batch 2
-    Then the server has "B: fooy"
+    Then the server has "B: fooxy"
     When Editor A's batch 2 comes back
-    Then Editor A shows "B: fooy|"
+    Then Editor A shows "B: fooxy|"
     And Editor A is in step
     And Editor A's sync is "synced"
 

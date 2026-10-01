@@ -899,7 +899,7 @@ describe(createIoEditor.name, () => {
     ])
   })
 
-  test('a resync reports unsent changes that no longer have a target as dropped work', () => {
+  test('a resync reports the rejected batch it drops and unsent changes that no longer have a target as dropped work', () => {
     const {editor, heard} = createLoadedEditor('B: foo;;B: bar|')
     const [fooBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
@@ -915,6 +915,17 @@ describe(createIoEditor.name, () => {
       '1 unsent patches had no target after the resync and did nothing',
     ])
     expect(heard.workDropped).toEqual([
+      {
+        patches: [
+          diffMatchPatch('bar', 'barx', [
+            {_key: 'd-k2'},
+            'children',
+            {_key: 'd-k3'},
+            'text',
+          ]),
+        ],
+        reason: 'rejected',
+      },
       {
         patches: [
           diffMatchPatch('barx', 'barxy', [
@@ -1111,7 +1122,7 @@ describe(createIoEditor.name, () => {
     })
   })
 
-  test('a resync while a batch is in flight is refused without its outcome, and with it drops the batch and re-applies the pending changes', () => {
+  test('a resync while a batch is in flight is refused without its outcome, and with it takes the copy, and a batch not applied rejoins the pending changes ahead of the rest', () => {
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
     const results = (
       [
@@ -1160,13 +1171,19 @@ describe(createIoEditor.name, () => {
         warnings: [
           'Refused a resync while batch "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
         ],
-        screen: 'B: fooy|',
+        screen: 'B: fooxy|',
         rev: 'r2',
         batches: [
           {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
-          {id: 'A-2', patches: [diffMatchPatch('foox', 'fooxy', textPath)]},
+          {
+            id: 'A-2',
+            patches: [
+              diffMatchPatch('foo', 'foox', textPath),
+              diffMatchPatch('foox', 'fooxy', textPath),
+            ],
+          },
         ],
-        inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
+        inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 2},
       },
     ])
   })

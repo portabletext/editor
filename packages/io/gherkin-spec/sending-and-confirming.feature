@@ -81,6 +81,7 @@ Feature: Sending and confirming
     And Editor A has sent nothing new
     When Editor A is resynced
     Then Editor A shows "B: fooyz|"
+    And Editor A has been told work was dropped, with reason "rejected"
     And Editor A has sent batch 2
     When the server receives Editor A's batch 2
     Then the server has "B: fooyz"

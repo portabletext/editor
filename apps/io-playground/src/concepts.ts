@@ -81,7 +81,7 @@ export const concepts = [
   {
     name: 'resync',
     definition:
-      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top. Only when a person asks to load the saved version are the unsent changes thrown away. While a batch is in flight, the host first looks up in the transaction history whether it landed and passes that outcome along, and the editor lets go of the batch.',
+      'The host gives the editor a fresh copy of what the server has, and the editor puts its unsent changes back on top. Only when a person asks to load the saved version are the unsent changes thrown away. While a batch is in flight, the host first finds out whether it landed and passes that outcome along: a batch that landed is in the copy, and the changes of one that did not go back with the unsent ones. A rejected batch is dropped, and the editor says so.',
   },
   {
     name: 'sync',
@@ -105,12 +105,12 @@ export const concepts = [
   {
     name: 'error',
     definition:
-      "An event the editor emits when it can't trust its copy of the server anymore, which puts it out of step: a transaction is missing, a key collides, a patch can't be applied, or its own batch came back rewritten (echo mismatch).",
+      "An event the editor emits when it can't trust its copy of the server anymore, which puts it out of step: a transaction is missing, a key collides, a patch can't be applied, its own batch came back rewritten (echo mismatch), or a transaction left content it can't show (invalid content).",
   },
   {
     name: 'work dropped',
     definition:
-      "An event the editor emits when it gives up on the user's unsent changes: their target is gone, or the editor closed while sending was blocked.",
+      "An event the editor emits when it gives up on the user's unsent changes: their target is gone, the editor closed while sending was blocked, or a resync dropped the rejected batch.",
   },
   {
     name: 'warning',

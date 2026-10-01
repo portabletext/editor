@@ -260,6 +260,12 @@ export function createIoEditor(options: {
       return
     }
 
+    const notApplied =
+      inFlight && incoming.outcomes?.[inFlight.id] === 'not applied'
+        ? inFlight
+        : undefined
+    const droppedRejected = rejected
+
     base = {value: incoming.value, rev: incoming.rev}
     inFlight = undefined
     stopInFlightWarning()
@@ -269,12 +275,25 @@ export function createIoEditor(options: {
     history = []
     releaseHeld()
 
+    if (notApplied) {
+      pending = [notApplied.patches, ...pending]
+    }
+
     if (incoming.discardUnsent) {
       pending = []
     }
 
     queueKeyRepair(incoming.value)
     updateScreen()
+
+    if (droppedRejected) {
+      emit({
+        type: 'work dropped',
+        patches: droppedRejected.patches,
+        reason: 'rejected',
+      })
+    }
+
     reportDroppedPending('the resync')
     flush()
   }

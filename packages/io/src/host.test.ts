@@ -252,7 +252,7 @@ describe(createPassThroughHost.name, () => {
       {
         outcomes: [{'A-1': 'not applied'}],
         warnings: [],
-        screen: 'B: fooy|',
+        screen: 'B: fooxy|',
         inFlight: 'A-2',
       },
     ])
