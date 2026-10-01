@@ -31,9 +31,9 @@ describe(applicableActions.name, () => {
       'resync discarding': {enabled: false, why: 'nothing unsent to discard'},
       'load': {
         enabled: false,
-        why: 'load is only accepted while the first load is claimed',
+        why: 'load is only accepted in the first commit: after ready it throws',
       },
-      'release claim': {enabled: false, why: 'no claim is pending'},
+      'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
     expect(editorPrompts(actions)).toEqual([])
   })
@@ -78,9 +78,9 @@ describe(applicableActions.name, () => {
       },
       'load': {
         enabled: false,
-        why: 'load is only accepted while the first load is claimed',
+        why: 'load is only accepted in the first commit: after ready it throws',
       },
-      'release claim': {enabled: false, why: 'no claim is pending'},
+      'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
     expect(editorPrompts(actions)).toEqual([])
   })
@@ -118,9 +118,9 @@ describe(applicableActions.name, () => {
       },
       'load': {
         enabled: false,
-        why: 'load is only accepted while the first load is claimed',
+        why: 'load is only accepted in the first commit: after ready it throws',
       },
-      'release claim': {enabled: false, why: 'no claim is pending'},
+      'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
     expect(editorPrompts(actions)).toEqual([
       "Editor A's batch 1 was rejected: sending is blocked until a resync",
@@ -195,13 +195,13 @@ describe(applicableActions.name, () => {
       'resync discarding': {enabled: false, why: 'nothing unsent to discard'},
       'load': {
         enabled: false,
-        why: 'load is only accepted while the first load is claimed',
+        why: 'load is only accepted in the first commit: after ready it throws',
       },
-      'release claim': {enabled: false, why: 'no claim is pending'},
+      'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
   })
 
-  test('a claimed first load suggests loading or releasing the claim', () => {
+  test('an editor in its first commit suggests loading or ending the commit', () => {
     const snapshot = worldSnapshot({
       editorA: editorSnapshot({status: 'loading'}),
       editorB: editorSnapshot({status: 'loading'}),
@@ -229,21 +229,17 @@ describe(applicableActions.name, () => {
       'load': {
         enabled: true,
         suggested:
-          "Editor A's first load is claimed: load the first content, or release the claim",
+          'Editor A is in its first commit: load the first content, or end the commit to start empty',
       },
-      'release claim': {
+      'end first commit': {
         enabled: true,
         suggested:
-          "Editor A's first load is claimed: load the first content, or release the claim",
+          'Editor A is in its first commit: load the first content, or end the commit to start empty',
       },
     })
     expect(editorPrompts(actions)).toEqual([
-      "Editor A's first load is claimed: load the first content, or release the claim",
+      'Editor A is in its first commit: load the first content, or end the commit to start empty',
     ])
-    expect(applicableActions(snapshot, 'Editor B')['release claim']).toEqual({
-      enabled: false,
-      why: "the steps release Editor A's claim only",
-    })
   })
 
   test('an unmounted editor refuses everything', () => {
@@ -271,7 +267,7 @@ describe(applicableActions.name, () => {
       'resync': {enabled: false, why: 'the editor is unmounted'},
       'resync discarding': {enabled: false, why: 'the editor is unmounted'},
       'load': {enabled: false, why: 'the editor is unmounted'},
-      'release claim': {enabled: false, why: 'the editor is unmounted'},
+      'end first commit': {enabled: false, why: 'the editor is unmounted'},
     })
     expect(editorPrompts(actions)).toEqual([])
   })

@@ -38,11 +38,8 @@ export const stepDefinitions = [
   Given("the server's block has no key", (context: Context) => {
     context.world.removeServerBlockKey()
   }),
-  Given('an editor that claims the first load', (context: Context) => {
-    context.world.startEditors({claimLoad: true})
-  }),
-  Given("an editor that doesn't claim the first load", (context: Context) => {
-    context.world.startEditors({claimLoad: false})
+  Given('the editors are in their first commit', (context: Context) => {
+    context.world.startEditors()
   }),
   Given('hosts that fold batches into shared requests', (context: Context) => {
     context.world.setHostShape('folding')
@@ -185,8 +182,8 @@ export const stepDefinitions = [
   When('{editor} is loaded', (context: Context, name: EditorName) => {
     context.world.load(name)
   }),
-  When('the claim is released', (context: Context) => {
-    context.world.releaseClaim('Editor A')
+  When("{editor}'s first commit ends", (context: Context, name: EditorName) => {
+    context.world.endFirstCommit(name)
   }),
   When('{editor} becomes read-only', (context: Context, name: EditorName) => {
     context.world.becomeReadOnly(name)
@@ -465,6 +462,17 @@ export const stepDefinitions = [
       heard.mutations.length,
       resync.batchCount,
     )
+  }),
+  Then('loading {editor} throws', (context: Context, name: EditorName) => {
+    let threw = false
+
+    try {
+      context.world.load(name)
+    } catch {
+      threw = true
+    }
+
+    checkEqual(`Whether loading ${name} throws`, threw, true)
   }),
   Then(
     "{editor}'s status is {status}",

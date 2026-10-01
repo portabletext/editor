@@ -15,9 +15,9 @@ describe(compileScenarios.name, () => {
     }).toEqual({
       feature: 'Loading and empty',
       names: [
-        "An editor that doesn't claim the first load starts ready and empty, and a resync fills it",
-        'An editor that claims the first load waits for it',
-        'Releasing the claim makes the editor ready and empty',
+        'A load in the first commit makes the editor ready with the content, and no change',
+        'An editor nobody loads is ready and empty when its first commit ends, and a resync fills it',
+        'A load after the editor is ready throws',
         'An empty field shows the placeholder, and a lone empty block is real content (the server has no document)',
         'An empty field shows the placeholder, and a lone empty block is real content (the server has no field)',
         'An empty field shows the placeholder, and a lone empty block is real content (the server has an empty list)',
@@ -127,8 +127,9 @@ describe(compileScenarios.name, () => {
         'Feature: Free play',
         '  Scenario: foo',
         '    Given the server has an empty list',
-        '    And an editor that claims the first load',
+        '    And the editors are in their first commit',
         '    When Editor A is loaded',
+        "    And Editor A's first commit ends",
         '    Then the server has an empty list',
         '    And the server has no field',
       ].join('\n'),
@@ -146,6 +147,7 @@ describe(compileScenarios.name, () => {
     }
 
     expect(outcomes).toEqual([
+      'passed',
       'passed',
       'passed',
       'passed',

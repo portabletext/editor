@@ -137,16 +137,24 @@ function narrateEditor({
     if (before.status === 'loading' && after.status === 'ready') {
       screenExplained = true
       sentences.push(
-        before.base.rev === after.base.rev &&
-          before.base.textspec === after.base.textspec
-          ? `${name} is ready without a load.`
-          : `${name} loaded the server's copy at ${describeRev(after.base.rev)} and is ready, showing \`${after.screen}\`.`,
+        after.base.rev === null && after.base.textspec === null
+          ? `${name}'s first commit ended and it is ready, empty.`
+          : `${name}'s first commit ended and it is ready, showing \`${after.screen}\` from the server's copy at ${describeRev(after.base.rev)}.`,
       )
     } else if (after.status === 'unmounted') {
       sentences.push(`${name} closed and unmounted.`)
     } else {
       sentences.push(`${name} is now ${after.status}.`)
     }
+  } else if (
+    after.status === 'loading' &&
+    (before.base.rev !== after.base.rev ||
+      before.base.textspec !== after.base.textspec)
+  ) {
+    screenExplained = true
+    sentences.push(
+      `${name} took the server's copy at ${describeRev(after.base.rev)} as its first content, and becomes ready with it when its first commit ends.`,
+    )
   }
 
   for (const reply of beforeNetwork.replies) {

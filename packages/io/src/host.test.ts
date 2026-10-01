@@ -319,7 +319,6 @@ function createHostedEditor(
     id: 'A',
     keyGenerator: createTestKeyGenerator('a-'),
     clock,
-    claimLoad: true,
   })
   const heard = listenTo(editor)
   const {value, caret} = parseTextspec(
@@ -356,8 +355,8 @@ function createHostedEditor(
     foldBatches,
   })
 
-  editor.mount()
   host.load()
+  editor.mount()
 
   if (caret) {
     editor.document.setCaret(caret)

@@ -35,4 +35,4 @@ pnpm --filter @portabletext/io test:unit
 
 ## Not modeled
 
-Batching by time (a change is sent as soon as nothing is in flight), the key-matched reconciler (the screen is recomputed wholesale), operations in `change` events (the model carries patches as a stand-in), redo, several load claims, and selection beyond a caret in one block.
+Batching by time (a change is sent as soon as nothing is in flight), the key-matched reconciler (the screen is recomputed wholesale), operations in `change` events (the model carries patches as a stand-in), redo, and selection beyond a caret in one block.

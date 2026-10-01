@@ -26,10 +26,7 @@ import {NarrationLog} from './narration-log'
 import {ActionButton, Button, Prompts, Section, TextInput} from './ui'
 
 type Setup = {
-  mode:
-    | 'the document is'
-    | 'editors claim the first load'
-    | "editors don't claim"
+  mode: 'the document is' | 'editors in their first commit'
   textspec: string
   serverCopy: 'textspec' | ServerCopyName
   hosts: HostShape
@@ -44,8 +41,7 @@ type FreePlay = {
 
 const setupModes: Array<Setup['mode']> = [
   'the document is',
-  'editors claim the first load',
-  "editors don't claim",
+  'editors in their first commit',
 ]
 
 const hostShapes: Record<HostShape, {label: string; step: string | null}> = {
@@ -439,14 +435,12 @@ function EditorControls({
           >
             load
           </ActionButton>
-          {name === 'Editor A' ? (
-            <ActionButton
-              applicability={actions['release claim']}
-              onClick={() => onStep('the claim is released')}
-            >
-              release claim
-            </ActionButton>
-          ) : null}
+          <ActionButton
+            applicability={actions['end first commit']}
+            onClick={() => onStep(`${name}'s first commit ends`)}
+          >
+            end first commit
+          </ActionButton>
         </div>
       </div>
     </Section>
@@ -499,8 +493,6 @@ function editorSetupSteps(setup: Setup): Array<string> {
     setup.serverCopy === 'textspec'
       ? `the server has ${quoted(setup.textspec)}`
       : `the server has ${setup.serverCopy}`,
-    setup.mode === 'editors claim the first load'
-      ? 'an editor that claims the first load'
-      : "an editor that doesn't claim the first load",
+    'the editors are in their first commit',
   ]
 }

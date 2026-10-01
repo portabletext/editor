@@ -24,7 +24,7 @@ export type EditorAction =
   | 'resync'
   | 'resync discarding'
   | 'load'
-  | 'release claim'
+  | 'end first commit'
 
 export type EditorApplicability = Record<EditorAction, Applicability>
 
@@ -86,7 +86,7 @@ export function applicableActions(
       'resync': noEditor,
       'resync discarding': noEditor,
       'load': noEditor,
-      'release claim': noEditor,
+      'end first commit': noEditor,
     }
   }
 
@@ -123,13 +123,16 @@ export function applicableActions(
               enabled: true,
               why: `the user's choice: load the saved version and throw away ${editor.pending.length} unsent change(s)`,
             },
-    'load':
-      editor.status === 'unmounted'
-        ? disabled(whyUnmounted)
-        : editor.status === 'loading'
-          ? {enabled: true, suggested: loadPrompt(editorName)}
-          : disabled('load is only accepted while the first load is claimed'),
-    'release claim': releaseClaimApplicability(editorName, editor),
+    'load': firstCommitApplicability(
+      editorName,
+      editor,
+      'load is only accepted in the first commit: after ready it throws',
+    ),
+    'end first commit': firstCommitApplicability(
+      editorName,
+      editor,
+      'the first commit has ended',
+    ),
   }
 }
 
@@ -215,29 +218,23 @@ function resyncSuggestion(
   return {}
 }
 
-function releaseClaimApplicability(
+function firstCommitApplicability(
   editorName: EditorName,
   editor: EditorSnapshot,
+  whyReady: string,
 ): Applicability {
   if (editor.status === 'unmounted') {
     return disabled(whyUnmounted)
   }
 
   if (editor.status !== 'loading') {
-    return disabled('no claim is pending')
+    return disabled(whyReady)
   }
 
-  if (editorName !== 'Editor A') {
-    return disabled("the steps release Editor A's claim only")
+  return {
+    enabled: true,
+    suggested: `${editorName} is in its first commit: load the first content, or end the commit to start empty`,
   }
-
-  return {enabled: true, suggested: loadPrompt(editorName)}
-}
-
-function loadPrompt(editorName: EditorName): string {
-  return editorName === 'Editor A'
-    ? `${editorName}'s first load is claimed: load the first content, or release the claim`
-    : `${editorName}'s first load is claimed: load the first content`
 }
 
 function linkApplicability(

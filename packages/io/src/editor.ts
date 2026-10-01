@@ -33,6 +33,7 @@ export type Clock = {
   schedule: (delay: number, callback: () => void) => () => void
 }
 
+/** `'loading'` only until `mount` returns. */
 export type IoEditorStatus = 'loading' | 'ready' | 'unmounted'
 
 /**
@@ -92,12 +93,15 @@ export type IoEditor = {
   on: (listener: (event: IoEditorEvent) => void) => () => void
 
   /**
-   * Ends the first commit. An editor that doesn't claim the first load
-   * becomes ready here.
+   * Ends the first commit: the editor becomes ready with the content of the
+   * last `load`, or empty.
    */
   mount: () => void
+  /**
+   * The first content, accepted only before `mount`. A second `load` replaces
+   * the first.
+   */
   load: (load: Load) => void
-  releaseClaim: () => void
   resync: (resync: Resync) => void
   transaction: (transaction: Transaction) => void
   mutationSent: (mutationSent: MutationSent) => void
@@ -157,7 +161,6 @@ export function createIoEditor(options: {
   id: string
   keyGenerator: () => string
   clock: Clock
-  claimLoad?: boolean
 }): IoEditor {
   const {keyGenerator, clock} = options
   const listeners = new Set<(event: IoEditorEvent) => void>()
@@ -165,7 +168,6 @@ export function createIoEditor(options: {
   const emittedBatchIds = new Set<string>()
 
   let status: IoEditorStatus = 'loading'
-  let mounted = false
   let base: Load = {value: undefined, rev: undefined}
   let readOnly = false
   let outOfStep = false
@@ -178,7 +180,6 @@ export function createIoEditor(options: {
   let history: Array<HistoryEntry> = []
   let cancelHeldTimeout: (() => void) | undefined
   let cancelInFlightWarning: (() => void) | undefined
-  let cancelLoadWarning: (() => void) | undefined
   const droppedPatches = new WeakSet<Patch>()
 
   function emit(event: IoEditorEvent) {
@@ -192,25 +193,17 @@ export function createIoEditor(options: {
   }
 
   function mount() {
-    if (mounted) {
+    if (status === 'ready') {
       throw new Error('The editor is already mounted')
     }
 
-    mounted = true
-
-    if (!options.claimLoad) {
-      becomeReady()
-      return
+    if (status === 'unmounted') {
+      throw new Error('The editor is unmounted')
     }
 
-    if (status === 'loading') {
-      cancelLoadWarning = clock.schedule(livenessTimeout, () => {
-        cancelLoadWarning = undefined
-        warn(
-          `The claimed first load hasn't arrived after ${livenessTimeout} ms`,
-        )
-      })
-    }
+    status = 'ready'
+    emit({type: 'ready'})
+    flush()
   }
 
   function load(incoming: Load) {
@@ -219,28 +212,16 @@ export function createIoEditor(options: {
       return
     }
 
-    if (!options.claimLoad || status !== 'loading') {
-      throw new Error('`load` is only accepted while the first load is claimed')
+    if (status !== 'loading') {
+      throw new Error(
+        '`load` is only accepted in the first commit, before the editor is ready',
+      )
     }
 
     base = {value: incoming.value, rev: incoming.rev}
+    pending = []
     queueKeyRepair(incoming.value)
     document.setValue(deriveScreen())
-    becomeReady()
-  }
-
-  function releaseClaim() {
-    if (options.claimLoad && status === 'loading') {
-      becomeReady()
-    }
-  }
-
-  function becomeReady() {
-    cancelLoadWarning?.()
-    cancelLoadWarning = undefined
-    status = 'ready'
-    emit({type: 'ready'})
-    flush()
   }
 
   function resync(incoming: Resync) {
@@ -763,8 +744,6 @@ export function createIoEditor(options: {
     status = 'unmounted'
     releaseHeld()
     stopInFlightWarning()
-    cancelLoadWarning?.()
-    cancelLoadWarning = undefined
   }
 
   function flush() {
@@ -961,7 +940,6 @@ export function createIoEditor(options: {
     },
     mount,
     load,
-    releaseClaim,
     resync,
     transaction,
     mutationSent,

@@ -221,7 +221,8 @@ export const heldTransactionTimeout = 10_000
 /**
  * One server, one network and two editors, each with a pass-through host.
  * The server's initial document is set up first, and the editors are created
- * on demand, so steps can shape the document before anyone loads it.
+ * on demand, so steps can shape the document before anyone loads it. A
+ * created editor is in its first commit until a step ends it.
  */
 export function createWorld() {
   const documentKeyGenerator = createTestKeyGenerator('d-')
@@ -232,7 +233,7 @@ export function createWorld() {
   const namedTransactions = new Map<string, NamedTransaction>()
   const namedTransactionCounts = new Map<NamedTransaction, number>()
 
-  function startEditors({claimLoad}: {claimLoad: boolean}): Setup {
+  function startEditors(): Setup {
     const server = createServer({
       documentId: 'document',
       document: initialDocument,
@@ -243,14 +244,12 @@ export function createWorld() {
         name: 'Editor A',
         server,
         network,
-        claimLoad,
         hostShape,
       }),
       'Editor B': createWorldEditor({
         name: 'Editor B',
         server,
         network,
-        claimLoad,
         hostShape,
       }),
     }
@@ -488,14 +487,14 @@ export function createWorld() {
       )
       initialDocument = {value}
 
-      for (const {editor, host} of Object.values(
-        startEditors({claimLoad: true}).editors,
-      )) {
+      for (const {editor, host} of Object.values(startEditors().editors)) {
         host.load()
 
         if (caret) {
           editor.document.setCaret(caret)
         }
+
+        editor.mount()
       }
     },
     serverHas: (textspec: string) => {
@@ -695,8 +694,8 @@ export function createWorld() {
     load: (name: EditorName) => {
       getEditor(name).host.load()
     },
-    releaseClaim: (name: EditorName) => {
-      getEditor(name).editor.releaseClaim()
+    endFirstCommit: (name: EditorName) => {
+      getEditor(name).editor.mount()
     },
 
     type: (name: EditorName, text: string) => {
@@ -741,20 +740,17 @@ function createWorldEditor({
   name,
   server,
   network,
-  claimLoad,
   hostShape,
 }: {
   name: EditorName
   server: Server
   network: Network<MutationBatch>
-  claimLoad: boolean
   hostShape: HostShape
 }): WorldEditor {
   const editor = createIoEditor({
     id: name === 'Editor A' ? 'A' : 'B',
     keyGenerator: createTestKeyGenerator(name === 'Editor A' ? 'a-' : 'b-'),
     clock: network.clock,
-    claimLoad,
   })
   const heard = listenTo(editor)
   const mutationsSent: Array<MutationSent> = []
@@ -787,8 +783,6 @@ function createWorldEditor({
     receiveReply: (reply) => host.reportRejected(reply.batchId),
     receiveSaveTaken: host.reportSaveTaken,
   })
-  editor.mount()
-
   return {
     editor,
     host,

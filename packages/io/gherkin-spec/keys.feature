@@ -76,8 +76,9 @@ Feature: Keys
   Scenario: Content received without keys is repaired, and the repair goes out in the next batch
     Given the server has "B: foo"
     And the server's block has no key
-    And an editor that claims the first load
+    And the editors are in their first commit
     When Editor A is loaded
+    And Editor A's first commit ends
     Then Editor A shows "B: foo"
     And every block in Editor A has a unique key
     And Editor A has sent batch 1

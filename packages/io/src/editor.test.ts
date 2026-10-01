@@ -830,7 +830,6 @@ describe(createIoEditor.name, () => {
       id: 'A',
       keyGenerator: createTestKeyGenerator('a-'),
       clock,
-      claimLoad: true,
     })
     const heard = listenTo(editor)
     const {value} = parseTextspec(
@@ -840,8 +839,8 @@ describe(createIoEditor.name, () => {
     const keylessBlock = {...value[1]}
     Reflect.deleteProperty(keylessBlock, '_key')
 
-    editor.mount()
     editor.load({value: [value[0], keylessBlock], rev: 'r1'})
+    editor.mount()
 
     expect(heard.mutations).toEqual([
       {
@@ -879,24 +878,45 @@ describe(createIoEditor.name, () => {
     expect(heard.warnings.length).toEqual(2)
   })
 
-  test("a claimed load that hasn't arrived after 10 seconds warns", () => {
+  test('a second load in the first commit replaces the first, repairs included, and a load after the editor is ready throws', () => {
     const {clock} = createNetwork()
     const editor = createIoEditor({
       id: 'A',
       keyGenerator: createTestKeyGenerator('a-'),
       clock,
-      claimLoad: true,
     })
     const heard = listenTo(editor)
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B: bar',
+    ).value
+    const keylessBlock = {...fooBlock}
+    Reflect.deleteProperty(keylessBlock, '_key')
 
+    editor.load({value: [keylessBlock], rev: 'r1'})
+    editor.load({value: [barBlock], rev: 'r2'})
+    const statusBeforeMount = editor.getStatus()
     editor.mount()
-    clock.advance(10_000)
-    editor.load({value: undefined, rev: undefined})
-    clock.advance(100_000)
 
-    expect(heard.warnings).toEqual([
-      "The claimed first load hasn't arrived after 10000 ms",
-    ])
+    expect({
+      statusBeforeMount,
+      status: editor.getStatus(),
+      screen: editor.document.toTextspec({keys: true}),
+      rev: editor.getBase().rev,
+      mutations: heard.mutations,
+      changes: heard.changes,
+    }).toEqual({
+      statusBeforeMount: 'loading',
+      status: 'ready',
+      screen: 'B _key="d-k2": |bar',
+      rev: 'r2',
+      mutations: [],
+      changes: [],
+    })
+    expect(() => editor.load({value: [fooBlock], rev: 'r3'})).toThrow(
+      '`load` is only accepted in the first commit, before the editor is ready',
+    )
+    expect(editor.document.toTextspec()).toEqual('B: |bar')
   })
 
   test('a resync reports the rejected batch it drops and unsent changes that no longer have a target as dropped work', () => {
@@ -1331,26 +1351,13 @@ describe(createIoEditor.name, () => {
     expect(heard.changes).toEqual([])
   })
 
-  test('`ready` fires once, whether the first load is claimed or not', () => {
+  test('`ready` fires once, at the end of `mount`, with a load or without one', () => {
     const {clock} = createNetwork()
-    const readyCounts = [
-      {claimLoad: false, finish: () => {}},
-      {
-        claimLoad: true,
-        finish: (editor: ReturnType<typeof createIoEditor>) =>
-          editor.load({value: undefined, rev: undefined}),
-      },
-      {
-        claimLoad: true,
-        finish: (editor: ReturnType<typeof createIoEditor>) =>
-          editor.releaseClaim(),
-      },
-    ].map(({claimLoad, finish}) => {
+    const results = [false, true].map((loaded) => {
       const editor = createIoEditor({
         id: 'A',
         keyGenerator: createTestKeyGenerator('a-'),
         clock,
-        claimLoad,
       })
       const statuses: Array<string> = []
 
@@ -1359,14 +1366,31 @@ describe(createIoEditor.name, () => {
           statuses.push(editor.getStatus())
         }
       })
-      editor.mount()
-      finish(editor)
-      editor.releaseClaim()
 
-      return statuses
+      if (loaded) {
+        editor.load({
+          value: parseTextspec(
+            {keyGenerator: createTestKeyGenerator('d-')},
+            'B: foo',
+          ).value,
+          rev: 'r1',
+        })
+      }
+
+      const statusesBeforeMount = [...statuses]
+      editor.mount()
+
+      return {
+        statusesBeforeMount,
+        statuses,
+        screen: editor.document.toTextspec(),
+      }
     })
 
-    expect(readyCounts).toEqual([['ready'], ['ready'], ['ready']])
+    expect(results).toEqual([
+      {statusesBeforeMount: [], statuses: ['ready'], screen: 'B: |'},
+      {statusesBeforeMount: [], statuses: ['ready'], screen: 'B: |foo'},
+    ])
   })
 })
 
@@ -1376,7 +1400,6 @@ function createLoadedEditor(textspec: string | undefined) {
     id: 'A',
     keyGenerator: createTestKeyGenerator('a-'),
     clock,
-    claimLoad: true,
   })
   const heard = listenTo(editor)
   const {value, caret} =
@@ -1384,8 +1407,8 @@ function createLoadedEditor(textspec: string | undefined) {
       ? {value: undefined, caret: undefined}
       : parseTextspec({keyGenerator: createTestKeyGenerator('d-')}, textspec)
 
-  editor.mount()
   editor.load({value, rev: 'r1'})
+  editor.mount()
 
   if (caret) {
     editor.document.setCaret(caret)
