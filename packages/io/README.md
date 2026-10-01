@@ -42,15 +42,17 @@ io listens to `change` (a local one carries the action's patches, which io books
 3. A patch on a block unlanded work also touched becomes a `set` of the whole block from the new working copy. The server applied the editor's work after the patch, and the screen applied it before.
 4. An insert into or removal from a list (the block list or a block's `children`) that unlanded work also inserted into or removed from becomes the list lined up against the new working copy key by key: keyed `unset`s, keyed `insert`s next to a sibling the list has by then, and a `set` of an item that stays but differs. Two inserts after the same block land in different orders on the two sides.
 
-A pending insert io gave a new key, because the base now has its key, comes first as a keyed `set` of `_key`. A transaction that moved the base and left the working copy as it was comes with empty `patches`, for the editor's history. The instructions are for the editor's tree only and never reach the server.
+A transaction that moved the base and left the working copy as it was comes with empty `patches`, for the editor's history. The instructions are for the editor's tree only and never reach the server.
 
 After every `apply` and every local change, the editor's tree equals io's working copy, the placeholder aside.
 
 The model's undo ledger stands in for the editor's history until that design is done, and it is not part of `EditorForIo`. io reads each undo step from the local change and the working copy, and computes the revert against its working copy. `createIo` takes an `applyLocalEdit(patches)` callback for it, a test seam the world wires to the fake document's user-action path (the same path typing takes). The document applies the revert as the user's own edit and reports it as a local `change`, or refuses it while read-only.
 
-### Repair keys
+### Keys
 
 A key io mints while repairing a received whole value (a missing or duplicate `_key` in `load` or `resync`) comes from the value's revision and the repaired node's index path: the 32-bit FNV-1a hash of the revision and the path segments joined by `/` (`r1/0`, `r1/0/children/1`), as eight hex digits. When the value already has that key, io hashes again with `#1`, `#2` and so on appended. Two editors repairing the same defect of the same revision mint the same key, so their repairs agree. Keys for local inserts come from the editor's key generator, and the world gives each editor's generator its own prefix (`a-`, `b-`), so the two never mint the same key by accident.
+
+Applied work is never re-keyed in place. A transaction that gives the base a block key that a pending insert also inserts emits `error` with reason `duplicate key`, as one that collides with the batch in flight or the rejected batch does, and the editor is out of step. The resync gives the pending insert a new key from the key generator while it re-applies the pending changes, so the caret, which stays with its key, may land in the other writer's block.
 
 ## Layout
 

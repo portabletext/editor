@@ -150,12 +150,17 @@ describe(createIo.name, () => {
     })
   })
 
-  test('a pending insert re-keyed on collision takes its later patches, its undo steps and the caret with it', () => {
+  test("an unsent insert whose key another writer's insert brings puts the editor out of step, and the resync gives it a new key in its later patches too", () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
-    const barBlock = parseTextspec(
+    const [fooxBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foox',
+    ).value
+    const [barBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('b-')},
       'B _key="k9": bar',
-    ).value[0]
+    ).value
+    const collidingInsert = insert([barBlock], 'after', [{_key: 'd-k0'}])
 
     document.type('x')
     document.insertBlock('B _key="k9": baz')
@@ -164,19 +169,20 @@ describe(createIo.name, () => {
       transactionId: 't1',
       previousRev: 'r1',
       resultRev: 'r2',
-      patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
+      patches: [collidingInsert],
     })
 
-    expect(heard.errors).toEqual([])
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1', patch: collidingInsert},
+    ])
     expect(document.toTextspec({keys: true})).toEqual(
-      'B _key="d-k0": foox;;B _key="a-k3": bazq|;;B _key="k9": bar',
+      'B _key="d-k0": foox;;B _key="k9": bazq|',
     )
 
-    editor.transaction({
-      transactionId: 'A-t1',
-      previousRev: 'r2',
-      resultRev: 'r3',
-      patches: heard.mutations[0].patches,
+    editor.resync({
+      value: [fooxBlock, barBlock],
+      rev: 'r3',
+      outcomes: {'A-1': 'applied'},
     })
 
     expect(heard.mutations).toEqual([
@@ -219,12 +225,8 @@ describe(createIo.name, () => {
         ],
       },
     ])
-
-    editor.undo()
-    editor.undo()
-
     expect(document.toTextspec({keys: true})).toEqual(
-      'B _key="d-k0": foox|;;B _key="k9": bar',
+      'B _key="d-k0": foox;;B _key="a-k3": bazq;;B _key="k9": bar|',
     )
   })
 
@@ -1229,32 +1231,6 @@ describe(createIo.name, () => {
         ],
       },
     ])
-  })
-
-  test('a re-keyed pending insert whose target another writer deleted leaves the caret where the document puts it', () => {
-    const {editor, document, heard} = createLoadedEditor('B: foo|;;B: bar')
-    const bazBlock = parseTextspec(
-      {keyGenerator: createTestKeyGenerator('b-')},
-      'B _key="k9": baz',
-    ).value[0]
-
-    document.type('x')
-    document.insertBlock('B _key="k9": qux')
-    editor.transaction({
-      transactionId: 't1',
-      previousRev: 'r1',
-      resultRev: 'r2',
-      patches: [
-        unset([{_key: 'd-k0'}]),
-        insert([bazBlock], 'after', [{_key: 'd-k2'}]),
-      ],
-    })
-
-    expect(heard.errors).toEqual([])
-    expect(editor.getBase().rev).toEqual('r2')
-    expect(document.toTextspec({keys: true})).toEqual(
-      'B _key="d-k2": |bar;;B _key="k9": baz',
-    )
   })
 
   test('a rejected batch stays on screen while the feed keeps applying', () => {

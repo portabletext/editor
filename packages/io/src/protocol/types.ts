@@ -120,11 +120,9 @@ export type EditorEventForIo =
  * patches in the transaction are left out, another writer's patch on a
  * place the editor's unsaved work didn't touch comes as it is, a block both
  * touched comes as a `set` of the block, and a list both inserted into or
- * removed from comes lined up key by key. A keyed `set` of `_key` for each
- * of the editor's unsaved blocks io gave a new key goes first, so the caret
- * stays with its block. A transaction that moved the base and left the
- * screen as it was comes with no `patches`, so its `underneath` still
- * reaches the editor's history.
+ * removed from comes lined up key by key. A transaction that moved the
+ * base and left the screen as it was comes with no `patches`, so its
+ * `underneath` still reaches the editor's history.
  */
 export type EditorMessageForIo =
   | {type: 'load'; value: Array<PortableTextBlock> | undefined}

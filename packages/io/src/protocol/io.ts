@@ -172,8 +172,8 @@ type HistoryEntry = {
  * Batch IDs are the editor's `id` plus a counter, so editors with different
  * IDs never share one. The proposed transaction IDs come from the same
  * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
- * editor's `id`. `keyGenerator` mints the new keys of re-keyed pending
- * inserts. Keys io mints to repair a received value come from the
+ * editor's `id`. `keyGenerator` mints the new keys a resync gives pending
+ * inserts whose keys the copy has. Keys io mints to repair a received value come from the
  * value's revision and the repaired node's path instead (see
  * `mintRepairKey`).
  * `applyLocalEdit` is the model's seam for undo, outside `EditorForIo`: it
@@ -469,10 +469,11 @@ export function createIo(options: {
         ...(rejected ? [rejected] : []),
       ].flatMap((batch) => batch.patches),
     )
-    const collidingPatch = incoming.patches.find(
-      (patch) =>
-        patch.type === 'insert' && insertCollides(patch, unconfirmedKeys),
-    )
+    const collidingPatch =
+      incoming.patches.find(
+        (patch) =>
+          patch.type === 'insert' && insertCollides(patch, unconfirmedKeys),
+      ) ?? patchTakingPendingKey(incoming.patches)
 
     if (collidingPatch) {
       return fail({
@@ -509,6 +510,39 @@ export function createIo(options: {
     }
 
     return true
+  }
+
+  /**
+   * The first of `patches` after which the base has a block key that a
+   * pending insert also inserts and the base didn't have before. Applied
+   * work is never re-keyed in place: the resync re-keys the pending insert.
+   */
+  function patchTakingPendingKey(patches: Array<Patch>): Patch | undefined {
+    const pendingKeys = insertedBlockKeys(pending.flat())
+    const keysBefore = new Set(
+      (base.value ?? []).flatMap((block) => itemKey(block)),
+    )
+    let value = base.value
+
+    if (pendingKeys.size === 0) {
+      return undefined
+    }
+
+    for (const patch of patches) {
+      value = applyWithContentLakeSemantics(value, [patch])
+
+      if (
+        (value ?? []).some((block) =>
+          itemKey(block).some(
+            (key) => pendingKeys.has(key) && !keysBefore.has(key),
+          ),
+        )
+      ) {
+        return patch
+      }
+    }
+
+    return undefined
   }
 
   /**
@@ -921,9 +955,7 @@ export function createIo(options: {
   /**
    * Sends the editor a transaction's effect as keyed instructions for its
    * tree, authored from the working copy before and after the transaction.
-   * A pending insert re-keyed because the base now has its key goes first,
-   * as a keyed `_key` set, so the editor's caret stays with its block. The
-   * editor's own patches in the transaction are already on screen. Work that
+   * The editor's own patches in the transaction are already on screen. Work that
    * was unconfirmed when the transaction arrived, `unconfirmedPatches` and
    * the pending changes, decides how the rest arrive (see
    * `authorInstructions`). A transaction that left the working copy as it
@@ -942,7 +974,6 @@ export function createIo(options: {
     ownPatches: Array<Patch>
     unconfirmedPatches: Array<Patch>
   }) {
-    const newKeys = rekeyPendingInserts(screenBefore)
     const screen = deriveScreen()
 
     if (isEqual(screenBefore, screen)) {
@@ -950,21 +981,14 @@ export function createIo(options: {
       return
     }
 
-    const renames = [...newKeys].map(([oldKey, newKey]) =>
-      set(newKey, [{_key: oldKey}, '_key']),
-    )
-
     editor.send({
       type: 'apply',
-      patches: [
-        ...renames,
-        ...authorInstructions({
-          shown: applyWithContentLakeSemantics(screenBefore, renames),
-          wanted: screen,
-          patches: withoutPatches(underneath, ownPatches),
-          unlanded: [...unconfirmedPatches, ...pending.flat()],
-        }),
-      ],
+      patches: authorInstructions({
+        shown: screenBefore,
+        wanted: screen,
+        patches: withoutPatches(underneath, ownPatches),
+        unlanded: [...unconfirmedPatches, ...pending.flat()],
+      }),
       underneath,
     })
   }
@@ -985,9 +1009,13 @@ export function createIo(options: {
     ]
   }
 
+  /**
+   * Gives each pending insert whose key the base has a new key, in its
+   * later patches too. Only a resync does this: history is clear by then.
+   */
   function rekeyPendingInserts(
     screenBefore: Array<PortableTextBlock> | undefined,
-  ): Map<string, string> {
+  ) {
     const baseKeys = new Set(
       (base.value ?? []).flatMap((block) => itemKey(block)),
     )
@@ -1006,7 +1034,7 @@ export function createIo(options: {
     }
 
     if (newKeys.size === 0) {
-      return newKeys
+      return
     }
 
     pending = pending.map((patches) =>
@@ -1020,12 +1048,6 @@ export function createIo(options: {
         return renamed
       }),
     )
-    history = history.map((entry) => ({
-      ...entry,
-      step: renameStepKeys(entry.step, newKeys),
-    }))
-
-    return newKeys
   }
 
   function queueKeyRepair(incoming: Load) {
@@ -1726,25 +1748,6 @@ function renameBlockKeys(patch: Patch, newKeys: Map<string, string>): Patch {
   }
 
   return {...patch, path: renamedPath}
-}
-
-function renameStepKeys(
-  step: UndoStep,
-  newKeys: Map<string, string>,
-): UndoStep {
-  const rename = (key: string | undefined) =>
-    key === undefined ? undefined : (newKeys.get(key) ?? key)
-
-  if (step.type === 'deleted') {
-    return {
-      ...step,
-      block: {...step.block, _key: rename(step.block._key) ?? step.block._key},
-      previousKey: rename(step.previousKey),
-      nextKey: rename(step.nextKey),
-    }
-  }
-
-  return {...step, blockKey: rename(step.blockKey) ?? step.blockKey}
 }
 
 /**
