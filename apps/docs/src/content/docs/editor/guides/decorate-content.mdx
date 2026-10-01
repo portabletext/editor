@@ -1,0 +1,360 @@
+---
+title: Decorate content
+description: Draw highlights, comments, and presence carets over the Portable Text Editor's content with decoration layers from @portabletext/plugin-decorations.
+---
+
+import {PackageManagers} from 'starlight-package-managers'
+
+A decoration changes how a range of text looks without changing the document. It is never stored in the value and never emits patches. That makes it different from a schema decorator like `strong` and from an annotation like a link: both are marks saved with the text. The editor keeps each decoration on its text as the document changes, so a highlight stays on the same words when someone types before it.
+
+Typical uses are search highlights, comments anchored to a passage, and the carets of other people editing the same document.
+
+:::caution[Beta]
+The decoration layer API is in beta and can still change. That covers `editor.registerDecorations`, `defineDecoration`, and everything in `@portabletext/plugin-decorations`. The `rangeDecorations` prop on `PortableTextEditable` is stable.
+:::
+
+## Choose an approach
+
+The editor gives you two ways to decorate content:
+
+|                | `rangeDecorations` prop              | Decoration layers                                                 |
+| -------------- | ------------------------------------ | ----------------------------------------------------------------- |
+| Who owns it    | One `PortableTextEditable`           | Any number of components inside `EditorProvider`, each on its own |
+| Identity       | None                                 | A stable `id` per decoration, matched across updates              |
+| Edits          | An `onMoved` callback per decoration | `moved`, `content-changed`, and `lost` events, batched per change |
+| Live positions | Not available                        | Read with `useDecorations`                                        |
+| Read-only mode | Freezes                              | Keeps following remote edits                                      |
+
+Use the `rangeDecorations` prop for simple highlights that one editable owns. [Customize editor rendering](/editor/guides/custom-rendering/#range-decorations) documents it. Use decoration layers when several features decorate the same editor, or when you need to track decorations through edits. The rest of this guide covers decoration layers.
+
+## Render a highlight
+
+<PackageManagers pkg="@portabletext/plugin-decorations" />
+
+A decoration has an `id`, a `type` (always `'range'`), the `range` to decorate, and a `render` function that wraps the decorated text. `defineDecoration` types the object for you. Pass an array of decorations to `DecorationsPlugin`, inside the `EditorProvider`:
+
+```tsx
+import {
+  defineDecoration,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
+import {DecorationsPlugin} from '@portabletext/plugin-decorations'
+
+const decorations = [
+  defineDecoration({
+    id: 'search-match',
+    type: 'range',
+    range: {
+      anchor: {
+        path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
+        offset: 0,
+      },
+      focus: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 5},
+    },
+    render: ({children}) => <mark>{children}</mark>,
+  }),
+]
+
+function MyEditor() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition}}>
+      <DecorationsPlugin decorations={decorations} />
+      <PortableTextEditable />
+    </EditorProvider>
+  )
+}
+```
+
+Each `DecorationsPlugin` is one layer. Add as many as you need: search highlights in one, spell-check underlines in another. Layers never touch each other, and unmounting one removes only its own decorations.
+
+To change what a layer shows, pass a new array. The layer matches decorations to the previous array by `id`, not by position. A decoration whose `id` carries over keeps its current position unless you give it a different `range`. Every `id` must be unique within a layer. A duplicate throws.
+
+## React to edits
+
+Comments need more than a highlight. When someone types before a commented passage, you want to save its new position. When they edit the passage, you want its new text. When they delete it, you want to mark the comment as orphaned. `useDecorationLayer` takes the same `decorations` as `DecorationsPlugin`, plus an `on` handler that receives these events:
+
+```tsx
+import {
+  defineDecoration,
+  useEditor,
+  type DecorationRenderProps,
+  type EditorSelection,
+} from '@portabletext/editor'
+import {getSelectionText} from '@portabletext/editor/selectors'
+import {useDecorationLayer} from '@portabletext/plugin-decorations'
+import {useMemo} from 'react'
+
+type Comment = {
+  id: string
+  range: NonNullable<EditorSelection>
+  quote: string | undefined
+  status: 'active' | 'orphaned'
+}
+
+const renderCommentHighlight = (props: DecorationRenderProps) => (
+  <span className="comment-highlight">{props.children}</span>
+)
+
+function CommentsLayer(props: {
+  comments: Array<Comment>
+  onCommentChange: (id: string, change: Partial<Comment>) => void
+}) {
+  const editor = useEditor()
+
+  const decorations = useMemo(
+    () =>
+      props.comments
+        .filter((comment) => comment.status === 'active')
+        .map((comment) =>
+          defineDecoration({
+            id: comment.id,
+            type: 'range',
+            range: comment.range,
+            render: renderCommentHighlight,
+          }),
+        ),
+    [props.comments],
+  )
+
+  useDecorationLayer({
+    decorations,
+    on: (events) => {
+      for (const event of events) {
+        if (event.origin !== 'local') {
+          continue
+        }
+
+        if (event.type === 'moved') {
+          props.onCommentChange(event.decoration.id, {range: event.newRange})
+        }
+
+        if (event.type === 'content-changed') {
+          const snapshot = editor.getSnapshot()
+          const quote = getSelectionText({
+            ...snapshot,
+            context: {...snapshot.context, selection: event.range},
+          })
+          props.onCommentChange(event.decoration.id, {quote})
+        }
+
+        if (event.type === 'lost') {
+          props.onCommentChange(event.decoration.id, {status: 'orphaned'})
+        }
+      }
+    },
+  })
+
+  return null
+}
+```
+
+Render `CommentsLayer` inside the `EditorProvider`. To create a comment, save the editor's current selection as its `range` when the user clicks your "Add comment" button.
+
+Each event carries the `decoration` as you supplied it:
+
+- `moved` means an edit shifted the decorated range. `newRange` is where it is now.
+- `content-changed` means an edit changed the text inside the range. `range` is the current position to read the text from. `decoration.range` may be out of date.
+- `lost` means an edit deleted the decorated text. The layer drops the decoration.
+
+The layer calls `on` once per change, after the editor has finished applying it, with every event that change produced. One change can produce more than one event for the same decoration. Typing inside a comment, for example, both moves its end and changes its text. Loop over the events and handle each one on its own, in order. `on` can be an inline function: the layer always calls the latest one.
+
+### Local and remote edits
+
+`origin` says where the edit came from. `'local'` is an edit made in this editor. `'remote'` is a change that arrived from a collaborator. In a collaborative app, every collaborator runs the same layer. A comment that moves because Alice typed reports `'local'` in Alice's editor and `'remote'` in Bob's. If both saved the move, your store would get it twice. Save only `'local'` events, and each change is saved once, by the editor where it happened.
+
+## Read live positions
+
+`useDecorationLayer` returns a handle for the layer. Pass it to `useDecorations` to read where each decoration is right now, for example to line up a comments sidebar with the text:
+
+```tsx
+import {
+  useDecorations,
+  type DecorationLayer,
+} from '@portabletext/plugin-decorations'
+
+function CommentsSidebar(props: {layer: DecorationLayer}) {
+  const positions = useDecorations(props.layer)
+
+  return (
+    <ul>
+      {positions.map((position) => (
+        <li key={position.id}>
+          {position.id} starts at offset {position.range.anchor.offset}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+In `CommentsLayer`, keep the handle and render the sidebar with it:
+
+```tsx
+const layer = useDecorationLayer({
+  decorations,
+  on: (events) => {
+    // ...
+  },
+})
+
+return <CommentsSidebar layer={layer} />
+```
+
+`positions` lists every live decoration with its `id` and current `range`, in the order of your `decorations` array. Lost and removed decorations are not in it. The array is empty until the layer has registered with the editor. It updates after each change and keeps the same reference between changes, so it is safe in a dependency array.
+
+`useDecorations` re-renders its component on every edit that moves a decoration. Call it from a small component like `CommentsSidebar`, not from a large parent that would re-render with it.
+
+## Restore lost decorations
+
+Undo brings back deleted text, but it does not bring back a lost decoration. Once a decoration is lost, the layer stops tracking it. Supplying the same `id` again with the `range` you supplied before, or with the range where it was lost, does nothing. To restore it, supply it with a different `range`, or remove its `id` from `decorations` and add it back in a later update.
+
+The comments example above already removes an orphaned comment, because it only renders active ones. To restore a comment after undo, keep its last `range` and `quote` when it is orphaned. After each change to the editor value, read the text at that range. When the text matches the saved `quote` again, set the comment back to `'active'`. It returns to `decorations` and the layer tracks it again.
+
+## Draw carets and markers
+
+Some decorations draw something that is not text: a caret for another person's cursor, or a marker at the start of a comment. Wrap that chrome in `DecorationWidget`. It renders a zero-width inline element that the caret can't enter, so the chrome doesn't change the layout of the text or get in the way of typing.
+
+A presence caret decorates a collapsed range at the other person's cursor:
+
+```tsx
+import {
+  defineDecoration,
+  type DecorationRenderProps,
+  type EditorSelection,
+} from '@portabletext/editor'
+import {
+  DecorationsPlugin,
+  DecorationWidget,
+} from '@portabletext/plugin-decorations'
+import {useMemo} from 'react'
+
+type Peer = {
+  id: string
+  name: string
+  color: string
+  selection: EditorSelection
+}
+
+function PresenceCaret(
+  props: DecorationRenderProps & {color: string; name: string},
+) {
+  return (
+    <>
+      <DecorationWidget
+        style={{borderLeft: `2px solid ${props.color}`, marginLeft: -1}}
+      >
+        <span
+          title={props.name}
+          style={{
+            position: 'absolute',
+            top: -5,
+            left: -1,
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: props.color,
+            pointerEvents: 'auto',
+          }}
+        />
+      </DecorationWidget>
+      {props.children}
+    </>
+  )
+}
+
+function PresenceLayer(props: {peers: Array<Peer>}) {
+  const decorations = useMemo(
+    () =>
+      props.peers.flatMap((peer) =>
+        peer.selection
+          ? [
+              defineDecoration({
+                id: peer.id,
+                type: 'range',
+                range: {
+                  anchor: peer.selection.focus,
+                  focus: peer.selection.focus,
+                },
+                render: (renderProps) => (
+                  <PresenceCaret
+                    {...renderProps}
+                    color={peer.color}
+                    name={peer.name}
+                  />
+                ),
+              }),
+            ]
+          : [],
+      ),
+    [props.peers],
+  )
+
+  return <DecorationsPlugin decorations={decorations} />
+}
+```
+
+Follow these rules for widget chrome:
+
+- Keep the decorated `children` outside the widget, as a sibling. The widget's own `children` are its chrome, never document text.
+- Put chrome inside a `DecorationWidget`, or draw it with CSS generated content (`::before` and `::after`). Bare text or editable elements next to the decorated text throw the caret off: arrow keys jump or stick around the decoration.
+- Render inline elements only. `DecorationWidget` is always a `span`, and block elements inside a paragraph break it.
+- Clicks pass through the widget to the text underneath. To make part of the chrome interactive, give it `pointerEvents: 'auto'`, like the dot in the example, which shows the name on hover.
+
+## How decorations render
+
+`render` is called as a plain function, not as a component, so it can't use hooks. When you need hooks, return a component that uses them, like `PresenceCaret` above.
+
+One decoration can render more than once. The editor splits the range into segments where formatting changes and where it overlaps other decorations, and calls `render` for each segment. To draw something once per decoration, such as a comment badge, check `isFirst` (the segment with the start of the range) or `isLast` (the segment with the end):
+
+```tsx
+const renderComment = (props: DecorationRenderProps) => (
+  <span className="comment-highlight">
+    {props.isFirst ? (
+      <DecorationWidget>
+        <span className="comment-badge" />
+      </DecorationWidget>
+    ) : null}
+    {props.children}
+  </span>
+)
+```
+
+A collapsed range has one segment, which is both `isFirst` and `isLast`.
+
+Where decorations overlap, their wrappers nest. A layer registered earlier wraps a layer registered later. For sibling plugins, that is the one that comes first. Within one layer, earlier entries in the array wrap later ones. The `rangeDecorations` prop always renders outermost.
+
+Keep `render` references stable when you can. A new `render` function counts as a change and re-renders the decorated text. Define `render` at module level, like `renderCommentHighlight`, or build decorations inside `useMemo` so they only change when your data does.
+
+## Use layers outside React
+
+For code that holds an `Editor` but doesn't live in a component, `createDecorationLayer` creates the same layer `useDecorationLayer` manages. You own its lifecycle, so call `unregister()` when you are done:
+
+```tsx
+import type {Decoration, Editor} from '@portabletext/editor'
+import {createDecorationLayer} from '@portabletext/plugin-decorations'
+
+function trackSearchMatches(editor: Editor, matches: Array<Decoration>) {
+  const layer = createDecorationLayer(editor, {
+    decorations: matches,
+    on: (events) => {
+      for (const event of events) {
+        if (event.type === 'lost') {
+          console.log(`Match ${event.decoration.id} was deleted`)
+        }
+      }
+    },
+  })
+
+  return {
+    update: (nextMatches: Array<Decoration>) => layer.update(nextMatches),
+    getPositions: () => layer.current,
+    stop: () => layer.unregister(),
+  }
+}
+```
+
+`update` replaces the whole set and matches decorations by `id`, the same way a new `decorations` array does. `current` holds the live positions that `useDecorations` reads.
+
+The plugin builds on `editor.registerDecorations`, the low-level primitive in `@portabletext/editor`. It reports every single editor operation through an `onMapped` callback, while the operation is still being applied, and leaves batching to you. Most apps should use the plugin.
