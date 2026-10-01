@@ -231,7 +231,7 @@ describe(createIo.name, () => {
     )
   })
 
-  test("a transaction's `value` becomes the base, and what its patches don't say reaches the editor lined up after them", () => {
+  test("Scenario: a transaction's `value` becomes the base, and what its patches don't say reaches the editor lined up after them", () => {
     const {editor, document, received} = createLoadedEditor('B: foo|;;B: bar')
     const [fooBlock, barBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
@@ -324,7 +324,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test("the editor's own echo applies nothing, and a transaction that mixes it with another writer's patch on another block applies only that patch", () => {
+  test("Scenario: the editor's own echo applies nothing, and a transaction that mixes it with another writer's patch on another block applies only that patch", () => {
     const {editor, document, heard, received} =
       createLoadedEditor('B: foo|;;B: bar')
     const remotePatch = set('h1', [{_key: 'd-k2'}, 'style'])
@@ -429,7 +429,7 @@ describe(createIo.name, () => {
     expect(editor.getBase().value).toEqual(document.getValue())
   })
 
-  test("a remote span inserted after the span the editor's unsaved span went after lines up in the server's order", () => {
+  test("Scenario: a remote span inserted after the span the editor's unsaved span went after lines up in the server's order", () => {
     const {editor, document, received} = createLoadedEditor('B: foo|')
     const spanPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}]
     const spanKeyGenerator = createTestKeyGenerator('s-')

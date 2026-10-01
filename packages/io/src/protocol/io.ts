@@ -1087,10 +1087,6 @@ export function createIo(options: {
     })
   }
 
-  /**
-   * The working copy as the editor holds it: blocks that aren't objects are
-   * left out.
-   */
   function deriveScreen(
     baseValue: Array<PortableTextBlock> | undefined = base.value,
   ): Array<PortableTextBlock> | undefined {
@@ -1161,10 +1157,6 @@ export function createIo(options: {
     )
   }
 
-  /**
-   * Books the repairs that bring a received whole value up to the floor as
-   * the editor's own pending work, ahead of the rest.
-   */
   function queueFloorRepair(incoming: Load) {
     const repairPatches = repairToFloor(incoming)
     const leftOutCount =

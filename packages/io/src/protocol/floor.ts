@@ -204,9 +204,10 @@ function repairChildren({
  * `rev`: the 32-bit FNV-1a hash of `<rev>/<path segments joined by "/">`,
  * as eight hex digits, with `#<attempt>` appended to the input for each
  * attempt whose key is taken. An `undefined` revision hashes as the empty
- * string. Every editor that repairs the same defect of the same revision
- * mints the same key, so their repairs agree instead of racing. Marks the
- * key as taken.
+ * string. Every editor that repairs the same revision received the same
+ * value, so it hashes the same inputs and the taken-key suffix resolves the
+ * same way: the editors mint the same keys, and their repairs agree instead
+ * of racing. Marks the key as taken.
  */
 function mintRepairKey(
   rev: string | undefined,

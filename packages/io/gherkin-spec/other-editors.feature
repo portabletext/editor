@@ -123,6 +123,7 @@ Feature: Other editors
     Then Editor A shows "H1: foox|"
     And Editor A has sent nothing new
 
+  # Its Given turns on the server's copy, so it runs with values in the "patches only" mode too
   Scenario: A transaction that carries the server's copy gives the editor its base, with a change the patches don't carry
     Given transactions that carry the server's copy
     And the document is "B _key="k1": foo|;;B _key="k2": bar"

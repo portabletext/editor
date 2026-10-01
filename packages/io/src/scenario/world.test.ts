@@ -343,28 +343,44 @@ describe(createWorld.name, () => {
     world.type('Editor A', 'x')
     world.receive('Editor A', 1)
 
-    expect(
-      world.snapshot().editors?.['Editor A'].messages.map((message) =>
-        message.type === 'transaction'
-          ? {
-              route: message.route,
-              type: message.type,
-              via: message.via,
-              transactionId: message.transactionId,
-            }
-          : {route: message.route, type: message.type},
-      ),
-    ).toEqual([
-      {route: 'host to io', type: 'load'},
-      {route: 'io to editor', type: 'load'},
-      {route: 'io to host', type: 'mutation'},
+    const fooBlock = {
+      _type: 'block',
+      _key: 'd-k0',
+      children: [{_key: 'd-k1', _type: 'span', text: 'foo', marks: []}],
+      style: 'normal',
+    }
+    const textPatch = diffMatchPatch('foo', 'foox', [
+      {_key: 'd-k0'},
+      'children',
+      {_key: 'd-k1'},
+      'text',
+    ])
+
+    expect(world.snapshot().editors?.['Editor A'].messages).toEqual([
+      {route: 'host to io', type: 'load', value: [fooBlock], rev: 'r1'},
+      {route: 'io to editor', type: 'load', value: [fooBlock]},
+      {
+        route: 'io to host',
+        type: 'mutation',
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [textPatch],
+      },
       {
         route: 'host to io',
         type: 'transaction',
         via: 'save reply',
         transactionId: 'A-t1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: [textPatch],
       },
-      {route: 'io to editor', type: 'apply'},
+      {
+        route: 'io to editor',
+        type: 'apply',
+        patches: [],
+        underneath: [textPatch],
+      },
     ])
   })
 
@@ -377,23 +393,14 @@ describe(createWorld.name, () => {
     world.feedLost('Editor A')
     world.resync('Editor A', {discardUnsent: false, outcomeOf: 1})
 
-    expect(
-      world
-        .snapshot()
-        .editors?.['Editor A'].messages.slice(3)
-        .map((message) =>
-          message.type === 're-submit'
-            ? message
-            : message.type === 'resync' && message.route === 'host to io'
-              ? {
-                  route: message.route,
-                  type: message.type,
-                  rev: message.rev,
-                  outcomes: message.outcomes,
-                }
-              : {route: message.route, type: message.type},
-        ),
-    ).toEqual([
+    const fooxBlock = {
+      _type: 'block',
+      _key: 'd-k0',
+      children: [{_key: 'd-k1', _type: 'span', text: 'foox', marks: []}],
+      style: 'normal',
+    }
+
+    expect(world.snapshot().editors?.['Editor A'].messages.slice(3)).toEqual([
       {route: 'host to io', type: 'feed lost'},
       {
         route: 'host to server',
@@ -404,10 +411,11 @@ describe(createWorld.name, () => {
       {
         route: 'host to io',
         type: 'resync',
+        value: [fooxBlock],
         rev: 'r2',
         outcomes: {'A-1': 'applied'},
       },
-      {route: 'io to editor', type: 'resync'},
+      {route: 'io to editor', type: 'resync', value: [fooxBlock]},
     ])
   })
 

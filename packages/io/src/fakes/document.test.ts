@@ -916,7 +916,7 @@ describe('the editor seam', () => {
     )
   })
 
-  test('an apply moves the caret past text a patch on its span inserts before it, leaves it for an insert, and takes it to the previous block when its block goes', () => {
+  test('Scenario: an apply moves the caret past text a patch on its span inserts before it, leaves it for an insert, and takes it to the previous block when its block goes', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument(
       {keyGenerator},

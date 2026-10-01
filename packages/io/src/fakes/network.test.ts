@@ -1,5 +1,7 @@
 import {set} from '@portabletext/patches'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {parseTextspec} from './document'
 import {createFakeNetwork, type FailureReply, type Reply} from './network'
 import type {ServerTransaction} from './server'
 
@@ -58,13 +60,10 @@ describe(createFakeNetwork.name, () => {
   })
 
   test("a network that includes the server's copy delivers each transaction with the copy after it", () => {
-    const value = [
-      {
-        _type: 'block',
-        _key: 'k0',
-        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-      },
-    ]
+    const {value} = parseTextspec(
+      {keyGenerator: createTestKeyGenerator()},
+      'B: foo',
+    )
     const transaction: ServerTransaction = {
       transactionId: 't1',
       previousRev: 'r1',
