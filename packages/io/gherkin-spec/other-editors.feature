@@ -71,6 +71,26 @@ Feature: Other editors
     Then Editor B shows "B: foox;;B: baryw|"
     And Editor B has sent batch 2
 
+  Scenario: The editor's own echo applies nothing, and a transaction that also carries another editor's batch applies only that batch
+    Given hosts that fold batches into shared requests
+    And the document is "B: foo|;;B: bar"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    And Editor A's batch 1 comes back
+    Then Editor A shows "B: foox|;;B: bar"
+    And Editor A's last apply carries no patches
+    And Editor A's last apply has Editor A's batch 1 underneath
+    When "y" is typed
+    Then Editor A has sent batch 2
+    When the caret is put after "bar" in Editor B
+    And "z" is typed in Editor B
+    Then Editor B has sent batch 1
+    When the server receives Editor A's batch 2 and Editor B's batch 1 as one transaction
+    And Editor A's batch 2 comes back
+    Then Editor A shows "B: fooxy|;;B: barz"
+    And Editor A's last apply carries the patches of Editor B's batch 1
+
   Scenario: Undo reverts only this editor's changes, and a resync clears the undo history
     Given the document is "B: foo|"
     When "x" is typed

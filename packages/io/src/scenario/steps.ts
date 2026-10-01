@@ -1,3 +1,4 @@
+import {set} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {Given, Then, When, type StepDefinition} from 'racejar'
 import {
@@ -8,7 +9,11 @@ import {
 } from '../fakes/document'
 import type {FakeDocumentStatus} from '../fakes/document'
 import type {RequestFailure} from '../protocol/host'
-import type {ChangeEvent, WorkDropped} from '../protocol/types'
+import type {
+  ChangeEvent,
+  EditorMessageForIo,
+  WorkDropped,
+} from '../protocol/types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference, ExpectedSync} from './parameter-types'
 import {
@@ -557,6 +562,61 @@ export const stepDefinitions = [
       )
     },
   ),
+  Then(
+    "{editor}'s last apply carries no patches",
+    (context: Context, name: EditorName) => {
+      checkEqual(
+        `The patches of ${name}'s last apply`,
+        JSON.stringify(getLastApply(context, name).patches),
+        JSON.stringify([]),
+      )
+    },
+  ),
+  Then(
+    "{editor}'s last apply carries the patches of {editor}'s batch {int}",
+    (
+      context: Context,
+      name: EditorName,
+      senderName: EditorName,
+      batchNumber: number,
+    ) => {
+      checkEqual(
+        `The patches of ${name}'s last apply`,
+        JSON.stringify(getLastApply(context, name).patches),
+        JSON.stringify(context.world.getBatch(senderName, batchNumber).patches),
+      )
+    },
+  ),
+  Then(
+    "{editor}'s last apply has {editor}'s batch {int} underneath",
+    (
+      context: Context,
+      name: EditorName,
+      senderName: EditorName,
+      batchNumber: number,
+    ) => {
+      checkEqual(
+        `What ${name}'s last apply has underneath`,
+        JSON.stringify(getLastApply(context, name).underneath),
+        JSON.stringify(context.world.getBatch(senderName, batchNumber).patches),
+      )
+    },
+  ),
+  Then(
+    "{editor}'s last apply sets the whole block {string}",
+    (context: Context, name: EditorName, text: string) => {
+      const block = findBlockByText(
+        context.world.getEditor(name).document.getValue(),
+        text,
+      )
+
+      checkEqual(
+        `The patches of ${name}'s last apply`,
+        JSON.stringify(getLastApply(context, name).patches),
+        JSON.stringify([set(block, [{_key: block._key}])]),
+      )
+    },
+  ),
 ].map(checkingTrees)
 
 function checkingTrees(
@@ -655,6 +715,53 @@ function getChange(
   }
 
   return change
+}
+
+function getLastApply(
+  context: Context,
+  name: EditorName,
+): Extract<EditorMessageForIo, {type: 'apply'}> {
+  const apply = context.world
+    .getEditor(name)
+    .received.findLast((message) => message.type === 'apply')
+
+  if (apply?.type !== 'apply') {
+    throw new Error(`${name} has not been sent an apply`)
+  }
+
+  return apply
+}
+
+function findBlockByText(
+  value: Array<PortableTextBlock>,
+  text: string,
+): PortableTextBlock {
+  const matches = value.filter((block) => blockText(block) === text)
+
+  if (matches.length !== 1) {
+    throw new Error(
+      `Expected one block with the text "${text}", found ${matches.length}`,
+    )
+  }
+
+  return matches[0]
+}
+
+function blockText(block: PortableTextBlock): string {
+  const children: unknown = Reflect.get(block, 'children')
+
+  return Array.isArray(children)
+    ? children
+        .map((child: unknown) => {
+          const text: unknown =
+            typeof child === 'object' && child !== null
+              ? Reflect.get(child, 'text')
+              : undefined
+
+          return typeof text === 'string' ? text : ''
+        })
+        .join('')
+    : ''
 }
 
 function describeField(value: Array<PortableTextBlock> | undefined): string {

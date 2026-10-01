@@ -64,8 +64,6 @@ Feature: Concurrent edits
     Then Editor A shows "B: bar"
     And Editor A has sent nothing new
 
-  # known red: the model doesn't map the caret through remote text changes
-  @skip
   Scenario: The caret stays with its word while Editor B types before it
     Given the document is "B: |foo bar"
     When the caret is put after "foo"
@@ -75,6 +73,69 @@ Feature: Concurrent edits
     When the server receives Editor B's batch 1
     And Editor A receives Editor B's batch 1
     Then Editor A shows "B: yfoo| bar"
+    And Editor A's last apply carries the patches of Editor B's batch 1
+
+  Scenario: Two editors insert after the same block, and Editor A shows the server's order from the moment Editor B's insert arrives
+    Given the document is "B: a|"
+    When the block "B: x" is inserted
+    Then Editor A shows "B: a;;B: x|"
+    And Editor A has sent batch 1
+    When the block "B: y" is inserted in Editor B
+    Then Editor B shows "B: a;;B: y|"
+    And Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And Editor A receives Editor B's batch 1
+    Then Editor A shows "B: a;;B: x|;;B: y"
+    When the server receives Editor A's batch 1
+    Then the server has "B: a;;B: x;;B: y"
+    When Editor A's batch 1 comes back
+    Then Editor A shows "B: a;;B: x|;;B: y"
+    When Editor B's batch 1 comes back
+    And Editor B receives Editor A's batch 1
+    Then Editor B shows "B: a;;B: x;;B: y|"
+
+  Scenario: Editor B removes the block Editor A's unsent insert went after, the removal lands first, and both leave A's screen
+    Given the document is "B: a|;;B: b"
+    When "q" is typed
+    Then Editor A shows "B: aq|;;B: b"
+    And Editor A has sent batch 1
+    When the block "B: x" is inserted
+    Then Editor A shows "B: aq;;B: x|;;B: b"
+    And Editor A has sent nothing new
+    When the block "a" is deleted in Editor B
+    Then Editor B shows "B: |b"
+    And Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And Editor A receives Editor B's batch 1
+    Then Editor A shows "B: |b"
+    And Editor A has been told work was dropped, with reason "no target"
+    When the server receives Editor A's batch 1
+    And Editor A's batch 1 comes back
+    Then Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    And Editor A's batch 2 comes back
+    Then the server has "B: b"
+    And Editor A shows "B: |b"
+
+  Scenario: Editor B types into the block whose style Editor A changed, B's typing lands first, and A gets the whole block as the server will have it
+    Given the document is "B: foo|"
+    When the style is set to "h2"
+    Then Editor A shows "H2: foo|"
+    And Editor A has sent batch 1
+    When "x" is typed in Editor B
+    Then Editor B shows "B: foox|"
+    And Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And Editor A receives Editor B's batch 1
+    Then Editor A shows "H2: foox"
+    And Editor A's last apply sets the whole block "foox"
+    When the server receives Editor A's batch 1
+    Then the server has "H2: foox"
+    When Editor A's batch 1 comes back
+    Then Editor A shows "H2: foox"
+    When Editor B's batch 1 comes back
+    And Editor B receives Editor A's batch 1
+    Then Editor B shows "H2: foox|"
 
   Scenario: Two editors fill an empty field at the same moment and end with two blocks
     Given the document is "B: foo|"

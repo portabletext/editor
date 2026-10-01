@@ -1,5 +1,4 @@
 import {describe, expect, test} from 'vitest'
-import concurrentEditsFeature from '../../gherkin-spec/concurrent-edits.feature?raw'
 import listenersFeature from '../../gherkin-spec/listeners.feature?raw'
 import loadingAndEmptyFeature from '../../gherkin-spec/loading-and-empty.feature?raw'
 import {compileScenarios} from './compile'
@@ -28,41 +27,24 @@ describe(compileScenarios.name, () => {
   })
 
   test('marks skipped scenarios and reads what a known red one lacks', () => {
-    const {scenarios} = compileScenarios(concurrentEditsFeature)
+    const {scenarios} = compileScenarios(
+      [
+        'Feature: Free play',
+        '  Scenario: foo',
+        '    Given the document is "B: foo|"',
+        '',
+        '  # known red: no bar yet',
+        '  @skip',
+        '  Scenario: bar',
+        '    Given the document is "B: bar|"',
+      ].join('\n'),
+    )
 
     expect(
       scenarios.map(({name, skipped, knownRed}) => ({name, skipped, knownRed})),
     ).toEqual([
-      {
-        name: 'Two editors type into the same block at once, and both keep their words',
-        skipped: false,
-        knownRed: undefined,
-      },
-      {
-        name: 'One editor deletes a repeated word while another types next to it, every screen converges, and the second copy is the one that goes',
-        skipped: false,
-        knownRed: undefined,
-      },
-      {
-        name: 'A script replaces the whole field while Editor A has unsent typing',
-        skipped: false,
-        knownRed: undefined,
-      },
-      {
-        name: 'The caret stays with its word while Editor B types before it',
-        skipped: true,
-        knownRed: "the model doesn't map the caret through remote text changes",
-      },
-      {
-        name: 'Two editors fill an empty field at the same moment and end with two blocks',
-        skipped: false,
-        knownRed: undefined,
-      },
-      {
-        name: "Editor B deletes the block Editor A is typing into, the deletion lands first, and A's unsent typing is reported as dropped",
-        skipped: false,
-        knownRed: undefined,
-      },
+      {name: 'foo', skipped: false, knownRed: undefined},
+      {name: 'bar', skipped: true, knownRed: 'no bar yet'},
     ])
   })
 
