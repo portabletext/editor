@@ -11,7 +11,7 @@ import {
   hasTarget,
   resolvePath,
 } from './content-lake'
-import {blocksForEditor, isBelowFloor, repairToFloor} from './floor'
+import {blocksForEditor, isBelowFloor, isObject, repairToFloor} from './floor'
 import {mapOffsetThrough, textEditPatch, textEditsOf} from './text-edits'
 import type {
   EditorForIo,
@@ -520,6 +520,7 @@ export function createIo(options: {
         underneath: incoming.patches,
         ownPatches,
         unconfirmedPatches,
+        valueBefore,
         valueFromPatches,
       })
       reportDroppedPending(`transaction "${incoming.transactionId}"`)
@@ -1004,12 +1005,14 @@ export function createIo(options: {
     underneath,
     ownPatches,
     unconfirmedPatches,
+    valueBefore,
     valueFromPatches,
   }: {
     screenBefore: Array<PortableTextBlock> | undefined
     underneath: Array<Patch>
     ownPatches: Array<Patch>
     unconfirmedPatches: Array<Patch>
+    valueBefore: Array<PortableTextBlock> | undefined
     valueFromPatches: Array<PortableTextBlock> | undefined
   }) {
     const screen = deriveScreen()
@@ -1021,6 +1024,7 @@ export function createIo(options: {
 
     const screenFromPatches = deriveScreen(valueFromPatches)
     const instructions = authorInstructions({
+      stored: valueBefore,
       shown: screenBefore,
       wanted: screenFromPatches,
       patches: withoutPatches(underneath, ownPatches),
@@ -1435,23 +1439,37 @@ function generateUniqueKey(
  * `wanted` lost it), since the server applied the editor's work after the
  * patch and the screen applied it before.
  *
+ * With no unlanded work, a patch addressed by index in `stored`, the base
+ * the patches apply to, is addressed to the editor's block first (see
+ * `addressForEditor`), since the editor leaves out the stored blocks that
+ * aren't objects.
+ *
  * The forwarded patches go first: they touch nothing the rest lines up, and
  * a forwarded patch into a block a later instruction inserts does nothing,
  * as the block arrives from `wanted` with it applied.
  */
 function authorInstructions({
+  stored,
   shown,
   wanted,
   patches,
   unlanded,
 }: {
+  stored: Array<PortableTextBlock> | undefined
   shown: Array<PortableTextBlock> | undefined
   wanted: Array<PortableTextBlock> | undefined
   patches: Array<Patch>
   unlanded: Array<Patch>
 }): Array<Patch> {
+  const addressed =
+    unlanded.length === 0 ? addressForEditor(patches, stored) : patches
+
+  if (addressed === undefined) {
+    return lineUpList(shown ?? [], wanted ?? [], [])
+  }
+
   const touched = touchedPlaces(unlanded)
-  const places = patches.map((patch) => ({patch, place: placeOf(patch)}))
+  const places = addressed.map((patch) => ({patch, place: placeOf(patch)}))
   const lineUpBlockList = places.some(
     ({place}) =>
       (place.type === 'field' && unlanded.length > 0) ||
@@ -1530,6 +1548,62 @@ function authorInstructions({
   }
 
   return [...forwarded, ...fixes]
+}
+
+/**
+ * `patches` with each path that starts with an index in the stored array,
+ * taken patch by patch from `stored`, addressed to that block in the
+ * editor instead: by its key, or else by its position among the blocks
+ * that are objects. `undefined` when a patch by index targets no block
+ * that is an object, or brings a block that isn't one.
+ */
+function addressForEditor(
+  patches: Array<Patch>,
+  stored: Array<PortableTextBlock> | undefined,
+): Array<Patch> | undefined {
+  const addressed: Array<Patch> = []
+  let value = stored
+
+  for (const patch of patches) {
+    const [head, ...tail] = patch.path
+
+    if (typeof head === 'number') {
+      const storedBlocks = value ?? []
+      const {blocks, storedIndexes} = blocksForEditor(storedBlocks)
+      const position = storedIndexes.indexOf(
+        head < 0 ? storedBlocks.length + head : head,
+      )
+
+      if (position === -1 || bringsNonObjectBlock(patch)) {
+        return undefined
+      }
+
+      const [key] = itemKey(blocks[position])
+
+      addressed.push({
+        ...patch,
+        path: [key === undefined ? position : {_key: key}, ...tail],
+      })
+    } else {
+      addressed.push(patch)
+    }
+
+    value = applyWithContentLakeSemantics(value, [patch])
+  }
+
+  return addressed
+}
+
+function bringsNonObjectBlock(patch: Patch): boolean {
+  if (patch.path.length !== 1) {
+    return false
+  }
+
+  if (patch.type === 'insert') {
+    return patch.items.some((item) => !isObject(item))
+  }
+
+  return patch.type === 'set' && !isObject(patch.value)
 }
 
 /**

@@ -701,6 +701,45 @@ describe(createIo.name, () => {
     expect(results).toEqual([expected, expected])
   })
 
+  test('Scenario: a remote patch addressed by index in a stored array with a block that is not an object reaches the editor addressed by key', () => {
+    const {clock} = createFakeNetwork()
+    const {
+      document,
+      io: editor,
+      received,
+      treeMismatches,
+    } = createEditorWithIo({
+      id: 'A',
+      keyGenerator: createTestKeyGenerator('a-'),
+      clock,
+    })
+    const value = applyWithContentLakeSemantics(
+      parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        'B: left;;B: oops;;B: right',
+      ).value,
+      [set('oops', [1])],
+    )
+    const remotePatch = set('h1', [2, 'style'])
+
+    editor.load({value, rev: 'r1'})
+    document.mount()
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remotePatch],
+    })
+
+    expect(received.at(-1)).toEqual({
+      type: 'apply',
+      patches: [set('h1', [{_key: 'd-k4'}, 'style'])],
+      underneath: [remotePatch],
+    })
+    expect(document.toTextspec()).toEqual('B: |left;;H1: right')
+    expect(treeMismatches).toEqual([])
+  })
+
   test('undo puts back the style another writer set underneath', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const path = [{_key: 'd-k0'}, 'style']

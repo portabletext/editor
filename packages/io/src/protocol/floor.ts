@@ -221,7 +221,7 @@ function fnv1a(input: string): string {
   return hash.toString(16).padStart(8, '0')
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
+export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
