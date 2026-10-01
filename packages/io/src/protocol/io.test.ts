@@ -11,6 +11,7 @@ import {parseTextspec} from '../fakes/document'
 import {createFakeNetwork} from '../fakes/network'
 import {createEditorWithIo} from '../scenario/world'
 import {createIo} from './io'
+import type {EditorMessageForIo} from './types'
 
 describe(createIo.name, () => {
   test('held transactions are applied in chain order once the missing one arrives', () => {
@@ -154,6 +155,37 @@ describe(createIo.name, () => {
     expect(document.toTextspec({keys: true})).toEqual(
       'B _key="d-k0": foox|;;B _key="k9": bar',
     )
+  })
+
+  test('a remote style under a local one reaches the editor as `underneath` of an apply with no patches', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const path = [{_key: 'd-k0'}, 'style']
+    const sent: Array<EditorMessageForIo> = []
+    const {send} = document
+    document.send = (message) => {
+      sent.push(message)
+      send(message)
+    }
+
+    document.setStyle('h1')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h2', path)],
+    })
+
+    expect(document.toTextspec()).toEqual('H1: foo|')
+    expect(sent).toEqual([
+      {type: 'apply', patches: [], underneath: [set('h2', path)]},
+    ])
+    expect(heard.changes).toEqual([
+      {
+        origin: 'local',
+        operations: [set('h1', path)],
+        patches: [set('h1', path)],
+      },
+    ])
   })
 
   test('undo puts back the style another writer set underneath', () => {

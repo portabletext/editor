@@ -119,7 +119,9 @@ export type EditorEventForIo =
  * history. For now `patches` is a whole-value `set` (path `[]`), after a
  * keyed `set` of `_key` for each of the editor's unsaved blocks io gave a
  * new key, so the caret stays with its block. Group B replaces the
- * whole-value `set` with keyed instructions.
+ * whole-value `set` with keyed instructions. A transaction that moved the
+ * base and left the screen as it was comes with no `patches`, so its
+ * `underneath` still reaches the editor's history.
  */
 export type EditorMessageForIo =
   | {type: 'load'; value: Array<PortableTextBlock> | undefined}

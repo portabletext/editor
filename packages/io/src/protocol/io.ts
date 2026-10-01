@@ -841,9 +841,12 @@ export function createIo(options: {
   }
 
   /**
-   * Sends the editor a transaction's effect when it changed the working copy.
-   * A pending insert re-keyed because the base now has its key goes first,
-   * as a keyed `_key` set, so the editor's caret stays with its block.
+   * Sends the editor a transaction's effect. A pending insert re-keyed
+   * because the base now has its key goes first, as a keyed `_key` set, so
+   * the editor's caret stays with its block. A transaction that left the
+   * working copy as it was goes out with no `patches`: its `underneath` is
+   * what the editor's history needs, since a remote change under a local one
+   * shows nowhere on screen.
    */
   function applyToEditor(
     screenBefore: Array<PortableTextBlock> | undefined,
@@ -853,6 +856,7 @@ export function createIo(options: {
     const screen = deriveScreen()
 
     if (isEqual(screenBefore, screen)) {
+      editor.send({type: 'apply', patches: [], underneath})
       return
     }
 

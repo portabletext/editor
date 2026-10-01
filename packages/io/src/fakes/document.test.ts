@@ -841,6 +841,11 @@ describe('the editor seam', () => {
     document.send({type: 'resync', value: [...document.getValue()]})
     document.send({type: 'resync', value})
     document.send({type: 'apply', patches: [set(value, [])], underneath: []})
+    document.send({
+      type: 'apply',
+      patches: [],
+      underneath: [set('h1', [{_key: 'k0'}, 'style'])],
+    })
 
     expect(events).toEqual([
       {type: 'change', origin: 'remote', operations: [set(value, [])]},
