@@ -32,7 +32,8 @@ export function App() {
     const resolved = typeof next === 'function' ? next(drawer) : next
     setDrawerState(resolved === null ? null : {world, drawer: resolved})
   }
-  const network = applicableNetworkActions(snapshot)
+  const deadFeeds = tab === 'free play' ? freePlay.deadFeeds : []
+  const network = applicableNetworkActions(snapshot, deadFeeds)
   const promptsFor = (name: EditorName) => {
     const held = network.links[name].held
 
@@ -114,6 +115,9 @@ export function App() {
           <EditorPanel
             name="Editor A"
             editor={snapshot.editors?.['Editor A']}
+            savingFor={
+              tab === 'free play' ? freePlay.savingFor('Editor A') : undefined
+            }
             waitingCount={snapshot.network?.feeds['Editor A'].length ?? 0}
             prompts={promptsFor('Editor A')}
           />
@@ -127,6 +131,7 @@ export function App() {
             onDeliver={onDeliver}
             selectedBatchIds={selectedBatchIds}
             onToggleSelected={toggleSelected}
+            deadFeed={deadFeeds.includes('Editor A')}
           />
           <ServerPanel
             server={snapshot.server}
@@ -146,10 +151,14 @@ export function App() {
             onDeliver={onDeliver}
             selectedBatchIds={selectedBatchIds}
             onToggleSelected={toggleSelected}
+            deadFeed={deadFeeds.includes('Editor B')}
           />
           <EditorPanel
             name="Editor B"
             editor={snapshot.editors?.['Editor B']}
+            savingFor={
+              tab === 'free play' ? freePlay.savingFor('Editor B') : undefined
+            }
             waitingCount={snapshot.network?.feeds['Editor B'].length ?? 0}
             prompts={promptsFor('Editor B')}
           />

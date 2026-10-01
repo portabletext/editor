@@ -459,6 +459,30 @@ describe(applicableNetworkActions.name, () => {
     ])
   })
 
+  test('a dead feed delivers nothing and suggests nothing', () => {
+    const network = applicableNetworkActions(
+      worldSnapshot({
+        editorA: editorSnapshot({inFlight: batch(1), sync: 'saving'}),
+        network: networkSnapshot({
+          feeds: {'Editor A': [feedItem('A-1', 'r1', 'r2')], 'Editor B': []},
+        }),
+      }),
+      ['Editor A'],
+    )
+
+    expect(network.links['Editor A'].towardEditor).toEqual({
+      prompts: [],
+      replies: {},
+      lostReplies: {},
+      feed: {
+        'A-1': {
+          enabled: false,
+          why: "the feed is dead: the network delivers nothing to Editor A's listener",
+        },
+      },
+    })
+  })
+
   test('a host with no listener has no feed to lose', () => {
     const network = applicableNetworkActions(
       worldSnapshot({editorA: editorSnapshot({host: 'self-confirming'})}),

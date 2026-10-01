@@ -147,11 +147,21 @@ export function editorPrompts(actions: EditorApplicability): Array<string> {
   )
 }
 
+/**
+ * `deadFeeds` names the editors whose listener the network has stopped
+ * delivering to.
+ */
 export function applicableNetworkActions(
   snapshot: WorldSnapshot,
+  deadFeeds: ReadonlyArray<EditorName> = [],
 ): NetworkApplicability {
   const link = (name: EditorName) =>
-    linkApplicability(name, snapshot.editors?.[name], snapshot.network)
+    linkApplicability(
+      name,
+      snapshot.editors?.[name],
+      snapshot.network,
+      deadFeeds.includes(name),
+    )
   const links = {'Editor A': link('Editor A'), 'Editor B': link('Editor B')}
   const anyHeld = Object.values(links).some((link) => link.held !== undefined)
 
@@ -241,6 +251,7 @@ function linkApplicability(
   name: EditorName,
   editor: EditorSnapshot | undefined,
   network: NetworkSnapshot | null,
+  deadFeed: boolean,
 ): LinkApplicability {
   const requests =
     network?.saveRequests.filter((request) => request.editor === name) ?? []
@@ -268,7 +279,16 @@ function linkApplicability(
     : undefined
 
   const held = editor ? heldPrompt(editor, feed) : undefined
-  const feedEntries = feedApplicability(name, editor, feed)
+  const feedEntries = deadFeed
+    ? Object.fromEntries(
+        feed.map((item) => [
+          item.transactionId,
+          disabled(
+            `the feed is dead: the network delivers nothing to ${name}'s listener`,
+          ),
+        ]),
+      )
+    : feedApplicability(name, editor, feed)
   const suggestedFeed = Object.values(feedEntries).find(
     (entry) => entry.suggested !== undefined,
   )

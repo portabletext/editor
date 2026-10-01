@@ -37,6 +37,7 @@ export function LinkPanel({
   onDeliver,
   selectedBatchIds,
   onToggleSelected,
+  deadFeed,
 }: {
   name: EditorName
   /** Where the editor sits relative to this link. */
@@ -54,6 +55,8 @@ export function LinkPanel({
   /** Save requests picked to be received as one transaction. */
   selectedBatchIds: Array<string>
   onToggleSelected: (batchId: string) => void
+  /** Whether the network has stopped delivering to the editor's listener. */
+  deadFeed: boolean
 }) {
   const requests =
     network?.saveRequests.filter((request) => request.editor === name) ?? []
@@ -216,6 +219,7 @@ export function LinkPanel({
                     and the <Label concept="feed">feed</Label>
                   </>
                 ) : null}
+                {deadFeed ? <Badge tone="red">feed dead</Badge> : null}
                 {editorSide === 'right' ? (
                   <span aria-hidden="true">
                     {towardEditor} {name}
@@ -375,7 +379,12 @@ export function LinkPanel({
                   </ActionButton>
                 ) : null}
                 <Button
-                  disabled={feed.length === 0}
+                  disabled={feed.length === 0 || deadFeed}
+                  title={
+                    deadFeed
+                      ? `the feed is dead: the network delivers nothing to ${name}'s listener`
+                      : undefined
+                  }
                   onClick={() => {
                     for (const item of feed) {
                       if (!onDeliver(deliveryStep(name, item.source))) {

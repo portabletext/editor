@@ -29,9 +29,12 @@ export function EditorPanel({
   editor,
   waitingCount,
   prompts,
+  savingFor,
 }: {
   name: EditorName
   editor: EditorSnapshot | undefined
+  /** How long the batch in flight has been out, on the world's clock. */
+  savingFor?: number | undefined
   /** Transactions waiting in this editor's feed. */
   waitingCount: number
   /** What the editor's state calls for. */
@@ -64,6 +67,15 @@ export function EditorPanel({
                 <Badge tone={syncTones[editor.sync]}>{editor.sync}</Badge>
               </span>
             </Label>
+            {editor.sync === 'saving' && savingFor !== undefined ? (
+              <span
+                aria-label="time the batch in flight has been out"
+                title="how long the batch in flight has been out, on the world's clock"
+                className={`font-mono text-xs ${savingFor >= 10_000 ? 'font-semibold text-red-700' : 'text-gray-500'}`}
+              >
+                {savingFor / 1000} s
+              </span>
+            ) : null}
             {waitingCount > 0 ? (
               <Badge tone="amber">{waitingCount} waiting</Badge>
             ) : null}

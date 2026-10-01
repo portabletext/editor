@@ -2,14 +2,17 @@ import {
   createWorld,
   editorNames,
   type EditorName,
+  type EditorSnapshot,
   type HostShape,
   type ServerCopyName,
   type World,
+  type WorldSnapshot,
 } from '@portabletext/io/testing'
 import {useState} from 'react'
 import {
   applicableActions,
   editorPrompts,
+  type Applicability,
   type EditorApplicability,
 } from './applicable'
 import {hostPresetOf, hostPresets} from './concepts'
@@ -24,7 +27,7 @@ import {
 } from './gherkin'
 import {narrateStep, type NarrationEntry} from './narration'
 import {NarrationLog} from './narration-log'
-import {ActionButton, Button, Prompts, Section, TextInput} from './ui'
+import {ActionButton, Badge, Button, Prompts, Section, TextInput} from './ui'
 
 type Setup = {
   mode: 'the document is' | 'editors in their first commit'
@@ -38,6 +41,10 @@ type FreePlay = {
   log: Array<LoggedStep>
   narration: Array<NarrationEntry>
   error: string | null
+  /** Editors whose listener the network has stopped delivering to. */
+  deadFeeds: Array<EditorName>
+  /** When each editor sent each batch, on the world's clock, by batch number. */
+  sentAt: Record<EditorName, Array<number>>
 }
 
 const setupModes: Array<Setup['mode']> = [
@@ -77,22 +84,96 @@ export function useFreePlay() {
     try {
       runStep(world, {keyword, text})
       const entries = narrateNow()
+      const after = world.snapshot()
       setFreePlay((current) => ({
         ...current,
         log: [...current.log, {keyword, text}],
         narration: [...current.narration, ...entries],
         error: null,
+        sentAt: recordSends(current.sentAt, after),
       }))
       return true
     } catch (error) {
       const entries = narrateNow()
+      const after = world.snapshot()
       setFreePlay((current) => ({
         ...current,
         narration: [...current.narration, ...entries],
         error: `${keyword} ${text}: ${error instanceof Error ? error.message : String(error)}`,
+        sentAt: recordSends(current.sentAt, after),
       }))
       return false
     }
+  }
+
+  function note(step: string, sentences: Array<string>) {
+    setFreePlay((current) => ({
+      ...current,
+      narration: [...current.narration, {step, sentences}],
+    }))
+  }
+
+  function setFeedDead(name: EditorName, dead: boolean) {
+    setFreePlay((current) => ({
+      ...current,
+      deadFeeds: dead
+        ? [...current.deadFeeds.filter((candidate) => candidate !== name), name]
+        : current.deadFeeds.filter((candidate) => candidate !== name),
+    }))
+  }
+
+  function killFeed(name: EditorName) {
+    setFeedDead(name, true)
+    note(`(${name}'s feed dies)`, [
+      `The network stops delivering to ${name}'s listener. Nothing tells the host or io: transactions pile up unheard, and a batch in flight never comes back.`,
+    ])
+  }
+
+  function sayFeedLost(name: EditorName) {
+    const inFlight = freePlay.world.snapshot().editors?.[name].inFlight
+
+    if (!perform('When', `${name}'s feed is lost`)) {
+      return
+    }
+
+    perform(
+      'When',
+      inFlight
+        ? `${name} is resynced with the outcome of batch ${inFlight.batchNumber}`
+        : `${name} is resynced`,
+    )
+    setFeedDead(name, false)
+  }
+
+  function doNothing(name: EditorName) {
+    if (!perform('When', '10 seconds pass')) {
+      return
+    }
+
+    const snapshot = freePlay.world.snapshot()
+    const editor = snapshot.editors?.[name]
+    const elapsed = editor ? savingFor(name, snapshot) : undefined
+
+    note(`(${name}'s host does nothing)`, [
+      editor?.inFlight && elapsed !== undefined
+        ? `${name}'s host never notices. Batch ${editor.inFlight.batchNumber} has been in flight for ${elapsed / 1000} s and sync still says ${editor.sync}. The protocol has no stalled state to show: what a user sees when a save never comes back is still an open question.`
+        : `${name}'s host never notices, and sync says ${editor?.sync ?? 'nothing'}.`,
+    ])
+  }
+
+  function savingFor(
+    name: EditorName,
+    snapshot = freePlay.world.snapshot(),
+  ): number | undefined {
+    const inFlight = snapshot.editors?.[name].inFlight
+    const sentAt =
+      inFlight === null || inFlight === undefined
+        ? undefined
+        : recordSends(freePlay.sentAt, snapshot)[name][inFlight.batchNumber - 1]
+
+    return sentAt === undefined || snapshot.network === null
+      ? undefined
+      : snapshot.network.now - sentAt
   }
 
   function captureChecks() {
@@ -135,6 +216,11 @@ export function useFreePlay() {
     log: freePlay.log,
     narration: freePlay.narration,
     error: freePlay.error,
+    deadFeeds: freePlay.deadFeeds,
+    killFeed,
+    sayFeedLost,
+    doNothing,
+    savingFor,
     setup,
     setSetup,
     reset: () => setFreePlay(startFreePlay(setup)),
@@ -165,6 +251,13 @@ export function FreePlayTab({
           readOnly={snapshot.editors?.[name].readOnly ?? false}
           inFlightBatchNumber={snapshot.editors?.[name].inFlight?.batchNumber}
           onStep={(text) => freePlay.perform('When', text)}
+          feed={{
+            dead: freePlay.deadFeeds.includes(name),
+            dies: feedDiesApplicability(snapshot, name),
+            onDies: () => freePlay.killFeed(name),
+            onSayFeedLost: () => freePlay.sayFeedLost(name),
+            onDoNothing: () => freePlay.doNothing(name),
+          }}
         />
       ))}
 
@@ -285,6 +378,7 @@ function EditorControls({
   readOnly,
   inFlightBatchNumber,
   onStep,
+  feed,
 }: {
   name: EditorName
   actions: EditorApplicability
@@ -292,6 +386,13 @@ function EditorControls({
   /** The batch whose outcome a resync carries. */
   inFlightBatchNumber: number | undefined
   onStep: (text: string) => void
+  feed: {
+    dead: boolean
+    dies: Applicability
+    onDies: () => void
+    onSayFeedLost: () => void
+    onDoNothing: () => void
+  }
 }) {
   const [typed, setTyped] = useState('x')
   const [style, setStyle] = useState('h1')
@@ -437,6 +538,38 @@ function EditorControls({
             end first commit
           </ActionButton>
         </div>
+        <div
+          aria-label={`${name}'s feed`}
+          className="flex flex-wrap items-center gap-1"
+        >
+          {feed.dead ? (
+            <>
+              <Badge tone="red">feed dead</Badge>
+              <span className="text-xs text-gray-500">the host can:</span>
+              <Button
+                suggested
+                onClick={feed.onSayFeedLost}
+                title={
+                  inFlightBatchNumber === undefined
+                    ? 'feed lost, then a resync'
+                    : `feed lost, then re-submit batch ${inFlightBatchNumber}'s frozen request and resync with its outcome`
+                }
+              >
+                say feed lost
+              </Button>
+              <Button
+                onClick={feed.onDoNothing}
+                title="10 seconds pass, and the host never notices"
+              >
+                do nothing
+              </Button>
+            </>
+          ) : (
+            <ActionButton applicability={feed.dies} onClick={feed.onDies}>
+              the feed dies
+            </ActionButton>
+          )}
+        </div>
       </div>
     </Section>
   )
@@ -462,15 +595,84 @@ function startFreePlay(setup: Setup): FreePlay {
       )
     }
 
-    return {world, log, narration, error: null}
+    return {
+      world,
+      log,
+      narration,
+      error: null,
+      deadFeeds: [],
+      sentAt: recordSends(noSends, world.snapshot()),
+    }
   } catch (error) {
     return {
       world,
       log,
       narration,
       error: `Setup: ${error instanceof Error ? error.message : String(error)}`,
+      deadFeeds: [],
+      sentAt: recordSends(noSends, world.snapshot()),
     }
   }
+}
+
+function feedDiesApplicability(
+  snapshot: WorldSnapshot,
+  name: EditorName,
+): Applicability {
+  const editor = snapshot.editors?.[name]
+
+  if (!editor) {
+    return {enabled: false, why: 'there are no editors yet'}
+  }
+
+  if (editor.status !== 'ready') {
+    return {enabled: false, why: 'the feed runs only while the editor is ready'}
+  }
+
+  if (editor.host === 'self-confirming') {
+    return {
+      enabled: false,
+      why: 'the host has no listener, so there is no feed to die',
+    }
+  }
+
+  return editor.outOfStep
+    ? {enabled: false, why: 'the editor is out of step already: resync'}
+    : {
+        enabled: true,
+        why: 'the network stops delivering to the listener, and nothing tells the host',
+      }
+}
+
+const noSends: Record<EditorName, Array<number>> = {
+  'Editor A': [],
+  'Editor B': [],
+}
+
+function recordSends(
+  sentAt: Record<EditorName, Array<number>>,
+  snapshot: WorldSnapshot,
+): Record<EditorName, Array<number>> {
+  const {editors, network} = snapshot
+
+  if (!editors || !network) {
+    return sentAt
+  }
+
+  return {
+    'Editor A': stamp(sentAt['Editor A'], editors['Editor A'], network.now),
+    'Editor B': stamp(sentAt['Editor B'], editors['Editor B'], network.now),
+  }
+}
+
+function stamp(
+  times: Array<number>,
+  editor: EditorSnapshot,
+  now: number,
+): Array<number> {
+  return editor.sentBatches.length > times.length
+    ? [...times, ...editor.sentBatches.slice(times.length).map(() => now)]
+    : times
 }
 
 function setupSteps(setup: Setup): Array<string> {
