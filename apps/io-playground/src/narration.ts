@@ -760,7 +760,7 @@ function describeTextDiff(diff: string): string | undefined {
   return added === '' ? undefined : `replaced "${removed}" with "${added}"`
 }
 
-function decodeDiffText(
+export function decodeDiffText(
   lines: Array<string>,
   sign: '+' | '-',
 ): string | undefined {

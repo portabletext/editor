@@ -15,10 +15,14 @@ export function MessagePath({
   messages: Array<PathMessage>
 }) {
   const openDetails = useOpenDetails()
-  const endRef = useRef<HTMLLIElement>(null)
+  const listRef = useRef<HTMLOListElement>(null)
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({block: 'nearest'})
+    const list = listRef.current
+
+    if (list) {
+      list.scrollTop = list.scrollHeight
+    }
   }, [messages.length])
 
   return (
@@ -26,11 +30,13 @@ export function MessagePath({
       {messages.length === 0 ? (
         <Empty>none</Empty>
       ) : (
-        <ol className="flex max-h-56 flex-col gap-0.5 overflow-auto rounded bg-white p-1 font-mono text-[11px] ring-1 ring-gray-200">
+        <ol
+          ref={listRef}
+          className="flex max-h-56 flex-col gap-0.5 overflow-auto rounded bg-white p-1 font-mono text-[11px] ring-1 ring-gray-200"
+        >
           {messages.map((message, index) => (
             <li
               key={index}
-              ref={index === messages.length - 1 ? endRef : null}
               className="grid grid-cols-[6rem_minmax(0,1fr)] gap-1"
             >
               <span className={routeTones[message.route]}>

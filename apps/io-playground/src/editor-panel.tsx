@@ -23,6 +23,7 @@ import {
   TextspecValue,
   useFlash,
 } from './ui'
+import {WorkDroppedNotices} from './work-dropped'
 
 export function EditorPanel({
   name,
@@ -30,6 +31,8 @@ export function EditorPanel({
   waitingCount,
   prompts,
   savingFor,
+  dismissedWork,
+  onDismissWork,
 }: {
   name: EditorName
   editor: EditorSnapshot | undefined
@@ -39,6 +42,9 @@ export function EditorPanel({
   waitingCount: number
   /** What the editor's state calls for. */
   prompts: Array<string>
+  /** The `work dropped` events, by index, whose notice was dismissed. */
+  dismissedWork: Array<number>
+  onDismissWork: (index: number) => void
 }) {
   const flash = useFlash(JSON.stringify(editor ?? null))
 
@@ -86,6 +92,15 @@ export function EditorPanel({
           </>
         ) : null}
       </header>
+
+      {editor ? (
+        <WorkDroppedNotices
+          name={name}
+          events={editor.events}
+          dismissed={dismissedWork}
+          onDismiss={onDismissWork}
+        />
+      ) : null}
 
       <Prompts prompts={prompts} />
 

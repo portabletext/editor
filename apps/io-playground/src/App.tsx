@@ -47,6 +47,21 @@ export function App() {
     batchIds: Array<string>
   } | null>(null)
   const selectedBatchIds = selection?.world === world ? selection.batchIds : []
+  const [dismissedWork, setDismissedWork] = useState<{
+    world: World
+    byEditor: Record<EditorName, Array<number>>
+  } | null>(null)
+  const dismissedFor = (name: EditorName) =>
+    dismissedWork?.world === world ? dismissedWork.byEditor[name] : []
+  const dismissWork = (name: EditorName, index: number) =>
+    setDismissedWork({
+      world,
+      byEditor: {
+        'Editor A': dismissedFor('Editor A'),
+        'Editor B': dismissedFor('Editor B'),
+        [name]: [...dismissedFor(name), index],
+      },
+    })
   const onStep =
     tab === 'free play'
       ? (text: string) => freePlay.perform('When', text)
@@ -118,6 +133,8 @@ export function App() {
             savingFor={
               tab === 'free play' ? freePlay.savingFor('Editor A') : undefined
             }
+            dismissedWork={dismissedFor('Editor A')}
+            onDismissWork={(index) => dismissWork('Editor A', index)}
             waitingCount={snapshot.network?.feeds['Editor A'].length ?? 0}
             prompts={promptsFor('Editor A')}
           />
@@ -159,6 +176,8 @@ export function App() {
             savingFor={
               tab === 'free play' ? freePlay.savingFor('Editor B') : undefined
             }
+            dismissedWork={dismissedFor('Editor B')}
+            onDismissWork={(index) => dismissWork('Editor B', index)}
             waitingCount={snapshot.network?.feeds['Editor B'].length ?? 0}
             prompts={promptsFor('Editor B')}
           />
