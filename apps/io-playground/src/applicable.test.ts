@@ -459,6 +459,17 @@ describe(applicableNetworkActions.name, () => {
     ])
   })
 
+  test('a host with no listener has no feed to lose', () => {
+    const network = applicableNetworkActions(
+      worldSnapshot({editorA: editorSnapshot({host: 'self-confirming'})}),
+    )
+
+    expect(network.links['Editor A'].feedLost).toEqual({
+      enabled: false,
+      why: 'the host has no listener, so there is no feed to lose',
+    })
+  })
+
   test('a waiting transaction suggests delivering it', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
@@ -603,6 +614,7 @@ function worldSnapshot({
 function editorSnapshot(overrides: Partial<EditorSnapshot>): EditorSnapshot {
   return {
     id: 'A',
+    host: 'plain',
     status: 'ready',
     sync: 'synced',
     screen: 'B: foo|',
@@ -618,6 +630,7 @@ function editorSnapshot(overrides: Partial<EditorSnapshot>): EditorSnapshot {
     undoDepth: 0,
     sentBatches: [],
     events: [],
+    messages: [],
     ...overrides,
   }
 }
@@ -628,6 +641,7 @@ function networkSnapshot(overrides: Partial<NetworkSnapshot>): NetworkSnapshot {
     replies: [],
     lostReplies: [],
     feeds: {'Editor A': [], 'Editor B': []},
+    carriesServerCopy: false,
     now: 0,
     ...overrides,
   }

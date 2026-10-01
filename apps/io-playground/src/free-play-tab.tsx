@@ -12,6 +12,7 @@ import {
   editorPrompts,
   type EditorApplicability,
 } from './applicable'
+import {hostPresetOf, hostPresets} from './concepts'
 import {
   formatScenario,
   formatSteps,
@@ -43,20 +44,6 @@ const setupModes: Array<Setup['mode']> = [
   'the document is',
   'editors in their first commit',
 ]
-
-const hostShapes: Record<HostShape, {label: string; step: string | null}> = {
-  'plain': {label: 'plain hosts', step: null},
-  'folding': {
-    label: 'folding hosts',
-    step: 'hosts that fold batches into shared requests',
-  },
-  'self-confirming': {
-    label: 'self-confirming hosts',
-    step: 'hosts that confirm each batch themselves',
-  },
-}
-
-const hostShapeNames: Array<HostShape> = ['plain', 'folding', 'self-confirming']
 
 const serverCopies: Array<Setup['serverCopy']> = [
   'textspec',
@@ -151,6 +138,7 @@ export function useFreePlay() {
     setup,
     setSetup,
     reset: () => setFreePlay(startFreePlay(setup)),
+    resetWith: (next: Setup) => setFreePlay(startFreePlay(next)),
     perform,
     captureChecks,
   }
@@ -184,21 +172,24 @@ export function FreePlayTab({
         <Section title="Setup">
           <div className="flex flex-wrap items-center gap-1">
             <select
+              aria-label="host preset"
               className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs"
               value={setup.hosts}
-              onChange={(event) =>
-                setSetup({
+              onChange={(event) => {
+                const next = {
                   ...setup,
                   hosts:
-                    hostShapeNames.find(
-                      (shape) => shape === event.target.value,
-                    ) ?? 'plain',
-                })
-              }
+                    hostPresets.find(
+                      (preset) => preset.shape === event.target.value,
+                    )?.shape ?? 'plain',
+                }
+                setSetup(next)
+                freePlay.resetWith(next)
+              }}
             >
-              {hostShapeNames.map((shape) => (
-                <option key={shape} value={shape}>
-                  {hostShapes[shape].label}
+              {hostPresets.map((preset) => (
+                <option key={preset.shape} value={preset.shape}>
+                  {preset.label}
                 </option>
               ))}
             </select>
@@ -483,7 +474,7 @@ function startFreePlay(setup: Setup): FreePlay {
 }
 
 function setupSteps(setup: Setup): Array<string> {
-  const hostStep = hostShapes[setup.hosts].step
+  const hostStep = hostPresetOf(setup.hosts).step
 
   return [...(hostStep === null ? [] : [hostStep]), ...editorSetupSteps(setup)]
 }

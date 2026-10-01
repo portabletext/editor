@@ -1,3 +1,5 @@
+import type {HostShape} from '@portabletext/io/testing'
+
 export const concepts = [
   {
     name: 'change',
@@ -113,6 +115,16 @@ export const concepts = [
       "An event the editor emits when it gives up on the user's unsent changes: their target is gone, the editor closed while sending was blocked, or a resync dropped the rejected batch.",
   },
   {
+    name: 'message path',
+    definition:
+      "Every message between an editor's host and io, in the order it passed, and what io sent the editor: `mutation` goes out to the host, `mutation sent`, `mutation rejected`, `transaction`, `feed lost`, `load` and `resync` come in from it, and `load`, `resync` and `apply` reach the editor's tree.",
+  },
+  {
+    name: 'host',
+    definition:
+      'The application around the editor that talks to the server: it saves the batches io emits, forwards the transactions the server records, and hands over the server copy. Free play offers three shapes.',
+  },
+  {
     name: 'warning',
     definition:
       "An event the editor emits when something looks wrong but it can carry on, like a batch that hasn't come back in time.",
@@ -120,6 +132,43 @@ export const concepts = [
 ] as const
 
 export type ConceptName = (typeof concepts)[number]['name']
+
+/**
+ * The host shapes the world supports, under the names of the hosts they
+ * stand in for.
+ */
+export const hostPresets = [
+  {
+    shape: 'plain',
+    label: 'plain host',
+    step: null,
+    description:
+      'Saves each batch as its own request, under the transaction ID io proposed with it, so it never sends `mutation sent`. Its listener forwards every transaction the server records, its own included, and its own transaction coming back confirms the batch. The shape a simple app or the SDK plugin takes.',
+  },
+  {
+    shape: 'folding',
+    label: 'Studio-shaped host',
+    step: 'hosts that fold batches into shared requests',
+    description:
+      "Folds the batches waiting at a flush into one request, the way Studio's committer sends the whole form in one commit. The request gets the host's own transaction ID, and the host tells io which with a `mutation sent` for each batch in it, so the transaction coming back on the listener still confirms the right batches. The request is frozen once formed: a retry or a re-submit sends it as it was, under the same ID.",
+  },
+  {
+    shape: 'self-confirming',
+    label: 'Horizon-shaped host',
+    step: 'hosts that confirm each batch themselves',
+    description:
+      "Has no listener and is the document's only writer. The answer to each save carries the transaction it became, and the host forwards that as `transaction` itself, which confirms the batch. No other writer's changes reach it, and there is no feed to lose.",
+  },
+] as const satisfies ReadonlyArray<{
+  shape: HostShape
+  label: string
+  step: string | null
+  description: string
+}>
+
+export function hostPresetOf(shape: HostShape) {
+  return hostPresets.find((preset) => preset.shape === shape) ?? hostPresets[0]
+}
 
 export function definitionOf(name: ConceptName): string {
   return concepts.find((concept) => concept.name === name)?.definition ?? ''

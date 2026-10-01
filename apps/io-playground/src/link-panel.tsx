@@ -64,6 +64,7 @@ export function LinkPanel({
   const feed = network?.feeds[name] ?? []
   const flash = useFlash(JSON.stringify({requests, replies, lostReplies, feed}))
   const openDetails = useOpenDetails()
+  const listening = editor?.host !== 'self-confirming'
   const towardServer = editorSide === 'left' ? '→' : '←'
   const towardEditor = editorSide === 'left' ? '←' : '→'
   const upwardOrder = editorSide === 'left' ? 'flex-row-reverse' : 'flex-row'
@@ -208,8 +209,13 @@ export function LinkPanel({
                     {towardEditor} {name}
                   </span>
                 ) : null}
-                <Label concept="rejection">failed saves</Label> and the{' '}
-                <Label concept="feed">feed</Label>
+                <Label concept="rejection">failed saves</Label>
+                {listening ? (
+                  <>
+                    {' '}
+                    and the <Label concept="feed">feed</Label>
+                  </>
+                ) : null}
                 {editorSide === 'right' ? (
                   <span aria-hidden="true">
                     {towardEditor} {name}
@@ -296,7 +302,12 @@ export function LinkPanel({
               </div>
             )}
 
-            {feed.length === 0 ? (
+            {!listening ? (
+              <Empty>
+                no listener: the host confirms each batch from the answer to its
+                own save
+              </Empty>
+            ) : feed.length === 0 ? (
               <Empty>no transactions waiting</Empty>
             ) : (
               <div className={`flex flex-wrap gap-1.5 ${downwardOrder}`}>

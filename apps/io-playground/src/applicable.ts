@@ -346,6 +346,10 @@ function feedLostApplicability(
     return disabled('the feed starts once the editor is ready')
   }
 
+  if (editor.host === 'self-confirming') {
+    return disabled('the host has no listener, so there is no feed to lose')
+  }
+
   return editor.outOfStep
     ? disabled('the editor is out of step already: resync')
     : {

@@ -5,8 +5,9 @@ import type {
   HeardEvent,
 } from '@portabletext/io/testing'
 import type {ReactNode} from 'react'
-import type {ConceptName} from './concepts'
+import {hostPresetOf, type ConceptName} from './concepts'
 import {useOpenDetails} from './drawers'
+import {MessagePath} from './message-path'
 import {describePatches} from './narration'
 import {
   Badge,
@@ -67,6 +68,9 @@ export function EditorPanel({
               <Badge tone="amber">{waitingCount} waiting</Badge>
             ) : null}
             {editor.readOnly ? <Badge tone="blue">read-only</Badge> : null}
+            <span className="text-xs text-gray-500">
+              <Label concept="host">{hostPresetOf(editor.host).label}</Label>
+            </span>
           </>
         ) : null}
       </header>
@@ -208,6 +212,8 @@ function EditorDetails({
           </LedgerRow>
         </ItemList>
       </Section>
+
+      <MessagePath name={name} messages={editor.messages} />
 
       <Section title="sent batches" concept="batch">
         {editor.sentBatches.length === 0 ? (

@@ -4,7 +4,7 @@ import {
   type WorldSnapshot,
 } from '@portabletext/io/testing'
 import {createContext, useContext, type ReactNode} from 'react'
-import {concepts, notationRules} from './concepts'
+import {concepts, hostPresets, notationRules} from './concepts'
 import {describeSource} from './narration'
 import {
   Badge,
@@ -26,6 +26,7 @@ export type DetailsSelection =
   | {type: 'pending'; editor: EditorName; index: number}
   | {type: 'event'; editor: EditorName; index: number}
   | {type: 'transaction'; transactionId: string}
+  | {type: 'message'; editor: EditorName; index: number}
 
 export type Drawer =
   | {type: 'concepts'}
@@ -94,10 +95,21 @@ function ConceptsList() {
         {concepts.map((concept) => (
           <div key={concept.name}>
             <dt className="font-semibold">{concept.name}</dt>
-            <dd className="text-gray-700">{concept.definition}</dd>
+            <dd className="text-gray-700">
+              <WithCode text={concept.definition} />
+            </dd>
           </div>
         ))}
       </dl>
+      <section aria-label="Host presets" className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold">Host presets</h3>
+        {hostPresets.map((preset) => (
+          <p key={preset.shape} className="text-sm text-gray-700">
+            <span className="font-semibold">{preset.label}.</span>{' '}
+            <WithCode text={preset.description} />
+          </p>
+        ))}
+      </section>
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold">State notation</h3>
         <p className="text-sm text-gray-700">
@@ -136,6 +148,8 @@ function Details({
       return <EventDetails selection={selection} snapshot={snapshot} />
     case 'transaction':
       return <TransactionDetails selection={selection} snapshot={snapshot} />
+    case 'message':
+      return <MessageDetails selection={selection} snapshot={snapshot} />
   }
 }
 
@@ -366,7 +380,242 @@ function TransactionDetails({
   )
 }
 
-function Fields({fields}: {fields: Array<[string, ReactNode]>}) {
+function MessageDetails({
+  selection,
+  snapshot,
+}: {
+  selection: Extract<DetailsSelection, {type: 'message'}>
+  snapshot: WorldSnapshot
+}) {
+  const message =
+    snapshot.editors?.[selection.editor]?.messages[selection.index]
+
+  if (!message) {
+    return <Empty>This message isn't in the current world.</Empty>
+  }
+
+  const heading = (
+    <h3 className="flex items-center gap-1 text-sm font-semibold">
+      {selection.editor}'s message {selection.index + 1}: {message.type}{' '}
+      <InfoMark concept="message path" />
+    </h3>
+  )
+  const route = ['route', routeDescriptions[message.route]] as const
+
+  switch (message.type) {
+    case 'mutation':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              ['id', message.id],
+              ['transactionId', `${message.transactionId}, proposed by io`],
+              ['final', message.final ? 'yes, sent on close' : 'no'],
+            ]}
+          />
+          <PatchesView patches={message.patches} />
+        </>
+      )
+    case 'mutation sent':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              ['id', message.id],
+              [
+                'transactionId',
+                `${message.transactionId}, the host's own: io now takes this transaction for the batch's echo`,
+              ],
+            ]}
+          />
+        </>
+      )
+    case 'mutation rejected':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              ['id', message.id],
+              ['means', 'the server refused the batch for good'],
+            ]}
+          />
+        </>
+      )
+    case 'feed lost':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              [
+                'means',
+                'the listener may have missed transactions: io is out of step until a resync',
+              ],
+            ]}
+          />
+        </>
+      )
+    case 'transaction':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              [
+                'came from',
+                message.via === 'feed'
+                  ? "the host's listener"
+                  : "the answer to the host's own save",
+              ],
+              ['transactionId', message.transactionId],
+              [
+                'previousRev → resultRev',
+                <RevisionStep
+                  key="revisions"
+                  from={message.previousRev ?? null}
+                  to={message.resultRev ?? null}
+                />,
+              ],
+              ['patches', plural(message.patches.length, 'patch')],
+              [
+                'value',
+                'value' in message
+                  ? "the server's copy after the transaction: io takes it as the base"
+                  : 'none: io applies the patches to its base',
+              ],
+            ]}
+          />
+          <PatchesView patches={message.patches} />
+          {'value' in message ? (
+            <JsonSection
+              label="value"
+              title="transaction.value, the field as the server holds it after the transaction"
+              value={message.value}
+            />
+          ) : null}
+        </>
+      )
+    case 'load':
+    case 'resync':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              ...(message.route === 'host to io'
+                ? [
+                    ['rev', message.rev ?? 'no document'] as const,
+                    [
+                      'outcomes',
+                      message.type === 'resync' && message.outcomes
+                        ? JSON.stringify(message.outcomes)
+                        : 'none',
+                    ] as const,
+                  ]
+                : []),
+            ]}
+          />
+          <JsonSection
+            label="value"
+            title={
+              message.route === 'host to io'
+                ? "the server's copy, as the host fetched it"
+                : "the whole value io gave the editor, repaired to the floor, with io's unsent work on top"
+            }
+            value={message.value}
+          />
+        </>
+      )
+    case 'apply':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              [
+                'patches',
+                `${plural(message.patches.length, 'instruction')} for the editor's tree`,
+              ],
+              [
+                'underneath',
+                `${plural(message.underneath.length, 'patch')}, the transaction's own, for history`,
+              ],
+            ]}
+          />
+          <JsonSection
+            label="apply instructions"
+            title="patches: keyed instructions io authored from its working copy"
+            value={message.patches}
+          />
+          <JsonSection
+            label="underneath"
+            title="underneath: the transaction's patches as they moved the base"
+            value={message.underneath}
+          />
+        </>
+      )
+    case 're-submit':
+      return (
+        <>
+          {heading}
+          <Fields
+            fields={[
+              route,
+              ['transactionId', message.transactionId],
+              [
+                'answer',
+                message.answer.type === 'duplicate'
+                  ? '409: the transaction ID exists, so the batch had landed'
+                  : message.answer.type === 'saved'
+                    ? "saved: the batch hadn't landed, and now has"
+                    : `failed with ${message.answer.status}`,
+              ],
+            ]}
+          />
+        </>
+      )
+  }
+}
+
+const routeDescriptions = {
+  'io to host': 'io → host',
+  'host to io': 'host → io',
+  'io to editor': 'io → the editor',
+  'host to server': 'host → server, the frozen request sent again',
+}
+
+function JsonSection({
+  label,
+  title,
+  value,
+}: {
+  label: string
+  title: string
+  value: unknown
+}) {
+  return (
+    <section aria-label={label} className="flex flex-col gap-1">
+      <h4 className="text-xs font-semibold text-gray-500">{title}</h4>
+      <JsonView value={value} />
+    </section>
+  )
+}
+
+function Fields({
+  fields,
+}: {
+  fields: ReadonlyArray<readonly [string, ReactNode]>
+}) {
   return (
     <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-sm">
       {fields.map(([name, value]) => (

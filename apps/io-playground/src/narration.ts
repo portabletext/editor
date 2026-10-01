@@ -14,6 +14,16 @@ type Patch = BatchSnapshot['patches'][number]
 
 type FeedItem = NetworkSnapshot['feeds'][EditorName][number]
 
+/**
+ * A transaction that reached an editor's host in a step: from the feed and
+ * forwarded, from the feed and dropped as covered by the last copy, or from
+ * the answer to the host's own save.
+ */
+type ArrivedTransaction = Pick<
+  FeedItem,
+  'transactionId' | 'previousRev' | 'resultRev' | 'source'
+> & {via: 'feed' | 'save reply' | 'dropped'}
+
 export type NarrationEntry = {
   /** The step as written in Gherkin. */
   step: string
@@ -76,6 +86,7 @@ function narrate(before: WorldSnapshot, after: WorldSnapshot): Array<string> {
         afterDuplicates: after.server.duplicates.filter((duplicate) =>
           duplicate.batches.some((batch) => batch.name === name),
         ),
+        afterServer: after.server,
       }),
     )
   }
@@ -106,6 +117,7 @@ function narrateEditor({
   afterNetwork,
   beforeDuplicates,
   afterDuplicates,
+  afterServer,
 }: {
   name: EditorName
   before: EditorSnapshot
@@ -114,19 +126,61 @@ function narrateEditor({
   afterNetwork: NetworkSnapshot
   beforeDuplicates: ServerSnapshot['duplicates']
   afterDuplicates: ServerSnapshot['duplicates']
+  afterServer: ServerSnapshot
 }): Array<string> {
   const sentences: Array<string> = []
+  const newMessages = after.messages.slice(before.messages.length)
   const newBatches = after.sentBatches.slice(before.sentBatches.length)
   const explainedBatchNumbers = new Set<number>()
   const newEvents = after.events.slice(before.events.length)
   const newErrors = newEvents.flatMap((event) =>
     event.type === 'error' ? [event] : [],
   )
-  const deliveredItems = beforeNetwork.feeds[name].filter(
-    (item) =>
-      !afterNetwork.feeds[name].some(
-        (candidate) => candidate.transactionId === item.transactionId,
-      ),
+  const forwarded = new Set(
+    newMessages.flatMap((message) =>
+      message.type === 'transaction' ? [message.transactionId] : [],
+    ),
+  )
+  const deliveredItems: Array<ArrivedTransaction> = [
+    ...beforeNetwork.feeds[name]
+      .filter(
+        (item) =>
+          !afterNetwork.feeds[name].some(
+            (candidate) => candidate.transactionId === item.transactionId,
+          ),
+      )
+      .map((item) => ({
+        ...item,
+        via: forwarded.has(item.transactionId)
+          ? ('feed' as const)
+          : ('dropped' as const),
+      })),
+    ...newMessages.flatMap((message) => {
+      const transaction =
+        message.type === 'transaction' && message.via === 'save reply'
+          ? afterServer.transactions.find(
+              (candidate) => candidate.id === message.transactionId,
+            )
+          : undefined
+
+      return transaction
+        ? [
+            {
+              transactionId: transaction.id,
+              previousRev: transaction.previousRev,
+              resultRev: transaction.resultRev,
+              source: transaction.source,
+              via: 'save reply' as const,
+            },
+          ]
+        : []
+    }),
+  ]
+  const resyncMessage = newMessages.find(
+    (message) => message.route === 'host to io' && message.type === 'resync',
+  )
+  const resyncTook = newMessages.some(
+    (message) => message.route === 'io to editor' && message.type === 'resync',
   )
   const screenChanged = before.screen !== after.screen
   const blocksChanged =
@@ -215,11 +269,22 @@ function narrateEditor({
   }
 
   for (const item of deliveredItems) {
+    if (item.via === 'dropped') {
+      sentences.push(
+        `${name}'s host dropped ${item.transactionId} on arrival: the copy it fetched for the last load or resync covers it already.`,
+      )
+      continue
+    }
+
     screenExplained = true
     const ownBatchNumbers = ownBatches(item.source, name)
     const failed = newErrors.some(
       (error) => error.transactionId === item.transactionId,
     )
+    const arrived =
+      item.via === 'save reply'
+        ? `${name}'s host forwarded ${item.transactionId} from the answer to its own save`
+        : `${item.transactionId} came back to ${name}`
 
     if (before.outOfStep) {
       sentences.push(
@@ -273,9 +338,7 @@ function narrateEditor({
         parts.push(`it shows \`${after.screen}\``)
       }
 
-      sentences.push(
-        `${item.transactionId} came back to ${name}: ${parts.join(', ')}.`,
-      )
+      sentences.push(`${arrived}: ${parts.join(', ')}.`)
       continue
     }
 
@@ -292,16 +355,6 @@ function narrateEditor({
         (candidate) => candidate.transactionId === held.transactionId,
       ),
   )
-  const resynced =
-    deliveredItems.length === 0 &&
-    before.status === 'ready' &&
-    after.status === 'ready' &&
-    (before.base.rev !== after.base.rev ||
-      before.base.textspec !== after.base.textspec ||
-      (before.outOfStep && !after.outOfStep) ||
-      (before.rejected !== null && after.rejected === null) ||
-      (released.length > 0 && !after.outOfStep))
-
   if (deliveredItems.length > 0 && !after.outOfStep && released.length > 0) {
     const confirmedEchoes = before.echoed
       .filter(
@@ -321,17 +374,57 @@ function narrateEditor({
     )
   }
 
-  if (resynced) {
+  for (const message of newMessages) {
+    if (message.type === 'mutation sent') {
+      sentences.push(
+        `${name}'s host formed the request for batch ${batchNumberOf(after, message.id)} under its own transaction ID, ${message.transactionId}, and told io with \`mutation sent\`.`,
+      )
+    }
+
+    if (message.type === 're-submit' && resyncMessage) {
+      sentences.push(
+        `${name}'s host re-submitted the frozen request ${message.transactionId} to find out what became of the batch in flight: ${
+          message.answer.type === 'duplicate'
+            ? 'the server answered 409, the transaction ID exists, so the batch had landed'
+            : message.answer.type === 'saved'
+              ? "the server saved it, so it hadn't landed before and has now"
+              : `it failed with ${message.answer.status}, so the batch never landed`
+        }.`,
+      )
+    }
+  }
+
+  if (resyncMessage && !resyncTook) {
+    sentences.push(`${name} refused the resync.`)
+  }
+
+  if (resyncTook) {
     screenExplained = true
     const followUp = newBatches.at(0)
+    const outcome =
+      resyncMessage?.type === 'resync' && before.inFlight
+        ? resyncMessage.outcomes?.[
+            batchIdOf(after, before.inFlight.batchNumber) ?? ''
+          ]
+        : undefined
     const parts = [
       `${name} took a fresh copy at ${describeRev(after.base.rev)}`,
     ]
 
+    if (before.inFlight && outcome !== undefined) {
+      parts.push(
+        outcome === 'applied'
+          ? `let go of batch ${before.inFlight.batchNumber}: it landed, so it is in the copy`
+          : `put batch ${before.inFlight.batchNumber} back with the unsent changes: it never landed`,
+      )
+    }
+
     if (followUp) {
       explainedBatchNumbers.add(followUp.number)
       parts.push(
-        `re-applied ${plural(before.pending.length, 'unsent change')}, which went out as batch ${followUp.number}`,
+        before.pending.length > 0 || outcome === 'not applied'
+          ? `re-applied the unsent changes, which went out as batch ${followUp.number}`
+          : `repaired the copy to the floor and sent the repair as batch ${followUp.number}`,
       )
     } else if (before.pending.length > 0) {
       parts.push(`dropped ${plural(before.pending.length, 'unsent change')}`)
@@ -339,15 +432,6 @@ function narrateEditor({
 
     if (before.rejected) {
       parts.push(`let go of the rejected batch ${before.rejected.batchNumber}`)
-    }
-
-    if (
-      before.inFlight &&
-      after.inFlight?.batchNumber !== before.inFlight.batchNumber
-    ) {
-      parts.push(
-        `let go of batch ${before.inFlight.batchNumber}, in flight, by the outcome the host found: in the copy if it landed, back with the unsent changes if it didn't`,
-      )
     }
 
     if (before.outOfStep && !after.outOfStep) {
@@ -389,7 +473,7 @@ function narrateEditor({
     }
 
     sentences.push(
-      `${name} sent batch ${batch.number} as transaction ${batch.transactionId}${
+      `${name} sent batch ${batch.number}, proposing transaction ID ${batch.transactionId}${
         batch.final ? ', its final batch' : ''
       }: ${describePatches(batch.patches)}.`,
     )
@@ -533,6 +617,23 @@ function describeEditorStart(name: EditorName, world: WorldSnapshot): string {
   return editor.status === 'ready'
     ? `${name} is ready and shows \`${editor.screen}\`.`
     : `${name} is ${editor.status} and waits for its first load.`
+}
+
+function batchNumberOf(editor: EditorSnapshot, batchId: string): number {
+  return (
+    editor.messages
+      .flatMap((message) => (message.type === 'mutation' ? [message.id] : []))
+      .indexOf(batchId) + 1
+  )
+}
+
+function batchIdOf(
+  editor: EditorSnapshot,
+  batchNumber: number,
+): string | undefined {
+  return editor.messages.flatMap((message) =>
+    message.type === 'mutation' ? [message.id] : [],
+  )[batchNumber - 1]
 }
 
 function ownBatches(
