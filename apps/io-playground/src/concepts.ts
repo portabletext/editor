@@ -115,6 +115,11 @@ export const concepts = [
       "An event the editor emits when it gives up on the user's unsent changes: their target is gone, the editor closed while sending was blocked, or a resync dropped the rejected batch.",
   },
   {
+    name: 'transaction.value',
+    definition:
+      "The field as the server holds it right after a transaction, from the listener's result. When the listener sends it, the host passes it on and io takes it as the new base instead of applying the patches to the old one. The patches still travel: io checks them, authors `apply` from them for the editor's tree, and matches them against its batch to confirm it.",
+  },
+  {
     name: 'first commit',
     definition:
       'The editor mounting, before it is ready. It takes its first content as a `load` now, and a second `load` replaces the first. Ending the first commit makes it ready, with the content loaded or empty. After ready a `load` throws, and a `resync` takes over.',

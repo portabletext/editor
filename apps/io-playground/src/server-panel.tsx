@@ -15,6 +15,7 @@ import {
   Button,
   DetailsLink,
   Empty,
+  InfoMark,
   ItemList,
   Label,
   plural,
@@ -37,6 +38,8 @@ export function ServerPanel({
   onReceiveSelected,
   editorA,
   editorADeadFeed,
+  carriesServerCopy,
+  onToggleServerCopy,
 }: {
   server: ServerSnapshot | null
   /** The virtual clock, in milliseconds. */
@@ -50,6 +53,10 @@ export function ServerPanel({
   /** The editor the malformed-content doors lead to. */
   editorA: EditorSnapshot | undefined
   editorADeadFeed: boolean
+  /** Whether each transaction reaches the hosts with the server's copy. */
+  carriesServerCopy: boolean
+  /** Present in free play: restarts it with the listener sending the copy, or not. */
+  onToggleServerCopy: ((on: boolean) => void) | undefined
 }) {
   const [recreatedAs, setRecreatedAs] = useState('B: bar')
   const [scriptValue, setScriptValue] = useState('B: baz')
@@ -89,6 +96,24 @@ export function ServerPanel({
           </span>
         ) : null}
       </header>
+
+      <label
+        title={
+          onToggleServerCopy === undefined
+            ? "set by the scenario's Given"
+            : 'changing it restarts free play'
+        }
+        className="flex items-center gap-1 text-xs text-gray-700"
+      >
+        <input
+          type="checkbox"
+          checked={carriesServerCopy}
+          disabled={onToggleServerCopy === undefined}
+          onChange={(event) => onToggleServerCopy?.(event.target.checked)}
+        />
+        <span>listener sends the document with each transaction</span>
+        <InfoMark concept="transaction.value" />
+      </label>
 
       {server ? (
         <>

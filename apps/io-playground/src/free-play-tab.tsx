@@ -34,6 +34,7 @@ type Setup = {
   textspec: string
   serverCopy: 'textspec' | ServerCopyName
   hosts: HostShape
+  transactionsCarryCopy: boolean
 }
 
 type FreePlay = {
@@ -67,6 +68,7 @@ export function useFreePlay() {
     textspec: 'B: foo',
     serverCopy: 'textspec',
     hosts: 'plain',
+    transactionsCarryCopy: false,
   })
   const [freePlay, setFreePlay] = useState<FreePlay>(() => startFreePlay(setup))
 
@@ -225,6 +227,11 @@ export function useFreePlay() {
     setSetup,
     reset: () => setFreePlay(startFreePlay(setup)),
     resetWith: (next: Setup) => setFreePlay(startFreePlay(next)),
+    setTransactionsCarryCopy: (transactionsCarryCopy: boolean) => {
+      const next = {...setup, transactionsCarryCopy}
+      setSetup(next)
+      setFreePlay(startFreePlay(next))
+    },
     perform,
     captureChecks,
   }
@@ -683,7 +690,13 @@ function stamp(
 function setupSteps(setup: Setup): Array<string> {
   const hostStep = hostPresetOf(setup.hosts).step
 
-  return [...(hostStep === null ? [] : [hostStep]), ...editorSetupSteps(setup)]
+  return [
+    ...(hostStep === null ? [] : [hostStep]),
+    ...(setup.transactionsCarryCopy
+      ? ["transactions that carry the server's copy"]
+      : []),
+    ...editorSetupSteps(setup),
+  ]
 }
 
 function editorSetupSteps(setup: Setup): Array<string> {

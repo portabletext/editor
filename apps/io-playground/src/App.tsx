@@ -159,6 +159,15 @@ export function App() {
             onReceiveSelected={receiveSelected}
             editorA={snapshot.editors?.['Editor A']}
             editorADeadFeed={deadFeeds.includes('Editor A')}
+            carriesServerCopy={
+              snapshot.network?.carriesServerCopy ??
+              (tab === 'free play' && freePlay.setup.transactionsCarryCopy)
+            }
+            onToggleServerCopy={
+              tab === 'free play'
+                ? freePlay.setTransactionsCarryCopy
+                : undefined
+            }
           />
           <LinkPanel
             name="Editor B"
