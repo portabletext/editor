@@ -57,7 +57,7 @@ describe(createIoEditor.name, () => {
     editor.type('x')
     editor.type('y')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -66,27 +66,13 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foox', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'fooxy', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
     ])
     expect(editor.document.toTextspec()).toEqual('B: fooxy|')
@@ -131,7 +117,7 @@ describe(createIoEditor.name, () => {
     )
 
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -139,6 +125,7 @@ describe(createIoEditor.name, () => {
 
     expect(heard.mutations[1]).toEqual({
       id: 'A-2',
+      transactionId: 'A-t2',
       patches: [
         insert(
           [
@@ -158,21 +145,6 @@ describe(createIoEditor.name, () => {
           {_key: 'a-k2'},
           'text',
         ]),
-      ],
-      value: [
-        {
-          _type: 'block',
-          _key: 'd-k0',
-          children: [{_type: 'span', _key: 'd-k1', text: 'foox', marks: []}],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: 'a-k3',
-          children: [{_type: 'span', _key: 'a-k2', text: 'bazq', marks: []}],
-          style: 'normal',
-        },
-        barBlock,
       ],
     })
 
@@ -203,7 +175,7 @@ describe(createIoEditor.name, () => {
     expect(editor.document.toTextspec()).toEqual('H1: foo|')
 
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -212,27 +184,13 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [set('h2', path)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-            style: 'h2',
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [set('h1', path)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-            style: 'h1',
-          },
-        ],
       },
     ])
   })
@@ -243,7 +201,7 @@ describe(createIoEditor.name, () => {
 
     editor.setStyle('h2')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -254,27 +212,13 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [set('h2', path)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-            style: 'h2',
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [set('normal', path)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
     ])
   })
@@ -291,7 +235,7 @@ describe(createIoEditor.name, () => {
       patches: [set('h1', path)],
     })
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -301,15 +245,8 @@ describe(createIoEditor.name, () => {
     expect(editor.document.toTextspec()).toEqual('H1: foo|')
     expect(heard.mutations[1]).toEqual({
       id: 'A-2',
+      transactionId: 'A-t2',
       patches: [set('h1', path)],
-      value: [
-        {
-          _type: 'block',
-          _key: 'd-k0',
-          children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-          style: 'h1',
-        },
-      ],
     })
   })
 
@@ -331,15 +268,8 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [set('h2', path)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-            style: 'h2',
-          },
-        ],
       },
     ])
   })
@@ -350,13 +280,13 @@ describe(createIoEditor.name, () => {
     editor.setStyle('h2')
     editor.setStyle('h1')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
     })
     editor.transaction({
-      transactionId: 'A-2',
+      transactionId: 'A-t2',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[1].patches,
@@ -376,7 +306,7 @@ describe(createIoEditor.name, () => {
 
     editor.setStyle('h1')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -387,16 +317,8 @@ describe(createIoEditor.name, () => {
     expect(editor.document.getPlaceholderKey()).toEqual(undefined)
     expect(heard.mutations[1]).toEqual({
       id: 'A-2',
+      transactionId: 'A-t2',
       patches: [set('normal', path)],
-      value: [
-        {
-          _type: 'block',
-          _key: 'a-k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'a-k1', text: '', marks: []}],
-        },
-      ],
     })
   })
 
@@ -419,7 +341,7 @@ describe(createIoEditor.name, () => {
     expect(editor.document.getPlaceholderKey()).toEqual(undefined)
 
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -427,13 +349,13 @@ describe(createIoEditor.name, () => {
 
     expect(heard.mutations[1]).toEqual({
       id: 'A-2',
+      transactionId: 'A-t2',
       patches: [
         setIfMissing([], []),
         insert([placeholder], 'before', [0]),
         set('h1', path),
         set('normal', path),
       ],
-      value: [placeholder],
     })
   })
 
@@ -443,7 +365,7 @@ describe(createIoEditor.name, () => {
 
     editor.type('x')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -459,15 +381,8 @@ describe(createIoEditor.name, () => {
     expect(editor.document.toTextspec()).toEqual('B: yfoo|')
     expect(heard.mutations[1]).toEqual({
       id: 'A-2',
+      transactionId: 'A-t2',
       patches: [diffMatchPatch('yfoox', 'yfoo', textPath)],
-      value: [
-        {
-          _type: 'block',
-          _key: 'd-k0',
-          children: [{_type: 'span', _key: 'd-k1', text: 'yfoo', marks: []}],
-          style: 'normal',
-        },
-      ],
     })
   })
 
@@ -481,7 +396,7 @@ describe(createIoEditor.name, () => {
 
     editor.type('x')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -498,6 +413,7 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [
           setIfMissing([], []),
           insert(
@@ -515,43 +431,25 @@ describe(createIoEditor.name, () => {
           ),
           diffMatchPatch('', 'x', textPath),
         ],
-        value: [
-          {
-            _type: 'block',
-            _key: 'a-k0',
-            style: 'normal',
-            markDefs: [],
-            children: [{_type: 'span', _key: 'a-k1', text: 'x', marks: []}],
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [diffMatchPatch('x', '', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'a-k0',
-            style: 'normal',
-            markDefs: [],
-            children: [{_type: 'span', _key: 'a-k1', text: '', marks: []}],
-          },
-          barBlock,
-        ],
       },
     ])
   })
 
   test('undoing a delete puts the block back after its previous sibling', () => {
     const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
-    const [fooBlock, barBlock] = parseTextspec(
+    const [, barBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
       'B: foo;;B: bar',
     ).value
 
     editor.deleteBlock('bar')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -560,18 +458,18 @@ describe(createIoEditor.name, () => {
 
     expect(editor.document.toTextspec()).toEqual('B: foo|;;B: bar')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', patches: [unset([{_key: 'd-k2'}])], value: [fooBlock]},
+      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
-        value: [fooBlock, barBlock],
       },
     ])
   })
 
   test('undoing a delete puts the block back as another writer changed it while the delete was in flight', () => {
     const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
-    const [fooBlock, barBlock] = parseTextspec(
+    const [, barBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
       'B: foo;;H1: bar',
     ).value
@@ -588,32 +486,32 @@ describe(createIoEditor.name, () => {
     expect(editor.document.toTextspec()).toEqual('B: foo|;;H1: bar')
 
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
     })
 
     expect(heard.mutations).toEqual([
-      {id: 'A-1', patches: [unset([{_key: 'd-k2'}])], value: [fooBlock]},
+      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
-        value: [fooBlock, barBlock],
       },
     ])
   })
 
   test('undoing a confirmed delete puts the block back as the base held it just before the delete', () => {
     const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
-    const [fooBlock, barBlock] = parseTextspec(
+    const [, barBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
       'B: foo;;B: bar',
     ).value
 
     editor.deleteBlock('bar')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -628,25 +526,25 @@ describe(createIoEditor.name, () => {
 
     expect(editor.document.toTextspec()).toEqual('B: foo|;;B: bar')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', patches: [unset([{_key: 'd-k2'}])], value: [fooBlock]},
+      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
-        value: [fooBlock, barBlock],
       },
     ])
   })
 
   test('undoing a delete does nothing once the block is back', () => {
     const {editor, heard} = createLoadedEditor('B: foo|;;B: bar')
-    const [fooBlock, barBlock] = parseTextspec(
+    const [, barBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
       'B: foo;;B: bar',
     ).value
 
     editor.deleteBlock('bar')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -661,7 +559,7 @@ describe(createIoEditor.name, () => {
 
     expect(editor.document.toTextspec()).toEqual('B: foo|;;B: bar')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', patches: [unset([{_key: 'd-k2'}])], value: [fooBlock]},
+      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
     ])
     expect(heard.errors).toEqual([])
   })
@@ -671,7 +569,7 @@ describe(createIoEditor.name, () => {
 
     editor.insertBlock('B: bar')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -682,16 +580,8 @@ describe(createIoEditor.name, () => {
     expect(editor.document.getPlaceholderKey()).toEqual(undefined)
     expect(heard.mutations[1]).toEqual({
       id: 'A-2',
+      transactionId: 'A-t2',
       patches: [unset([{_key: 'a-k2'}])],
-      value: [
-        {
-          _type: 'block',
-          _key: 'a-k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'a-k1', text: '', marks: []}],
-        },
-      ],
     })
   })
 
@@ -700,7 +590,7 @@ describe(createIoEditor.name, () => {
 
     editor.insertBlock('B: bar')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -717,6 +607,7 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [
           insert(
             [
@@ -732,20 +623,6 @@ describe(createIoEditor.name, () => {
             'after',
             [{_key: 'd-k0'}],
           ),
-        ],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foo', marks: []}],
-            style: 'normal',
-          },
-          {
-            _type: 'block',
-            _key: 'a-k2',
-            children: [{_type: 'span', _key: 'a-k3', text: 'bar', marks: []}],
-            style: 'normal',
-          },
         ],
       },
     ])
@@ -793,6 +670,7 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [
           diffMatchPatch('foo', 'foox', [
             {_key: 'd-k0'},
@@ -800,20 +678,6 @@ describe(createIoEditor.name, () => {
             {_key: 'd-k1'},
             'text',
           ]),
-        ],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foox', marks: []}],
-            style: 'normal',
-          },
-          {
-            _type: 'block',
-            _key: 'd-k2',
-            children: [{_type: 'span', _key: 'd-k3', text: 'bar', marks: []}],
-            style: 'normal',
-          },
         ],
       },
     ])
@@ -834,7 +698,7 @@ describe(createIoEditor.name, () => {
     })
 
     expect(editor.inspect()).toEqual({
-      inFlight: {id: 'A-1', transactionIds: ['A-1'], patchCount: 1},
+      inFlight: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
       rejected: undefined,
       echoed: [],
       pending: [
@@ -862,7 +726,7 @@ describe(createIoEditor.name, () => {
 
     expect(editor.inspect()).toEqual({
       inFlight: undefined,
-      rejected: {id: 'A-1', transactionIds: ['A-1'], patchCount: 1},
+      rejected: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
       echoed: [],
       pending: [
         {
@@ -883,7 +747,7 @@ describe(createIoEditor.name, () => {
 
     editor.type('x')
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -897,27 +761,13 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foox', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'fooxy', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
     ])
   })
@@ -996,8 +846,8 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [set('a-k3', [1, '_key'])],
-        value: [value[0], {...keylessBlock, _key: 'a-k3'}],
       },
     ])
   })
@@ -1019,7 +869,7 @@ describe(createIoEditor.name, () => {
     ])
 
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1144,11 +994,52 @@ describe(createIoEditor.name, () => {
     expect(heard.mutations.map((batch) => batch.id)).toEqual(['A-1'])
   })
 
-  test('a second `mutation sent` with another transaction ID warns, and either ID confirms the batch', () => {
-    const results = ['A-1', 'retry-1'].map((transactionId) => {
+  test('a `mutation sent` with another transaction ID replaces the proposed one as the ID that confirms the batch', () => {
+    const results = ['A-t1', 'commit-1'].map((transactionId) => {
       const {editor, heard} = createLoadedEditor('B: foo|')
 
       editor.type('x')
+      const inFlightProposed = editor.inspect().inFlight
+      editor.mutationSent({id: 'A-1', transactionId: 'commit-1'})
+      const inFlightNamed = editor.inspect().inFlight
+      editor.type('y')
+      editor.transaction({
+        transactionId,
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: heard.mutations[0].patches,
+      })
+
+      return {
+        inFlightProposed,
+        inFlightNamed,
+        inFlightAfter: editor.inspect().inFlight,
+        warnings: heard.warnings,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        inFlightProposed: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+        inFlightNamed: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
+        inFlightAfter: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
+        warnings: [],
+      },
+      {
+        inFlightProposed: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+        inFlightNamed: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
+        warnings: [],
+      },
+    ])
+  })
+
+  test('a second `mutation sent` with another transaction ID warns, and either ID confirms the batch', () => {
+    const results = ['commit-1', 'retry-1'].map((transactionId) => {
+      const {editor, heard} = createLoadedEditor('B: foo|')
+
+      editor.type('x')
+      editor.mutationSent({id: 'A-1', transactionId: 'commit-1'})
       editor.mutationSent({id: 'A-1', transactionId: 'retry-1'})
       const inFlightBefore = editor.inspect().inFlight
       editor.type('y')
@@ -1168,15 +1059,15 @@ describe(createIoEditor.name, () => {
     })
 
     expect(results).toEqual(
-      ['A-1', 'retry-1'].map(() => ({
+      ['commit-1', 'retry-1'].map(() => ({
         inFlightBefore: {
           id: 'A-1',
-          transactionIds: ['A-1', 'retry-1'],
+          transactionIds: ['commit-1', 'retry-1'],
           patchCount: 1,
         },
-        inFlightAfter: {id: 'A-2', transactionIds: ['A-2'], patchCount: 1},
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
         warnings: [
-          '`mutation sent` names transaction "retry-1" for batch "A-1", already sent as "A-1": a retry must reuse the transaction ID',
+          '`mutation sent` names transaction "retry-1" for batch "A-1", already sent as "commit-1": a retry must reuse the transaction ID',
         ],
         screen: 'B: fooxy|',
       })),
@@ -1195,7 +1086,7 @@ describe(createIoEditor.name, () => {
       patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
     })
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -1262,7 +1153,7 @@ describe(createIoEditor.name, () => {
           {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
           {id: 'A-2', patches: [diffMatchPatch('foox', 'fooxy', textPath)]},
         ],
-        inFlight: {id: 'A-2', transactionIds: ['A-2'], patchCount: 1},
+        inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
       },
       {
         screenAfterRefusal: 'B: fooxy|',
@@ -1275,7 +1166,7 @@ describe(createIoEditor.name, () => {
           {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
           {id: 'A-2', patches: [diffMatchPatch('foox', 'fooxy', textPath)]},
         ],
-        inFlight: {id: 'A-2', transactionIds: ['A-2'], patchCount: 1},
+        inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
       },
     ])
   })
@@ -1292,7 +1183,7 @@ describe(createIoEditor.name, () => {
 
       editor.type('x')
       editor.transaction({
-        transactionId: 'A-1',
+        transactionId: 'A-t1',
         previousRev: 'r1',
         resultRev: 'r2',
         patches: [extraPatch, diffMatchPatch('foo', 'foox', textPath)],
@@ -1319,7 +1210,7 @@ describe(createIoEditor.name, () => {
         errors: [
           {
             reason: 'echo mismatch',
-            transactionId: 'A-1',
+            transactionId: 'A-t1',
             patch: ancestorPatch,
           },
         ],
@@ -1340,14 +1231,14 @@ describe(createIoEditor.name, () => {
     editor.type('y')
     syncs.push(editor.getSync())
     editor.transaction({
-      transactionId: 'A-1',
+      transactionId: 'A-t1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
     })
     syncs.push(editor.getSync())
     editor.transaction({
-      transactionId: 'A-2',
+      transactionId: 'A-t2',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[1].patches,
@@ -1367,7 +1258,7 @@ describe(createIoEditor.name, () => {
     editor.resync({value: editor.getBase().value, rev: 'r3'})
     syncs.push(editor.getSync())
     editor.transaction({
-      transactionId: 'A-4',
+      transactionId: 'A-t4',
       previousRev: 'r3',
       resultRev: 'r4',
       patches: heard.mutations[3].patches,
@@ -1476,11 +1367,6 @@ function createLoadedEditor(textspec: string | undefined) {
       ? {value: undefined, caret: undefined}
       : parseTextspec({keyGenerator: createTestKeyGenerator('d-')}, textspec)
 
-  editor.on((event) => {
-    if (event.type === 'mutation' && !event.final) {
-      editor.mutationSent({id: event.id, transactionId: event.id})
-    }
-  })
   editor.mount()
   editor.load({value, rev: 'r1'})
 

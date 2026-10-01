@@ -13,14 +13,16 @@ export type Transaction = {
 }
 
 /**
- * A batch of patches the editor hands to its host to save. `value` is the
- * editor's content when the batch goes out, `undefined` when the field is
- * empty.
+ * A batch of patches the editor hands to its host to save. `transactionId`
+ * is the transaction ID the editor proposes for saving it: a host that saves
+ * the batch as its own request uses it as is, and a host that chooses
+ * another names that one with `mutation sent`. The batch carries no value:
+ * the patches are the save.
  */
 export type MutationBatch = {
   id: string
+  transactionId: string
   patches: Array<Patch>
-  value: Array<PortableTextBlock> | undefined
   final?: true
 }
 

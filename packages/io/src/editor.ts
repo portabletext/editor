@@ -52,7 +52,8 @@ export type IoEditorEvent =
 
 /**
  * A batch the editor has sent and the base doesn't hold yet.
- * `transactionIds` is empty until the host reports `mutation sent`.
+ * `transactionIds` holds the proposed transaction ID until the host names
+ * another with `mutation sent`.
  */
 export type IoEditorSentBatch = {
   id: string
@@ -117,8 +118,13 @@ export type IoEditor = {
 type SentBatch = {
   id: string
   patches: Array<Patch>
-  /** Every transaction ID the host reported for the batch. */
+  /**
+   * The transaction IDs the editor takes for its own: the proposed one until
+   * the host names another, then every one the host named.
+   */
   transactionIds: Set<string>
+  /** Whether the host has sent `mutation sent` for the batch. */
+  named: boolean
 }
 
 type HeldTransaction = {transaction: Transaction; arrivedAt: number}
@@ -143,7 +149,9 @@ type HistoryEntry = {
 
 /**
  * The editor side of the pass-through protocol. Batch IDs are the editor's
- * `id` plus a counter, so editors with different IDs never share one.
+ * `id` plus a counter, so editors with different IDs never share one. The
+ * proposed transaction IDs come from the same per-editor counter, as
+ * `<id>-t<counter>`, so they are as unique as the editor's `id`.
  */
 export function createIoEditor(options: {
   id: string
@@ -535,14 +543,20 @@ export function createIoEditor(options: {
       return
     }
 
-    if (
-      inFlight?.id !== incoming.id ||
-      inFlight.transactionIds.has(incoming.transactionId)
-    ) {
+    if (inFlight?.id !== incoming.id) {
       return
     }
 
-    if (inFlight.transactionIds.size > 0) {
+    if (!inFlight.named) {
+      inFlight = {
+        ...inFlight,
+        transactionIds: new Set([incoming.transactionId]),
+        named: true,
+      }
+      return
+    }
+
+    if (!inFlight.transactionIds.has(incoming.transactionId)) {
       warn(
         `\`mutation sent\` names transaction "${incoming.transactionId}" for batch "${incoming.id}", already sent as ${[
           ...inFlight.transactionIds,
@@ -550,14 +564,13 @@ export function createIoEditor(options: {
           .map((transactionId) => `"${transactionId}"`)
           .join(', ')}: a retry must reuse the transaction ID`,
       )
-    }
-
-    inFlight = {
-      ...inFlight,
-      transactionIds: new Set([
-        ...inFlight.transactionIds,
-        incoming.transactionId,
-      ]),
+      inFlight = {
+        ...inFlight,
+        transactionIds: new Set([
+          ...inFlight.transactionIds,
+          incoming.transactionId,
+        ]),
+      }
     }
   }
 
@@ -748,8 +761,8 @@ export function createIoEditor(options: {
 
     const batch: MutationBatch = {
       id: `${options.id}-${batchCounter}`,
+      transactionId: `${options.id}-t${batchCounter}`,
       patches: pending.flat(),
-      value: getContent(),
       ...(final ? {final: true as const} : {}),
     }
 
@@ -763,7 +776,8 @@ export function createIoEditor(options: {
       inFlight = {
         id: batch.id,
         patches: batch.patches,
-        transactionIds: new Set(),
+        transactionIds: new Set([batch.transactionId]),
+        named: false,
       }
       startInFlightWarning(batch.id, livenessTimeout, clock.now())
     }
@@ -886,12 +900,6 @@ export function createIoEditor(options: {
     }
 
     return inFlight || pending.length > 0 ? 'saving' : 'synced'
-  }
-
-  function getContent(): Array<PortableTextBlock> | undefined {
-    return document.getPlaceholderKey() === undefined
-      ? document.getValue()
-      : undefined
   }
 
   function putCaretAfter(text: string) {

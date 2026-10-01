@@ -46,8 +46,9 @@ Feature: Other editors
       | Editor B's batch 1 | Editor A's batch 1 | H2: foo | Editor A receives Editor B's batch 1 | H2: foo\|   | Editor A's batch 1 comes back        |
       | Editor A's batch 1 | Editor B's batch 1 | H1: foo | Editor A's batch 1 comes back        | H2: foo\|   | Editor A receives Editor B's batch 1 |
 
-  Scenario: Two batches saved in one transaction are each confirmed
-    Given the document is "B: foo|;;B: bar"
+  Scenario: A host that folds two batches into one request names its transaction for each, and each batch is confirmed
+    Given hosts that fold batches into shared requests
+    And the document is "B: foo|;;B: bar"
     When "x" is typed
     Then Editor A shows "B: foox|;;B: bar"
     And Editor A has sent batch 1
@@ -61,6 +62,8 @@ Feature: Other editors
     And Editor B has sent nothing new
     When the server receives Editor A's batch 1 and Editor B's batch 1 as one transaction
     Then the server has "B: foox;;B: bary"
+    And Editor A's host has named the transaction for batch 1
+    And Editor B's host has named the transaction for batch 1
     When Editor A's batch 1 comes back
     Then Editor A shows "B: fooxz|;;B: bary"
     And Editor A has sent batch 2

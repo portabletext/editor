@@ -5,8 +5,8 @@ export type PassThroughHost = {
   /** The transaction a batch will be saved as. */
   getTransactionId: (batchId: string) => string
   /**
-   * Saves a batch as another transaction, as when several batches go out in
-   * one request, and tells the editor before the request goes out.
+   * Puts a batch in a request with other batches, saved as one transaction.
+   * Only a host that folds batches does this.
    */
   mapToTransaction: (batchId: string, transactionId: string) => void
   forward: (transaction: Transaction) => void
@@ -30,15 +30,22 @@ export type PassThroughHost = {
 }
 
 /**
- * Forwards the feed to the editor as it arrives, saves each batch as the
- * transaction named by its batch ID, and fetches the server's copy for `load`
- * and `resync`. Waiting for the batch in flight before a resync, or naming it
- * so the host looks up its outcome, is the caller's job.
+ * Forwards the feed to the editor as it arrives, saves each batch, and
+ * fetches the server's copy for `load` and `resync`. Waiting for the batch in
+ * flight before a resync, or naming it so the host looks up its outcome, is
+ * the caller's job.
  *
- * The host sends `mutation sent` when the server takes the save request, the
- * last moment before the save, so a step can still fold two waiting batches
- * into one transaction and each batch is named once. A real host decides the
- * transaction before the request leaves and names it then.
+ * By default the host saves each batch as its own request, under the
+ * transaction ID the batch proposes, and never sends `mutation sent`. With
+ * `foldBatches`, the host is shaped like Studio's committer: it chooses one
+ * transaction ID per request, which may carry several batches, and sends
+ * `mutation sent` for each batch in it. A batch that goes out alone is saved
+ * under its batch ID. The host sends `mutation sent` when the server takes
+ * the save request, the last moment before the save, so a step can still fold
+ * two waiting batches into one request and each batch is named once. A real
+ * host decides the transaction before the request leaves and names it then.
+ * The `final` batch is always saved under its proposed ID, with no
+ * `mutation sent`.
  *
  * `subscription` returns what the host's feed subscription holds but hasn't
  * delivered yet, in server order. The host subscribes before it fetches a
@@ -63,6 +70,7 @@ export function createPassThroughHost({
   hasTransaction,
   fetchCopy,
   subscription,
+  foldBatches = false,
 }: {
   editor: IoEditor
   save: (batch: MutationBatch) => void
@@ -75,9 +83,11 @@ export function createPassThroughHost({
   hasTransaction: (transactionId: string) => boolean
   fetchCopy: () => Load
   subscription: () => Array<Pick<Transaction, 'transactionId' | 'resultRev'>>
+  foldBatches?: boolean
 }): PassThroughHost {
   const transactionIds = new Map<string, string>()
   const batches = new Map<string, MutationBatch>()
+  const requestTransactionIds = new Map<string, string>()
   const unnamedBatchIds = new Set<string>()
   let inFlightBatchId: string | undefined
   let untakenBatchId: string | undefined
@@ -92,7 +102,7 @@ export function createPassThroughHost({
     }
 
     const {type: _type, ...batch} = event
-    transactionIds.set(batch.id, batch.id)
+    transactionIds.set(batch.id, batch.transactionId)
     batches.set(batch.id, batch)
 
     if (batch.final) {
@@ -105,7 +115,10 @@ export function createPassThroughHost({
       return
     }
 
-    unnamedBatchIds.add(batch.id)
+    if (foldBatches) {
+      unnamedBatchIds.add(batch.id)
+    }
+
     inFlightBatchId = batch.id
     untakenBatchId = batch.id
     save(batch)
@@ -168,11 +181,19 @@ export function createPassThroughHost({
   return {
     getTransactionId,
     mapToTransaction: (batchId, transactionId) => {
-      transactionIds.set(batchId, transactionId)
-
-      if (!unnamedBatchIds.has(batchId)) {
-        editor.mutationSent({id: batchId, transactionId})
+      if (!foldBatches) {
+        throw new Error(
+          'A host that saves each batch under its proposed transaction ID never folds batches into one request',
+        )
       }
+
+      if (unnamedBatchIds.has(batchId)) {
+        requestTransactionIds.set(batchId, transactionId)
+        return
+      }
+
+      transactionIds.set(batchId, transactionId)
+      editor.mutationSent({id: batchId, transactionId})
     },
     forward: (transaction) => {
       if (transaction.resultRev !== undefined) {
@@ -203,10 +224,9 @@ export function createPassThroughHost({
     },
     reportSaveTaken: (batchId) => {
       if (unnamedBatchIds.delete(batchId)) {
-        editor.mutationSent({
-          id: batchId,
-          transactionId: getTransactionId(batchId),
-        })
+        const transactionId = requestTransactionIds.get(batchId) ?? batchId
+        transactionIds.set(batchId, transactionId)
+        editor.mutationSent({id: batchId, transactionId})
       }
 
       if (batchId !== untakenBatchId) {

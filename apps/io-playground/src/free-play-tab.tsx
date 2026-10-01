@@ -2,6 +2,7 @@ import {
   createWorld,
   editorNames,
   type EditorName,
+  type HostShape,
   type ServerCopyName,
   type World,
 } from '@portabletext/io'
@@ -31,6 +32,7 @@ type Setup = {
     | "editors don't claim"
   textspec: string
   serverCopy: 'textspec' | ServerCopyName
+  hosts: HostShape
 }
 
 type FreePlay = {
@@ -46,6 +48,16 @@ const setupModes: Array<Setup['mode']> = [
   "editors don't claim",
 ]
 
+const hostShapes: Record<HostShape, {label: string; step: string | null}> = {
+  plain: {label: 'plain hosts', step: null},
+  folding: {
+    label: 'folding hosts',
+    step: 'hosts that fold batches into shared requests',
+  },
+}
+
+const hostShapeNames: Array<HostShape> = ['plain', 'folding']
+
 const serverCopies: Array<Setup['serverCopy']> = [
   'textspec',
   'no document',
@@ -60,6 +72,7 @@ export function useFreePlay() {
     mode: 'the document is',
     textspec: 'B: foo|',
     serverCopy: 'textspec',
+    hosts: 'plain',
   })
   const [freePlay, setFreePlay] = useState<FreePlay>(() => startFreePlay(setup))
 
@@ -170,6 +183,25 @@ export function FreePlayTab({
       <div className="flex min-h-0 flex-col gap-2">
         <Section title="Setup">
           <div className="flex flex-wrap items-center gap-1">
+            <select
+              className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs"
+              value={setup.hosts}
+              onChange={(event) =>
+                setSetup({
+                  ...setup,
+                  hosts:
+                    hostShapeNames.find(
+                      (shape) => shape === event.target.value,
+                    ) ?? 'plain',
+                })
+              }
+            >
+              {hostShapeNames.map((shape) => (
+                <option key={shape} value={shape}>
+                  {hostShapes[shape].label}
+                </option>
+              ))}
+            </select>
             <select
               className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs"
               value={setup.mode}
@@ -453,6 +485,12 @@ function startFreePlay(setup: Setup): FreePlay {
 }
 
 function setupSteps(setup: Setup): Array<string> {
+  const hostStep = hostShapes[setup.hosts].step
+
+  return [...(hostStep === null ? [] : [hostStep]), ...editorSetupSteps(setup)]
+}
+
+function editorSetupSteps(setup: Setup): Array<string> {
   if (setup.mode === 'the document is') {
     return [`the document is ${quoted(setup.textspec)}`]
   }

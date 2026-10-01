@@ -6,7 +6,7 @@ import {createIoEditor} from './editor'
 import {createNetwork} from './fakes/network'
 import {createPassThroughHost} from './host'
 import {listenTo} from './scenario/world'
-import type {Load, MutationBatch, Transaction} from './types'
+import type {Load, MutationBatch, MutationSent, Transaction} from './types'
 
 describe(createPassThroughHost.name, () => {
   test('a transaction the resync copy covers is dropped, and the next one is forwarded', () => {
@@ -102,18 +102,69 @@ describe(createPassThroughHost.name, () => {
     expect(editor.document.toTextspec()).toEqual('H2: foo|')
   })
 
-  test('`mutation sent` names the batch once, when the server takes the request, with the transaction it was folded into', () => {
-    const {editor, host, heard} = createHostedEditor('B: foo|')
+  test('a plain host saves each batch under the transaction ID it proposes and sends no `mutation sent`', () => {
+    const {editor, host, heard, mutationsSent} = createHostedEditor('B: foo|')
 
     editor.type('x')
-
-    expect(editor.inspect().inFlight?.transactionIds).toEqual([])
-
-    host.mapToTransaction('A-1', 'A-1+B-1')
     host.reportSaveTaken('A-1')
 
-    expect(editor.inspect().inFlight?.transactionIds).toEqual(['A-1+B-1'])
-    expect(heard.warnings).toEqual([])
+    expect({
+      transactionId: host.getTransactionId('A-1'),
+      inFlight: editor.inspect().inFlight,
+      mutationsSent,
+      warnings: heard.warnings,
+    }).toEqual({
+      transactionId: 'A-t1',
+      inFlight: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+      mutationsSent: [],
+      warnings: [],
+    })
+    expect(() => host.mapToTransaction('A-1', 'A-1+B-1')).toThrow(
+      'A host that saves each batch under its proposed transaction ID never folds batches into one request',
+    )
+  })
+
+  test('a folding host names the request a batch went out in once, when the server takes it', () => {
+    const results = [true, false].map((folded) => {
+      const {editor, host, heard, mutationsSent} = createHostedEditor(
+        'B: foo|',
+        {foldBatches: true},
+      )
+
+      editor.type('x')
+      const transactionIdsBefore = editor.inspect().inFlight?.transactionIds
+
+      if (folded) {
+        host.mapToTransaction('A-1', 'A-1+B-1')
+      }
+
+      host.reportSaveTaken('A-1')
+
+      return {
+        transactionIdsBefore,
+        transactionIdsAfter: editor.inspect().inFlight?.transactionIds,
+        savedAs: host.getTransactionId('A-1'),
+        mutationsSent,
+        warnings: heard.warnings,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        transactionIdsBefore: ['A-t1'],
+        transactionIdsAfter: ['A-1+B-1'],
+        savedAs: 'A-1+B-1',
+        mutationsSent: [{id: 'A-1', transactionId: 'A-1+B-1'}],
+        warnings: [],
+      },
+      {
+        transactionIdsBefore: ['A-t1'],
+        transactionIdsAfter: ['A-1'],
+        savedAs: 'A-1',
+        mutationsSent: [{id: 'A-1', transactionId: 'A-1'}],
+        warnings: [],
+      },
+    ])
   })
 
   test('a retry re-sends the save request with the transaction ID the batch was first sent as', () => {
@@ -125,7 +176,7 @@ describe(createPassThroughHost.name, () => {
       host.reportSaveTaken('A-1')
 
       if (landed) {
-        transactionHistory.add('A-1')
+        transactionHistory.add('A-t1')
       }
 
       return {
@@ -139,15 +190,15 @@ describe(createPassThroughHost.name, () => {
     expect(results).toEqual([
       {
         answer: 'duplicate',
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-1'}],
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
         warnings: [],
-        transactionIds: ['A-1'],
+        transactionIds: ['A-t1'],
       },
       {
         answer: 'saved',
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-1'}],
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
         warnings: [],
-        transactionIds: ['A-1'],
+        transactionIds: ['A-t1'],
       },
     ])
   })
@@ -168,7 +219,7 @@ describe(createPassThroughHost.name, () => {
       editor.type('y')
 
       if (landed) {
-        transactionHistory.add('A-1')
+        transactionHistory.add('A-t1')
       }
 
       serverCopy.current = {
@@ -222,27 +273,13 @@ describe(createPassThroughHost.name, () => {
     expect(saved).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foox', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'fooxy', marks: []}],
-            style: 'normal',
-          },
-        ],
         final: true,
       },
     ])
@@ -260,34 +297,23 @@ describe(createPassThroughHost.name, () => {
     expect(saved).toEqual([
       {
         id: 'A-1',
+        transactionId: 'A-t1',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'foox', marks: []}],
-            style: 'normal',
-          },
-        ],
       },
       {
         id: 'A-2',
+        transactionId: 'A-t2',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
-        value: [
-          {
-            _type: 'block',
-            _key: 'd-k0',
-            children: [{_type: 'span', _key: 'd-k1', text: 'fooxy', marks: []}],
-            style: 'normal',
-          },
-        ],
         final: true,
       },
     ])
   })
 })
 
-function createHostedEditor(textspec: string) {
+function createHostedEditor(
+  textspec: string,
+  {foldBatches = false}: {foldBatches?: boolean} = {},
+) {
   const {clock} = createNetwork()
   const editor = createIoEditor({
     id: 'A',
@@ -305,6 +331,12 @@ function createHostedEditor(textspec: string) {
   const saved: Array<MutationBatch> = []
   const resubmitted: Array<{batchId: string; transactionId: string}> = []
   const transactionHistory = new Set<string>()
+  const mutationsSent: Array<MutationSent> = []
+  const {mutationSent} = editor
+  editor.mutationSent = (incoming) => {
+    mutationsSent.push(incoming)
+    mutationSent(incoming)
+  }
   const host = createPassThroughHost({
     editor,
     save: (batch) => saved.push(batch),
@@ -321,6 +353,7 @@ function createHostedEditor(textspec: string) {
     hasTransaction: (transactionId) => transactionHistory.has(transactionId),
     fetchCopy: () => serverCopy.current,
     subscription: () => feed,
+    foldBatches,
   })
 
   editor.mount()
@@ -340,5 +373,6 @@ function createHostedEditor(textspec: string) {
     serverCopy,
     resubmitted,
     transactionHistory,
+    mutationsSent,
   }
 }

@@ -20,12 +20,20 @@ import type {
   ChangeEvent,
   ErrorEvent,
   MutationBatch,
+  MutationSent,
   WorkDropped,
 } from '../types'
 
 export type EditorName = 'Editor A' | 'Editor B'
 
 export type ServerCopyName = 'no document' | 'no field' | 'an empty list'
+
+/**
+ * How the hosts save: `'plain'` saves each batch as its own request under
+ * the transaction ID it proposes, `'folding'` folds batches into shared
+ * requests and names each request's transaction with `mutation sent`.
+ */
+export type HostShape = 'plain' | 'folding'
 
 /**
  * What the editor's listeners received, recorded from the moment it was
@@ -178,6 +186,8 @@ export type WorldEditor = {
   editor: IoEditor
   host: PassThroughHost
   heard: Heard
+  /** Every `mutation sent` the host gave the editor. */
+  mutationsSent: Array<MutationSent>
   /** The batch count at the previous `has sent` check. */
   checkedBatchCount: number
   /** The error count at the previous out-of-step or in-step check. */
@@ -216,6 +226,7 @@ export const heldTransactionTimeout = 10_000
 export function createWorld() {
   const documentKeyGenerator = createTestKeyGenerator('d-')
   let initialDocument: {value: Array<PortableTextBlock> | undefined} | undefined
+  let hostShape: HostShape = 'plain'
   let setup: Setup | undefined
   let lastResync: ResyncAttempt | undefined
   const namedTransactions = new Map<string, NamedTransaction>()
@@ -233,12 +244,14 @@ export function createWorld() {
         server,
         network,
         claimLoad,
+        hostShape,
       }),
       'Editor B': createWorldEditor({
         name: 'Editor B',
         server,
         network,
         claimLoad,
+        hostShape,
       }),
     }
 
@@ -247,13 +260,19 @@ export function createWorld() {
     return setup
   }
 
+  /**
+   * The server takes the save requests first, so a host that names the
+   * request's transaction at that moment has named it before the save.
+   */
   function publishReceived(
     batches: Array<{name: EditorName; batch: MutationBatch}>,
-    transactionId: string,
   ) {
     const {server, network} = getSetup()
     const [first, second] = batches.map(
       ({batch}) => network.takeSaveRequest(batch.id).batch,
+    )
+    const [transactionId] = batches.map(({name, batch}) =>
+      getEditor(name).host.getTransactionId(batch.id),
     )
     const transaction = second
       ? server.receiveAsOne(first, second, transactionId)
@@ -512,12 +531,16 @@ export function createWorld() {
     },
     startEditors,
 
+    setHostShape: (shape: HostShape) => {
+      if (setup) {
+        throw new Error('The hosts are set up already')
+      }
+
+      hostShape = shape
+    },
+
     receive: (name: EditorName, batchNumber: number) => {
-      const batch = getBatch(name, batchNumber)
-      publishReceived(
-        [{name, batch}],
-        getEditor(name).host.getTransactionId(batch.id),
-      )
+      publishReceived([{name, batch: getBatch(name, batchNumber)}])
     },
     receiveFinal: (name: EditorName) => {
       const batch = getEditor(name).heard.mutations.at(-1)
@@ -526,10 +549,7 @@ export function createWorld() {
         throw new Error(`${name} has not sent a final batch`)
       }
 
-      publishReceived(
-        [{name, batch}],
-        getEditor(name).host.getTransactionId(batch.id),
-      )
+      publishReceived([{name, batch}])
     },
     receiveAsOne: (
       first: {name: EditorName; batchNumber: number},
@@ -545,7 +565,7 @@ export function createWorld() {
         getEditor(name).host.mapToTransaction(batch.id, transactionId)
       }
 
-      publishReceived(batches, transactionId)
+      publishReceived(batches)
     },
     rewriteAsWholeFieldUnset: (name: EditorName, batchNumber: number) => {
       const {server, network} = getSetup()
@@ -722,11 +742,13 @@ function createWorldEditor({
   server,
   network,
   claimLoad,
+  hostShape,
 }: {
   name: EditorName
   server: Server
   network: Network<MutationBatch>
   claimLoad: boolean
+  hostShape: HostShape
 }): WorldEditor {
   const editor = createIoEditor({
     id: name === 'Editor A' ? 'A' : 'B',
@@ -735,8 +757,15 @@ function createWorldEditor({
     claimLoad,
   })
   const heard = listenTo(editor)
+  const mutationsSent: Array<MutationSent> = []
   const host = createPassThroughHost({
-    editor,
+    editor: {
+      ...editor,
+      mutationSent: (mutationSent) => {
+        mutationsSent.push(mutationSent)
+        editor.mutationSent(mutationSent)
+      },
+    },
     save: (batch) => network.send(name, batch),
     resubmit: (batch, transactionId) => {
       const result = server.submit(batch, transactionId)
@@ -750,6 +779,7 @@ function createWorldEditor({
     hasTransaction: server.hasTransaction,
     fetchCopy: () => server.copy(),
     subscription: () => network.getFeed(name),
+    foldBatches: hostShape === 'folding',
   })
 
   network.connect(name, {
@@ -763,6 +793,7 @@ function createWorldEditor({
     editor,
     host,
     heard,
+    mutationsSent,
     checkedBatchCount: 0,
     checkedErrorCount: 0,
     checkedWarningCount: 0,

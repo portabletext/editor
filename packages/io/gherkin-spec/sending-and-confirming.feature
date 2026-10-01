@@ -23,6 +23,22 @@ Feature: Sending and confirming
     Then Editor A has sent nothing new
     And Editor A's sync is "synced"
 
+  Scenario: A host that saves each batch under the transaction ID it proposes never names a transaction, and each batch is confirmed
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When "y" is typed
+    And the server receives Editor A's batch 1
+    And Editor A's batch 1 comes back
+    Then Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    And Editor A's batch 2 comes back
+    Then Editor A shows "B: fooxy|"
+    And Editor A's sync is "synced"
+    And the server has "B: fooxy"
+    And the server saved Editor A's batch 1 under the transaction ID it proposed
+    And the server saved Editor A's batch 2 under the transaction ID it proposed
+    And Editor A's host has not named a transaction
+
   Scenario: A batch that changes nothing on the server still comes back, and is confirmed like any other
     When the style is set to "h1" in Editor B
     Then Editor B shows "H1: foo|"

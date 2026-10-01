@@ -43,6 +43,9 @@ export const stepDefinitions = [
   Given("an editor that doesn't claim the first load", (context: Context) => {
     context.world.startEditors({claimLoad: false})
   }),
+  Given('hosts that fold batches into shared requests', (context: Context) => {
+    context.world.setHostShape('folding')
+  }),
 
   ...userSteps(),
 
@@ -384,6 +387,45 @@ export const stepDefinitions = [
           .filter((transaction) => transaction.batchIds.includes(batchId))
           .length,
         1,
+      )
+    },
+  ),
+  Then(
+    "the server saved {editor}'s batch {int} under the transaction ID it proposed",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      const batch = context.world.getBatch(name, batchNumber)
+
+      checkEqual(
+        `The transaction carrying ${name}'s batch ${batchNumber}`,
+        context.world
+          .getServer()
+          .getTransactions()
+          .find((transaction) => transaction.batchIds.includes(batch.id))
+          ?.transactionId,
+        batch.transactionId,
+      )
+    },
+  ),
+  Then(
+    "{editor}'s host has named the transaction for batch {int}",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      const batchId = context.world.getBatch(name, batchNumber).id
+
+      checkEqual(
+        `Whether ${name}'s host sent \`mutation sent\` for batch ${batchNumber}`,
+        context.world
+          .getEditor(name)
+          .mutationsSent.some((mutationSent) => mutationSent.id === batchId),
+        true,
+      )
+    },
+  ),
+  Then(
+    "{editor}'s host has not named a transaction",
+    (context: Context, name: EditorName) => {
+      checkEmpty(
+        `The \`mutation sent\` messages ${name}'s host sent`,
+        context.world.getEditor(name).mutationsSent,
       )
     },
   ),

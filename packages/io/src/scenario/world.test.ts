@@ -62,7 +62,7 @@ describe(createWorld.name, () => {
           },
           inFlight: {
             batchNumber: 1,
-            transactionIds: ['A-1'],
+            transactionIds: ['A-t1'],
             patchCount: 1,
             patches: [diffMatchPatch('foo', 'foox', textPath)],
           },
@@ -81,7 +81,7 @@ describe(createWorld.name, () => {
           sentBatches: [
             {
               number: 1,
-              transactionId: 'A-1',
+              transactionId: 'A-t1',
               patchCount: 1,
               patches: [diffMatchPatch('foo', 'foox', textPath)],
               final: false,
@@ -121,7 +121,7 @@ describe(createWorld.name, () => {
           },
           inFlight: {
             batchNumber: 1,
-            transactionIds: [],
+            transactionIds: ['B-t1'],
             patchCount: 1,
             patches: [set('h1', stylePath)],
           },
@@ -142,7 +142,7 @@ describe(createWorld.name, () => {
           sentBatches: [
             {
               number: 1,
-              transactionId: 'B-1',
+              transactionId: 'B-t1',
               patchCount: 1,
               patches: [set('h1', stylePath)],
               final: false,
@@ -164,7 +164,7 @@ describe(createWorld.name, () => {
         rev: 'r3',
         transactions: [
           {
-            id: 'A-1',
+            id: 'A-t1',
             previousRev: 'r1',
             resultRev: 'r2',
             batchIds: ['A-1'],
@@ -205,7 +205,7 @@ describe(createWorld.name, () => {
         feeds: {
           'Editor A': [
             {
-              transactionId: 'A-1',
+              transactionId: 'A-t1',
               previousRev: 'r1',
               resultRev: 'r2',
               batchIds: ['A-1'],
@@ -228,7 +228,7 @@ describe(createWorld.name, () => {
           ],
           'Editor B': [
             {
-              transactionId: 'A-1',
+              transactionId: 'A-t1',
               previousRev: 'r1',
               resultRev: 'r2',
               batchIds: ['A-1'],

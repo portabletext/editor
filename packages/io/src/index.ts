@@ -47,6 +47,7 @@ export type {
   EditorName,
   EditorSnapshot,
   Heard,
+  HostShape,
   HeardEvent,
   NamedTransaction,
   NetworkSnapshot,
