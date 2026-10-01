@@ -687,19 +687,28 @@ function checkingTrees(
 
   return {
     ...definition,
-    callback: async (
+    callback: (
       context: Context,
       paramA: unknown,
       paramB: unknown,
       paramC: unknown,
     ) => {
-      await callback(context, paramA, paramB, paramC)
-      checkEmpty(
-        "Where an editor's tree differed from io's working copy",
-        context.world.takeTreeMismatches(),
-      )
+      const result = callback(context, paramA, paramB, paramC)
+
+      if (result instanceof Promise) {
+        return result.then(() => checkTrees(context))
+      }
+
+      return checkTrees(context)
     },
   }
+}
+
+function checkTrees(context: Context) {
+  checkEmpty(
+    "Where an editor's tree differed from io's working copy",
+    context.world.takeTreeMismatches(),
+  )
 }
 
 function userSteps() {

@@ -108,6 +108,35 @@ describe(compileScenarios.name, () => {
     expect(world.snapshot().editors?.['Editor A'].screen).toEqual('H1: foox|')
   })
 
+  test('a synchronous step runs and checks without a promise, and throws where it fails', () => {
+    const {scenarios} = compileScenarios(
+      [
+        'Feature: Free play',
+        '  Scenario: foo',
+        '    Given the document is "B: foo|"',
+        '    When "x" is typed',
+        '    Then Editor A shows "B: foo|"',
+      ].join('\n'),
+    )
+    const world = createWorld()
+    const outcomes: Array<string> = []
+
+    for (const step of scenarios[0].steps) {
+      try {
+        const result = step.run(world)
+        outcomes.push(result instanceof Promise ? 'a promise' : 'passed')
+      } catch (error) {
+        outcomes.push(error instanceof Error ? error.message : String(error))
+      }
+    }
+
+    expect(outcomes).toEqual([
+      'passed',
+      'passed',
+      'What Editor A shows: expected "B: foo|", got "B: foox|"',
+    ])
+  })
+
   test('an empty list on the server is checked apart from no field', async () => {
     const {scenarios} = compileScenarios(
       [
