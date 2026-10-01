@@ -172,7 +172,10 @@ type HistoryEntry = {
  * Batch IDs are the editor's `id` plus a counter, so editors with different
  * IDs never share one. The proposed transaction IDs come from the same
  * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
- * editor's `id`. `keyGenerator` mints keys for repairs and re-keyed inserts.
+ * editor's `id`. `keyGenerator` mints the new keys of re-keyed pending
+ * inserts. Keys io mints to repair a received value come from the
+ * value's revision and the repaired node's path instead (see
+ * `mintRepairKey`).
  * `applyLocalEdit` is the model's seam for undo, outside `EditorForIo`: it
  * applies patches to the editor as the user's own edit, which the editor
  * reports as a local `change`, or refuses while read-only.
@@ -244,7 +247,7 @@ export function createIo(options: {
 
     base = {value: incoming.value, rev: incoming.rev}
     pending = []
-    queueKeyRepair(incoming.value)
+    queueKeyRepair(incoming)
     editor.send({type: 'load', value: deriveScreen()})
   }
 
@@ -289,7 +292,7 @@ export function createIo(options: {
       pending = []
     }
 
-    queueKeyRepair(incoming.value)
+    queueKeyRepair(incoming)
     rekeyPendingInserts(screenBefore)
     editor.send({type: 'resync', value: deriveScreen()})
 
@@ -1025,8 +1028,8 @@ export function createIo(options: {
     return newKeys
   }
 
-  function queueKeyRepair(value: Array<PortableTextBlock> | undefined) {
-    const repairPatches = repairKeys(value, keyGenerator)
+  function queueKeyRepair(incoming: Load) {
+    const repairPatches = repairKeys(incoming)
 
     if (repairPatches.length > 0) {
       warn(`Repaired ${repairPatches.length} missing or duplicate keys`)
@@ -1747,13 +1750,11 @@ function renameStepKeys(
 /**
  * Repairs missing and duplicate keys among blocks and among each block's
  * children, keeping the first of each duplicate. Index paths address the
- * nodes, since a missing or duplicate key can't. New keys collide with no
- * key anywhere in the value.
+ * nodes, since a missing or duplicate key can't. New keys come from the
+ * revision and the node's path, and collide with no key anywhere in the
+ * value.
  */
-function repairKeys(
-  value: Array<PortableTextBlock> | undefined,
-  keyGenerator: () => string,
-): Array<Patch> {
+function repairKeys({value, rev}: Load): Array<Patch> {
   const patches: Array<Patch> = []
   const takenKeys = new Set(
     (value ?? []).flatMap((block) => [
@@ -1768,7 +1769,7 @@ function repairKeys(
 
     if (blockKey === undefined || blockKeys.has(blockKey)) {
       patches.push(
-        set(generateUniqueKey(keyGenerator, takenKeys), [blockIndex, '_key']),
+        set(mintRepairKey(rev, [blockIndex], takenKeys), [blockIndex, '_key']),
       )
     } else {
       blockKeys.add(blockKey)
@@ -1781,12 +1782,10 @@ function repairKeys(
 
       if (childKey === undefined || childKeys.has(childKey)) {
         patches.push(
-          set(generateUniqueKey(keyGenerator, takenKeys), [
-            blockIndex,
-            'children',
-            childIndex,
-            '_key',
-          ]),
+          set(
+            mintRepairKey(rev, [blockIndex, 'children', childIndex], takenKeys),
+            [blockIndex, 'children', childIndex, '_key'],
+          ),
         )
       } else {
         childKeys.add(childKey)
@@ -1795,6 +1794,45 @@ function repairKeys(
   }
 
   return patches
+}
+
+/**
+ * The key a repair gives the node at `path` in the value received at
+ * `rev`: the 32-bit FNV-1a hash of `<rev>/<path segments joined by "/">`,
+ * as eight hex digits, with `#<attempt>` appended to the input for each
+ * attempt whose key is taken. An `undefined` revision hashes as the empty
+ * string. Every editor that repairs the same defect of the same revision
+ * mints the same key, so their repairs agree instead of racing. Marks the
+ * key as taken.
+ */
+function mintRepairKey(
+  rev: string | undefined,
+  path: Array<string | number>,
+  takenKeys: Set<string>,
+): string {
+  const input = [rev ?? '', ...path].join('/')
+  let attempt = 0
+  let key = fnv1a(input)
+
+  while (takenKeys.has(key)) {
+    attempt++
+    key = fnv1a(`${input}#${attempt}`)
+  }
+
+  takenKeys.add(key)
+
+  return key
+}
+
+function fnv1a(input: string): string {
+  let hash = 0x811c9dc5
+
+  for (let index = 0; index < input.length; index++) {
+    hash ^= input.charCodeAt(index)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+
+  return hash.toString(16).padStart(8, '0')
 }
 
 function childrenOf(block: PortableTextBlock): Array<unknown> {

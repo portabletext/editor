@@ -48,6 +48,10 @@ After every `apply` and every local change, the editor's tree equals io's workin
 
 The model's undo ledger stands in for the editor's history until that design is done, and it is not part of `EditorForIo`. io reads each undo step from the local change and the working copy, and computes the revert against its working copy. `createIo` takes an `applyLocalEdit(patches)` callback for it, a test seam the world wires to the fake document's user-action path (the same path typing takes). The document applies the revert as the user's own edit and reports it as a local `change`, or refuses it while read-only.
 
+### Repair keys
+
+A key io mints while repairing a received whole value (a missing or duplicate `_key` in `load` or `resync`) comes from the value's revision and the repaired node's index path: the 32-bit FNV-1a hash of the revision and the path segments joined by `/` (`r1/0`, `r1/0/children/1`), as eight hex digits. When the value already has that key, io hashes again with `#1`, `#2` and so on appended. Two editors repairing the same defect of the same revision mint the same key, so their repairs agree. Keys for local inserts come from the editor's key generator, and the world gives each editor's generator its own prefix (`a-`, `b-`), so the two never mint the same key by accident.
+
 ## Layout
 
 ```
@@ -89,4 +93,4 @@ pnpm --filter @portabletext/io test:unit
 
 ## Not modeled
 
-Batching by time (a change is sent as soon as nothing is in flight), operations in `change` events (the model carries patches as a stand-in, and a text operation is a `diffMatchPatch` built at the offset the user acted at, so it keeps the position the saved patch loses), redo, selection beyond a caret in one block, `transaction.value` (the field's server value a host may send with each transaction, so the editor takes the base from the server instead of mirroring it), repair keys derived from the revision and the path (io mints them from its key generator), and the floor for malformed content with its `invalid content` error (the reason is in `ErrorEvent`, and nothing emits it).
+Batching by time (a change is sent as soon as nothing is in flight), operations in `change` events (the model carries patches as a stand-in, and a text operation is a `diffMatchPatch` built at the offset the user acted at, so it keeps the position the saved patch loses), redo, selection beyond a caret in one block, `transaction.value` (the field's server value a host may send with each transaction, so the editor takes the base from the server instead of mirroring it), and the floor for malformed content with its `invalid content` error (the reason is in `ErrorEvent`, and nothing emits it).

@@ -1427,7 +1427,7 @@ describe(createIo.name, () => {
     expect(document.toTextspec()).toEqual('B: foo|')
   })
 
-  test('a key repair never picks a key the value already has', () => {
+  test('a repair key comes from the revision and the path, and never one the value already has', () => {
     const {clock} = createFakeNetwork()
     const {
       document,
@@ -1440,7 +1440,7 @@ describe(createIo.name, () => {
     })
     const {value} = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
-      'B _key="a-k2": foo;;B _key="missing": bar',
+      'B _key="51491b98": foo;;B _key="missing": bar',
     )
     const keylessBlock = {...value[1]}
     Reflect.deleteProperty(keylessBlock, '_key')
@@ -1452,7 +1452,7 @@ describe(createIo.name, () => {
       {
         id: 'A-1',
         transactionId: 'A-t1',
-        patches: [set('a-k3', [1, '_key'])],
+        patches: [set('16a962f0', [1, '_key'])],
       },
     ])
   })
