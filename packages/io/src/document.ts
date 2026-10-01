@@ -35,38 +35,6 @@ const schema = compileSchema(
  */
 export type Caret = {blockKey: string; offset: number}
 
-/**
- * What an action did, in terms undo can check against the content at undo
- * time: text typed into a span at an offset, a block's style set, a
- * block inserted, or a block deleted next to its siblings.
- */
-export type UndoStep =
-  | {
-      type: 'typed'
-      blockKey: string
-      spanKey: string
-      offset: number
-      text: string
-    }
-  | {type: 'styled'; blockKey: string; style: string}
-  | {type: 'inserted'; blockKey: string}
-  | {
-      type: 'deleted'
-      block: PortableTextBlock
-      previousKey: string | undefined
-      nextKey: string | undefined
-    }
-
-/**
- * What a user action produced: the patches the editor sends, and what undo
- * needs to revert it. Creating the block from the placeholder isn't part of
- * the undo step.
- */
-export type ActionResult = {
-  patches: Array<Patch>
-  undoStep: UndoStep | undefined
-}
-
 /** `'loading'` until the first commit ends with `mount`. */
 export type DocumentStatus = 'loading' | 'ready' | 'unmounted'
 
@@ -93,37 +61,17 @@ export type Document = EditorForIo & {
   getSelection: () => TextspecSelection
   /** The key of the placeholder block, while one is shown. */
   getPlaceholderKey: () => string | undefined
-  /**
-   * Replaces the content on screen. Empty content shows the placeholder. The
-   * caret stays in its block if the block survives.
-   */
-  setValue: (value: Array<PortableTextBlock> | undefined) => void
   toTextspec: (options?: {keys?: boolean}) => string
-  setStyle: (style: string) => ActionResult
-  type: (text: string) => ActionResult
+  setStyle: (style: string) => void
+  type: (text: string) => void
   /**
    * Deletes text that ends at the caret within the caret's span, as a run of
-   * backspaces. Throws if the text isn't right before the caret. Undo doesn't
-   * revert it.
+   * backspaces. Throws if the text isn't right before the caret.
    */
-  deleteBeforeCaret: (text: string) => ActionResult
+  deleteBeforeCaret: (text: string) => void
   putCaretAfter: (text: string) => void
-  insertBlock: (textspec: string) => ActionResult
-  deleteBlock: (text: string) => ActionResult
-  /**
-   * Removes typed text from its span, at the occurrence nearest its offset.
-   * Returns no patches when the span no longer holds the text.
-   */
-  deleteText: (typed: Extract<UndoStep, {type: 'typed'}>) => Array<Patch>
-  /** Returns no patches when the block is gone. */
-  setBlockStyle: (blockKey: string, style: string | undefined) => Array<Patch>
-  /** Returns no patches when the block is gone. */
-  deleteBlockByKey: (blockKey: string) => Array<Patch>
-  /**
-   * Puts a deleted block back after its previous sibling, or else before its
-   * next one, or else first. Returns no patches when its key is on screen.
-   */
-  restoreBlock: (deleted: Extract<UndoStep, {type: 'deleted'}>) => Array<Patch>
+  insertBlock: (textspec: string) => void
+  deleteBlock: (text: string) => void
 }
 
 export function createDocument(
@@ -183,23 +131,16 @@ export function createDocument(
     return !readOnly
   }
 
-  function act(run: () => ActionResult): ActionResult {
+  function act(run: () => Array<Patch>) {
     if (!canAct()) {
-      return {patches: [], undoStep: undefined}
+      return
     }
 
-    const result = run()
+    const patches = run()
 
-    if (result.patches.length > 0) {
-      emit({
-        type: 'change',
-        origin: 'local',
-        operations: result.patches,
-        patches: result.patches,
-      })
+    if (patches.length > 0) {
+      emit({type: 'change', origin: 'local', operations: patches, patches})
     }
-
-    return result
   }
 
   function send(message: EditorMessageForIo) {
@@ -347,54 +288,23 @@ export function createDocument(
     ]
   }
 
-  function setStyle(style: string): ActionResult {
-    const block = getTextBlock(findBlock(caret.blockKey)).block
-
-    return {
-      patches: setBlockStyle(block._key, style),
-      undoStep: {
-        type: 'styled',
-        blockKey: block._key,
-        style,
-      },
-    }
-  }
-
-  function setBlockStyle(
-    blockKey: string,
-    style: string | undefined,
-  ): Array<Patch> {
-    if (
-      style !== undefined &&
-      !schema.styles.some((definition) => definition.name === style)
-    ) {
+  function setStyle(style: string): Array<Patch> {
+    if (!schema.styles.some((definition) => definition.name === style)) {
       throw new Error(`Unknown style "${style}"`)
     }
 
-    const blockIndex = value.findIndex((block) => block._key === blockKey)
-
-    if (blockIndex === -1) {
-      return []
-    }
-
-    const {style: _previousStyle, ...block} = getTextBlock(
-      value[blockIndex],
-    ).block
-    const path = [{_key: blockKey}, 'style']
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
     const patches = withPlaceholderCreation([
-      style === undefined ? unset(path) : set(style, path),
+      set(style, [{_key: block._key}, 'style']),
     ])
 
-    value = replaceAt(
-      value,
-      blockIndex,
-      style === undefined ? block : {...block, style},
-    )
+    value = replaceAt(value, blockIndex, {...block, style})
 
     return patches
   }
 
-  function type(text: string): ActionResult {
+  function type(text: string): Array<Patch> {
     const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
     const block = getTextBlock(value[blockIndex]).block
     const {span, offset} = locateSpan(block, caret.offset)
@@ -412,19 +322,10 @@ export function createDocument(
     })
     caret = {blockKey: block._key, offset: caret.offset + text.length}
 
-    return {
-      patches,
-      undoStep: {
-        type: 'typed',
-        blockKey: block._key,
-        spanKey: span._key,
-        offset,
-        text,
-      },
-    }
+    return patches
   }
 
-  function deleteBeforeCaret(text: string): ActionResult {
+  function deleteBeforeCaret(text: string): Array<Patch> {
     const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
     const block = getTextBlock(value[blockIndex]).block
     const {span, offset} = locateSpan(block, caret.offset)
@@ -447,71 +348,7 @@ export function createDocument(
     })
     caret = {blockKey: block._key, offset: caret.offset - text.length}
 
-    return {
-      patches: [diffMatchPatch(span.text, nextText, path)],
-      undoStep: undefined,
-    }
-  }
-
-  function deleteText(typed: Extract<UndoStep, {type: 'typed'}>): Array<Patch> {
-    const blockIndex = value.findIndex((block) => block._key === typed.blockKey)
-
-    if (blockIndex === -1) {
-      return []
-    }
-
-    const block = getTextBlock(value[blockIndex]).block
-    const spanIndex = block.children.findIndex(
-      (child) => child._key === typed.spanKey && isSpan({schema}, child),
-    )
-    const span = block.children[spanIndex]
-
-    if (spanIndex === -1 || !isSpan({schema}, span)) {
-      return []
-    }
-
-    const typedOffset = findNearest(span.text, typed.text, typed.offset)
-
-    if (typedOffset === undefined) {
-      return []
-    }
-
-    const nextText =
-      span.text.slice(0, typedOffset) +
-      span.text.slice(typedOffset + typed.text.length)
-    const spanStart = block.children
-      .slice(0, spanIndex)
-      .reduce(
-        (length, child) =>
-          length + (isSpan({schema}, child) ? child.text.length : 0),
-        0,
-      )
-    const deletionStart = spanStart + typedOffset
-
-    value = replaceAt(value, blockIndex, {
-      ...block,
-      children: block.children.map((child) =>
-        child._key === span._key ? {...span, text: nextText} : child,
-      ),
-    })
-
-    if (caret.blockKey === block._key && caret.offset > deletionStart) {
-      caret = {
-        blockKey: block._key,
-        offset:
-          deletionStart +
-          Math.max(0, caret.offset - deletionStart - typed.text.length),
-      }
-    }
-
-    return [
-      diffMatchPatch(span.text, nextText, [
-        {_key: block._key},
-        'children',
-        {_key: span._key},
-        'text',
-      ]),
-    ]
+    return [diffMatchPatch(span.text, nextText, path)]
   }
 
   function putCaretAfter(text: string) {
@@ -537,7 +374,7 @@ export function createDocument(
     caret = matches[0]
   }
 
-  function insertBlock(textspec: string): ActionResult {
+  function insertBlock(textspec: string): Array<Patch> {
     const {blocks} = fromTextspec(
       {schema, keyGenerator: context.keyGenerator},
       textspec,
@@ -572,10 +409,10 @@ export function createDocument(
       offset: getTextBlock(newBlock).text.length,
     }
 
-    return {patches, undoStep: {type: 'inserted', blockKey: newBlock._key}}
+    return patches
   }
 
-  function deleteBlock(text: string): ActionResult {
+  function deleteBlock(text: string): Array<Patch> {
     const matches = value.filter((block) => getTextBlock(block).text === text)
 
     if (matches.length !== 1) {
@@ -587,30 +424,16 @@ export function createDocument(
     const block = matches[0]
 
     if (block._key === placeholderKey) {
-      return {patches: [], undoStep: undefined}
-    }
-
-    const blockIndex = value.indexOf(block)
-    const undoStep: UndoStep = {
-      type: 'deleted',
-      block,
-      previousKey: value[blockIndex - 1]?._key,
-      nextKey: value[blockIndex + 1]?._key,
-    }
-
-    return {patches: deleteBlockByKey(block._key), undoStep}
-  }
-
-  function deleteBlockByKey(blockKey: string): Array<Patch> {
-    const blockIndex = value.findIndex((block) => block._key === blockKey)
-
-    if (blockIndex === -1 || blockKey === placeholderKey) {
       return []
     }
 
+    const blockKey = block._key
+    const blockIndex = value.indexOf(block)
     const previousBlock = value[blockIndex - 1]
     const nextBlock = value[blockIndex + 1]
-    const remainingValue = value.filter((block) => block._key !== blockKey)
+    const remainingValue = value.filter(
+      (candidate) => candidate._key !== blockKey,
+    )
 
     if (remainingValue.length === 0) {
       setValue(undefined)
@@ -630,49 +453,6 @@ export function createDocument(
     value = remainingValue
 
     return [unset([{_key: blockKey}])]
-  }
-
-  function restoreBlock(
-    deleted: Extract<UndoStep, {type: 'deleted'}>,
-  ): Array<Patch> {
-    const {block} = deleted
-
-    if (value.some((candidate) => candidate._key === block._key)) {
-      return []
-    }
-
-    if (placeholderKey !== undefined) {
-      setValue([block])
-
-      return [setIfMissing([], []), insert([block], 'before', [0])]
-    }
-
-    const previousIndex = value.findIndex(
-      (candidate) => candidate._key === deleted.previousKey,
-    )
-    const nextIndex = value.findIndex(
-      (candidate) => candidate._key === deleted.nextKey,
-    )
-
-    if (previousIndex !== -1) {
-      value = [
-        ...value.slice(0, previousIndex + 1),
-        block,
-        ...value.slice(previousIndex + 1),
-      ]
-
-      return [insert([block], 'after', [{_key: value[previousIndex]._key}])]
-    }
-
-    const referenceIndex = nextIndex === -1 ? 0 : nextIndex
-    const reference = value[referenceIndex]._key
-    value = [
-      ...value.slice(0, referenceIndex),
-      block,
-      ...value.slice(referenceIndex),
-    ]
-
-    return [insert([block], 'before', [{_key: reference}])]
   }
 
   return {
@@ -695,7 +475,6 @@ export function createDocument(
     setCaret: placeCaret,
     getSelection,
     getPlaceholderKey: () => placeholderKey,
-    setValue,
     toTextspec: (options) =>
       serializeTextspec({
         value,
@@ -712,10 +491,6 @@ export function createDocument(
     },
     insertBlock: (textspec) => act(() => insertBlock(textspec)),
     deleteBlock: (text) => act(() => deleteBlock(text)),
-    deleteText,
-    setBlockStyle,
-    deleteBlockByKey,
-    restoreBlock,
   }
 }
 
@@ -723,7 +498,7 @@ export function createDocument(
  * Calls the key generator until it returns a key that isn't taken, and marks
  * that key as taken.
  */
-export function generateUniqueKey(
+function generateUniqueKey(
   keyGenerator: () => string,
   takenKeys: Set<string>,
 ): string {
@@ -1027,30 +802,6 @@ function locateSpan(
   throw new Error(
     `Offset ${blockOffset} is past the end of block "${block._key}"`,
   )
-}
-
-/**
- * The start of the occurrence of `search` in `text` nearest `offset`, looking
- * after the offset first at each distance.
- */
-function findNearest(
-  text: string,
-  search: string,
-  offset: number,
-): number | undefined {
-  for (
-    let distance = 0;
-    distance <= Math.max(offset, text.length);
-    distance++
-  ) {
-    for (const candidate of [offset + distance, offset - distance]) {
-      if (candidate >= 0 && text.startsWith(search, candidate)) {
-        return candidate
-      }
-    }
-  }
-
-  return undefined
 }
 
 function replaceAt<TItem>(

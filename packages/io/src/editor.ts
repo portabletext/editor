@@ -1,19 +1,20 @@
-import {set, type Patch} from '@portabletext/patches'
+import {
+  applyAll,
+  diffMatchPatch,
+  insert,
+  set,
+  setIfMissing,
+  unset,
+  type Patch,
+} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {
   applyWithContentLakeSemantics,
   hasTarget,
   resolvePath,
 } from './content-lake'
-import {
-  createDocument,
-  generateUniqueKey,
-  type ActionResult,
-  type Document,
-  type UndoStep,
-} from './document'
 import type {
-  ChangeEvent,
+  EditorForIo,
   ErrorEvent,
   Load,
   MutationBatch,
@@ -33,7 +34,7 @@ export type Clock = {
   schedule: (delay: number, callback: () => void) => () => void
 }
 
-/** `'loading'` only until `mount` returns. */
+/** `'loading'` until the editor's `ready`, `'unmounted'` after its `closing`. */
 export type IoEditorStatus = 'loading' | 'ready' | 'unmounted'
 
 /**
@@ -45,11 +46,9 @@ export type IoEditorSync = 'synced' | 'saving' | 'blocked' | 'out of step'
 
 export type IoEditorEvent =
   | ({type: 'mutation'} & MutationBatch)
-  | ({type: 'change'} & ChangeEvent)
   | ({type: 'error'} & ErrorEvent)
   | ({type: 'work dropped'} & WorkDropped)
   | {type: 'warning'; message: string}
-  | {type: 'ready'}
 
 /**
  * A batch the editor has sent and the base doesn't hold yet.
@@ -78,14 +77,11 @@ export type IoEditorLedger = {
     }
   >
   outOfStep: boolean
-  readOnly: boolean
   /** How many of the editor's own changes undo can still revert. */
   undoDepth: number
 }
 
 export type IoEditor = {
-  /** The content on screen and the caret. */
-  document: Document
   getStatus: () => IoEditorStatus
   getSync: () => IoEditorSync
   getBase: () => Load
@@ -93,13 +89,8 @@ export type IoEditor = {
   on: (listener: (event: IoEditorEvent) => void) => () => void
 
   /**
-   * Ends the first commit: the editor becomes ready with the content of the
-   * last `load`, or empty.
-   */
-  mount: () => void
-  /**
-   * The first content, accepted only before `mount`. A second `load` replaces
-   * the first.
+   * The first content, accepted only before the editor's `ready`. A second
+   * `load` replaces the first.
    */
   load: (load: Load) => void
   resync: (resync: Resync) => void
@@ -107,16 +98,13 @@ export type IoEditor = {
   mutationSent: (mutationSent: MutationSent) => void
   mutationRejected: (mutationRejected: MutationRejected) => void
   feedLost: () => void
-  updateReadOnly: (readOnly: boolean) => void
-
-  setStyle: (style: string) => void
-  type: (text: string) => void
-  deleteBeforeCaret: (text: string) => void
-  putCaretAfter: (text: string) => void
-  insertBlock: (textspec: string) => void
-  deleteBlock: (text: string) => void
+  /**
+   * Reverts the last of the editor's own changes that undo can still revert,
+   * and has the editor apply the revert as a local change. The undo ledger
+   * lives here, driven by the editor's local changes and the transactions,
+   * until the editor's own history is designed.
+   */
   undo: () => void
-  close: () => void
 }
 
 type SentBatch = {
@@ -132,6 +120,29 @@ type SentBatch = {
 }
 
 type HeldTransaction = {transaction: Transaction; arrivedAt: number}
+
+/**
+ * What a local change did, in terms undo can check against the working copy
+ * at undo time: text typed into a span at an offset, a block's style set, a
+ * block inserted, or a block deleted next to its siblings. Creating the
+ * block from the placeholder isn't part of the step.
+ */
+type UndoStep =
+  | {
+      type: 'typed'
+      blockKey: string
+      spanKey: string
+      offset: number
+      text: string
+    }
+  | {type: 'styled'; blockKey: string; style: string}
+  | {type: 'inserted'; blockKey: string}
+  | {
+      type: 'deleted'
+      block: PortableTextBlock
+      previousKey: string | undefined
+      nextKey: string | undefined
+    }
 
 /** A block's style, or `undefined` when there is no such block. */
 type BlockStyle = {style: string | undefined} | undefined
@@ -152,24 +163,25 @@ type HistoryEntry = {
 }
 
 /**
- * The editor side of the pass-through protocol. Batch IDs are the editor's
- * `id` plus a counter, so editors with different IDs never share one. The
- * proposed transaction IDs come from the same per-editor counter, as
- * `<id>-t<counter>`, so they are as unique as the editor's `id`.
+ * The editor side of the pass-through protocol, speaking to the editor only
+ * through `EditorForIo`. It is created during the editor's first commit.
+ * Batch IDs are the editor's `id` plus a counter, so editors with different
+ * IDs never share one. The proposed transaction IDs come from the same
+ * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
+ * editor's `id`. `keyGenerator` mints keys for repairs and re-keyed inserts.
  */
 export function createIoEditor(options: {
   id: string
+  editor: EditorForIo
   keyGenerator: () => string
   clock: Clock
 }): IoEditor {
-  const {keyGenerator, clock} = options
+  const {editor, keyGenerator, clock} = options
   const listeners = new Set<(event: IoEditorEvent) => void>()
-  const document = createDocument({keyGenerator}, {value: undefined})
   const emittedBatchIds = new Set<string>()
 
   let status: IoEditorStatus = 'loading'
   let base: Load = {value: undefined, rev: undefined}
-  let readOnly = false
   let outOfStep = false
   let batchCounter = 0
   let inFlight: SentBatch | undefined
@@ -180,7 +192,23 @@ export function createIoEditor(options: {
   let history: Array<HistoryEntry> = []
   let cancelHeldTimeout: (() => void) | undefined
   let cancelInFlightWarning: (() => void) | undefined
+  let reverting: {applied: boolean} | undefined
   const droppedPatches = new WeakSet<Patch>()
+
+  editor.on((event) => {
+    switch (event.type) {
+      case 'ready':
+        becomeReady()
+        return
+      case 'closing':
+        close()
+        return
+      case 'change':
+        if (event.origin === 'local') {
+          takeLocalChange(event.patches)
+        }
+    }
+  })
 
   function emit(event: IoEditorEvent) {
     for (const listener of listeners) {
@@ -192,18 +220,12 @@ export function createIoEditor(options: {
     emit({type: 'warning', message})
   }
 
-  function mount() {
-    if (status === 'ready') {
-      throw new Error('The editor is already mounted')
+  function becomeReady() {
+    if (status !== 'loading') {
+      return
     }
 
-    if (status === 'unmounted') {
-      throw new Error('The editor is unmounted')
-    }
-
-    document.mount()
     status = 'ready'
-    emit({type: 'ready'})
     flush()
   }
 
@@ -222,7 +244,7 @@ export function createIoEditor(options: {
     base = {value: incoming.value, rev: incoming.rev}
     pending = []
     queueKeyRepair(incoming.value)
-    document.setValue(deriveScreen())
+    editor.send({type: 'load', value: deriveScreen()})
   }
 
   function resync(incoming: Resync) {
@@ -247,6 +269,7 @@ export function createIoEditor(options: {
         ? inFlight
         : undefined
     const droppedRejected = rejected
+    const screenBefore = deriveScreen()
 
     base = {value: incoming.value, rev: incoming.rev}
     inFlight = undefined
@@ -266,7 +289,8 @@ export function createIoEditor(options: {
     }
 
     queueKeyRepair(incoming.value)
-    updateScreen()
+    rekeyPendingInserts(screenBefore)
+    editor.send({type: 'resync', value: deriveScreen()})
 
     if (droppedRejected) {
       emit({
@@ -454,6 +478,8 @@ export function createIoEditor(options: {
       })
     }
 
+    const screenBefore = deriveScreen()
+
     captureBlocksBefore(confirmedBatchIds)
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
@@ -461,7 +487,7 @@ export function createIoEditor(options: {
     )
 
     if (incoming.patches.length > 0) {
-      updateScreen()
+      applyToEditor(screenBefore, incoming.patches)
       reportDroppedPending(`transaction "${incoming.transactionId}"`)
     }
 
@@ -606,83 +632,125 @@ export function createIoEditor(options: {
     stopInFlightWarning()
   }
 
-  function act(run: () => ActionResult) {
-    if (!canEdit()) {
+  /**
+   * Books a local change as pending and records what undo needs to revert
+   * it, unless the change is an undo's own revert.
+   */
+  function takeLocalChange(patches: Array<Patch>) {
+    if (status !== 'ready' || patches.length === 0) {
       return
     }
 
-    const result = run()
+    if (reverting) {
+      reverting.applied = true
+    } else {
+      const step = undoStepOf(patches, deriveScreen())
 
-    if (result.patches.length === 0) {
-      return
+      if (step) {
+        history = [
+          ...history,
+          {
+            step,
+            batchId: undefined,
+            patchOffset: pending.flat().length,
+            confirmed: undefined,
+          },
+        ]
+      }
     }
 
-    if (result.undoStep) {
-      history = [
-        ...history,
-        {
-          step: result.undoStep,
-          batchId: undefined,
-          patchOffset: pending.flat().length,
-          confirmed: undefined,
-        },
-      ]
-    }
-
-    commitLocalChange(result.patches)
+    pending = [...pending, patches]
+    flush()
   }
 
+  /**
+   * The editor applies the revert as a local change, which books it. A
+   * read-only editor refuses it, and the step stays.
+   */
   function undo() {
+    if (status === 'unmounted') {
+      warn('Ignored an undo after the editor unmounted')
+      return
+    }
+
+    if (status !== 'ready') {
+      throw new Error(`The editor is ${status}`)
+    }
+
     const entry = history.at(-1)
 
-    if (!canEdit() || !entry) {
+    if (!entry) {
       return
     }
 
     history = history.slice(0, -1)
-    commitLocalChange(revert(entry))
+
+    const patches = revert(entry)
+
+    if (patches.length === 0) {
+      return
+    }
+
+    const attempt = {applied: false}
+    reverting = attempt
+
+    try {
+      editor.send({type: 'apply', patches, underneath: [], origin: 'local'})
+    } finally {
+      reverting = undefined
+    }
+
+    if (!attempt.applied) {
+      history = [...history, entry]
+    }
   }
 
   function revert(entry: HistoryEntry): Array<Patch> {
     const {step} = entry
+    const screen = deriveScreen() ?? []
 
     switch (step.type) {
       case 'typed':
-        return document.deleteText(step)
+        return deleteTyped(screen, step)
       case 'styled': {
-        const block = findBlock(document.getValue(), step.blockKey)
+        const block = findBlock(screen, step.blockKey)
 
         if (block === undefined) {
           return []
         }
 
         const restored = styleToRestore(entry, step, block)
+        const path = [{_key: step.blockKey}, 'style']
 
-        return restored === undefined || block.style === restored.style
-          ? []
-          : document.setBlockStyle(step.blockKey, restored.style)
+        if (restored === undefined || block.style === restored.style) {
+          return []
+        }
+
+        return [
+          restored.style === undefined
+            ? unset(path)
+            : set(restored.style, path),
+        ]
       }
       case 'inserted':
-        return document.deleteBlockByKey(step.blockKey)
+        return deleteBlockByKey(screen, step.blockKey)
       case 'deleted': {
         const block = entry.confirmed
           ? entry.confirmed.blockBefore
           : blockUnder(entry)
 
-        return block === undefined
-          ? []
-          : document.restoreBlock({...step, block})
+        return block === undefined ? [] : restoreBlock(screen, {...step, block})
       }
     }
   }
 
   /**
-   * Once the change is confirmed, a style on screen other than the one it set
-   * means another writer changed the style after it, and undo leaves it. The
-   * screen, not the base alone, since the editor's own later changes are
-   * undone first and may still be unconfirmed. A block the base didn't have
-   * before the change came from the placeholder in the same action, so its
-   * style before the change is the placeholder's.
+   * Once the change is confirmed, a style in the working copy other than the
+   * one it set means another writer changed the style after it, and undo
+   * leaves it. The working copy, not the base alone, since the editor's own
+   * later changes are undone first and may still be unconfirmed. A block the
+   * base didn't have before the change came from the placeholder in the same
+   * action, so its style before the change is the placeholder's.
    */
   function styleToRestore(
     entry: HistoryEntry,
@@ -696,29 +764,6 @@ export function createIoEditor(options: {
     return styleOf(screenBlock)?.style === step.style
       ? (styleOf(entry.confirmed.blockBefore) ?? placeholderStyle)
       : undefined
-  }
-
-  function canEdit(): boolean {
-    if (status === 'unmounted') {
-      warn('Ignored an action after the editor unmounted')
-      return false
-    }
-
-    if (status !== 'ready') {
-      throw new Error(`The editor is ${status}`)
-    }
-
-    return !readOnly
-  }
-
-  function commitLocalChange(patches: Array<Patch>) {
-    if (patches.length === 0) {
-      return
-    }
-
-    pending = [...pending, patches]
-    emit({type: 'change', origin: 'local', operations: patches, patches})
-    flush()
   }
 
   function close() {
@@ -745,7 +790,6 @@ export function createIoEditor(options: {
     status = 'unmounted'
     releaseHeld()
     stopInFlightWarning()
-    document.close()
   }
 
   function flush() {
@@ -799,29 +843,32 @@ export function createIoEditor(options: {
     cancelInFlightWarning = undefined
   }
 
-  function updateScreen() {
-    const newKeys = rekeyPendingInserts()
-    const caret = document.getCaret()
-    const caretBlockKey = newKeys.get(caret.blockKey)
-    const before = document.getValue()
-    document.setValue(deriveScreen())
-    const after = document.getValue()
+  /**
+   * Sends the editor a transaction's effect when it changed the working copy.
+   * A pending insert re-keyed because the base now has its key goes first,
+   * as a keyed `_key` set, so the editor's caret stays with its block.
+   */
+  function applyToEditor(
+    screenBefore: Array<PortableTextBlock> | undefined,
+    underneath: Array<Patch>,
+  ) {
+    const newKeys = rekeyPendingInserts(screenBefore)
+    const screen = deriveScreen()
 
-    if (caretBlockKey !== undefined) {
-      // The old key now names another writer's block, so the caret would
-      // follow the key into it. When the re-keyed insert lost its target, the
-      // caret's block is gone and the caret goes where a vanished block's
-      // caret goes.
-      document.setCaret(
-        after.some((block) => block._key === caretBlockKey)
-          ? {blockKey: caretBlockKey, offset: caret.offset}
-          : {blockKey: after[0]._key, offset: 0},
-      )
+    if (isEqual(screenBefore, screen)) {
+      return
     }
 
-    if (!isEqual(before, after)) {
-      emit({type: 'change', origin: 'remote', operations: [set(after, [])]})
-    }
+    editor.send({
+      type: 'apply',
+      patches: [
+        ...[...newKeys].map(([oldKey, newKey]) =>
+          set(newKey, [{_key: oldKey}, '_key']),
+        ),
+        set(screen ?? [], []),
+      ],
+      underneath,
+    })
   }
 
   function deriveScreen(): Array<PortableTextBlock> | undefined {
@@ -840,7 +887,9 @@ export function createIoEditor(options: {
     ]
   }
 
-  function rekeyPendingInserts(): Map<string, string> {
+  function rekeyPendingInserts(
+    screenBefore: Array<PortableTextBlock> | undefined,
+  ): Map<string, string> {
     const baseKeys = new Set(
       (base.value ?? []).flatMap((block) => itemKey(block)),
     )
@@ -848,7 +897,7 @@ export function createIoEditor(options: {
     const takenKeys = new Set([
       ...baseKeys,
       ...pendingInsertKeys,
-      ...document.getValue().map((block) => block._key),
+      ...(screenBefore ?? []).map((block) => block._key),
     ])
     const newKeys = new Map<string, string>()
 
@@ -902,17 +951,7 @@ export function createIoEditor(options: {
     return inFlight || pending.length > 0 ? 'saving' : 'synced'
   }
 
-  function putCaretAfter(text: string) {
-    if (status === 'unmounted') {
-      warn('Ignored an action after the editor unmounted')
-      return
-    }
-
-    document.putCaretAfter(text)
-  }
-
   return {
-    document,
     getStatus: () => status,
     getSync,
     getBase: () => base,
@@ -931,7 +970,6 @@ export function createIoEditor(options: {
         arrivedAt,
       })),
       outOfStep,
-      readOnly,
       undoDepth: history.length,
     }),
     on: (listener) => {
@@ -940,25 +978,13 @@ export function createIoEditor(options: {
         listeners.delete(listener)
       }
     },
-    mount,
     load,
     resync,
     transaction,
     mutationSent,
     mutationRejected,
     feedLost,
-    updateReadOnly: (nextReadOnly) => {
-      readOnly = nextReadOnly
-      document.updateReadOnly(nextReadOnly)
-    },
-    setStyle: (style) => act(() => document.setStyle(style)),
-    type: (text) => act(() => document.type(text)),
-    deleteBeforeCaret: (text) => act(() => document.deleteBeforeCaret(text)),
-    putCaretAfter,
-    insertBlock: (textspec) => act(() => document.insertBlock(textspec)),
-    deleteBlock: (text) => act(() => document.deleteBlock(text)),
     undo,
-    close,
   }
 }
 
@@ -968,6 +994,253 @@ function describeSentBatch(batch: SentBatch): IoEditorSentBatch {
     transactionIds: [...batch.transactionIds],
     patchCount: batch.patches.length,
   }
+}
+
+/**
+ * What undo needs to revert a local change, read from its patches and the
+ * working copy before it. Typing, a style, an insert and a delete are steps,
+ * and deleting text isn't. A text diff that grows the span is typing, at the
+ * start of the inserted run as the diff places it.
+ */
+function undoStepOf(
+  patches: Array<Patch>,
+  screenBefore: Array<PortableTextBlock> | undefined,
+): UndoStep | undefined {
+  const fromPlaceholder = createsBlock(patches)
+  const value = applyWithContentLakeSemantics(
+    screenBefore,
+    fromPlaceholder ? patches.slice(0, 2) : [],
+  )
+  const [patch] = fromPlaceholder ? patches.slice(2) : patches
+  const [head, field, spanSegment] = patch?.path ?? []
+  const blockKey = keyOf(head)
+
+  if (!patch || blockKey === undefined) {
+    return undefined
+  }
+
+  if (
+    patch.type === 'set' &&
+    patch.path.length === 2 &&
+    field === 'style' &&
+    typeof patch.value === 'string'
+  ) {
+    return {type: 'styled', blockKey, style: patch.value}
+  }
+
+  if (patch.type === 'insert' && patch.path.length === 1) {
+    const [insertedKey] = patch.items.flatMap((item) => itemKey(item))
+
+    return insertedKey === undefined
+      ? undefined
+      : {type: 'inserted', blockKey: insertedKey}
+  }
+
+  if (patch.type === 'unset' && patch.path.length === 1) {
+    const blocks = value ?? []
+    const index = blocks.findIndex((block) => block._key === blockKey)
+
+    return index === -1
+      ? undefined
+      : {
+          type: 'deleted',
+          block: blocks[index],
+          previousKey: blocks[index - 1]?._key,
+          nextKey: blocks[index + 1]?._key,
+        }
+  }
+
+  const spanKey = keyOf(spanSegment)
+  const text = resolvePath(value, patch.path)
+
+  if (
+    patch.type !== 'diffMatchPatch' ||
+    patch.path.length !== 4 ||
+    spanKey === undefined ||
+    typeof text !== 'string'
+  ) {
+    return undefined
+  }
+
+  const nextText = applyAll(text, [{...patch, path: []}])
+  const offset = commonPrefixLength(text, nextText)
+
+  return nextText.length > text.length
+    ? {
+        type: 'typed',
+        blockKey,
+        spanKey,
+        offset,
+        text: nextText.slice(offset, offset + nextText.length - text.length),
+      }
+    : undefined
+}
+
+/**
+ * Whether a change turns the placeholder into content: it starts with a
+ * whole-field `setIfMissing` followed by an `insert`.
+ */
+function createsBlock(patches: Array<Patch>): boolean {
+  const [first, second] = patches
+
+  return (
+    first?.type === 'setIfMissing' &&
+    first.path.length === 0 &&
+    second?.type === 'insert'
+  )
+}
+
+/**
+ * Removes typed text from its span, at the occurrence nearest its offset.
+ * Returns no patches when the span no longer holds the text.
+ */
+function deleteTyped(
+  value: Array<PortableTextBlock>,
+  typed: Extract<UndoStep, {type: 'typed'}>,
+): Array<Patch> {
+  const block = findBlock(value, typed.blockKey)
+  const span = block
+    ? childrenOf(block).find((child) => itemKey(child)[0] === typed.spanKey)
+    : undefined
+  const text: unknown =
+    typeof span === 'object' && span !== null
+      ? Reflect.get(span, 'text')
+      : undefined
+
+  if (typeof text !== 'string') {
+    return []
+  }
+
+  const typedOffset = findNearest(text, typed.text, typed.offset)
+
+  if (typedOffset === undefined) {
+    return []
+  }
+
+  return [
+    diffMatchPatch(
+      text,
+      text.slice(0, typedOffset) + text.slice(typedOffset + typed.text.length),
+      [{_key: typed.blockKey}, 'children', {_key: typed.spanKey}, 'text'],
+    ),
+  ]
+}
+
+/**
+ * Removes a block, and the field with it when it was the last. Returns no
+ * patches when the block is gone.
+ */
+function deleteBlockByKey(
+  value: Array<PortableTextBlock>,
+  blockKey: string,
+): Array<Patch> {
+  if (findBlock(value, blockKey) === undefined) {
+    return []
+  }
+
+  return value.length === 1
+    ? [unset([{_key: blockKey}]), unset([])]
+    : [unset([{_key: blockKey}])]
+}
+
+/**
+ * Puts a deleted block back after its previous sibling, or else before its
+ * next one, or else first. An empty field gets the block as its content.
+ * Returns no patches when the block's key is in the working copy.
+ */
+function restoreBlock(
+  value: Array<PortableTextBlock>,
+  deleted: Extract<UndoStep, {type: 'deleted'}>,
+): Array<Patch> {
+  const {block} = deleted
+
+  if (findBlock(value, block._key) !== undefined) {
+    return []
+  }
+
+  if (value.length === 0) {
+    return [setIfMissing([], []), insert([block], 'before', [0])]
+  }
+
+  if (
+    deleted.previousKey !== undefined &&
+    findBlock(value, deleted.previousKey) !== undefined
+  ) {
+    return [insert([block], 'after', [{_key: deleted.previousKey}])]
+  }
+
+  const reference =
+    deleted.nextKey !== undefined &&
+    findBlock(value, deleted.nextKey) !== undefined
+      ? deleted.nextKey
+      : value[0]._key
+
+  return [insert([block], 'before', [{_key: reference}])]
+}
+
+/**
+ * The start of the occurrence of `search` in `text` nearest `offset`, looking
+ * after the offset first at each distance.
+ */
+function findNearest(
+  text: string,
+  search: string,
+  offset: number,
+): number | undefined {
+  for (
+    let distance = 0;
+    distance <= Math.max(offset, text.length);
+    distance++
+  ) {
+    for (const candidate of [offset + distance, offset - distance]) {
+      if (candidate >= 0 && text.startsWith(search, candidate)) {
+        return candidate
+      }
+    }
+  }
+
+  return undefined
+}
+
+function commonPrefixLength(textA: string, textB: string): number {
+  let length = 0
+
+  while (
+    length < textA.length &&
+    length < textB.length &&
+    textA[length] === textB[length]
+  ) {
+    length++
+  }
+
+  return length
+}
+
+function keyOf(segment: Patch['path'][number] | undefined): string | undefined {
+  return typeof segment === 'object' &&
+    !Array.isArray(segment) &&
+    typeof segment._key === 'string'
+    ? segment._key
+    : undefined
+}
+
+/**
+ * Calls the key generator until it returns a key that isn't taken, and marks
+ * that key as taken.
+ */
+function generateUniqueKey(
+  keyGenerator: () => string,
+  takenKeys: Set<string>,
+): string {
+  let key = keyGenerator()
+
+  while (takenKeys.has(key)) {
+    key = keyGenerator()
+  }
+
+  takenKeys.add(key)
+
+  return key
 }
 
 /** Whether `ancestor` is a strict prefix of `path`. */

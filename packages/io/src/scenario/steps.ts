@@ -6,7 +6,7 @@ import {
   emptiesField,
   formatTextspec,
 } from '../document'
-import type {IoEditorStatus} from '../editor'
+import type {DocumentStatus} from '../document'
 import type {ChangeEvent, WorkDropped} from '../types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference, ExpectedSync} from './parameter-types'
@@ -201,7 +201,7 @@ export const stepDefinitions = [
   Then(
     '{editor} shows {textspec}',
     (context: Context, name: EditorName, textspec: string) => {
-      const {document} = context.world.getEditor(name).editor
+      const {document} = context.world.getEditor(name)
       const {actual, expected} = comparableTextspec(
         {value: document.getValue(), selection: document.getSelection()},
         textspec,
@@ -238,7 +238,7 @@ export const stepDefinitions = [
   Then(
     'every block in {editor} has a unique key',
     (context: Context, name: EditorName) => {
-      const value = context.world.getEditor(name).editor.document.getValue()
+      const value = context.world.getEditor(name).document.getValue()
 
       checkEmpty(`Key problems in ${name}`, duplicateOrMissingKeys(value))
     },
@@ -451,7 +451,7 @@ export const stepDefinitions = [
   ),
   Then('the resync is refused', (context: Context) => {
     const resync = context.world.getLastResync()
-    const {editor, heard} = context.world.getEditor(resync.editorName)
+    const {document, heard} = context.world.getEditor(resync.editorName)
 
     checkGreaterThan(
       `The warnings ${resync.editorName} has given`,
@@ -460,7 +460,7 @@ export const stepDefinitions = [
     )
     checkEqual(
       `What ${resync.editorName} shows`,
-      editor.document.toTextspec({keys: true}),
+      document.toTextspec({keys: true}),
       resync.screen,
     )
     checkEqual(
@@ -482,10 +482,10 @@ export const stepDefinitions = [
   }),
   Then(
     "{editor}'s status is {status}",
-    (context: Context, name: EditorName, status: IoEditorStatus) => {
+    (context: Context, name: EditorName, status: DocumentStatus) => {
       checkEqual(
         `${name}'s status`,
-        context.world.getEditor(name).editor.getStatus(),
+        context.world.getEditor(name).document.getStatus(),
         status,
       )
     },
@@ -495,7 +495,7 @@ export const stepDefinitions = [
     (context: Context, name: EditorName, sync: ExpectedSync) => {
       checkEqual(
         `${name}'s sync`,
-        context.world.getEditor(name).editor.getSync(),
+        context.world.getEditor(name).io.getSync(),
         sync,
       )
     },

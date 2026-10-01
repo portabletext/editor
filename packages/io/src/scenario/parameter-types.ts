@@ -1,5 +1,6 @@
 import {createParameterType} from 'racejar'
-import type {IoEditorStatus, IoEditorSync} from '../editor'
+import type {DocumentStatus} from '../document'
+import type {IoEditorSync} from '../editor'
 import type {WorkDropped} from '../types'
 import type {EditorName, ServerCopyName} from './world'
 
@@ -40,7 +41,7 @@ export const parameterTypes = [
     name: 'copy',
     matcher: /no document|no field|an empty list/,
   }),
-  createParameterType<Exclude<IoEditorStatus, 'unmounted'>>({
+  createParameterType<Exclude<DocumentStatus, 'unmounted'>>({
     name: 'status',
     matcher: /"(loading|ready)"/,
   }),

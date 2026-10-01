@@ -1,12 +1,18 @@
 import {unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {formatTextspec, parseTextspec} from '../document'
+import {
+  createDocument,
+  formatTextspec,
+  parseTextspec,
+  type Document,
+  type DocumentStatus,
+} from '../document'
 import {
   createIoEditor,
+  type Clock,
   type IoEditor,
   type IoEditorSentBatch,
-  type IoEditorStatus,
   type IoEditorSync,
 } from '../editor'
 import {createNetwork, type Network} from '../fakes/network'
@@ -81,7 +87,7 @@ export type BatchSnapshot = {
 
 export type EditorSnapshot = {
   id: string
-  status: IoEditorStatus
+  status: DocumentStatus
   sync: IoEditorSync
   /** What the editor shows, with the caret. */
   screen: string
@@ -185,7 +191,9 @@ export type WorldSnapshot = {
 }
 
 export type WorldEditor = {
-  editor: IoEditor
+  /** The fake editor, which the user steps act on. */
+  document: Document
+  io: IoEditor
   host: PassThroughHost
   heard: Heard
   /** Every `mutation sent` the host gave the editor. */
@@ -365,10 +373,10 @@ export function createWorld() {
   }
 
   function snapshotEditor(name: EditorName): EditorSnapshot {
-    const {editor, host, heard} = getEditor(name)
+    const {document, io, host, heard} = getEditor(name)
     const {server} = getSetup()
-    const ledger = editor.inspect()
-    const base = editor.getBase()
+    const ledger = io.inspect()
+    const base = io.getBase()
     const describeBatch = (batch: IoEditorSentBatch): BatchSnapshot => ({
       batchNumber: locateBatch(batch.id).batchNumber,
       transactionIds: batch.transactionIds,
@@ -378,10 +386,10 @@ export function createWorld() {
 
     return {
       id: name === 'Editor A' ? 'A' : 'B',
-      status: editor.getStatus(),
-      sync: editor.getSync(),
-      screen: editor.document.toTextspec(),
-      blocks: editor.document.getValue(),
+      status: document.getStatus(),
+      sync: io.getSync(),
+      screen: document.toTextspec(),
+      blocks: document.getValue(),
       base: {
         textspec: base.value === undefined ? null : formatTextspec(base.value),
         blocks: base.value ?? null,
@@ -398,7 +406,7 @@ export function createWorld() {
         patches: server.getTransaction(transaction.transactionId).patches,
       })),
       outOfStep: ledger.outOfStep,
-      readOnly: ledger.readOnly,
+      readOnly: document.getReadOnly(),
       undoDepth: ledger.undoDepth,
       sentBatches: heard.mutations.map((batch, index) => ({
         number: index + 1,
@@ -501,14 +509,14 @@ export function createWorld() {
       )
       initialDocument = {value}
 
-      for (const {editor, host} of Object.values(startEditors().editors)) {
+      for (const {document, host} of Object.values(startEditors().editors)) {
         host.load()
 
         if (caret) {
-          editor.document.setCaret(caret)
+          document.setCaret(caret)
         }
 
-        editor.mount()
+        document.mount()
       }
     },
     serverHas: (textspec: string) => {
@@ -689,11 +697,11 @@ export function createWorld() {
       name: EditorName,
       {discardUnsent, outcomeOf}: {discardUnsent: boolean; outcomeOf?: number},
     ) => {
-      const {editor, host, heard} = getEditor(name)
+      const {document, host, heard} = getEditor(name)
       lastResync = {
         editorName: name,
         warningCount: heard.warnings.length,
-        screen: editor.document.toTextspec({keys: true}),
+        screen: document.toTextspec({keys: true}),
         batchCount: heard.mutations.length,
       }
       host.resync({
@@ -710,35 +718,35 @@ export function createWorld() {
       getEditor(name).host.load()
     },
     endFirstCommit: (name: EditorName) => {
-      getEditor(name).editor.mount()
+      getEditor(name).document.mount()
     },
 
     type: (name: EditorName, text: string) => {
-      getEditor(name).editor.type(text)
+      getEditor(name).document.type(text)
     },
     deleteBeforeCaret: (name: EditorName, text: string) => {
-      getEditor(name).editor.deleteBeforeCaret(text)
+      getEditor(name).document.deleteBeforeCaret(text)
     },
     putCaretAfter: (name: EditorName, text: string) => {
-      getEditor(name).editor.putCaretAfter(text)
+      getEditor(name).document.putCaretAfter(text)
     },
     setStyle: (name: EditorName, style: string) => {
-      getEditor(name).editor.setStyle(style)
+      getEditor(name).document.setStyle(style)
     },
     insertBlock: (name: EditorName, textspec: string) => {
-      getEditor(name).editor.insertBlock(textspec)
+      getEditor(name).document.insertBlock(textspec)
     },
     deleteBlock: (name: EditorName, text: string) => {
-      getEditor(name).editor.deleteBlock(text)
+      getEditor(name).document.deleteBlock(text)
     },
     undo: (name: EditorName) => {
-      getEditor(name).editor.undo()
+      getEditor(name).io.undo()
     },
     becomeReadOnly: (name: EditorName) => {
-      getEditor(name).editor.updateReadOnly(true)
+      getEditor(name).document.updateReadOnly(true)
     },
     close: (name: EditorName) => {
-      getEditor(name).editor.close()
+      getEditor(name).document.close()
     },
 
     getLastResync: () => {
@@ -762,19 +770,18 @@ function createWorldEditor({
   network: Network<MutationBatch>
   hostShape: HostShape
 }): WorldEditor {
-  const editor = createIoEditor({
+  const {document, io, heard} = createEditorWithIo({
     id: name === 'Editor A' ? 'A' : 'B',
     keyGenerator: createTestKeyGenerator(name === 'Editor A' ? 'a-' : 'b-'),
     clock: network.clock,
   })
-  const heard = listenTo(editor)
   const mutationsSent: Array<MutationSent> = []
   const host = createPassThroughHost({
     editor: {
-      ...editor,
+      ...io,
       mutationSent: (mutationSent) => {
         mutationsSent.push(mutationSent)
-        editor.mutationSent(mutationSent)
+        io.mutationSent(mutationSent)
       },
     },
     save: (batch) => network.send(name, batch),
@@ -804,7 +811,8 @@ function createWorldEditor({
     {listening: hostShape !== 'self-confirming'},
   )
   return {
-    editor,
+    document,
+    io,
     host,
     heard,
     mutationsSent,
@@ -815,7 +823,21 @@ function createWorldEditor({
   }
 }
 
-export function listenTo(editor: IoEditor): Heard {
+/**
+ * A fake document with the protocol's editor side attached, both minting
+ * keys from the same generator, and what their listeners heard. The document
+ * is listened to before the editor side attaches, so a change is heard
+ * before the batch it leads to.
+ */
+export function createEditorWithIo({
+  id,
+  keyGenerator,
+  clock,
+}: {
+  id: string
+  keyGenerator: () => string
+  clock: Clock
+}): {document: Document; io: IoEditor; heard: Heard} {
   const heard: Heard = {
     mutations: [],
     changes: [],
@@ -824,22 +846,29 @@ export function listenTo(editor: IoEditor): Heard {
     workDropped: [],
     events: [],
   }
+  const document = createDocument({keyGenerator}, {value: undefined})
 
-  editor.on((event) => {
+  document.on((event) => {
+    if (event.type !== 'change') {
+      return
+    }
+
+    const {type: _type, ...change} = event
+    heard.changes.push(change)
+    heard.events.push({
+      type: 'change',
+      origin: change.origin,
+      patchCount: change.operations.length,
+    })
+  })
+
+  const io = createIoEditor({id, editor: document, keyGenerator, clock})
+
+  io.on((event) => {
     switch (event.type) {
       case 'mutation': {
         const {type: _type, ...batch} = event
         heard.mutations.push(batch)
-        break
-      }
-      case 'change': {
-        const {type: _type, ...change} = event
-        heard.changes.push(change)
-        heard.events.push({
-          type: 'change',
-          origin: change.origin,
-          patchCount: change.operations.length,
-        })
         break
       }
       case 'error': {
@@ -862,12 +891,10 @@ export function listenTo(editor: IoEditor): Heard {
         heard.warnings.push(event.message)
         heard.events.push({type: 'warning', message: event.message})
         break
-      case 'ready':
-        break
     }
   })
 
-  return heard
+  return {document, io, heard}
 }
 
 const namedTransactionPrefixes: Record<NamedTransaction, string> = {

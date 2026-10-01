@@ -2,15 +2,14 @@ import {diffMatchPatch, set} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {parseTextspec} from './document'
-import {createIoEditor} from './editor'
 import {createNetwork} from './fakes/network'
 import {createPassThroughHost} from './host'
-import {listenTo} from './scenario/world'
+import {createEditorWithIo} from './scenario/world'
 import type {Load, MutationBatch, MutationSent, Transaction} from './types'
 
 describe(createPassThroughHost.name, () => {
   test('a transaction the resync copy covers is dropped, and the next one is forwarded', () => {
-    const {editor, host, heard, clock, feed, serverCopy} =
+    const {editor, document, host, heard, clock, feed, serverCopy} =
       createHostedEditor('B: foo|')
     const coveredTransaction: Transaction = {
       transactionId: 't1',
@@ -39,16 +38,16 @@ describe(createPassThroughHost.name, () => {
 
     expect(heard.errors).toEqual([])
     expect(editor.getBase().rev).toEqual('r2')
-    expect(editor.document.toTextspec()).toEqual('H1: foo|')
+    expect(document.toTextspec()).toEqual('H1: foo|')
 
     host.forward(nextTransaction)
 
     expect(editor.getBase().rev).toEqual('r3')
-    expect(editor.document.toTextspec()).toEqual('H2: foo|')
+    expect(document.toTextspec()).toEqual('H2: foo|')
   })
 
   test('a transaction delivered late is dropped when a transaction the editor held links it to the resync copy', () => {
-    const {editor, host, heard, clock, feed, serverCopy} =
+    const {editor, document, host, heard, clock, feed, serverCopy} =
       createHostedEditor('B: foo|')
     const firstTransaction: Transaction = {
       transactionId: 't1',
@@ -78,11 +77,11 @@ describe(createPassThroughHost.name, () => {
 
     expect(heard.errors).toEqual([])
     expect(editor.getBase().rev).toEqual('r3')
-    expect(editor.document.toTextspec()).toEqual('H2: foo|')
+    expect(document.toTextspec()).toEqual('H2: foo|')
   })
 
   test('a transaction that skips ahead after the load reaches the editor', () => {
-    const {editor, host, heard} = createHostedEditor('B: foo|')
+    const {editor, document, host, heard} = createHostedEditor('B: foo|')
 
     host.forward({
       transactionId: 't2',
@@ -99,13 +98,14 @@ describe(createPassThroughHost.name, () => {
 
     expect(heard.errors).toEqual([])
     expect(editor.getBase().rev).toEqual('r3')
-    expect(editor.document.toTextspec()).toEqual('H2: foo|')
+    expect(document.toTextspec()).toEqual('H2: foo|')
   })
 
   test('a plain host saves each batch under the transaction ID it proposes and sends no `mutation sent`', () => {
-    const {editor, host, heard, mutationsSent} = createHostedEditor('B: foo|')
+    const {editor, document, host, heard, mutationsSent} =
+      createHostedEditor('B: foo|')
 
-    editor.type('x')
+    document.type('x')
     host.reportSaveTaken('A-1')
 
     expect({
@@ -126,12 +126,12 @@ describe(createPassThroughHost.name, () => {
 
   test('a folding host names the request a batch went out in once, when the server takes it', () => {
     const results = [true, false].map((folded) => {
-      const {editor, host, heard, mutationsSent} = createHostedEditor(
+      const {editor, document, host, heard, mutationsSent} = createHostedEditor(
         'B: foo|',
         {foldBatches: true},
       )
 
-      editor.type('x')
+      document.type('x')
       const transactionIdsBefore = editor.inspect().inFlight?.transactionIds
 
       if (folded) {
@@ -169,10 +169,10 @@ describe(createPassThroughHost.name, () => {
 
   test('a retry re-sends the save request with the transaction ID the batch was first sent as', () => {
     const results = [true, false].map((landed) => {
-      const {editor, host, heard, resubmitted, transactionHistory} =
+      const {editor, document, host, heard, resubmitted, transactionHistory} =
         createHostedEditor('B: foo|')
 
-      editor.type('x')
+      document.type('x')
       host.reportSaveTaken('A-1')
 
       if (landed) {
@@ -214,6 +214,7 @@ describe(createPassThroughHost.name, () => {
     const results = cases.map(({outcomeMethod, server}) => {
       const {
         editor,
+        document,
         host,
         heard,
         transactionHistory,
@@ -222,9 +223,9 @@ describe(createPassThroughHost.name, () => {
       } = createHostedEditor('B: foo|', {outcomeMethod})
       const outcomes: Array<unknown> = []
 
-      editor.type('x')
+      document.type('x')
       host.reportSaveTaken('A-1')
-      editor.type('y')
+      document.type('y')
 
       if (server === 'landed') {
         transactionHistory.add('A-t1')
@@ -275,11 +276,11 @@ describe(createPassThroughHost.name, () => {
 
   test('a self-confirming host forwards the transaction its save answers with, and a plain host waits for the feed', () => {
     const results = [true, false].map((selfConfirming) => {
-      const {editor, host, heard} = createHostedEditor('B: foo|', {
+      const {editor, document, host, heard} = createHostedEditor('B: foo|', {
         selfConfirming,
       })
 
-      editor.type('x')
+      document.type('x')
       host.reportSaveTaken('A-1')
       host.reportSaved({
         transactionId: 'A-t1',
@@ -302,12 +303,12 @@ describe(createPassThroughHost.name, () => {
   })
 
   test('the final batch is saved once the save request of the batch in flight is taken', () => {
-    const {editor, host, saved} = createHostedEditor('B: foo|')
+    const {document, host, saved} = createHostedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 
-    editor.type('x')
-    editor.type('y')
-    editor.close()
+    document.type('x')
+    document.type('y')
+    document.close()
 
     expect(saved.length).toEqual(1)
 
@@ -329,13 +330,13 @@ describe(createPassThroughHost.name, () => {
   })
 
   test('the final batch is saved at once when no save request is waiting', () => {
-    const {editor, host, saved} = createHostedEditor('B: foo|')
+    const {document, host, saved} = createHostedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 
-    editor.type('x')
+    document.type('x')
     host.reportSaveTaken('A-1')
-    editor.type('y')
-    editor.close()
+    document.type('y')
+    document.close()
 
     expect(saved).toEqual([
       {
@@ -366,12 +367,15 @@ function createHostedEditor(
   } = {},
 ) {
   const {clock} = createNetwork()
-  const editor = createIoEditor({
+  const {
+    document,
+    io: editor,
+    heard,
+  } = createEditorWithIo({
     id: 'A',
     keyGenerator: createTestKeyGenerator('a-'),
     clock,
   })
-  const heard = listenTo(editor)
   const {value, caret} = parseTextspec(
     {keyGenerator: createTestKeyGenerator('d-')},
     textspec,
@@ -414,14 +418,15 @@ function createHostedEditor(
   })
 
   host.load()
-  editor.mount()
+  document.mount()
 
   if (caret) {
-    editor.document.setCaret(caret)
+    document.setCaret(caret)
   }
 
   return {
     editor,
+    document,
     host,
     heard,
     clock,

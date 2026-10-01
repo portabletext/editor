@@ -15,6 +15,7 @@ import {
   emptiesField,
   formatTextspec,
   parseTextspec,
+  type Document,
 } from './document'
 import type {EditorEventForIo} from './types'
 
@@ -98,16 +99,18 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: ba|r'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const result = document.setStyle('h1')
+    const patches = [set('h1', [{_key: 'k2'}, 'style'])]
 
-    expect(result).toEqual({
-      patches: [set('h1', [{_key: 'k2'}, 'style'])],
-      undoStep: {type: 'styled', blockKey: 'k2', style: 'h1'},
-    })
+    document.setStyle('h1')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec()).toEqual('B: foo;;H1: ba|r')
-    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+    expect(applyAll(before, patches)).toEqual(document.getValue())
   })
 
   test('setting the h3 style works, and the notation reads and writes it', () => {
@@ -150,29 +153,25 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fo|o;;B: bar'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const result = document.type('xy')
+    const patches = [
+      diffMatchPatch('foo', 'foxyo', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+    ]
 
-    expect(result).toEqual({
-      patches: [
-        diffMatchPatch('foo', 'foxyo', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-      ],
-      undoStep: {
-        type: 'typed',
-        blockKey: 'k0',
-        spanKey: 'k1',
-        offset: 2,
-        text: 'xy',
-      },
-    })
+    document.type('xy')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec()).toEqual('B: foxy|o;;B: bar')
-    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+    expect(applyAll(before, patches)).toEqual(document.getValue())
   })
 
   test('deleting before the caret removes the text that ends at the caret and sends a text diff', () => {
@@ -181,23 +180,25 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo bar|;;B: baz'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const result = document.deleteBeforeCaret(' bar')
+    const patches = [
+      diffMatchPatch('foo bar', 'foo', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+    ]
 
-    expect(result).toEqual({
-      patches: [
-        diffMatchPatch('foo bar', 'foo', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-      ],
-      undoStep: undefined,
-    })
+    document.deleteBeforeCaret(' bar')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec()).toEqual('B: foo|;;B: baz')
-    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+    expect(applyAll(before, patches)).toEqual(document.getValue())
   })
 
   test('deleting text that is not right before the caret throws and changes nothing', () => {
@@ -256,31 +257,33 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|;;B: bar'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const result = document.insertBlock('B _key="k9": baz')
+    const patches = [
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k9',
+            children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+            style: 'normal',
+          },
+        ],
+        'after',
+        [{_key: 'k0'}],
+      ),
+    ]
 
-    expect(result).toEqual({
-      patches: [
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k9',
-              children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
-              style: 'normal',
-            },
-          ],
-          'after',
-          [{_key: 'k0'}],
-        ),
-      ],
-      undoStep: {type: 'inserted', blockKey: 'k9'},
-    })
+    document.insertBlock('B _key="k9": baz')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec({keys: true})).toEqual(
       'B _key="k0": foo;;B _key="k9": baz|;;B _key="k2": bar',
     )
-    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+    expect(applyAll(before, patches)).toEqual(document.getValue())
   })
 
   test('an inserted block without a named key gets a generated one', () => {
@@ -289,26 +292,28 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
+    const events = listen(document)
 
-    const result = document.insertBlock('H2: baz')
+    const patches = [
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
+            style: 'h2',
+          },
+        ],
+        'after',
+        [{_key: 'k0'}],
+      ),
+    ]
 
-    expect(result).toEqual({
-      patches: [
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k2',
-              children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
-              style: 'h2',
-            },
-          ],
-          'after',
-          [{_key: 'k0'}],
-        ),
-      ],
-      undoStep: {type: 'inserted', blockKey: 'k2'},
-    })
+    document.insertBlock('H2: baz')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec()).toEqual('B: foo;;H2: baz|')
   })
 
@@ -318,26 +323,18 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: ba|r;;B: baz'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const result = document.deleteBlock('bar')
+    const patches = [unset([{_key: 'k2'}])]
 
-    expect(result).toEqual({
-      patches: [unset([{_key: 'k2'}])],
-      undoStep: {
-        type: 'deleted',
-        block: {
-          _type: 'block',
-          _key: 'k2',
-          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
-          style: 'normal',
-        },
-        previousKey: 'k0',
-        nextKey: 'k4',
-      },
-    })
+    document.deleteBlock('bar')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec()).toEqual('B: foo|;;B: baz')
-    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+    expect(applyAll(before, patches)).toEqual(document.getValue())
   })
 
   test('deleting the first block records that it had no previous sibling', () => {
@@ -346,26 +343,18 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fo|o;;B: bar'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const result = document.deleteBlock('foo')
+    const patches = [unset([{_key: 'k0'}])]
 
-    expect(result).toEqual({
-      patches: [unset([{_key: 'k0'}])],
-      undoStep: {
-        type: 'deleted',
-        block: {
-          _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-          style: 'normal',
-        },
-        previousKey: undefined,
-        nextKey: 'k2',
-      },
-    })
+    document.deleteBlock('foo')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec()).toEqual('B: |bar')
-    expect(applyAll(before, result.patches)).toEqual(document.getValue())
+    expect(applyAll(before, patches)).toEqual(document.getValue())
   })
 
   test('deleting another block leaves the caret where it is', () => {
@@ -401,26 +390,28 @@ describe(createDocument.name, () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B _key="k9": foo|'),
     )
+    const events = listen(document)
 
-    const result = document.insertBlock('B _key="k9": bar')
+    const patches = [
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+            style: 'normal',
+          },
+        ],
+        'after',
+        [{_key: 'k9'}],
+      ),
+    ]
 
-    expect(result).toEqual({
-      patches: [
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k2',
-              children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
-              style: 'normal',
-            },
-          ],
-          'after',
-          [{_key: 'k9'}],
-        ),
-      ],
-      undoStep: {type: 'inserted', blockKey: 'k2'},
-    })
+    document.insertBlock('B _key="k9": bar')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
     expect(document.toTextspec({keys: true})).toEqual(
       'B _key="k9": foo;;B _key="k2": bar|',
     )
@@ -433,9 +424,11 @@ describe(createDocument.name, () => {
       parseTextspec({keyGenerator}, 'B: foo;;B: bar|'),
     )
 
-    document.setValue(
-      parseTextspec({keyGenerator}, 'B _key="k0": foox;;B _key="k2": b').value,
-    )
+    document.send({
+      type: 'resync',
+      value: parseTextspec({keyGenerator}, 'B _key="k0": foox;;B _key="k2": b')
+        .value,
+    })
 
     expect(document.toTextspec()).toEqual('B: foox;;B: b|')
   })
@@ -447,149 +440,12 @@ describe(createDocument.name, () => {
       parseTextspec({keyGenerator}, 'B: foo;;B: bar|'),
     )
 
-    document.setValue(parseTextspec({keyGenerator}, 'B _key="k0": foo').value)
+    document.send({
+      type: 'resync',
+      value: parseTextspec({keyGenerator}, 'B _key="k0": foo').value,
+    })
 
     expect(document.toTextspec()).toEqual('B: |foo')
-  })
-})
-
-describe('reverting a change', () => {
-  test('typed text is deleted while its span still holds it, and the caret moves back', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const document = createReadyDocument(
-      {keyGenerator},
-      parseTextspec({keyGenerator}, 'B: fooxy|'),
-    )
-    const typed = {
-      type: 'typed' as const,
-      blockKey: 'k0',
-      spanKey: 'k1',
-      offset: 3,
-      text: 'x',
-    }
-
-    expect(document.deleteText(typed)).toEqual([
-      diffMatchPatch('fooxy', 'fooy', [
-        {_key: 'k0'},
-        'children',
-        {_key: 'k1'},
-        'text',
-      ]),
-    ])
-    expect(document.toTextspec()).toEqual('B: fooy|')
-    expect(document.deleteText(typed)).toEqual([])
-    expect(document.deleteText({...typed, spanKey: 'k8'})).toEqual([])
-    expect(document.deleteText({...typed, blockKey: 'k9'})).toEqual([])
-    expect(document.toTextspec()).toEqual('B: fooy|')
-  })
-
-  test("a block's style is set or removed, and a gone block is left alone", () => {
-    const keyGenerator = createTestKeyGenerator()
-    const document = createReadyDocument(
-      {keyGenerator},
-      parseTextspec({keyGenerator}, 'H1: foo|'),
-    )
-
-    expect(document.setBlockStyle('k0', 'h2')).toEqual([
-      set('h2', [{_key: 'k0'}, 'style']),
-    ])
-    expect(document.setBlockStyle('k0', undefined)).toEqual([
-      unset([{_key: 'k0'}, 'style']),
-    ])
-    expect(document.getValue()).toEqual([
-      {
-        _type: 'block',
-        _key: 'k0',
-        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-      },
-    ])
-    expect(document.setBlockStyle('k9', 'h1')).toEqual([])
-  })
-
-  test('a block deleted by key empties the field when it was the last, and a gone block is left alone', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const document = createReadyDocument(
-      {keyGenerator},
-      parseTextspec({keyGenerator}, 'B: foo|;;B: bar'),
-    )
-
-    expect(document.deleteBlockByKey('k9')).toEqual([])
-    expect(document.deleteBlockByKey('k2')).toEqual([unset([{_key: 'k2'}])])
-    expect(document.deleteBlockByKey('k0')).toEqual([
-      unset([{_key: 'k0'}]),
-      unset([]),
-    ])
-    expect(document.getPlaceholderKey()).toEqual('k4')
-  })
-
-  test('a deleted block goes back after its previous sibling, else before its next one, else first', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar;;B: baz')
-    const [fooBlock, barBlock, bazBlock] = value
-    const document = createReadyDocument({keyGenerator}, {value: [bazBlock]})
-
-    expect(
-      document.restoreBlock({
-        type: 'deleted',
-        block: barBlock,
-        previousKey: fooBlock._key,
-        nextKey: bazBlock._key,
-      }),
-    ).toEqual([insert([barBlock], 'before', [{_key: bazBlock._key}])])
-    expect(
-      document.restoreBlock({
-        type: 'deleted',
-        block: fooBlock,
-        previousKey: 'k9',
-        nextKey: 'k8',
-      }),
-    ).toEqual([insert([fooBlock], 'before', [{_key: barBlock._key}])])
-    expect(document.toTextspec()).toEqual('B: foo;;B: bar;;B: |baz')
-
-    document.deleteBlockByKey(bazBlock._key)
-
-    expect(
-      document.restoreBlock({
-        type: 'deleted',
-        block: bazBlock,
-        previousKey: barBlock._key,
-        nextKey: undefined,
-      }),
-    ).toEqual([insert([bazBlock], 'after', [{_key: barBlock._key}])])
-    expect(document.toTextspec()).toEqual('B: foo;;B: bar|;;B: baz')
-  })
-
-  test('a deleted block is not put back while its key is on screen', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const {value} = parseTextspec({keyGenerator}, 'B: foo|;;B: bar')
-    const document = createReadyDocument({keyGenerator}, {value})
-
-    expect(
-      document.restoreBlock({
-        type: 'deleted',
-        block: value[1],
-        previousKey: value[0]._key,
-        nextKey: undefined,
-      }),
-    ).toEqual([])
-    expect(document.getValue()).toEqual(value)
-  })
-
-  test('a deleted block put back into an empty field replaces the placeholder', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const [block] = parseTextspec({keyGenerator}, 'B: foo').value
-    const document = createReadyDocument({keyGenerator}, {value: undefined})
-
-    expect(
-      document.restoreBlock({
-        type: 'deleted',
-        block,
-        previousKey: undefined,
-        nextKey: undefined,
-      }),
-    ).toEqual([setIfMissing([], []), insert([block], 'before', [0])])
-    expect(document.getPlaceholderKey()).toEqual(undefined)
-    expect(document.getValue()).toEqual([block])
   })
 })
 
@@ -625,76 +481,69 @@ describe('the placeholder', () => {
   test('the first keystroke creates the field and the block in the same batch', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument({keyGenerator}, {value: undefined})
+    const events = listen(document)
 
-    const firstResult = document.type('x')
+    const firstPatches = [
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'x', [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text']),
+    ]
 
-    expect(firstResult).toEqual({
-      patches: [
-        setIfMissing([], []),
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k0',
-              style: 'normal',
-              markDefs: [],
-              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-            },
-          ],
-          'before',
-          [0],
-        ),
-        diffMatchPatch('', 'x', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-      ],
-      undoStep: {
-        type: 'typed',
-        blockKey: 'k0',
-        spanKey: 'k1',
-        offset: 0,
-        text: 'x',
+    document.type('x')
+
+    expect(events.splice(0)).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: firstPatches,
+        patches: firstPatches,
       },
-    })
-    expect(createsBlock(firstResult.patches)).toEqual(true)
+    ])
+    expect(createsBlock(firstPatches)).toEqual(true)
     expect(document.getPlaceholderKey()).toEqual(undefined)
     expect(document.toTextspec()).toEqual('B: x|')
-    expect(applyAll(undefined, firstResult.patches)).toEqual(
-      document.getValue(),
-    )
+    expect(applyAll(undefined, firstPatches)).toEqual(document.getValue())
 
-    const secondResult = document.type('y')
+    const secondPatches = [
+      diffMatchPatch('x', 'xy', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+    ]
 
-    expect(secondResult).toEqual({
-      patches: [
-        diffMatchPatch('x', 'xy', [
-          {_key: 'k0'},
-          'children',
-          {_key: 'k1'},
-          'text',
-        ]),
-      ],
-      undoStep: {
-        type: 'typed',
-        blockKey: 'k0',
-        spanKey: 'k1',
-        offset: 1,
-        text: 'y',
+    document.type('y')
+
+    expect(events.splice(0)).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: secondPatches,
+        patches: secondPatches,
       },
-    })
-    expect(createsBlock(secondResult.patches)).toEqual(false)
+    ])
+    expect(createsBlock(secondPatches)).toEqual(false)
   })
 
   test('setting a style on the placeholder creates the block first', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument({keyGenerator}, {value: []})
+    const events = listen(document)
 
-    const result = document.setStyle('h1')
-
-    expect(result.patches).toEqual([
+    const patches = [
       setIfMissing([], []),
       insert(
         [
@@ -710,17 +559,22 @@ describe('the placeholder', () => {
         [0],
       ),
       set('h1', [{_key: 'k0'}, 'style']),
+    ]
+
+    document.setStyle('h1')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
     ])
-    expect(applyAll([], result.patches)).toEqual(document.getValue())
+    expect(applyAll([], patches)).toEqual(document.getValue())
   })
 
   test('inserting a block after the placeholder creates the placeholder first', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument({keyGenerator}, {value: undefined})
+    const events = listen(document)
 
-    const result = document.insertBlock('B: foo')
-
-    expect(result.patches).toEqual([
+    const patches = [
       setIfMissing([], []),
       insert(
         [
@@ -747,8 +601,14 @@ describe('the placeholder', () => {
         'after',
         [{_key: 'k0'}],
       ),
+    ]
+
+    document.insertBlock('B: foo')
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
     ])
-    expect(applyAll(undefined, result.patches)).toEqual(document.getValue())
+    expect(applyAll(undefined, patches)).toEqual(document.getValue())
   })
 
   test('a lone empty block from the host is content, and typing sends only the text change', () => {
@@ -757,14 +617,19 @@ describe('the placeholder', () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B _key="b1": '),
     )
+    const events = listen(document)
 
-    const result = document.type('x')
+    const patches = [
+      diffMatchPatch('', 'x', [{_key: 'b1'}, 'children', {_key: 'k0'}, 'text']),
+    ]
+
+    document.type('x')
 
     expect(document.getPlaceholderKey()).toEqual(undefined)
-    expect(result.patches).toEqual([
-      diffMatchPatch('', 'x', [{_key: 'b1'}, 'children', {_key: 'k0'}, 'text']),
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
     ])
-    expect(createsBlock(result.patches)).toEqual(false)
+    expect(createsBlock(patches)).toEqual(false)
   })
 
   test('deleting the last block empties the field and shows a fresh placeholder', () => {
@@ -773,40 +638,46 @@ describe('the placeholder', () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
+    const events = listen(document)
     const before = document.getValue()
 
-    const deleteResult = document.deleteBlock('foo')
+    const deletePatches = [unset([{_key: 'k0'}]), unset([])]
 
-    expect(deleteResult).toEqual({
-      patches: [unset([{_key: 'k0'}]), unset([])],
-      undoStep: {
-        type: 'deleted',
-        block: {
-          _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-          style: 'normal',
-        },
-        previousKey: undefined,
-        nextKey: undefined,
+    document.deleteBlock('foo')
+
+    expect(events.splice(0)).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: deletePatches,
+        patches: deletePatches,
       },
-    })
-    expect(emptiesField(deleteResult.patches)).toEqual(true)
+    ])
+    expect(emptiesField(deletePatches)).toEqual(true)
     expect(document.getPlaceholderKey()).toEqual('k2')
     expect(document.toTextspec({keys: true})).toEqual('B _key="k2": |')
-    expect(applyAll(before, deleteResult.patches)).toEqual(undefined)
+    expect(applyAll(before, deletePatches)).toEqual(undefined)
 
-    const typeResult = document.type('x')
+    document.type('x')
 
-    expect(createsBlock(typeResult.patches)).toEqual(true)
-    expect(emptiesField(typeResult.patches)).toEqual(false)
+    const [typeChange] = events.splice(0)
+
+    expect(
+      typeChange?.type === 'change' && typeChange.origin === 'local'
+        ? [createsBlock(typeChange.patches), emptiesField(typeChange.patches)]
+        : undefined,
+    ).toEqual([true, false])
   })
 
   test('deleting the placeholder sends nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument({keyGenerator}, {value: undefined})
 
-    expect(document.deleteBlock('')).toEqual({patches: [], undoStep: undefined})
+    const events = listen(document)
+
+    document.deleteBlock('')
+
+    expect(events).toEqual([])
     expect(document.getPlaceholderKey()).toEqual('k0')
   })
 
@@ -814,16 +685,19 @@ describe('the placeholder', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument({keyGenerator}, {value: undefined})
 
-    document.setValue([])
+    document.send({type: 'resync', value: []})
 
     expect(document.getPlaceholderKey()).toEqual('k0')
 
-    document.setValue(parseTextspec({keyGenerator}, 'B: foo').value)
+    document.send({
+      type: 'resync',
+      value: parseTextspec({keyGenerator}, 'B: foo').value,
+    })
 
     expect(document.getPlaceholderKey()).toEqual(undefined)
     expect(document.toTextspec({keys: true})).toEqual('B _key="k2": |foo')
 
-    document.setValue(undefined)
+    document.send({type: 'resync', value: undefined})
 
     expect(document.getPlaceholderKey()).toEqual('k4')
     expect(document.toTextspec({keys: true})).toEqual('B _key="k4": |')
@@ -1171,4 +1045,11 @@ function createReadyDocument(
   document.mount()
 
   return document
+}
+
+function listen(document: Document): Array<EditorEventForIo> {
+  const events: Array<EditorEventForIo> = []
+  document.on((event) => events.push(event))
+
+  return events
 }
