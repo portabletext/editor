@@ -1,5 +1,11 @@
 # @portabletext/plugin-input-rule
 
+## 7.0.18
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.4`
+
 ## 7.0.17
 
 ### Patch Changes
