@@ -110,11 +110,12 @@ export const playgroundSchemaDefinition = defineSchema({
     },
     // ARCHETYPE 1 - locked-down: nothing in scope.
     // Tests: every operation correctly skips when sub-schema declares
-    // nothing. Toolbar shows everything dimmed inside a code-block.
+    // nothing. Toolbar shows everything dimmed inside a code block.
     {
       title: 'Code block',
-      name: 'code-block',
+      name: 'code',
       fields: [
+        {name: 'language', title: 'Language', type: 'string'},
         {
           name: 'lines',
           title: 'Lines',
@@ -134,7 +135,7 @@ export const playgroundSchemaDefinition = defineSchema({
     },
     // ARCHETYPE 2 - full inheritance: mirrors root exactly.
     // Tests: behaves identically to root. Allows nested heterogeneous
-    // containers (callout + code-block + image) - exercises traversal
+    // containers (callout + code block + image) - exercises traversal
     // across nested containers with DIFFERENT sub-schemas.
     {
       title: 'Fact box',
@@ -279,8 +280,9 @@ export const playgroundSchemaDefinition = defineSchema({
             },
             {
               type: 'object',
-              name: 'code-block',
+              name: 'code',
               fields: [
+                {name: 'language', type: 'string'},
                 {
                   name: 'lines',
                   type: 'array',
