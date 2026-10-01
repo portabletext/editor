@@ -195,6 +195,34 @@ Feature: Out of step and resync
     And Editor A is in step
     And Editor A's sync is "synced"
 
+  Scenario: An editor out of step sends nothing, even after its batch comes back, until the resync re-keys its unsent insert
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When the block "B _key="k9": baz" is inserted
+    Then Editor A shows "B: foox;;B _key="k9": baz|"
+    And Editor A has sent nothing new
+    When the block "B _key="k9": bar" is inserted in Editor B
+    Then Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And Editor A receives Editor B's batch 1
+    Then Editor A reports that it is out of step, with reason "duplicate key"
+    When the server receives Editor A's batch 1
+    Then the server has "B: foox;;B _key="k9": bar"
+    When Editor A's batch 1 comes back
+    Then Editor A has sent nothing new
+    And Editor A's sync is "out of step"
+    When "y" is typed
+    Then Editor A shows "B: foox;;B _key="k9": bazy|"
+    And Editor A has sent nothing new
+    When Editor A is resynced
+    Then Editor A is in step
+    And Editor A shows "B: foox;;B: bazy;;B _key="k9": bar|"
+    And Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    Then the server has "B: foox;;B: bazy;;B _key="k9": bar"
+    And every block on the server has a unique key
+
   Scenario: A host that rewrites a keyed removal as a whole-field unset is caught when the echo comes back
     Given the document is "B: foo|;;B: bar"
     When the block "bar" is deleted

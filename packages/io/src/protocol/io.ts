@@ -897,7 +897,17 @@ export function createIo(options: {
     }
 
     if (pending.length > 0) {
-      if (rejected) {
+      if (outOfStep) {
+        warn(
+          `${pending.length} unsent change(s) dropped on close: the editor is out of step`,
+        )
+        emit({
+          type: 'work dropped',
+          patches: pending.flat(),
+          reason: 'closed out of step',
+        })
+        pending = []
+      } else if (rejected) {
         warn(
           `${pending.length} unsent change(s) dropped on close: sending was blocked by the rejection of batch ${rejected.id}`,
         )
@@ -918,7 +928,13 @@ export function createIo(options: {
   }
 
   function flush() {
-    if (status !== 'ready' || inFlight || rejected || pending.length === 0) {
+    if (
+      status !== 'ready' ||
+      outOfStep ||
+      inFlight ||
+      rejected ||
+      pending.length === 0
+    ) {
       return
     }
 

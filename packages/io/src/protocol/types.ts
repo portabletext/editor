@@ -67,12 +67,16 @@ export type ErrorEvent = {
 
 /**
  * The user's own unsaved work the editor gave up on: pending changes with no
- * target, pending changes dropped on close while sending was blocked, or the
- * rejected batch a resync dropped.
+ * target, pending changes dropped on close while sending was blocked or the
+ * editor was out of step, or the rejected batch a resync dropped.
  */
 export type WorkDropped = {
   patches: Array<Patch>
-  reason: 'no target' | 'closed while blocked' | 'rejected'
+  reason:
+    | 'no target'
+    | 'closed while blocked'
+    | 'closed out of step'
+    | 'rejected'
 }
 
 /**

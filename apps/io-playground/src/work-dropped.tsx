@@ -104,6 +104,8 @@ const reasonExplanations: Record<WorkDroppedEvent['reason'], string> = {
     'The server refused the batch for good, and the resync let go of it.',
   'closed while blocked':
     'The editor closed while sending was blocked by a rejection, so these edits never went out.',
+  'closed out of step':
+    'The editor closed while it was out of step with the server, so these edits never went out.',
 }
 
 /**

@@ -48,3 +48,18 @@ Feature: Lifecycle
     Then Editor A has sent nothing new
     And Editor A has been warned
     And the server has "B: foo"
+
+  Scenario: Closing while out of step sends nothing, and the unsent changes are dropped
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When Editor A's feed is lost
+    And "y" is typed
+    Then Editor A shows "B: fooxy|"
+    And Editor A has sent nothing new
+    When the server receives Editor A's batch 1
+    And Editor A's batch 1 comes back
+    Then Editor A has sent nothing new
+    When Editor A is closed
+    Then Editor A has sent nothing new
+    And Editor A has been told work was dropped, with reason "closed out of step"
+    And the server has "B: foox"

@@ -78,7 +78,7 @@ export const concepts = [
   {
     name: 'out of step',
     definition:
-      'The editor reported that it no longer matches the server and stopped applying the feed until a resync.',
+      "The editor reported that it no longer matches the server, and it stops applying the feed and sending batches until a resync. It keeps taking the user's changes and recognizing its own batches when they come back.",
   },
   {
     name: 'resync',
@@ -112,7 +112,7 @@ export const concepts = [
   {
     name: 'work dropped',
     definition:
-      "An event the editor emits when it gives up on the user's unsent changes: their target is gone, the editor closed while sending was blocked, or a resync dropped the rejected batch.",
+      "An event the editor emits when it gives up on the user's unsent changes: their target is gone, the editor closed while sending was blocked or while it was out of step, or a resync dropped the rejected batch.",
   },
   {
     name: 'transaction.value',

@@ -103,6 +103,6 @@ export const parameterTypes = [
   }),
   createParameterType<WorkDropped['reason']>({
     name: 'dropReason',
-    matcher: /"(no target|closed while blocked|rejected)"/,
+    matcher: /"(no target|closed while blocked|closed out of step|rejected)"/,
   }),
 ]

@@ -54,6 +54,10 @@ A transaction may carry `value`, the field as the server holds it after the tran
 
 `createWorld({serverCopyOnTransactions: true})`, or the step `Given transactions that carry the server's copy`, has the network deliver every transaction with the server's copy after it, and the host pass it on. The test runner runs every feature in both modes, a `describe` per mode.
 
+### Out of step
+
+After an `error`, whatever its reason, or `feed lost`, the editor is out of step until a resync. io keeps booking local changes as pending and keeps recognizing its own batches when they come back, but sends no batch: pending work written against a copy io no longer trusts could repeat a key the server has by now. The resync re-applies the pending changes to the fresh copy, re-keys what collides, and sends them. Closing while out of step sends nothing and emits `work dropped` with reason `closed out of step`, carrying the pending patches.
+
 ### Keys
 
 A key io mints while repairing a received whole value (a missing or duplicate `_key` in `load` or `resync`) comes from the value's revision and the repaired node's index path: the 32-bit FNV-1a hash of the revision and the path segments joined by `/` (`r1/0`, `r1/0/children/1`), as eight hex digits. When the value already has that key, io hashes again with `#1`, `#2` and so on appended. Two editors repairing the same defect of the same revision mint the same key, so their repairs agree. Keys for local inserts come from the editor's key generator, and the world gives each editor's generator its own prefix (`a-`, `b-`), so the two never mint the same key by accident.
