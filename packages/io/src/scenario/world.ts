@@ -811,7 +811,7 @@ export function createWorld(
     },
     alterServerCopy: (key: string, corruption: Corruption) => {
       const {server} = getSetup()
-      server.alterLatestCopy(
+      server.alterStoredCopy(
         corruptionPatches(server.copy().value, key, corruption),
       )
     },

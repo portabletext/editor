@@ -102,6 +102,16 @@ Feature: Malformed content
     Then the server has "B: x"
     And the server has a block that is not an object
 
+  Scenario: The server's copy changes without a transaction before any transaction is recorded, and the resync repairs it
+    Given the document is "B _key="k1": foo|"
+    When the server's copy changes without a transaction so its block "k1" has no type
+    And Editor A is resynced
+    Then Editor A shows "B: foo"
+    And Editor A has been warned
+    And Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    Then the server has "B: foo"
+
   Scenario: A transaction that removes a block's key puts the editor out of step, and the resync repairs it
     Given the document is "B _key="k1": foo|;;B _key="k2": bar"
     When a script changes the server's block "k2" so it has no key

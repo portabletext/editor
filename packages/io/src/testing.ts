@@ -1,6 +1,6 @@
 export type {RequestFailure} from './protocol/host'
 export type {MutationBatch} from './protocol/types'
-export {createFakeDocument} from './fakes/document'
+export {createFakeDocument, formatTextspec} from './fakes/document'
 export type {Caret, FakeDocument, FakeDocumentStatus} from './fakes/document'
 export {createFakeServer} from './fakes/server'
 export type {

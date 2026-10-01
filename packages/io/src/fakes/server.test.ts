@@ -391,14 +391,30 @@ describe(createFakeServer.name, () => {
     ).toThrow('The document does not exist')
   })
 
-  test('the copy after each transaction is kept, and altering the latest copy changes the field without a transaction', () => {
+  test('Scenario: the stored copy of a document with no transaction yet can be altered', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo')
+    const server = createFakeServer({documentId: 'document', document: {value}})
+
+    server.alterStoredCopy([set('h1', [{_key: 'k0'}, 'style'])])
+
+    expect({
+      transactions: server.getTransactions(),
+      copy: server.copy(),
+    }).toEqual({
+      transactions: [],
+      copy: {value: [{...value[0], style: 'h1'}], rev: 'r1'},
+    })
+  })
+
+  test('the copy after each transaction is kept, and altering the stored copy changes the field without a transaction', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
     const server = createFakeServer({documentId: 'document', document: {value}})
     server.patchField([set('h1', [{_key: 'k0'}, 'style'])], 't1')
 
     server.patchField([set('h2', [{_key: 'k0'}, 'style'])], 't2')
-    server.alterLatestCopy([
+    server.alterStoredCopy([
       set('foox', [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text']),
     ])
 

@@ -1,6 +1,8 @@
 import {
   compileScenarios,
+  formatTextspec,
   type EditorName,
+  type ServerSnapshot,
   type World,
 } from '@portabletext/io/testing'
 
@@ -51,4 +53,60 @@ export function inEditor(name: EditorName): string {
 
 export function quoted(text: string): string {
   return `"${text}"`
+}
+
+/**
+ * The checks that pin what the server has, in the step vocabulary: its
+ * blocks that are objects as textspec, and a check of its own for a block
+ * that isn't an object, which textspec can't spell. A block that is an
+ * object but below the floor textspec can't spell either, so the blocks go
+ * unchecked, and `omitted` says why.
+ */
+export function serverChecks(server: Pick<ServerSnapshot, 'blocks' | 'rev'>): {
+  checks: Array<string>
+  omitted: string | null
+} {
+  if (server.blocks === null) {
+    return {
+      checks: [
+        server.rev === null
+          ? 'the server has no document'
+          : 'the server has no field',
+      ],
+      omitted: null,
+    }
+  }
+
+  if (server.blocks.length === 0) {
+    return {checks: ['the server has an empty list'], omitted: null}
+  }
+
+  const objectBlocks = server.blocks.filter(
+    (block) =>
+      typeof block === 'object' && block !== null && !Array.isArray(block),
+  )
+  const nonObjectChecks =
+    objectBlocks.length < server.blocks.length
+      ? ['the server has a block that is not an object']
+      : []
+
+  if (objectBlocks.length === 0) {
+    return {checks: nonObjectChecks, omitted: null}
+  }
+
+  try {
+    return {
+      checks: [
+        `the server has ${quoted(formatTextspec(objectBlocks))}`,
+        ...nonObjectChecks,
+      ],
+      omitted: null,
+    }
+  } catch {
+    return {
+      checks: nonObjectChecks,
+      omitted:
+        "The server holds a block below the floor that textspec can't spell, so no check pins the server's blocks.",
+    }
+  }
 }

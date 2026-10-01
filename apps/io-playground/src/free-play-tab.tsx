@@ -22,6 +22,7 @@ import {
   inEditor,
   quoted,
   runStep,
+  serverChecks,
   type LoggedStep,
   type StepKeyword,
 } from './gherkin'
@@ -190,26 +191,14 @@ export function useFreePlay() {
       }
     }
 
-    const server = snapshot.server
+    const server = snapshot.server ? serverChecks(snapshot.server) : undefined
 
-    if (server) {
-      if (server.value === null) {
-        checks.push(
-          server.rev === null
-            ? 'the server has no document'
-            : 'the server has no field',
-        )
-      } else {
-        checks.push(
-          server.value === ''
-            ? 'the server has an empty list'
-            : `the server has ${quoted(server.value)}`,
-        )
-      }
+    for (const check of [...checks, ...(server?.checks ?? [])]) {
+      perform('Then', check)
     }
 
-    for (const check of checks) {
-      perform('Then', check)
+    if (server?.omitted) {
+      note('(capture checks)', [server.omitted])
     }
   }
 

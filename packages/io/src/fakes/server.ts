@@ -85,10 +85,12 @@ export type Server = {
   /** The field as it was right after the transaction. */
   getCopyAfter: (transactionId: string) => Array<PortableTextBlock> | undefined
   /**
-   * Applies the patches to the field without recording a transaction, so the
-   * field after the latest transaction holds a change its patches don't.
+   * Applies the patches to the stored field without recording a
+   * transaction, whether or not one was recorded before. The copy after the
+   * latest transaction, if there is one, then holds a change its patches
+   * don't.
    */
-  alterLatestCopy: (patches: Array<Patch>) => void
+  alterStoredCopy: (patches: Array<Patch>) => void
   getTransactions: () => Array<ServerTransaction>
   /**
    * Every transaction in the order it was recorded, with whether it changed
@@ -270,15 +272,14 @@ export function createFakeServer(initial: {
 
       return structuredClone(copiesAfter.get(transactionId))
     },
-    alterLatestCopy: (patches) => {
+    alterStoredCopy: (patches) => {
       const latest = transactions.at(-1)
 
-      if (!latest) {
-        throw new Error('The server has recorded no transaction')
-      }
-
       value = applyWithContentLakeSemantics(value, patches)
-      copiesAfter.set(latest.transactionId, structuredClone(value))
+
+      if (latest) {
+        copiesAfter.set(latest.transactionId, structuredClone(value))
+      }
     },
     getTransactions: () => transactions,
     getLog: () => log,
