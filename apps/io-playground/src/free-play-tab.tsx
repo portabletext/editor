@@ -63,8 +63,8 @@ const styles = ['normal', 'h1', 'h2', 'h3']
 
 export function useFreePlay() {
   const [setup, setSetup] = useState<Setup>({
-    mode: 'the document is',
-    textspec: 'B: foo|',
+    mode: 'editors in their first commit',
+    textspec: 'B: foo',
     serverCopy: 'textspec',
     hosts: 'plain',
   })
@@ -537,6 +537,11 @@ function EditorControls({
           >
             end first commit
           </ActionButton>
+          {actions.load.enabled ? null : (
+            <span className="text-xs text-gray-400">
+              load: {actions.load.why}
+            </span>
+          )}
         </div>
         <div
           aria-label={`${name}'s feed`}

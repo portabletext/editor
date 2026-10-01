@@ -202,12 +202,13 @@ function narrateEditor({
     }
   } else if (
     after.status === 'loading' &&
-    (before.base.rev !== after.base.rev ||
-      before.base.textspec !== after.base.textspec)
+    newMessages.some(isLoadOfTheEditor)
   ) {
     screenExplained = true
     sentences.push(
-      `${name} took the server's copy at ${describeRev(after.base.rev)} as its first content, and becomes ready with it when its first commit ends.`,
+      before.messages.some(isLoadOfTheEditor)
+        ? `${name} was loaded again before ready: the second load replaces the first, so it holds the server's copy at ${describeRev(after.base.rev)} (\`${after.screen}\`) and becomes ready with it when its first commit ends.`
+        : `${name} took the server's copy at ${describeRev(after.base.rev)} as its first content, and becomes ready with it when its first commit ends.`,
     )
   }
 
@@ -626,6 +627,10 @@ function describeEditorStart(name: EditorName, world: WorldSnapshot): string {
   return editor.status === 'ready'
     ? `${name} is ready and shows \`${editor.screen}\`.`
     : `${name} is ${editor.status} and waits for its first load.`
+}
+
+function isLoadOfTheEditor(message: EditorSnapshot['messages'][number]) {
+  return message.route === 'io to editor' && message.type === 'load'
 }
 
 function batchNumberOf(editor: EditorSnapshot, batchId: string): number {

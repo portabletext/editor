@@ -115,6 +115,11 @@ export const concepts = [
       "An event the editor emits when it gives up on the user's unsent changes: their target is gone, the editor closed while sending was blocked, or a resync dropped the rejected batch.",
   },
   {
+    name: 'first commit',
+    definition:
+      'The editor mounting, before it is ready. It takes its first content as a `load` now, and a second `load` replaces the first. Ending the first commit makes it ready, with the content loaded or empty. After ready a `load` throws, and a `resync` takes over.',
+  },
+  {
     name: 'message path',
     definition:
       "Every message between an editor's host and io, in the order it passed, and what io sent the editor: `mutation` goes out to the host, `mutation sent`, `mutation rejected`, `transaction`, `feed lost`, `load` and `resync` come in from it, and `load`, `resync` and `apply` reach the editor's tree.",

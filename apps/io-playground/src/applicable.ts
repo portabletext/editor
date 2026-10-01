@@ -126,7 +126,7 @@ export function applicableActions(
     'load': firstCommitApplicability(
       editorName,
       editor,
-      'load is only accepted in the first commit: after ready it throws',
+      'after ready a load throws: resync takes over',
     ),
     'end first commit': firstCommitApplicability(
       editorName,

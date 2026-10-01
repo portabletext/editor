@@ -68,6 +68,13 @@ export function EditorPanel({
             >
               {editor.status}
             </Badge>
+            {editor.status === 'loading' ? (
+              <Label concept="first commit">
+                <span className="rounded border border-dashed border-amber-500 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                  first commit
+                </span>
+              </Label>
+            ) : null}
             <Label concept="sync">
               <span aria-label={`sync: ${editor.sync}`}>
                 <Badge tone={syncTones[editor.sync]}>{editor.sync}</Badge>

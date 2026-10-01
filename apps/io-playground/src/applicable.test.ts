@@ -31,7 +31,7 @@ describe(applicableActions.name, () => {
       'resync discarding': {enabled: false, why: 'nothing unsent to discard'},
       'load': {
         enabled: false,
-        why: 'load is only accepted in the first commit: after ready it throws',
+        why: 'after ready a load throws: resync takes over',
       },
       'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
@@ -78,7 +78,7 @@ describe(applicableActions.name, () => {
       },
       'load': {
         enabled: false,
-        why: 'load is only accepted in the first commit: after ready it throws',
+        why: 'after ready a load throws: resync takes over',
       },
       'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
@@ -118,7 +118,7 @@ describe(applicableActions.name, () => {
       },
       'load': {
         enabled: false,
-        why: 'load is only accepted in the first commit: after ready it throws',
+        why: 'after ready a load throws: resync takes over',
       },
       'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
@@ -195,7 +195,7 @@ describe(applicableActions.name, () => {
       'resync discarding': {enabled: false, why: 'nothing unsent to discard'},
       'load': {
         enabled: false,
-        why: 'load is only accepted in the first commit: after ready it throws',
+        why: 'after ready a load throws: resync takes over',
       },
       'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
