@@ -45,14 +45,18 @@ const setupModes: Array<Setup['mode']> = [
 ]
 
 const hostShapes: Record<HostShape, {label: string; step: string | null}> = {
-  plain: {label: 'plain hosts', step: null},
-  folding: {
+  'plain': {label: 'plain hosts', step: null},
+  'folding': {
     label: 'folding hosts',
     step: 'hosts that fold batches into shared requests',
   },
+  'self-confirming': {
+    label: 'self-confirming hosts',
+    step: 'hosts that confirm each batch themselves',
+  },
 }
 
-const hostShapeNames: Array<HostShape> = ['plain', 'folding']
+const hostShapeNames: Array<HostShape> = ['plain', 'folding', 'self-confirming']
 
 const serverCopies: Array<Setup['serverCopy']> = [
   'textspec',

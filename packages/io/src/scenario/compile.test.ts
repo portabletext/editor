@@ -58,6 +58,11 @@ describe(compileScenarios.name, () => {
         skipped: false,
         knownRed: undefined,
       },
+      {
+        name: "Editor B deletes the block Editor A is typing into, the deletion lands first, and A's unsent typing is reported as dropped",
+        skipped: false,
+        knownRed: undefined,
+      },
     ])
   })
 

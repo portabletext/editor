@@ -6,10 +6,10 @@ import {
   emptiesField,
   formatTextspec,
 } from '../document'
-import type {IoEditorStatus, IoEditorSync} from '../editor'
+import type {IoEditorStatus} from '../editor'
 import type {ChangeEvent, WorkDropped} from '../types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
-import type {BatchReference} from './parameter-types'
+import type {BatchReference, ExpectedSync} from './parameter-types'
 import {
   heldTransactionTimeout,
   type EditorName,
@@ -43,6 +43,9 @@ export const stepDefinitions = [
   }),
   Given('hosts that fold batches into shared requests', (context: Context) => {
     context.world.setHostShape('folding')
+  }),
+  Given('hosts that confirm each batch themselves', (context: Context) => {
+    context.world.setHostShape('self-confirming')
   }),
 
   ...userSteps(),
@@ -156,6 +159,9 @@ export const stepDefinitions = [
   ),
   When('the wait for the missing transaction runs out', (context: Context) => {
     context.world.advanceClock(heldTransactionTimeout)
+  }),
+  When('{int} seconds pass', (context: Context, seconds: number) => {
+    context.world.advanceClock(seconds * 1000)
   }),
 
   When(
@@ -486,7 +492,7 @@ export const stepDefinitions = [
   ),
   Then(
     "{editor}'s sync is {sync}",
-    (context: Context, name: EditorName, sync: IoEditorSync) => {
+    (context: Context, name: EditorName, sync: ExpectedSync) => {
       checkEqual(
         `${name}'s sync`,
         context.world.getEditor(name).editor.getSync(),

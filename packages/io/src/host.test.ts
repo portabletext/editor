@@ -273,6 +273,34 @@ describe(createPassThroughHost.name, () => {
     ])
   })
 
+  test('a self-confirming host forwards the transaction its save answers with, and a plain host waits for the feed', () => {
+    const results = [true, false].map((selfConfirming) => {
+      const {editor, host, heard} = createHostedEditor('B: foo|', {
+        selfConfirming,
+      })
+
+      editor.type('x')
+      host.reportSaveTaken('A-1')
+      host.reportSaved({
+        transactionId: 'A-t1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: heard.mutations[0].patches,
+      })
+
+      return {
+        sync: editor.getSync(),
+        rev: editor.getBase().rev,
+        inFlight: editor.inspect().inFlight?.id,
+      }
+    })
+
+    expect(results).toEqual([
+      {sync: 'synced', rev: 'r2', inFlight: undefined},
+      {sync: 'saving', rev: 'r1', inFlight: 'A-1'},
+    ])
+  })
+
   test('the final batch is saved once the save request of the batch in flight is taken', () => {
     const {editor, host, saved} = createHostedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
@@ -329,8 +357,13 @@ function createHostedEditor(
   textspec: string,
   {
     foldBatches = false,
+    selfConfirming = false,
     outcomeMethod,
-  }: {foldBatches?: boolean; outcomeMethod?: 'resubmit' | 'history'} = {},
+  }: {
+    foldBatches?: boolean
+    selfConfirming?: boolean
+    outcomeMethod?: 'resubmit' | 'history'
+  } = {},
 ) {
   const {clock} = createNetwork()
   const editor = createIoEditor({
@@ -376,6 +409,7 @@ function createHostedEditor(
     fetchCopy: () => serverCopy.current,
     subscription: () => feed,
     foldBatches,
+    selfConfirming,
     outcomeMethod,
   })
 

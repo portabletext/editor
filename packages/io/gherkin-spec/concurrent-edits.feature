@@ -101,3 +101,30 @@ Feature: Concurrent edits
     When Editor B receives Editor A's batch 2
     And Editor B's batch 1 comes back
     Then Editor B shows "B: y|;;B: x"
+
+  Scenario: Editor B deletes the block Editor A is typing into, the deletion lands first, and A's unsent typing is reported as dropped
+    Given the document is "B: foo|;;B: bar"
+    When "x" is typed
+    Then Editor A shows "B: foox|;;B: bar"
+    And Editor A has sent batch 1
+    When the caret is put after "bar"
+    And "y" is typed
+    Then Editor A shows "B: foox;;B: bary|"
+    And Editor A has sent nothing new
+    When the block "bar" is deleted in Editor B
+    Then Editor B shows "B: foo|"
+    And Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And the server receives Editor A's batch 1
+    Then the server has "B: foox"
+    When Editor A receives Editor B's batch 1
+    Then Editor A has been told work was dropped, with reason "no target"
+    And Editor A shows "B: foox"
+    When Editor A's batch 1 comes back
+    Then Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    Then the server has "B: foox"
+    When Editor A's batch 2 comes back
+    Then Editor A shows "B: foox"
+    And Editor A is in step
+    And Editor A's sync is "synced"

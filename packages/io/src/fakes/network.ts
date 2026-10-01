@@ -37,7 +37,15 @@ export type VirtualClock = {
 
 export type Network<TBatch extends SavedBatch> = {
   clock: VirtualClock
-  connect: (editorId: string, receiver: NetworkReceiver) => void
+  /**
+   * `listening: false` connects a host with no feed listener: it gets save
+   * replies, and its feed stays empty.
+   */
+  connect: (
+    editorId: string,
+    receiver: NetworkReceiver,
+    options?: {listening: boolean},
+  ) => void
   send: (editorId: string, batch: TBatch) => void
   getSaveRequests: () => Array<SaveRequest<TBatch>>
   /** Removes the request and tells the sending editor, if it is connected. */
@@ -53,7 +61,7 @@ export type Network<TBatch extends SavedBatch> = {
   getLostReplies: () => Array<Reply>
   /** Removes the lost reply, as when the host retries the save. */
   takeLostReply: (batchId: string) => Reply
-  /** Appends the transaction to the feed of every connected editor. */
+  /** Appends the transaction to the feed of every listening editor. */
   publish: (transaction: ServerTransaction) => void
   getFeed: (editorId: string) => Array<ServerTransaction>
   deliver: (editorId: string, transactionId: string) => void
@@ -68,6 +76,7 @@ export function createNetwork<
 >(): Network<TBatch> {
   const receivers = new Map<string, NetworkReceiver>()
   const feeds = new Map<string, Array<ServerTransaction>>()
+  const deafEditorIds = new Set<string>()
   let saveRequests: Array<SaveRequest<TBatch>> = []
   let replies: Array<Reply> = []
   let lostReplies: Array<Reply> = []
@@ -84,9 +93,13 @@ export function createNetwork<
 
   return {
     clock: createVirtualClock(),
-    connect: (editorId, receiver) => {
+    connect: (editorId, receiver, {listening} = {listening: true}) => {
       receivers.set(editorId, receiver)
       feeds.set(editorId, [])
+
+      if (!listening) {
+        deafEditorIds.add(editorId)
+      }
     },
     send: (editorId, batch) => {
       saveRequests = [...saveRequests, {editorId, batch}]
@@ -147,7 +160,9 @@ export function createNetwork<
     },
     publish: (transaction) => {
       for (const [editorId, feed] of feeds) {
-        feeds.set(editorId, [...feed, transaction])
+        if (!deafEditorIds.has(editorId)) {
+          feeds.set(editorId, [...feed, transaction])
+        }
       }
     },
     getFeed: (editorId) => {

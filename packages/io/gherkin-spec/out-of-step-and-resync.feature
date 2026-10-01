@@ -208,3 +208,30 @@ Feature: Out of step and resync
     Then Editor A shows "B: |"
     And Editor A is in step
     And Editor A's sync is "synced"
+
+  Scenario: The quiet document: the feed dies before the echo, and the host finds the batch had landed by re-submitting it
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    Then the server has "B: foox"
+    When Editor A's feed is lost
+    And Editor A is resynced with the outcome of batch 1
+    Then the retry of Editor A's batch 1 was refused as a duplicate
+    And Editor A is in step
+    And Editor A's sync is "synced"
+    And Editor A shows "B: foox|"
+    And the server has "B: foox"
+    And the server has saved Editor A's batch 1 once
+
+  # known red: no stalled state
+  @skip
+  Scenario: The quiet document, and the host never says the feed is lost: the user is told saving has stalled
+    Given the document is "B: foo|"
+    When "x" is typed
+    Then Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    Then the server has "B: foox"
+    When 60 seconds pass
+    Then Editor A has been warned
+    And Editor A's sync is "stalled"

@@ -12,6 +12,11 @@ export type PassThroughHost = {
   forward: (transaction: Transaction) => void
   /** The server has taken the save request for a batch. */
   reportSaveTaken: (batchId: string) => void
+  /**
+   * The server saved a batch as this transaction. Only a self-confirming host
+   * passes it on: any other host waits for it on the feed.
+   */
+  reportSaved: (transaction: Transaction) => void
   reportRejected: (batchId: string) => void
   /**
    * Re-sends a batch's save request with the transaction ID it was first sent
@@ -46,6 +51,10 @@ export type PassThroughHost = {
  * host decides the transaction before the request leaves and names it then.
  * The `final` batch is always saved under its proposed ID, with no
  * `mutation sent`.
+ *
+ * With `selfConfirming`, the host is shaped like a host with no listener and
+ * one writer: it forwards the transaction each save answers with, which
+ * confirms the batch, and sees no other transactions.
  *
  * The host keeps every batch's save request, so it can send it again: to
  * retry after a lost reply, and to find out what became of the batch in
@@ -82,6 +91,7 @@ export function createPassThroughHost({
   fetchCopy,
   subscription,
   foldBatches = false,
+  selfConfirming = false,
   outcomeMethod = 'resubmit',
 }: {
   editor: IoEditor
@@ -96,6 +106,7 @@ export function createPassThroughHost({
   fetchCopy: () => Load
   subscription: () => Array<Pick<Transaction, 'transactionId' | 'resultRev'>>
   foldBatches?: boolean
+  selfConfirming?: boolean
   outcomeMethod?: 'resubmit' | 'history'
 }): PassThroughHost {
   const transactionIds = new Map<string, string>()
@@ -181,6 +192,34 @@ export function createPassThroughHost({
     )
   }
 
+  function forward(transaction: Transaction) {
+    if (transaction.resultRev !== undefined) {
+      previousRevs.set(transaction.resultRev, transaction.previousRev)
+    }
+
+    if (isCovered(transaction)) {
+      if (transaction.previousRev !== undefined) {
+        coveredRevs.add(transaction.previousRev)
+      }
+
+      return
+    }
+
+    if (
+      inFlightBatchId !== undefined &&
+      transactionIds.get(inFlightBatchId) === transaction.transactionId
+    ) {
+      inFlightBatchId = undefined
+    }
+
+    editor.transaction({
+      transactionId: transaction.transactionId,
+      previousRev: transaction.previousRev,
+      resultRev: transaction.resultRev,
+      patches: transaction.patches,
+    })
+  }
+
   function resubmitBatch(batchId: string): 'saved' | 'duplicate' | 'refused' {
     const batch = batches.get(batchId)
 
@@ -228,32 +267,11 @@ export function createPassThroughHost({
       transactionIds.set(batchId, transactionId)
       editor.mutationSent({id: batchId, transactionId})
     },
-    forward: (transaction) => {
-      if (transaction.resultRev !== undefined) {
-        previousRevs.set(transaction.resultRev, transaction.previousRev)
+    forward,
+    reportSaved: (transaction) => {
+      if (selfConfirming) {
+        forward(transaction)
       }
-
-      if (isCovered(transaction)) {
-        if (transaction.previousRev !== undefined) {
-          coveredRevs.add(transaction.previousRev)
-        }
-
-        return
-      }
-
-      if (
-        inFlightBatchId !== undefined &&
-        transactionIds.get(inFlightBatchId) === transaction.transactionId
-      ) {
-        inFlightBatchId = undefined
-      }
-
-      editor.transaction({
-        transactionId: transaction.transactionId,
-        previousRev: transaction.previousRev,
-        resultRev: transaction.resultRev,
-        patches: transaction.patches,
-      })
     },
     reportSaveTaken: (batchId) => {
       if (unnamedBatchIds.delete(batchId)) {

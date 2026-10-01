@@ -5,6 +5,12 @@ import type {EditorName, ServerCopyName} from './world'
 
 export type BatchReference = {name: EditorName; batchNumber: number}
 
+/**
+ * A sync state a scenario checks for. The editor has no `'stalled'` state, so
+ * a scenario that expects it is known red.
+ */
+export type ExpectedSync = IoEditorSync | 'stalled'
+
 export const parameterTypes = [
   createParameterType<EditorName>({
     name: 'editor',
@@ -38,9 +44,9 @@ export const parameterTypes = [
     name: 'status',
     matcher: /"(loading|ready)"/,
   }),
-  createParameterType<IoEditorSync>({
+  createParameterType<ExpectedSync>({
     name: 'sync',
-    matcher: /"(synced|saving|blocked|out of step)"/,
+    matcher: /"(synced|saving|blocked|out of step|stalled)"/,
   }),
   createParameterType<WorkDropped['reason']>({
     name: 'dropReason',

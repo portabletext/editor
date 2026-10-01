@@ -181,6 +181,29 @@ describe(createNetwork.name, () => {
     expect(network.getFeed('B')).toEqual([])
   })
 
+  test('an editor connected without a listener gets no transactions', () => {
+    const network = createNetwork()
+    const receiver = {
+      receiveTransaction: () => {},
+      receiveReply: () => {},
+      receiveSaveTaken: () => {},
+    }
+    const transaction: ServerTransaction = {
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [],
+      batchIds: [],
+    }
+
+    network.connect('A', receiver)
+    network.connect('B', receiver, {listening: false})
+    network.publish(transaction)
+
+    expect(network.getFeed('A')).toEqual([transaction])
+    expect(network.getFeed('B')).toEqual([])
+  })
+
   test('the clock runs what falls due, in due order, only when advanced', () => {
     const network = createNetwork()
     const fired: Array<{name: string; at: number}> = []

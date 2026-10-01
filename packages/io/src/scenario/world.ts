@@ -31,9 +31,11 @@ export type ServerCopyName = 'no document' | 'no field' | 'an empty list'
 /**
  * How the hosts save: `'plain'` saves each batch as its own request under
  * the transaction ID it proposes, `'folding'` folds batches into shared
- * requests and names each request's transaction with `mutation sent`.
+ * requests and names each request's transaction with `mutation sent`, and
+ * `'self-confirming'` has no feed listener and forwards the transaction each
+ * save answers with.
  */
-export type HostShape = 'plain' | 'folding'
+export type HostShape = 'plain' | 'folding' | 'self-confirming'
 
 /**
  * What the editor's listeners received, recorded from the moment it was
@@ -277,7 +279,19 @@ export function createWorld() {
       ? server.receiveAsOne(first, second, transactionId)
       : server.receive(first, transactionId)
 
-    network.publish(transaction)
+    publishSaved(batches, transaction)
+  }
+
+  /** The feed carries the transaction, and so does each sender's save reply. */
+  function publishSaved(
+    batches: Array<{name: EditorName}>,
+    transaction: ServerTransaction,
+  ) {
+    getSetup().network.publish(transaction)
+
+    for (const {name} of batches) {
+      getEditor(name).host.reportSaved(transaction)
+    }
   }
 
   function getBatch(name: EditorName, batchNumber: number): MutationBatch {
@@ -570,7 +584,8 @@ export function createWorld() {
       const {server, network} = getSetup()
       const batch = getBatch(name, batchNumber)
       network.takeSaveRequest(batch.id)
-      network.publish(
+      publishSaved(
+        [{name}],
         server.receive(
           {id: batch.id, patches: [unset([])]},
           getEditor(name).host.getTransactionId(batch.id),
@@ -776,13 +791,18 @@ function createWorldEditor({
     fetchCopy: () => server.copy(),
     subscription: () => network.getFeed(name),
     foldBatches: hostShape === 'folding',
+    selfConfirming: hostShape === 'self-confirming',
   })
 
-  network.connect(name, {
-    receiveTransaction: host.forward,
-    receiveReply: (reply) => host.reportRejected(reply.batchId),
-    receiveSaveTaken: host.reportSaveTaken,
-  })
+  network.connect(
+    name,
+    {
+      receiveTransaction: host.forward,
+      receiveReply: (reply) => host.reportRejected(reply.batchId),
+      receiveSaveTaken: host.reportSaveTaken,
+    },
+    {listening: hostShape !== 'self-confirming'},
+  )
   return {
     editor,
     host,
