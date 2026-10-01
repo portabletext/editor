@@ -205,3 +205,44 @@ export const notationRules = [
     meaning: 'How the caret is written inside a Gherkin Examples table.',
   },
 ]
+
+export const floorRules = [
+  {
+    phrase: 'has no key',
+    label: 'remove its key',
+    shape: 'A block without `_key`.',
+    onCopy:
+      'io gives it a repair key, hashed from the revision and the index path, so two editors repairing the same copy agree, and the repair goes out in the next batch.',
+  },
+  {
+    phrase: 'has no type',
+    label: 'remove its type',
+    shape: 'A block without `_type`.',
+    onCopy:
+      "io makes it `'block'` (a text block's child becomes `'span'`), and the repair goes out in the next batch.",
+  },
+  {
+    phrase: 'has children "oops"',
+    label: 'set its children to "oops"',
+    shape: "A text block whose `children` isn't a non-empty array of objects.",
+    onCopy:
+      'io gives it one empty span with a repair key, and the repair goes out in the next batch.',
+  },
+  {
+    phrase: 'has a span whose text is 42',
+    label: "set a span's text to 42",
+    shape: "A span whose `text` isn't a string.",
+    onCopy:
+      "io sets the text to `''`, and the repair goes out in the next batch.",
+  },
+  {
+    phrase: 'is the string "oops"',
+    label: 'replace it with "oops"',
+    shape: "A block that isn't an object.",
+    onCopy:
+      'io leaves it out of what the editor gets and never writes to it, so the server keeps it. A repair of a later block addresses it by its index in the stored array.',
+  },
+] as const
+
+export const floorOnTransaction =
+  'A transaction that leaves any of these in the blocks it changed makes io emit `error` with reason `invalid content`. The editor is out of step until a resync, which repairs the copy as above.'

@@ -157,6 +157,8 @@ export function App() {
             onStep={onStep}
             selectedRequests={selectedRequests}
             onReceiveSelected={receiveSelected}
+            editorA={snapshot.editors?.['Editor A']}
+            editorADeadFeed={deadFeeds.includes('Editor A')}
           />
           <LinkPanel
             name="Editor B"

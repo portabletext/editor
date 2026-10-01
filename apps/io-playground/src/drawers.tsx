@@ -4,7 +4,13 @@ import {
   type WorldSnapshot,
 } from '@portabletext/io/testing'
 import {createContext, useContext, type ReactNode} from 'react'
-import {concepts, hostPresets, notationRules} from './concepts'
+import {
+  concepts,
+  floorOnTransaction,
+  floorRules,
+  hostPresets,
+  notationRules,
+} from './concepts'
 import {describeSource} from './narration'
 import {
   Badge,
@@ -109,6 +115,29 @@ function ConceptsList() {
             <WithCode text={preset.description} />
           </p>
         ))}
+      </section>
+      <section aria-label="The floor" className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold">The floor</h3>
+        <p className="text-sm text-gray-700">
+          The shapes the editor can't hold at all. On a <code>load</code> or a{' '}
+          <code>resync</code>, io repairs the copy before anything else and
+          sends the repairs as its own work:
+        </p>
+        <dl className="flex flex-col gap-2 text-sm">
+          {floorRules.map((rule) => (
+            <div key={rule.phrase}>
+              <dt className="font-semibold">
+                <WithCode text={rule.shape} />
+              </dt>
+              <dd className="text-gray-700">
+                <WithCode text={rule.onCopy} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-sm text-gray-700">
+          <WithCode text={floorOnTransaction} />
+        </p>
       </section>
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold">State notation</h3>

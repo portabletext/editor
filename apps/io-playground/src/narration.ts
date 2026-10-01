@@ -578,6 +578,15 @@ function narrateServer({
     )
   }
 
+  if (
+    after.transactions.length === before.transactions.length &&
+    JSON.stringify(after.blocks) !== JSON.stringify(before.blocks)
+  ) {
+    sentences.push(
+      `The server's copy changed without a transaction, still at ${describeRev(after.rev)}, so no feed hears of it: only a load or a resync fetches it.`,
+    )
+  }
+
   for (const request of beforeNetwork.saveRequests) {
     const failure = afterNetwork.replies.find(
       (reply) =>
