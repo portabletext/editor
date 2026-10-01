@@ -3,7 +3,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {parseTextspec} from '../fakes/document'
 import {createFakeNetwork} from '../fakes/network'
-import {createEditorWithIo} from '../scenario/world'
+import {createEditorWithIo, createWorld} from '../scenario/world'
 import {createPassThroughHost} from './host'
 import type {Load, MutationBatch, MutationSent, Transaction} from './types'
 
@@ -119,12 +119,17 @@ describe(createPassThroughHost.name, () => {
       mutationsSent: [],
       warnings: [],
     })
-    expect(() => host.mapToTransaction('A-1', 'A-1+B-1')).toThrow(
+    expect(() =>
+      host.foldIntoRequest('A-1', {
+        transactionId: 'A-1+B-1',
+        batches: heard.mutations,
+      }),
+    ).toThrow(
       'A host that saves each batch under its proposed transaction ID never folds batches into one request',
     )
   })
 
-  test('a folding host names the request a batch went out in once, when the server takes it', () => {
+  test('a folding host names the request a batch went out in once, when the request is formed', () => {
     const results = [true, false].map((folded) => {
       const {editor, document, host, heard, mutationsSent} = createHostedEditor(
         'B: foo|',
@@ -135,7 +140,10 @@ describe(createPassThroughHost.name, () => {
       const transactionIdsBefore = editor.inspect().inFlight?.transactionIds
 
       if (folded) {
-        host.mapToTransaction('A-1', 'A-1+B-1')
+        host.foldIntoRequest('A-1', {
+          transactionId: 'A-1+B-1',
+          batches: heard.mutations,
+        })
       }
 
       host.reportSaveTaken('A-1')
@@ -190,17 +198,104 @@ describe(createPassThroughHost.name, () => {
     expect(results).toEqual([
       {
         answer: 'duplicate',
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
         transactionIds: ['A-t1'],
       },
       {
         answer: 'saved',
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
         transactionIds: ['A-t1'],
       },
     ])
+  })
+
+  test('a folding host that re-submits a batch before its request arrives saves the batch once, under one transaction ID', () => {
+    const world = createWorld()
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const batch = {name: 'Editor A', batchNumber: 1} as const
+
+    world.setHostShape('folding')
+    world.documentIs('B: foo|')
+    world.type('Editor A', 'x')
+    world.feedLost('Editor A')
+    world.resync('Editor A', {discardUnsent: false, outcomeOf: 1})
+    world.receive('Editor A', 1)
+
+    expect(world.getEditor('Editor A').mutationsSent).toEqual([
+      {id: 'A-1', transactionId: 'A-1'},
+    ])
+    expect(world.snapshot().server).toEqual({
+      value: 'B: foox',
+      blocks: [
+        {
+          _type: 'block',
+          _key: 'd-k0',
+          children: [{_key: 'd-k1', _type: 'span', text: 'foox', marks: []}],
+          style: 'normal',
+        },
+      ],
+      rev: 'r2',
+      transactions: [
+        {
+          id: 'A-1',
+          previousRev: 'r1',
+          resultRev: 'r2',
+          batchIds: ['A-1'],
+          patchCount: 1,
+          patches: [diffMatchPatch('foo', 'foox', textPath)],
+          noop: false,
+          source: {type: 'batches', batches: [batch]},
+        },
+      ],
+      duplicates: [{transactionId: 'A-1', batches: [batch]}],
+    })
+  })
+
+  test('a shared request retried before it lands saves both batches once', () => {
+    const world = createWorld()
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const batchA = {name: 'Editor A', batchNumber: 1} as const
+    const batchB = {name: 'Editor B', batchNumber: 1} as const
+
+    world.setHostShape('folding')
+    world.documentIs('B: foo|')
+    world.type('Editor A', 'x')
+    world.putCaretAfter('Editor B', 'f')
+    world.type('Editor B', 'y')
+    world.foldAsOne(batchA, batchB)
+    world.getEditor('Editor A').host.retry('A-1')
+    world.receiveAsOne(batchA, batchB)
+
+    expect(world.snapshot().server).toEqual({
+      value: 'B: fyoox',
+      blocks: [
+        {
+          _type: 'block',
+          _key: 'd-k0',
+          children: [{_key: 'd-k1', _type: 'span', text: 'fyoox', marks: []}],
+          style: 'normal',
+        },
+      ],
+      rev: 'r2',
+      transactions: [
+        {
+          id: 'A-1+B-1',
+          previousRev: 'r1',
+          resultRev: 'r2',
+          batchIds: ['A-1', 'B-1'],
+          patchCount: 2,
+          patches: [
+            diffMatchPatch('foo', 'foox', textPath),
+            diffMatchPatch('foo', 'fyoo', textPath),
+          ],
+          noop: false,
+          source: {type: 'batches', batches: [batchA, batchB]},
+        },
+      ],
+      duplicates: [{transactionId: 'A-1+B-1', batches: [batchA, batchB]}],
+    })
   })
 
   test('a resync naming the batch in flight finds its outcome by re-submitting it, or from the transaction history', () => {
@@ -248,17 +343,17 @@ describe(createPassThroughHost.name, () => {
     expect(results).toEqual([
       {
         outcomes: [{'A-1': 'applied'}],
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
       },
       {
         outcomes: [{'A-1': 'applied'}],
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
       },
       {
         outcomes: [{'A-1': 'not applied'}],
-        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
+        resubmitted: [{batchIds: ['A-1'], transactionId: 'A-t1'}],
         warnings: [],
       },
       {
@@ -383,7 +478,8 @@ function createHostedEditor(
   const serverCopy: {current: Load} = {current: {value, rev: 'r1'}}
   const feed: Array<Transaction> = []
   const saved: Array<MutationBatch> = []
-  const resubmitted: Array<{batchId: string; transactionId: string}> = []
+  const resubmitted: Array<{batchIds: Array<string>; transactionId: string}> =
+    []
   const transactionHistory = new Set<string>()
   const refusedBatchIds = new Set<string>()
   const mutationsSent: Array<MutationSent> = []
@@ -395,10 +491,13 @@ function createHostedEditor(
   const host = createPassThroughHost({
     io: editor,
     save: (batch) => saved.push(batch),
-    resubmit: (batch, transactionId) => {
-      resubmitted.push({batchId: batch.id, transactionId})
+    resubmit: ({transactionId, batches}) => {
+      resubmitted.push({
+        batchIds: batches.map((batch) => batch.id),
+        transactionId,
+      })
 
-      if (refusedBatchIds.has(batch.id)) {
+      if (batches.some((batch) => refusedBatchIds.has(batch.id))) {
         return 'refused'
       }
 

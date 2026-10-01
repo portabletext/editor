@@ -270,24 +270,47 @@ export function createWorld() {
   }
 
   /**
-   * The server takes the save requests first, so a host that names the
-   * request's transaction at that moment has named it before the save.
+   * The server takes the save requests first, so a host that forms the
+   * request at that moment has formed it before the save. The server gets
+   * the request as the first batch's host formed it, and answers a 409 when
+   * a re-submit saved it already.
    */
   function publishReceived(
     batches: Array<{name: EditorName; batch: MutationBatch}>,
   ) {
     const {server, network} = getSetup()
-    const [first, second] = batches.map(
-      ({batch}) => network.takeSaveRequest(batch.id).batch,
-    )
-    const [transactionId] = batches.map(({name, batch}) =>
-      getEditor(name).host.getTransactionId(batch.id),
-    )
-    const transaction = second
-      ? server.receiveAsOne(first, second, transactionId)
-      : server.receive(first, transactionId)
 
-    publishSaved(batches, transaction)
+    for (const {batch} of batches) {
+      network.takeSaveRequest(batch.id)
+    }
+
+    const [first] = batches
+    const request = getEditor(first.name).host.getRequest(first.batch.id)
+    const result = server.submit(request.batches, request.transactionId)
+
+    if (result.type === 'saved') {
+      publishSaved(batches, result.transaction)
+    }
+  }
+
+  function foldAsOne(
+    first: {name: EditorName; batchNumber: number},
+    second: {name: EditorName; batchNumber: number},
+  ): Array<{name: EditorName; batch: MutationBatch}> {
+    const batches = [first, second].map(({name, batchNumber}) => ({
+      name,
+      batch: getBatch(name, batchNumber),
+    }))
+    const request = {
+      transactionId: batches.map(({batch}) => batch.id).join('+'),
+      batches: batches.map(({batch}) => batch),
+    }
+
+    for (const {name, batch} of batches) {
+      getEditor(name).host.foldIntoRequest(batch.id, request)
+    }
+
+    return batches
   }
 
   /** The feed carries the transaction, and so does each sender's save reply. */
@@ -572,21 +595,13 @@ export function createWorld() {
 
       publishReceived([{name, batch}])
     },
+    /** The hosts fold both batches into one request, which stays unsent. */
+    foldAsOne,
     receiveAsOne: (
       first: {name: EditorName; batchNumber: number},
       second: {name: EditorName; batchNumber: number},
     ) => {
-      const batches = [first, second].map(({name, batchNumber}) => ({
-        name,
-        batch: getBatch(name, batchNumber),
-      }))
-      const transactionId = batches.map(({batch}) => batch.id).join('+')
-
-      for (const {name, batch} of batches) {
-        getEditor(name).host.mapToTransaction(batch.id, transactionId)
-      }
-
-      publishReceived(batches)
+      publishReceived(foldAsOne(first, second))
     },
     rewriteAsWholeFieldUnset: (name: EditorName, batchNumber: number) => {
       const {server, network} = getSetup()
@@ -785,8 +800,8 @@ function createWorldEditor({
       },
     },
     save: (batch) => network.send(name, batch),
-    resubmit: (batch, transactionId) => {
-      const result = server.submit(batch, transactionId)
+    resubmit: (request) => {
+      const result = server.submit(request.batches, request.transactionId)
 
       if (result.type === 'saved') {
         network.publish(result.transaction)

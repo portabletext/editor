@@ -40,21 +40,19 @@ export type Server = {
    */
   receive: (batch: SavedBatch, transactionId: string) => ServerTransaction
   /**
-   * Saves the batch as `receive` does, unless the transaction ID is taken:
-   * then it changes nothing and answers 409, as Content Lake does for a
-   * retried request. A batch the server refused is refused again.
+   * Saves a request's batches as one transaction, as `receive` does for one,
+   * unless the transaction ID is taken: then it changes nothing and answers
+   * 409, as Content Lake does for a retried request. A request carrying a
+   * batch the server refused is refused again.
    */
-  submit: (batch: SavedBatch, transactionId: string) => SubmitResult
+  submit: (
+    batches: ReadonlyArray<SavedBatch>,
+    transactionId: string,
+  ) => SubmitResult
   /** Whether the document's transaction history lists the ID. */
   hasTransaction: (transactionId: string) => boolean
   /** The save requests refused with a 409, in the order they arrived. */
   getDuplicates: () => Array<{transactionId: string; batchIds: Array<string>}>
-  /** Applies both batches and records them as one transaction. */
-  receiveAsOne: (
-    batchA: SavedBatch,
-    batchB: SavedBatch,
-    transactionId: string,
-  ) => ServerTransaction
   /** Refuses the batch for good. Nothing is recorded. */
   refuse: (batchId: string) => void
   isRefused: (batchId: string) => boolean
@@ -107,7 +105,10 @@ export function createFakeServer(initial: {
     )
   }
 
-  function receiveBatches(batches: Array<SavedBatch>, transactionId: string) {
+  function receiveBatches(
+    batches: ReadonlyArray<SavedBatch>,
+    transactionId: string,
+  ) {
     if (hasTransaction(transactionId)) {
       throw new Error(`Transaction "${transactionId}" already exists`)
     }
@@ -147,25 +148,26 @@ export function createFakeServer(initial: {
   return {
     documentId: initial.documentId,
     receive: (batch, transactionId) => receiveBatches([batch], transactionId),
-    submit: (batch, transactionId) => {
-      if (refusedBatchIds.has(batch.id)) {
+    submit: (batches, transactionId) => {
+      if (batches.some((batch) => refusedBatchIds.has(batch.id))) {
         return {type: 'refused'}
       }
 
       if (hasTransaction(transactionId)) {
-        duplicates.push({transactionId, batchIds: [batch.id]})
+        duplicates.push({
+          transactionId,
+          batchIds: batches.map((batch) => batch.id),
+        })
         return {type: 'duplicate'}
       }
 
       return {
         type: 'saved',
-        transaction: receiveBatches([batch], transactionId),
+        transaction: receiveBatches(batches, transactionId),
       }
     },
     hasTransaction,
     getDuplicates: () => duplicates,
-    receiveAsOne: (batchA, batchB, transactionId) =>
-      receiveBatches([batchA, batchB], transactionId),
     refuse: (batchId) => {
       refusedBatchIds.add(batchId)
     },

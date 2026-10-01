@@ -197,19 +197,22 @@ describe(createFakeServer.name, () => {
       'text',
     ])
 
-    const transaction = server.receiveAsOne(
-      {id: 'a1', patches: [fooPatch]},
-      {id: 'b1', patches: [barPatch]},
+    const result = server.submit(
+      [
+        {id: 'a1', patches: [fooPatch]},
+        {id: 'b1', patches: [barPatch]},
+      ],
       't1',
     )
-
-    expect(transaction).toEqual({
+    const transaction = {
       transactionId: 't1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [fooPatch, barPatch],
       batchIds: ['a1', 'b1'],
-    })
+    }
+
+    expect(result).toEqual({type: 'saved', transaction})
     expect(server.getTransactions()).toEqual([transaction])
     expect(server.copy()).toEqual({
       value: [
@@ -236,8 +239,8 @@ describe(createFakeServer.name, () => {
     const server = createFakeServer({documentId: 'document', document: {value}})
     const batch = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
 
-    const first = server.submit(batch, 't1')
-    const retry = server.submit(batch, 't1')
+    const first = server.submit([batch], 't1')
+    const retry = server.submit([batch], 't1')
 
     expect({first, retry}).toEqual({
       first: {
@@ -288,7 +291,7 @@ describe(createFakeServer.name, () => {
 
     expect(
       server.submit(
-        {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]},
+        [{id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}],
         't1',
       ),
     ).toEqual({type: 'refused'})
