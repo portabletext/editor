@@ -321,7 +321,7 @@ export const extendBlockObject = ((blockObject) => {
     }
   }
 
-  if (blockObject.name === 'code-block') {
+  if (blockObject.name === 'code') {
     return {
       ...blockObject,
       icon: CodeIcon,

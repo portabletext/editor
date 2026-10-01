@@ -561,7 +561,7 @@ function PlaygroundBlockObject(props: BlockObjectRenderProps) {
         focused={props.focused}
       />
     )
-  } else if (props.node._type === 'code-block') {
+  } else if (props.node._type === 'code') {
     const language = (props.node as {language?: string}).language
     content = (
       <MarkdownFallback
