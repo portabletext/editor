@@ -201,6 +201,7 @@ export function createIoEditor(options: {
       throw new Error('The editor is unmounted')
     }
 
+    document.mount()
     status = 'ready'
     emit({type: 'ready'})
     flush()
@@ -744,6 +745,7 @@ export function createIoEditor(options: {
     status = 'unmounted'
     releaseHeld()
     stopInFlightWarning()
+    document.close()
   }
 
   function flush() {
@@ -947,6 +949,7 @@ export function createIoEditor(options: {
     feedLost,
     updateReadOnly: (nextReadOnly) => {
       readOnly = nextReadOnly
+      document.updateReadOnly(nextReadOnly)
     },
     setStyle: (style) => act(() => document.setStyle(style)),
     type: (text) => act(() => document.type(text)),

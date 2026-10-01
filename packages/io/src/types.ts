@@ -80,3 +80,53 @@ export type WorkDropped = {
 export type ChangeEvent =
   | {origin: 'local'; operations: Array<Patch>; patches: Array<Patch>}
   | {origin: 'remote'; operations: Array<Patch>}
+
+/**
+ * The whole of what io uses from an editor: it listens to `change`, `ready`
+ * and `closing`, and sends `load`, `resync` and `apply`. A structural type,
+ * so any editor with these two functions satisfies it.
+ */
+export type EditorForIo = {
+  on: (listener: (event: EditorEventForIo) => void) => () => void
+  send: (message: EditorMessageForIo) => void
+}
+
+/**
+ * `change` fires once per user action and once per `resync` or `apply` that
+ * changed the content. `ready` fires at the end of the first commit, and
+ * `closing` just before the editor stops: the last moment to send.
+ */
+export type EditorEventForIo =
+  | {
+      type: 'change'
+      origin: 'local'
+      operations: Array<Patch>
+      patches: Array<Patch>
+    }
+  | {type: 'change'; origin: 'remote'; operations: Array<Patch>}
+  | {type: 'ready'}
+  | {type: 'closing'}
+
+/**
+ * `load` is the first content, accepted only during the first commit, and
+ * `resync` a fresh copy: both are whole values, matched to the tree by key.
+ * `apply` is one transaction's effect on the content: `patches` is what to
+ * do to the tree, and `underneath` is the transaction's patches, for
+ * history. For now `patches` is a whole-value `set` (path `[]`), after a
+ * keyed `set` of `_key` for each of the editor's unsaved blocks io gave a
+ * new key, so the caret stays with its block. Group B replaces the
+ * whole-value `set` with keyed instructions.
+ *
+ * `origin: 'local'` stands in for the editor's own undo while the undo
+ * ledger lives in io: the editor applies the patches as a user action,
+ * reports them as a local `change`, and refuses them while read-only.
+ */
+export type EditorMessageForIo =
+  | {type: 'load'; value: Array<PortableTextBlock> | undefined}
+  | {type: 'resync'; value: Array<PortableTextBlock> | undefined}
+  | {
+      type: 'apply'
+      patches: Array<Patch>
+      underneath: Array<Patch>
+      origin?: 'local'
+    }

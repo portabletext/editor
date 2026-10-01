@@ -1,4 +1,5 @@
 import {
+  applyAll,
   diffMatchPatch,
   insert,
   set,
@@ -22,6 +23,7 @@ import {
   type TextspecSelection,
 } from '@portabletext/test'
 import {parse} from '@textspec/notation'
+import type {EditorEventForIo, EditorForIo, EditorMessageForIo} from './types'
 
 const schema = compileSchema(
   defineSchema({styles: [{name: 'h1'}, {name: 'h2'}, {name: 'h3'}]}),
@@ -65,7 +67,24 @@ export type ActionResult = {
   undoStep: UndoStep | undefined
 }
 
-export type Document = {
+/** `'loading'` until the first commit ends with `mount`. */
+export type DocumentStatus = 'loading' | 'ready' | 'unmounted'
+
+/**
+ * The fake editor. It satisfies `EditorForIo`: every user action that
+ * changes the content emits a local `change` with the action's patches,
+ * `load`, `resync` and `apply` replace or patch the content, `mount` ends
+ * the first commit with `ready`, and `close` emits `closing` before it
+ * stops. Actions before `mount` throw, and actions after `close` or while
+ * read-only do nothing.
+ */
+export type Document = EditorForIo & {
+  getStatus: () => DocumentStatus
+  getReadOnly: () => boolean
+  /** Ends the first commit. */
+  mount: () => void
+  close: () => void
+  updateReadOnly: (readOnly: boolean) => void
   /** The content on screen, the placeholder included. */
   getValue: () => Array<PortableTextBlock>
   getCaret: () => Caret
@@ -111,6 +130,9 @@ export function createDocument(
   context: {keyGenerator: () => string},
   initial: {value: Array<PortableTextBlock> | undefined; caret?: Caret},
 ): Document {
+  const listeners = new Set<(event: EditorEventForIo) => void>()
+  let status: DocumentStatus = 'loading'
+  let readOnly = false
   let value: Array<PortableTextBlock> = []
   let placeholderKey: string | undefined
   let caret: Caret = {blockKey: '', offset: 0}
@@ -119,6 +141,134 @@ export function createDocument(
 
   if (initial.caret) {
     placeCaret(initial.caret)
+  }
+
+  function emit(event: EditorEventForIo) {
+    for (const listener of listeners) {
+      listener(event)
+    }
+  }
+
+  function mount() {
+    if (status === 'ready') {
+      throw new Error('The editor is already mounted')
+    }
+
+    if (status === 'unmounted') {
+      throw new Error('The editor is unmounted')
+    }
+
+    status = 'ready'
+    emit({type: 'ready'})
+  }
+
+  function close() {
+    if (status === 'unmounted') {
+      return
+    }
+
+    emit({type: 'closing'})
+    status = 'unmounted'
+  }
+
+  function canAct(): boolean {
+    if (status === 'unmounted') {
+      return false
+    }
+
+    if (status !== 'ready') {
+      throw new Error(`The editor is ${status}`)
+    }
+
+    return !readOnly
+  }
+
+  function act(run: () => ActionResult): ActionResult {
+    if (!canAct()) {
+      return {patches: [], undoStep: undefined}
+    }
+
+    const result = run()
+
+    if (result.patches.length > 0) {
+      emit({
+        type: 'change',
+        origin: 'local',
+        operations: result.patches,
+        patches: result.patches,
+      })
+    }
+
+    return result
+  }
+
+  function send(message: EditorMessageForIo) {
+    switch (message.type) {
+      case 'load':
+        if (status !== 'loading') {
+          throw new Error(
+            '`load` is only accepted in the first commit, before the editor is ready',
+          )
+        }
+
+        setValue(message.value)
+        return
+      case 'resync':
+        changeRemotely(() => setValue(message.value))
+        return
+      case 'apply':
+        if (message.origin !== 'local') {
+          changeRemotely(() => applyPatches(message.patches))
+          return
+        }
+
+        if (!canAct() || message.patches.length === 0) {
+          return
+        }
+
+        applyPatches(message.patches)
+        emit({
+          type: 'change',
+          origin: 'local',
+          operations: message.patches,
+          patches: message.patches,
+        })
+    }
+  }
+
+  function changeRemotely(run: () => void) {
+    if (status === 'unmounted') {
+      return
+    }
+
+    const before = value
+    run()
+
+    if (!isEqual(before, value)) {
+      emit({type: 'change', origin: 'remote', operations: [set(value, [])]})
+    }
+  }
+
+  /**
+   * Applies patches to the content, the placeholder left out, and keeps the
+   * caret with its block: through a new `_key`, to the previous block when
+   * its block is removed (or else the next), and past text changed before
+   * it. A whole-value `set` keeps the caret in the block with its key.
+   */
+  function applyPatches(patches: Array<Patch>) {
+    let content: Array<PortableTextBlock> | undefined =
+      placeholderKey === undefined ? value : undefined
+
+    for (const patch of patches) {
+      const nextContent: Array<PortableTextBlock> | undefined = applyAll(
+        content,
+        [patch],
+      )
+      caret = followCaret(caret, patch, content ?? [], nextContent ?? [])
+      content = nextContent
+    }
+
+    setValue(content)
   }
 
   function setValue(nextValue: Array<PortableTextBlock> | undefined) {
@@ -526,6 +676,20 @@ export function createDocument(
   }
 
   return {
+    on: (listener) => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    send,
+    getStatus: () => status,
+    getReadOnly: () => readOnly,
+    mount,
+    close,
+    updateReadOnly: (nextReadOnly) => {
+      readOnly = nextReadOnly
+    },
     getValue: () => value,
     getCaret: () => caret,
     setCaret: placeCaret,
@@ -538,12 +702,16 @@ export function createDocument(
         selection: getSelection(),
         keys: options?.keys ?? false,
       }),
-    setStyle,
-    type,
-    deleteBeforeCaret,
-    putCaretAfter,
-    insertBlock,
-    deleteBlock,
+    setStyle: (style) => act(() => setStyle(style)),
+    type: (text) => act(() => type(text)),
+    deleteBeforeCaret: (text) => act(() => deleteBeforeCaret(text)),
+    putCaretAfter: (text) => {
+      if (status !== 'unmounted') {
+        putCaretAfter(text)
+      }
+    },
+    insertBlock: (textspec) => act(() => insertBlock(textspec)),
+    deleteBlock: (text) => act(() => deleteBlock(text)),
     deleteText,
     setBlockStyle,
     deleteBlockByKey,
@@ -688,6 +856,131 @@ export function createsBlock(patches: Array<Patch>): boolean {
 export function emptiesField(patches: Array<Patch>): boolean {
   return patches.some(
     (patch) => patch.type === 'unset' && patch.path.length === 0,
+  )
+}
+
+function followCaret(
+  caret: Caret,
+  patch: Patch,
+  before: Array<PortableTextBlock>,
+  after: Array<PortableTextBlock>,
+): Caret {
+  const [head, field] = patch.path
+
+  if (
+    typeof head !== 'object' ||
+    Array.isArray(head) ||
+    head._key !== caret.blockKey
+  ) {
+    return caret
+  }
+
+  if (
+    patch.type === 'set' &&
+    patch.path.length === 2 &&
+    field === '_key' &&
+    typeof patch.value === 'string'
+  ) {
+    return {blockKey: patch.value, offset: caret.offset}
+  }
+
+  const afterBlock = after.find((block) => block._key === caret.blockKey)
+
+  if (patch.type === 'unset' && patch.path.length === 1) {
+    const index = before.findIndex((block) => block._key === caret.blockKey)
+    const survives = (block: PortableTextBlock) =>
+      after.find((candidate) => candidate._key === block._key)
+    const previous = before.slice(0, index).reverse().find(survives)
+    const next = before.slice(index + 1).find(survives)
+
+    if (previous) {
+      return {
+        blockKey: previous._key,
+        offset: getTextBlock(survives(previous)).text.length,
+      }
+    }
+
+    return next ? {blockKey: next._key, offset: 0} : caret
+  }
+
+  const beforeBlock = before.find((block) => block._key === caret.blockKey)
+
+  if (patch.type === 'diffMatchPatch' && beforeBlock && afterBlock) {
+    return {
+      blockKey: caret.blockKey,
+      offset: mapOffset(
+        caret.offset,
+        getTextBlock(beforeBlock).text,
+        getTextBlock(afterBlock).text,
+      ),
+    }
+  }
+
+  return caret
+}
+
+/**
+ * Where an offset in `before` lands in `after`, taking the change as the
+ * span between their common prefix and common suffix. An offset inside the
+ * changed span goes to its end.
+ */
+function mapOffset(offset: number, before: string, after: string): number {
+  let prefix = 0
+
+  while (
+    prefix < before.length &&
+    prefix < after.length &&
+    before[prefix] === after[prefix]
+  ) {
+    prefix++
+  }
+
+  let suffix = 0
+
+  while (
+    suffix < before.length - prefix &&
+    suffix < after.length - prefix &&
+    before[before.length - 1 - suffix] === after[after.length - 1 - suffix]
+  ) {
+    suffix++
+  }
+
+  if (offset <= prefix) {
+    return offset
+  }
+
+  if (offset >= before.length - suffix) {
+    return offset + after.length - before.length
+  }
+
+  return after.length - suffix
+}
+
+function isEqual(valueA: unknown, valueB: unknown): boolean {
+  if (valueA === valueB) {
+    return true
+  }
+
+  if (
+    typeof valueA !== 'object' ||
+    typeof valueB !== 'object' ||
+    valueA === null ||
+    valueB === null ||
+    Array.isArray(valueA) !== Array.isArray(valueB)
+  ) {
+    return false
+  }
+
+  const keysA = Object.keys(valueA)
+  const keysB = Object.keys(valueB)
+
+  return (
+    keysA.length === keysB.length &&
+    keysA.every(
+      (key) =>
+        Object.hasOwn(valueB, key) &&
+        isEqual(Reflect.get(valueA, key), Reflect.get(valueB, key)),
+    )
   )
 }
 

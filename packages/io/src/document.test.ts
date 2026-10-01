@@ -16,6 +16,7 @@ import {
   formatTextspec,
   parseTextspec,
 } from './document'
+import type {EditorEventForIo} from './types'
 
 describe(parseTextspec.name, () => {
   test('reads blocks, styles and the caret', () => {
@@ -60,7 +61,7 @@ describe(parseTextspec.name, () => {
 describe(createDocument.name, () => {
   test('writes back the notation it was built from', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;H2: ba|r;;H1: '),
     )
@@ -70,7 +71,7 @@ describe(createDocument.name, () => {
 
   test('writes keys on request', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B _key="k9": baz;;H1: fo|o'),
     )
@@ -82,7 +83,7 @@ describe(createDocument.name, () => {
 
   test('puts the caret at the start of the first block when none is given', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       {value: parseTextspec({keyGenerator}, 'B: foo;;B: bar').value},
     )
@@ -93,7 +94,7 @@ describe(createDocument.name, () => {
 
   test('setting a style sets it on the caret block', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: ba|r'),
     )
@@ -111,7 +112,7 @@ describe(createDocument.name, () => {
 
   test('setting the h3 style works, and the notation reads and writes it', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
@@ -135,7 +136,7 @@ describe(createDocument.name, () => {
 
   test('setting an unknown style throws', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
@@ -145,7 +146,7 @@ describe(createDocument.name, () => {
 
   test('typing inserts at the caret and sends a text diff', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fo|o;;B: bar'),
     )
@@ -176,7 +177,7 @@ describe(createDocument.name, () => {
 
   test('deleting before the caret removes the text that ends at the caret and sends a text diff', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo bar|;;B: baz'),
     )
@@ -201,7 +202,7 @@ describe(createDocument.name, () => {
 
   test('deleting text that is not right before the caret throws and changes nothing', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo| bar'),
     )
@@ -220,7 +221,7 @@ describe(createDocument.name, () => {
 
   test('the caret is put after text found in one block', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|;;B: bar'),
     )
@@ -233,7 +234,7 @@ describe(createDocument.name, () => {
 
   test('putting the caret after ambiguous or missing text throws', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|;;B: foobar;;B: baba'),
     )
@@ -251,7 +252,7 @@ describe(createDocument.name, () => {
 
   test('an inserted block keeps its named key and goes after the caret block', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|;;B: bar'),
     )
@@ -284,7 +285,7 @@ describe(createDocument.name, () => {
 
   test('an inserted block without a named key gets a generated one', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
@@ -313,7 +314,7 @@ describe(createDocument.name, () => {
 
   test('deleting the caret block moves the caret to the end of the previous block', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: ba|r;;B: baz'),
     )
@@ -341,7 +342,7 @@ describe(createDocument.name, () => {
 
   test('deleting the first block records that it had no previous sibling', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fo|o;;B: bar'),
     )
@@ -369,7 +370,7 @@ describe(createDocument.name, () => {
 
   test('deleting another block leaves the caret where it is', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fo|o;;B: bar'),
     )
@@ -381,7 +382,7 @@ describe(createDocument.name, () => {
 
   test('deleting a block with ambiguous or missing text throws', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|;;B: foo'),
     )
@@ -396,7 +397,7 @@ describe(createDocument.name, () => {
 
   test('an inserted block whose key a sibling has gets a new key', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B _key="k9": foo|'),
     )
@@ -427,7 +428,7 @@ describe(createDocument.name, () => {
 
   test('new content keeps the caret in its block, clamped to the text', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: bar|'),
     )
@@ -441,7 +442,7 @@ describe(createDocument.name, () => {
 
   test('new content without the caret block puts the caret at the start', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: bar|'),
     )
@@ -455,7 +456,7 @@ describe(createDocument.name, () => {
 describe('reverting a change', () => {
   test('typed text is deleted while its span still holds it, and the caret moves back', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fooxy|'),
     )
@@ -484,7 +485,7 @@ describe('reverting a change', () => {
 
   test("a block's style is set or removed, and a gone block is left alone", () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'H1: foo|'),
     )
@@ -507,7 +508,7 @@ describe('reverting a change', () => {
 
   test('a block deleted by key empties the field when it was the last, and a gone block is left alone', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|;;B: bar'),
     )
@@ -525,7 +526,7 @@ describe('reverting a change', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar;;B: baz')
     const [fooBlock, barBlock, bazBlock] = value
-    const document = createDocument({keyGenerator}, {value: [bazBlock]})
+    const document = createReadyDocument({keyGenerator}, {value: [bazBlock]})
 
     expect(
       document.restoreBlock({
@@ -561,7 +562,7 @@ describe('reverting a change', () => {
   test('a deleted block is not put back while its key is on screen', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo|;;B: bar')
-    const document = createDocument({keyGenerator}, {value})
+    const document = createReadyDocument({keyGenerator}, {value})
 
     expect(
       document.restoreBlock({
@@ -577,7 +578,7 @@ describe('reverting a change', () => {
   test('a deleted block put back into an empty field replaces the placeholder', () => {
     const keyGenerator = createTestKeyGenerator()
     const [block] = parseTextspec({keyGenerator}, 'B: foo').value
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createReadyDocument({keyGenerator}, {value: undefined})
 
     expect(
       document.restoreBlock({
@@ -597,7 +598,7 @@ describe('the placeholder', () => {
     const keyGenerator = createTestKeyGenerator()
 
     for (const value of [undefined, []]) {
-      const document = createDocument({keyGenerator}, {value})
+      const document = createReadyDocument({keyGenerator}, {value})
       const placeholderKey = document.getPlaceholderKey()
 
       expect(document.toTextspec()).toEqual('B: |')
@@ -623,7 +624,7 @@ describe('the placeholder', () => {
 
   test('the first keystroke creates the field and the block in the same batch', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createReadyDocument({keyGenerator}, {value: undefined})
 
     const firstResult = document.type('x')
 
@@ -689,7 +690,7 @@ describe('the placeholder', () => {
 
   test('setting a style on the placeholder creates the block first', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: []})
+    const document = createReadyDocument({keyGenerator}, {value: []})
 
     const result = document.setStyle('h1')
 
@@ -715,7 +716,7 @@ describe('the placeholder', () => {
 
   test('inserting a block after the placeholder creates the placeholder first', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createReadyDocument({keyGenerator}, {value: undefined})
 
     const result = document.insertBlock('B: foo')
 
@@ -752,7 +753,7 @@ describe('the placeholder', () => {
 
   test('a lone empty block from the host is content, and typing sends only the text change', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B _key="b1": '),
     )
@@ -768,7 +769,7 @@ describe('the placeholder', () => {
 
   test('deleting the last block empties the field and shows a fresh placeholder', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
@@ -803,7 +804,7 @@ describe('the placeholder', () => {
 
   test('deleting the placeholder sends nothing', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createReadyDocument({keyGenerator}, {value: undefined})
 
     expect(document.deleteBlock('')).toEqual({patches: [], undoStep: undefined})
     expect(document.getPlaceholderKey()).toEqual('k0')
@@ -811,7 +812,7 @@ describe('the placeholder', () => {
 
   test('the placeholder survives new empty content, and new content replaces it', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createReadyDocument({keyGenerator}, {value: undefined})
 
     document.setValue([])
 
@@ -826,6 +827,195 @@ describe('the placeholder', () => {
 
     expect(document.getPlaceholderKey()).toEqual('k4')
     expect(document.toTextspec({keys: true})).toEqual('B _key="k4": |')
+  })
+})
+
+describe('the editor seam', () => {
+  test('a user action emits a local change that carries its patches', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo|'),
+    )
+    const events: Array<EditorEventForIo> = []
+    const textPatch = diffMatchPatch('foo', 'foox', [
+      {_key: 'k0'},
+      'children',
+      {_key: 'k1'},
+      'text',
+    ])
+
+    document.on((event) => events.push(event))
+    document.type('x')
+    document.putCaretAfter('f')
+
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [textPatch],
+        patches: [textPatch],
+      },
+    ])
+  })
+
+  test('`ready` fires when the first commit ends and `closing` just before the editor stops, and actions after that do nothing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument({keyGenerator}, {value: undefined})
+    const events: Array<{type: string; status: string}> = []
+
+    document.on((event) => {
+      events.push({type: event.type, status: document.getStatus()})
+    })
+    document.send({
+      type: 'load',
+      value: parseTextspec({keyGenerator}, 'B: foo').value,
+    })
+    document.mount()
+    document.close()
+    document.type('x')
+    document.putCaretAfter('f')
+    document.close()
+
+    expect(events).toEqual([
+      {type: 'ready', status: 'ready'},
+      {type: 'closing', status: 'ready'},
+    ])
+    expect(document.getStatus()).toEqual('unmounted')
+    expect(document.toTextspec()).toEqual('B: |foo')
+  })
+
+  test('a load in the first commit replaces the content without a change, and a load after it throws', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createDocument({keyGenerator}, {value: undefined})
+    const events: Array<EditorEventForIo> = []
+
+    document.on((event) => events.push(event))
+    document.send({
+      type: 'load',
+      value: parseTextspec({keyGenerator}, 'B: foo').value,
+    })
+    document.send({
+      type: 'load',
+      value: parseTextspec({keyGenerator}, 'B: bar').value,
+    })
+    document.mount()
+
+    expect(() =>
+      document.send({
+        type: 'load',
+        value: parseTextspec({keyGenerator}, 'B: baz').value,
+      }),
+    ).toThrow(
+      '`load` is only accepted in the first commit, before the editor is ready',
+    )
+    expect(events).toEqual([{type: 'ready'}])
+    expect(document.toTextspec()).toEqual('B: |bar')
+  })
+
+  test('a resync or an apply emits a remote change only when it changed the content, and the caret stays in the block with its key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo;;B: ba|r'),
+    )
+    const events: Array<EditorEventForIo> = []
+    const {value} = parseTextspec(
+      {keyGenerator},
+      'B _key="k2": bar;;B _key="k0": foo',
+    )
+
+    document.on((event) => events.push(event))
+    document.send({type: 'resync', value: [...document.getValue()]})
+    document.send({type: 'resync', value})
+    document.send({type: 'apply', patches: [set(value, [])], underneath: []})
+
+    expect(events).toEqual([
+      {type: 'change', origin: 'remote', operations: [set(value, [])]},
+    ])
+    expect(document.toTextspec()).toEqual('B: ba|r;;B: foo')
+  })
+
+  test('an apply that gives the caret block a new key keeps the caret in that block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo;;B: ba|r'),
+    )
+    const [fooBlock, barBlock] = document.getValue()
+    const [bazBlock] = parseTextspec({keyGenerator}, 'B _key="k2": baz').value
+
+    document.send({
+      type: 'apply',
+      patches: [
+        set('k9', [{_key: 'k2'}, '_key']),
+        set([fooBlock, {...barBlock, _key: 'k9'}, bazBlock], []),
+      ],
+      underneath: [],
+    })
+
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="k0": foo;;B _key="k9": ba|r;;B _key="k2": baz',
+    )
+  })
+
+  test('a local apply is a user action: it emits a local change, the caret moves back over removed text and out of a removed block, and read-only refuses it', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo;;B: barx|'),
+    )
+    const events: Array<EditorEventForIo> = []
+    const textPatch = diffMatchPatch('barx', 'bar', [
+      {_key: 'k2'},
+      'children',
+      {_key: 'k3'},
+      'text',
+    ])
+
+    document.on((event) => events.push(event))
+    document.send({
+      type: 'apply',
+      patches: [textPatch],
+      underneath: [],
+      origin: 'local',
+    })
+
+    expect(document.toTextspec()).toEqual('B: foo;;B: bar|')
+
+    document.send({
+      type: 'apply',
+      patches: [unset([{_key: 'k2'}])],
+      underneath: [],
+      origin: 'local',
+    })
+
+    expect(document.toTextspec()).toEqual('B: foo|')
+
+    document.updateReadOnly(true)
+    document.send({
+      type: 'apply',
+      patches: [unset([{_key: 'k0'}]), unset([])],
+      underneath: [],
+      origin: 'local',
+    })
+    document.type('y')
+
+    expect(document.toTextspec()).toEqual('B: foo|')
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [textPatch],
+        patches: [textPatch],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [unset([{_key: 'k2'}])],
+        patches: [unset([{_key: 'k2'}])],
+      },
+    ])
   })
 })
 
@@ -845,7 +1035,7 @@ describe(formatTextspec.name, () => {
 describe(comparableTextspec.name, () => {
   test('ignores keys when the expected notation names none', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;H1: bar|'),
     )
@@ -860,7 +1050,7 @@ describe(comparableTextspec.name, () => {
 
   test('compares the keys the expected notation names, and only those', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B _key="k9": baz|'),
     )
@@ -908,7 +1098,7 @@ describe(comparableTextspec.name, () => {
 
   test('compares the caret only when the expected notation has one', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument(
+    const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: fo|o'),
     )
@@ -973,3 +1163,12 @@ describe(emptiesField.name, () => {
     expect(emptiesField([unset([{_key: block._key}])])).toEqual(false)
   })
 })
+
+function createReadyDocument(
+  ...parameters: Parameters<typeof createDocument>
+): ReturnType<typeof createDocument> {
+  const document = createDocument(...parameters)
+  document.mount()
+
+  return document
+}
