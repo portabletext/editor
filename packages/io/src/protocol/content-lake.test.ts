@@ -29,25 +29,55 @@ describe(applyWithContentLakeSemantics.name, () => {
     ).toEqual(undefined)
   })
 
-  test('a path through a primitive throws', () => {
+  test('a `set` through a primitive replaces it with the structure the path names, and other patches through one do nothing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo')
+
+    expect(
+      applyWithContentLakeSemantics(value, [
+        set('x', [{_key: 'k0'}, 'style', 'name', 'first']),
+      ]),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        style: {name: {first: 'x'}},
+      },
+    ])
+    expect(
+      applyWithContentLakeSemantics(value, [
+        set('x', [{_key: 'k0'}, 'style', {_key: 'k9'}]),
+        unset([{_key: 'k0'}, 'children', {_key: 'k1'}, 'text', 0]),
+        insert(['x'], 'after', [{_key: 'k0'}, 'style', 0]),
+      ]),
+    ).toEqual(value)
+  })
+
+  test('a `diffMatchPatch` on anything but a string fails, unless its keyed target is missing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
 
     expect(() =>
       applyWithContentLakeSemantics(value, [
-        set('x', [{_key: 'k0'}, 'style', 'name']),
+        diffMatchPatch('foo', 'foox', [{_key: 'k0'}, 'children']),
       ]),
-    ).toThrow(`Can't follow "name" into a string`)
+    ).toThrow("Can't apply a `diffMatchPatch` to [")
     expect(() =>
       applyWithContentLakeSemantics(value, [
-        unset([{_key: 'k0'}, 'children', {_key: 'k1'}, 'text', 0]),
+        diffMatchPatch('foo', 'foox', [{_key: 'k0'}, 'listItem']),
       ]),
-    ).toThrow(`Can't follow 0 into a string`)
+    ).toThrow("Can't apply a `diffMatchPatch` to null")
     expect(() =>
       applyWithContentLakeSemantics(value, [
-        set('x', [{_key: 'k0'}, 'style', 'name', 'first']),
+        diffMatchPatch('foo', 'foox', [{_key: 'k0'}, 'style', 'name']),
       ]),
-    ).toThrow(`Can't follow "name" into a string`)
+    ).toThrow("Can't apply a `diffMatchPatch` through a string")
+    expect(
+      applyWithContentLakeSemantics(value, [
+        diffMatchPatch('foo', 'foox', [{_key: 'k0'}, 'children', {_key: 'k9'}]),
+      ]),
+    ).toEqual(value)
   })
 })
 
@@ -66,5 +96,11 @@ describe(hasTarget.name, () => {
       false,
     )
     expect(hasTarget(undefined, set([], []))).toEqual(true)
+    expect(hasTarget(value, set('x', [{_key: 'k0'}, 'style', 'name']))).toEqual(
+      true,
+    )
+    expect(hasTarget(value, unset([{_key: 'k0'}, 'style', 'name']))).toEqual(
+      false,
+    )
   })
 })

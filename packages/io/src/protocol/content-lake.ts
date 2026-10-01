@@ -1,5 +1,6 @@
 import {
   applyAll,
+  set,
   type Patch,
   type Path,
   type PathSegment,
@@ -10,21 +11,67 @@ import type {PortableTextBlock} from '@portabletext/schema'
  * Applies patches the way Content Lake does: a patch whose target is gone is
  * a no-op. `applyAll` already skips a keyed segment it can't find inside an
  * existing array, but throws when a path runs into a missing field, so those
- * patches are skipped here. A path that runs through a string, number or
- * boolean can't be evaluated at all, and throws. Duplicate keys are stored
- * as sent.
+ * patches are skipped here. A `set` through a string, number or boolean
+ * replaces it with the structure the rest of the path names, and any other
+ * patch through one selects nothing. A `diffMatchPatch` on anything but a
+ * string fails, as does one on a missing field that isn't keyed. Duplicate
+ * keys are stored as sent.
  */
 export function applyWithContentLakeSemantics(
   value: Array<PortableTextBlock> | undefined,
   patches: Array<Patch>,
 ): Array<PortableTextBlock> | undefined {
   return patches.reduce<Array<PortableTextBlock> | undefined>(
-    (currentValue, patch) =>
-      hasContainer(currentValue, patch.path)
-        ? applyAll(currentValue, [patch])
-        : currentValue,
+    (currentValue, patch) => applyPatch(currentValue, patch),
     value,
   )
+}
+
+function applyPatch(
+  value: Array<PortableTextBlock> | undefined,
+  patch: Patch,
+): Array<PortableTextBlock> | undefined {
+  const location = locate(value, patch.path)
+
+  if (location.type === 'missing') {
+    return value
+  }
+
+  if (location.type === 'primitive') {
+    if (patch.type === 'diffMatchPatch') {
+      throw new Error(
+        `Can't apply a \`diffMatchPatch\` through a ${location.primitiveType}`,
+      )
+    }
+
+    const replacement =
+      patch.type === 'set'
+        ? nestUnder(patch.path.slice(location.depth), patch.value)
+        : undefined
+
+    return replacement === undefined
+      ? value
+      : applyAll(value, [
+          set(replacement.value, patch.path.slice(0, location.depth)),
+        ])
+  }
+
+  if (patch.type === 'diffMatchPatch') {
+    const target = resolvePath(value, patch.path)
+    const last = patch.path.at(-1)
+
+    if (target === undefined && isKeyedSegment(last)) {
+      return value
+    }
+
+    if (typeof target !== 'string') {
+      throw new Error(
+        `Can't apply a \`diffMatchPatch\` to ${JSON.stringify(target ?? null)}`,
+      )
+    }
+  }
+
+  return applyAll(value, [patch])
 }
 
 /**
@@ -43,16 +90,18 @@ export function resolvePath(value: unknown, path: Path): unknown {
 
 /**
  * Whether a patch has something to act on: the item it names, or a field
- * inside an existing object. An `insert` names the item it goes next to.
- * Throws, like `applyWithContentLakeSemantics`, for a path through a
- * primitive.
+ * inside an existing object. An `insert` names the item it goes next to. A
+ * `set` through a primitive acts on it, and any other patch through one
+ * selects nothing.
  */
 export function hasTarget(
   value: Array<PortableTextBlock> | undefined,
   patch: Patch,
 ): boolean {
-  if (!hasContainer(value, patch.path)) {
-    return false
+  const location = locate(value, patch.path)
+
+  if (location.type !== 'reachable') {
+    return location.type === 'primitive' && patch.type === 'set'
   }
 
   const last = patch.path.at(-1)
@@ -64,37 +113,56 @@ export function hasTarget(
   return resolvePath(value, patch.path) !== undefined
 }
 
-function hasContainer(value: unknown, path: Path): boolean {
-  if (path.length === 0) {
-    return true
-  }
-
+/**
+ * Walks the containers a path runs through: `reachable` when each one is an
+ * object or a list, `missing` when one isn't there, and `primitive` when the
+ * value at `path.slice(0, depth)` is a string, number or boolean the rest of
+ * the path runs into.
+ */
+function locate(
+  value: unknown,
+  path: Path,
+):
+  | {type: 'reachable'}
+  | {type: 'missing'}
+  | {type: 'primitive'; depth: number; primitiveType: string} {
   let container = value
 
-  for (const segment of path.slice(0, -1)) {
+  for (const [depth, segment] of path.entries()) {
     if (container === undefined || container === null) {
-      return false
+      return {type: 'missing'}
     }
 
-    assertTraversable(container, segment)
+    if (typeof container !== 'object') {
+      return {type: 'primitive', depth, primitiveType: typeof container}
+    }
+
     container = resolveSegment(container, segment)
   }
 
-  if (container === undefined || container === null) {
-    return false
-  }
-
-  assertTraversable(container, path[path.length - 1])
-
-  return true
+  return {type: 'reachable'}
 }
 
-function assertTraversable(container: unknown, segment: PathSegment) {
-  if (typeof container !== 'object') {
-    throw new Error(
-      `Can't follow ${JSON.stringify(segment)} into a ${typeof container}`,
-    )
+/**
+ * The object a path of field names builds around a value, or `undefined`
+ * when the path has a keyed or index segment, which selects nothing.
+ */
+function nestUnder(path: Path, value: unknown): {value: unknown} | undefined {
+  let nested: unknown = value
+
+  for (const segment of [...path].reverse()) {
+    if (typeof segment !== 'string') {
+      return undefined
+    }
+
+    nested = {[segment]: nested}
   }
+
+  return {value: nested}
+}
+
+function isKeyedSegment(segment: PathSegment | undefined): boolean {
+  return typeof segment === 'object' && !Array.isArray(segment)
 }
 
 function resolveSegment(container: unknown, segment: PathSegment): unknown {

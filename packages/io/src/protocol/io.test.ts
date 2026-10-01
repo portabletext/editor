@@ -1011,9 +1011,12 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('a patch through a primitive puts the editor out of step, and a patch for a missing parent does nothing', () => {
+  test('a `diffMatchPatch` on a non-string puts the editor out of step, and a patch for a missing parent does nothing', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
-    const failingPatch = set('x', [{_key: 'd-k0'}, 'style', 'name'])
+    const failingPatch = diffMatchPatch('foo', 'foox', [
+      {_key: 'd-k0'},
+      'children',
+    ])
 
     editor.transaction({
       transactionId: 't1',
@@ -1534,7 +1537,7 @@ describe(createIo.name, () => {
       transactionId: 't1',
       previousRev: 'r3',
       resultRev: 'r4',
-      patches: [set('x', [{_key: 'd-k0'}, 'style', 'name'])],
+      patches: [diffMatchPatch('foo', 'foox', [{_key: 'd-k0'}, 'children'])],
     })
     syncs.push(editor.getSync())
     editor.resync({value: editor.getBase().value, rev: 'r3'})
