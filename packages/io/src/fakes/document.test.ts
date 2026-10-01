@@ -8,6 +8,7 @@ import {
 } from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {textEditPatch} from '../protocol/text-edits'
 import type {EditorEventForIo} from '../protocol/types'
 import {
   comparableTextspec,
@@ -899,14 +900,13 @@ describe('the editor seam', () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: ba|r'),
     )
-    const [fooBlock, barBlock] = document.getValue()
     const [bazBlock] = parseTextspec({keyGenerator}, 'B _key="k2": baz').value
 
     document.send({
       type: 'apply',
       patches: [
         set('k9', [{_key: 'k2'}, '_key']),
-        set([fooBlock, {...barBlock, _key: 'k9'}, bazBlock], []),
+        insert([bazBlock], 'after', [{_key: 'k9'}]),
       ],
       underneath: [],
     })
@@ -914,6 +914,50 @@ describe('the editor seam', () => {
     expect(document.toTextspec({keys: true})).toEqual(
       'B _key="k0": foo;;B _key="k9": ba|r;;B _key="k2": baz',
     )
+  })
+
+  test('an apply moves the caret past text a patch on its span inserts before it, leaves it for an insert, and takes it to the previous block when its block goes', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: bar;;B: foo|foo'),
+    )
+    const [bazBlock] = parseTextspec({keyGenerator}, 'B: baz').value
+    const textPath = [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text']
+
+    document.send({
+      type: 'apply',
+      patches: [
+        textEditPatch('foofoo', {offset: 0, insertText: 'foo'}, textPath),
+      ],
+      underneath: [],
+    })
+
+    expect(document.toTextspec()).toEqual('B: bar;;B: foofoo|foo')
+
+    document.send({
+      type: 'apply',
+      patches: [set('xfoofoofoo', textPath)],
+      underneath: [],
+    })
+
+    expect(document.toTextspec()).toEqual('B: bar;;B: xfoofoo|foo')
+
+    document.send({
+      type: 'apply',
+      patches: [insert([bazBlock], 'after', [{_key: 'k0'}])],
+      underneath: [],
+    })
+
+    expect(document.toTextspec()).toEqual('B: bar;;B: baz;;B: xfoofoo|foo')
+
+    document.send({
+      type: 'apply',
+      patches: [unset([{_key: 'k2'}])],
+      underneath: [],
+    })
+
+    expect(document.toTextspec()).toEqual('B: bar;;B: baz|')
   })
 
   test('a local edit is a user action: it emits a local change, the caret moves back over removed text and out of a removed block, and read-only refuses it', () => {

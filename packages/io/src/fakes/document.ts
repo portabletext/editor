@@ -1,5 +1,4 @@
 import {
-  applyAll,
   diffMatchPatch,
   insert,
   set,
@@ -23,7 +22,12 @@ import {
   type TextspecSelection,
 } from '@portabletext/test'
 import {parse} from '@textspec/notation'
-import {textEditPatch} from '../protocol/text-edits'
+import {applyWithContentLakeSemantics} from '../protocol/content-lake'
+import {
+  mapOffsetThrough,
+  textEditPatch,
+  textEditsOf,
+} from '../protocol/text-edits'
 import type {
   EditorEventForIo,
   EditorForIo,
@@ -197,20 +201,19 @@ export function createFakeDocument(
   }
 
   /**
-   * Applies patches to the content, the placeholder left out, and keeps the
-   * caret with its block: through a new `_key`, to the previous block when
-   * its block is removed (or else the next), and past text changed before
-   * it. A whole-value `set` keeps the caret in the block with its key.
+   * Applies patches to the content one at a time, the placeholder left out,
+   * by Content Lake's rules and with no normalization, and moves the caret
+   * by each patch: through a new `_key` of its block, to the end of the
+   * previous block (or else the start of the next) when its block is
+   * removed, and past text a patch on its span inserted or deleted before
+   * it. Anything else leaves the caret in its span at its offset there.
    */
   function applyPatches(patches: Array<Patch>) {
     let content: Array<PortableTextBlock> | undefined =
       placeholderKey === undefined ? value : undefined
 
     for (const patch of patches) {
-      const nextContent: Array<PortableTextBlock> | undefined = applyAll(
-        content,
-        [patch],
-      )
+      const nextContent = applyWithContentLakeSemantics(content, [patch])
       caret = followCaret(caret, patch, content ?? [], nextContent ?? [])
       content = nextContent
     }
@@ -679,12 +682,13 @@ function followCaret(
   before: Array<PortableTextBlock>,
   after: Array<PortableTextBlock>,
 ): Caret {
-  const [head, field] = patch.path
+  const [head, field, spanSegment] = patch.path
 
   if (
     typeof head !== 'object' ||
     Array.isArray(head) ||
-    head._key !== caret.blockKey
+    head._key !== caret.blockKey ||
+    patch.type === 'insert'
   ) {
     return caret
   }
@@ -697,8 +701,6 @@ function followCaret(
   ) {
     return {blockKey: patch.value, offset: caret.offset}
   }
-
-  const afterBlock = after.find((block) => block._key === caret.blockKey)
 
   if (patch.type === 'unset' && patch.path.length === 1) {
     const index = before.findIndex((block) => block._key === caret.blockKey)
@@ -718,19 +720,63 @@ function followCaret(
   }
 
   const beforeBlock = before.find((block) => block._key === caret.blockKey)
+  const afterBlock = after.find((block) => block._key === caret.blockKey)
 
-  if (patch.type === 'diffMatchPatch' && beforeBlock && afterBlock) {
-    return {
-      blockKey: caret.blockKey,
-      offset: mapOffset(
-        caret.offset,
-        getTextBlock(beforeBlock).text,
-        getTextBlock(afterBlock).text,
-      ),
-    }
+  if (!beforeBlock || !afterBlock) {
+    return caret
   }
 
-  return caret
+  const {span, offset} = locateSpan(
+    getTextBlock(beforeBlock).block,
+    caret.offset,
+  )
+  const onCaretSpan =
+    patch.path.length === 4 &&
+    field === 'children' &&
+    typeof spanSegment === 'object' &&
+    !Array.isArray(spanSegment) &&
+    spanSegment._key === span._key &&
+    patch.path[3] === 'text'
+  let spanOffset = offset
+
+  if (onCaretSpan && patch.type === 'diffMatchPatch') {
+    spanOffset = mapOffsetThrough(offset, textEditsOf(patch.value, span.text))
+  }
+
+  if (onCaretSpan && patch.type === 'set' && typeof patch.value === 'string') {
+    spanOffset = mapOffset(offset, span.text, patch.value)
+  }
+
+  return {
+    blockKey: caret.blockKey,
+    offset: blockOffset(getTextBlock(afterBlock).block, span._key, spanOffset),
+  }
+}
+
+/**
+ * The offset in a block of an offset in one of its spans, clamped to the
+ * span's text. A span the block no longer has puts it at the block's end.
+ */
+function blockOffset(
+  block: PortableTextTextBlock,
+  spanKey: string,
+  spanOffset: number,
+): number {
+  let offset = 0
+
+  for (const child of block.children) {
+    if (!isSpan({schema}, child)) {
+      continue
+    }
+
+    if (child._key === spanKey) {
+      return offset + Math.min(spanOffset, child.text.length)
+    }
+
+    offset += child.text.length
+  }
+
+  return offset
 }
 
 /**
