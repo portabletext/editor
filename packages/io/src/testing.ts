@@ -38,6 +38,7 @@ export type {
   ServerCopyName,
   ServerSnapshot,
   TransactionSource,
+  TreeMismatch,
   World,
   WorldEditor,
   WorldSnapshot,

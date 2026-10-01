@@ -1,5 +1,5 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {Given, Then, When} from 'racejar'
+import {Given, Then, When, type StepDefinition} from 'racejar'
 import {
   comparableTextspec,
   createsBlock,
@@ -20,6 +20,11 @@ import {
 
 export type Context = {world: World}
 
+/**
+ * Every step ends by checking that each editor's tree equals io's working
+ * copy, both at the end of the step and right after every message and local
+ * change during it.
+ */
 export const stepDefinitions = [
   Given('the document is {textspec}', (context: Context, textspec: string) => {
     context.world.documentIs(textspec)
@@ -552,7 +557,34 @@ export const stepDefinitions = [
       )
     },
   ),
-]
+].map(checkingTrees)
+
+function checkingTrees(
+  definition: StepDefinition<Context, any, any, any>,
+): StepDefinition<Context, any, any, any> {
+  const callback: (
+    context: Context,
+    paramA: unknown,
+    paramB: unknown,
+    paramC: unknown,
+  ) => Promise<void> | void = definition.callback
+
+  return {
+    ...definition,
+    callback: async (
+      context: Context,
+      paramA: unknown,
+      paramB: unknown,
+      paramC: unknown,
+    ) => {
+      await callback(context, paramA, paramB, paramC)
+      checkEmpty(
+        "Where an editor's tree differed from io's working copy",
+        context.world.takeTreeMismatches(),
+      )
+    },
+  }
+}
 
 function userSteps() {
   const actions = [

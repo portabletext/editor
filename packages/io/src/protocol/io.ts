@@ -84,6 +84,11 @@ export type Io = {
   getStatus: () => IoStatus
   getSync: () => IoSync
   getBase: () => Load
+  /**
+   * The base with the unconfirmed batches and the pending changes applied:
+   * what the editor shows, the placeholder aside.
+   */
+  getWorkingCopy: () => Array<PortableTextBlock> | undefined
   inspect: () => IoLedger
   on: (listener: (event: IoEvent) => void) => () => void
 
@@ -1021,6 +1026,7 @@ export function createIo(options: {
     getStatus: () => status,
     getSync,
     getBase: () => base,
+    getWorkingCopy: deriveScreen,
     inspect: () => ({
       inFlight: inFlight ? describeSentBatch(inFlight) : undefined,
       rejected: rejected ? describeSentBatch(rejected) : undefined,

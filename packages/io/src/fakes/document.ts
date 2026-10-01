@@ -770,7 +770,8 @@ function mapOffset(offset: number, before: string, after: string): number {
   return after.length - suffix
 }
 
-function isEqual(valueA: unknown, valueB: unknown): boolean {
+/** Whether two plain values are deeply equal, key order aside. */
+export function isEqual(valueA: unknown, valueB: unknown): boolean {
   if (valueA === valueB) {
     return true
   }

@@ -246,4 +246,42 @@ describe(createWorld.name, () => {
       },
     })
   })
+
+  test("an editor's tree apart from io's working copy is reported for the moment it happened and for every step it lasts", () => {
+    const world = createWorld()
+
+    world.documentIs('B: foo|')
+
+    expect(world.takeTreeMismatches()).toEqual([])
+
+    world.getEditor('Editor A').document.send({
+      type: 'apply',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+      underneath: [],
+    })
+    world.type('Editor A', 'x')
+
+    expect(world.takeTreeMismatches()).toEqual([
+      {
+        editor: 'Editor A',
+        after: 'local change',
+        tree: 'H1 _key="d-k0": foox',
+        workingCopy: 'B _key="d-k0": foox',
+      },
+      {
+        editor: 'Editor A',
+        after: 'the step',
+        tree: 'H1 _key="d-k0": foox',
+        workingCopy: 'B _key="d-k0": foox',
+      },
+    ])
+    expect(world.takeTreeMismatches()).toEqual([
+      {
+        editor: 'Editor A',
+        after: 'the step',
+        tree: 'H1 _key="d-k0": foox',
+        workingCopy: 'B _key="d-k0": foox',
+      },
+    ])
+  })
 })

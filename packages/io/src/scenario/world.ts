@@ -4,6 +4,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {
   createFakeDocument,
   formatTextspec,
+  isEqual,
   parseTextspec,
   type FakeDocument,
   type FakeDocumentStatus,
@@ -28,6 +29,7 @@ import {
 } from '../protocol/io'
 import type {
   ChangeEvent,
+  EditorMessageForIo,
   ErrorEvent,
   MutationBatch,
   MutationSent,
@@ -66,6 +68,18 @@ export type HeardEvent =
   | ({type: 'error'} & ErrorEvent)
   | ({type: 'work dropped'; patchCount: number} & WorkDropped)
   | {type: 'warning'; message: string}
+
+/**
+ * A moment an editor's tree differed from io's working copy: right after
+ * the editor took a message from io or a local change, or at the end of a
+ * step. Both are textspec with keys, the placeholder left out.
+ */
+export type TreeMismatch = {
+  editor: EditorName
+  after: EditorMessageForIo['type'] | 'local change' | 'the step'
+  tree: string
+  workingCopy: string
+}
 
 export type NamedTransaction =
   | 'the other field'
@@ -206,6 +220,13 @@ export type WorldEditor = {
   heard: Heard
   /** Every `mutation sent` the host gave the editor. */
   mutationsSent: Array<MutationSent>
+  /** Every message io sent the editor. */
+  received: Array<EditorMessageForIo>
+  /**
+   * The moments the editor's tree differed from io's working copy, since the
+   * last `takeTreeMismatches`.
+   */
+  treeMismatches: Array<Omit<TreeMismatch, 'editor'>>
   /** The batch count at the previous `has sent` check. */
   checkedBatchCount: number
   /** The error count at the previous out-of-step or in-step check. */
@@ -547,11 +568,34 @@ export function createWorld() {
     return setup
   }
 
+  /**
+   * The tree mismatches recorded since the last call, and any an open editor
+   * has now. An editor that has closed is left out: its final batch is no
+   * longer in the working copy.
+   */
+  function takeTreeMismatches(): Array<TreeMismatch> {
+    if (!setup) {
+      return []
+    }
+
+    return editorNames.flatMap((name) => {
+      const worldEditor = getEditor(name)
+      const recorded = worldEditor.treeMismatches.splice(0)
+      const now = findTreeMismatch(worldEditor, 'the step')
+
+      return [...recorded, ...(now ? [now] : [])].map((mismatch) => ({
+        editor: name,
+        ...mismatch,
+      }))
+    })
+  }
+
   return {
     getEditor,
     getBatch,
     getServer: () => getSetup().server,
     snapshot,
+    takeTreeMismatches,
 
     documentIs: (textspec: string) => {
       const {value, caret} = parseTextspec(
@@ -830,7 +874,7 @@ function createWorldEditor({
   network: Network<MutationBatch>
   hostShape: HostShape
 }): WorldEditor {
-  const {document, io, heard} = createEditorWithIo({
+  const {document, io, heard, received, treeMismatches} = createEditorWithIo({
     id: name === 'Editor A' ? 'A' : 'B',
     keyGenerator: createTestKeyGenerator(name === 'Editor A' ? 'a-' : 'b-'),
     clock: network.clock,
@@ -877,6 +921,8 @@ function createWorldEditor({
     host,
     heard,
     mutationsSent,
+    received,
+    treeMismatches,
     checkedBatchCount: 0,
     checkedErrorCount: 0,
     checkedWarningCount: 0,
@@ -888,7 +934,10 @@ function createWorldEditor({
  * A fake document with the protocol's editor side attached, both minting
  * keys from the same generator, and what their listeners heard. The document
  * is listened to before the editor side attaches, so a change is heard
- * before the batch it leads to.
+ * before the batch it leads to. `received` records every message io sends
+ * the document, and `treeMismatches` every moment, right after one of those
+ * messages or a local change io has booked, that the document's tree
+ * differs from io's working copy.
  */
 export function createEditorWithIo({
   id,
@@ -898,7 +947,13 @@ export function createEditorWithIo({
   id: string
   keyGenerator: () => string
   clock: Clock
-}): {document: FakeDocument; io: Io; heard: Heard} {
+}): {
+  document: FakeDocument
+  io: Io
+  heard: Heard
+  received: Array<EditorMessageForIo>
+  treeMismatches: Array<Omit<TreeMismatch, 'editor'>>
+} {
   const heard: Heard = {
     mutations: [],
     changes: [],
@@ -919,12 +974,34 @@ export function createEditorWithIo({
     })
   })
 
-  const io = createIo({
+  const received: Array<EditorMessageForIo> = []
+  const treeMismatches: Array<Omit<TreeMismatch, 'editor'>> = []
+  const recordTreeMismatch = (after: TreeMismatch['after']) => {
+    const mismatch = findTreeMismatch({document, io}, after)
+
+    if (mismatch) {
+      treeMismatches.push(mismatch)
+    }
+  }
+  const io: Io = createIo({
     id,
-    editor: document,
+    editor: {
+      on: document.on,
+      send: (message) => {
+        received.push(message)
+        document.send(message)
+        recordTreeMismatch(message.type)
+      },
+    },
     keyGenerator,
     clock,
     applyLocalEdit: document.applyLocalEdit,
+  })
+
+  document.on('change', (event) => {
+    if (event.origin === 'local') {
+      recordTreeMismatch('local change')
+    }
   })
 
   io.on((event) => {
@@ -957,7 +1034,33 @@ export function createEditorWithIo({
     }
   })
 
-  return {document, io, heard}
+  return {document, io, heard, received, treeMismatches}
+}
+
+/**
+ * The editor's tree and io's working copy, when they differ. No field and an
+ * empty list are the same tree, the placeholder. An editor that has closed
+ * has no tree to compare.
+ */
+function findTreeMismatch(
+  {document, io}: {document: FakeDocument; io: Io},
+  after: TreeMismatch['after'],
+): Omit<TreeMismatch, 'editor'> | undefined {
+  if (document.getStatus() === 'unmounted') {
+    return undefined
+  }
+
+  const tree =
+    document.getPlaceholderKey() === undefined ? document.getValue() : []
+  const workingCopy = io.getWorkingCopy() ?? []
+
+  return isEqual(tree, workingCopy)
+    ? undefined
+    : {
+        after,
+        tree: formatTextspec(tree, {keys: true}),
+        workingCopy: formatTextspec(workingCopy, {keys: true}),
+      }
 }
 
 const namedTransactionPrefixes: Record<NamedTransaction, string> = {
