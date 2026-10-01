@@ -104,7 +104,9 @@ export function createFakeNetwork<
       receivers.set(editorId, receiver)
       feeds.set(editorId, [])
 
-      if (!listening) {
+      if (listening) {
+        deafEditorIds.delete(editorId)
+      } else {
         deafEditorIds.add(editorId)
       }
     },

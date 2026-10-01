@@ -206,6 +206,28 @@ describe(createFakeNetwork.name, () => {
     expect(network.getFeed('B')).toEqual([])
   })
 
+  test('an editor that reconnects with a listener gets transactions again', () => {
+    const network = createFakeNetwork()
+    const receiver = {
+      receiveTransaction: () => {},
+      receiveReply: () => {},
+      receiveSaveTaken: () => {},
+    }
+    const transaction: ServerTransaction = {
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [],
+      batchIds: [],
+    }
+
+    network.connect('A', receiver, {listening: false})
+    network.connect('A', receiver, {listening: true})
+    network.publish(transaction)
+
+    expect(network.getFeed('A')).toEqual([transaction])
+  })
+
   test('the clock runs what falls due, in due order, only when advanced', () => {
     const network = createFakeNetwork()
     const fired: Array<{name: string; at: number}> = []
