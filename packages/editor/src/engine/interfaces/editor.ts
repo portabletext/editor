@@ -1,6 +1,7 @@
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import type {OperationListener} from '../core/operation-channel'
 import type {DOMEditor} from '../dom/plugin/dom-editor'
+import type {DirtyPathEntry} from './dirty-path-entry'
 import type {Location} from './location'
 import type {Node} from './node'
 import type {EngineOperation} from './operation'
@@ -22,8 +23,8 @@ export interface BaseEditor {
     before: Array<OperationListener>
     after: Array<OperationListener>
   }
-  dirtyPaths: Path[]
-  dirtyPathKeys: Set<string>
+  dirtyPaths: DirtyPathEntry[]
+  dirtyPathKeys: Map<string, DirtyPathEntry>
   flushing: boolean
   normalizing: boolean
   pathRefs: Set<PathRef>
