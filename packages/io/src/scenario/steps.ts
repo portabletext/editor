@@ -359,6 +359,16 @@ export const stepDefinitions = [
     },
   ),
   Then(
+    "{editor}'s batch {int} does not empty the field",
+    (context: Context, name: EditorName, batchNumber: number) => {
+      checkEqual(
+        `Whether ${name}'s batch ${batchNumber} empties the field`,
+        emptiesField(context.world.getBatch(name, batchNumber).patches),
+        false,
+      )
+    },
+  ),
+  Then(
     "{editor}'s batch {int} empties the field",
     (context: Context, name: EditorName, batchNumber: number) => {
       checkEqual(

@@ -81,6 +81,27 @@ Feature: Malformed content
     Then the server has "B: xbar"
     And the server has a block that is not an object
 
+  Scenario: Emptying a field that still holds a block that is not an object removes the blocks the editor shows and leaves the stored one
+    Given the server has "B _key="k1": foo;;B _key="k2": bar"
+    And the server's block "k1" is the string "oops"
+    And the editors are in their first commit
+    When Editor A is loaded
+    And Editor A's first commit ends
+    Then Editor A shows "B: |bar"
+    When the block "bar" is deleted
+    Then Editor A shows "B: |"
+    And Editor A has sent batch 1
+    And Editor A's batch 1 does not empty the field
+    When the server receives Editor A's batch 1
+    Then the server has a block that is not an object
+    When Editor A's batch 1 comes back
+    And "x" is typed
+    Then Editor A shows "B: x|"
+    And Editor A has sent batch 2
+    When the server receives Editor A's batch 2
+    Then the server has "B: x"
+    And the server has a block that is not an object
+
   Scenario: A transaction that removes a block's key puts the editor out of step, and the resync repairs it
     Given the document is "B _key="k1": foo|;;B _key="k2": bar"
     When a script changes the server's block "k2" so it has no key

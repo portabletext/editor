@@ -799,8 +799,38 @@ export function createIo(options: {
       }
     }
 
-    pending = [...pending, patches]
+    pending = [...pending, keepingStoredNonObjects(patches)]
     flush()
+  }
+
+  /**
+   * The editor empties its field with a whole-field `unset`, which would
+   * also remove the stored blocks that aren't objects, though the editor
+   * never had them. While the working copy holds any, each whole-field
+   * `unset` becomes keyed `unset`s of the blocks that are objects there.
+   */
+  function keepingStoredNonObjects(patches: Array<Patch>): Array<Patch> {
+    let value = applyWithContentLakeSemantics(base.value, [
+      ...unconfirmedBatches().flatMap((batch) => batch.patches),
+      ...pending.flat(),
+    ])
+
+    if (!(value ?? []).some((block) => !isObject(block))) {
+      return patches
+    }
+
+    return patches.flatMap((patch) => {
+      const kept =
+        patch.type === 'unset' && patch.path.length === 0
+          ? blocksForEditor(value ?? []).blocks.flatMap((block) =>
+              itemKey(block).map((key) => unset([{_key: key}])),
+            )
+          : [patch]
+
+      value = applyWithContentLakeSemantics(value, kept)
+
+      return kept
+    })
   }
 
   /**
