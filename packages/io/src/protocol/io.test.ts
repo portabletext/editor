@@ -44,7 +44,62 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec()).toEqual('H2: |foox')
     expect(editor.getBase().rev).toEqual('r4')
-    expect(heard.changes.length).toEqual(3)
+    expect(heard.changes).toEqual([
+      {
+        origin: 'remote',
+        operations: [
+          set(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+                ],
+                style: 'h1',
+              },
+            ],
+            [],
+          ),
+        ],
+      },
+      {
+        origin: 'remote',
+        operations: [
+          set(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+                ],
+                style: 'h2',
+              },
+            ],
+            [],
+          ),
+        ],
+      },
+      {
+        origin: 'remote',
+        operations: [
+          set(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+                ],
+                style: 'h2',
+              },
+            ],
+            [],
+          ),
+        ],
+      },
+    ])
 
     clock.advance(10_000)
 
@@ -124,30 +179,46 @@ describe(createIo.name, () => {
       patches: heard.mutations[0].patches,
     })
 
-    expect(heard.mutations[1]).toEqual({
-      id: 'A-2',
-      transactionId: 'A-t2',
-      patches: [
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'a-k3',
-              children: [{_key: 'a-k2', _type: 'span', text: 'baz', marks: []}],
-              style: 'normal',
-            },
-          ],
-          'after',
-          [{_key: 'd-k0'}],
-        ),
-        diffMatchPatch('baz', 'bazq', [
-          {_key: 'a-k3'},
-          'children',
-          {_key: 'a-k2'},
-          'text',
-        ]),
-      ],
-    })
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [
+          diffMatchPatch('foo', 'foox', [
+            {_key: 'd-k0'},
+            'children',
+            {_key: 'd-k1'},
+            'text',
+          ]),
+        ],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-t2',
+        patches: [
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'a-k3',
+                children: [
+                  {_key: 'a-k2', _type: 'span', text: 'baz', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'd-k0'}],
+          ),
+          diffMatchPatch('baz', 'bazq', [
+            {_key: 'a-k3'},
+            'children',
+            {_key: 'a-k2'},
+            'text',
+          ]),
+        ],
+      },
+    ])
 
     editor.undo()
     editor.undo()
@@ -275,11 +346,10 @@ describe(createIo.name, () => {
     editor.undo()
 
     expect(document.toTextspec()).toEqual('H1: foo|')
-    expect(heard.mutations[1]).toEqual({
-      id: 'A-2',
-      transactionId: 'A-t2',
-      patches: [set('h1', path)],
-    })
+    expect(heard.mutations).toEqual([
+      {id: 'A-1', transactionId: 'A-t1', patches: [set('h2', path)]},
+      {id: 'A-2', transactionId: 'A-t2', patches: [set('h1', path)]},
+    ])
   })
 
   test('undo leaves a style another writer set after the editor in the same transaction', () => {
@@ -347,11 +417,30 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec({keys: true})).toEqual('B _key="a-k0": |')
     expect(document.getPlaceholderKey()).toEqual(undefined)
-    expect(heard.mutations[1]).toEqual({
-      id: 'A-2',
-      transactionId: 'A-t2',
-      patches: [set('normal', path)],
-    })
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [
+          setIfMissing([], []),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'a-k0',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'a-k1', text: '', marks: []}],
+              },
+            ],
+            'before',
+            [0],
+          ),
+          set('h1', path),
+        ],
+      },
+      {id: 'A-2', transactionId: 'A-t2', patches: [set('normal', path)]},
+    ])
   })
 
   test('undoing a style set on the placeholder before the block is sent puts back the normal style in the same batch', () => {
@@ -379,16 +468,23 @@ describe(createIo.name, () => {
       patches: heard.mutations[0].patches,
     })
 
-    expect(heard.mutations[1]).toEqual({
-      id: 'A-2',
-      transactionId: 'A-t2',
-      patches: [
-        setIfMissing([], []),
-        insert([placeholder], 'before', [0]),
-        set('h1', path),
-        set('normal', path),
-      ],
-    })
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [unset([{_key: 'd-k0'}]), unset([])],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-t2',
+        patches: [
+          setIfMissing([], []),
+          insert([placeholder], 'before', [0]),
+          set('h1', path),
+          set('normal', path),
+        ],
+      },
+    ])
   })
 
   test('undoing typing deletes the typed text where another writer moved it', () => {
@@ -411,11 +507,18 @@ describe(createIo.name, () => {
     editor.undo()
 
     expect(document.toTextspec()).toEqual('B: yfoo|')
-    expect(heard.mutations[1]).toEqual({
-      id: 'A-2',
-      transactionId: 'A-t2',
-      patches: [diffMatchPatch('yfoox', 'yfoo', textPath)],
-    })
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [diffMatchPatch('foo', 'foox', textPath)],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-t2',
+        patches: [diffMatchPatch('yfoox', 'yfoo', textPath)],
+      },
+    ])
   })
 
   test('undoing typing deletes the repeated word where it was typed, not the one the patch names', () => {
@@ -820,11 +923,47 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec({keys: true})).toEqual('B _key="a-k0": |')
     expect(document.getPlaceholderKey()).toEqual(undefined)
-    expect(heard.mutations[1]).toEqual({
-      id: 'A-2',
-      transactionId: 'A-t2',
-      patches: [unset([{_key: 'a-k2'}])],
-    })
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [
+          setIfMissing([], []),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'a-k0',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'a-k1', text: '', marks: []}],
+              },
+            ],
+            'before',
+            [0],
+          ),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'a-k2',
+                children: [
+                  {_type: 'span', _key: 'a-k3', text: 'bar', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'a-k0'}],
+          ),
+        ],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-t2',
+        patches: [unset([{_key: 'a-k2'}])],
+      },
+    ])
   })
 
   test('undoing an insert does nothing once another writer deleted the block', () => {
@@ -1120,7 +1259,10 @@ describe(createIo.name, () => {
     })
     clock.advance(100_000)
 
-    expect(heard.warnings.length).toEqual(2)
+    expect(heard.warnings).toEqual([
+      'Batch "A-1" has been in flight for 10000 ms without coming back',
+      'Batch "A-1" has been in flight for 30000 ms without coming back',
+    ])
   })
 
   test('a second load in the first commit replaces the first, repairs included, and a load after the editor is ready throws', () => {
@@ -1415,7 +1557,7 @@ describe(createIo.name, () => {
         warnings: heard.warnings,
         screen: document.toTextspec(),
         rev: editor.getBase().rev,
-        batches: heard.mutations.map(({id, patches}) => ({id, patches})),
+        batches: heard.mutations,
         inFlight: editor.inspect().inFlight,
       }
     })
@@ -1429,8 +1571,16 @@ describe(createIo.name, () => {
         screen: 'B: fooxy|',
         rev: 'r2',
         batches: [
-          {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
-          {id: 'A-2', patches: [diffMatchPatch('foox', 'fooxy', textPath)]},
+          {
+            id: 'A-1',
+            transactionId: 'A-t1',
+            patches: [diffMatchPatch('foo', 'foox', textPath)],
+          },
+          {
+            id: 'A-2',
+            transactionId: 'A-t2',
+            patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+          },
         ],
         inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
       },
@@ -1442,9 +1592,14 @@ describe(createIo.name, () => {
         screen: 'B: fooxy|',
         rev: 'r2',
         batches: [
-          {id: 'A-1', patches: [diffMatchPatch('foo', 'foox', textPath)]},
+          {
+            id: 'A-1',
+            transactionId: 'A-t1',
+            patches: [diffMatchPatch('foo', 'foox', textPath)],
+          },
           {
             id: 'A-2',
+            transactionId: 'A-t2',
             patches: [
               diffMatchPatch('foo', 'foox', textPath),
               diffMatchPatch('foox', 'fooxy', textPath),

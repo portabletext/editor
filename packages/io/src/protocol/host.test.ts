@@ -487,7 +487,13 @@ describe(createPassThroughHost.name, () => {
     document.type('y')
     document.close()
 
-    expect(saved.length).toEqual(1)
+    expect(saved).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-t1',
+        patches: [diffMatchPatch('foo', 'foox', textPath)],
+      },
+    ])
 
     host.reportSaveTaken('A-1')
 

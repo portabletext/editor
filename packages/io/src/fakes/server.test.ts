@@ -255,7 +255,15 @@ describe(createFakeServer.name, () => {
       },
       retry: {type: 'duplicate'},
     })
-    expect(server.getTransactions().length).toEqual(1)
+    expect(server.getTransactions()).toEqual([
+      {
+        transactionId: 't1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: [set('h1', [{_key: 'k0'}, 'style'])],
+        batchIds: ['b1'],
+      },
+    ])
     expect(server.getDuplicates()).toEqual([
       {transactionId: 't1', batchIds: ['b1']},
     ])
