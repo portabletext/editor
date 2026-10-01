@@ -3,8 +3,12 @@
   "version": "2.0.16",
   "description": "Compute the list index of each list item for custom list rendering",
   "keywords": [
+    "bullet-list",
     "list-index",
+    "list-rendering",
     "lists",
+    "numbered-list",
+    "ordered-list",
     "plugin",
     "portabletext"
   ],
