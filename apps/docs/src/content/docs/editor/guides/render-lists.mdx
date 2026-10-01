@@ -1,0 +1,183 @@
+---
+title: Render lists
+description: Render bulleted and numbered lists in the Portable Text Editor with your own text block render and @portabletext/plugin-list-index.
+---
+
+import {PackageManagers} from 'starlight-package-managers'
+
+A list in Portable Text has no wrapper node. It is a run of sibling text blocks that each carry a list type (`listItem`, for example `bullet` or `number`) and an indentation `level`. The editor renders every text block through your `defineTextBlock` registration and draws no bullets or numbers of its own, so list markup is part of your text block render.
+
+The one thing your render can't read from the block itself is the item's position in its list. `@portabletext/plugin-list-index` computes it for every list item, of every list type: same-type items count up across consecutive blocks on the same level, deeper levels start again at 1, and any other block ends the list. Numbered lists show the position. Bulleted lists use it to tell where a list starts.
+
+This guide assumes you have a text block registration, as set up in the [getting started guide](/editor/getting-started/).
+
+## Set up the plugin
+
+<PackageManagers pkg="@portabletext/plugin-list-index" />
+
+Declare the list types in your schema:
+
+```tsx
+const schemaDefinition = defineSchema({
+  // ...
+  lists: [{name: 'bullet'}, {name: 'number'}],
+})
+```
+
+Wrap `PortableTextEditable` in `ListIndexProvider`, inside the `EditorProvider`:
+
+```tsx
+import {ListIndexProvider} from '@portabletext/plugin-list-index'
+
+function MyEditor() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition}}>
+      <NodePlugin nodes={nodes} />
+      <ListIndexProvider>
+        <PortableTextEditable />
+      </ListIndexProvider>
+    </EditorProvider>
+  )
+}
+```
+
+## Put list information on the block
+
+Read the position with `useListIndex` and put it on the block's wrapper along with the list type and level. `useListIndex` is a React hook, and the editor calls `render` as a plain function, so call the hook from a component the render returns:
+
+```tsx
+import {defineTextBlock, type TextBlockRenderProps} from '@portabletext/editor'
+import {useListIndex} from '@portabletext/plugin-list-index'
+
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => <TextBlock {...props} />,
+})
+
+function TextBlock(props: TextBlockRenderProps) {
+  // The 1-based position within the list, or `undefined` for a block that
+  // is not a list item
+  const listIndex = useListIndex(props.path)
+
+  return (
+    <div
+      {...props.attributes}
+      data-list-item={props.node.listItem}
+      data-level={props.node.level}
+      data-list-index={listIndex}
+    >
+      {props.children}
+    </div>
+  )
+}
+```
+
+React leaves out attributes whose value is `undefined`, so blocks that are not list items render without them. The attribute names are yours to choose. The CSS on this page uses these three.
+
+## Style lists with CSS
+
+The attributes are enough to draw markers and indent nested levels:
+
+```css
+[data-list-item] {
+  display: flex;
+  gap: 0.5rem;
+}
+
+[data-list-item='bullet']::before {
+  content: '•';
+}
+
+[data-list-item='number']::before {
+  content: attr(data-list-index) '.';
+}
+
+[data-level='2'] {
+  padding-left: 1.5em;
+}
+
+[data-level='3'] {
+  padding-left: 3em;
+}
+```
+
+`data-list-index='1'` marks the first item of every list, nested lists included. Use it to add space above a list without spacing out its items:
+
+```css
+[data-level='1'][data-list-index='1'] {
+  margin-top: 0.75em;
+}
+```
+
+## Number each level in its own style
+
+`attr()` prints the position as a plain number. For styles like `a.` or `i.` on deeper levels, use one CSS counter per level. Set the counter to 1 on an item at position 1, increment it on every other item, and print it with `counter()`. Put the `counter-reset` on a class you pass to `PortableTextEditable` (`className="editor"` here):
+
+```css
+.editor {
+  counter-reset: level-1 level-2 level-3;
+}
+
+[data-level='1'][data-list-index='1'] {
+  counter-set: level-1 1;
+}
+[data-level='1']:not([data-list-index='1']) {
+  counter-increment: level-1;
+}
+[data-level='2'][data-list-index='1'] {
+  counter-set: level-2 1;
+}
+[data-level='2']:not([data-list-index='1']) {
+  counter-increment: level-2;
+}
+[data-level='3'][data-list-index='1'] {
+  counter-set: level-3 1;
+}
+[data-level='3']:not([data-list-index='1']) {
+  counter-increment: level-3;
+}
+
+[data-list-item='number'][data-level='1']::before {
+  content: counter(level-1, decimal) '.';
+}
+[data-list-item='number'][data-level='2']::before {
+  content: counter(level-2, lower-alpha) '.';
+}
+[data-list-item='number'][data-level='3']::before {
+  content: counter(level-3, lower-roman) '.';
+}
+```
+
+The [basic example](https://github.com/portabletext/editor/tree/main/examples/basic) carries this pattern through all ten levels, with a different bullet per level, in [`editor.css`](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css).
+
+## Render markers in React
+
+If you'd rather render the marker yourself, for example as a component, output the position directly. Mark the marker `contentEditable={false}` so the caret can't enter it:
+
+```tsx
+function TextBlock(props: TextBlockRenderProps) {
+  const listIndex = useListIndex(props.path)
+
+  return (
+    <div {...props.attributes}>
+      {props.node.listItem === 'number' && listIndex !== undefined ? (
+        <span contentEditable={false}>{listIndex}. </span>
+      ) : null}
+      {props.node.listItem === 'bullet' ? (
+        <span contentEditable={false}>• </span>
+      ) : null}
+      {props.children}
+    </div>
+  )
+}
+```
+
+## Lists inside containers
+
+Text blocks inside [containers](/editor/concepts/containers/) render through the same `type: 'block'` registration, so the attributes are there too. List items in a container number within their own array: a list inside a callout starts at 1, whatever comes before the callout. If a container registers its own text block render, read `useListIndex` and set the attributes there as well.
+
+## Create and indent lists
+
+The editor toggles a list type on the selected blocks with the `list item.toggle` event, and the `useListButton` hook from `@portabletext/toolbar` builds a toolbar button around it (see [Customize the toolbar](/editor/guides/customize-toolbar/)). In a list item, Tab indents the item one level and Shift+Tab outdents it.
+
+The plugin keeps positions correct through every kind of change: local edits, remote patches from collaborators, and value updates. A component that reads `useListIndex` re-renders only when its own position changes.
