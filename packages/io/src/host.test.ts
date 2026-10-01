@@ -203,30 +203,37 @@ describe(createPassThroughHost.name, () => {
     ])
   })
 
-  test('a resync naming the batch in flight passes its outcome from the transaction history', () => {
-    const results = (
-      [
-        [true, 'B: foox'],
-        [false, 'B: foo'],
-      ] as const
-    ).map(([landed, copy]) => {
-      const {editor, host, heard, serverCopy, transactionHistory} =
-        createHostedEditor('B: foo|')
+  test('a resync naming the batch in flight finds its outcome by re-submitting it, or from the transaction history', () => {
+    const cases = [
+      {outcomeMethod: 'resubmit', server: 'landed'},
+      {outcomeMethod: 'resubmit', server: 'never arrived'},
+      {outcomeMethod: 'resubmit', server: 'refused'},
+      {outcomeMethod: 'history', server: 'landed'},
+      {outcomeMethod: 'history', server: 'never arrived'},
+    ] as const
+    const results = cases.map(({outcomeMethod, server}) => {
+      const {
+        editor,
+        host,
+        heard,
+        transactionHistory,
+        refusedBatchIds,
+        resubmitted,
+      } = createHostedEditor('B: foo|', {outcomeMethod})
       const outcomes: Array<unknown> = []
 
       editor.type('x')
       host.reportSaveTaken('A-1')
       editor.type('y')
 
-      if (landed) {
+      if (server === 'landed') {
         transactionHistory.add('A-t1')
       }
 
-      serverCopy.current = {
-        value: parseTextspec({keyGenerator: createTestKeyGenerator('d-')}, copy)
-          .value,
-        rev: landed ? 'r2' : 'r1',
+      if (server === 'refused') {
+        refusedBatchIds.add('A-1')
       }
+
       const resync = editor.resync
       editor.resync = (incoming) => {
         outcomes.push(incoming.outcomes)
@@ -234,26 +241,34 @@ describe(createPassThroughHost.name, () => {
       }
       host.resync({discardUnsent: false, outcomeOf: 'A-1'})
 
-      return {
-        outcomes,
-        warnings: heard.warnings,
-        screen: editor.document.toTextspec(),
-        inFlight: editor.inspect().inFlight?.id,
-      }
+      return {outcomes, resubmitted, warnings: heard.warnings}
     })
 
     expect(results).toEqual([
       {
         outcomes: [{'A-1': 'applied'}],
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
         warnings: [],
-        screen: 'B: fooxy|',
-        inFlight: 'A-2',
+      },
+      {
+        outcomes: [{'A-1': 'applied'}],
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
+        warnings: [],
       },
       {
         outcomes: [{'A-1': 'not applied'}],
+        resubmitted: [{batchId: 'A-1', transactionId: 'A-t1'}],
         warnings: [],
-        screen: 'B: fooxy|',
-        inFlight: 'A-2',
+      },
+      {
+        outcomes: [{'A-1': 'applied'}],
+        resubmitted: [],
+        warnings: [],
+      },
+      {
+        outcomes: [{'A-1': 'not applied'}],
+        resubmitted: [],
+        warnings: [],
       },
     ])
   })
@@ -312,7 +327,10 @@ describe(createPassThroughHost.name, () => {
 
 function createHostedEditor(
   textspec: string,
-  {foldBatches = false}: {foldBatches?: boolean} = {},
+  {
+    foldBatches = false,
+    outcomeMethod,
+  }: {foldBatches?: boolean; outcomeMethod?: 'resubmit' | 'history'} = {},
 ) {
   const {clock} = createNetwork()
   const editor = createIoEditor({
@@ -330,6 +348,7 @@ function createHostedEditor(
   const saved: Array<MutationBatch> = []
   const resubmitted: Array<{batchId: string; transactionId: string}> = []
   const transactionHistory = new Set<string>()
+  const refusedBatchIds = new Set<string>()
   const mutationsSent: Array<MutationSent> = []
   const {mutationSent} = editor
   editor.mutationSent = (incoming) => {
@@ -342,6 +361,10 @@ function createHostedEditor(
     resubmit: (batch, transactionId) => {
       resubmitted.push({batchId: batch.id, transactionId})
 
+      if (refusedBatchIds.has(batch.id)) {
+        return 'refused'
+      }
+
       if (transactionHistory.has(transactionId)) {
         return 'duplicate'
       }
@@ -353,6 +376,7 @@ function createHostedEditor(
     fetchCopy: () => serverCopy.current,
     subscription: () => feed,
     foldBatches,
+    outcomeMethod,
   })
 
   host.load()
@@ -372,6 +396,7 @@ function createHostedEditor(
     serverCopy,
     resubmitted,
     transactionHistory,
+    refusedBatchIds,
     mutationsSent,
   }
 }

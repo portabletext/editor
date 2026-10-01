@@ -17,12 +17,14 @@ export type ServerTransaction = {
 }
 
 /**
- * The answer to a save request: saved as a new transaction, or refused with
- * a 409 `transactionAlreadyExistsError` because the transaction ID is taken.
+ * The answer to a save request: saved as a new transaction, refused with a
+ * 409 `transactionAlreadyExistsError` because the transaction ID is taken, or
+ * refused for good because the server refused the batch.
  */
 export type SubmitResult =
   | {type: 'saved'; transaction: ServerTransaction}
   | {type: 'duplicate'}
+  | {type: 'refused'}
 
 export type ServerCopy = {
   value: Array<PortableTextBlock> | undefined
@@ -40,7 +42,7 @@ export type Server = {
   /**
    * Saves the batch as `receive` does, unless the transaction ID is taken:
    * then it changes nothing and answers 409, as Content Lake does for a
-   * retried request.
+   * retried request. A batch the server refused is refused again.
    */
   submit: (batch: SavedBatch, transactionId: string) => SubmitResult
   /** Whether the document's transaction history lists the ID. */
@@ -146,6 +148,10 @@ export function createServer(initial: {
     documentId: initial.documentId,
     receive: (batch, transactionId) => receiveBatches([batch], transactionId),
     submit: (batch, transactionId) => {
+      if (refusedBatchIds.has(batch.id)) {
+        return {type: 'refused'}
+      }
+
       if (hasTransaction(transactionId)) {
         duplicates.push({transactionId, batchIds: [batch.id]})
         return {type: 'duplicate'}

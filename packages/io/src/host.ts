@@ -18,13 +18,13 @@ export type PassThroughHost = {
    * as. A 409 means the earlier attempt landed, and a save means it hadn't:
    * either way the echo confirms the batch, so the host does nothing more.
    */
-  retry: (batchId: string) => 'saved' | 'duplicate'
+  retry: (batchId: string) => 'saved' | 'duplicate' | 'refused'
   /** The listener reconnected or may have missed transactions. */
   feedLost: () => void
   load: () => void
   /**
-   * `outcomeOf` names the batch in flight, whose outcome the host looks up
-   * in the document's transaction history and passes along.
+   * `outcomeOf` names the batch in flight, whose outcome the host finds out
+   * and passes along.
    */
   resync: (options: {discardUnsent: boolean; outcomeOf?: string}) => void
 }
@@ -46,6 +46,17 @@ export type PassThroughHost = {
  * host decides the transaction before the request leaves and names it then.
  * The `final` batch is always saved under its proposed ID, with no
  * `mutation sent`.
+ *
+ * The host keeps every batch's save request, so it can send it again: to
+ * retry after a lost reply, and to find out what became of the batch in
+ * flight before a resync. By default (`outcomeMethod: 'resubmit'`) it finds
+ * the outcome by re-submitting the request under the same transaction ID: a
+ * 409 means the batch had landed, a save means it hadn't and now has, both
+ * `'applied'`, and a refusal for good means `'not applied'`. With
+ * `outcomeMethod: 'history'` it asks the document's transaction history
+ * whether the transaction ID is there instead. A lookup while the request is
+ * still in transit can answer `'not applied'` for a batch that lands a moment
+ * later, which re-submitting can't.
  *
  * `subscription` returns what the host's feed subscription holds but hasn't
  * delivered yet, in server order. The host subscribes before it fetches a
@@ -71,6 +82,7 @@ export function createPassThroughHost({
   fetchCopy,
   subscription,
   foldBatches = false,
+  outcomeMethod = 'resubmit',
 }: {
   editor: IoEditor
   save: (batch: MutationBatch) => void
@@ -78,12 +90,13 @@ export function createPassThroughHost({
   resubmit: (
     batch: MutationBatch,
     transactionId: string,
-  ) => 'saved' | 'duplicate'
+  ) => 'saved' | 'duplicate' | 'refused'
   /** Whether the document's transaction history lists the ID. */
   hasTransaction: (transactionId: string) => boolean
   fetchCopy: () => Load
   subscription: () => Array<Pick<Transaction, 'transactionId' | 'resultRev'>>
   foldBatches?: boolean
+  outcomeMethod?: 'resubmit' | 'history'
 }): PassThroughHost {
   const transactionIds = new Map<string, string>()
   const batches = new Map<string, MutationBatch>()
@@ -168,6 +181,26 @@ export function createPassThroughHost({
     )
   }
 
+  function resubmitBatch(batchId: string): 'saved' | 'duplicate' | 'refused' {
+    const batch = batches.get(batchId)
+
+    if (!batch || batch.final) {
+      throw new Error(`No batch "${batchId}" to send again`)
+    }
+
+    return resubmit(batch, getTransactionId(batchId))
+  }
+
+  function findOutcome(batchId: string): 'applied' | 'not applied' {
+    if (outcomeMethod === 'history') {
+      return hasTransaction(getTransactionId(batchId))
+        ? 'applied'
+        : 'not applied'
+    }
+
+    return resubmitBatch(batchId) === 'refused' ? 'not applied' : 'applied'
+  }
+
   function getTransactionId(batchId: string): string {
     const transactionId = transactionIds.get(batchId)
 
@@ -248,15 +281,7 @@ export function createPassThroughHost({
 
       editor.mutationRejected({id: batchId})
     },
-    retry: (batchId) => {
-      const batch = batches.get(batchId)
-
-      if (!batch || batch.final) {
-        throw new Error(`No batch "${batchId}" to retry`)
-      }
-
-      return resubmit(batch, getTransactionId(batchId))
-    },
+    retry: resubmitBatch,
     feedLost: () => {
       editor.feedLost()
     },
@@ -267,11 +292,7 @@ export function createPassThroughHost({
       const outcomes =
         outcomeOf === undefined
           ? undefined
-          : {
-              [outcomeOf]: hasTransaction(getTransactionId(outcomeOf))
-                ? ('applied' as const)
-                : ('not applied' as const),
-            }
+          : {[outcomeOf]: findOutcome(outcomeOf)}
 
       if (outcomeOf !== undefined && outcomeOf === inFlightBatchId) {
         inFlightBatchId = undefined

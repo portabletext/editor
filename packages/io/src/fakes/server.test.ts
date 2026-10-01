@@ -273,6 +273,24 @@ describe(createServer.name, () => {
     expect(server.copy()).toEqual({value, rev: 'r1'})
   })
 
+  test('a refused batch submitted again is refused again and records nothing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo')
+    const server = createServer({documentId: 'document', document: {value}})
+
+    server.refuse('b1')
+
+    expect(
+      server.submit(
+        {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]},
+        't1',
+      ),
+    ).toEqual({type: 'refused'})
+    expect(server.getTransactions()).toEqual([])
+    expect(server.getDuplicates()).toEqual([])
+    expect(server.copy()).toEqual({value, rev: 'r1'})
+  })
+
   test('a change to another field moves the revision with no field patches', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')

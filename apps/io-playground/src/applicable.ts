@@ -187,7 +187,7 @@ function resyncApplicability(editor: EditorSnapshot): Applicability {
   return editor.inFlight
     ? {
         enabled: true,
-        why: `batch ${editor.inFlight.batchNumber} is in flight: the host looks up in the transaction history whether it landed, and the resync carries that outcome`,
+        why: `batch ${editor.inFlight.batchNumber} is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome`,
       }
     : enabled
 }

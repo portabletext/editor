@@ -70,7 +70,7 @@ describe(applicableActions.name, () => {
       'close': {enabled: true},
       'resync': {
         enabled: true,
-        why: 'batch 1 is in flight: the host looks up in the transaction history whether it landed, and the resync carries that outcome',
+        why: 'batch 1 is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome',
       },
       'resync discarding': {
         enabled: false,
@@ -152,7 +152,7 @@ describe(applicableActions.name, () => {
 
     expect(actions.resync).toEqual({
       enabled: true,
-      why: 'batch 1 is in flight: the host looks up in the transaction history whether it landed, and the resync carries that outcome',
+      why: 'batch 1 is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome',
       suggested:
         'Editor A is out of step: resync with the outcome of batch 1 to recover',
     })
