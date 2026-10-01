@@ -1834,6 +1834,32 @@ describe(createIo.name, () => {
     ])
   })
 
+  test("Scenario: a transaction whose `value` holds a block keyed like an unsent insert puts the editor out of step, though its patches don't say so", () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B _key="k9": bar',
+    ).value
+
+    document.type('x')
+    document.insertBlock('B _key="k9": baz')
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [],
+      value: [fooBlock, barBlock],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1'},
+    ])
+    expect(editor.getBase().rev).toEqual('r1')
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k0": foox;;B _key="k9": baz|',
+    )
+  })
+
   test('Scenario: a remote span keyed like an unconfirmed block is no collision', () => {
     const {editor, document, heard, treeMismatches} =
       createLoadedEditor('B: foo|')

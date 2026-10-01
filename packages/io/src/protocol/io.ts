@@ -484,22 +484,24 @@ export function createIo(options: {
         ...(rejected ? [rejected] : []),
       ].flatMap((batch) => batch.patches),
     )
-    const collidingPatch =
-      incoming.patches.find(
-        (patch) =>
-          patch.type === 'insert' &&
-          insertCollides(
-            patch,
-            unconfirmedLists.get(listId(patch.path.slice(0, -1)))?.keys ??
-              new Set(),
-          ),
-      ) ?? patchTakingPendingKey(incoming.patches)
+    const unconfirmedCollision = incoming.patches.find(
+      (patch) =>
+        patch.type === 'insert' &&
+        insertCollides(
+          patch,
+          unconfirmedLists.get(listId(patch.path.slice(0, -1)))?.keys ??
+            new Set(),
+        ),
+    )
+    const collision = unconfirmedCollision
+      ? {patch: unconfirmedCollision}
+      : pendingKeyCollision(incoming.patches, nextValue)
 
-    if (collidingPatch) {
+    if (collision) {
       return fail({
         reason: 'duplicate key',
         transactionId: incoming.transactionId,
-        patch: collidingPatch,
+        ...collision,
       })
     }
 
@@ -535,37 +537,43 @@ export function createIo(options: {
   }
 
   /**
-   * The first of `patches` after which a list of the base (the block list
-   * or a block's `children`) has a key that a pending insert into that list
-   * also inserts and the list didn't have before. Applied work is never
-   * re-keyed in place: the resync re-keys the pending insert.
+   * Whether `nextBase`, the base the transaction selects (from its `value`
+   * or its patches), has a key in a list (the block list or a block's
+   * `children`) that a pending insert into that list also inserts and the
+   * list didn't have before, with the first of `patches` after which it
+   * does, if any does. Applied work is never re-keyed in place: the resync
+   * re-keys the pending insert.
    */
-  function patchTakingPendingKey(patches: Array<Patch>): Patch | undefined {
+  function pendingKeyCollision(
+    patches: Array<Patch>,
+    nextBase: Array<PortableTextBlock> | undefined,
+  ): {patch?: Patch} | undefined {
     const pendingLists = [...insertedKeysByList(pending.flat()).values()]
     const keysBefore = pendingLists.map(
       ({listPath}) => new Set(keysInList(base.value, listPath)),
     )
-    let value = base.value
+    const takesPendingKey = (value: Array<PortableTextBlock> | undefined) =>
+      pendingLists.some(({listPath, keys}, index) =>
+        keysInList(value, listPath).some(
+          (key) => keys.has(key) && !keysBefore[index].has(key),
+        ),
+      )
 
-    if (pendingLists.length === 0) {
+    if (!takesPendingKey(nextBase)) {
       return undefined
     }
+
+    let value = base.value
 
     for (const patch of patches) {
       value = applyWithContentLakeSemantics(value, [patch])
 
-      if (
-        pendingLists.some(({listPath, keys}, index) =>
-          keysInList(value, listPath).some(
-            (key) => keys.has(key) && !keysBefore[index].has(key),
-          ),
-        )
-      ) {
-        return patch
+      if (takesPendingKey(value)) {
+        return {patch}
       }
     }
 
-    return undefined
+    return {}
   }
 
   /**
