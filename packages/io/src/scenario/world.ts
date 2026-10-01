@@ -222,6 +222,12 @@ type Setup = {
   editors: Record<EditorName, WorldEditor>
 }
 
+type LoadAttempt = {
+  editorName: EditorName
+  threw: boolean
+  screen: string
+}
+
 type ResyncAttempt = {
   editorName: EditorName
   warningCount: number
@@ -248,6 +254,7 @@ export function createWorld() {
   let hostShape: HostShape = 'plain'
   let setup: Setup | undefined
   let lastResync: ResyncAttempt | undefined
+  let lastLoad: LoadAttempt | undefined
   const namedTransactions = new Map<string, NamedTransaction>()
   const namedTransactionCounts = new Map<NamedTransaction, number>()
 
@@ -749,6 +756,20 @@ export function createWorld() {
     load: (name: EditorName) => {
       getEditor(name).host.load()
     },
+    /** Loads the editor and records whether the load threw, without throwing. */
+    loadAgain: (name: EditorName) => {
+      const {document, host} = getEditor(name)
+      const screen = document.toTextspec({keys: true})
+      let threw = false
+
+      try {
+        host.load()
+      } catch {
+        threw = true
+      }
+
+      lastLoad = {editorName: name, threw, screen}
+    },
     endFirstCommit: (name: EditorName) => {
       getEditor(name).document.mount()
     },
@@ -787,6 +808,13 @@ export function createWorld() {
       }
 
       return lastResync
+    },
+    getLastLoad: () => {
+      if (!lastLoad) {
+        throw new Error('No load yet')
+      }
+
+      return lastLoad
     },
   }
 }

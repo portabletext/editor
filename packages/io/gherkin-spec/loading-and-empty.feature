@@ -19,12 +19,12 @@ Feature: Loading and empty
     When Editor A is resynced
     Then Editor A shows "B: foo"
 
-  Scenario: A load after the editor is ready throws
+  Scenario: A load after the editor is ready is refused
     Given the server has "B: foo"
     And the editors are in their first commit
     When Editor A's first commit ends
-    Then loading Editor A throws
-    And Editor A's status is "ready"
+    And Editor A is loaded again
+    Then the load was refused
     And Editor A shows "B: |"
 
   Scenario Outline: An empty field shows the placeholder, and a lone empty block is real content (the server has <copy>)

@@ -17,7 +17,7 @@ describe(compileScenarios.name, () => {
       names: [
         'A load in the first commit makes the editor ready with the content, and no change',
         'An editor nobody loads is ready and empty when its first commit ends, and a resync fills it',
-        'A load after the editor is ready throws',
+        'A load after the editor is ready is refused',
         'An empty field shows the placeholder, and a lone empty block is real content (the server has no document)',
         'An empty field shows the placeholder, and a lone empty block is real content (the server has no field)',
         'An empty field shows the placeholder, and a lone empty block is real content (the server has an empty list)',

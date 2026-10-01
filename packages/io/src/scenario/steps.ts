@@ -189,6 +189,9 @@ export const stepDefinitions = [
   When('{editor} is loaded', (context: Context, name: EditorName) => {
     context.world.load(name)
   }),
+  When('{editor} is loaded again', (context: Context, name: EditorName) => {
+    context.world.loadAgain(name)
+  }),
   When("{editor}'s first commit ends", (context: Context, name: EditorName) => {
     context.world.endFirstCommit(name)
   }),
@@ -470,16 +473,17 @@ export const stepDefinitions = [
       resync.batchCount,
     )
   }),
-  Then('loading {editor} throws', (context: Context, name: EditorName) => {
-    let threw = false
+  Then('the load was refused', (context: Context) => {
+    const load = context.world.getLastLoad()
+    const {document} = context.world.getEditor(load.editorName)
 
-    try {
-      context.world.load(name)
-    } catch {
-      threw = true
-    }
-
-    checkEqual(`Whether loading ${name} throws`, threw, true)
+    checkEqual(`Whether loading ${load.editorName} threw`, load.threw, true)
+    checkEqual(`${load.editorName}'s status`, document.getStatus(), 'ready')
+    checkEqual(
+      `What ${load.editorName} shows`,
+      document.toTextspec({keys: true}),
+      load.screen,
+    )
   }),
   Then(
     "{editor}'s status is {status}",
