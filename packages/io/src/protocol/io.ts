@@ -100,9 +100,9 @@ export type Io = {
   feedLost: () => void
   /**
    * Reverts the last of the editor's own changes that undo can still revert,
-   * and has the editor apply the revert as a local change. The undo ledger
-   * lives here, driven by the editor's local changes and the transactions,
-   * until the editor's own history is designed.
+   * through `applyLocalEdit`, as a user action. The undo ledger lives here,
+   * driven by the editor's local changes and the transactions, as a stand-in
+   * for the editor's own history until that is designed.
    */
   undo: () => void
 }
@@ -169,14 +169,18 @@ type HistoryEntry = {
  * IDs never share one. The proposed transaction IDs come from the same
  * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
  * editor's `id`. `keyGenerator` mints keys for repairs and re-keyed inserts.
+ * `applyLocalEdit` is the model's seam for undo, outside `EditorForIo`: it
+ * applies patches to the editor as the user's own edit, which the editor
+ * reports as a local `change`, or refuses while read-only.
  */
 export function createIo(options: {
   id: string
   editor: EditorForIo
   keyGenerator: () => string
   clock: Clock
+  applyLocalEdit: (patches: Array<Patch>) => void
 }): Io {
-  const {editor, keyGenerator, clock} = options
+  const {editor, keyGenerator, clock, applyLocalEdit} = options
   const listeners = new Set<(event: IoEvent) => void>()
   const emittedBatchIds = new Set<string>()
 
@@ -195,18 +199,11 @@ export function createIo(options: {
   let reverting: {applied: boolean} | undefined
   const droppedPatches = new WeakSet<Patch>()
 
-  editor.on((event) => {
-    switch (event.type) {
-      case 'ready':
-        becomeReady()
-        return
-      case 'closing':
-        close()
-        return
-      case 'change':
-        if (event.origin === 'local') {
-          takeLocalChange(event.patches)
-        }
+  editor.on('ready', becomeReady)
+  editor.on('closing', close)
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      takeLocalChange(event.patches)
     }
   })
 
@@ -695,7 +692,7 @@ export function createIo(options: {
     reverting = attempt
 
     try {
-      editor.send({type: 'apply', patches, underneath: [], origin: 'local'})
+      applyLocalEdit(patches)
     } finally {
       reverting = undefined
     }

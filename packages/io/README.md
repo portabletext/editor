@@ -23,14 +23,17 @@ This package is private. It exists to prove the host contract before it lands in
 
 ```ts
 type EditorForIo = {
-  on: (listener: (event: EditorEventForIo) => void) => () => void
+  on: <TType extends EditorEventForIo['type']>(
+    type: TType,
+    listener: (event: EditorEventForIo & {type: TType}) => void,
+  ) => {unsubscribe: () => void}
   send: (message: EditorMessageForIo) => void
 }
 ```
 
 io listens to `change` (a local one carries the action's patches, which io books as pending), `ready` (the end of the first commit) and `closing` (the moment to send the final batch). It sends `load` and `resync` as whole values and `apply` for each transaction that changed its working copy. For now `apply` carries a whole-value `set`, after a keyed `_key` set for each pending insert io gave a new key.
 
-The undo ledger stays in io until the editor's own history is designed. io reads each undo step from the local change's patches, computes the revert against its working copy, and sends it as `apply` with `origin: 'local'`. The editor applies it as a user action and reports it as a local `change`, or refuses it while read-only.
+The model's undo ledger stands in for the editor's history until that design is done, and it is not part of `EditorForIo`. io reads each undo step from the local change and the working copy, and computes the revert against its working copy. `createIo` takes an `applyLocalEdit(patches)` callback for it, a test seam the world wires to the fake document's user-action path (the same path typing takes). The document applies the revert as the user's own edit and reports it as a local `change`, or refuses it while read-only.
 
 ## Layout
 

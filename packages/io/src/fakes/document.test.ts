@@ -711,15 +711,14 @@ describe('the editor seam', () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo|'),
     )
-    const events: Array<EditorEventForIo> = []
     const textPatch = diffMatchPatch('foo', 'foox', [
       {_key: 'k0'},
       'children',
       {_key: 'k1'},
       'text',
     ])
+    const events = listen(document)
 
-    document.on((event) => events.push(event))
     document.type('x')
     document.putCaretAfter('f')
 
@@ -733,14 +732,55 @@ describe('the editor seam', () => {
     ])
   })
 
+  test('a listener hears only the event type it listens to, until it unsubscribes', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createFakeDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo|'),
+    )
+    const events: Array<EditorEventForIo> = []
+    const subscription = document.on('change', (event) => events.push(event))
+
+    document.mount()
+    document.type('x')
+    subscription.unsubscribe()
+    document.type('y')
+    document.close()
+
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          diffMatchPatch('foo', 'foox', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ],
+        patches: [
+          diffMatchPatch('foo', 'foox', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ],
+      },
+    ])
+  })
+
   test('`ready` fires when the first commit ends and `closing` just before the editor stops, and actions after that do nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createFakeDocument({keyGenerator}, {value: undefined})
     const events: Array<{type: string; status: string}> = []
 
-    document.on((event) => {
-      events.push({type: event.type, status: document.getStatus()})
-    })
+    for (const type of ['ready', 'closing'] as const) {
+      document.on(type, (event) => {
+        events.push({type: event.type, status: document.getStatus()})
+      })
+    }
     document.send({
       type: 'load',
       value: parseTextspec({keyGenerator}, 'B: foo').value,
@@ -762,9 +802,8 @@ describe('the editor seam', () => {
   test('a load in the first commit replaces the content without a change, and a load after it throws', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createFakeDocument({keyGenerator}, {value: undefined})
-    const events: Array<EditorEventForIo> = []
+    const events = listen(document)
 
-    document.on((event) => events.push(event))
     document.send({
       type: 'load',
       value: parseTextspec({keyGenerator}, 'B: foo').value,
@@ -793,13 +832,12 @@ describe('the editor seam', () => {
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: ba|r'),
     )
-    const events: Array<EditorEventForIo> = []
     const {value} = parseTextspec(
       {keyGenerator},
       'B _key="k2": bar;;B _key="k0": foo',
     )
+    const events = listen(document)
 
-    document.on((event) => events.push(event))
     document.send({type: 'resync', value: [...document.getValue()]})
     document.send({type: 'resync', value})
     document.send({type: 'apply', patches: [set(value, [])], underneath: []})
@@ -833,46 +871,30 @@ describe('the editor seam', () => {
     )
   })
 
-  test('a local apply is a user action: it emits a local change, the caret moves back over removed text and out of a removed block, and read-only refuses it', () => {
+  test('a local edit is a user action: it emits a local change, the caret moves back over removed text and out of a removed block, and read-only refuses it', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument(
       {keyGenerator},
       parseTextspec({keyGenerator}, 'B: foo;;B: barx|'),
     )
-    const events: Array<EditorEventForIo> = []
     const textPatch = diffMatchPatch('barx', 'bar', [
       {_key: 'k2'},
       'children',
       {_key: 'k3'},
       'text',
     ])
+    const events = listen(document)
 
-    document.on((event) => events.push(event))
-    document.send({
-      type: 'apply',
-      patches: [textPatch],
-      underneath: [],
-      origin: 'local',
-    })
+    document.applyLocalEdit([textPatch])
 
     expect(document.toTextspec()).toEqual('B: foo;;B: bar|')
 
-    document.send({
-      type: 'apply',
-      patches: [unset([{_key: 'k2'}])],
-      underneath: [],
-      origin: 'local',
-    })
+    document.applyLocalEdit([unset([{_key: 'k2'}])])
 
     expect(document.toTextspec()).toEqual('B: foo|')
 
     document.updateReadOnly(true)
-    document.send({
-      type: 'apply',
-      patches: [unset([{_key: 'k0'}]), unset([])],
-      underneath: [],
-      origin: 'local',
-    })
+    document.applyLocalEdit([unset([{_key: 'k0'}]), unset([])])
     document.type('y')
 
     expect(document.toTextspec()).toEqual('B: foo|')
@@ -1049,7 +1071,10 @@ function createReadyDocument(
 
 function listen(document: FakeDocument): Array<EditorEventForIo> {
   const events: Array<EditorEventForIo> = []
-  document.on((event) => events.push(event))
+
+  for (const type of ['change', 'ready', 'closing'] as const) {
+    document.on(type, (event) => events.push(event))
+  }
 
   return events
 }

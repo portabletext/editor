@@ -863,11 +863,7 @@ export function createEditorWithIo({
   }
   const document = createFakeDocument({keyGenerator}, {value: undefined})
 
-  document.on((event) => {
-    if (event.type !== 'change') {
-      return
-    }
-
+  document.on('change', (event) => {
     const {type: _type, ...change} = event
     heard.changes.push(change)
     heard.events.push({
@@ -877,7 +873,13 @@ export function createEditorWithIo({
     })
   })
 
-  const io = createIo({id, editor: document, keyGenerator, clock})
+  const io = createIo({
+    id,
+    editor: document,
+    keyGenerator,
+    clock,
+    applyLocalEdit: document.applyLocalEdit,
+  })
 
   io.on((event) => {
     switch (event.type) {

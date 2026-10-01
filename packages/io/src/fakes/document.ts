@@ -49,6 +49,9 @@ export type FakeDocumentStatus = 'loading' | 'ready' | 'unmounted'
  * the first commit with `ready`, and `close` emits `closing` before it
  * stops. Actions before `mount` throw, and actions after `close` or while
  * read-only do nothing.
+ *
+ * `applyLocalEdit` is the user action behind the model's undo: it applies
+ * the patches as the user's own edit. It isn't part of `EditorForIo`.
  */
 export type FakeDocument = EditorForIo & {
   getStatus: () => FakeDocumentStatus
@@ -76,6 +79,7 @@ export type FakeDocument = EditorForIo & {
   putCaretAfter: (text: string) => void
   insertBlock: (textspec: string) => void
   deleteBlock: (text: string) => void
+  applyLocalEdit: (patches: Array<Patch>) => void
 }
 
 export function createFakeDocument(
@@ -162,22 +166,7 @@ export function createFakeDocument(
         changeRemotely(() => setValue(message.value))
         return
       case 'apply':
-        if (message.origin !== 'local') {
-          changeRemotely(() => applyPatches(message.patches))
-          return
-        }
-
-        if (!canAct() || message.patches.length === 0) {
-          return
-        }
-
-        applyPatches(message.patches)
-        emit({
-          type: 'change',
-          origin: 'local',
-          operations: message.patches,
-          patches: message.patches,
-        })
+        changeRemotely(() => applyPatches(message.patches))
     }
   }
 
@@ -460,10 +449,18 @@ export function createFakeDocument(
   }
 
   return {
-    on: (listener) => {
-      listeners.add(listener)
-      return () => {
-        listeners.delete(listener)
+    on: (type, listener) => {
+      const listenToType = (event: EditorEventForIo) => {
+        if (isOfType(event, type)) {
+          listener(event)
+        }
+      }
+      listeners.add(listenToType)
+
+      return {
+        unsubscribe: () => {
+          listeners.delete(listenToType)
+        },
       }
     },
     send,
@@ -495,7 +492,19 @@ export function createFakeDocument(
     },
     insertBlock: (textspec) => act(() => insertBlock(textspec)),
     deleteBlock: (text) => act(() => deleteBlock(text)),
+    applyLocalEdit: (patches) =>
+      act(() => {
+        applyPatches(patches)
+        return patches
+      }),
   }
+}
+
+function isOfType<TType extends EditorEventForIo['type']>(
+  event: EditorEventForIo,
+  type: TType,
+): event is EditorEventForIo & {type: TType} {
+  return event.type === type
 }
 
 /**

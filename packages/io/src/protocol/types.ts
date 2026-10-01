@@ -84,10 +84,14 @@ export type ChangeEvent =
 /**
  * The whole of what io uses from an editor: it listens to `change`, `ready`
  * and `closing`, and sends `load`, `resync` and `apply`. A structural type,
- * so any editor with these two functions satisfies it.
+ * shaped like the editor's own `on` (one event type per listener, answered
+ * with an `unsubscribe`) and `send`.
  */
 export type EditorForIo = {
-  on: (listener: (event: EditorEventForIo) => void) => () => void
+  on: <TType extends EditorEventForIo['type']>(
+    type: TType,
+    listener: (event: EditorEventForIo & {type: TType}) => void,
+  ) => {unsubscribe: () => void}
   send: (message: EditorMessageForIo) => void
 }
 
@@ -116,17 +120,8 @@ export type EditorEventForIo =
  * keyed `set` of `_key` for each of the editor's unsaved blocks io gave a
  * new key, so the caret stays with its block. Group B replaces the
  * whole-value `set` with keyed instructions.
- *
- * `origin: 'local'` stands in for the editor's own undo while the undo
- * ledger lives in io: the editor applies the patches as a user action,
- * reports them as a local `change`, and refuses them while read-only.
  */
 export type EditorMessageForIo =
   | {type: 'load'; value: Array<PortableTextBlock> | undefined}
   | {type: 'resync'; value: Array<PortableTextBlock> | undefined}
-  | {
-      type: 'apply'
-      patches: Array<Patch>
-      underneath: Array<Patch>
-      origin?: 'local'
-    }
+  | {type: 'apply'; patches: Array<Patch>; underneath: Array<Patch>}
