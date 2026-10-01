@@ -82,6 +82,13 @@ export type Server = {
     transactionId: string,
   ) => ServerTransaction
   copy: () => ServerCopy
+  /** The field as it was right after the transaction. */
+  getCopyAfter: (transactionId: string) => Array<PortableTextBlock> | undefined
+  /**
+   * Applies the patches to the field without recording a transaction, so the
+   * field after the latest transaction holds a change its patches don't.
+   */
+  alterLatestCopy: (patches: Array<Patch>) => void
   getTransactions: () => Array<ServerTransaction>
   /**
    * Every transaction in the order it was recorded, with whether it changed
@@ -103,6 +110,7 @@ export function createFakeServer(initial: {
   let value: Array<PortableTextBlock> | undefined
   let rev: string | undefined
   const transactions: Array<ServerTransaction> = []
+  const copiesAfter = new Map<string, Array<PortableTextBlock> | undefined>()
   const log: Array<{transaction: ServerTransaction; changesField: boolean}> = []
   let nextFailure: RequestFailure | undefined
   const duplicates: Array<{transactionId: string; batchIds: Array<string>}> = []
@@ -148,6 +156,7 @@ export function createFakeServer(initial: {
   ): ServerTransaction {
     const recorded = {...transaction, previousRev: rev, resultRev}
     transactions.push(recorded)
+    copiesAfter.set(recorded.transactionId, structuredClone(value))
     log.push({transaction: recorded, changesField})
     rev = resultRev
     return recorded
@@ -254,6 +263,23 @@ export function createFakeServer(initial: {
       )
     },
     copy: () => ({value: structuredClone(value), rev}),
+    getCopyAfter: (transactionId) => {
+      if (!copiesAfter.has(transactionId)) {
+        throw new Error(`No transaction "${transactionId}"`)
+      }
+
+      return structuredClone(copiesAfter.get(transactionId))
+    },
+    alterLatestCopy: (patches) => {
+      const latest = transactions.at(-1)
+
+      if (!latest) {
+        throw new Error('The server has recorded no transaction')
+      }
+
+      value = applyWithContentLakeSemantics(value, patches)
+      copiesAfter.set(latest.transactionId, structuredClone(value))
+    },
     getTransactions: () => transactions,
     getLog: () => log,
     getTransaction: (transactionId) => {

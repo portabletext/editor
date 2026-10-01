@@ -63,6 +63,9 @@ export const stepDefinitions = [
   Given('hosts that confirm each batch themselves', (context: Context) => {
     context.world.setHostShape('self-confirming')
   }),
+  Given("transactions that carry the server's copy", (context: Context) => {
+    context.world.carryServerCopyOnTransactions()
+  }),
 
   ...userSteps(),
 
@@ -150,6 +153,12 @@ export const stepDefinitions = [
     "a script changes the server's block {key} so it {corruption}",
     (context: Context, key: string, corruption: Corruption) => {
       context.world.corruptByScript(key, corruption)
+    },
+  ),
+  When(
+    "the server's copy changes without a transaction so its block {key} {corruption}",
+    (context: Context, key: string, corruption: Corruption) => {
+      context.world.alterServerCopy(key, corruption)
     },
   ),
   When(

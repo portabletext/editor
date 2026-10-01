@@ -231,6 +231,49 @@ describe(createIo.name, () => {
     )
   })
 
+  test("a transaction's `value` becomes the base, and what its patches don't say reaches the editor lined up after them", () => {
+    const {editor, document, received} = createLoadedEditor('B: foo|;;B: bar')
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B: bar',
+    ).value
+    const styledValue = [
+      {...fooBlock, style: 'h1'},
+      {...barBlock, style: 'h2'},
+    ]
+    const stylePath = [{_key: 'd-k0'}, 'style']
+
+    editor.transaction({
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', stylePath)],
+      value: styledValue,
+    })
+    editor.transaction({
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [],
+      value: [styledValue[0]],
+    })
+
+    expect(editor.getBase()).toEqual({value: [styledValue[0]], rev: 'r3'})
+    expect(received).toEqual([
+      {type: 'load', value: [fooBlock, barBlock]},
+      {
+        type: 'apply',
+        patches: [
+          set('h1', stylePath),
+          set({...barBlock, style: 'h2'}, [{_key: 'd-k2'}]),
+        ],
+        underneath: [set('h1', stylePath)],
+      },
+      {type: 'apply', patches: [unset([{_key: 'd-k2'}])], underneath: []},
+    ])
+    expect(document.toTextspec()).toEqual('H1: foo|')
+  })
+
   test('a remote style under a local one reaches the editor as `underneath` of an apply with no patches', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const path = [{_key: 'd-k0'}, 'style']

@@ -462,6 +462,12 @@ export function createIo(options: {
       }
     }
 
+    const baseFromValue = 'value' in incoming
+
+    if (baseFromValue) {
+      nextValue = incoming.value
+    }
+
     if (touchedBlocks(base.value, nextValue).some(isBelowFloor)) {
       return fail({
         reason: 'invalid content',
@@ -508,12 +514,13 @@ export function createIo(options: {
       (batch) => !confirmedBatchIds.has(batch.id),
     )
 
-    if (incoming.patches.length > 0) {
+    if (incoming.patches.length > 0 || !isEqual(valueBefore, nextValue)) {
       applyToEditor({
         screenBefore,
         underneath: incoming.patches,
         ownPatches,
         unconfirmedPatches,
+        baseFromValue,
       })
       reportDroppedPending(`transaction "${incoming.transactionId}"`)
     }
@@ -964,24 +971,28 @@ export function createIo(options: {
   /**
    * Sends the editor a transaction's effect as keyed instructions for its
    * tree, authored from the working copy before and after the transaction.
-   * The editor's own patches in the transaction are already on screen. Work that
-   * was unconfirmed when the transaction arrived, `unconfirmedPatches` and
-   * the pending changes, decides how the rest arrive (see
+   * The editor's own patches in the transaction are already on screen. Work
+   * that was unconfirmed when the transaction arrived, `unconfirmedPatches`
+   * and the pending changes, decides how the rest arrive (see
    * `authorInstructions`). A transaction that left the working copy as it
    * was goes out with no `patches`: its `underneath` is what the editor's
    * history needs, since a remote change under a local one shows nowhere on
-   * screen.
+   * screen. A base taken from the transaction's `value` can differ from the
+   * old one in ways the patches don't say, so whatever the instructions
+   * leave different from the working copy is lined up after them.
    */
   function applyToEditor({
     screenBefore,
     underneath,
     ownPatches,
     unconfirmedPatches,
+    baseFromValue,
   }: {
     screenBefore: Array<PortableTextBlock> | undefined
     underneath: Array<Patch>
     ownPatches: Array<Patch>
     unconfirmedPatches: Array<Patch>
+    baseFromValue: boolean
   }) {
     const screen = deriveScreen()
 
@@ -990,14 +1001,20 @@ export function createIo(options: {
       return
     }
 
+    const instructions = authorInstructions({
+      shown: screenBefore,
+      wanted: screen,
+      patches: withoutPatches(underneath, ownPatches),
+      unlanded: [...unconfirmedPatches, ...pending.flat()],
+    })
+    const shown = applyWithContentLakeSemantics(screenBefore, instructions)
+
     editor.send({
       type: 'apply',
-      patches: authorInstructions({
-        shown: screenBefore,
-        wanted: screen,
-        patches: withoutPatches(underneath, ownPatches),
-        unlanded: [...unconfirmedPatches, ...pending.flat()],
-      }),
+      patches:
+        baseFromValue && !isEqual(shown, screen)
+          ? [...instructions, ...lineUpList(shown ?? [], screen ?? [], [])]
+          : instructions,
       underneath,
     })
   }

@@ -1,5 +1,14 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {RequestFailure} from '../protocol/host'
 import type {SavedBatch, ServerTransaction} from './server'
+
+/**
+ * A transaction as the network carries it to a host: with the field as the
+ * server held it right after, when the network includes the server's copy.
+ */
+export type CarriedTransaction = ServerTransaction & {
+  value?: Array<PortableTextBlock> | undefined
+}
 
 export type SaveRequest<TBatch extends SavedBatch> = {
   editorId: string
@@ -25,7 +34,7 @@ export type FailureReply = Reply & {status: RequestFailure}
  * What an editor's host receives from the network.
  */
 export type NetworkReceiver = {
-  receiveTransaction: (transaction: ServerTransaction) => void
+  receiveTransaction: (transaction: CarriedTransaction) => void
   receiveReply: (reply: FailureReply) => void
   /** The server has taken this editor's save request for a batch. */
   receiveSaveTaken: (batchId: string) => void
@@ -72,15 +81,21 @@ export type Network<TBatch extends SavedBatch> = {
   publish: (transaction: ServerTransaction) => void
   getFeed: (editorId: string) => Array<ServerTransaction>
   deliver: (editorId: string, transactionId: string) => void
+  /** The transaction as the network carries it to a host. */
+  carry: (transaction: ServerTransaction) => CarriedTransaction
 }
 
 /**
  * Queues between the editors' hosts and the server. Nothing moves until a
- * caller takes or delivers it, in whatever order the caller asks for.
+ * caller takes or delivers it, in whatever order the caller asks for. With
+ * `copyAfter`, each transaction carries the field as the server held it
+ * right after, as a listener with `includeResult` reports it.
  */
-export function createFakeNetwork<
-  TBatch extends SavedBatch = SavedBatch,
->(): Network<TBatch> {
+export function createFakeNetwork<TBatch extends SavedBatch = SavedBatch>(
+  options: {
+    copyAfter?: (transactionId: string) => Array<PortableTextBlock> | undefined
+  } = {},
+): Network<TBatch> {
   const receivers = new Map<string, NetworkReceiver>()
   const feeds = new Map<string, Array<ServerTransaction>>()
   const deafEditorIds = new Set<string>()
@@ -199,8 +214,15 @@ export function createFakeNetwork<
         editorId,
         feed.filter((candidate) => candidate !== transaction),
       )
-      getReceiver(editorId).receiveTransaction(transaction)
+      getReceiver(editorId).receiveTransaction(carry(transaction))
     },
+    carry,
+  }
+
+  function carry(transaction: ServerTransaction): CarriedTransaction {
+    return options.copyAfter
+      ? {...transaction, value: options.copyAfter(transaction.transactionId)}
+      : transaction
   }
 }
 

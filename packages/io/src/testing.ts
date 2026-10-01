@@ -12,6 +12,7 @@ export type {
 } from './fakes/server'
 export {createFakeNetwork} from './fakes/network'
 export type {
+  CarriedTransaction,
   FailureReply,
   Network,
   NetworkReceiver,

@@ -253,6 +253,7 @@ export function createPassThroughHost({
       previousRev: transaction.previousRev,
       resultRev: transaction.resultRev,
       patches: transaction.patches,
+      ...('value' in transaction ? {value: transaction.value} : {}),
     })
   }
 

@@ -3,13 +3,18 @@ import type {PortableTextBlock} from '@portabletext/schema'
 
 /**
  * One transaction the server recorded on the document the editor saves to,
- * with its patches scoped to the field.
+ * with its patches scoped to the field. `value`, when present, is the field
+ * as the server holds it after the transaction, from the listener's result:
+ * the editor takes it as its base instead of applying `patches` to the old
+ * one. `patches` still travel, for the editor's tree, `change` and the echo
+ * check.
  */
 export type Transaction = {
   transactionId: string
   previousRev: string | undefined
   resultRev: string | undefined
   patches: Array<Patch>
+  value?: Array<PortableTextBlock> | undefined
 }
 
 /**

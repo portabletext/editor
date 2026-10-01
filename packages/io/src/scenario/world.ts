@@ -281,12 +281,18 @@ export const heldTransactionTimeout = 10_000
  * One server, one network and two editors, each with a pass-through host.
  * The server's initial document is set up first, and the editors are created
  * on demand, so steps can shape the document before anyone loads it. A
- * created editor is in its first commit until a step ends it.
+ * created editor is in its first commit until a step ends it. With
+ * `serverCopyOnTransactions`, every transaction reaches the hosts with the
+ * field as the server held it right after, and the hosts pass it on as
+ * `value`.
  */
-export function createWorld() {
+export function createWorld(
+  options: {serverCopyOnTransactions?: boolean} = {},
+) {
   const documentKeyGenerator = createTestKeyGenerator('d-')
   let initialDocument: {value: Array<PortableTextBlock> | undefined} | undefined
   let hostShape: HostShape = 'plain'
+  let serverCopyOnTransactions = options.serverCopyOnTransactions ?? false
   let setup: Setup | undefined
   let lastResync: ResyncAttempt | undefined
   let lastLoad: LoadAttempt | undefined
@@ -298,7 +304,11 @@ export function createWorld() {
       documentId: 'document',
       document: initialDocument,
     })
-    const network = createFakeNetwork<MutationBatch>()
+    const network = createFakeNetwork<MutationBatch>(
+      serverCopyOnTransactions
+        ? {copyAfter: (transactionId) => server.getCopyAfter(transactionId)}
+        : {},
+    )
     const editors = {
       'Editor A': createWorldEditor({
         name: 'Editor A',
@@ -382,7 +392,10 @@ export function createWorld() {
     getSetup().network.publish(transaction)
 
     for (const {name, batch} of batches) {
-      getEditor(name).host.reportSaved(batch.id, transaction)
+      getEditor(name).host.reportSaved(
+        batch.id,
+        getSetup().network.carry(transaction),
+      )
     }
   }
 
@@ -673,6 +686,13 @@ export function createWorld() {
 
       hostShape = shape
     },
+    carryServerCopyOnTransactions: () => {
+      if (setup) {
+        throw new Error('The network is set up already')
+      }
+
+      serverCopyOnTransactions = true
+    },
 
     receive: (name: EditorName, batchNumber: number) => {
       publishReceived([{name, batch: getBatch(name, batchNumber)}])
@@ -747,6 +767,12 @@ export function createWorld() {
           corruptionPatches(server.copy().value, key, corruption),
           nameTransaction("the script's corruption"),
         ),
+      )
+    },
+    alterServerCopy: (key: string, corruption: Corruption) => {
+      const {server} = getSetup()
+      server.alterLatestCopy(
+        corruptionPatches(server.copy().value, key, corruption),
       )
     },
     deleteDocument: () => {

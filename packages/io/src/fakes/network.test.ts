@@ -57,6 +57,48 @@ describe(createFakeNetwork.name, () => {
     expect(taken).toEqual([{editorId: 'B', batchId: 'b1'}])
   })
 
+  test("a network that includes the server's copy delivers each transaction with the copy after it", () => {
+    const value = [
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ]
+    const transaction: ServerTransaction = {
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [],
+      batchIds: [],
+    }
+    const received = [false, true].map((includesCopy) => {
+      const network = createFakeNetwork(
+        includesCopy
+          ? {
+              copyAfter: (transactionId) =>
+                transactionId === 't1' ? value : [],
+            }
+          : {},
+      )
+      const transactions: Array<unknown> = []
+
+      network.connect('A', {
+        receiveTransaction: (carried) => {
+          transactions.push(carried)
+        },
+        receiveReply: () => {},
+        receiveSaveTaken: () => {},
+      })
+      network.publish(transaction)
+      network.deliver('A', 't1')
+
+      return transactions
+    })
+
+    expect(received).toEqual([[transaction], [{...transaction, value}]])
+  })
+
   test('replies reach the sending editor in the order the caller delivers them', () => {
     const network = createFakeNetwork()
     const received: Array<{editorId: string; reply: FailureReply}> = []

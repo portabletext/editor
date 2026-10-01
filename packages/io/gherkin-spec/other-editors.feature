@@ -122,3 +122,20 @@ Feature: Other editors
     And undo is performed
     Then Editor A shows "H1: foox|"
     And Editor A has sent nothing new
+
+  Scenario: A transaction that carries the server's copy gives the editor its base, with a change the patches don't carry
+    Given transactions that carry the server's copy
+    And the document is "B _key="k1": foo|;;B _key="k2": bar"
+    When the style is set to "h1" in Editor B
+    Then Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And the server's copy changes without a transaction so its block "k2" has a span whose text is 42
+    And Editor A receives Editor B's batch 1
+    Then Editor A reports that it is out of step, with reason "invalid content"
+    And Editor A shows "B: foo|;;B: bar"
+    When Editor A is resynced
+    Then Editor A is in step
+    And Editor A shows "H1: foo|;;B: "
+    And Editor A has sent batch 1
+    When the server receives Editor A's batch 1
+    Then the server has "H1: foo;;B: "

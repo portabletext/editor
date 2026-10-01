@@ -1,5 +1,6 @@
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
+import {describe} from 'vitest'
 import concurrentEditsFeature from '../../gherkin-spec/concurrent-edits.feature?raw'
 import keysFeature from '../../gherkin-spec/keys.feature?raw'
 import lifecycleFeature from '../../gherkin-spec/lifecycle.feature?raw'
@@ -25,15 +26,24 @@ const features = [
   sendingAndConfirmingFeature,
 ]
 
-for (const featureText of features) {
-  Feature({
-    featureText,
-    hooks: [
-      Before((context: Context) => {
-        context.world = createWorld()
-      }),
-    ],
-    stepDefinitions,
-    parameterTypes,
+const modes = [
+  {name: 'transactions with patches only', serverCopyOnTransactions: false},
+  {name: "transactions with the server's copy", serverCopyOnTransactions: true},
+]
+
+for (const {name, serverCopyOnTransactions} of modes) {
+  describe(name, () => {
+    for (const featureText of features) {
+      Feature({
+        featureText,
+        hooks: [
+          Before((context: Context) => {
+            context.world = createWorld({serverCopyOnTransactions})
+          }),
+        ],
+        stepDefinitions,
+        parameterTypes,
+      })
+    }
   })
 }

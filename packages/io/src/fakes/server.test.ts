@@ -391,6 +391,48 @@ describe(createFakeServer.name, () => {
     ).toThrow('The document does not exist')
   })
 
+  test('the copy after each transaction is kept, and altering the latest copy changes the field without a transaction', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {value} = parseTextspec({keyGenerator}, 'B: foo')
+    const server = createFakeServer({documentId: 'document', document: {value}})
+    server.patchField([set('h1', [{_key: 'k0'}, 'style'])], 't1')
+
+    server.patchField([set('h2', [{_key: 'k0'}, 'style'])], 't2')
+    server.alterLatestCopy([
+      set('foox', [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text']),
+    ])
+
+    expect({
+      transactions: server
+        .getTransactions()
+        .map((transaction) => transaction.transactionId),
+      first: server.getCopyAfter('t1'),
+      latest: server.getCopyAfter('t2'),
+      copy: server.copy(),
+    }).toEqual({
+      transactions: ['t1', 't2'],
+      first: [{...value[0], style: 'h1'}],
+      latest: [
+        {
+          ...value[0],
+          style: 'h2',
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+      ],
+      copy: {
+        value: [
+          {
+            ...value[0],
+            style: 'h2',
+            children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+          },
+        ],
+        rev: 'r3',
+      },
+    })
+    expect(() => server.getCopyAfter('t9')).toThrow('No transaction "t9"')
+  })
+
   test('deleting and recreating the document', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
