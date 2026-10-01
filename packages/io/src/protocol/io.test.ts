@@ -7,12 +7,12 @@ import {
 } from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {parseTextspec} from './document'
-import {createIoEditor} from './editor'
-import {createNetwork} from './fakes/network'
-import {createEditorWithIo} from './scenario/world'
+import {parseTextspec} from '../fakes/document'
+import {createFakeNetwork} from '../fakes/network'
+import {createEditorWithIo} from '../scenario/world'
+import {createIo} from './io'
 
-describe(createIoEditor.name, () => {
+describe(createIo.name, () => {
   test('held transactions are applied in chain order once the missing one arrives', () => {
     const {editor, document, clock, heard} = createLoadedEditor('B: foo')
     const path = [{_key: 'd-k0'}, 'style']
@@ -962,7 +962,7 @@ describe(createIoEditor.name, () => {
   })
 
   test('a key repair never picks a key the value already has', () => {
-    const {clock} = createNetwork()
+    const {clock} = createFakeNetwork()
     const {
       document,
       io: editor,
@@ -1019,7 +1019,7 @@ describe(createIoEditor.name, () => {
   })
 
   test('a second load in the first commit replaces the first, repairs included, and a load after the editor is ready throws', () => {
-    const {clock} = createNetwork()
+    const {clock} = createFakeNetwork()
     const {
       document,
       io: editor,
@@ -1491,7 +1491,7 @@ describe(createIoEditor.name, () => {
   })
 
   test("the editor side is ready once the editor's first commit ends, with a load or without one", () => {
-    const {clock} = createNetwork()
+    const {clock} = createFakeNetwork()
     const results = [false, true].map((loaded) => {
       const {document, io: editor} = createEditorWithIo({
         id: 'A',
@@ -1527,7 +1527,7 @@ describe(createIoEditor.name, () => {
 })
 
 function createLoadedEditor(textspec: string | undefined) {
-  const {clock} = createNetwork()
+  const {clock} = createFakeNetwork()
   const {
     document,
     io: editor,

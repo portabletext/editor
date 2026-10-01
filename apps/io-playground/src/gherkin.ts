@@ -1,4 +1,8 @@
-import {compileScenarios, type EditorName, type World} from '@portabletext/io'
+import {
+  compileScenarios,
+  type EditorName,
+  type World,
+} from '@portabletext/io/testing'
 
 export type StepKeyword = 'Given' | 'When' | 'Then'
 

@@ -7,7 +7,7 @@ import {
   type ServerSnapshot,
   type TransactionSource,
   type WorldSnapshot,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 import {plural} from './ui'
 
 type Patch = BatchSnapshot['patches'][number]

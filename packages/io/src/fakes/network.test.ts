@@ -1,11 +1,11 @@
 import {set} from '@portabletext/patches'
 import {describe, expect, test} from 'vitest'
-import {createNetwork, type Reply} from './network'
+import {createFakeNetwork, type Reply} from './network'
 import type {ServerTransaction} from './server'
 
-describe(createNetwork.name, () => {
+describe(createFakeNetwork.name, () => {
   test('save requests leave in the order the caller takes them', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const batchA1 = {id: 'a1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
     const batchA2 = {id: 'a2', patches: [set('h2', [{_key: 'k0'}, 'style'])]}
     const batchB1 = {
@@ -37,7 +37,7 @@ describe(createNetwork.name, () => {
   })
 
   test('taking a save request tells the editor that sent it', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const taken: Array<{editorId: string; batchId: string}> = []
 
     for (const editorId of ['A', 'B']) {
@@ -58,7 +58,7 @@ describe(createNetwork.name, () => {
   })
 
   test('replies reach the sending editor in the order the caller delivers them', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const received: Array<{editorId: string; reply: Reply}> = []
 
     for (const editorId of ['A', 'B']) {
@@ -93,7 +93,7 @@ describe(createNetwork.name, () => {
   })
 
   test('a lost reply waits until the host retries the save', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const reply: Reply = {editorId: 'A', batchId: 'a1'}
 
     network.loseReply(reply)
@@ -110,7 +110,7 @@ describe(createNetwork.name, () => {
   })
 
   test('each editor receives its feed in the order the caller delivers it', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const received: Array<{editorId: string; transactionId: string}> = []
     const firstTransaction: ServerTransaction = {
       transactionId: 't1',
@@ -159,7 +159,7 @@ describe(createNetwork.name, () => {
   })
 
   test('an editor that connects late gets only later transactions', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const receiver = {
       receiveTransaction: () => {},
       receiveReply: () => {},
@@ -182,7 +182,7 @@ describe(createNetwork.name, () => {
   })
 
   test('an editor connected without a listener gets no transactions', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const receiver = {
       receiveTransaction: () => {},
       receiveReply: () => {},
@@ -205,7 +205,7 @@ describe(createNetwork.name, () => {
   })
 
   test('the clock runs what falls due, in due order, only when advanced', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const fired: Array<{name: string; at: number}> = []
 
     network.clock.schedule(10_000, () => {
@@ -238,7 +238,7 @@ describe(createNetwork.name, () => {
   })
 
   test('a callback can schedule another that falls due in the same advance', () => {
-    const network = createNetwork()
+    const network = createFakeNetwork()
     const fired: Array<number> = []
 
     network.clock.schedule(1_000, () => {

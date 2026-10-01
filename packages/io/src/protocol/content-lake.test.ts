@@ -1,8 +1,8 @@
 import {diffMatchPatch, insert, set, unset} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {parseTextspec} from '../fakes/document'
 import {applyWithContentLakeSemantics, hasTarget} from './content-lake'
-import {parseTextspec} from './document'
 
 describe(applyWithContentLakeSemantics.name, () => {
   test('a patch whose parent is missing does nothing', () => {

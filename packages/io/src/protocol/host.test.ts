@@ -1,10 +1,10 @@
 import {diffMatchPatch, set} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {parseTextspec} from './document'
-import {createNetwork} from './fakes/network'
+import {parseTextspec} from '../fakes/document'
+import {createFakeNetwork} from '../fakes/network'
+import {createEditorWithIo} from '../scenario/world'
 import {createPassThroughHost} from './host'
-import {createEditorWithIo} from './scenario/world'
 import type {Load, MutationBatch, MutationSent, Transaction} from './types'
 
 describe(createPassThroughHost.name, () => {
@@ -366,7 +366,7 @@ function createHostedEditor(
     outcomeMethod?: 'resubmit' | 'history'
   } = {},
 ) {
-  const {clock} = createNetwork()
+  const {clock} = createFakeNetwork()
   const {
     document,
     io: editor,
@@ -393,7 +393,7 @@ function createHostedEditor(
     mutationSent(incoming)
   }
   const host = createPassThroughHost({
-    editor,
+    io: editor,
     save: (batch) => saved.push(batch),
     resubmit: (batch, transactionId) => {
       resubmitted.push({batchId: batch.id, transactionId})

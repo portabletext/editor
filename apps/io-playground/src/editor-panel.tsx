@@ -3,7 +3,7 @@ import type {
   EditorName,
   EditorSnapshot,
   HeardEvent,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 import type {ReactNode} from 'react'
 import type {ConceptName} from './concepts'
 import {useOpenDetails} from './drawers'

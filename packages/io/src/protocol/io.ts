@@ -35,16 +35,16 @@ export type Clock = {
 }
 
 /** `'loading'` until the editor's `ready`, `'unmounted'` after its `closing`. */
-export type IoEditorStatus = 'loading' | 'ready' | 'unmounted'
+export type IoStatus = 'loading' | 'ready' | 'unmounted'
 
 /**
  * Whether the user's work is saved: `'saving'` while a batch is in flight or
  * changes are pending, `'blocked'` after a rejection and `'out of step'` after
  * an error or a lost feed, both until the next resync.
  */
-export type IoEditorSync = 'synced' | 'saving' | 'blocked' | 'out of step'
+export type IoSync = 'synced' | 'saving' | 'blocked' | 'out of step'
 
-export type IoEditorEvent =
+export type IoEvent =
   | ({type: 'mutation'} & MutationBatch)
   | ({type: 'error'} & ErrorEvent)
   | ({type: 'work dropped'} & WorkDropped)
@@ -55,7 +55,7 @@ export type IoEditorEvent =
  * `transactionIds` holds the proposed transaction ID until the host names
  * another with `mutation sent`.
  */
-export type IoEditorSentBatch = {
+export type IoSentBatch = {
   id: string
   transactionIds: Array<string>
   patchCount: number
@@ -66,10 +66,10 @@ export type IoEditorSentBatch = {
  * transaction came back but waits in `held` behind a missing one, and
  * `pending` holds one entry per local change not sent yet.
  */
-export type IoEditorLedger = {
-  inFlight: IoEditorSentBatch | undefined
-  rejected: IoEditorSentBatch | undefined
-  echoed: Array<IoEditorSentBatch>
+export type IoLedger = {
+  inFlight: IoSentBatch | undefined
+  rejected: IoSentBatch | undefined
+  echoed: Array<IoSentBatch>
   pending: Array<{patchCount: number; patches: Array<Patch>}>
   held: Array<
     Pick<Transaction, 'transactionId' | 'previousRev' | 'resultRev'> & {
@@ -81,12 +81,12 @@ export type IoEditorLedger = {
   undoDepth: number
 }
 
-export type IoEditor = {
-  getStatus: () => IoEditorStatus
-  getSync: () => IoEditorSync
+export type Io = {
+  getStatus: () => IoStatus
+  getSync: () => IoSync
   getBase: () => Load
-  inspect: () => IoEditorLedger
-  on: (listener: (event: IoEditorEvent) => void) => () => void
+  inspect: () => IoLedger
+  on: (listener: (event: IoEvent) => void) => () => void
 
   /**
    * The first content, accepted only before the editor's `ready`. A second
@@ -170,17 +170,17 @@ type HistoryEntry = {
  * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
  * editor's `id`. `keyGenerator` mints keys for repairs and re-keyed inserts.
  */
-export function createIoEditor(options: {
+export function createIo(options: {
   id: string
   editor: EditorForIo
   keyGenerator: () => string
   clock: Clock
-}): IoEditor {
+}): Io {
   const {editor, keyGenerator, clock} = options
-  const listeners = new Set<(event: IoEditorEvent) => void>()
+  const listeners = new Set<(event: IoEvent) => void>()
   const emittedBatchIds = new Set<string>()
 
-  let status: IoEditorStatus = 'loading'
+  let status: IoStatus = 'loading'
   let base: Load = {value: undefined, rev: undefined}
   let outOfStep = false
   let batchCounter = 0
@@ -210,7 +210,7 @@ export function createIoEditor(options: {
     }
   })
 
-  function emit(event: IoEditorEvent) {
+  function emit(event: IoEvent) {
     for (const listener of listeners) {
       listener(event)
     }
@@ -939,7 +939,7 @@ export function createIoEditor(options: {
     }
   }
 
-  function getSync(): IoEditorSync {
+  function getSync(): IoSync {
     if (outOfStep) {
       return 'out of step'
     }
@@ -988,7 +988,7 @@ export function createIoEditor(options: {
   }
 }
 
-function describeSentBatch(batch: SentBatch): IoEditorSentBatch {
+function describeSentBatch(batch: SentBatch): IoSentBatch {
   return {
     id: batch.id,
     transactionIds: [...batch.transactionIds],

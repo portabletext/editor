@@ -5,9 +5,9 @@ import {
   createsBlock,
   emptiesField,
   formatTextspec,
-} from '../document'
-import type {DocumentStatus} from '../document'
-import type {ChangeEvent, WorkDropped} from '../types'
+} from '../fakes/document'
+import type {FakeDocumentStatus} from '../fakes/document'
+import type {ChangeEvent, WorkDropped} from '../protocol/types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
 import type {BatchReference, ExpectedSync} from './parameter-types'
 import {
@@ -482,7 +482,7 @@ export const stepDefinitions = [
   }),
   Then(
     "{editor}'s status is {status}",
-    (context: Context, name: EditorName, status: DocumentStatus) => {
+    (context: Context, name: EditorName, status: FakeDocumentStatus) => {
       checkEqual(
         `${name}'s status`,
         context.world.getEditor(name).document.getStatus(),

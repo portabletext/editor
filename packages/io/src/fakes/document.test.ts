@@ -8,16 +8,16 @@ import {
 } from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import type {EditorEventForIo} from '../protocol/types'
 import {
   comparableTextspec,
-  createDocument,
+  createFakeDocument,
   createsBlock,
   emptiesField,
   formatTextspec,
   parseTextspec,
-  type Document,
+  type FakeDocument,
 } from './document'
-import type {EditorEventForIo} from './types'
 
 describe(parseTextspec.name, () => {
   test('reads blocks, styles and the caret', () => {
@@ -59,7 +59,7 @@ describe(parseTextspec.name, () => {
   })
 })
 
-describe(createDocument.name, () => {
+describe(createFakeDocument.name, () => {
   test('writes back the notation it was built from', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument(
@@ -735,7 +735,7 @@ describe('the editor seam', () => {
 
   test('`ready` fires when the first commit ends and `closing` just before the editor stops, and actions after that do nothing', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createFakeDocument({keyGenerator}, {value: undefined})
     const events: Array<{type: string; status: string}> = []
 
     document.on((event) => {
@@ -761,7 +761,7 @@ describe('the editor seam', () => {
 
   test('a load in the first commit replaces the content without a change, and a load after it throws', () => {
     const keyGenerator = createTestKeyGenerator()
-    const document = createDocument({keyGenerator}, {value: undefined})
+    const document = createFakeDocument({keyGenerator}, {value: undefined})
     const events: Array<EditorEventForIo> = []
 
     document.on((event) => events.push(event))
@@ -1039,15 +1039,15 @@ describe(emptiesField.name, () => {
 })
 
 function createReadyDocument(
-  ...parameters: Parameters<typeof createDocument>
-): ReturnType<typeof createDocument> {
-  const document = createDocument(...parameters)
+  ...parameters: Parameters<typeof createFakeDocument>
+): ReturnType<typeof createFakeDocument> {
+  const document = createFakeDocument(...parameters)
   document.mount()
 
   return document
 }
 
-function listen(document: Document): Array<EditorEventForIo> {
+function listen(document: FakeDocument): Array<EditorEventForIo> {
   const events: Array<EditorEventForIo> = []
   document.on((event) => events.push(event))
 

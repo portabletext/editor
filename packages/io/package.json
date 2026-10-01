@@ -9,6 +9,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./testing": "./src/testing.ts",
     "./gherkin-spec/*": "./gherkin-spec/*",
     "./package.json": "./package.json"
   },

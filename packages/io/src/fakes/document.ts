@@ -23,7 +23,11 @@ import {
   type TextspecSelection,
 } from '@portabletext/test'
 import {parse} from '@textspec/notation'
-import type {EditorEventForIo, EditorForIo, EditorMessageForIo} from './types'
+import type {
+  EditorEventForIo,
+  EditorForIo,
+  EditorMessageForIo,
+} from '../protocol/types'
 
 const schema = compileSchema(
   defineSchema({styles: [{name: 'h1'}, {name: 'h2'}, {name: 'h3'}]}),
@@ -36,7 +40,7 @@ const schema = compileSchema(
 export type Caret = {blockKey: string; offset: number}
 
 /** `'loading'` until the first commit ends with `mount`. */
-export type DocumentStatus = 'loading' | 'ready' | 'unmounted'
+export type FakeDocumentStatus = 'loading' | 'ready' | 'unmounted'
 
 /**
  * The fake editor. It satisfies `EditorForIo`: every user action that
@@ -46,8 +50,8 @@ export type DocumentStatus = 'loading' | 'ready' | 'unmounted'
  * stops. Actions before `mount` throw, and actions after `close` or while
  * read-only do nothing.
  */
-export type Document = EditorForIo & {
-  getStatus: () => DocumentStatus
+export type FakeDocument = EditorForIo & {
+  getStatus: () => FakeDocumentStatus
   getReadOnly: () => boolean
   /** Ends the first commit. */
   mount: () => void
@@ -74,12 +78,12 @@ export type Document = EditorForIo & {
   deleteBlock: (text: string) => void
 }
 
-export function createDocument(
+export function createFakeDocument(
   context: {keyGenerator: () => string},
   initial: {value: Array<PortableTextBlock> | undefined; caret?: Caret},
-): Document {
+): FakeDocument {
   const listeners = new Set<(event: EditorEventForIo) => void>()
-  let status: DocumentStatus = 'loading'
+  let status: FakeDocumentStatus = 'loading'
   let readOnly = false
   let value: Array<PortableTextBlock> = []
   let placeholderKey: string | undefined

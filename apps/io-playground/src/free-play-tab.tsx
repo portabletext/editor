@@ -5,7 +5,7 @@ import {
   type HostShape,
   type ServerCopyName,
   type World,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 import {useState} from 'react'
 import {
   applicableActions,

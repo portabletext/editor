@@ -1,4 +1,4 @@
-import {createWorld, type World} from '@portabletext/io'
+import {createWorld, type World} from '@portabletext/io/testing'
 import {useEffect, useRef, useState, type ReactNode} from 'react'
 import {features} from './features'
 import {runStep} from './gherkin'

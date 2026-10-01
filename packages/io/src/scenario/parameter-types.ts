@@ -1,7 +1,7 @@
 import {createParameterType} from 'racejar'
-import type {DocumentStatus} from '../document'
-import type {IoEditorSync} from '../editor'
-import type {WorkDropped} from '../types'
+import type {FakeDocumentStatus} from '../fakes/document'
+import type {IoSync} from '../protocol/io'
+import type {WorkDropped} from '../protocol/types'
 import type {EditorName, ServerCopyName} from './world'
 
 export type BatchReference = {name: EditorName; batchNumber: number}
@@ -10,7 +10,7 @@ export type BatchReference = {name: EditorName; batchNumber: number}
  * A sync state a scenario checks for. The editor has no `'stalled'` state, so
  * a scenario that expects it is known red.
  */
-export type ExpectedSync = IoEditorSync | 'stalled'
+export type ExpectedSync = IoSync | 'stalled'
 
 export const parameterTypes = [
   createParameterType<EditorName>({
@@ -41,7 +41,7 @@ export const parameterTypes = [
     name: 'copy',
     matcher: /no document|no field|an empty list/,
   }),
-  createParameterType<Exclude<DocumentStatus, 'unmounted'>>({
+  createParameterType<Exclude<FakeDocumentStatus, 'unmounted'>>({
     name: 'status',
     matcher: /"(loading|ready)"/,
   }),

@@ -1,4 +1,4 @@
-import type {EditorName, World} from '@portabletext/io'
+import type {EditorName, World} from '@portabletext/io/testing'
 import {useState} from 'react'
 import {
   applicableActions,

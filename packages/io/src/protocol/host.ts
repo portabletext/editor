@@ -1,4 +1,4 @@
-import type {IoEditor} from './editor'
+import type {Io} from './io'
 import type {Load, MutationBatch, Transaction} from './types'
 
 export type PassThroughHost = {
@@ -84,7 +84,7 @@ export type PassThroughHost = {
  * the editor holds it for 10 s before it reports `out of order`.
  */
 export function createPassThroughHost({
-  editor,
+  io,
   save,
   resubmit,
   hasTransaction,
@@ -94,7 +94,7 @@ export function createPassThroughHost({
   selfConfirming = false,
   outcomeMethod = 'resubmit',
 }: {
-  editor: IoEditor
+  io: Io
   save: (batch: MutationBatch) => void
   /** Sends a save request again and answers whether it saved. */
   resubmit: (
@@ -120,7 +120,7 @@ export function createPassThroughHost({
   let coveredRevs = new Set<string>()
   const previousRevs = new Map<string, string | undefined>()
 
-  editor.on((event) => {
+  io.on((event) => {
     if (event.type !== 'mutation') {
       return
     }
@@ -212,7 +212,7 @@ export function createPassThroughHost({
       inFlightBatchId = undefined
     }
 
-    editor.transaction({
+    io.transaction({
       transactionId: transaction.transactionId,
       previousRev: transaction.previousRev,
       resultRev: transaction.resultRev,
@@ -265,7 +265,7 @@ export function createPassThroughHost({
       }
 
       transactionIds.set(batchId, transactionId)
-      editor.mutationSent({id: batchId, transactionId})
+      io.mutationSent({id: batchId, transactionId})
     },
     forward,
     reportSaved: (transaction) => {
@@ -277,7 +277,7 @@ export function createPassThroughHost({
       if (unnamedBatchIds.delete(batchId)) {
         const transactionId = requestTransactionIds.get(batchId) ?? batchId
         transactionIds.set(batchId, transactionId)
-        editor.mutationSent({id: batchId, transactionId})
+        io.mutationSent({id: batchId, transactionId})
       }
 
       if (batchId !== untakenBatchId) {
@@ -297,14 +297,14 @@ export function createPassThroughHost({
         inFlightBatchId = undefined
       }
 
-      editor.mutationRejected({id: batchId})
+      io.mutationRejected({id: batchId})
     },
     retry: resubmitBatch,
     feedLost: () => {
-      editor.feedLost()
+      io.feedLost()
     },
     load: () => {
-      editor.load(fetchCoveredCopy())
+      io.load(fetchCoveredCopy())
     },
     resync: ({discardUnsent, outcomeOf}) => {
       const outcomes =
@@ -316,7 +316,7 @@ export function createPassThroughHost({
         inFlightBatchId = undefined
       }
 
-      editor.resync({
+      io.resync({
         ...fetchCoveredCopy(),
         ...(discardUnsent ? {discardUnsent: true as const} : {}),
         ...(outcomes ? {outcomes} : {}),

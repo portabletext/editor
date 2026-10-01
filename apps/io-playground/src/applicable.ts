@@ -3,7 +3,7 @@ import type {
   EditorSnapshot,
   NetworkSnapshot,
   WorldSnapshot,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 
 /**
  * Whether the protocol lets an action happen now, why not, and the prompt

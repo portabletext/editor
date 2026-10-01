@@ -1,4 +1,4 @@
-import type {NetworkSnapshot, ServerSnapshot} from '@portabletext/io'
+import type {NetworkSnapshot, ServerSnapshot} from '@portabletext/io/testing'
 import {useState} from 'react'
 import type {Applicability} from './applicable'
 import {useOpenDetails} from './drawers'

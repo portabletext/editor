@@ -2,7 +2,7 @@ import type {
   EditorSnapshot,
   NetworkSnapshot,
   WorldSnapshot,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 import {describe, expect, test} from 'vitest'
 import {
   applicableActions,

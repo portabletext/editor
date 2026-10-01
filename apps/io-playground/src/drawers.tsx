@@ -2,7 +2,7 @@ import {
   editorNames,
   type EditorName,
   type WorldSnapshot,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 import {createContext, useContext, type ReactNode} from 'react'
 import {concepts, notationRules} from './concepts'
 import {describeSource} from './narration'

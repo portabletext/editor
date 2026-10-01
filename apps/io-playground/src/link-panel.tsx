@@ -3,7 +3,7 @@ import type {
   EditorSnapshot,
   NetworkSnapshot,
   TransactionSource,
-} from '@portabletext/io'
+} from '@portabletext/io/testing'
 import type {ReactNode} from 'react'
 import type {LinkApplicability} from './applicable'
 import {useOpenDetails} from './drawers'

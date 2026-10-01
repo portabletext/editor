@@ -1,6 +1,6 @@
 import {set, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {applyWithContentLakeSemantics} from '../content-lake'
+import {applyWithContentLakeSemantics} from '../protocol/content-lake'
 
 /**
  * A batch as the server sees it: the batch ID and its patches, scoped to the
@@ -84,7 +84,7 @@ export type Server = {
  * A fake Content Lake holding one document. Revisions count up from `r1`, and
  * the revision is `undefined` while the document doesn't exist.
  */
-export function createServer(initial: {
+export function createFakeServer(initial: {
   documentId: string
   document: {value: Array<PortableTextBlock> | undefined} | undefined
 }): Server {

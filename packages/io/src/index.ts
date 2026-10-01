@@ -1,17 +1,20 @@
-export {createIoEditor} from './editor'
+export {createIo} from './protocol/io'
 export type {
   Clock,
-  IoEditor,
-  IoEditorEvent,
-  IoEditorLedger,
-  IoEditorSentBatch,
-  IoEditorStatus,
-  IoEditorSync,
-} from './editor'
-export {createPassThroughHost} from './host'
-export type {PassThroughHost} from './host'
+  Io,
+  IoEvent,
+  IoLedger,
+  IoSentBatch,
+  IoStatus,
+  IoSync,
+} from './protocol/io'
+export {createPassThroughHost} from './protocol/host'
+export type {PassThroughHost} from './protocol/host'
 export type {
   ChangeEvent,
+  EditorEventForIo,
+  EditorForIo,
+  EditorMessageForIo,
   ErrorEvent,
   Load,
   MutationBatch,
@@ -20,51 +23,4 @@ export type {
   Resync,
   Transaction,
   WorkDropped,
-} from './types'
-
-export type {
-  Network,
-  NetworkReceiver,
-  Reply,
-  SaveRequest,
-  VirtualClock,
-} from './fakes/network'
-export type {
-  SavedBatch,
-  Server,
-  ServerCopy,
-  ServerTransaction,
-  SubmitResult,
-} from './fakes/server'
-
-export {
-  createWorld,
-  editorNames,
-  heldTransactionTimeout,
-} from './scenario/world'
-export type {
-  BatchSnapshot,
-  EditorName,
-  EditorSnapshot,
-  Heard,
-  HostShape,
-  HeardEvent,
-  NamedTransaction,
-  NetworkSnapshot,
-  ServerCopyName,
-  ServerSnapshot,
-  TransactionSource,
-  World,
-  WorldEditor,
-  WorldSnapshot,
-} from './scenario/world'
-export {stepDefinitions} from './scenario/steps'
-export type {Context} from './scenario/steps'
-export {parameterTypes} from './scenario/parameter-types'
-export type {BatchReference} from './scenario/parameter-types'
-export {compileScenarios} from './scenario/compile'
-export type {
-  CompiledScenario,
-  CompiledScenarios,
-  CompiledStep,
-} from './scenario/compile'
+} from './protocol/types'

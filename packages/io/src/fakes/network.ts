@@ -71,7 +71,7 @@ export type Network<TBatch extends SavedBatch> = {
  * Queues between the editors' hosts and the server. Nothing moves until a
  * caller takes or delivers it, in whatever order the caller asks for.
  */
-export function createNetwork<
+export function createFakeNetwork<
   TBatch extends SavedBatch = SavedBatch,
 >(): Network<TBatch> {
   const receivers = new Map<string, NetworkReceiver>()

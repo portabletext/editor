@@ -7,14 +7,14 @@ import {
 } from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {parseTextspec} from '../document'
-import {createServer} from './server'
+import {parseTextspec} from './document'
+import {createFakeServer} from './server'
 
-describe(createServer.name, () => {
+describe(createFakeServer.name, () => {
   test('an existing document starts at the first revision', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     expect(server.copy()).toEqual({
       value: [
@@ -31,7 +31,10 @@ describe(createServer.name, () => {
   })
 
   test('a missing document has no revision', () => {
-    const server = createServer({documentId: 'document', document: undefined})
+    const server = createFakeServer({
+      documentId: 'document',
+      document: undefined,
+    })
 
     expect(server.copy()).toEqual({value: undefined, rev: undefined})
   })
@@ -39,7 +42,7 @@ describe(createServer.name, () => {
   test('a batch that changes nothing is still recorded and moves the revision', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'H1: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     const transaction = server.receive(
       {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]},
@@ -60,7 +63,7 @@ describe(createServer.name, () => {
   test('a patch for a block that is gone does nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     const transaction = server.receive(
       {
@@ -85,7 +88,7 @@ describe(createServer.name, () => {
   })
 
   test('a patch into a field that is gone does nothing', () => {
-    const server = createServer({
+    const server = createFakeServer({
       documentId: 'document',
       document: {value: undefined},
     })
@@ -114,7 +117,7 @@ describe(createServer.name, () => {
   test('an insert with a key that already exists is stored', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo;;B _key="k9": baz')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
     const [barBlock] = parseTextspec({keyGenerator}, 'B _key="k9": bar').value
 
     server.receive(
@@ -143,7 +146,10 @@ describe(createServer.name, () => {
   })
 
   test('a batch for a missing document creates it', () => {
-    const server = createServer({documentId: 'document', document: undefined})
+    const server = createFakeServer({
+      documentId: 'document',
+      document: undefined,
+    })
     const keyGenerator = createTestKeyGenerator()
     const [placeholder] = parseTextspec({keyGenerator}, 'B: ').value
     const patches = [
@@ -177,7 +183,7 @@ describe(createServer.name, () => {
   test('two batches received as one are one transaction', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
     const fooPatch = diffMatchPatch('foo', 'foox', [
       {_key: 'k0'},
       'children',
@@ -227,7 +233,7 @@ describe(createServer.name, () => {
   test('a save request with a transaction ID the history lists is refused with a 409 and changes nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
     const batch = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
 
     const first = server.submit(batch, 't1')
@@ -263,7 +269,7 @@ describe(createServer.name, () => {
   test('a refused batch records nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     server.refuse('b1')
 
@@ -276,7 +282,7 @@ describe(createServer.name, () => {
   test('a refused batch submitted again is refused again and records nothing', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     server.refuse('b1')
 
@@ -294,7 +300,7 @@ describe(createServer.name, () => {
   test('a change to another field moves the revision with no field patches', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     expect(server.changeOtherField('t1')).toEqual({
       transactionId: 't1',
@@ -309,7 +315,7 @@ describe(createServer.name, () => {
   test('setting the whole field records a whole-field set and moves the revision', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
     const nextValue = parseTextspec({keyGenerator}, 'B: bar').value
 
     const transaction = server.setField(nextValue, 't1')
@@ -327,7 +333,10 @@ describe(createServer.name, () => {
 
   test('setting the whole field of a missing document throws', () => {
     const keyGenerator = createTestKeyGenerator()
-    const server = createServer({documentId: 'document', document: undefined})
+    const server = createFakeServer({
+      documentId: 'document',
+      document: undefined,
+    })
 
     expect(() =>
       server.setField(parseTextspec({keyGenerator}, 'B: bar').value, 't1'),
@@ -337,7 +346,7 @@ describe(createServer.name, () => {
   test('deleting and recreating the document', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
     const recreatedValue = parseTextspec({keyGenerator}, 'B: bar').value
 
     const deletion = server.deleteDocument('t1')
@@ -378,7 +387,7 @@ describe(createServer.name, () => {
   test('the log marks the transactions that left the field as it was', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'H1: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     const unchanged = server.receive(
       {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]},
@@ -402,7 +411,7 @@ describe(createServer.name, () => {
   test('a copy does not share content with the server', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
-    const server = createServer({documentId: 'document', document: {value}})
+    const server = createFakeServer({documentId: 'document', document: {value}})
 
     const copy = server.copy()
     copy.value?.pop()

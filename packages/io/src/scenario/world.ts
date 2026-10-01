@@ -2,33 +2,33 @@ import {unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {
-  createDocument,
+  createFakeDocument,
   formatTextspec,
   parseTextspec,
-  type Document,
-  type DocumentStatus,
-} from '../document'
+  type FakeDocument,
+  type FakeDocumentStatus,
+} from '../fakes/document'
+import {createFakeNetwork, type Network} from '../fakes/network'
 import {
-  createIoEditor,
-  type Clock,
-  type IoEditor,
-  type IoEditorSentBatch,
-  type IoEditorSync,
-} from '../editor'
-import {createNetwork, type Network} from '../fakes/network'
-import {
-  createServer,
+  createFakeServer,
   type Server,
   type ServerTransaction,
 } from '../fakes/server'
-import {createPassThroughHost, type PassThroughHost} from '../host'
+import {createPassThroughHost, type PassThroughHost} from '../protocol/host'
+import {
+  createIo,
+  type Clock,
+  type Io,
+  type IoSentBatch,
+  type IoSync,
+} from '../protocol/io'
 import type {
   ChangeEvent,
   ErrorEvent,
   MutationBatch,
   MutationSent,
   WorkDropped,
-} from '../types'
+} from '../protocol/types'
 
 export type EditorName = 'Editor A' | 'Editor B'
 
@@ -87,8 +87,8 @@ export type BatchSnapshot = {
 
 export type EditorSnapshot = {
   id: string
-  status: DocumentStatus
-  sync: IoEditorSync
+  status: FakeDocumentStatus
+  sync: IoSync
   /** What the editor shows, with the caret. */
   screen: string
   /** What the editor shows, as blocks, the placeholder included. */
@@ -192,8 +192,8 @@ export type WorldSnapshot = {
 
 export type WorldEditor = {
   /** The fake editor, which the user steps act on. */
-  document: Document
-  io: IoEditor
+  document: FakeDocument
+  io: Io
   host: PassThroughHost
   heard: Heard
   /** Every `mutation sent` the host gave the editor. */
@@ -244,11 +244,11 @@ export function createWorld() {
   const namedTransactionCounts = new Map<NamedTransaction, number>()
 
   function startEditors(): Setup {
-    const server = createServer({
+    const server = createFakeServer({
       documentId: 'document',
       document: initialDocument,
     })
-    const network = createNetwork<MutationBatch>()
+    const network = createFakeNetwork<MutationBatch>()
     const editors = {
       'Editor A': createWorldEditor({
         name: 'Editor A',
@@ -377,7 +377,7 @@ export function createWorld() {
     const {server} = getSetup()
     const ledger = io.inspect()
     const base = io.getBase()
-    const describeBatch = (batch: IoEditorSentBatch): BatchSnapshot => ({
+    const describeBatch = (batch: IoSentBatch): BatchSnapshot => ({
       batchNumber: locateBatch(batch.id).batchNumber,
       transactionIds: batch.transactionIds,
       patchCount: batch.patchCount,
@@ -777,7 +777,7 @@ function createWorldEditor({
   })
   const mutationsSent: Array<MutationSent> = []
   const host = createPassThroughHost({
-    editor: {
+    io: {
       ...io,
       mutationSent: (mutationSent) => {
         mutationsSent.push(mutationSent)
@@ -837,7 +837,7 @@ export function createEditorWithIo({
   id: string
   keyGenerator: () => string
   clock: Clock
-}): {document: Document; io: IoEditor; heard: Heard} {
+}): {document: FakeDocument; io: Io; heard: Heard} {
   const heard: Heard = {
     mutations: [],
     changes: [],
@@ -846,7 +846,7 @@ export function createEditorWithIo({
     workDropped: [],
     events: [],
   }
-  const document = createDocument({keyGenerator}, {value: undefined})
+  const document = createFakeDocument({keyGenerator}, {value: undefined})
 
   document.on((event) => {
     if (event.type !== 'change') {
@@ -862,7 +862,7 @@ export function createEditorWithIo({
     })
   })
 
-  const io = createIoEditor({id, editor: document, keyGenerator, clock})
+  const io = createIo({id, editor: document, keyGenerator, clock})
 
   io.on((event) => {
     switch (event.type) {
