@@ -75,6 +75,36 @@ Feature: Concurrent edits
     Then Editor A shows "B: yfoo| bar"
     And Editor A's last apply carries the patches of Editor B's batch 1
 
+  Scenario: The caret stays after the typing when its echo comes back folded with Editor B's text before it
+    Given hosts that fold batches into shared requests
+    And the document is "B: |foo bar"
+    When the caret is put after "bar"
+    And "x" is typed
+    Then Editor A shows "B: foo barx|"
+    And Editor A has sent batch 1
+    When "baz " is typed in Editor B
+    Then Editor B shows "B: baz |foo bar"
+    And Editor B has sent batch 1
+    When the server receives Editor A's batch 1 and Editor B's batch 1 as one transaction
+    Then the server has "B: baz foo barx"
+    When Editor A's batch 1 comes back
+    Then Editor A shows "B: baz foo barx|"
+
+  Scenario: The caret stays after unsent typing when Editor B types before earlier typing in the same span
+    Given the document is "B: |foo bar baz"
+    When "qux " is typed
+    Then Editor A shows "B: qux |foo bar baz"
+    And Editor A has sent batch 1
+    When the caret is put after "bar"
+    And "x" is typed
+    Then Editor A shows "B: qux foo barx| baz"
+    And Editor A has sent nothing new
+    When "remote " is typed in Editor B
+    Then Editor B has sent batch 1
+    When the server receives Editor B's batch 1
+    And Editor A receives Editor B's batch 1
+    Then Editor A shows "B: remote qux foo barx| baz"
+
   Scenario: Two editors insert after the same block, and Editor A shows the server's order from the moment Editor B's insert arrives
     Given the document is "B: a|"
     When the block "B: x" is inserted

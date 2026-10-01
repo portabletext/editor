@@ -960,6 +960,43 @@ describe('the editor seam', () => {
     expect(document.toTextspec()).toEqual('B: bar;;B: baz|')
   })
 
+  test('Scenario: an apply that inserts a span before the caret span leaves the caret in its span at its offset', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo|'),
+    )
+
+    document.send({
+      type: 'apply',
+      patches: [
+        insert(
+          [{_type: 'span', _key: 'k9', text: 'bar ', marks: []}],
+          'before',
+          [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        ),
+      ],
+      underneath: [],
+    })
+
+    expect(document.getValue()).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [
+          {_type: 'span', _key: 'k9', text: 'bar ', marks: []},
+          {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+        ],
+        style: 'normal',
+      },
+    ])
+    expect(document.getSelection()).toEqual({
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    })
+    expect(document.toTextspec()).toEqual('B: bar foo|')
+  })
+
   test('a local edit is a user action: it emits a local change, the caret moves back over removed text and out of a removed block, and read-only refuses it', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument(

@@ -205,8 +205,12 @@ export function createFakeDocument(
    * by Content Lake's rules and with no normalization, and moves the caret
    * by each patch: through a new `_key` of its block, to the end of the
    * previous block (or else the start of the next) when its block is
-   * removed, and past text a patch on its span inserted or deleted before
-   * it. Anything else leaves the caret in its span at its offset there.
+   * removed, and past text a patch inserted or deleted before it in its
+   * span: by the edits of a text patch on the span, and by the change
+   * between the common prefix and suffix of the span's text for any other
+   * patch that changes it, a `set` of the block included. Anything else,
+   * a span inserted before it included, leaves the caret in its span at
+   * its offset there.
    */
   function applyPatches(patches: Array<Patch>) {
     let content: Array<PortableTextBlock> | undefined =
@@ -687,8 +691,7 @@ function followCaret(
   if (
     typeof head !== 'object' ||
     Array.isArray(head) ||
-    head._key !== caret.blockKey ||
-    patch.type === 'insert'
+    head._key !== caret.blockKey
   ) {
     return caret
   }
@@ -737,14 +740,15 @@ function followCaret(
     !Array.isArray(spanSegment) &&
     spanSegment._key === span._key &&
     patch.path[3] === 'text'
+  const afterSpan = getTextBlock(afterBlock).block.children.find(
+    (child) => child._key === span._key,
+  )
   let spanOffset = offset
 
   if (onCaretSpan && patch.type === 'diffMatchPatch') {
     spanOffset = mapOffsetThrough(offset, textEditsOf(patch.value, span.text))
-  }
-
-  if (onCaretSpan && patch.type === 'set' && typeof patch.value === 'string') {
-    spanOffset = mapOffset(offset, span.text, patch.value)
+  } else if (afterSpan && isSpan({schema}, afterSpan)) {
+    spanOffset = mapOffset(offset, span.text, afterSpan.text)
   }
 
   return {
