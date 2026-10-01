@@ -1,4 +1,4 @@
-import {set, type Patch} from '@portabletext/patches'
+import {set, unset, type Patch} from '@portabletext/patches'
 import type {Load} from './types'
 
 /**
@@ -63,9 +63,10 @@ export function blocksForEditor<TBlock>(value: Array<TBlock>): {
  *
  * A missing `_key` or one that repeats a sibling's gets a repair key (see
  * `mintRepairKey`), a missing `_type` becomes `'block'`, and a missing
- * `_type` on a text block's child `'span'`. A text block's `children` that
- * isn't a non-empty array of objects becomes one empty span with a repair
- * key, and a span `text` that isn't a string becomes `''`.
+ * `_type` on a text block's child `'span'`. A text block's child that
+ * isn't an object is removed, by index, last first. `children` that isn't an
+ * array, or holds no object, becomes one empty span with a repair key. A
+ * span `text` that isn't a string becomes `''`.
  */
 export function repairToFloor({value, rev}: Load): Array<Patch> {
   const {blocks: storedBlocks, storedIndexes} = blocksForEditor(value ?? [])
@@ -106,9 +107,15 @@ export function repairToFloor({value, rev}: Load): Array<Patch> {
       continue
     }
 
-    const children = block['children']
+    const storedChildren = block['children']
+    const children: Array<unknown> = Array.isArray(storedChildren)
+      ? storedChildren
+      : []
+    const objectChildren = children.flatMap((child, storedChildIndex) =>
+      isObject(child) ? [{child, storedChildIndex}] : [],
+    )
 
-    if (!isNonEmptyArrayOfObjects(children)) {
+    if (objectChildren.length === 0) {
       patches.push(
         set(
           [
@@ -125,9 +132,15 @@ export function repairToFloor({value, rev}: Load): Array<Patch> {
       continue
     }
 
+    for (const [storedChildIndex, child] of [...children.entries()].reverse()) {
+      if (!isObject(child)) {
+        patches.push(unset([...blockPath, 'children', storedChildIndex]))
+      }
+    }
+
     patches.push(
       ...repairChildren({
-        children,
+        children: objectChildren,
         rev,
         storedPath: [storedIndex, 'children'],
         childrenPath: [...blockPath, 'children'],
@@ -146,7 +159,7 @@ function repairChildren({
   childrenPath,
   takenKeys,
 }: {
-  children: Array<Record<string, unknown>>
+  children: Array<{child: Record<string, unknown>; storedChildIndex: number}>
   rev: string | undefined
   storedPath: Array<string | number>
   childrenPath: Patch['path']
@@ -155,14 +168,14 @@ function repairChildren({
   const patches: Array<Patch> = []
   const childKeys = new Set<string>()
 
-  for (const [childIndex, child] of children.entries()) {
+  for (const [childIndex, {child, storedChildIndex}] of children.entries()) {
     const [childKey] = nameOf(child, '_key')
     let childPath: Patch['path'] = [...childrenPath, {_key: childKey ?? ''}]
 
     if (childKey === undefined || childKeys.has(childKey)) {
       childPath = [...childrenPath, childIndex]
       patches.push(
-        set(mintRepairKey(rev, [...storedPath, childIndex], takenKeys), [
+        set(mintRepairKey(rev, [...storedPath, storedChildIndex], takenKeys), [
           ...childPath,
           '_key',
         ]),

@@ -1886,6 +1886,63 @@ describe(createIo.name, () => {
     expect(treeMismatches).toEqual([])
   })
 
+  test("Scenario: a load repairs a text block's mixed `children` by removing what isn't an object, and makes one empty span only when no object is left", () => {
+    const [block] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: good',
+    ).value
+    const results = [
+      set([42, {_type: 'span', text: 'good', marks: []}, 43], [0, 'children']),
+      set([42], [0, 'children']),
+    ].map((corruption) => {
+      const {clock} = createFakeNetwork()
+      const {
+        document,
+        io: editor,
+        heard,
+      } = createEditorWithIo({
+        id: 'A',
+        keyGenerator: createTestKeyGenerator('a-'),
+        clock,
+      })
+
+      editor.load({
+        value: applyWithContentLakeSemantics([block], [corruption]),
+        rev: 'r1',
+      })
+      document.mount()
+
+      return {
+        patches: heard.mutations.map((batch) => batch.patches),
+        screen: document.toTextspec({keys: true}),
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        patches: [
+          [
+            unset([{_key: 'd-k0'}, 'children', 2]),
+            unset([{_key: 'd-k0'}, 'children', 0]),
+            set('6af268c7', [{_key: 'd-k0'}, 'children', 0, '_key']),
+          ],
+        ],
+        screen: 'B _key="d-k0": |good',
+      },
+      {
+        patches: [
+          [
+            set(
+              [{_type: 'span', _key: '69f26734', text: '', marks: []}],
+              [{_key: 'd-k0'}, 'children'],
+            ),
+          ],
+        ],
+        screen: 'B _key="d-k0": |',
+      },
+    ])
+  })
+
   test('a batch in flight without its echo warns after 10 seconds, then with backoff', () => {
     const {editor, document, clock, heard} = createLoadedEditor('B: foo|')
 
