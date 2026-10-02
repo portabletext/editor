@@ -66,9 +66,12 @@ export type ErrorEvent = {
 }
 
 /**
- * The user's own unsaved work the editor gave up on: pending changes with no
- * target, pending changes dropped on close while sending was blocked or the
- * editor was out of step, or the rejected mutation a resync dropped.
+ * The user's own work the editor gave up on: pending changes with no
+ * target, the editor's own patches that came back in its echo with no
+ * target in the base right before they applied (the server applied them as
+ * no-ops), pending changes dropped on close while sending was blocked or
+ * the editor was out of step, or the rejected mutation a resync dropped.
+ * Each patch is reported once.
  */
 export type WorkDropped = {
   patches: Array<Patch>

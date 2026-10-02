@@ -99,7 +99,7 @@ function WorkDroppedNotice({
 
 const reasonExplanations: Record<WorkDroppedEvent['reason'], string> = {
   'no target':
-    'Another change removed what these edits were for, so they have nowhere to go.',
+    'Another change removed what these edits were for, so they did nothing, on the server too once sent.',
   'rejected':
     'The server refused the mutation for good, and the resync let go of it.',
   'closed while blocked':

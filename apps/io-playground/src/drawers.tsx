@@ -328,7 +328,7 @@ function EventDetails({
             [
               'means',
               event.reason === 'no target'
-                ? 'the unsent changes had nowhere to go: their target is gone'
+                ? 'the changes had nowhere to go: their target is gone, so they did nothing, on the server too once sent'
                 : event.reason === 'rejected'
                   ? 'the resync dropped the mutation the server refused'
                   : 'the editor closed while sending was blocked by a rejection',

@@ -581,9 +581,25 @@ export function createIo(options: {
         )
         .map((mutation) => mutation.id),
     )
+    const unmatchedOwnPatches = echoedAwaitingBase
+      .filter((mutation) => confirmedMutationIds.has(mutation.id))
+      .flatMap((mutation) => mutation.patches)
+    const ownPatchesWithoutTarget: Array<Patch> = []
     let nextValue = base.value
 
     for (const patch of incoming.patches) {
+      const ownIndex = unmatchedOwnPatches.findIndex((ownPatch) =>
+        isEqual(ownPatch, patch),
+      )
+
+      if (ownIndex !== -1) {
+        const [ownPatch] = unmatchedOwnPatches.splice(ownIndex, 1)
+
+        if (!hasTarget(nextValue, patch)) {
+          ownPatchesWithoutTarget.push(ownPatch)
+        }
+      }
+
       if (
         patch.type === 'insert' &&
         insertCollides(patch, keysAmongSiblings(nextValue, patch.path))
@@ -684,7 +700,31 @@ export function createIo(options: {
       reportDroppedPending(`transaction "${incoming.transactionId}"`)
     }
 
+    reportDroppedOwn(ownPatchesWithoutTarget, incoming.transactionId)
+
     return true
+  }
+
+  /**
+   * Reports the editor's own patches that came back in its echo with no
+   * target in the base right before they applied, once: the server applied
+   * them as no-ops, so the work in them is gone.
+   */
+  function reportDroppedOwn(patches: Array<Patch>, transactionId: string) {
+    const dropped = patches.filter((patch) => !droppedPatches.has(patch))
+
+    if (dropped.length === 0) {
+      return
+    }
+
+    for (const patch of dropped) {
+      droppedPatches.add(patch)
+    }
+
+    warn(
+      `${dropped.length} sent patches had no target when transaction "${transactionId}" saved them and did nothing`,
+    )
+    emit({type: 'work dropped', patches: dropped, reason: 'no target'})
   }
 
   /**

@@ -140,3 +140,21 @@ Feature: Other editors
     And Editor A has sent mutation 1
     When the server receives Editor A's mutation 1
     Then the server has "H1: foo;;B: "
+
+  Scenario: Editor B removes the block Editor A typed into, the removal lands first, and A's echo comes back as a no-op that A reports as dropped
+    Given the document is "B: foo|;;B: bar"
+    When "x" is typed
+    Then Editor A shows "B: foox|;;B: bar"
+    And Editor A has sent mutation 1
+    When the block "foo" is deleted in Editor B
+    Then Editor B has sent mutation 1
+    When the server receives Editor B's mutation 1
+    And the server receives Editor A's mutation 1
+    Then the server has "B: bar"
+    When Editor A receives Editor B's mutation 1
+    Then Editor A shows "B: bar"
+    When Editor A's mutation 1 comes back
+    Then Editor A has been told work was dropped, with reason "no target"
+    And Editor A shows "B: bar"
+    And Editor A's sync is "synced"
+    And the server has "B: bar"

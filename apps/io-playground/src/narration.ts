@@ -502,7 +502,7 @@ function narrateEditor({
 
     if (event.type === 'work dropped') {
       sentences.push(
-        `${name} dropped ${plural(event.patchCount, 'unsent change')}: ${
+        `${name} dropped ${plural(event.patchCount, 'patch')}: ${
           event.reason === 'no target'
             ? event.patchCount === 1
               ? 'its target is gone'

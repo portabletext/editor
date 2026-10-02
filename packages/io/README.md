@@ -57,6 +57,10 @@ type IoSnapshot = {
 
 `on` listens to what io tells the host: `mutation` (a mutation to save), `error` (io is out of step until a resync), `work dropped` (the user's unsaved work io gave up on) and `warning` (a message for the host's log), or all of them with `'*'`. `send` takes what the host tells io: `load`, `transaction`, `mutation sent`, `mutation rejected`, `feed lost`, `resync` and `close`. `close` does what the editor's `closing` does: io sends the final mutation, or drops the pending changes while sending is blocked or io is out of step, and stops.
 
+### Dropped work
+
+`work dropped` carries the user's own patches io gave up on, each reported once, with a reason. `no target` covers pending changes whose target a transaction or a resync took away (they stay pending and go out as no-ops), and the editor's own patches that come back in its echo with no target in the base right before they applied: another writer's transaction landed first and took their target away, so the server applied them as no-ops and the words in them are gone. `closed while blocked` and `closed out of step` carry the pending changes a close drops, and `rejected` the rejected mutation a resync drops.
+
 ### Transaction IDs
 
 Every mutation proposes the transaction ID it is saved under, from `createIo`'s `transactionIdGenerator`. The default is a random UUID (`crypto.randomUUID()` where the runtime has it, a version 4 UUID from `Math.random` otherwise), since the ID must be unique among every writer of the document. A host that saves a mutation as its own request uses the ID as it is, and a host that chooses its own names it with `mutation sent`. The world injects a deterministic generator per editor (`A-tk0`, `A-tk1` for Editor A), so the scenarios and tests can name transactions.

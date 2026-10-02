@@ -933,6 +933,52 @@ describe(createIo.name, () => {
     expect(document.toTextspec()).toEqual('H1: foo|')
   })
 
+  test('Scenario: an echo whose own patches had no target in the base reports them as dropped work once, leaving out the ones reported while unsent', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo;;B: bar|')
+    const textPath = [{_key: 'd-k2'}, 'children', {_key: 'd-k3'}, 'text']
+
+    document.type('x')
+    document.type('y')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [unset([{_key: 'd-k2'}])],
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk1',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: heard.mutations[1].patches,
+    })
+
+    expect(heard.warnings).toEqual([
+      '1 unsent patches had no target after transaction "t1" and did nothing',
+      '1 sent patches had no target when transaction "A-tk0" saved them and did nothing',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [diffMatchPatch('barx', 'barxy', textPath)],
+        reason: 'no target',
+      },
+      {
+        patches: [diffMatchPatch('bar', 'barx', textPath)],
+        reason: 'no target',
+      },
+    ])
+    expect(editor.getSnapshot().context.sync).toEqual('synced')
+    expect(document.toTextspec()).toEqual('B: foo|')
+  })
+
   test('closing while sending is blocked reports the unsent changes as dropped work', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
 
