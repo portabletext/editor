@@ -1,0 +1,1633 @@
+import {diffMatchPatch, insert, set, unset} from '@portabletext/patches'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {describe, expect, test, vi} from 'vitest'
+import {createFakeDocument, parseTextspec} from '../fakes/document'
+import {createFakeNetwork} from '../fakes/network'
+import {createEditorWithIo} from '../scenario/world'
+import {applyWithContentLakeSemantics} from './content-lake'
+import {createIo, getIoInternals} from './io'
+import type {EditorMessageForIo} from './types'
+
+describe(createIo.name, () => {
+  test('held transactions are applied in chain order once the missing one arrives', () => {
+    const {editor, document, clock, heard} = createLoadedEditor('B: foo')
+    const path = [{_key: 'd-k0'}, 'style']
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't3',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: [diffMatchPatch('foo', 'foox', textPath)],
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [set('h2', path)],
+    })
+
+    expect(document.toTextspec()).toEqual('B: |foo')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r1')
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', path)],
+    })
+
+    expect(document.toTextspec()).toEqual('H2: |foox')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r4')
+    expect(heard.changes).toEqual([
+      {
+        origin: 'remote',
+        operations: [
+          set(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+                ],
+                style: 'h1',
+              },
+            ],
+            [],
+          ),
+        ],
+      },
+      {
+        origin: 'remote',
+        operations: [
+          set(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foo', marks: []},
+                ],
+                style: 'h2',
+              },
+            ],
+            [],
+          ),
+        ],
+      },
+      {
+        origin: 'remote',
+        operations: [
+          set(
+            [
+              {
+                _type: 'block',
+                _key: 'd-k0',
+                children: [
+                  {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+                ],
+                style: 'h2',
+              },
+            ],
+            [],
+          ),
+        ],
+      },
+    ])
+
+    clock.advance(10_000)
+
+    expect(heard.errors).toEqual([])
+  })
+
+  test('a held echo lets the next mutation go out and keeps its work on screen until it applies', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('x')
+    document.type('y')
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [diffMatchPatch('foo', 'foox', textPath)],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-tk1',
+        patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+      },
+    ])
+    expect(document.toTextspec()).toEqual('B: fooxy|')
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    })
+
+    expect(document.toTextspec()).toEqual('H1: fooxy|')
+    expect(getIoInternals(editor).getBase()).toEqual({
+      value: parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        'H1: foox',
+      ).value,
+      rev: 'r3',
+    })
+  })
+
+  test("an unsent insert whose key another writer's insert brings puts the editor out of step, and the resync gives it a new key in its later patches too", () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const [fooxBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foox',
+    ).value
+    const [barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('b-')},
+      'B _key="k9": bar',
+    ).value
+    const collidingInsert = insert([barBlock], 'after', [{_key: 'd-k0'}])
+
+    document.type('x')
+    document.insertBlock('B _key="k9": baz')
+    document.type('q')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [collidingInsert],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1', patch: collidingInsert},
+    ])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k0": foox;;B _key="k9": bazq|',
+    )
+
+    editor.send({
+      type: 'resync',
+      value: [fooxBlock, barBlock],
+      rev: 'r3',
+      outcomes: {'A-1': 'applied'},
+    })
+
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [
+          diffMatchPatch('foo', 'foox', [
+            {_key: 'd-k0'},
+            'children',
+            {_key: 'd-k1'},
+            'text',
+          ]),
+        ],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-tk1',
+        patches: [
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'a-k3',
+                children: [
+                  {_key: 'a-k2', _type: 'span', text: 'baz', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+            'after',
+            [{_key: 'd-k0'}],
+          ),
+          diffMatchPatch('baz', 'bazq', [
+            {_key: 'a-k3'},
+            'children',
+            {_key: 'a-k2'},
+            'text',
+          ]),
+        ],
+      },
+    ])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k0": foox;;B _key="a-k3": bazq;;B _key="k9": bar|',
+    )
+  })
+
+  test("Scenario: a transaction's `value` becomes the base, and what its patches don't say reaches the editor lined up after them", () => {
+    const {editor, document, received} = createLoadedEditor('B: foo|;;B: bar')
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B: bar',
+    ).value
+    const styledValue = [
+      {...fooBlock, style: 'h1'},
+      {...barBlock, style: 'h2'},
+    ]
+    const stylePath = [{_key: 'd-k0'}, 'style']
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', stylePath)],
+      value: styledValue,
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [],
+      value: [styledValue[0]],
+    })
+
+    expect(getIoInternals(editor).getBase()).toEqual({
+      value: [styledValue[0]],
+      rev: 'r3',
+    })
+    expect(received).toEqual([
+      {type: 'load', value: [fooBlock, barBlock]},
+      {
+        type: 'apply',
+        patches: [
+          set('h1', stylePath),
+          set({...barBlock, style: 'h2'}, [{_key: 'd-k2'}]),
+        ],
+        underneath: [set('h1', stylePath)],
+      },
+      {type: 'apply', patches: [unset([{_key: 'd-k2'}])], underneath: []},
+    ])
+    expect(document.toTextspec()).toEqual('H1: foo|')
+  })
+
+  test('a remote style under a local one reaches the editor as `underneath` of an apply with no patches', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const path = [{_key: 'd-k0'}, 'style']
+    const sent: Array<EditorMessageForIo> = []
+    const {send} = document
+    document.send = (message) => {
+      sent.push(message)
+      send(message)
+    }
+
+    document.setStyle('h1')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h2', path)],
+    })
+
+    expect(document.toTextspec()).toEqual('H1: foo|')
+    expect(sent).toEqual([
+      {type: 'apply', patches: [], underneath: [set('h2', path)]},
+    ])
+    expect(heard.changes).toEqual([
+      {
+        origin: 'local',
+        operations: [set('h1', path)],
+        patches: [set('h1', path)],
+      },
+    ])
+  })
+
+  test('a rejected mutation stays on screen while the feed keeps applying', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|;;B: bar')
+
+    document.type('x')
+    editor.send({type: 'mutation rejected', id: 'A-1'})
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [unset([{_key: 'd-k2'}])],
+    })
+
+    expect(document.toTextspec()).toEqual('B: foox|')
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [
+          diffMatchPatch('foo', 'foox', [
+            {_key: 'd-k0'},
+            'children',
+            {_key: 'd-k1'},
+            'text',
+          ]),
+        ],
+      },
+    ])
+  })
+
+  test('`inspect` reports the mutation in flight, the rejected one, pending changes and held transactions', () => {
+    const {editor, document, clock} = createLoadedEditor('B: foo|')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('x')
+    document.type('y')
+    clock.advance(500)
+    editor.send({
+      type: 'transaction',
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [],
+    })
+
+    expect(getIoInternals(editor).inspect()).toEqual({
+      inFlight: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
+      rejected: undefined,
+      echoed: [],
+      pending: [
+        {
+          patchCount: 1,
+          patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+        },
+      ],
+      held: [
+        {
+          transactionId: 't2',
+          previousRev: 'r2',
+          resultRev: 'r3',
+          arrivedAt: 500,
+        },
+      ],
+      outOfStep: false,
+    })
+
+    editor.send({type: 'mutation rejected', id: 'A-1'})
+    clock.advance(10_000)
+
+    expect(getIoInternals(editor).inspect()).toEqual({
+      inFlight: undefined,
+      rejected: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
+      echoed: [],
+      pending: [
+        {
+          patchCount: 1,
+          patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+        },
+      ],
+      held: [],
+      outOfStep: true,
+    })
+  })
+
+  test('a rejection for a mutation that already came back is ignored with a warning', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('x')
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    editor.send({type: 'mutation rejected', id: 'A-1'})
+    document.type('y')
+
+    expect(heard.warnings).toEqual([
+      '`mutation rejected` for mutation "A-1", not in flight',
+    ])
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [diffMatchPatch('foo', 'foox', textPath)],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-tk1',
+        patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+      },
+    ])
+  })
+
+  test('a `diffMatchPatch` on a non-string puts the editor out of step, and a patch for a missing parent does nothing', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const failingPatch = diffMatchPatch('foo', 'foox', [
+      {_key: 'd-k0'},
+      'children',
+    ])
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'k9'}, 'style'])],
+    })
+
+    expect(heard.errors).toEqual([])
+    expect(getIoInternals(editor).getBase().rev).toEqual('r2')
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [failingPatch],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'patch failed', transactionId: 't2', patch: failingPatch},
+    ])
+    expect(getIoInternals(editor).getBase().rev).toEqual('r2')
+    expect(document.toTextspec()).toEqual('B: foo|')
+  })
+
+  test('a remote insert that brings the same key twice puts the editor out of step', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const keyGenerator = createTestKeyGenerator('b-')
+    const [firstBlock, secondBlock] = parseTextspec(
+      {keyGenerator},
+      'B _key="k7": bar;;B _key="k7": baz',
+    ).value
+    const duplicateInsert = insert([firstBlock, secondBlock], 'after', [
+      {_key: 'd-k0'},
+    ])
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [duplicateInsert],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1', patch: duplicateInsert},
+    ])
+    expect(document.toTextspec()).toEqual('B: foo|')
+  })
+
+  test('a repair key comes from the revision and the path, and never one the value already has', () => {
+    const {clock} = createFakeNetwork()
+    const {
+      document,
+      io: editor,
+      heard,
+    } = createEditorWithIo({
+      id: 'A',
+      keyGenerator: createTestKeyGenerator('a-'),
+      clock,
+    })
+    const {value} = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B _key="51491b98": foo;;B _key="missing": bar',
+    )
+    const keylessBlock = {...value[1]}
+    Reflect.deleteProperty(keylessBlock, '_key')
+
+    editor.send({type: 'load', value: [value[0], keylessBlock], rev: 'r1'})
+    document.mount()
+
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [set('16a962f0', [1, '_key'])],
+      },
+    ])
+  })
+
+  test('a load below the floor is repaired against the stored array, by key where the key holds and by index where it does not', () => {
+    const {clock} = createFakeNetwork()
+    const {
+      document,
+      io: editor,
+      heard,
+    } = createEditorWithIo({
+      id: 'A',
+      keyGenerator: createTestKeyGenerator('a-'),
+      clock,
+    })
+    const value = applyWithContentLakeSemantics(
+      parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        'B: foo;;B: bar;;B _key="k5": baz',
+      ).value,
+      [
+        set('oops', [0]),
+        unset([1, '_key']),
+        unset([1, '_type']),
+        set('oops', [1, 'children']),
+        unset([{_key: 'k5'}, 'children', 0, '_key']),
+        unset([{_key: 'k5'}, 'children', 0, '_type']),
+        set(42, [{_key: 'k5'}, 'children', 0, 'text']),
+      ],
+    )
+
+    editor.send({type: 'load', value, rev: 'r1'})
+    document.mount()
+
+    expect(heard.warnings).toEqual([
+      'Left out 1 blocks that are not objects',
+      'Repaired 6 places below the floor or with missing or duplicate keys',
+    ])
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [
+          set('51491b98', [1, '_key']),
+          set('block', [1, '_type']),
+          set(
+            [{_type: 'span', _key: '9d1e3ce5', text: '', marks: []}],
+            [1, 'children'],
+          ),
+          set('2b73c14a', [{_key: 'k5'}, 'children', 0, '_key']),
+          set('span', [{_key: 'k5'}, 'children', 0, '_type']),
+          set('', [{_key: 'k5'}, 'children', 0, 'text']),
+        ],
+      },
+    ])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="51491b98": |;;B _key="k5": ',
+    )
+    expect(getIoInternals(editor).getWorkingCopy()).toEqual(document.getValue())
+  })
+
+  test("Scenario: a transaction that leaves a text block's child without `_key` or `_type` is invalid content", () => {
+    const childPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}]
+    const results = [
+      unset([...childPath, '_key']),
+      unset([...childPath, '_type']),
+    ].map((patch) => {
+      const {editor, heard} = createLoadedEditor('B: foo|')
+
+      editor.send({
+        type: 'transaction',
+        transactionId: 't1',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: [patch],
+      })
+
+      return {errors: heard.errors, sync: editor.getSnapshot().context.sync}
+    })
+
+    expect(results).toEqual([
+      {
+        errors: [{reason: 'invalid content', transactionId: 't1'}],
+        sync: 'out of step',
+      },
+      {
+        errors: [{reason: 'invalid content', transactionId: 't1'}],
+        sync: 'out of step',
+      },
+    ])
+  })
+
+  test('Scenario: an unsent span and a remote span keyed alike in the same block put the editor out of step, and the resync gives the unsent span a new key', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const spanPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}]
+    const localSpan = {_type: 'span', _key: 'k9', text: 'bar', marks: []}
+    const remoteSpan = {_type: 'span', _key: 'k9', text: 'baz', marks: []}
+    const remoteInsert = insert([remoteSpan], 'after', spanPath)
+
+    document.type('x')
+    document.applyLocalEdit([insert([localSpan], 'after', spanPath)])
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [remoteInsert],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1', patch: remoteInsert},
+    ])
+
+    editor.send({
+      type: 'resync',
+      value: [
+        {
+          _type: 'block',
+          _key: 'd-k0',
+          children: [
+            {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+            remoteSpan,
+          ],
+          style: 'normal',
+        },
+      ],
+      rev: 'r3',
+      outcomes: {'A-1': 'applied'},
+    })
+
+    expect(heard.mutations.slice(1)).toEqual([
+      {
+        id: 'A-2',
+        transactionId: 'A-tk1',
+        patches: [insert([{...localSpan, _key: 'a-k2'}], 'after', spanPath)],
+      },
+    ])
+    expect(document.getValue()).toEqual([
+      {
+        _type: 'block',
+        _key: 'd-k0',
+        children: [
+          {_type: 'span', _key: 'd-k1', text: 'foox', marks: []},
+          {_type: 'span', _key: 'a-k2', text: 'bar', marks: []},
+          remoteSpan,
+        ],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test("Scenario: a transaction whose `value` holds a block keyed like an unsent insert puts the editor out of step, though its patches don't say so", () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B _key="k9": bar',
+    ).value
+
+    document.type('x')
+    document.insertBlock('B _key="k9": baz')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [],
+      value: [fooBlock, barBlock],
+    })
+
+    expect(heard.errors).toEqual([
+      {reason: 'duplicate key', transactionId: 't1'},
+    ])
+    expect(getIoInternals(editor).getBase().rev).toEqual('r1')
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k0": foox;;B _key="k9": baz|',
+    )
+  })
+
+  test('Scenario: a remote span keyed like an unconfirmed block is no collision', () => {
+    const {editor, document, heard, treeMismatches} =
+      createLoadedEditor('B: foo|')
+    const remoteSpan = {_type: 'span', _key: 'k9', text: 'baz', marks: []}
+
+    document.insertBlock('B _key="k9": bar')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [
+        insert([remoteSpan], 'after', [
+          {_key: 'd-k0'},
+          'children',
+          {_key: 'd-k1'},
+        ]),
+      ],
+    })
+
+    expect(heard.errors).toEqual([])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="d-k0": foobaz;;B _key="k9": bar|',
+    )
+    expect(treeMismatches).toEqual([])
+  })
+
+  test("Scenario: a load repairs a text block's mixed `children` by removing what isn't an object, and makes one empty span only when no object is left", () => {
+    const [block] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: good',
+    ).value
+    const results = [
+      set([42, {_type: 'span', text: 'good', marks: []}, 43], [0, 'children']),
+      set([42], [0, 'children']),
+    ].map((corruption) => {
+      const {clock} = createFakeNetwork()
+      const {
+        document,
+        io: editor,
+        heard,
+      } = createEditorWithIo({
+        id: 'A',
+        keyGenerator: createTestKeyGenerator('a-'),
+        clock,
+      })
+
+      editor.send({
+        type: 'load',
+        value: applyWithContentLakeSemantics([block], [corruption]),
+        rev: 'r1',
+      })
+      document.mount()
+
+      return {
+        patches: heard.mutations.map((mutation) => mutation.patches),
+        screen: document.toTextspec({keys: true}),
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        patches: [
+          [
+            unset([{_key: 'd-k0'}, 'children', 2]),
+            unset([{_key: 'd-k0'}, 'children', 0]),
+            set('6af268c7', [{_key: 'd-k0'}, 'children', 0, '_key']),
+          ],
+        ],
+        screen: 'B _key="d-k0": |good',
+      },
+      {
+        patches: [
+          [
+            set(
+              [{_type: 'span', _key: '69f26734', text: '', marks: []}],
+              [{_key: 'd-k0'}, 'children'],
+            ),
+          ],
+        ],
+        screen: 'B _key="d-k0": |',
+      },
+    ])
+  })
+
+  test('a mutation in flight without its echo warns after 10 seconds, then with backoff', () => {
+    const {editor, document, clock, heard} = createLoadedEditor('B: foo|')
+
+    document.type('x')
+    clock.advance(9_999)
+
+    expect(heard.warnings).toEqual([])
+
+    clock.advance(1)
+    clock.advance(20_000)
+
+    expect(heard.warnings).toEqual([
+      'Mutation "A-1" has been in flight for 10000 ms without coming back',
+      'Mutation "A-1" has been in flight for 30000 ms without coming back',
+    ])
+
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    clock.advance(100_000)
+
+    expect(heard.warnings).toEqual([
+      'Mutation "A-1" has been in flight for 10000 ms without coming back',
+      'Mutation "A-1" has been in flight for 30000 ms without coming back',
+    ])
+  })
+
+  test('a second load in the first commit replaces the first, repairs included, and a load after the editor is ready throws', () => {
+    const {clock} = createFakeNetwork()
+    const {
+      document,
+      io: editor,
+      heard,
+    } = createEditorWithIo({
+      id: 'A',
+      keyGenerator: createTestKeyGenerator('a-'),
+      clock,
+    })
+    const [fooBlock, barBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo;;B: bar',
+    ).value
+    const keylessBlock = {...fooBlock}
+    Reflect.deleteProperty(keylessBlock, '_key')
+
+    editor.send({type: 'load', value: [keylessBlock], rev: 'r1'})
+    editor.send({type: 'load', value: [barBlock], rev: 'r2'})
+    const statusBeforeMount = editor.getSnapshot().context.status
+    document.mount()
+
+    expect({
+      statusBeforeMount,
+      status: editor.getSnapshot().context.status,
+      screen: document.toTextspec({keys: true}),
+      rev: getIoInternals(editor).getBase().rev,
+      mutations: heard.mutations,
+      changes: heard.changes,
+    }).toEqual({
+      statusBeforeMount: 'loading',
+      status: 'ready',
+      screen: 'B _key="d-k2": |bar',
+      rev: 'r2',
+      mutations: [],
+      changes: [],
+    })
+    expect(() =>
+      editor.send({type: 'load', value: [fooBlock], rev: 'r3'}),
+    ).toThrow(
+      '`load` is only accepted in the first commit, before the editor is ready',
+    )
+    expect(document.toTextspec()).toEqual('B: |bar')
+  })
+
+  test('a resync reports the rejected mutation it drops and unsent changes that no longer have a target as dropped work', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo;;B: bar|')
+    const [fooBlock] = parseTextspec(
+      {keyGenerator: createTestKeyGenerator('d-')},
+      'B: foo',
+    ).value
+
+    document.type('x')
+    document.type('y')
+    editor.send({type: 'mutation rejected', id: 'A-1'})
+    editor.send({type: 'resync', value: [fooBlock], rev: 'r2'})
+
+    expect(heard.warnings).toEqual([
+      '1 unsent patches had no target after the resync and did nothing',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [
+          diffMatchPatch('bar', 'barx', [
+            {_key: 'd-k2'},
+            'children',
+            {_key: 'd-k3'},
+            'text',
+          ]),
+        ],
+        reason: 'rejected',
+      },
+      {
+        patches: [
+          diffMatchPatch('barx', 'barxy', [
+            {_key: 'd-k2'},
+            'children',
+            {_key: 'd-k3'},
+            'text',
+          ]),
+        ],
+        reason: 'no target',
+      },
+    ])
+    expect(document.toTextspec()).toEqual('B: |foo')
+  })
+
+  test('a transaction that takes the target of unsent changes away reports them as dropped work once', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo;;B: bar|')
+    const textPath = [{_key: 'd-k2'}, 'children', {_key: 'd-k3'}, 'text']
+
+    document.type('x')
+    document.type('y')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [unset([{_key: 'd-k2'}])],
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 't2',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    })
+
+    expect(heard.warnings).toEqual([
+      '1 unsent patches had no target after transaction "t1" and did nothing',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [diffMatchPatch('barx', 'barxy', textPath)],
+        reason: 'no target',
+      },
+    ])
+    expect(getIoInternals(editor).inspect().pending).toEqual([
+      {
+        patchCount: 1,
+        patches: [diffMatchPatch('barx', 'barxy', textPath)],
+      },
+    ])
+    expect(document.toTextspec()).toEqual('H1: foo|')
+  })
+
+  test('Scenario: an echo whose own patches had no target in the base reports them as dropped work once, leaving out the ones reported while unsent', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo;;B: bar|')
+    const textPath = [{_key: 'd-k2'}, 'children', {_key: 'd-k3'}, 'text']
+
+    document.type('x')
+    document.type('y')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [unset([{_key: 'd-k2'}])],
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk1',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: heard.mutations[1].patches,
+    })
+
+    expect(heard.warnings).toEqual([
+      '1 unsent patches had no target after transaction "t1" and did nothing',
+      '1 sent patches had no target when transaction "A-tk0" saved them and did nothing',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [diffMatchPatch('barx', 'barxy', textPath)],
+        reason: 'no target',
+      },
+      {
+        patches: [diffMatchPatch('bar', 'barx', textPath)],
+        reason: 'no target',
+      },
+    ])
+    expect(editor.getSnapshot().context.sync).toEqual('synced')
+    expect(document.toTextspec()).toEqual('B: foo|')
+  })
+
+  test('closing while sending is blocked reports the unsent changes as dropped work', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+
+    document.type('x')
+    editor.send({type: 'mutation rejected', id: 'A-1'})
+    document.type('y')
+    document.close()
+
+    expect(heard.warnings).toEqual([
+      '1 unsent change(s) dropped on close: sending was blocked by the rejection of mutation A-1',
+    ])
+    expect(heard.workDropped).toEqual([
+      {
+        patches: [
+          diffMatchPatch('foox', 'fooxy', [
+            {_key: 'd-k0'},
+            'children',
+            {_key: 'd-k1'},
+            'text',
+          ]),
+        ],
+        reason: 'closed while blocked',
+      },
+    ])
+    expect(heard.mutations.map((mutation) => mutation.id)).toEqual(['A-1'])
+  })
+
+  test('a `mutation sent` with another transaction ID replaces the proposed one as the ID that confirms the mutation', () => {
+    const results = ['A-tk0', 'commit-1'].map((transactionId) => {
+      const {editor, document, heard} = createLoadedEditor('B: foo|')
+
+      document.type('x')
+      const inFlightProposed = getIoInternals(editor).inspect().inFlight
+      editor.send({type: 'mutation sent', id: 'A-1', transactionId: 'commit-1'})
+      const inFlightNamed = getIoInternals(editor).inspect().inFlight
+      document.type('y')
+      editor.send({
+        type: 'transaction',
+        transactionId,
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: heard.mutations[0].patches,
+      })
+
+      return {
+        inFlightProposed,
+        inFlightNamed,
+        inFlightAfter: getIoInternals(editor).inspect().inFlight,
+        warnings: heard.warnings,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        inFlightProposed: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
+        inFlightNamed: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
+        inFlightAfter: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
+        warnings: [],
+      },
+      {
+        inFlightProposed: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
+        inFlightNamed: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 1},
+        warnings: [],
+      },
+    ])
+  })
+
+  test('a second `mutation sent` with another transaction ID warns, and either ID confirms the mutation', () => {
+    const results = ['commit-1', 'retry-1'].map((transactionId) => {
+      const {editor, document, heard} = createLoadedEditor('B: foo|')
+
+      document.type('x')
+      editor.send({type: 'mutation sent', id: 'A-1', transactionId: 'commit-1'})
+      editor.send({type: 'mutation sent', id: 'A-1', transactionId: 'retry-1'})
+      const inFlightBefore = getIoInternals(editor).inspect().inFlight
+      document.type('y')
+      editor.send({
+        type: 'transaction',
+        transactionId,
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: heard.mutations[0].patches,
+      })
+
+      return {
+        inFlightBefore,
+        inFlightAfter: getIoInternals(editor).inspect().inFlight,
+        warnings: heard.warnings,
+        screen: document.toTextspec(),
+      }
+    })
+
+    expect(results).toEqual(
+      ['commit-1', 'retry-1'].map(() => ({
+        inFlightBefore: {
+          id: 'A-1',
+          transactionIds: ['commit-1', 'retry-1'],
+          patchCount: 1,
+        },
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 1},
+        warnings: [
+          '`mutation sent` names transaction "retry-1" for mutation "A-1", already sent as "commit-1": a retry must reuse the transaction ID',
+        ],
+        screen: 'B: fooxy|',
+      })),
+    )
+  })
+
+  test('a lost feed puts the editor out of step with a warning, and it still notes its own echo', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+
+    document.type('x')
+    editor.send({type: 'feed lost'})
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    })
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[0].patches,
+    })
+
+    expect({
+      errors: heard.errors,
+      warnings: heard.warnings,
+      sync: editor.getSnapshot().context.sync,
+      screen: document.toTextspec(),
+      rev: getIoInternals(editor).getBase().rev,
+      inFlight: getIoInternals(editor).inspect().inFlight,
+    }).toEqual({
+      errors: [],
+      warnings: [
+        'The feed was lost: applying no more transactions until a resync',
+      ],
+      sync: 'out of step',
+      screen: 'B: foox|',
+      rev: 'r1',
+      inFlight: undefined,
+    })
+  })
+
+  test('a resync while a mutation is in flight is refused without its outcome, and with it takes the copy, and a mutation not applied rejoins the pending changes ahead of the rest', () => {
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const results = (
+      [
+        ['applied', 'B: foox'],
+        ['not applied', 'B: foo'],
+      ] as const
+    ).map(([outcome, copy]) => {
+      const {editor, document, heard} = createLoadedEditor('B: foo|')
+      const {value} = parseTextspec(
+        {keyGenerator: createTestKeyGenerator('d-')},
+        copy,
+      )
+
+      document.type('x')
+      document.type('y')
+      editor.send({type: 'resync', value, rev: 'r2'})
+      const screenAfterRefusal = document.toTextspec()
+      editor.send({
+        type: 'resync',
+        value,
+        rev: 'r2',
+        outcomes: {'A-1': outcome},
+      })
+
+      return {
+        screenAfterRefusal,
+        warnings: heard.warnings,
+        screen: document.toTextspec(),
+        rev: getIoInternals(editor).getBase().rev,
+        mutations: heard.mutations,
+        inFlight: getIoInternals(editor).inspect().inFlight,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        screenAfterRefusal: 'B: fooxy|',
+        warnings: [
+          'Refused a resync while mutation "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
+        ],
+        screen: 'B: fooxy|',
+        rev: 'r2',
+        mutations: [
+          {
+            id: 'A-1',
+            transactionId: 'A-tk0',
+            patches: [diffMatchPatch('foo', 'foox', textPath)],
+          },
+          {
+            id: 'A-2',
+            transactionId: 'A-tk1',
+            patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+          },
+        ],
+        inFlight: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 1},
+      },
+      {
+        screenAfterRefusal: 'B: fooxy|',
+        warnings: [
+          'Refused a resync while mutation "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
+        ],
+        screen: 'B: fooxy|',
+        rev: 'r2',
+        mutations: [
+          {
+            id: 'A-1',
+            transactionId: 'A-tk0',
+            patches: [diffMatchPatch('foo', 'foox', textPath)],
+          },
+          {
+            id: 'A-2',
+            transactionId: 'A-tk1',
+            patches: [
+              diffMatchPatch('foo', 'foox', textPath),
+              diffMatchPatch('foox', 'fooxy', textPath),
+            ],
+          },
+        ],
+        inFlight: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 2},
+      },
+    ])
+  })
+
+  test('an own echo with a set above a path the mutation touched is an echo mismatch, and one with a patch on another block is not', () => {
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+    const otherBlockPatch = set('h1', [{_key: 'd-k2'}, 'style'])
+    const ancestorPatch = set(
+      {_type: 'block', _key: 'd-k0', children: [], style: 'normal'},
+      [{_key: 'd-k0'}],
+    )
+    const results = [otherBlockPatch, ancestorPatch].map((extraPatch) => {
+      const {editor, document, heard} = createLoadedEditor('B: foo|;;B: bar')
+
+      document.type('x')
+      editor.send({
+        type: 'transaction',
+        transactionId: 'A-tk0',
+        previousRev: 'r1',
+        resultRev: 'r2',
+        patches: [extraPatch, diffMatchPatch('foo', 'foox', textPath)],
+      })
+
+      return {
+        errors: heard.errors,
+        sync: editor.getSnapshot().context.sync,
+        screen: document.toTextspec(),
+        rev: getIoInternals(editor).getBase().rev,
+        inFlight: getIoInternals(editor).inspect().inFlight,
+      }
+    })
+
+    expect(results).toEqual([
+      {
+        errors: [],
+        sync: 'synced',
+        screen: 'B: foox|;;H1: bar',
+        rev: 'r2',
+        inFlight: undefined,
+      },
+      {
+        errors: [
+          {
+            reason: 'echo mismatch',
+            transactionId: 'A-tk0',
+            patch: ancestorPatch,
+          },
+        ],
+        sync: 'out of step',
+        screen: 'B: foox|;;B: bar',
+        rev: 'r1',
+        inFlight: undefined,
+      },
+    ])
+  })
+
+  test('sync is saving while work is unsaved, blocked after a rejection and out of step after an error, each until a resync', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const syncs = [editor.getSnapshot().context.sync]
+
+    document.type('x')
+    syncs.push(editor.getSnapshot().context.sync)
+    document.type('y')
+    syncs.push(editor.getSnapshot().context.sync)
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    syncs.push(editor.getSnapshot().context.sync)
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk1',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[1].patches,
+    })
+    syncs.push(editor.getSnapshot().context.sync)
+    document.type('z')
+    document.type('w')
+    editor.send({type: 'mutation rejected', id: 'A-3'})
+    syncs.push(editor.getSnapshot().context.sync)
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: [diffMatchPatch('foo', 'foox', [{_key: 'd-k0'}, 'children'])],
+    })
+    syncs.push(editor.getSnapshot().context.sync)
+    editor.send({
+      type: 'resync',
+      value: getIoInternals(editor).getBase().value,
+      rev: 'r3',
+    })
+    syncs.push(editor.getSnapshot().context.sync)
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk3',
+      previousRev: 'r3',
+      resultRev: 'r4',
+      patches: heard.mutations[3].patches,
+    })
+    syncs.push(editor.getSnapshot().context.sync)
+
+    expect(syncs).toEqual([
+      'synced',
+      'saving',
+      'saving',
+      'saving',
+      'synced',
+      'blocked',
+      'out of step',
+      'saving',
+      'synced',
+    ])
+  })
+
+  test('Scenario: `getSnapshot` returns the same object until the state changes, and `subscribe` calls `next` once per change until unsubscribed', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const observed: Array<unknown> = []
+    const calledBack: Array<unknown> = []
+    const subscription = editor.subscribe({
+      next: (snapshot) => observed.push(snapshot),
+    })
+    editor.subscribe((snapshot) => calledBack.push(snapshot))
+    const before = editor.getSnapshot()
+
+    document.putCaretAfter('f')
+    const afterCaret = editor.getSnapshot()
+    document.type('x')
+    document.type('y')
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk0',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: heard.mutations[0].patches,
+    })
+    subscription.unsubscribe()
+    editor.send({
+      type: 'transaction',
+      transactionId: 'A-tk1',
+      previousRev: 'r2',
+      resultRev: 'r3',
+      patches: heard.mutations[1].patches,
+    })
+
+    expect(afterCaret).toBe(before)
+    expect(editor.getSnapshot()).toBe(editor.getSnapshot())
+    expect(before).toEqual({
+      context: {
+        status: 'ready',
+        sync: 'synced',
+        rev: 'r1',
+        inFlight: undefined,
+        pending: 0,
+      },
+    })
+    expect(observed).toEqual([
+      {
+        context: {
+          status: 'ready',
+          sync: 'saving',
+          rev: 'r1',
+          inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          pending: 0,
+        },
+      },
+      {
+        context: {
+          status: 'ready',
+          sync: 'saving',
+          rev: 'r1',
+          inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          pending: 1,
+        },
+      },
+      {
+        context: {
+          status: 'ready',
+          sync: 'saving',
+          rev: 'r2',
+          inFlight: {id: 'A-2', transactionId: 'A-tk1'},
+          pending: 0,
+        },
+      },
+    ])
+    expect(calledBack).toEqual([
+      ...observed,
+      {
+        context: {
+          status: 'ready',
+          sync: 'synced',
+          rev: 'r3',
+          inFlight: undefined,
+          pending: 0,
+        },
+      },
+    ])
+    expect(calledBack[0]).toBe(observed[0])
+  })
+
+  test('Scenario: `on` hears only the events of its type, every event with `*`, until unsubscribed', () => {
+    const {editor, document} = createLoadedEditor('B: foo|')
+    const errors: Array<unknown> = []
+    const everything: Array<unknown> = []
+    const subscription = editor.on('error', (event) => errors.push(event))
+    editor.on('*', (event) => everything.push(event))
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('x')
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [diffMatchPatch('foo', 'foox', [{_key: 'd-k0'}, 'children'])],
+    })
+    subscription.unsubscribe()
+    editor.send({type: 'feed lost'})
+
+    expect(errors).toEqual([
+      {
+        type: 'error',
+        reason: 'patch failed',
+        transactionId: 't1',
+        patch: diffMatchPatch('foo', 'foox', [{_key: 'd-k0'}, 'children']),
+      },
+    ])
+    expect(everything).toEqual([
+      {
+        type: 'mutation',
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [diffMatchPatch('foo', 'foox', textPath)],
+      },
+      ...errors,
+      {
+        type: 'warning',
+        message:
+          'The feed was lost: applying no more transactions until a resync',
+      },
+    ])
+  })
+
+  test('Scenario: `close` from the host sends the final mutation, unmounts io and leaves later local changes unbooked', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+    const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
+
+    document.type('x')
+    document.type('y')
+    editor.send({type: 'close'})
+    document.type('z')
+    document.close()
+
+    expect(heard.mutations).toEqual([
+      {
+        id: 'A-1',
+        transactionId: 'A-tk0',
+        patches: [diffMatchPatch('foo', 'foox', textPath)],
+      },
+      {
+        id: 'A-2',
+        transactionId: 'A-tk1',
+        patches: [diffMatchPatch('foox', 'fooxy', textPath)],
+        final: true,
+      },
+    ])
+    expect(editor.getSnapshot()).toEqual({
+      context: {
+        status: 'unmounted',
+        sync: 'saving',
+        rev: 'r1',
+        inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+        pending: 0,
+      },
+    })
+  })
+
+  test('Scenario: without a `transactionIdGenerator`, each mutation proposes a UUID of its own, with `crypto.randomUUID` or without it', () => {
+    const uuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    const proposedIds = (cryptoGlobal: 'present' | 'missing') => {
+      if (cryptoGlobal === 'missing') {
+        vi.stubGlobal('crypto', undefined)
+      }
+
+      try {
+        const keyGenerator = createTestKeyGenerator('a-')
+        const document = createFakeDocument({keyGenerator}, {value: undefined})
+        const io = createIo({
+          id: 'A',
+          editor: document,
+          keyGenerator,
+          clock: createFakeNetwork().clock,
+        })
+        const transactionIds: Array<string> = []
+
+        io.on('mutation', (mutation) => {
+          transactionIds.push(mutation.transactionId)
+        })
+        document.mount()
+        document.type('x')
+        io.send({
+          type: 'mutation rejected',
+          id: 'A-1',
+        })
+        io.send({type: 'resync', value: undefined, rev: undefined})
+        document.type('y')
+
+        return transactionIds
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    }
+    const results = [proposedIds('present'), proposedIds('missing')]
+
+    expect(results).toEqual([
+      [expect.stringMatching(uuid), expect.stringMatching(uuid)],
+      [expect.stringMatching(uuid), expect.stringMatching(uuid)],
+    ])
+    expect(results.map((ids) => new Set(ids).size)).toEqual([2, 2])
+  })
+
+  test('inputs after the editor closes are ignored, with a warning for each the editor side gets', () => {
+    const {editor, document, heard} = createLoadedEditor('B: foo|')
+
+    document.close()
+    editor.send({
+      type: 'transaction',
+      transactionId: 't1',
+      previousRev: 'r1',
+      resultRev: 'r2',
+      patches: [set('h1', [{_key: 'd-k0'}, 'style'])],
+    })
+    editor.send({type: 'resync', value: undefined, rev: 'r2'})
+    editor.send({type: 'load', value: undefined, rev: 'r2'})
+    document.type('x')
+    document.setStyle('h1')
+    document.insertBlock('B: bar')
+    document.deleteBlock('foo')
+    editor.undo()
+    document.putCaretAfter('f')
+
+    expect(heard.warnings).toEqual([
+      'Ignored transaction "t1" after the editor unmounted',
+      'Ignored a resync after the editor unmounted',
+      'Ignored a load after the editor unmounted',
+      'Ignored an undo after the editor unmounted',
+    ])
+    expect(editor.getSnapshot().context.status).toEqual('unmounted')
+    expect(document.toTextspec()).toEqual('B: foo|')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r1')
+    expect(heard.mutations).toEqual([])
+    expect(heard.changes).toEqual([])
+  })
+
+  test("the editor side is ready once the editor's first commit ends, with a load or without one", () => {
+    const {clock} = createFakeNetwork()
+    const results = [false, true].map((loaded) => {
+      const {document, io: editor} = createEditorWithIo({
+        id: 'A',
+        keyGenerator: createTestKeyGenerator('a-'),
+        clock,
+      })
+
+      if (loaded) {
+        editor.send({
+          type: 'load',
+          value: parseTextspec(
+            {keyGenerator: createTestKeyGenerator('d-')},
+            'B: foo',
+          ).value,
+          rev: 'r1',
+        })
+      }
+
+      const statusBeforeMount = editor.getSnapshot().context.status
+      document.mount()
+
+      return {
+        statusBeforeMount,
+        status: editor.getSnapshot().context.status,
+        screen: document.toTextspec(),
+      }
+    })
+
+    expect(results).toEqual([
+      {statusBeforeMount: 'loading', status: 'ready', screen: 'B: |'},
+      {statusBeforeMount: 'loading', status: 'ready', screen: 'B: |foo'},
+    ])
+  })
+})
+
+function createLoadedEditor(textspec: string | undefined) {
+  const {clock} = createFakeNetwork()
+  const {
+    document,
+    io: editor,
+    heard,
+    received,
+    treeMismatches,
+  } = createEditorWithIo({
+    id: 'A',
+    keyGenerator: createTestKeyGenerator('a-'),
+    clock,
+  })
+  const {value, caret} =
+    textspec === undefined
+      ? {value: undefined, caret: undefined}
+      : parseTextspec({keyGenerator: createTestKeyGenerator('d-')}, textspec)
+
+  editor.send({type: 'load', value, rev: 'r1'})
+  document.mount()
+
+  if (caret) {
+    document.setCaret(caret)
+  }
+
+  return {editor, document, clock, heard, received, treeMismatches}
+}
