@@ -69,6 +69,7 @@ export interface DOMEditor extends BaseEditor {
   pendingAction: Action | null
   pendingSelection: Range | null
   forceRender: (() => void) | null
+  flushPendingDOMSelectionChange: (() => void) | null
 }
 
 interface DOMEditorInterface {

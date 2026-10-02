@@ -140,6 +140,10 @@ export function createInternalEditor(config: EditorConfig): {
           break
 
         default:
+          if (event.type !== 'focus' && event.type !== 'blur') {
+            editorEngine.flushPendingDOMSelectionChange?.()
+          }
+
           editorActor.send(
             rerouteExternalBehaviorEvent({
               event,

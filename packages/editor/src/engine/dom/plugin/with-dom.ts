@@ -32,6 +32,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.pendingAction = null
   e.pendingSelection = null
   e.forceRender = null
+  e.flushPendingDOMSelectionChange = null
 
   subscribeToOperations(
     e,

@@ -386,6 +386,16 @@ export const Editable = forwardRef(
       scheduleOnDOMSelectionChange,
     })
 
+    const flushPendingDOMSelectionChange = useCallback(() => {
+      if (androidInputManagerRef.current) {
+        return
+      }
+
+      scheduleOnDOMSelectionChange.flush()
+      onDOMSelectionChange.flush()
+    }, [onDOMSelectionChange, scheduleOnDOMSelectionChange])
+    editor.flushPendingDOMSelectionChange = flushPendingDOMSelectionChange
+
     useIsomorphicLayoutEffect(() => {
       // Consumed at most once per effect run: whichever render runs next
       // after a local content change is the only one allowed to scroll
