@@ -62,7 +62,7 @@ describe(createWorld.name, () => {
             rev: 'r1',
           },
           inFlight: {
-            batchNumber: 1,
+            mutationNumber: 1,
             transactionIds: ['A-t1'],
             patchCount: 1,
             patches: [diffMatchPatch('foo', 'foox', textPath)],
@@ -79,7 +79,7 @@ describe(createWorld.name, () => {
           outOfStep: false,
           readOnly: false,
           undoDepth: 2,
-          sentBatches: [
+          sentMutations: [
             {
               number: 1,
               transactionId: 'A-t1',
@@ -160,7 +160,7 @@ describe(createWorld.name, () => {
             rev: 'r1',
           },
           inFlight: {
-            batchNumber: 1,
+            mutationNumber: 1,
             transactionIds: ['B-t1'],
             patchCount: 1,
             patches: [set('h1', stylePath)],
@@ -179,7 +179,7 @@ describe(createWorld.name, () => {
           outOfStep: false,
           readOnly: false,
           undoDepth: 1,
-          sentBatches: [
+          sentMutations: [
             {
               number: 1,
               transactionId: 'B-t1',
@@ -254,20 +254,20 @@ describe(createWorld.name, () => {
             id: 'A-t1',
             previousRev: 'r1',
             resultRev: 'r2',
-            batchIds: ['A-1'],
+            mutationIds: ['A-1'],
             patchCount: 1,
             patches: [diffMatchPatch('foo', 'foox', textPath)],
             noop: false,
             source: {
-              type: 'batches',
-              batches: [{name: 'Editor A', batchNumber: 1}],
+              type: 'mutations',
+              mutations: [{name: 'Editor A', mutationNumber: 1}],
             },
           },
           {
             id: 'other-field-1',
             previousRev: 'r2',
             resultRev: 'r3',
-            batchIds: [],
+            mutationIds: [],
             patchCount: 0,
             patches: [],
             noop: true,
@@ -281,8 +281,8 @@ describe(createWorld.name, () => {
         saveRequests: [
           {
             editor: 'Editor B',
-            batchId: 'B-1',
-            batchNumber: 1,
+            mutationId: 'B-1',
+            mutationNumber: 1,
             final: false,
             patchCount: 1,
             patches: [set('h1', stylePath)],
@@ -296,19 +296,19 @@ describe(createWorld.name, () => {
               transactionId: 'A-t1',
               previousRev: 'r1',
               resultRev: 'r2',
-              batchIds: ['A-1'],
+              mutationIds: ['A-1'],
               patchCount: 1,
               patches: [diffMatchPatch('foo', 'foox', textPath)],
               source: {
-                type: 'batches',
-                batches: [{name: 'Editor A', batchNumber: 1}],
+                type: 'mutations',
+                mutations: [{name: 'Editor A', mutationNumber: 1}],
               },
             },
             {
               transactionId: 'other-field-1',
               previousRev: 'r2',
               resultRev: 'r3',
-              batchIds: [],
+              mutationIds: [],
               patchCount: 0,
               patches: [],
               source: {type: 'named', name: 'the other field'},
@@ -319,12 +319,12 @@ describe(createWorld.name, () => {
               transactionId: 'A-t1',
               previousRev: 'r1',
               resultRev: 'r2',
-              batchIds: ['A-1'],
+              mutationIds: ['A-1'],
               patchCount: 1,
               patches: [diffMatchPatch('foo', 'foox', textPath)],
               source: {
-                type: 'batches',
-                batches: [{name: 'Editor A', batchNumber: 1}],
+                type: 'mutations',
+                mutations: [{name: 'Editor A', mutationNumber: 1}],
               },
             },
           ],
@@ -384,7 +384,7 @@ describe(createWorld.name, () => {
     ])
   })
 
-  test('a resync after `feed lost` re-submits the batch in flight, and the 409 is on the path', () => {
+  test('a resync after `feed lost` re-submits the mutation in flight, and the 409 is on the path', () => {
     const world = createWorld()
 
     world.documentIs('B: foo|')

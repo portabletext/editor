@@ -658,7 +658,7 @@ export function formatTextspec(
 }
 
 /**
- * Whether a batch turns the placeholder into content: it starts with a
+ * Whether a mutation turns the placeholder into content: it starts with a
  * whole-field `setIfMissing` followed by an `insert`.
  */
 export function createsBlock(patches: Array<Patch>): boolean {
@@ -672,7 +672,7 @@ export function createsBlock(patches: Array<Patch>): boolean {
 }
 
 /**
- * Whether a batch empties the field: it contains a whole-field `unset`.
+ * Whether a mutation empties the field: it contains a whole-field `unset`.
  */
 export function emptiesField(patches: Array<Patch>): boolean {
   return patches.some(

@@ -4,17 +4,17 @@ import {applyWithContentLakeSemantics} from '../protocol/content-lake'
 import type {RequestFailure} from '../protocol/host'
 
 /**
- * A batch as the server sees it: the batch ID and its patches, scoped to the
+ * A mutation as the server sees it: the mutation ID and its patches, scoped to the
  * field.
  */
-export type SavedBatch = {id: string; patches: Array<Patch>}
+export type SavedMutation = {id: string; patches: Array<Patch>}
 
 export type ServerTransaction = {
   transactionId: string
   previousRev: string | undefined
   resultRev: string | undefined
   patches: Array<Patch>
-  batchIds: Array<string>
+  mutationIds: Array<string>
 }
 
 /**
@@ -35,25 +35,28 @@ export type ServerCopy = {
 export type Server = {
   documentId: string
   /**
-   * Applies the batch and records a transaction, whether or not anything
+   * Applies the mutation and records a transaction, whether or not anything
    * changed. Creates the document if it doesn't exist. Throws when the
    * transaction ID is taken.
    */
-  receive: (batch: SavedBatch, transactionId: string) => ServerTransaction
+  receive: (mutation: SavedMutation, transactionId: string) => ServerTransaction
   /**
-   * Saves a request's batches as one transaction, as `receive` does for one,
+   * Saves a request's mutations as one transaction, as `receive` does for one,
    * unless the transaction ID is taken: then it changes nothing and answers
    * 409, as Content Lake does for a retried request. A request that meets an
    * injected failure changes nothing and fails with it.
    */
   submit: (
-    batches: ReadonlyArray<SavedBatch>,
+    mutations: ReadonlyArray<SavedMutation>,
     transactionId: string,
   ) => SubmitResult
   /** Whether the document's transaction history lists the ID. */
   hasTransaction: (transactionId: string) => boolean
   /** The save requests refused with a 409, in the order they arrived. */
-  getDuplicates: () => Array<{transactionId: string; batchIds: Array<string>}>
+  getDuplicates: () => Array<{
+    transactionId: string
+    mutationIds: Array<string>
+  }>
   /**
    * Makes the next request `submit` gets fail with the status, whatever it
    * carries.
@@ -115,7 +118,8 @@ export function createFakeServer(initial: {
   const copiesAfter = new Map<string, Array<PortableTextBlock> | undefined>()
   const log: Array<{transaction: ServerTransaction; changesField: boolean}> = []
   let nextFailure: RequestFailure | undefined
-  const duplicates: Array<{transactionId: string; batchIds: Array<string>}> = []
+  const duplicates: Array<{transactionId: string; mutationIds: Array<string>}> =
+    []
 
   if (initial.document) {
     value = initial.document.value
@@ -128,15 +132,15 @@ export function createFakeServer(initial: {
     )
   }
 
-  function receiveBatches(
-    batches: ReadonlyArray<SavedBatch>,
+  function receiveMutations(
+    mutations: ReadonlyArray<SavedMutation>,
     transactionId: string,
   ) {
     if (hasTransaction(transactionId)) {
       throw new Error(`Transaction "${transactionId}" already exists`)
     }
 
-    const patches = batches.flatMap((batch) => batch.patches)
+    const patches = mutations.flatMap((mutation) => mutation.patches)
     const valueBefore = value
     value = applyWithContentLakeSemantics(value, patches)
 
@@ -144,7 +148,7 @@ export function createFakeServer(initial: {
       {
         transactionId,
         patches,
-        batchIds: batches.map((batch) => batch.id),
+        mutationIds: mutations.map((mutation) => mutation.id),
       },
       nextRevision(),
       JSON.stringify(valueBefore) !== JSON.stringify(value),
@@ -171,8 +175,9 @@ export function createFakeServer(initial: {
 
   return {
     documentId: initial.documentId,
-    receive: (batch, transactionId) => receiveBatches([batch], transactionId),
-    submit: (batches, transactionId) => {
+    receive: (mutation, transactionId) =>
+      receiveMutations([mutation], transactionId),
+    submit: (mutations, transactionId) => {
       if (nextFailure !== undefined) {
         const status = nextFailure
         nextFailure = undefined
@@ -182,14 +187,14 @@ export function createFakeServer(initial: {
       if (hasTransaction(transactionId)) {
         duplicates.push({
           transactionId,
-          batchIds: batches.map((batch) => batch.id),
+          mutationIds: mutations.map((mutation) => mutation.id),
         })
         return {type: 'duplicate'}
       }
 
       return {
         type: 'saved',
-        transaction: receiveBatches(batches, transactionId),
+        transaction: receiveMutations(mutations, transactionId),
       }
     },
     hasTransaction,
@@ -204,7 +209,7 @@ export function createFakeServer(initial: {
       }
 
       return record(
-        {transactionId, patches: [], batchIds: []},
+        {transactionId, patches: [], mutationIds: []},
         nextRevision(),
         false,
       )
@@ -218,7 +223,7 @@ export function createFakeServer(initial: {
       value = applyWithContentLakeSemantics(value, patches)
 
       return record(
-        {transactionId, patches, batchIds: []},
+        {transactionId, patches, mutationIds: []},
         nextRevision(),
         JSON.stringify(valueBefore) !== JSON.stringify(value),
       )
@@ -232,7 +237,7 @@ export function createFakeServer(initial: {
       value = nextValue
 
       return record(
-        {transactionId, patches: [set(nextValue, [])], batchIds: []},
+        {transactionId, patches: [set(nextValue, [])], mutationIds: []},
         nextRevision(),
         JSON.stringify(valueBefore) !== JSON.stringify(value),
       )
@@ -246,7 +251,7 @@ export function createFakeServer(initial: {
       value = undefined
 
       return record(
-        {transactionId, patches: [unset([])], batchIds: []},
+        {transactionId, patches: [unset([])], mutationIds: []},
         undefined,
         valueBefore !== undefined,
       )
@@ -259,7 +264,7 @@ export function createFakeServer(initial: {
       value = nextValue
 
       return record(
-        {transactionId, patches: [set(nextValue, [])], batchIds: []},
+        {transactionId, patches: [set(nextValue, [])], mutationIds: []},
         nextRevision(),
         true,
       )

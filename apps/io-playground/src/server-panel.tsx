@@ -272,7 +272,7 @@ export function ServerPanel({
                     ) {
                       onStep(
                         editorA?.inFlight
-                          ? `Editor A is resynced with the outcome of batch ${editorA.inFlight.batchNumber}`
+                          ? `Editor A is resynced with the outcome of mutation ${editorA.inFlight.mutationNumber}`
                           : 'Editor A is resynced',
                       )
                     }
@@ -342,7 +342,7 @@ function malformedDoors(
   return {
     reload: {
       enabled: true,
-      why: "the server's copy changes without a transaction, and Editor A resyncs from it: io repairs the copy and sends the repair as its next batch",
+      why: "the server's copy changes without a transaction, and Editor A resyncs from it: io repairs the copy and sends the repair as its next mutation",
     },
     transaction:
       editor.host === 'self-confirming'

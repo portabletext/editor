@@ -35,7 +35,7 @@ export function LinkPanel({
   applicability,
   onStep,
   onDeliver,
-  selectedBatchIds,
+  selectedMutationIds,
   onToggleSelected,
   deadFeed,
 }: {
@@ -53,8 +53,8 @@ export function LinkPanel({
    */
   onDeliver: ((text: string) => boolean) | undefined
   /** Save requests picked to be received as one transaction. */
-  selectedBatchIds: Array<string>
-  onToggleSelected: (batchId: string) => void
+  selectedMutationIds: Array<string>
+  onToggleSelected: (mutationId: string) => void
   /** Whether the network has stopped delivering to the editor's listener. */
   deadFeed: boolean
 }) {
@@ -102,33 +102,35 @@ export function LinkPanel({
               <div className={`flex flex-wrap gap-1.5 ${upwardOrder}`}>
                 {requests.map((request) => (
                   <Card
-                    key={request.batchId}
-                    label={`save request for ${name}'s batch ${request.batchNumber}`}
+                    key={request.mutationId}
+                    label={`save request for ${name}'s mutation ${request.mutationNumber}`}
                   >
                     <div className="flex items-start gap-1">
                       {onStep && network.saveRequests.length > 1 ? (
                         <input
                           type="checkbox"
-                          aria-label={`Select ${name}'s batch ${request.batchNumber} to receive two batches as one transaction`}
-                          title="select to receive two batches as one transaction"
-                          checked={selectedBatchIds.includes(request.batchId)}
-                          onChange={() => onToggleSelected(request.batchId)}
+                          aria-label={`Select ${name}'s mutation ${request.mutationNumber} to receive two mutations as one transaction`}
+                          title="select to receive two mutations as one transaction"
+                          checked={selectedMutationIds.includes(
+                            request.mutationId,
+                          )}
+                          onChange={() => onToggleSelected(request.mutationId)}
                           className="mt-0.5"
                         />
                       ) : null}
                       <DetailsLink
-                        label={`Details of ${name}'s batch ${request.batchNumber}`}
+                        label={`Details of ${name}'s mutation ${request.mutationNumber}`}
                         onClick={() =>
                           openDetails({
-                            type: 'batch',
+                            type: 'mutation',
                             editor: name,
-                            batchNumber: request.batchNumber,
+                            mutationNumber: request.mutationNumber,
                           })
                         }
                       >
-                        batch {request.batchNumber} →{' '}
-                        {editor?.sentBatches[request.batchNumber - 1]
-                          ?.transactionId ?? request.batchId}
+                        mutation {request.mutationNumber} →{' '}
+                        {editor?.sentMutations[request.mutationNumber - 1]
+                          ?.transactionId ?? request.mutationId}
                       </DetailsLink>
                     </div>
                     <span className="text-gray-500">
@@ -140,14 +142,14 @@ export function LinkPanel({
                         <ActionButton
                           applicability={
                             applicability.towardServer.saveRequests[
-                              request.batchId
+                              request.mutationId
                             ] ?? {enabled: true}
                           }
                           onClick={() =>
                             onStep(
                               request.final
-                                ? `the server receives ${name}'s final batch`
-                                : `the server receives ${name}'s batch ${request.batchNumber}`,
+                                ? `the server receives ${name}'s final mutation`
+                                : `the server receives ${name}'s mutation ${request.mutationNumber}`,
                             )
                           }
                         >
@@ -165,8 +167,8 @@ export function LinkPanel({
                               ) {
                                 onStep(
                                   request.final
-                                    ? `the server receives ${name}'s final batch`
-                                    : `the server receives ${name}'s batch ${request.batchNumber}`,
+                                    ? `the server receives ${name}'s final mutation`
+                                    : `the server receives ${name}'s mutation ${request.mutationNumber}`,
                                 )
                               }
                             }}
@@ -178,17 +180,17 @@ export function LinkPanel({
                         <ActionButton
                           applicability={
                             applicability.towardServer.loseReply[
-                              request.batchId
+                              request.mutationId
                             ] ?? {enabled: true}
                           }
                           onClick={() => {
                             if (
                               onStep(
-                                `the server receives ${name}'s batch ${request.batchNumber}`,
+                                `the server receives ${name}'s mutation ${request.mutationNumber}`,
                               )
                             ) {
                               onStep(
-                                `the save reply for ${name}'s batch ${request.batchNumber} is lost`,
+                                `the save reply for ${name}'s mutation ${request.mutationNumber} is lost`,
                               )
                             }
                           }}
@@ -235,26 +237,26 @@ export function LinkPanel({
               <div className={`flex flex-wrap gap-1.5 ${downwardOrder}`}>
                 {replies.map((reply) => (
                   <Card
-                    key={reply.batchId}
-                    label={`failure reply for ${name}'s batch ${reply.batchNumber}`}
+                    key={reply.mutationId}
+                    label={`failure reply for ${name}'s mutation ${reply.mutationNumber}`}
                   >
                     <span>
                       <Badge tone="red">failed: {reply.status}</Badge>
                     </span>
                     <span className="text-gray-500">
-                      batch {reply.batchNumber}
+                      mutation {reply.mutationNumber}
                     </span>
                     {onDeliver ? (
                       <div>
                         <ActionButton
                           applicability={
                             applicability.towardEditor.replies[
-                              reply.batchId
+                              reply.mutationId
                             ] ?? {enabled: true}
                           }
                           onClick={() =>
                             onDeliver(
-                              `the save reply for ${name}'s batch ${reply.batchNumber} arrives`,
+                              `the save reply for ${name}'s mutation ${reply.mutationNumber} arrives`,
                             )
                           }
                         >
@@ -271,29 +273,29 @@ export function LinkPanel({
               <div className={`flex flex-wrap gap-1.5 ${downwardOrder}`}>
                 {lostReplies.map((reply) => (
                   <Card
-                    key={reply.batchId}
-                    label={`lost save reply for ${name}'s batch ${reply.batchNumber}`}
+                    key={reply.mutationId}
+                    label={`lost save reply for ${name}'s mutation ${reply.mutationNumber}`}
                   >
                     <span className="flex flex-wrap items-center gap-1">
                       <Badge tone="amber">reply lost</Badge>
                       <InfoMark concept="lost reply" />
                     </span>
                     <span className="text-gray-500">
-                      batch {reply.batchNumber} →{' '}
-                      {editor?.sentBatches[reply.batchNumber - 1]
-                        ?.transactionId ?? reply.batchId}
+                      mutation {reply.mutationNumber} →{' '}
+                      {editor?.sentMutations[reply.mutationNumber - 1]
+                        ?.transactionId ?? reply.mutationId}
                     </span>
                     {onStep ? (
                       <div>
                         <ActionButton
                           applicability={
                             applicability.towardEditor.lostReplies[
-                              reply.batchId
+                              reply.mutationId
                             ] ?? {enabled: true}
                           }
                           onClick={() =>
                             onStep(
-                              `${name}'s batch ${reply.batchNumber} is retried`,
+                              `${name}'s mutation ${reply.mutationNumber} is retried`,
                             )
                           }
                         >
@@ -308,8 +310,8 @@ export function LinkPanel({
 
             {!listening ? (
               <Empty>
-                no listener: the host confirms each batch from the answer to its
-                own save
+                no listener: the host confirms each mutation from the answer to
+                its own save
               </Empty>
             ) : feed.length === 0 ? (
               <Empty>no transactions waiting</Empty>
@@ -446,11 +448,11 @@ function deliveryStep(receiver: EditorName, source: TransactionSource): string {
       : `${receiver} receives ${source.name}`
   }
 
-  const batch =
-    source.batches.find((candidate) => candidate.name === receiver) ??
-    source.batches[0]
+  const mutation =
+    source.mutations.find((candidate) => candidate.name === receiver) ??
+    source.mutations[0]
 
-  return batch.name === receiver
-    ? `${receiver}'s batch ${batch.batchNumber} comes back`
-    : `${receiver} receives ${batch.name}'s batch ${batch.batchNumber}`
+  return mutation.name === receiver
+    ? `${receiver}'s mutation ${mutation.mutationNumber} comes back`
+    : `${receiver} receives ${mutation.name}'s mutation ${mutation.mutationNumber}`
 }

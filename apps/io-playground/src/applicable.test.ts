@@ -50,10 +50,10 @@ describe(applicableActions.name, () => {
     })
   })
 
-  test('a batch in flight resyncs with its outcome, and discarding waits', () => {
+  test('a mutation in flight resyncs with its outcome, and discarding waits', () => {
     const actions = applicableActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: batch(1), undoDepth: 1}),
+        editorA: editorSnapshot({inFlight: mutation(1), undoDepth: 1}),
       }),
       'Editor A',
     )
@@ -70,11 +70,11 @@ describe(applicableActions.name, () => {
       'close': {enabled: true},
       'resync': {
         enabled: true,
-        why: 'batch 1 is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome',
+        why: 'mutation 1 is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome',
       },
       'resync discarding': {
         enabled: false,
-        why: 'the steps discard only when no batch is in flight',
+        why: 'the steps discard only when no mutation is in flight',
       },
       'load': {
         enabled: false,
@@ -85,12 +85,12 @@ describe(applicableActions.name, () => {
     expect(editorPrompts(actions)).toEqual([])
   })
 
-  test('a rejected batch suggests a resync', () => {
+  test('a rejected mutation suggests a resync', () => {
     const actions = applicableActions(
       worldSnapshot({
         editorA: editorSnapshot({
-          rejected: batch(1),
-          pending: [batch(2)],
+          rejected: mutation(1),
+          pending: [mutation(2)],
           undoDepth: 1,
         }),
       }),
@@ -110,7 +110,7 @@ describe(applicableActions.name, () => {
       'resync': {
         enabled: true,
         suggested:
-          "Editor A's batch 1 was rejected: sending is blocked until a resync",
+          "Editor A's mutation 1 was rejected: sending is blocked until a resync",
       },
       'resync discarding': {
         enabled: true,
@@ -123,7 +123,7 @@ describe(applicableActions.name, () => {
       'end first commit': {enabled: false, why: 'the first commit has ended'},
     })
     expect(editorPrompts(actions)).toEqual([
-      "Editor A's batch 1 was rejected: sending is blocked until a resync",
+      "Editor A's mutation 1 was rejected: sending is blocked until a resync",
     ])
   })
 
@@ -142,22 +142,22 @@ describe(applicableActions.name, () => {
     ])
   })
 
-  test('an editor out of step with a batch in flight suggests a resync with its outcome', () => {
+  test('an editor out of step with a mutation in flight suggests a resync with its outcome', () => {
     const actions = applicableActions(
       worldSnapshot({
-        editorA: editorSnapshot({outOfStep: true, inFlight: batch(1)}),
+        editorA: editorSnapshot({outOfStep: true, inFlight: mutation(1)}),
       }),
       'Editor A',
     )
 
     expect(actions.resync).toEqual({
       enabled: true,
-      why: 'batch 1 is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome',
+      why: 'mutation 1 is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome',
       suggested:
-        'Editor A is out of step: resync with the outcome of batch 1 to recover',
+        'Editor A is out of step: resync with the outcome of mutation 1 to recover',
     })
     expect(editorPrompts(actions)).toEqual([
-      'Editor A is out of step: resync with the outcome of batch 1 to recover',
+      'Editor A is out of step: resync with the outcome of mutation 1 to recover',
     ])
   })
 
@@ -247,7 +247,7 @@ describe(applicableActions.name, () => {
       worldSnapshot({
         editorA: editorSnapshot({
           status: 'unmounted',
-          rejected: batch(1),
+          rejected: mutation(1),
           undoDepth: 1,
         }),
       }),
@@ -307,13 +307,13 @@ describe(applicableNetworkActions.name, () => {
   test('a waiting save request suggests the server receives it', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: batch(1)}),
+        editorA: editorSnapshot({inFlight: mutation(1)}),
         network: networkSnapshot({
           saveRequests: [
             {
               editor: 'Editor A',
-              batchId: 'A-1',
-              batchNumber: 1,
+              mutationId: 'A-1',
+              mutationNumber: 1,
               final: false,
               patchCount: 1,
               patches: [],
@@ -326,13 +326,13 @@ describe(applicableNetworkActions.name, () => {
     expect(network.links['Editor A']).toEqual({
       towardServer: {
         prompts: [
-          "Editor A's batch 1 is waiting: the server receives it, or the request fails",
+          "Editor A's mutation 1 is waiting: the server receives it, or the request fails",
         ],
         saveRequests: {
           'A-1': {
             enabled: true,
             suggested:
-              "Editor A's batch 1 is waiting: the server receives it, or the request fails",
+              "Editor A's mutation 1 is waiting: the server receives it, or the request fails",
           },
         },
         loseReply: {
@@ -351,10 +351,15 @@ describe(applicableNetworkActions.name, () => {
   test('a waiting failure reply suggests delivering it', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: batch(1)}),
+        editorA: editorSnapshot({inFlight: mutation(1)}),
         network: networkSnapshot({
           replies: [
-            {editor: 'Editor A', batchId: 'A-1', batchNumber: 1, status: 400},
+            {
+              editor: 'Editor A',
+              mutationId: 'A-1',
+              mutationNumber: 1,
+              status: 400,
+            },
           ],
         }),
       }),
@@ -363,11 +368,12 @@ describe(applicableNetworkActions.name, () => {
     expect(network.links['Editor A']).toEqual({
       towardServer: {prompts: [], saveRequests: {}, loseReply: {}},
       towardEditor: {
-        prompts: ["Editor A's batch 1 failed with 400: deliver the reply"],
+        prompts: ["Editor A's mutation 1 failed with 400: deliver the reply"],
         replies: {
           'A-1': {
             enabled: true,
-            suggested: "Editor A's batch 1 failed with 400: deliver the reply",
+            suggested:
+              "Editor A's mutation 1 failed with 400: deliver the reply",
           },
         },
         lostReplies: {},
@@ -385,8 +391,8 @@ describe(applicableNetworkActions.name, () => {
           saveRequests: [
             {
               editor: 'Editor A',
-              batchId: 'A-2',
-              batchNumber: 2,
+              mutationId: 'A-2',
+              mutationNumber: 2,
               final: true,
               patchCount: 1,
               patches: [],
@@ -397,17 +403,17 @@ describe(applicableNetworkActions.name, () => {
     )
 
     expect(network.links['Editor A'].towardServer.loseReply).toEqual({
-      'A-2': {enabled: false, why: 'a final batch gets no reply'},
+      'A-2': {enabled: false, why: 'a final mutation gets no reply'},
     })
   })
 
-  test('a lost reply for the batch in flight suggests retrying it, and one for a settled batch cannot be retried', () => {
+  test('a lost reply for the mutation in flight suggests retrying it, and one for a settled mutation cannot be retried', () => {
     const lostReplies = [
-      {editor: 'Editor A' as const, batchId: 'A-1', batchNumber: 1},
+      {editor: 'Editor A' as const, mutationId: 'A-1', mutationNumber: 1},
     ]
     const inFlight = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: batch(1)}),
+        editorA: editorSnapshot({inFlight: mutation(1)}),
         network: networkSnapshot({lostReplies}),
       }),
     )
@@ -417,14 +423,14 @@ describe(applicableNetworkActions.name, () => {
 
     expect(inFlight.links['Editor A'].towardEditor).toEqual({
       prompts: [
-        "the save reply for Editor A's batch 1 was lost: retry it with the same transaction ID",
+        "the save reply for Editor A's mutation 1 was lost: retry it with the same transaction ID",
       ],
       replies: {},
       lostReplies: {
         'A-1': {
           enabled: true,
           suggested:
-            "the save reply for Editor A's batch 1 was lost: retry it with the same transaction ID",
+            "the save reply for Editor A's mutation 1 was lost: retry it with the same transaction ID",
         },
       },
       feed: {},
@@ -435,7 +441,7 @@ describe(applicableNetworkActions.name, () => {
       lostReplies: {
         'A-1': {
           enabled: false,
-          why: "batch 1 isn't in flight anymore: the host knows what became of it",
+          why: "mutation 1 isn't in flight anymore: the host knows what became of it",
         },
       },
       feed: {},
@@ -462,7 +468,7 @@ describe(applicableNetworkActions.name, () => {
   test('a dead feed delivers nothing and suggests nothing', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: batch(1), sync: 'saving'}),
+        editorA: editorSnapshot({inFlight: mutation(1), sync: 'saving'}),
         network: networkSnapshot({
           feeds: {'Editor A': [feedItem('A-1', 'r1', 'r2')], 'Editor B': []},
         }),
@@ -652,7 +658,7 @@ function editorSnapshot(overrides: Partial<EditorSnapshot>): EditorSnapshot {
     outOfStep: false,
     readOnly: false,
     undoDepth: 0,
-    sentBatches: [],
+    sentMutations: [],
     events: [],
     messages: [],
     ...overrides,
@@ -671,10 +677,10 @@ function networkSnapshot(overrides: Partial<NetworkSnapshot>): NetworkSnapshot {
   }
 }
 
-function batch(batchNumber: number) {
+function mutation(mutationNumber: number) {
   return {
-    batchNumber,
-    transactionIds: [`A-${batchNumber}`],
+    mutationNumber,
+    transactionIds: [`A-${mutationNumber}`],
     patchCount: 1,
     patches: [],
   }
@@ -689,15 +695,15 @@ function feedItem(
     transactionId,
     previousRev,
     resultRev,
-    batchIds: [transactionId],
+    mutationIds: [transactionId],
     patchCount: 1,
     patches: [],
     source: {
-      type: 'batches',
-      batches: [
+      type: 'mutations',
+      mutations: [
         {
           name: transactionId.startsWith('A') ? 'Editor A' : 'Editor B',
-          batchNumber: Number(transactionId.split('-')[1]),
+          mutationNumber: Number(transactionId.split('-')[1]),
         },
       ],
     },

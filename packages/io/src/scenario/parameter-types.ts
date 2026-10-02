@@ -5,7 +5,7 @@ import type {IoSync} from '../protocol/io'
 import type {ErrorEvent, WorkDropped} from '../protocol/types'
 import type {Corruption, EditorName, ServerCopyName} from './world'
 
-export type BatchReference = {name: EditorName; batchNumber: number}
+export type MutationReference = {name: EditorName; mutationNumber: number}
 
 /**
  * A sync state a scenario checks for. The editor has no `'stalled'` state, so
@@ -27,12 +27,12 @@ export const parameterTypes = [
     name: 'editor',
     matcher: /Editor A|Editor B/,
   }),
-  createParameterType<BatchReference>({
-    name: 'batch',
-    matcher: /(Editor A|Editor B)'s batch (\d+)/,
-    transform: (name, batchNumber) => ({
+  createParameterType<MutationReference>({
+    name: 'mutation',
+    matcher: /(Editor A|Editor B)'s mutation (\d+)/,
+    transform: (name, mutationNumber) => ({
       name: name === 'Editor A' ? 'Editor A' : 'Editor B',
-      batchNumber: Number.parseInt(batchNumber, 10),
+      mutationNumber: Number.parseInt(mutationNumber, 10),
     }),
   }),
   createParameterType<string>({

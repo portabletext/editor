@@ -45,7 +45,7 @@ type FreePlay = {
   error: string | null
   /** Editors whose listener the network has stopped delivering to. */
   deadFeeds: Array<EditorName>
-  /** When each editor sent each batch, on the world's clock, by batch number. */
+  /** When each editor sent each mutation, on the world's clock, by mutation number. */
   sentAt: Record<EditorName, Array<number>>
 }
 
@@ -128,7 +128,7 @@ export function useFreePlay() {
   function killFeed(name: EditorName) {
     setFeedDead(name, true)
     note(`(${name}'s feed dies)`, [
-      `The network stops delivering to ${name}'s listener. Nothing tells the host or io: transactions pile up unheard, and a batch in flight never comes back.`,
+      `The network stops delivering to ${name}'s listener. Nothing tells the host or io: transactions pile up unheard, and a mutation in flight never comes back.`,
     ])
   }
 
@@ -142,7 +142,7 @@ export function useFreePlay() {
     perform(
       'When',
       inFlight
-        ? `${name} is resynced with the outcome of batch ${inFlight.batchNumber}`
+        ? `${name} is resynced with the outcome of mutation ${inFlight.mutationNumber}`
         : `${name} is resynced`,
     )
     setFeedDead(name, false)
@@ -159,7 +159,7 @@ export function useFreePlay() {
 
     note(`(${name}'s host does nothing)`, [
       editor?.inFlight && elapsed !== undefined
-        ? `${name}'s host never notices. Batch ${editor.inFlight.batchNumber} has been in flight for ${elapsed / 1000} s and sync still says ${editor.sync}. The protocol has no stalled state to show: what a user sees when a save never comes back is still an open question.`
+        ? `${name}'s host never notices. Mutation ${editor.inFlight.mutationNumber} has been in flight for ${elapsed / 1000} s and sync still says ${editor.sync}. The protocol has no stalled state to show: what a user sees when a save never comes back is still an open question.`
         : `${name}'s host never notices, and sync says ${editor?.sync ?? 'nothing'}.`,
     ])
   }
@@ -172,7 +172,9 @@ export function useFreePlay() {
     const sentAt =
       inFlight === null || inFlight === undefined
         ? undefined
-        : recordSends(freePlay.sentAt, snapshot)[name][inFlight.batchNumber - 1]
+        : recordSends(freePlay.sentAt, snapshot)[name][
+            inFlight.mutationNumber - 1
+          ]
 
     return sentAt === undefined || snapshot.network === null
       ? undefined
@@ -245,7 +247,9 @@ export function FreePlayTab({
           name={name}
           actions={applicableActions(snapshot, name)}
           readOnly={snapshot.editors?.[name].readOnly ?? false}
-          inFlightBatchNumber={snapshot.editors?.[name].inFlight?.batchNumber}
+          inFlightMutationNumber={
+            snapshot.editors?.[name].inFlight?.mutationNumber
+          }
           onStep={(text) => freePlay.perform('When', text)}
           feed={{
             dead: freePlay.deadFeeds.includes(name),
@@ -372,15 +376,15 @@ function EditorControls({
   name,
   actions,
   readOnly,
-  inFlightBatchNumber,
+  inFlightMutationNumber,
   onStep,
   feed,
 }: {
   name: EditorName
   actions: EditorApplicability
   readOnly: boolean
-  /** The batch whose outcome a resync carries. */
-  inFlightBatchNumber: number | undefined
+  /** The mutation whose outcome a resync carries. */
+  inFlightMutationNumber: number | undefined
   onStep: (text: string) => void
   feed: {
     dead: boolean
@@ -503,15 +507,15 @@ function EditorControls({
             applicability={actions.resync}
             onClick={() =>
               onStep(
-                inFlightBatchNumber === undefined
+                inFlightMutationNumber === undefined
                   ? `${name} is resynced`
-                  : `${name} is resynced with the outcome of batch ${inFlightBatchNumber}`,
+                  : `${name} is resynced with the outcome of mutation ${inFlightMutationNumber}`,
               )
             }
           >
-            {inFlightBatchNumber === undefined
+            {inFlightMutationNumber === undefined
               ? 'resync'
-              : `resync with outcome of batch ${inFlightBatchNumber}`}
+              : `resync with outcome of mutation ${inFlightMutationNumber}`}
           </ActionButton>
           <ActionButton
             applicability={actions['resync discarding']}
@@ -551,9 +555,9 @@ function EditorControls({
                 suggested
                 onClick={feed.onSayFeedLost}
                 title={
-                  inFlightBatchNumber === undefined
+                  inFlightMutationNumber === undefined
                     ? 'feed lost, then a resync'
-                    : `feed lost, then re-submit batch ${inFlightBatchNumber}'s frozen request and resync with its outcome`
+                    : `feed lost, then re-submit mutation ${inFlightMutationNumber}'s frozen request and resync with its outcome`
                 }
               >
                 say feed lost
@@ -671,8 +675,8 @@ function stamp(
   editor: EditorSnapshot,
   now: number,
 ): Array<number> {
-  return editor.sentBatches.length > times.length
-    ? [...times, ...editor.sentBatches.slice(times.length).map(() => now)]
+  return editor.sentMutations.length > times.length
+    ? [...times, ...editor.sentMutations.slice(times.length).map(() => now)]
     : times
 }
 

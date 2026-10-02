@@ -110,7 +110,7 @@ describe(createIo.name, () => {
     expect(heard.errors).toEqual([])
   })
 
-  test('a held echo lets the next batch go out and keeps its work on screen until it applies', () => {
+  test('a held echo lets the next mutation go out and keeps its work on screen until it applies', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 
@@ -957,7 +957,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('undoing a style set on the placeholder before the block is sent puts back the normal style in the same batch', () => {
+  test('undoing a style set on the placeholder before the block is sent puts back the normal style in the same mutation', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const placeholder = {
       _type: 'block',
@@ -1548,7 +1548,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('a rejected batch stays on screen while the feed keeps applying', () => {
+  test('a rejected mutation stays on screen while the feed keeps applying', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|;;B: bar')
 
     document.type('x')
@@ -1578,7 +1578,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('`inspect` reports the batch in flight, the rejected one, pending changes and held transactions', () => {
+  test('`inspect` reports the mutation in flight, the rejected one, pending changes and held transactions', () => {
     const {editor, document, clock} = createLoadedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 
@@ -1634,7 +1634,7 @@ describe(createIo.name, () => {
     })
   })
 
-  test('a rejection for a batch that already came back is ignored with a warning', () => {
+  test('a rejection for a mutation that already came back is ignored with a warning', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 
@@ -1650,7 +1650,7 @@ describe(createIo.name, () => {
     document.type('y')
 
     expect(heard.warnings).toEqual([
-      '`mutation rejected` for batch "A-1", not in flight',
+      '`mutation rejected` for mutation "A-1", not in flight',
     ])
     expect(heard.mutations).toEqual([
       {
@@ -1983,7 +1983,7 @@ describe(createIo.name, () => {
       document.mount()
 
       return {
-        patches: heard.mutations.map((batch) => batch.patches),
+        patches: heard.mutations.map((mutation) => mutation.patches),
         screen: document.toTextspec({keys: true}),
       }
     })
@@ -2013,7 +2013,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('a batch in flight without its echo warns after 10 seconds, then with backoff', () => {
+  test('a mutation in flight without its echo warns after 10 seconds, then with backoff', () => {
     const {editor, document, clock, heard} = createLoadedEditor('B: foo|')
 
     document.type('x')
@@ -2025,8 +2025,8 @@ describe(createIo.name, () => {
     clock.advance(20_000)
 
     expect(heard.warnings).toEqual([
-      'Batch "A-1" has been in flight for 10000 ms without coming back',
-      'Batch "A-1" has been in flight for 30000 ms without coming back',
+      'Mutation "A-1" has been in flight for 10000 ms without coming back',
+      'Mutation "A-1" has been in flight for 30000 ms without coming back',
     ])
 
     editor.send({
@@ -2039,8 +2039,8 @@ describe(createIo.name, () => {
     clock.advance(100_000)
 
     expect(heard.warnings).toEqual([
-      'Batch "A-1" has been in flight for 10000 ms without coming back',
-      'Batch "A-1" has been in flight for 30000 ms without coming back',
+      'Mutation "A-1" has been in flight for 10000 ms without coming back',
+      'Mutation "A-1" has been in flight for 30000 ms without coming back',
     ])
   })
 
@@ -2090,7 +2090,7 @@ describe(createIo.name, () => {
     expect(document.toTextspec()).toEqual('B: |bar')
   })
 
-  test('a resync reports the rejected batch it drops and unsent changes that no longer have a target as dropped work', () => {
+  test('a resync reports the rejected mutation it drops and unsent changes that no longer have a target as dropped work', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo;;B: bar|')
     const [fooBlock] = parseTextspec(
       {keyGenerator: createTestKeyGenerator('d-')},
@@ -2180,7 +2180,7 @@ describe(createIo.name, () => {
     document.close()
 
     expect(heard.warnings).toEqual([
-      '1 unsent change(s) dropped on close: sending was blocked by the rejection of batch A-1',
+      '1 unsent change(s) dropped on close: sending was blocked by the rejection of mutation A-1',
     ])
     expect(heard.workDropped).toEqual([
       {
@@ -2195,10 +2195,10 @@ describe(createIo.name, () => {
         reason: 'closed while blocked',
       },
     ])
-    expect(heard.mutations.map((batch) => batch.id)).toEqual(['A-1'])
+    expect(heard.mutations.map((mutation) => mutation.id)).toEqual(['A-1'])
   })
 
-  test('a `mutation sent` with another transaction ID replaces the proposed one as the ID that confirms the batch', () => {
+  test('a `mutation sent` with another transaction ID replaces the proposed one as the ID that confirms the mutation', () => {
     const results = ['A-t1', 'commit-1'].map((transactionId) => {
       const {editor, document, heard} = createLoadedEditor('B: foo|')
 
@@ -2239,7 +2239,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('a second `mutation sent` with another transaction ID warns, and either ID confirms the batch', () => {
+  test('a second `mutation sent` with another transaction ID warns, and either ID confirms the mutation', () => {
     const results = ['commit-1', 'retry-1'].map((transactionId) => {
       const {editor, document, heard} = createLoadedEditor('B: foo|')
 
@@ -2273,7 +2273,7 @@ describe(createIo.name, () => {
         },
         inFlightAfter: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
         warnings: [
-          '`mutation sent` names transaction "retry-1" for batch "A-1", already sent as "commit-1": a retry must reuse the transaction ID',
+          '`mutation sent` names transaction "retry-1" for mutation "A-1", already sent as "commit-1": a retry must reuse the transaction ID',
         ],
         screen: 'B: fooxy|',
       })),
@@ -2319,7 +2319,7 @@ describe(createIo.name, () => {
     })
   })
 
-  test('a resync while a batch is in flight is refused without its outcome, and with it takes the copy, and a batch not applied rejoins the pending changes ahead of the rest', () => {
+  test('a resync while a mutation is in flight is refused without its outcome, and with it takes the copy, and a mutation not applied rejoins the pending changes ahead of the rest', () => {
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
     const results = (
       [
@@ -2349,7 +2349,7 @@ describe(createIo.name, () => {
         warnings: heard.warnings,
         screen: document.toTextspec(),
         rev: getIoInternals(editor).getBase().rev,
-        batches: heard.mutations,
+        mutations: heard.mutations,
         inFlight: getIoInternals(editor).inspect().inFlight,
       }
     })
@@ -2358,11 +2358,11 @@ describe(createIo.name, () => {
       {
         screenAfterRefusal: 'B: fooxy|',
         warnings: [
-          'Refused a resync while batch "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
+          'Refused a resync while mutation "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
         ],
         screen: 'B: fooxy|',
         rev: 'r2',
-        batches: [
+        mutations: [
           {
             id: 'A-1',
             transactionId: 'A-t1',
@@ -2379,11 +2379,11 @@ describe(createIo.name, () => {
       {
         screenAfterRefusal: 'B: fooxy|',
         warnings: [
-          'Refused a resync while batch "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
+          'Refused a resync while mutation "A-1" is in flight: wait until it comes back or is rejected, or say what became of it',
         ],
         screen: 'B: fooxy|',
         rev: 'r2',
-        batches: [
+        mutations: [
           {
             id: 'A-1',
             transactionId: 'A-t1',
@@ -2403,7 +2403,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('an own echo with a set above a path the batch touched is an echo mismatch, and one with a patch on another block is not', () => {
+  test('an own echo with a set above a path the mutation touched is an echo mismatch, and one with a patch on another block is not', () => {
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
     const otherBlockPatch = set('h1', [{_key: 'd-k2'}, 'style'])
     const ancestorPatch = set(
@@ -2647,7 +2647,7 @@ describe(createIo.name, () => {
     ])
   })
 
-  test('Scenario: `close` from the host sends the final batch, unmounts io and leaves later local changes unbooked', () => {
+  test('Scenario: `close` from the host sends the final mutation, unmounts io and leaves later local changes unbooked', () => {
     const {editor, document, heard} = createLoadedEditor('B: foo|')
     const textPath = [{_key: 'd-k0'}, 'children', {_key: 'd-k1'}, 'text']
 

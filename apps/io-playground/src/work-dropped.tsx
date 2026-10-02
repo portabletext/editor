@@ -1,5 +1,5 @@
 import type {
-  BatchSnapshot,
+  MutationSnapshot,
   EditorName,
   HeardEvent,
 } from '@portabletext/io/testing'
@@ -7,7 +7,7 @@ import {useState} from 'react'
 import {decodeDiffText, describePatches} from './narration'
 import {Button, plural} from './ui'
 
-type Patch = BatchSnapshot['patches'][number]
+type Patch = MutationSnapshot['patches'][number]
 
 type WorkDroppedEvent = Extract<HeardEvent, {type: 'work dropped'}>
 
@@ -101,7 +101,7 @@ const reasonExplanations: Record<WorkDroppedEvent['reason'], string> = {
   'no target':
     'Another change removed what these edits were for, so they have nowhere to go.',
   'rejected':
-    'The server refused the batch for good, and the resync let go of it.',
+    'The server refused the mutation for good, and the resync let go of it.',
   'closed while blocked':
     'The editor closed while sending was blocked by a rejection, so these edits never went out.',
   'closed out of step':

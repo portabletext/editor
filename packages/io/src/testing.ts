@@ -1,10 +1,10 @@
 export type {RequestFailure} from './protocol/host'
-export type {MutationBatch} from './protocol/types'
+export type {Mutation} from './protocol/types'
 export {createFakeDocument, formatTextspec} from './fakes/document'
 export type {Caret, FakeDocument, FakeDocumentStatus} from './fakes/document'
 export {createFakeServer} from './fakes/server'
 export type {
-  SavedBatch,
+  SavedMutation,
   Server,
   ServerCopy,
   ServerTransaction,
@@ -28,7 +28,7 @@ export {
   heldTransactionTimeout,
 } from './scenario/world'
 export type {
-  BatchSnapshot,
+  MutationSnapshot,
   Corruption,
   EditorName,
   EditorSnapshot,
@@ -49,7 +49,7 @@ export type {
 export {stepDefinitions} from './scenario/steps'
 export type {Context} from './scenario/steps'
 export {parameterTypes} from './scenario/parameter-types'
-export type {BatchReference} from './scenario/parameter-types'
+export type {MutationReference} from './scenario/parameter-types'
 export {compileScenarios} from './scenario/compile'
 export type {
   CompiledScenario,

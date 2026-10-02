@@ -18,13 +18,13 @@ export type Transaction = {
 }
 
 /**
- * A batch of patches the editor hands to its host to save. `transactionId`
- * is the transaction ID the editor proposes for saving it: a host that saves
- * the batch as its own request uses it as is, and a host that chooses
- * another names that one with `mutation sent`. The batch carries no value:
- * the patches are the save.
+ * The patches the editor hands to its host to save, as one mutation, with
+ * the mutation ID `id`. `transactionId` is the transaction ID the editor
+ * proposes for saving it: a host that saves the mutation as its own request
+ * uses it as is, and a host that chooses another names that one with
+ * `mutation sent`. The mutation carries no value: the patches are the save.
  */
-export type MutationBatch = {
+export type Mutation = {
   id: string
   transactionId: string
   patches: Array<Patch>
@@ -45,8 +45,8 @@ export type Load = {
 }
 
 /**
- * `outcomes` says, by batch ID, whether a batch the editor sent is in the
- * copy (`'applied'`) or was never saved (`'not applied'`). A batch not
+ * `outcomes` says, by mutation ID, whether a mutation the editor sent is in the
+ * copy (`'applied'`) or was never saved (`'not applied'`). A mutation not
  * applied rejoins the pending changes, ahead of the rest.
  */
 export type Resync = Load & {
@@ -68,7 +68,7 @@ export type ErrorEvent = {
 /**
  * The user's own unsaved work the editor gave up on: pending changes with no
  * target, pending changes dropped on close while sending was blocked or the
- * editor was out of step, or the rejected batch a resync dropped.
+ * editor was out of step, or the rejected mutation a resync dropped.
  */
 export type WorkDropped = {
   patches: Array<Patch>
@@ -83,7 +83,7 @@ export type WorkDropped = {
  * `operations` carries patches as the model's stand-in for the editor's
  * operations: the action's patches for a local change, and a whole-value
  * `set` for a re-derived screen. A local change's `patches` are the patches
- * that will go into its batch, save that io turns a whole-field `unset`
+ * that will go into its mutation, save that io turns a whole-field `unset`
  * into keyed `unset`s while the stored field holds blocks that aren't
  * objects. A remote change has nothing to save, so it carries no
  * `patches`.

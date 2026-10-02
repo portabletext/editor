@@ -1,6 +1,6 @@
 import {
   editorNames,
-  type BatchSnapshot,
+  type MutationSnapshot,
   type EditorName,
   type EditorSnapshot,
   type NetworkSnapshot,
@@ -10,7 +10,7 @@ import {
 } from '@portabletext/io/testing'
 import {plural} from './ui'
 
-type Patch = BatchSnapshot['patches'][number]
+type Patch = MutationSnapshot['patches'][number]
 
 type FeedItem = NetworkSnapshot['feeds'][EditorName][number]
 
@@ -81,10 +81,10 @@ function narrate(before: WorldSnapshot, after: WorldSnapshot): Array<string> {
         beforeNetwork: before.network,
         afterNetwork: after.network,
         beforeDuplicates: before.server.duplicates.filter((duplicate) =>
-          duplicate.batches.some((batch) => batch.name === name),
+          duplicate.mutations.some((mutation) => mutation.name === name),
         ),
         afterDuplicates: after.server.duplicates.filter((duplicate) =>
-          duplicate.batches.some((batch) => batch.name === name),
+          duplicate.mutations.some((mutation) => mutation.name === name),
         ),
         afterServer: after.server,
       }),
@@ -130,8 +130,8 @@ function narrateEditor({
 }): Array<string> {
   const sentences: Array<string> = []
   const newMessages = after.messages.slice(before.messages.length)
-  const newBatches = after.sentBatches.slice(before.sentBatches.length)
-  const explainedBatchNumbers = new Set<number>()
+  const newMutations = after.sentMutations.slice(before.sentMutations.length)
+  const explainedMutationNumbers = new Set<number>()
   const newEvents = after.events.slice(before.events.length)
   const newErrors = newEvents.flatMap((event) =>
     event.type === 'error' ? [event] : [],
@@ -216,22 +216,22 @@ function narrateEditor({
     if (
       reply.editor !== name ||
       afterNetwork.replies.some(
-        (candidate) => candidate.batchId === reply.batchId,
+        (candidate) => candidate.mutationId === reply.mutationId,
       )
     ) {
       continue
     }
 
     if (
-      after.rejected?.batchNumber === reply.batchNumber &&
-      before.rejected?.batchNumber !== reply.batchNumber
+      after.rejected?.mutationNumber === reply.mutationNumber &&
+      before.rejected?.mutationNumber !== reply.mutationNumber
     ) {
       sentences.push(
-        `${name}'s host got the ${reply.status} for batch ${reply.batchNumber} and reported the rejection, so ${name} sends nothing more until a resync.`,
+        `${name}'s host got the ${reply.status} for mutation ${reply.mutationNumber} and reported the rejection, so ${name} sends nothing more until a resync.`,
       )
     } else {
       sentences.push(
-        `${name}'s host got the ${reply.status} for batch ${reply.batchNumber}.`,
+        `${name}'s host got the ${reply.status} for mutation ${reply.mutationNumber}.`,
       )
     }
   }
@@ -240,11 +240,11 @@ function narrateEditor({
     if (
       reply.editor === name &&
       !beforeNetwork.lostReplies.some(
-        (candidate) => candidate.batchId === reply.batchId,
+        (candidate) => candidate.mutationId === reply.mutationId,
       )
     ) {
       sentences.push(
-        `The save reply for ${name}'s batch ${reply.batchNumber} was lost: the server saved it, but ${name}'s host never heard back.`,
+        `The save reply for ${name}'s mutation ${reply.mutationNumber} was lost: the server saved it, but ${name}'s host never heard back.`,
       )
     }
   }
@@ -253,19 +253,20 @@ function narrateEditor({
     if (
       reply.editor !== name ||
       afterNetwork.lostReplies.some(
-        (candidate) => candidate.batchId === reply.batchId,
+        (candidate) => candidate.mutationId === reply.mutationId,
       )
     ) {
       continue
     }
 
     const transactionId =
-      after.sentBatches[reply.batchNumber - 1]?.transactionId ?? reply.batchId
+      after.sentMutations[reply.mutationNumber - 1]?.transactionId ??
+      reply.mutationId
 
     sentences.push(
       afterDuplicates.length > beforeDuplicates.length
-        ? `${name}'s host retried batch ${reply.batchNumber} with the same transaction ID, ${transactionId}: the server already has it and refused the retry with a 409, so the batch landed once.`
-        : `${name}'s host retried batch ${reply.batchNumber} with the same transaction ID, ${transactionId}.`,
+        ? `${name}'s host retried mutation ${reply.mutationNumber} with the same transaction ID, ${transactionId}: the server already has it and refused the retry with a 409, so the mutation landed once.`
+        : `${name}'s host retried mutation ${reply.mutationNumber} with the same transaction ID, ${transactionId}.`,
     )
   }
 
@@ -278,7 +279,7 @@ function narrateEditor({
     }
 
     screenExplained = true
-    const ownBatchNumbers = ownBatches(item.source, name)
+    const ownMutationNumbers = ownMutations(item.source, name)
     const failed = newErrors.some(
       (error) => error.transactionId === item.transactionId,
     )
@@ -289,8 +290,8 @@ function narrateEditor({
 
     if (before.outOfStep) {
       sentences.push(
-        ownBatchNumbers.length > 0
-          ? `${item.transactionId} came back to ${name} while out of step: it notes that ${describeBatchNumbers(ownBatchNumbers)} came back and applies nothing.`
+        ownMutationNumbers.length > 0
+          ? `${item.transactionId} came back to ${name} while out of step: it notes that ${describeMutationNumbers(ownMutationNumbers)} came back and applies nothing.`
           : `${name} is out of step and ignored ${item.transactionId}.`,
       )
       continue
@@ -299,8 +300,8 @@ function narrateEditor({
     if (after.held.some((held) => held.transactionId === item.transactionId)) {
       sentences.push(
         `${name} held ${item.transactionId}: it doesn't connect to ${describeRev(before.base.rev)} (it starts at ${describeRev(item.previousRev)})${
-          ownBatchNumbers.length > 0
-            ? `, so ${describeBatchNumbers(ownBatchNumbers)} waits as a held echo`
+          ownMutationNumbers.length > 0
+            ? `, so ${describeMutationNumbers(ownMutationNumbers)} waits as a held echo`
             : ''
         }.`,
       )
@@ -311,23 +312,25 @@ function narrateEditor({
       continue
     }
 
-    if (ownBatchNumbers.length > 0) {
-      const confirmed = ownBatchNumbers.filter(
-        (batchNumber) =>
-          after.inFlight?.batchNumber !== batchNumber &&
-          !after.echoed.some((batch) => batch.batchNumber === batchNumber),
+    if (ownMutationNumbers.length > 0) {
+      const confirmed = ownMutationNumbers.filter(
+        (mutationNumber) =>
+          after.inFlight?.mutationNumber !== mutationNumber &&
+          !after.echoed.some(
+            (mutation) => mutation.mutationNumber === mutationNumber,
+          ),
       )
-      const followUp = newBatches.at(0)
+      const followUp = newMutations.at(0)
       const parts = [
         confirmed.length > 0
-          ? `${describeBatchNumbers(confirmed)} confirmed`
-          : `${describeBatchNumbers(ownBatchNumbers)} not confirmed yet`,
+          ? `${describeMutationNumbers(confirmed)} confirmed`
+          : `${describeMutationNumbers(ownMutationNumbers)} not confirmed yet`,
       ]
 
       if (followUp) {
-        explainedBatchNumbers.add(followUp.number)
+        explainedMutationNumbers.add(followUp.number)
         parts.push(
-          `batch ${followUp.number} went out with ${
+          `mutation ${followUp.number} went out with ${
             before.pending.length === 1
               ? 'the pending change'
               : `the ${before.pending.length} pending changes`
@@ -359,17 +362,17 @@ function narrateEditor({
   if (deliveredItems.length > 0 && !after.outOfStep && released.length > 0) {
     const confirmedEchoes = before.echoed
       .filter(
-        (batch) =>
+        (mutation) =>
           !after.echoed.some(
-            (candidate) => candidate.batchNumber === batch.batchNumber,
+            (candidate) => candidate.mutationNumber === mutation.mutationNumber,
           ),
       )
-      .map((batch) => batch.batchNumber)
+      .map((mutation) => mutation.mutationNumber)
 
     sentences.push(
       `${name} applied the held ${joinPhrases(released.map((held) => held.transactionId))} now that it connects${
         confirmedEchoes.length > 0
-          ? `: ${describeBatchNumbers(confirmedEchoes)} confirmed`
+          ? `: ${describeMutationNumbers(confirmedEchoes)} confirmed`
           : ''
       }.`,
     )
@@ -378,18 +381,18 @@ function narrateEditor({
   for (const message of newMessages) {
     if (message.type === 'mutation sent') {
       sentences.push(
-        `${name}'s host formed the request for batch ${batchNumberOf(after, message.id)} under its own transaction ID, ${message.transactionId}, and told io with \`mutation sent\`.`,
+        `${name}'s host formed the request for mutation ${mutationNumberOf(after, message.id)} under its own transaction ID, ${message.transactionId}, and told io with \`mutation sent\`.`,
       )
     }
 
     if (message.type === 're-submit' && resyncMessage) {
       sentences.push(
-        `${name}'s host re-submitted the frozen request ${message.transactionId} to find out what became of the batch in flight: ${
+        `${name}'s host re-submitted the frozen request ${message.transactionId} to find out what became of the mutation in flight: ${
           message.answer.type === 'duplicate'
-            ? 'the server answered 409, the transaction ID exists, so the batch had landed'
+            ? 'the server answered 409, the transaction ID exists, so the mutation had landed'
             : message.answer.type === 'saved'
               ? "the server saved it, so it hadn't landed before and has now"
-              : `it failed with ${message.answer.status}, so the batch never landed`
+              : `it failed with ${message.answer.status}, so the mutation never landed`
         }.`,
       )
     }
@@ -401,11 +404,11 @@ function narrateEditor({
 
   if (resyncTook) {
     screenExplained = true
-    const followUp = newBatches.at(0)
+    const followUp = newMutations.at(0)
     const outcome =
       resyncMessage?.type === 'resync' && before.inFlight
         ? resyncMessage.outcomes?.[
-            batchIdOf(after, before.inFlight.batchNumber) ?? ''
+            mutationIdOf(after, before.inFlight.mutationNumber) ?? ''
           ]
         : undefined
     const parts = [
@@ -415,24 +418,26 @@ function narrateEditor({
     if (before.inFlight && outcome !== undefined) {
       parts.push(
         outcome === 'applied'
-          ? `let go of batch ${before.inFlight.batchNumber}: it landed, so it is in the copy`
-          : `put batch ${before.inFlight.batchNumber} back with the unsent changes: it never landed`,
+          ? `let go of mutation ${before.inFlight.mutationNumber}: it landed, so it is in the copy`
+          : `put mutation ${before.inFlight.mutationNumber} back with the unsent changes: it never landed`,
       )
     }
 
     if (followUp) {
-      explainedBatchNumbers.add(followUp.number)
+      explainedMutationNumbers.add(followUp.number)
       parts.push(
         before.pending.length > 0 || outcome === 'not applied'
-          ? `re-applied the unsent changes, which went out as batch ${followUp.number}`
-          : `repaired the copy to the floor and sent the repair as batch ${followUp.number}`,
+          ? `re-applied the unsent changes, which went out as mutation ${followUp.number}`
+          : `repaired the copy to the floor and sent the repair as mutation ${followUp.number}`,
       )
     } else if (before.pending.length > 0) {
       parts.push(`dropped ${plural(before.pending.length, 'unsent change')}`)
     }
 
     if (before.rejected) {
-      parts.push(`let go of the rejected batch ${before.rejected.batchNumber}`)
+      parts.push(
+        `let go of the rejected mutation ${before.rejected.mutationNumber}`,
+      )
     }
 
     if (before.outOfStep && !after.outOfStep) {
@@ -460,23 +465,23 @@ function narrateEditor({
     sentences.push(
       `${name} kept the change (${describePatches(newPending.flatMap((change) => change.patches))}) as pending, because ${
         after.inFlight
-          ? `batch ${after.inFlight.batchNumber} is still in flight`
+          ? `mutation ${after.inFlight.mutationNumber} is still in flight`
           : after.rejected
-            ? `batch ${after.rejected.batchNumber} was rejected`
+            ? `mutation ${after.rejected.mutationNumber} was rejected`
             : `it isn't ready`
       }.`,
     )
   }
 
-  for (const batch of newBatches) {
-    if (explainedBatchNumbers.has(batch.number)) {
+  for (const mutation of newMutations) {
+    if (explainedMutationNumbers.has(mutation.number)) {
       continue
     }
 
     sentences.push(
-      `${name} sent batch ${batch.number}, proposing transaction ID ${batch.transactionId}${
-        batch.final ? ', its final batch' : ''
-      }: ${describePatches(batch.patches)}.`,
+      `${name} sent mutation ${mutation.number}, proposing transaction ID ${mutation.transactionId}${
+        mutation.final ? ', its final mutation' : ''
+      }: ${describePatches(mutation.patches)}.`,
     )
   }
 
@@ -503,7 +508,7 @@ function narrateEditor({
               ? 'its target is gone'
               : 'their targets are gone'
             : event.reason === 'rejected'
-              ? 'the resync dropped the rejected batch'
+              ? 'the resync dropped the rejected mutation'
               : 'it closed while sending was blocked'
         }.`,
       )
@@ -591,15 +596,15 @@ function narrateServer({
   for (const request of beforeNetwork.saveRequests) {
     const failure = afterNetwork.replies.find(
       (reply) =>
-        reply.batchId === request.batchId &&
+        reply.mutationId === request.mutationId &&
         !beforeNetwork.replies.some(
-          (candidate) => candidate.batchId === request.batchId,
+          (candidate) => candidate.mutationId === request.mutationId,
         ),
     )
 
     if (failure) {
       sentences.push(
-        `The request for ${request.editor}'s batch ${request.batchNumber} failed with ${failure.status}, and the reply is on its way back.`,
+        `The request for ${request.editor}'s mutation ${request.mutationNumber} failed with ${failure.status}, and the reply is on its way back.`,
       )
     }
   }
@@ -633,38 +638,38 @@ function isLoadOfTheEditor(message: EditorSnapshot['messages'][number]) {
   return message.route === 'io to editor' && message.type === 'load'
 }
 
-function batchNumberOf(editor: EditorSnapshot, batchId: string): number {
+function mutationNumberOf(editor: EditorSnapshot, mutationId: string): number {
   return (
     editor.messages
       .flatMap((message) => (message.type === 'mutation' ? [message.id] : []))
-      .indexOf(batchId) + 1
+      .indexOf(mutationId) + 1
   )
 }
 
-function batchIdOf(
+function mutationIdOf(
   editor: EditorSnapshot,
-  batchNumber: number,
+  mutationNumber: number,
 ): string | undefined {
   return editor.messages.flatMap((message) =>
     message.type === 'mutation' ? [message.id] : [],
-  )[batchNumber - 1]
+  )[mutationNumber - 1]
 }
 
-function ownBatches(
+function ownMutations(
   source: TransactionSource,
   name: EditorName,
 ): Array<number> {
-  return source.type === 'batches'
-    ? source.batches
-        .filter((batch) => batch.name === name)
-        .map((batch) => batch.batchNumber)
+  return source.type === 'mutations'
+    ? source.mutations
+        .filter((mutation) => mutation.name === name)
+        .map((mutation) => mutation.mutationNumber)
     : []
 }
 
-function describeBatchNumbers(batchNumbers: Array<number>): string {
-  return batchNumbers.length === 1
-    ? `batch ${batchNumbers[0]}`
-    : `batches ${joinPhrases(batchNumbers.map(String))}`
+function describeMutationNumbers(mutationNumbers: Array<number>): string {
+  return mutationNumbers.length === 1
+    ? `mutation ${mutationNumbers[0]}`
+    : `mutations ${joinPhrases(mutationNumbers.map(String))}`
 }
 
 function describeRev(rev: string | null): string {
@@ -674,13 +679,16 @@ function describeRev(rev: string | null): string {
 export function describeSource(source: TransactionSource): string {
   return source.type === 'named'
     ? source.name
-    : source.batches
-        .map((batch) => `${batch.name}'s batch ${batch.batchNumber}`)
+    : source.mutations
+        .map(
+          (mutation) =>
+            `${mutation.name}'s mutation ${mutation.mutationNumber}`,
+        )
         .join(' + ')
 }
 
 export function isOwnFeedItem(item: FeedItem, name: EditorName): boolean {
-  return ownBatches(item.source, name).length > 0
+  return ownMutations(item.source, name).length > 0
 }
 
 /**

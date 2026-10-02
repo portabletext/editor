@@ -17,7 +17,7 @@ import type {
   EditorForIo,
   ErrorEvent,
   Load,
-  MutationBatch,
+  Mutation,
   MutationRejected,
   MutationSent,
   Resync,
@@ -38,21 +38,21 @@ export type Clock = {
 export type IoStatus = 'loading' | 'ready' | 'unmounted'
 
 /**
- * Whether the user's work is saved: `'saving'` while a batch is in flight or
+ * Whether the user's work is saved: `'saving'` while a mutation is in flight or
  * changes are pending, `'blocked'` after a rejection and `'out of step'` after
  * an error or a lost feed, both until the next resync.
  */
 export type IoSync = 'synced' | 'saving' | 'blocked' | 'out of step'
 
 export type IoEvent =
-  | ({type: 'mutation'} & MutationBatch)
+  | ({type: 'mutation'} & Mutation)
   | ({type: 'error'} & ErrorEvent)
   | ({type: 'work dropped'} & WorkDropped)
   | {type: 'warning'; message: string}
 
 /**
  * What the host tells io: the first content, a transaction from the feed,
- * what became of a batch, a lost feed, a fresh copy, and that io is done.
+ * what became of a mutation, a lost feed, a fresh copy, and that io is done.
  * `load` is accepted only before the editor's `ready`, and a second `load`
  * replaces the first. `close` does what the editor's `closing` does.
  */
@@ -67,7 +67,7 @@ export type IoMessage =
 
 /**
  * io's state, shaped like the editor's snapshot. `rev` is the base's
- * revision, `inFlight` the batch in flight with the transaction ID it is
+ * revision, `inFlight` the mutation in flight with the transaction ID it is
  * saved under, and `pending` how many local changes wait to be sent.
  */
 export type IoSnapshot = {
@@ -107,25 +107,25 @@ export type Io = {
 }
 
 /**
- * A batch the editor has sent and the base doesn't hold yet.
+ * A mutation the editor has sent and the base doesn't hold yet.
  * `transactionIds` holds the proposed transaction ID until the host names
  * another with `mutation sent`.
  */
-export type IoSentBatch = {
+export type IoSentMutation = {
   id: string
   transactionIds: Array<string>
   patchCount: number
 }
 
 /**
- * The editor's protocol state, for display. `echoed` are batches whose
+ * The editor's protocol state, for display. `echoed` are mutations whose
  * transaction came back but waits in `held` behind a missing one, and
  * `pending` holds one entry per local change not sent yet.
  */
 export type IoLedger = {
-  inFlight: IoSentBatch | undefined
-  rejected: IoSentBatch | undefined
-  echoed: Array<IoSentBatch>
+  inFlight: IoSentMutation | undefined
+  rejected: IoSentMutation | undefined
+  echoed: Array<IoSentMutation>
   pending: Array<{patchCount: number; patches: Array<Patch>}>
   held: Array<
     Pick<Transaction, 'transactionId' | 'previousRev' | 'resultRev'> & {
@@ -139,7 +139,7 @@ export type IoLedger = {
 
 /**
  * What io holds beyond its snapshot, for the model's tests and world. The
- * base and the working copy, the base with the unconfirmed batches and the
+ * base and the working copy, the base with the unconfirmed mutations and the
  * pending changes applied, without the blocks that aren't objects: what the
  * editor shows, the placeholder aside. `undo` reverts the last of the
  * editor's own changes that undo can still revert, through
@@ -176,7 +176,7 @@ export function extendIo<TExtension extends object>(
   return extended
 }
 
-type SentBatch = {
+type SentMutation = {
   id: string
   patches: Array<Patch>
   /**
@@ -184,7 +184,7 @@ type SentBatch = {
    * the host names another, then every one the host named.
    */
   transactionIds: Set<string>
-  /** Whether the host has sent `mutation sent` for the batch. */
+  /** Whether the host has sent `mutation sent` for the mutation. */
   named: boolean
 }
 
@@ -220,8 +220,8 @@ const placeholderStyle: BlockStyle = {style: 'normal'}
 
 type HistoryEntry = {
   step: UndoStep
-  batchId: string | undefined
-  /** How many patches of the entry's batch come before the action's own. */
+  mutationId: string | undefined
+  /** How many patches of the entry's mutation come before the action's own. */
   patchOffset: number
   /**
    * The base's version of the step's block just before the change took
@@ -234,7 +234,7 @@ type HistoryEntry = {
 /**
  * The editor side of the pass-through protocol, speaking to the editor only
  * through `EditorForIo`. It is created during the editor's first commit.
- * Batch IDs are the editor's `id` plus a counter, so editors with different
+ * Mutation IDs are the editor's `id` plus a counter, so editors with different
  * IDs never share one. The proposed transaction IDs come from the same
  * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
  * editor's `id`. `keyGenerator` mints the new keys a resync gives pending
@@ -255,15 +255,15 @@ export function createIo(options: {
   const {editor, keyGenerator, clock, applyLocalEdit} = options
   const listeners = new Set<(event: IoEvent) => void>()
   const observers = new Set<(snapshot: IoSnapshot) => void>()
-  const emittedBatchIds = new Set<string>()
+  const emittedMutationIds = new Set<string>()
 
   let status: IoStatus = 'loading'
   let base: Load = {value: undefined, rev: undefined}
   let outOfStep = false
-  let batchCounter = 0
-  let inFlight: SentBatch | undefined
-  let rejected: SentBatch | undefined
-  let echoedAwaitingBase: Array<SentBatch> = []
+  let mutationCounter = 0
+  let inFlight: SentMutation | undefined
+  let rejected: SentMutation | undefined
+  let echoedAwaitingBase: Array<SentMutation> = []
   let pending: Array<Array<Patch>> = []
   let held: Array<HeldTransaction> = []
   let history: Array<HistoryEntry> = []
@@ -419,7 +419,7 @@ export function createIo(options: {
 
     if (inFlight && incoming.outcomes?.[inFlight.id] === undefined) {
       warn(
-        `Refused a resync while batch "${inFlight.id}" is in flight: wait until it comes back or is rejected, or say what became of it`,
+        `Refused a resync while mutation "${inFlight.id}" is in flight: wait until it comes back or is rejected, or say what became of it`,
       )
       return
     }
@@ -466,12 +466,12 @@ export function createIo(options: {
 
   /**
    * Reports each pending patch that has no target on the screen being built,
-   * once. The patches stay pending and go out, as no-ops, with the next batch.
+   * once. The patches stay pending and go out, as no-ops, with the next mutation.
    */
   function reportDroppedPending(after: string) {
     let value = applyWithContentLakeSemantics(
       base.value,
-      unconfirmedBatches().flatMap((batch) => batch.patches),
+      unconfirmedMutations().flatMap((mutation) => mutation.patches),
     )
     const dropped: Array<Patch> = []
 
@@ -542,9 +542,9 @@ export function createIo(options: {
 
   /**
    * A `set` or `unset` in the editor's own echo that the editor didn't send,
-   * above a path its batch touched: the host widened the batch. Other patches
-   * can't overwrite the batch's work, and patches at the same path or
-   * elsewhere can be other writers' batches folded into the same transaction.
+   * above a path its mutation touched: the host widened the mutation. Other patches
+   * can't overwrite the mutation's work, and patches at the same path or
+   * elsewhere can be other writers' mutations folded into the same transaction.
    */
   function echoMismatch(incoming: Transaction): Patch | undefined {
     if (!inFlight?.transactionIds.has(incoming.transactionId)) {
@@ -586,10 +586,12 @@ export function createIo(options: {
   }
 
   function applyTransaction(incoming: Transaction): boolean {
-    const confirmedBatchIds = new Set(
+    const confirmedMutationIds = new Set(
       echoedAwaitingBase
-        .filter((batch) => batch.transactionIds.has(incoming.transactionId))
-        .map((batch) => batch.id),
+        .filter((mutation) =>
+          mutation.transactionIds.has(incoming.transactionId),
+        )
+        .map((mutation) => mutation.id),
     )
     let nextValue = base.value
 
@@ -632,11 +634,11 @@ export function createIo(options: {
     const unconfirmedLists = insertedKeysByList(
       [
         ...echoedAwaitingBase.filter(
-          (batch) => !confirmedBatchIds.has(batch.id),
+          (mutation) => !confirmedMutationIds.has(mutation.id),
         ),
         ...(inFlight ? [inFlight] : []),
         ...(rejected ? [rejected] : []),
-      ].flatMap((batch) => batch.patches),
+      ].flatMap((mutation) => mutation.patches),
     )
     const unconfirmedCollision = incoming.patches.find(
       (patch) =>
@@ -662,17 +664,17 @@ export function createIo(options: {
     const screenBefore = deriveScreen()
     const valueBefore = base.value
     const ownPatches = echoedAwaitingBase
-      .filter((batch) => confirmedBatchIds.has(batch.id))
-      .flatMap((batch) => batch.patches)
-    const unconfirmedPatches = unconfirmedBatches().flatMap(
-      (batch) => batch.patches,
+      .filter((mutation) => confirmedMutationIds.has(mutation.id))
+      .flatMap((mutation) => mutation.patches)
+    const unconfirmedPatches = unconfirmedMutations().flatMap(
+      (mutation) => mutation.patches,
     )
 
-    captureBlocksBefore(confirmedBatchIds)
+    captureBlocksBefore(confirmedMutationIds)
     mapStepsThrough(incoming.patches, valueBefore, ownPatches)
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
-      (batch) => !confirmedBatchIds.has(batch.id),
+      (mutation) => !confirmedMutationIds.has(mutation.id),
     )
 
     if (incoming.patches.length > 0 || !isEqual(valueBefore, nextValue)) {
@@ -777,10 +779,11 @@ export function createIo(options: {
     }
   }
 
-  /** Runs before the base takes the transaction that confirms the batches. */
-  function captureBlocksBefore(confirmedBatchIds: Set<string>) {
+  /** Runs before the base takes the transaction that confirms the mutations. */
+  function captureBlocksBefore(confirmedMutationIds: Set<string>) {
     history = history.map((entry) =>
-      entry.batchId !== undefined && confirmedBatchIds.has(entry.batchId)
+      entry.mutationId !== undefined &&
+      confirmedMutationIds.has(entry.mutationId)
         ? {...entry, confirmed: {blockBefore: blockUnder(entry)}}
         : entry,
     )
@@ -792,19 +795,23 @@ export function createIo(options: {
    * base goes.
    */
   function blockUnder(entry: HistoryEntry): PortableTextBlock | undefined {
-    const batches = [
-      ...unconfirmedBatches(),
+    const mutations = [
+      ...unconfirmedMutations(),
       {id: undefined, patches: pending.flat()},
     ]
-    const batchIndex = batches.findIndex((batch) => batch.id === entry.batchId)
+    const mutationIndex = mutations.findIndex(
+      (mutation) => mutation.id === entry.mutationId,
+    )
 
-    if (batchIndex === -1) {
+    if (mutationIndex === -1) {
       return undefined
     }
 
     const patchesBefore = [
-      ...batches.slice(0, batchIndex).flatMap((batch) => batch.patches),
-      ...batches[batchIndex].patches.slice(0, entry.patchOffset),
+      ...mutations
+        .slice(0, mutationIndex)
+        .flatMap((mutation) => mutation.patches),
+      ...mutations[mutationIndex].patches.slice(0, entry.patchOffset),
     ]
 
     return findBlock(
@@ -849,8 +856,8 @@ export function createIo(options: {
   }
 
   function mutationSent(incoming: MutationSent) {
-    if (!emittedBatchIds.has(incoming.id)) {
-      warn(`\`mutation sent\` for unknown batch "${incoming.id}"`)
+    if (!emittedMutationIds.has(incoming.id)) {
+      warn(`\`mutation sent\` for unknown mutation "${incoming.id}"`)
       return
     }
 
@@ -869,7 +876,7 @@ export function createIo(options: {
 
     if (!inFlight.transactionIds.has(incoming.transactionId)) {
       warn(
-        `\`mutation sent\` names transaction "${incoming.transactionId}" for batch "${incoming.id}", already sent as ${[
+        `\`mutation sent\` names transaction "${incoming.transactionId}" for mutation "${incoming.id}", already sent as ${[
           ...inFlight.transactionIds,
         ]
           .map((transactionId) => `"${transactionId}"`)
@@ -901,13 +908,13 @@ export function createIo(options: {
   }
 
   function mutationRejected(incoming: MutationRejected) {
-    if (!emittedBatchIds.has(incoming.id)) {
-      warn(`\`mutation rejected\` for unknown batch "${incoming.id}"`)
+    if (!emittedMutationIds.has(incoming.id)) {
+      warn(`\`mutation rejected\` for unknown mutation "${incoming.id}"`)
       return
     }
 
     if (inFlight?.id !== incoming.id) {
-      warn(`\`mutation rejected\` for batch "${incoming.id}", not in flight`)
+      warn(`\`mutation rejected\` for mutation "${incoming.id}", not in flight`)
       return
     }
 
@@ -946,7 +953,7 @@ export function createIo(options: {
           ...history,
           {
             step,
-            batchId: undefined,
+            mutationId: undefined,
             patchOffset: pending.flat().length,
             confirmed: undefined,
           },
@@ -966,7 +973,7 @@ export function createIo(options: {
    */
   function keepingStoredNonObjects(patches: Array<Patch>): Array<Patch> {
     let value = applyWithContentLakeSemantics(base.value, [
-      ...unconfirmedBatches().flatMap((batch) => batch.patches),
+      ...unconfirmedMutations().flatMap((mutation) => mutation.patches),
       ...pending.flat(),
     ])
 
@@ -1109,7 +1116,7 @@ export function createIo(options: {
         pending = []
       } else if (rejected) {
         warn(
-          `${pending.length} unsent change(s) dropped on close: sending was blocked by the rejection of batch ${rejected.id}`,
+          `${pending.length} unsent change(s) dropped on close: sending was blocked by the rejection of mutation ${rejected.id}`,
         )
         emit({
           type: 'work dropped',
@@ -1118,7 +1125,7 @@ export function createIo(options: {
         })
         pending = []
       } else {
-        emitBatch({final: true})
+        emitMutation({final: true})
       }
     }
 
@@ -1142,44 +1149,50 @@ export function createIo(options: {
       return
     }
 
-    emitBatch({final: false})
+    emitMutation({final: false})
   }
 
-  function emitBatch({final}: {final: boolean}) {
-    batchCounter++
+  function emitMutation({final}: {final: boolean}) {
+    mutationCounter++
 
-    const batch: MutationBatch = {
-      id: `${options.id}-${batchCounter}`,
-      transactionId: `${options.id}-t${batchCounter}`,
+    const mutation: Mutation = {
+      id: `${options.id}-${mutationCounter}`,
+      transactionId: `${options.id}-t${mutationCounter}`,
       patches: pending.flat(),
       ...(final ? {final: true as const} : {}),
     }
 
     pending = []
-    emittedBatchIds.add(batch.id)
+    emittedMutationIds.add(mutation.id)
     history = history.map((entry) =>
-      entry.batchId === undefined ? {...entry, batchId: batch.id} : entry,
+      entry.mutationId === undefined
+        ? {...entry, mutationId: mutation.id}
+        : entry,
     )
 
     if (!final) {
       inFlight = {
-        id: batch.id,
-        patches: batch.patches,
-        transactionIds: new Set([batch.transactionId]),
+        id: mutation.id,
+        patches: mutation.patches,
+        transactionIds: new Set([mutation.transactionId]),
         named: false,
       }
-      startInFlightWarning(batch.id, livenessTimeout, clock.now())
+      startInFlightWarning(mutation.id, livenessTimeout, clock.now())
     }
 
-    emit({type: 'mutation', ...batch})
+    emit({type: 'mutation', ...mutation})
   }
 
-  function startInFlightWarning(batchId: string, delay: number, since: number) {
+  function startInFlightWarning(
+    mutationId: string,
+    delay: number,
+    since: number,
+  ) {
     cancelInFlightWarning = clock.schedule(delay, () => {
       warn(
-        `Batch "${batchId}" has been in flight for ${clock.now() - since} ms without coming back`,
+        `Mutation "${mutationId}" has been in flight for ${clock.now() - since} ms without coming back`,
       )
-      startInFlightWarning(batchId, delay * 2, since)
+      startInFlightWarning(mutationId, delay * 2, since)
     })
   }
 
@@ -1250,7 +1263,7 @@ export function createIo(options: {
     baseValue: Array<PortableTextBlock> | undefined = base.value,
   ): Array<PortableTextBlock> | undefined {
     const workingCopy = applyWithContentLakeSemantics(baseValue, [
-      ...unconfirmedBatches().flatMap((batch) => batch.patches),
+      ...unconfirmedMutations().flatMap((mutation) => mutation.patches),
       ...pending.flat(),
     ])
 
@@ -1259,8 +1272,8 @@ export function createIo(options: {
       : blocksForEditor(workingCopy).blocks
   }
 
-  /** Sent batches the base doesn't hold yet, in the order they were sent. */
-  function unconfirmedBatches(): Array<SentBatch> {
+  /** Sent mutations the base doesn't hold yet, in the order they were sent. */
+  function unconfirmedMutations(): Array<SentMutation> {
     return [
       ...echoedAwaitingBase,
       ...(inFlight ? [inFlight] : []),
@@ -1385,9 +1398,9 @@ export function createIo(options: {
     getBase: () => base,
     getWorkingCopy: () => deriveScreen(),
     inspect: () => ({
-      inFlight: inFlight ? describeSentBatch(inFlight) : undefined,
-      rejected: rejected ? describeSentBatch(rejected) : undefined,
-      echoed: echoedAwaitingBase.map(describeSentBatch),
+      inFlight: inFlight ? describeSentMutation(inFlight) : undefined,
+      rejected: rejected ? describeSentMutation(rejected) : undefined,
+      echoed: echoedAwaitingBase.map(describeSentMutation),
       pending: pending.map((patches) => ({
         patchCount: patches.length,
         patches,
@@ -1417,11 +1430,11 @@ function isOfType<TType extends IoEvent['type'] | '*'>(
   return type === '*' || event.type === type
 }
 
-function describeSentBatch(batch: SentBatch): IoSentBatch {
+function describeSentMutation(mutation: SentMutation): IoSentMutation {
   return {
-    id: batch.id,
-    transactionIds: [...batch.transactionIds],
-    patchCount: batch.patches.length,
+    id: mutation.id,
+    transactionIds: [...mutation.transactionIds],
+    patchCount: mutation.patches.length,
   }
 }
 

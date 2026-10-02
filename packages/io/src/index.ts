@@ -22,7 +22,7 @@ export type {
   EditorMessageForIo,
   ErrorEvent,
   Load,
-  MutationBatch,
+  Mutation,
   MutationRejected,
   MutationSent,
   Resync,

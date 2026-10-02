@@ -39,7 +39,7 @@ describe(createFakeServer.name, () => {
     expect(server.copy()).toEqual({value: undefined, rev: undefined})
   })
 
-  test('a batch that changes nothing is still recorded and moves the revision', () => {
+  test('a mutation that changes nothing is still recorded and moves the revision', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'H1: foo')
     const server = createFakeServer({documentId: 'document', document: {value}})
@@ -54,7 +54,7 @@ describe(createFakeServer.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [set('h1', [{_key: 'k0'}, 'style'])],
-      batchIds: ['b1'],
+      mutationIds: ['b1'],
     })
     expect(server.getTransactions()).toEqual([transaction])
     expect(server.copy()).toEqual({value, rev: 'r2'})
@@ -145,7 +145,7 @@ describe(createFakeServer.name, () => {
     })
   })
 
-  test('a batch for a missing document creates it', () => {
+  test('a mutation for a missing document creates it', () => {
     const server = createFakeServer({
       documentId: 'document',
       document: undefined,
@@ -165,7 +165,7 @@ describe(createFakeServer.name, () => {
       previousRev: undefined,
       resultRev: 'r1',
       patches,
-      batchIds: ['b1'],
+      mutationIds: ['b1'],
     })
     expect(server.copy()).toEqual({
       value: [
@@ -180,7 +180,7 @@ describe(createFakeServer.name, () => {
     })
   })
 
-  test('two batches received as one are one transaction', () => {
+  test('two mutations received as one are one transaction', () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo;;B: bar')
     const server = createFakeServer({documentId: 'document', document: {value}})
@@ -209,7 +209,7 @@ describe(createFakeServer.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [fooPatch, barPatch],
-      batchIds: ['a1', 'b1'],
+      mutationIds: ['a1', 'b1'],
     }
 
     expect(result).toEqual({type: 'saved', transaction})
@@ -237,10 +237,10 @@ describe(createFakeServer.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
     const server = createFakeServer({documentId: 'document', document: {value}})
-    const batch = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
+    const mutation = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
 
-    const first = server.submit([batch], 't1')
-    const retry = server.submit([batch], 't1')
+    const first = server.submit([mutation], 't1')
+    const retry = server.submit([mutation], 't1')
 
     expect({first, retry}).toEqual({
       first: {
@@ -250,7 +250,7 @@ describe(createFakeServer.name, () => {
           previousRev: 'r1',
           resultRev: 'r2',
           patches: [set('h1', [{_key: 'k0'}, 'style'])],
-          batchIds: ['b1'],
+          mutationIds: ['b1'],
         },
       },
       retry: {type: 'duplicate'},
@@ -261,18 +261,18 @@ describe(createFakeServer.name, () => {
         previousRev: 'r1',
         resultRev: 'r2',
         patches: [set('h1', [{_key: 'k0'}, 'style'])],
-        batchIds: ['b1'],
+        mutationIds: ['b1'],
       },
     ])
     expect(server.getDuplicates()).toEqual([
-      {transactionId: 't1', batchIds: ['b1']},
+      {transactionId: 't1', mutationIds: ['b1']},
     ])
     expect([server.hasTransaction('t1'), server.hasTransaction('t2')]).toEqual([
       true,
       false,
     ])
     expect(server.copy().rev).toEqual('r2')
-    expect(() => server.receive(batch, 't1')).toThrow(
+    expect(() => server.receive(mutation, 't1')).toThrow(
       'Transaction "t1" already exists',
     )
   })
@@ -281,12 +281,12 @@ describe(createFakeServer.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const {value} = parseTextspec({keyGenerator}, 'B: foo')
     const server = createFakeServer({documentId: 'document', document: {value}})
-    const batch = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
+    const mutation = {id: 'b1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
 
     server.failNextRequest(503)
-    const failed = server.submit([batch], 't1')
+    const failed = server.submit([mutation], 't1')
     const failedCopy = server.copy()
-    const retried = server.submit([batch], 't1')
+    const retried = server.submit([mutation], 't1')
 
     expect({failed, failedCopy, retried}).toEqual({
       failed: {type: 'failed', status: 503},
@@ -298,7 +298,7 @@ describe(createFakeServer.name, () => {
           previousRev: 'r1',
           resultRev: 'r2',
           patches: [set('h1', [{_key: 'k0'}, 'style'])],
-          batchIds: ['b1'],
+          mutationIds: ['b1'],
         },
       },
     })
@@ -316,7 +316,7 @@ describe(createFakeServer.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [],
-      batchIds: [],
+      mutationIds: [],
     })
     expect(server.copy()).toEqual({value, rev: 'r2'})
   })
@@ -334,7 +334,7 @@ describe(createFakeServer.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [set(nextValue, [])],
-      batchIds: [],
+      mutationIds: [],
     })
     expect(server.copy()).toEqual({value: nextValue, rev: 'r2'})
     expect(server.getLog()).toEqual([{transaction, changesField: true}])
@@ -359,7 +359,7 @@ describe(createFakeServer.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches,
-      batchIds: [],
+      mutationIds: [],
     })
     expect(server.copy()).toEqual({
       value: [
@@ -462,7 +462,7 @@ describe(createFakeServer.name, () => {
       previousRev: 'r1',
       resultRev: undefined,
       patches: [unset([])],
-      batchIds: [],
+      mutationIds: [],
     })
     expect(server.copy()).toEqual({value: undefined, rev: undefined})
 
@@ -473,7 +473,7 @@ describe(createFakeServer.name, () => {
       previousRev: undefined,
       resultRev: 'r2',
       patches: [set(recreatedValue, [])],
-      batchIds: [],
+      mutationIds: [],
     })
     expect(server.copy()).toEqual({
       value: [

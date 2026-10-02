@@ -1,14 +1,14 @@
 import type {Io} from './io'
-import type {Load, MutationBatch, Transaction} from './types'
+import type {Load, Mutation, Transaction} from './types'
 
 /**
- * A save request as the host formed it: the transaction ID and every batch
+ * A save request as the host formed it: the transaction ID and every mutation
  * it carries. It never changes once formed: every retry and every re-submit
  * sends it as it is.
  */
 export type FrozenRequest = {
   readonly transactionId: string
-  readonly batches: ReadonlyArray<MutationBatch>
+  readonly mutations: ReadonlyArray<Mutation>
 }
 
 /**
@@ -30,80 +30,81 @@ export type SaveAnswer =
 
 export type PassThroughHost = {
   /**
-   * The transaction a batch is saved as, or the one it proposes while a
+   * The transaction a mutation is saved as, or the one it proposes while a
    * folding host hasn't formed its request yet.
    */
-  getTransactionId: (batchId: string) => string
-  /** The request a batch is saved in, formed now if it wasn't yet. */
-  getRequest: (batchId: string) => FrozenRequest
+  getTransactionId: (mutationId: string) => string
+  /** The request a mutation is saved in, formed now if it wasn't yet. */
+  getRequest: (mutationId: string) => FrozenRequest
   /**
-   * Forms the request a batch goes out in, with other batches, saved as one
-   * transaction. Only a host that folds batches does this, and only once per
-   * batch: folding a batch again into the same request does nothing.
+   * Forms the request a mutation goes out in, with other mutations, saved as one
+   * transaction. Only a host that folds mutations does this, and only once per
+   * mutation: folding a mutation again into the same request does nothing.
    */
-  foldIntoRequest: (batchId: string, request: FrozenRequest) => void
+  foldIntoRequest: (mutationId: string, request: FrozenRequest) => void
   forward: (transaction: Transaction) => void
-  /** The server has taken the save request for a batch. */
-  reportSaveTaken: (batchId: string) => void
+  /** The server has taken the save request for a mutation. */
+  reportSaveTaken: (mutationId: string) => void
   /**
-   * The server saved a batch as this transaction. Only a self-confirming host
+   * The server saved a mutation as this transaction. Only a self-confirming host
    * passes it on: any other host waits for it on the feed.
    */
-  reportSaved: (batchId: string, transaction: Transaction) => void
+  reportSaved: (mutationId: string, transaction: Transaction) => void
   /**
-   * A batch's save request failed. A permanent failure is reported to the
+   * A mutation's save request failed. A permanent failure is reported to the
    * editor as `mutation rejected`, and a transient one is retried.
    */
-  reportFailure: (batchId: string, status: RequestFailure) => void
+  reportFailure: (mutationId: string, status: RequestFailure) => void
   /**
-   * Re-sends the request a batch was saved in, as it was formed, again after
+   * Re-sends the request a mutation was saved in, as it was formed, again after
    * each transient failure. A 409 means the earlier attempt landed, and a
-   * save means it hadn't: either way the echo confirms the batch, so the host
+   * save means it hadn't: either way the echo confirms the mutation, so the host
    * does nothing more. A permanent failure is reported as
    * `mutation rejected`.
    */
-  retry: (batchId: string) => SaveAnswer
+  retry: (mutationId: string) => SaveAnswer
   /** The listener reconnected or may have missed transactions. */
   feedLost: () => void
   load: () => void
   /**
-   * `outcomeOf` names the batch in flight, whose outcome the host finds out
+   * `outcomeOf` names the mutation in flight, whose outcome the host finds out
    * and passes along.
    */
   resync: (options: {discardUnsent: boolean; outcomeOf?: string}) => void
 }
 
 /**
- * Forwards the feed to the editor as it arrives, saves each batch, and
- * fetches the server's copy for `load` and `resync`. Waiting for the batch in
+ * Forwards the feed to the editor as it arrives, saves each mutation, and
+ * fetches the server's copy for `load` and `resync`. Waiting for the mutation in
  * flight before a resync, or naming it so the host looks up its outcome, is
  * the caller's job.
  *
- * By default the host saves each batch as its own request, under the
- * transaction ID the batch proposes, and never sends `mutation sent`. With
- * `foldBatches`, the host is shaped like Studio's committer: it chooses one
- * transaction ID per request, which may carry several batches, and sends
- * `mutation sent` for each batch in it. A batch that goes out alone is saved
- * under its batch ID. The host forms a batch's request, and sends
- * `mutation sent`, at the first of: a step folding it with other batches, the
- * server taking it, or the host re-sending it. Until then a step can still
- * fold two waiting batches into one request. A real host forms the request
- * before it leaves. The `final` batch is always saved under its proposed ID,
- * with no `mutation sent`.
+ * By default the host saves each mutation as its own request, under the
+ * transaction ID the mutation proposes, and never sends `mutation sent`, so
+ * each transaction carries one mutation. With `foldMutations`, the host is
+ * shaped like Studio's committer: it chooses one transaction ID per request,
+ * and sends `mutation sent` for each mutation in it. Its transaction can
+ * carry several mutations. A mutation that goes out alone is saved under its
+ * mutation ID. The host forms a mutation's request, and sends
+ * `mutation sent`, at the first of: a step folding it with other mutations,
+ * the server taking it, or the host re-sending it. Until then a step can
+ * still fold two waiting mutations into one request. A real host forms the
+ * request before it leaves. The `final` mutation is always saved under its
+ * proposed ID, with no `mutation sent`.
  *
  * With `selfConfirming`, the host is shaped like a host with no listener and
  * one writer: it forwards the transaction each save answers with, which
- * confirms the batch, and sees no other transactions.
+ * confirms the mutation, and sees no other transactions.
  *
  * The host keeps every request it formed, so it can send it again, whole and
  * under the same transaction ID: to retry after a lost reply or a transient
- * failure, and to find out what became of the batch in flight before a
+ * failure, and to find out what became of the mutation in flight before a
  * resync. By default (`outcomeMethod: 'resubmit'`) it finds the outcome by
- * re-submitting the request: a 409 means the batch had landed, a save means
+ * re-submitting the request: a 409 means the mutation had landed, a save means
  * it hadn't and now has, both `'applied'`, and a permanent failure means
  * `'not applied'`. With `outcomeMethod: 'history'` it asks the document's transaction history
  * whether the transaction ID is there instead. A lookup while the request is
- * still in transit can answer `'not applied'` for a batch that lands a moment
+ * still in transit can answer `'not applied'` for a mutation that lands a moment
  * later, which re-submitting can't.
  *
  * `subscription` returns what the host's feed subscription holds but hasn't
@@ -129,61 +130,64 @@ export function createPassThroughHost({
   hasTransaction,
   fetchCopy,
   subscription,
-  foldBatches = false,
+  foldMutations = false,
   selfConfirming = false,
   outcomeMethod = 'resubmit',
 }: {
   io: Io
-  save: (batch: MutationBatch) => void
+  save: (mutation: Mutation) => void
   /** Sends a save request again and answers whether it saved. */
   resubmit: (request: FrozenRequest) => SaveAnswer
   /** Whether the document's transaction history lists the ID. */
   hasTransaction: (transactionId: string) => boolean
   fetchCopy: () => Load
   subscription: () => Array<Pick<Transaction, 'transactionId' | 'resultRev'>>
-  foldBatches?: boolean
+  foldMutations?: boolean
   selfConfirming?: boolean
   outcomeMethod?: 'resubmit' | 'history'
 }): PassThroughHost {
-  const batches = new Map<string, MutationBatch>()
+  const mutations = new Map<string, Mutation>()
   const requests = new Map<string, FrozenRequest>()
-  let inFlightBatchId: string | undefined
-  let untakenBatchId: string | undefined
-  let heldFinalBatch: MutationBatch | undefined
+  let inFlightMutationId: string | undefined
+  let untakenMutationId: string | undefined
+  let heldFinalMutation: Mutation | undefined
   let coveredTransactionIds = new Set<string>()
   let coveredRevs = new Set<string>()
   const previousRevs = new Map<string, string | undefined>()
 
   io.on('mutation', (event) => {
-    const {type: _type, ...batch} = event
-    batches.set(batch.id, batch)
+    const {type: _type, ...mutation} = event
+    mutations.set(mutation.id, mutation)
 
-    if (batch.final || !foldBatches) {
+    if (mutation.final || !foldMutations) {
       requests.set(
-        batch.id,
-        freezeRequest({transactionId: batch.transactionId, batches: [batch]}),
+        mutation.id,
+        freezeRequest({
+          transactionId: mutation.transactionId,
+          mutations: [mutation],
+        }),
       )
     }
 
-    if (batch.final) {
-      if (untakenBatchId === undefined) {
-        save(batch)
+    if (mutation.final) {
+      if (untakenMutationId === undefined) {
+        save(mutation)
       } else {
-        heldFinalBatch = batch
+        heldFinalMutation = mutation
       }
 
       return
     }
 
-    inFlightBatchId = batch.id
-    untakenBatchId = batch.id
-    save(batch)
+    inFlightMutationId = mutation.id
+    untakenMutationId = mutation.id
+    save(mutation)
   })
 
   function fetchCoveredCopy(): Load {
     const copy = fetchCopy()
 
-    if (inFlightBatchId !== undefined) {
+    if (inFlightMutationId !== undefined) {
       return copy
     }
 
@@ -238,10 +242,11 @@ export function createPassThroughHost({
     }
 
     if (
-      inFlightBatchId !== undefined &&
-      requests.get(inFlightBatchId)?.transactionId === transaction.transactionId
+      inFlightMutationId !== undefined &&
+      requests.get(inFlightMutationId)?.transactionId ===
+        transaction.transactionId
     ) {
-      inFlightBatchId = undefined
+      inFlightMutationId = undefined
     }
 
     io.send({
@@ -254,80 +259,89 @@ export function createPassThroughHost({
     })
   }
 
-  function resubmitBatch(batchId: string): SaveAnswer {
-    if (getBatch(batchId).final) {
-      throw new Error(`No batch "${batchId}" to send again`)
+  function resubmitMutation(mutationId: string): SaveAnswer {
+    if (getMutation(mutationId).final) {
+      throw new Error(`No mutation "${mutationId}" to send again`)
     }
 
-    return resubmitUntilAnswered(batchId)
+    return resubmitUntilAnswered(mutationId)
   }
 
-  function resubmitUntilAnswered(batchId: string): SaveAnswer {
-    let answer = resubmit(getRequest(batchId))
+  function resubmitUntilAnswered(mutationId: string): SaveAnswer {
+    let answer = resubmit(getRequest(mutationId))
 
     while (answer.type === 'failed' && !isPermanent(answer.status)) {
-      answer = resubmit(getRequest(batchId))
+      answer = resubmit(getRequest(mutationId))
     }
 
     return answer
   }
 
-  function reject(batchId: string) {
-    if (getBatch(batchId).final) {
+  function reject(mutationId: string) {
+    if (getMutation(mutationId).final) {
       return
     }
 
-    if (batchId === inFlightBatchId) {
-      inFlightBatchId = undefined
+    if (mutationId === inFlightMutationId) {
+      inFlightMutationId = undefined
     }
 
-    io.send({type: 'mutation rejected', id: batchId})
+    io.send({type: 'mutation rejected', id: mutationId})
   }
 
-  function findOutcome(batchId: string): 'applied' | 'not applied' {
+  function findOutcome(mutationId: string): 'applied' | 'not applied' {
     if (outcomeMethod === 'history') {
-      return hasTransaction(getRequest(batchId).transactionId)
+      return hasTransaction(getRequest(mutationId).transactionId)
         ? 'applied'
         : 'not applied'
     }
 
-    return resubmitBatch(batchId).type === 'failed' ? 'not applied' : 'applied'
+    return resubmitMutation(mutationId).type === 'failed'
+      ? 'not applied'
+      : 'applied'
   }
 
-  function getBatch(batchId: string): MutationBatch {
-    const batch = batches.get(batchId)
+  function getMutation(mutationId: string): Mutation {
+    const mutation = mutations.get(mutationId)
 
-    if (!batch) {
-      throw new Error(`No batch "${batchId}" was saved`)
+    if (!mutation) {
+      throw new Error(`No mutation "${mutationId}" was saved`)
     }
 
-    return batch
+    return mutation
   }
 
-  function getTransactionId(batchId: string): string {
+  function getTransactionId(mutationId: string): string {
     return (
-      requests.get(batchId)?.transactionId ?? getBatch(batchId).transactionId
+      requests.get(mutationId)?.transactionId ??
+      getMutation(mutationId).transactionId
     )
   }
 
-  function getRequest(batchId: string): FrozenRequest {
-    const request = requests.get(batchId)
+  function getRequest(mutationId: string): FrozenRequest {
+    const request = requests.get(mutationId)
 
     if (request) {
       return request
     }
 
-    const batch = getBatch(batchId)
+    const mutation = getMutation(mutationId)
 
-    return formRequest(batchId, {transactionId: batch.id, batches: [batch]})
+    return formRequest(mutationId, {
+      transactionId: mutation.id,
+      mutations: [mutation],
+    })
   }
 
-  function formRequest(batchId: string, request: FrozenRequest): FrozenRequest {
+  function formRequest(
+    mutationId: string,
+    request: FrozenRequest,
+  ): FrozenRequest {
     const frozen = freezeRequest(request)
-    requests.set(batchId, frozen)
+    requests.set(mutationId, frozen)
     io.send({
       type: 'mutation sent',
-      id: batchId,
+      id: mutationId,
       transactionId: frozen.transactionId,
     })
 
@@ -337,64 +351,64 @@ export function createPassThroughHost({
   return {
     getTransactionId,
     getRequest,
-    foldIntoRequest: (batchId, request) => {
-      if (!foldBatches) {
+    foldIntoRequest: (mutationId, request) => {
+      if (!foldMutations) {
         throw new Error(
-          'A host that saves each batch under its proposed transaction ID never folds batches into one request',
+          'A host that saves each mutation under its proposed transaction ID never folds mutations into one request',
         )
       }
 
-      if (!request.batches.some((batch) => batch.id === batchId)) {
-        throw new Error(`The request does not carry batch "${batchId}"`)
+      if (!request.mutations.some((mutation) => mutation.id === mutationId)) {
+        throw new Error(`The request does not carry mutation "${mutationId}"`)
       }
 
-      const formed = requests.get(batchId)
+      const formed = requests.get(mutationId)
 
       if (formed === undefined) {
-        formRequest(batchId, request)
+        formRequest(mutationId, request)
         return
       }
 
       if (!isSameRequest(formed, request)) {
         throw new Error(
-          `Batch "${batchId}" went out in request "${formed.transactionId}" already`,
+          `Mutation "${mutationId}" went out in request "${formed.transactionId}" already`,
         )
       }
     },
     forward,
-    reportSaved: (batchId, transaction) => {
-      if (selfConfirming && !getBatch(batchId).final) {
+    reportSaved: (mutationId, transaction) => {
+      if (selfConfirming && !getMutation(mutationId).final) {
         forward(transaction)
       }
     },
-    reportSaveTaken: (batchId) => {
-      getRequest(batchId)
+    reportSaveTaken: (mutationId) => {
+      getRequest(mutationId)
 
-      if (batchId !== untakenBatchId) {
+      if (mutationId !== untakenMutationId) {
         return
       }
 
-      untakenBatchId = undefined
+      untakenMutationId = undefined
 
-      if (heldFinalBatch) {
-        const finalBatch = heldFinalBatch
-        heldFinalBatch = undefined
-        save(finalBatch)
+      if (heldFinalMutation) {
+        const finalMutation = heldFinalMutation
+        heldFinalMutation = undefined
+        save(finalMutation)
       }
     },
-    reportFailure: (batchId, status) => {
+    reportFailure: (mutationId, status) => {
       if (
         isPermanent(status) ||
-        resubmitUntilAnswered(batchId).type === 'failed'
+        resubmitUntilAnswered(mutationId).type === 'failed'
       ) {
-        reject(batchId)
+        reject(mutationId)
       }
     },
-    retry: (batchId) => {
-      const answer = resubmitBatch(batchId)
+    retry: (mutationId) => {
+      const answer = resubmitMutation(mutationId)
 
       if (answer.type === 'failed') {
-        reject(batchId)
+        reject(mutationId)
       }
 
       return answer
@@ -411,8 +425,8 @@ export function createPassThroughHost({
           ? undefined
           : {[outcomeOf]: findOutcome(outcomeOf)}
 
-      if (outcomeOf !== undefined && outcomeOf === inFlightBatchId) {
-        inFlightBatchId = undefined
+      if (outcomeOf !== undefined && outcomeOf === inFlightMutationId) {
+        inFlightMutationId = undefined
       }
 
       io.send({
@@ -432,16 +446,16 @@ function isPermanent(status: RequestFailure): boolean {
 function freezeRequest(request: FrozenRequest): FrozenRequest {
   return Object.freeze({
     transactionId: request.transactionId,
-    batches: Object.freeze([...request.batches]),
+    mutations: Object.freeze([...request.mutations]),
   })
 }
 
 function isSameRequest(requestA: FrozenRequest, requestB: FrozenRequest) {
   return (
     requestA.transactionId === requestB.transactionId &&
-    requestA.batches.length === requestB.batches.length &&
-    requestA.batches.every(
-      (batch, index) => batch.id === requestB.batches[index]?.id,
+    requestA.mutations.length === requestB.mutations.length &&
+    requestA.mutations.every(
+      (mutation, index) => mutation.id === requestB.mutations[index]?.id,
     )
   )
 }

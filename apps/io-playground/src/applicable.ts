@@ -31,16 +31,16 @@ export type EditorApplicability = Record<EditorAction, Applicability>
 export type LinkApplicability = {
   towardServer: {
     prompts: Array<string>
-    /** By batch ID. */
+    /** By mutation ID. */
     saveRequests: Record<string, Applicability>
-    /** Receiving a save request and losing its reply, by batch ID. */
+    /** Receiving a save request and losing its reply, by mutation ID. */
     loseReply: Record<string, Applicability>
   }
   towardEditor: {
     prompts: Array<string>
-    /** By batch ID. */
+    /** By mutation ID. */
     replies: Record<string, Applicability>
-    /** Retrying the save whose reply was lost, by batch ID. */
+    /** Retrying the save whose reply was lost, by mutation ID. */
     lostReplies: Record<string, Applicability>
     /** By transaction ID. */
     feed: Record<string, Applicability>
@@ -116,7 +116,7 @@ export function applicableActions(
     'resync discarding': !resync.enabled
       ? resync
       : editor.inFlight
-        ? disabled('the steps discard only when no batch is in flight')
+        ? disabled('the steps discard only when no mutation is in flight')
         : editor.pending.length === 0
           ? disabled('nothing unsent to discard')
           : {
@@ -197,7 +197,7 @@ function resyncApplicability(editor: EditorSnapshot): Applicability {
   return editor.inFlight
     ? {
         enabled: true,
-        why: `batch ${editor.inFlight.batchNumber} is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome`,
+        why: `mutation ${editor.inFlight.mutationNumber} is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome`,
       }
     : enabled
 }
@@ -214,14 +214,14 @@ function resyncSuggestion(
   if (editor.outOfStep) {
     return {
       suggested: editor.inFlight
-        ? `${editorName} is out of step: resync with the outcome of batch ${editor.inFlight.batchNumber} to recover`
+        ? `${editorName} is out of step: resync with the outcome of mutation ${editor.inFlight.mutationNumber} to recover`
         : `${editorName} is out of step: resync to recover`,
     }
   }
 
   if (editor.rejected) {
     return {
-      suggested: `${editorName}'s batch ${editor.rejected.batchNumber} was rejected: sending is blocked until a resync`,
+      suggested: `${editorName}'s mutation ${editor.rejected.mutationNumber} was rejected: sending is blocked until a resync`,
     }
   }
 
@@ -263,19 +263,19 @@ function linkApplicability(
 
   const firstRequest = requests.at(0)
   const requestPrompt = firstRequest
-    ? `${name}'s ${firstRequest.final ? 'final batch' : `batch ${firstRequest.batchNumber}`} is waiting: the server receives it, or the request fails`
+    ? `${name}'s ${firstRequest.final ? 'final mutation' : `mutation ${firstRequest.mutationNumber}`} is waiting: the server receives it, or the request fails`
     : undefined
 
   const firstReply = replies.at(0)
   const replyPrompt = firstReply
-    ? `${name}'s batch ${firstReply.batchNumber} failed with ${firstReply.status}: deliver the reply`
+    ? `${name}'s mutation ${firstReply.mutationNumber} failed with ${firstReply.status}: deliver the reply`
     : undefined
 
   const firstRetryable = lostReplies.find(
-    (reply) => editor?.inFlight?.batchNumber === reply.batchNumber,
+    (reply) => editor?.inFlight?.mutationNumber === reply.mutationNumber,
   )
   const lostReplyPrompt = firstRetryable
-    ? `the save reply for ${name}'s batch ${firstRetryable.batchNumber} was lost: retry it with the same transaction ID`
+    ? `the save reply for ${name}'s mutation ${firstRetryable.mutationNumber} was lost: retry it with the same transaction ID`
     : undefined
 
   const held = editor ? heldPrompt(editor, feed) : undefined
@@ -298,7 +298,7 @@ function linkApplicability(
       prompts: requestPrompt === undefined ? [] : [requestPrompt],
       saveRequests: Object.fromEntries(
         requests.map((request) => [
-          request.batchId,
+          request.mutationId,
           request === firstRequest && requestPrompt !== undefined
             ? {enabled: true, suggested: requestPrompt}
             : enabled,
@@ -306,9 +306,9 @@ function linkApplicability(
       ),
       loseReply: Object.fromEntries(
         requests.map((request) => [
-          request.batchId,
+          request.mutationId,
           request.final
-            ? disabled('a final batch gets no reply')
+            ? disabled('a final mutation gets no reply')
             : {
                 enabled: true,
                 why: 'the server saves it, but the host never hears back',
@@ -324,7 +324,7 @@ function linkApplicability(
       ),
       replies: Object.fromEntries(
         replies.map((reply) => [
-          reply.batchId,
+          reply.mutationId,
           reply === firstReply &&
           replyPrompt !== undefined &&
           editor?.status !== 'unmounted'
@@ -334,13 +334,13 @@ function linkApplicability(
       ),
       lostReplies: Object.fromEntries(
         lostReplies.map((reply) => [
-          reply.batchId,
+          reply.mutationId,
           reply === firstRetryable && lostReplyPrompt !== undefined
             ? {enabled: true, suggested: lostReplyPrompt}
-            : editor?.inFlight?.batchNumber === reply.batchNumber
+            : editor?.inFlight?.mutationNumber === reply.mutationNumber
               ? enabled
               : disabled(
-                  `batch ${reply.batchNumber} isn't in flight anymore: the host knows what became of it`,
+                  `mutation ${reply.mutationNumber} isn't in flight anymore: the host knows what became of it`,
                 ),
         ]),
       ),

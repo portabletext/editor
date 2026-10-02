@@ -35,11 +35,11 @@ Feature: Loading and empty
     Then Editor A shows "B: |"
     When "x" is typed
     Then Editor A shows "B: x|"
-    And Editor A has sent batch 1
-    And Editor A's batch 1 <patches>
-    When the server receives Editor A's batch 1
+    And Editor A has sent mutation 1
+    And Editor A's mutation 1 <patches>
+    When the server receives Editor A's mutation 1
     Then the server has "<server>"
-    When Editor A's batch 1 comes back
+    When Editor A's mutation 1 comes back
     Then Editor A has sent nothing new
 
     Examples:
@@ -53,10 +53,10 @@ Feature: Loading and empty
     Given the document is "B: foo|"
     When the block "foo" is deleted
     Then Editor A shows "B: |"
-    And Editor A has sent batch 1
-    And Editor A's batch 1 empties the field
-    When the server receives Editor A's batch 1
+    And Editor A has sent mutation 1
+    And Editor A's mutation 1 empties the field
+    When the server receives Editor A's mutation 1
     Then the server has no field
-    When Editor A's batch 1 comes back
+    When Editor A's mutation 1 comes back
     Then Editor A shows "B: |"
     And Editor A has sent nothing new

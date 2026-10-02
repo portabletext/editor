@@ -16,7 +16,7 @@ import type {
   WorkDropped,
 } from '../protocol/types'
 import {checkEmpty, checkEqual, checkGreaterThan, checkNotEqual} from './check'
-import type {BatchReference, ExpectedSync} from './parameter-types'
+import type {MutationReference, ExpectedSync} from './parameter-types'
 import {
   heldTransactionTimeout,
   type Corruption,
@@ -57,10 +57,13 @@ export const stepDefinitions = [
   Given('the editors are in their first commit', (context: Context) => {
     context.world.startEditors()
   }),
-  Given('hosts that fold batches into shared requests', (context: Context) => {
-    context.world.setHostShape('folding')
-  }),
-  Given('hosts that confirm each batch themselves', (context: Context) => {
+  Given(
+    'hosts that fold mutations into shared requests',
+    (context: Context) => {
+      context.world.setHostShape('folding')
+    },
+  ),
+  Given('hosts that confirm each mutation themselves', (context: Context) => {
     context.world.setHostShape('self-confirming')
   }),
   Given("transactions that carry the server's copy", (context: Context) => {
@@ -70,19 +73,19 @@ export const stepDefinitions = [
   ...userSteps(),
 
   When(
-    "the server receives {editor}'s batch {int}",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.receive(name, batchNumber)
+    "the server receives {editor}'s mutation {int}",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.receive(name, mutationNumber)
     },
   ),
   When(
-    'the server receives {batch} and {batch} as one transaction',
-    (context: Context, first: BatchReference, second: BatchReference) => {
+    'the server receives {mutation} and {mutation} as one transaction',
+    (context: Context, first: MutationReference, second: MutationReference) => {
       context.world.receiveAsOne(first, second)
     },
   ),
   When(
-    "the server receives {editor}'s final batch",
+    "the server receives {editor}'s final mutation",
     (context: Context, name: EditorName) => {
       context.world.receiveFinal(name)
     },
@@ -94,21 +97,21 @@ export const stepDefinitions = [
     },
   ),
   When(
-    "the host rewrites {editor}'s batch {int} as a whole-field unset",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.rewriteAsWholeFieldUnset(name, batchNumber)
+    "the host rewrites {editor}'s mutation {int} as a whole-field unset",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.rewriteAsWholeFieldUnset(name, mutationNumber)
     },
   ),
   When(
-    "the save reply for {editor}'s batch {int} is lost",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.loseReply(name, batchNumber)
+    "the save reply for {editor}'s mutation {int} is lost",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.loseReply(name, mutationNumber)
     },
   ),
   When(
-    "{editor}'s batch {int} is retried",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.retry(name, batchNumber)
+    "{editor}'s mutation {int} is retried",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.retry(name, mutationNumber)
     },
   ),
   When("{editor}'s feed is lost", (context: Context, name: EditorName) => {
@@ -121,14 +124,14 @@ export const stepDefinitions = [
     },
   ),
   When(
-    "{editor} receives {editor}'s batch {int}",
+    "{editor} receives {editor}'s mutation {int}",
     (
       context: Context,
       receiverName: EditorName,
       senderName: EditorName,
-      batchNumber: number,
+      mutationNumber: number,
     ) => {
-      context.world.deliverBatch(receiverName, senderName, batchNumber)
+      context.world.deliverMutation(receiverName, senderName, mutationNumber)
     },
   ),
   When(
@@ -168,9 +171,9 @@ export const stepDefinitions = [
     },
   ),
   When(
-    "{editor}'s batch {int} comes back",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.deliverBatch(name, name, batchNumber)
+    "{editor}'s mutation {int} comes back",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.deliverMutation(name, name, mutationNumber)
     },
   ),
   When('the document is deleted', (context: Context) => {
@@ -202,18 +205,21 @@ export const stepDefinitions = [
   }),
 
   When(
-    "the save reply for {editor}'s batch {int} arrives",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.deliverReply(name, batchNumber)
+    "the save reply for {editor}'s mutation {int} arrives",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.deliverReply(name, mutationNumber)
     },
   ),
   When('{editor} is resynced', (context: Context, name: EditorName) => {
     context.world.resync(name, {discardUnsent: false})
   }),
   When(
-    '{editor} is resynced with the outcome of batch {int}',
-    (context: Context, name: EditorName, batchNumber: number) => {
-      context.world.resync(name, {discardUnsent: false, outcomeOf: batchNumber})
+    '{editor} is resynced with the outcome of mutation {int}',
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      context.world.resync(name, {
+        discardUnsent: false,
+        outcomeOf: mutationNumber,
+      })
     },
   ),
   When(
@@ -301,16 +307,16 @@ export const stepDefinitions = [
     checkEmpty('Key problems on the server', duplicateOrMissingKeys(value))
   }),
   Then(
-    '{editor} has sent batch {int}',
-    (context: Context, name: EditorName, batchNumber: number) => {
+    '{editor} has sent mutation {int}',
+    (context: Context, name: EditorName, mutationNumber: number) => {
       const worldEditor = context.world.getEditor(name)
 
       checkEqual(
-        `The batches ${name} has sent`,
+        `The mutations ${name} has sent`,
         worldEditor.heard.mutations.length,
-        batchNumber,
+        mutationNumber,
       )
-      worldEditor.checkedBatchCount = batchNumber
+      worldEditor.checkedMutationCount = mutationNumber
     },
   ),
   Then(
@@ -319,61 +325,61 @@ export const stepDefinitions = [
       const worldEditor = context.world.getEditor(name)
 
       checkEqual(
-        `The batches ${name} has sent`,
+        `The mutations ${name} has sent`,
         worldEditor.heard.mutations.length,
-        worldEditor.checkedBatchCount,
+        worldEditor.checkedMutationCount,
       )
     },
   ),
   Then(
-    '{editor} has sent a final batch',
+    '{editor} has sent a final mutation',
     (context: Context, name: EditorName) => {
       const worldEditor = context.world.getEditor(name)
 
       checkEqual(
-        `Whether ${name}'s last batch is final`,
+        `Whether ${name}'s last mutation is final`,
         worldEditor.heard.mutations.at(-1)?.final,
         true,
       )
-      worldEditor.checkedBatchCount = worldEditor.heard.mutations.length
+      worldEditor.checkedMutationCount = worldEditor.heard.mutations.length
     },
   ),
   Then(
-    "{editor}'s batch {int} creates the block",
-    (context: Context, name: EditorName, batchNumber: number) => {
+    "{editor}'s mutation {int} creates the block",
+    (context: Context, name: EditorName, mutationNumber: number) => {
       checkEqual(
-        `Whether ${name}'s batch ${batchNumber} creates the block`,
-        createsBlock(context.world.getBatch(name, batchNumber).patches),
+        `Whether ${name}'s mutation ${mutationNumber} creates the block`,
+        createsBlock(context.world.getMutation(name, mutationNumber).patches),
         true,
       )
     },
   ),
   Then(
-    "{editor}'s batch {int} does not create a block",
-    (context: Context, name: EditorName, batchNumber: number) => {
+    "{editor}'s mutation {int} does not create a block",
+    (context: Context, name: EditorName, mutationNumber: number) => {
       checkEqual(
-        `Whether ${name}'s batch ${batchNumber} creates a block`,
-        createsBlock(context.world.getBatch(name, batchNumber).patches),
+        `Whether ${name}'s mutation ${mutationNumber} creates a block`,
+        createsBlock(context.world.getMutation(name, mutationNumber).patches),
         false,
       )
     },
   ),
   Then(
-    "{editor}'s batch {int} does not empty the field",
-    (context: Context, name: EditorName, batchNumber: number) => {
+    "{editor}'s mutation {int} does not empty the field",
+    (context: Context, name: EditorName, mutationNumber: number) => {
       checkEqual(
-        `Whether ${name}'s batch ${batchNumber} empties the field`,
-        emptiesField(context.world.getBatch(name, batchNumber).patches),
+        `Whether ${name}'s mutation ${mutationNumber} empties the field`,
+        emptiesField(context.world.getMutation(name, mutationNumber).patches),
         false,
       )
     },
   ),
   Then(
-    "{editor}'s batch {int} empties the field",
-    (context: Context, name: EditorName, batchNumber: number) => {
+    "{editor}'s mutation {int} empties the field",
+    (context: Context, name: EditorName, mutationNumber: number) => {
       checkEqual(
-        `Whether ${name}'s batch ${batchNumber} empties the field`,
-        emptiesField(context.world.getBatch(name, batchNumber).patches),
+        `Whether ${name}'s mutation ${mutationNumber} empties the field`,
+        emptiesField(context.world.getMutation(name, mutationNumber).patches),
         true,
       )
     },
@@ -460,62 +466,62 @@ export const stepDefinitions = [
     },
   ),
   Then(
-    "the retry of {editor}'s batch {int} was refused as a duplicate",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      const batchId = context.world.getBatch(name, batchNumber).id
+    "the retry of {editor}'s mutation {int} was refused as a duplicate",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      const mutationId = context.world.getMutation(name, mutationNumber).id
 
       checkEqual(
-        `Whether the server refused a retry of ${name}'s batch ${batchNumber} as a duplicate`,
+        `Whether the server refused a retry of ${name}'s mutation ${mutationNumber} as a duplicate`,
         context.world
           .getServer()
           .getDuplicates()
-          .some((duplicate) => duplicate.batchIds.includes(batchId)),
+          .some((duplicate) => duplicate.mutationIds.includes(mutationId)),
         true,
       )
     },
   ),
   Then(
-    "the server has saved {editor}'s batch {int} once",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      const batchId = context.world.getBatch(name, batchNumber).id
+    "the server has saved {editor}'s mutation {int} once",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      const mutationId = context.world.getMutation(name, mutationNumber).id
 
       checkEqual(
-        `The transactions carrying ${name}'s batch ${batchNumber}`,
+        `The transactions carrying ${name}'s mutation ${mutationNumber}`,
         context.world
           .getServer()
           .getTransactions()
-          .filter((transaction) => transaction.batchIds.includes(batchId))
+          .filter((transaction) => transaction.mutationIds.includes(mutationId))
           .length,
         1,
       )
     },
   ),
   Then(
-    "the server saved {editor}'s batch {int} under the transaction ID it proposed",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      const batch = context.world.getBatch(name, batchNumber)
+    "the server saved {editor}'s mutation {int} under the transaction ID it proposed",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      const mutation = context.world.getMutation(name, mutationNumber)
 
       checkEqual(
-        `The transaction carrying ${name}'s batch ${batchNumber}`,
+        `The transaction carrying ${name}'s mutation ${mutationNumber}`,
         context.world
           .getServer()
           .getTransactions()
-          .find((transaction) => transaction.batchIds.includes(batch.id))
+          .find((transaction) => transaction.mutationIds.includes(mutation.id))
           ?.transactionId,
-        batch.transactionId,
+        mutation.transactionId,
       )
     },
   ),
   Then(
-    "{editor}'s host has named the transaction for batch {int}",
-    (context: Context, name: EditorName, batchNumber: number) => {
-      const batchId = context.world.getBatch(name, batchNumber).id
+    "{editor}'s host has named the transaction for mutation {int}",
+    (context: Context, name: EditorName, mutationNumber: number) => {
+      const mutationId = context.world.getMutation(name, mutationNumber).id
 
       checkEqual(
-        `Whether ${name}'s host sent \`mutation sent\` for batch ${batchNumber}`,
+        `Whether ${name}'s host sent \`mutation sent\` for mutation ${mutationNumber}`,
         context.world
           .getEditor(name)
-          .mutationsSent.some((mutationSent) => mutationSent.id === batchId),
+          .mutationsSent.some((mutationSent) => mutationSent.id === mutationId),
         true,
       )
     },
@@ -544,9 +550,9 @@ export const stepDefinitions = [
       resync.screen,
     )
     checkEqual(
-      `The batches ${resync.editorName} has sent`,
+      `The mutations ${resync.editorName} has sent`,
       heard.mutations.length,
-      resync.batchCount,
+      resync.mutationCount,
     )
   }),
   Then('the load was refused', (context: Context) => {
@@ -592,19 +598,19 @@ export const stepDefinitions = [
     },
   ),
   Then(
-    "{editor}'s change {int} carries the patches of batch {int}",
+    "{editor}'s change {int} carries the patches of mutation {int}",
     (
       context: Context,
       name: EditorName,
       changeNumber: number,
-      batchNumber: number,
+      mutationNumber: number,
     ) => {
       const change = getChange(context, name, changeNumber)
 
       checkEqual(
         `The patches ${name}'s change ${changeNumber} carries`,
         JSON.stringify(change.origin === 'local' ? change.patches : undefined),
-        JSON.stringify(context.world.getBatch(name, batchNumber).patches),
+        JSON.stringify(context.world.getMutation(name, mutationNumber).patches),
       )
     },
   ),
@@ -639,32 +645,36 @@ export const stepDefinitions = [
     },
   ),
   Then(
-    "{editor}'s last apply carries the patches of {editor}'s batch {int}",
+    "{editor}'s last apply carries the patches of {editor}'s mutation {int}",
     (
       context: Context,
       name: EditorName,
       senderName: EditorName,
-      batchNumber: number,
+      mutationNumber: number,
     ) => {
       checkEqual(
         `The patches of ${name}'s last apply`,
         JSON.stringify(getLastApply(context, name).patches),
-        JSON.stringify(context.world.getBatch(senderName, batchNumber).patches),
+        JSON.stringify(
+          context.world.getMutation(senderName, mutationNumber).patches,
+        ),
       )
     },
   ),
   Then(
-    "{editor}'s last apply has {editor}'s batch {int} underneath",
+    "{editor}'s last apply has {editor}'s mutation {int} underneath",
     (
       context: Context,
       name: EditorName,
       senderName: EditorName,
-      batchNumber: number,
+      mutationNumber: number,
     ) => {
       checkEqual(
         `What ${name}'s last apply has underneath`,
         JSON.stringify(getLastApply(context, name).underneath),
-        JSON.stringify(context.world.getBatch(senderName, batchNumber).patches),
+        JSON.stringify(
+          context.world.getMutation(senderName, mutationNumber).patches,
+        ),
       )
     },
   ),

@@ -1,5 +1,5 @@
 import type {
-  BatchSnapshot,
+  MutationSnapshot,
   EditorName,
   EditorSnapshot,
   HeardEvent,
@@ -36,7 +36,7 @@ export function EditorPanel({
 }: {
   name: EditorName
   editor: EditorSnapshot | undefined
-  /** How long the batch in flight has been out, on the world's clock. */
+  /** How long the mutation in flight has been out, on the world's clock. */
   savingFor?: number | undefined
   /** Transactions waiting in this editor's feed. */
   waitingCount: number
@@ -82,8 +82,8 @@ export function EditorPanel({
             </Label>
             {editor.sync === 'saving' && savingFor !== undefined ? (
               <span
-                aria-label="time the batch in flight has been out"
-                title="how long the batch in flight has been out, on the world's clock"
+                aria-label="time the mutation in flight has been out"
+                title="how long the mutation in flight has been out, on the world's clock"
                 className={`font-mono text-xs ${savingFor >= 10_000 ? 'font-semibold text-red-700' : 'text-gray-500'}`}
               >
                 {savingFor / 1000} s
@@ -128,19 +128,19 @@ function EditorDetails({
   editor: EditorSnapshot
 }) {
   const openDetails = useOpenDetails()
-  const batchLink = (batch: BatchSnapshot) => (
+  const mutationLink = (mutation: MutationSnapshot) => (
     <DetailsLink
-      label={`Details of ${name}'s batch ${batch.batchNumber}`}
+      label={`Details of ${name}'s mutation ${mutation.mutationNumber}`}
       onClick={() =>
         openDetails({
-          type: 'batch',
+          type: 'mutation',
           editor: name,
-          batchNumber: batch.batchNumber,
+          mutationNumber: mutation.mutationNumber,
         })
       }
     >
-      batch {batch.batchNumber} → {describeTransactionIds(batch)} ·{' '}
-      {plural(batch.patchCount, 'patch')}
+      mutation {mutation.mutationNumber} → {describeTransactionIds(mutation)} ·{' '}
+      {plural(mutation.patchCount, 'patch')}
     </DetailsLink>
   )
 
@@ -177,7 +177,7 @@ function EditorDetails({
       <Section title="ledger">
         <ItemList>
           <LedgerRow concept="in flight" label="in flight">
-            {editor.inFlight ? batchLink(editor.inFlight) : 'nothing'}
+            {editor.inFlight ? mutationLink(editor.inFlight) : 'nothing'}
           </LedgerRow>
           <LedgerRow concept="pending" label="pending">
             {editor.pending.length === 0 ? (
@@ -229,14 +229,16 @@ function EditorDetails({
           {editor.echoed.length > 0 ? (
             <LedgerRow concept="held echo" label="held echo">
               <span className="flex flex-col">
-                {editor.echoed.map((batch) => (
-                  <span key={batch.batchNumber}>{batchLink(batch)}</span>
+                {editor.echoed.map((mutation) => (
+                  <span key={mutation.mutationNumber}>
+                    {mutationLink(mutation)}
+                  </span>
                 ))}
               </span>
             </LedgerRow>
           ) : null}
           <LedgerRow concept="rejected" label="rejected">
-            {editor.rejected ? batchLink(editor.rejected) : 'nothing'}
+            {editor.rejected ? mutationLink(editor.rejected) : 'nothing'}
           </LedgerRow>
           <LedgerRow concept="out of step" label="out of step">
             {editor.outOfStep ? 'yes' : 'no'}
@@ -249,26 +251,26 @@ function EditorDetails({
 
       <MessagePath name={name} messages={editor.messages} />
 
-      <Section title="sent batches" concept="batch">
-        {editor.sentBatches.length === 0 ? (
+      <Section title="sent mutations" concept="mutation">
+        {editor.sentMutations.length === 0 ? (
           <Empty>none</Empty>
         ) : (
           <ItemList>
-            {editor.sentBatches.map((batch) => (
-              <li key={batch.number}>
+            {editor.sentMutations.map((mutation) => (
+              <li key={mutation.number}>
                 <DetailsLink
-                  label={`Details of ${name}'s batch ${batch.number}`}
+                  label={`Details of ${name}'s mutation ${mutation.number}`}
                   onClick={() =>
                     openDetails({
-                      type: 'batch',
+                      type: 'mutation',
                       editor: name,
-                      batchNumber: batch.number,
+                      mutationNumber: mutation.number,
                     })
                   }
                 >
-                  batch {batch.number} → {batch.transactionId} ·{' '}
-                  {plural(batch.patchCount, 'patch')}
-                  {batch.final ? ' · final' : null}
+                  mutation {mutation.number} → {mutation.transactionId} ·{' '}
+                  {plural(mutation.patchCount, 'patch')}
+                  {mutation.final ? ' · final' : null}
                 </DetailsLink>
               </li>
             ))}
@@ -331,10 +333,10 @@ const syncTones = {
   'out of step': 'amber',
 } as const
 
-function describeTransactionIds(batch: BatchSnapshot): string {
-  return batch.transactionIds.length === 0
+function describeTransactionIds(mutation: MutationSnapshot): string {
+  return mutation.transactionIds.length === 0
     ? '?'
-    : batch.transactionIds.join(' / ')
+    : mutation.transactionIds.join(' / ')
 }
 
 function describeEvent(event: HeardEvent): string {

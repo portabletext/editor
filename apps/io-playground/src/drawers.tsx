@@ -28,7 +28,7 @@ import {
  * snapshot, so it follows the world as steps run.
  */
 export type DetailsSelection =
-  | {type: 'batch'; editor: EditorName; batchNumber: number}
+  | {type: 'mutation'; editor: EditorName; mutationNumber: number}
   | {type: 'pending'; editor: EditorName; index: number}
   | {type: 'event'; editor: EditorName; index: number}
   | {type: 'transaction'; transactionId: string}
@@ -169,8 +169,8 @@ function Details({
   snapshot: WorldSnapshot
 }) {
   switch (selection.type) {
-    case 'batch':
-      return <BatchDetails selection={selection} snapshot={snapshot} />
+    case 'mutation':
+      return <MutationDetails selection={selection} snapshot={snapshot} />
     case 'pending':
       return <PendingDetails selection={selection} snapshot={snapshot} />
     case 'event':
@@ -182,46 +182,48 @@ function Details({
   }
 }
 
-function BatchDetails({
+function MutationDetails({
   selection,
   snapshot,
 }: {
-  selection: Extract<DetailsSelection, {type: 'batch'}>
+  selection: Extract<DetailsSelection, {type: 'mutation'}>
   snapshot: WorldSnapshot
 }) {
   const editor = snapshot.editors?.[selection.editor]
-  const batch = editor?.sentBatches[selection.batchNumber - 1]
+  const mutation = editor?.sentMutations[selection.mutationNumber - 1]
 
-  if (!editor || !batch || !snapshot.network || !snapshot.server) {
-    return <Empty>This batch isn't in the current world.</Empty>
+  if (!editor || !mutation || !snapshot.network || !snapshot.server) {
+    return <Empty>This mutation isn't in the current world.</Empty>
   }
 
   const savedAs = snapshot.server.transactions.find(
     (transaction) =>
-      transaction.source.type === 'batches' &&
-      transaction.source.batches.some(
+      transaction.source.type === 'mutations' &&
+      transaction.source.mutations.some(
         (candidate) =>
           candidate.name === selection.editor &&
-          candidate.batchNumber === selection.batchNumber,
+          candidate.mutationNumber === selection.mutationNumber,
       ),
   )
   const whereItIs = snapshot.network.saveRequests.some(
     (request) =>
       request.editor === selection.editor &&
-      request.batchNumber === selection.batchNumber,
+      request.mutationNumber === selection.mutationNumber,
   )
     ? 'a save request, waiting for the server to receive it'
-    : editor.inFlight?.batchNumber === batch.number
+    : editor.inFlight?.mutationNumber === mutation.number
       ? snapshot.network.lostReplies.some(
           (reply) =>
             reply.editor === selection.editor &&
-            reply.batchNumber === batch.number,
+            reply.mutationNumber === mutation.number,
         )
         ? 'in flight: saved, but the reply was lost, so the host may retry it'
         : 'in flight: saved, waiting to come back on the feed'
-      : editor.rejected?.batchNumber === batch.number
+      : editor.rejected?.mutationNumber === mutation.number
         ? 'rejected'
-        : editor.echoed.some((echoed) => echoed.batchNumber === batch.number)
+        : editor.echoed.some(
+              (echoed) => echoed.mutationNumber === mutation.number,
+            )
           ? 'a held echo: it came back inside a held transaction'
           : savedAs
             ? `on the server as ${savedAs.id}`
@@ -230,18 +232,19 @@ function BatchDetails({
   return (
     <>
       <h3 className="flex items-center gap-1 text-sm font-semibold">
-        {selection.editor}'s batch {batch.number} <InfoMark concept="batch" />
+        {selection.editor}'s mutation {mutation.number}{' '}
+        <InfoMark concept="mutation" />
       </h3>
       <Fields
         fields={[
-          ['batch', `${selection.editor}'s batch ${batch.number}`],
-          ['transactionId', batch.transactionId],
-          ['final', batch.final ? 'yes, sent on close' : 'no'],
+          ['mutation', `${selection.editor}'s mutation ${mutation.number}`],
+          ['transactionId', mutation.transactionId],
+          ['final', mutation.final ? 'yes, sent on close' : 'no'],
           ['where it is', whereItIs],
-          ['patches', plural(batch.patchCount, 'patch')],
+          ['patches', plural(mutation.patchCount, 'patch')],
         ]}
       />
-      <PatchesView patches={batch.patches} />
+      <PatchesView patches={mutation.patches} />
     </>
   )
 }
@@ -268,7 +271,7 @@ function PendingDetails({
       </h3>
       <Fields
         fields={[
-          ['goes out', 'with the next batch, once nothing is in flight'],
+          ['goes out', 'with the next mutation, once nothing is in flight'],
           ['patches', plural(change.patchCount, 'patch')],
         ]}
       />
@@ -303,7 +306,7 @@ function EventDetails({
           <section aria-label="offending patch" className="flex flex-col gap-1">
             <h4 className="text-xs font-semibold text-gray-500">
               {event.reason === 'echo mismatch'
-                ? 'the patch the editor never sent, above a path its batch touched'
+                ? 'the patch the editor never sent, above a path its mutation touched'
                 : 'the patch'}
             </h4>
             <JsonView value={event.patch} />
@@ -327,7 +330,7 @@ function EventDetails({
               event.reason === 'no target'
                 ? 'the unsent changes had nowhere to go: their target is gone'
                 : event.reason === 'rejected'
-                  ? 'the resync dropped the batch the server refused'
+                  ? 'the resync dropped the mutation the server refused'
                   : 'the editor closed while sending was blocked by a rejection',
             ],
             ['patches', plural(event.patchCount, 'patch')],
@@ -348,7 +351,7 @@ const errorMeanings = {
     'a remote insert brought a key the editor already has or has sent',
   'patch failed': "a patch from the host couldn't be evaluated at all",
   'echo mismatch':
-    "the editor's own transaction came back with a patch it never sent, above a path its batch touched: the host widened its work",
+    "the editor's own transaction came back with a patch it never sent, above a path its mutation touched: the host widened its work",
   'invalid content':
     "a transaction left content the editor can't show: a block without a key or type, children that aren't a list of spans, or text that isn't a string",
 }
@@ -393,7 +396,7 @@ function TransactionDetails({
               to={transaction.resultRev}
             />,
           ],
-          ['batchIds', JSON.stringify(transaction.batchIds)],
+          ['mutationIds', JSON.stringify(transaction.mutationIds)],
           ['carries', describeSource(transaction.source)],
           ['changed the field', transaction.noop ? 'no' : 'yes'],
           [
@@ -457,7 +460,7 @@ function MessageDetails({
               ['id', message.id],
               [
                 'transactionId',
-                `${message.transactionId}, the host's own: io now takes this transaction for the batch's echo`,
+                `${message.transactionId}, the host's own: io now takes this transaction for the mutation's echo`,
               ],
             ]}
           />
@@ -471,7 +474,7 @@ function MessageDetails({
             fields={[
               route,
               ['id', message.id],
-              ['means', 'the server refused the batch for good'],
+              ['means', 'the server refused the mutation for good'],
             ]}
           />
         </>
@@ -604,9 +607,9 @@ function MessageDetails({
               [
                 'answer',
                 message.answer.type === 'duplicate'
-                  ? '409: the transaction ID exists, so the batch had landed'
+                  ? '409: the transaction ID exists, so the mutation had landed'
                   : message.answer.type === 'saved'
-                    ? "saved: the batch hadn't landed, and now has"
+                    ? "saved: the mutation hadn't landed, and now has"
                     : `failed with ${message.answer.status}`,
               ],
             ]}

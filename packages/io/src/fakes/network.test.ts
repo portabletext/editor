@@ -8,46 +8,48 @@ import type {ServerTransaction} from './server'
 describe(createFakeNetwork.name, () => {
   test('save requests leave in the order the caller takes them', () => {
     const network = createFakeNetwork()
-    const batchA1 = {id: 'a1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
-    const batchA2 = {id: 'a2', patches: [set('h2', [{_key: 'k0'}, 'style'])]}
-    const batchB1 = {
+    const mutationA1 = {id: 'a1', patches: [set('h1', [{_key: 'k0'}, 'style'])]}
+    const mutationA2 = {id: 'a2', patches: [set('h2', [{_key: 'k0'}, 'style'])]}
+    const mutationB1 = {
       id: 'b1',
       patches: [set('normal', [{_key: 'k0'}, 'style'])],
     }
 
-    network.send('A', batchA1)
-    network.send('A', batchA2)
-    network.send('B', batchB1)
+    network.send('A', mutationA1)
+    network.send('A', mutationA2)
+    network.send('B', mutationB1)
 
     expect(network.takeSaveRequest('b1')).toEqual({
       editorId: 'B',
-      batch: batchB1,
+      mutation: mutationB1,
     })
     expect(network.takeSaveRequest('a2')).toEqual({
       editorId: 'A',
-      batch: batchA2,
+      mutation: mutationA2,
     })
-    expect(network.getSaveRequests()).toEqual([{editorId: 'A', batch: batchA1}])
+    expect(network.getSaveRequests()).toEqual([
+      {editorId: 'A', mutation: mutationA1},
+    ])
     expect(network.takeSaveRequest('a1')).toEqual({
       editorId: 'A',
-      batch: batchA1,
+      mutation: mutationA1,
     })
     expect(network.getSaveRequests()).toEqual([])
     expect(() => network.takeSaveRequest('a1')).toThrow(
-      'No save request for batch "a1"',
+      'No save request for mutation "a1"',
     )
   })
 
   test('taking a save request tells the editor that sent it', () => {
     const network = createFakeNetwork()
-    const taken: Array<{editorId: string; batchId: string}> = []
+    const taken: Array<{editorId: string; mutationId: string}> = []
 
     for (const editorId of ['A', 'B']) {
       network.connect(editorId, {
         receiveTransaction: () => {},
         receiveReply: () => {},
-        receiveSaveTaken: (batchId) => {
-          taken.push({editorId, batchId})
+        receiveSaveTaken: (mutationId) => {
+          taken.push({editorId, mutationId})
         },
       })
     }
@@ -56,7 +58,7 @@ describe(createFakeNetwork.name, () => {
     network.send('B', {id: 'b1', patches: []})
     network.takeSaveRequest('b1')
 
-    expect(taken).toEqual([{editorId: 'B', batchId: 'b1'}])
+    expect(taken).toEqual([{editorId: 'B', mutationId: 'b1'}])
   })
 
   test("a network that includes the server's copy delivers each transaction with the copy after it", () => {
@@ -69,7 +71,7 @@ describe(createFakeNetwork.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [],
-      batchIds: [],
+      mutationIds: [],
     }
     const received = [false, true].map((includesCopy) => {
       const network = createFakeNetwork(
@@ -112,12 +114,12 @@ describe(createFakeNetwork.name, () => {
       })
     }
 
-    network.queueReply({editorId: 'A', batchId: 'a1', status: 400})
-    network.queueReply({editorId: 'B', batchId: 'b1', status: 503})
+    network.queueReply({editorId: 'A', mutationId: 'a1', status: 400})
+    network.queueReply({editorId: 'B', mutationId: 'b1', status: 503})
     network.deliverReply('b1')
 
     expect(network.getReplies()).toEqual([
-      {editorId: 'A', batchId: 'a1', status: 400},
+      {editorId: 'A', mutationId: 'a1', status: 400},
     ])
 
     network.deliverReply('a1')
@@ -125,11 +127,11 @@ describe(createFakeNetwork.name, () => {
     expect(received).toEqual([
       {
         editorId: 'B',
-        reply: {editorId: 'B', batchId: 'b1', status: 503},
+        reply: {editorId: 'B', mutationId: 'b1', status: 503},
       },
       {
         editorId: 'A',
-        reply: {editorId: 'A', batchId: 'a1', status: 400},
+        reply: {editorId: 'A', mutationId: 'a1', status: 400},
       },
     ])
     expect(network.getReplies()).toEqual([])
@@ -137,18 +139,18 @@ describe(createFakeNetwork.name, () => {
 
   test('a lost reply waits until the host retries the save', () => {
     const network = createFakeNetwork()
-    const reply: Reply = {editorId: 'A', batchId: 'a1'}
+    const reply: Reply = {editorId: 'A', mutationId: 'a1'}
 
     network.loseReply(reply)
 
     expect(network.getLostReplies()).toEqual([reply])
     expect(() => network.loseReply(reply)).toThrow(
-      'The reply for batch "a1" is lost already',
+      'The reply for mutation "a1" is lost already',
     )
     expect(network.takeLostReply('a1')).toEqual(reply)
     expect(network.getLostReplies()).toEqual([])
     expect(() => network.takeLostReply('a1')).toThrow(
-      'No lost reply for batch "a1"',
+      'No lost reply for mutation "a1"',
     )
   })
 
@@ -160,14 +162,14 @@ describe(createFakeNetwork.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [set('h1', [{_key: 'k0'}, 'style'])],
-      batchIds: ['b1'],
+      mutationIds: ['b1'],
     }
     const secondTransaction: ServerTransaction = {
       transactionId: 't2',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: [],
-      batchIds: [],
+      mutationIds: [],
     }
 
     for (const editorId of ['A', 'B']) {
@@ -213,7 +215,7 @@ describe(createFakeNetwork.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [],
-      batchIds: [],
+      mutationIds: [],
     }
 
     network.connect('A', receiver)
@@ -236,7 +238,7 @@ describe(createFakeNetwork.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [],
-      batchIds: [],
+      mutationIds: [],
     }
 
     network.connect('A', receiver)
@@ -259,7 +261,7 @@ describe(createFakeNetwork.name, () => {
       previousRev: 'r1',
       resultRev: 'r2',
       patches: [],
-      batchIds: [],
+      mutationIds: [],
     }
 
     network.connect('A', receiver, {listening: false})

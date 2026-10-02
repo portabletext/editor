@@ -29,7 +29,7 @@ import {
   type Clock,
   type Io,
   type IoMessage,
-  type IoSentBatch,
+  type IoSentMutation,
   type IoSync,
 } from '../protocol/io'
 import type {
@@ -37,7 +37,7 @@ import type {
   EditorMessageForIo,
   ErrorEvent,
   Load,
-  MutationBatch,
+  Mutation,
   MutationRejected,
   MutationSent,
   Resync,
@@ -50,8 +50,8 @@ export type EditorName = 'Editor A' | 'Editor B'
 export type ServerCopyName = 'no document' | 'no field' | 'an empty list'
 
 /**
- * How the hosts save: `'plain'` saves each batch as its own request under
- * the transaction ID it proposes, `'folding'` folds batches into shared
+ * How the hosts save: `'plain'` saves each mutation as its own request under
+ * the transaction ID it proposes, `'folding'` folds mutations into shared
  * requests and names each request's transaction with `mutation sent`, and
  * `'self-confirming'` has no feed listener and forwards the transaction each
  * save answers with.
@@ -63,7 +63,7 @@ export type HostShape = 'plain' | 'folding' | 'self-confirming'
  * created.
  */
 export type Heard = {
-  mutations: Array<MutationBatch>
+  mutations: Array<Mutation>
   changes: Array<ChangeEvent>
   errors: Array<ErrorEvent>
   warnings: Array<string>
@@ -85,7 +85,7 @@ export type HeardEvent =
  * the host had it from the feed or from the answer to its own save.
  */
 export type PathMessage =
-  | ({route: 'io to host'; type: 'mutation'} & MutationBatch)
+  | ({route: 'io to host'; type: 'mutation'} & Mutation)
   | ({route: 'host to io'; type: 'mutation sent'} & MutationSent)
   | ({route: 'host to io'; type: 'mutation rejected'} & MutationRejected)
   | ({
@@ -136,16 +136,19 @@ export type Corruption =
   | {type: 'string'; value: string}
 
 /**
- * What a transaction carries: batches sent by the editors, or a change made
+ * What a transaction carries: mutations sent by the editors, or a change made
  * on the server.
  */
 export type TransactionSource =
-  | {type: 'batches'; batches: Array<{name: EditorName; batchNumber: number}>}
+  | {
+      type: 'mutations'
+      mutations: Array<{name: EditorName; mutationNumber: number}>
+    }
   | {type: 'named'; name: NamedTransaction}
 
-export type BatchSnapshot = {
-  batchNumber: number
-  /** Every transaction ID the host reported for the batch. */
+export type MutationSnapshot = {
+  mutationNumber: number
+  /** Every transaction ID the host reported for the mutation. */
   transactionIds: Array<string>
   patchCount: number
   patches: Array<Patch>
@@ -165,10 +168,10 @@ export type EditorSnapshot = {
     blocks: Array<PortableTextBlock> | null
     rev: string | null
   }
-  inFlight: BatchSnapshot | null
-  rejected: BatchSnapshot | null
-  /** Batches that came back and wait behind a held transaction. */
-  echoed: Array<BatchSnapshot>
+  inFlight: MutationSnapshot | null
+  rejected: MutationSnapshot | null
+  /** Mutations that came back and wait behind a held transaction. */
+  echoed: Array<MutationSnapshot>
   pending: Array<{patchCount: number; patches: Array<Patch>}>
   held: Array<{
     transactionId: string
@@ -180,7 +183,7 @@ export type EditorSnapshot = {
   readOnly: boolean
   /** How many of the editor's own changes undo can still revert. */
   undoDepth: number
-  sentBatches: Array<{
+  sentMutations: Array<{
     number: number
     transactionId: string
     patchCount: number
@@ -201,7 +204,7 @@ export type ServerSnapshot = {
     id: string
     previousRev: string | null
     resultRev: string | null
-    batchIds: Array<string>
+    mutationIds: Array<string>
     patchCount: number
     patches: Array<Patch>
     noop: boolean
@@ -210,7 +213,7 @@ export type ServerSnapshot = {
   /** Save requests refused with a 409 because their transaction ID exists. */
   duplicates: Array<{
     transactionId: string
-    batches: Array<{name: EditorName; batchNumber: number}>
+    mutations: Array<{name: EditorName; mutationNumber: number}>
   }>
   /** The failure the next save request meets, if a step injected one. */
   nextFailure: RequestFailure | null
@@ -219,8 +222,8 @@ export type ServerSnapshot = {
 export type NetworkSnapshot = {
   saveRequests: Array<{
     editor: EditorName
-    batchId: string
-    batchNumber: number
+    mutationId: string
+    mutationNumber: number
     final: boolean
     patchCount: number
     patches: Array<Patch>
@@ -228,15 +231,15 @@ export type NetworkSnapshot = {
   /** Replies that say a save request failed, with the failure. */
   replies: Array<{
     editor: EditorName
-    batchId: string
-    batchNumber: number
+    mutationId: string
+    mutationNumber: number
     status: RequestFailure
   }>
   /** Saves the server took whose reply never reached the host. */
   lostReplies: Array<{
     editor: EditorName
-    batchId: string
-    batchNumber: number
+    mutationId: string
+    mutationNumber: number
   }>
   feeds: Record<
     EditorName,
@@ -244,7 +247,7 @@ export type NetworkSnapshot = {
       transactionId: string
       previousRev: string | null
       resultRev: string | null
-      batchIds: Array<string>
+      mutationIds: Array<string>
       patchCount: number
       patches: Array<Patch>
       source: TransactionSource
@@ -284,8 +287,8 @@ export type WorldEditor = {
    * last `takeTreeMismatches`.
    */
   treeMismatches: Array<Omit<TreeMismatch, 'editor'>>
-  /** The batch count at the previous `has sent` check. */
-  checkedBatchCount: number
+  /** The mutation count at the previous `has sent` check. */
+  checkedMutationCount: number
   /** The error count at the previous out-of-step or in-step check. */
   checkedErrorCount: number
   /** The warning count at the previous `has been warned` check. */
@@ -296,7 +299,7 @@ export type WorldEditor = {
 
 type Setup = {
   server: Server
-  network: Network<MutationBatch>
+  network: Network<Mutation>
   editors: Record<EditorName, WorldEditor>
 }
 
@@ -310,7 +313,7 @@ type ResyncAttempt = {
   editorName: EditorName
   warningCount: number
   screen: string
-  batchCount: number
+  mutationCount: number
 }
 
 export type World = ReturnType<typeof createWorld>
@@ -347,7 +350,7 @@ export function createWorld(
       documentId: 'document',
       document: initialDocument,
     })
-    const network = createFakeNetwork<MutationBatch>(
+    const network = createFakeNetwork<Mutation>(
       serverCopyOnTransactions
         ? {copyAfter: (transactionId) => server.getCopyAfter(transactionId)}
         : {},
@@ -375,32 +378,32 @@ export function createWorld(
   /**
    * The server takes the save requests first, so a host that forms the
    * request at that moment has formed it before the save. The server gets
-   * the request as the first batch's host formed it, and answers a 409 when
+   * the request as the first mutation's host formed it, and answers a 409 when
    * a re-submit saved it already. A failed request sends each sender a reply
    * with the failure.
    */
   function publishReceived(
-    batches: Array<{name: EditorName; batch: MutationBatch}>,
+    mutations: Array<{name: EditorName; mutation: Mutation}>,
   ) {
     const {server, network} = getSetup()
 
-    for (const {batch} of batches) {
-      network.takeSaveRequest(batch.id)
+    for (const {mutation} of mutations) {
+      network.takeSaveRequest(mutation.id)
     }
 
-    const [first] = batches
-    const request = getEditor(first.name).host.getRequest(first.batch.id)
-    const result = server.submit(request.batches, request.transactionId)
+    const [first] = mutations
+    const request = getEditor(first.name).host.getRequest(first.mutation.id)
+    const result = server.submit(request.mutations, request.transactionId)
 
     if (result.type === 'saved') {
-      publishSaved(batches, result.transaction)
+      publishSaved(mutations, result.transaction)
     }
 
     if (result.type === 'failed') {
-      for (const {name, batch} of batches) {
+      for (const {name, mutation} of mutations) {
         network.queueReply({
           editorId: name,
-          batchId: batch.id,
+          mutationId: mutation.id,
           status: result.status,
         })
       }
@@ -408,61 +411,61 @@ export function createWorld(
   }
 
   function foldAsOne(
-    first: {name: EditorName; batchNumber: number},
-    second: {name: EditorName; batchNumber: number},
-  ): Array<{name: EditorName; batch: MutationBatch}> {
-    const batches = [first, second].map(({name, batchNumber}) => ({
+    first: {name: EditorName; mutationNumber: number},
+    second: {name: EditorName; mutationNumber: number},
+  ): Array<{name: EditorName; mutation: Mutation}> {
+    const mutations = [first, second].map(({name, mutationNumber}) => ({
       name,
-      batch: getBatch(name, batchNumber),
+      mutation: getMutation(name, mutationNumber),
     }))
     const request = {
-      transactionId: batches.map(({batch}) => batch.id).join('+'),
-      batches: batches.map(({batch}) => batch),
+      transactionId: mutations.map(({mutation}) => mutation.id).join('+'),
+      mutations: mutations.map(({mutation}) => mutation),
     }
 
-    for (const {name, batch} of batches) {
-      getEditor(name).host.foldIntoRequest(batch.id, request)
+    for (const {name, mutation} of mutations) {
+      getEditor(name).host.foldIntoRequest(mutation.id, request)
     }
 
-    return batches
+    return mutations
   }
 
   /** The feed carries the transaction, and so does each sender's save reply. */
   function publishSaved(
-    batches: Array<{name: EditorName; batch: MutationBatch}>,
+    mutations: Array<{name: EditorName; mutation: Mutation}>,
     transaction: ServerTransaction,
   ) {
     getSetup().network.publish(transaction)
 
-    for (const {name, batch} of batches) {
+    for (const {name, mutation} of mutations) {
       getEditor(name).host.reportSaved(
-        batch.id,
+        mutation.id,
         getSetup().network.carry(transaction),
       )
     }
   }
 
-  function getBatch(name: EditorName, batchNumber: number): MutationBatch {
-    const batch = getEditor(name).heard.mutations[batchNumber - 1]
+  function getMutation(name: EditorName, mutationNumber: number): Mutation {
+    const mutation = getEditor(name).heard.mutations[mutationNumber - 1]
 
-    if (!batch) {
-      throw new Error(`${name} has not sent batch ${batchNumber}`)
+    if (!mutation) {
+      throw new Error(`${name} has not sent mutation ${mutationNumber}`)
     }
 
-    return batch
+    return mutation
   }
 
   function getEditor(name: EditorName): WorldEditor {
     return getSetup().editors[name]
   }
 
-  function transactionCarrying(batchId: string): string {
+  function transactionCarrying(mutationId: string): string {
     const transaction = getSetup()
       .server.getTransactions()
-      .find((candidate) => candidate.batchIds.includes(batchId))
+      .find((candidate) => candidate.mutationIds.includes(mutationId))
 
     if (!transaction) {
-      throw new Error(`The server has not received batch "${batchId}"`)
+      throw new Error(`The server has not received mutation "${mutationId}"`)
     }
 
     return transaction.transactionId
@@ -477,12 +480,12 @@ export function createWorld(
   }
 
   function describeSource(transaction: ServerTransaction): TransactionSource {
-    if (transaction.batchIds.length === 0) {
+    if (transaction.mutationIds.length === 0) {
       const name = namedTransactions.get(transaction.transactionId)
 
       if (!name) {
         throw new Error(
-          `Transaction "${transaction.transactionId}" carries no batch`,
+          `Transaction "${transaction.transactionId}" carries no mutation`,
         )
       }
 
@@ -490,26 +493,28 @@ export function createWorld(
     }
 
     return {
-      type: 'batches',
-      batches: transaction.batchIds.map((batchId) => locateBatch(batchId)),
+      type: 'mutations',
+      mutations: transaction.mutationIds.map((mutationId) =>
+        locateMutation(mutationId),
+      ),
     }
   }
 
-  function locateBatch(batchId: string): {
+  function locateMutation(mutationId: string): {
     name: EditorName
-    batchNumber: number
+    mutationNumber: number
   } {
     for (const name of editorNames) {
       const index = getEditor(name).heard.mutations.findIndex(
-        (batch) => batch.id === batchId,
+        (mutation) => mutation.id === mutationId,
       )
 
       if (index !== -1) {
-        return {name, batchNumber: index + 1}
+        return {name, mutationNumber: index + 1}
       }
     }
 
-    throw new Error(`No editor has sent batch "${batchId}"`)
+    throw new Error(`No editor has sent mutation "${mutationId}"`)
   }
 
   function snapshotEditor(name: EditorName): EditorSnapshot {
@@ -518,11 +523,12 @@ export function createWorld(
     const internals = getIoInternals(io)
     const ledger = internals.inspect()
     const base = internals.getBase()
-    const describeBatch = (batch: IoSentBatch): BatchSnapshot => ({
-      batchNumber: locateBatch(batch.id).batchNumber,
-      transactionIds: batch.transactionIds,
-      patchCount: batch.patchCount,
-      patches: getBatch(name, locateBatch(batch.id).batchNumber).patches,
+    const describeMutation = (mutation: IoSentMutation): MutationSnapshot => ({
+      mutationNumber: locateMutation(mutation.id).mutationNumber,
+      transactionIds: mutation.transactionIds,
+      patchCount: mutation.patchCount,
+      patches: getMutation(name, locateMutation(mutation.id).mutationNumber)
+        .patches,
     })
 
     return {
@@ -538,9 +544,9 @@ export function createWorld(
         blocks: base.value ?? null,
         rev: base.rev ?? null,
       },
-      inFlight: ledger.inFlight ? describeBatch(ledger.inFlight) : null,
-      rejected: ledger.rejected ? describeBatch(ledger.rejected) : null,
-      echoed: ledger.echoed.map(describeBatch),
+      inFlight: ledger.inFlight ? describeMutation(ledger.inFlight) : null,
+      rejected: ledger.rejected ? describeMutation(ledger.rejected) : null,
+      echoed: ledger.echoed.map(describeMutation),
       pending: ledger.pending,
       held: ledger.held.map((transaction) => ({
         transactionId: transaction.transactionId,
@@ -551,12 +557,12 @@ export function createWorld(
       outOfStep: ledger.outOfStep,
       readOnly: document.getReadOnly(),
       undoDepth: ledger.undoDepth,
-      sentBatches: heard.mutations.map((batch, index) => ({
+      sentMutations: heard.mutations.map((mutation, index) => ({
         number: index + 1,
-        transactionId: host.getTransactionId(batch.id),
-        patchCount: batch.patches.length,
-        patches: batch.patches,
-        final: batch.final === true,
+        transactionId: host.getTransactionId(mutation.id),
+        patchCount: mutation.patches.length,
+        patches: mutation.patches,
+        final: mutation.final === true,
       })),
       events: [...heard.events],
       messages: [...messages],
@@ -574,7 +580,7 @@ export function createWorld(
       transactionId: transaction.transactionId,
       previousRev: transaction.previousRev ?? null,
       resultRev: transaction.resultRev ?? null,
-      batchIds: [...transaction.batchIds],
+      mutationIds: [...transaction.mutationIds],
       patchCount: transaction.patches.length,
       patches: transaction.patches,
       source: describeSource(transaction),
@@ -594,7 +600,7 @@ export function createWorld(
           id: transaction.transactionId,
           previousRev: transaction.previousRev ?? null,
           resultRev: transaction.resultRev ?? null,
-          batchIds: [...transaction.batchIds],
+          mutationIds: [...transaction.mutationIds],
           patchCount: transaction.patches.length,
           patches: transaction.patches,
           noop: !changesField,
@@ -602,29 +608,31 @@ export function createWorld(
         })),
         duplicates: server.getDuplicates().map((duplicate) => ({
           transactionId: duplicate.transactionId,
-          batches: duplicate.batchIds.map((batchId) => locateBatch(batchId)),
+          mutations: duplicate.mutationIds.map((mutationId) =>
+            locateMutation(mutationId),
+          ),
         })),
         nextFailure: server.getNextFailure() ?? null,
       },
       network: {
-        saveRequests: network.getSaveRequests().map(({editorId, batch}) => ({
+        saveRequests: network.getSaveRequests().map(({editorId, mutation}) => ({
           editor: toEditorName(editorId),
-          batchId: batch.id,
-          batchNumber: locateBatch(batch.id).batchNumber,
-          final: batch.final === true,
-          patchCount: batch.patches.length,
-          patches: batch.patches,
+          mutationId: mutation.id,
+          mutationNumber: locateMutation(mutation.id).mutationNumber,
+          final: mutation.final === true,
+          patchCount: mutation.patches.length,
+          patches: mutation.patches,
         })),
         replies: network.getReplies().map((reply) => ({
           editor: toEditorName(reply.editorId),
-          batchId: reply.batchId,
-          batchNumber: locateBatch(reply.batchId).batchNumber,
+          mutationId: reply.mutationId,
+          mutationNumber: locateMutation(reply.mutationId).mutationNumber,
           status: reply.status,
         })),
         lostReplies: network.getLostReplies().map((reply) => ({
           editor: toEditorName(reply.editorId),
-          batchId: reply.batchId,
-          batchNumber: locateBatch(reply.batchId).batchNumber,
+          mutationId: reply.mutationId,
+          mutationNumber: locateMutation(reply.mutationId).mutationNumber,
         })),
         feeds: {
           'Editor A': network.getFeed('Editor A').map(describeFeedItem),
@@ -646,7 +654,7 @@ export function createWorld(
 
   /**
    * The tree mismatches recorded since the last call, and any an open editor
-   * has now. An editor that has closed is left out: its final batch is no
+   * has now. An editor that has closed is left out: its final mutation is no
    * longer in the working copy.
    */
   function takeTreeMismatches(): Array<TreeMismatch> {
@@ -668,7 +676,7 @@ export function createWorld(
 
   return {
     getEditor,
-    getBatch,
+    getMutation,
     getServer: () => getSetup().server,
     snapshot,
     takeTreeMismatches,
@@ -741,52 +749,54 @@ export function createWorld(
       serverCopyOnTransactions = true
     },
 
-    receive: (name: EditorName, batchNumber: number) => {
-      publishReceived([{name, batch: getBatch(name, batchNumber)}])
+    receive: (name: EditorName, mutationNumber: number) => {
+      publishReceived([{name, mutation: getMutation(name, mutationNumber)}])
     },
     receiveFinal: (name: EditorName) => {
-      const batch = getEditor(name).heard.mutations.at(-1)
+      const mutation = getEditor(name).heard.mutations.at(-1)
 
-      if (!batch?.final) {
-        throw new Error(`${name} has not sent a final batch`)
+      if (!mutation?.final) {
+        throw new Error(`${name} has not sent a final mutation`)
       }
 
-      publishReceived([{name, batch}])
+      publishReceived([{name, mutation}])
     },
-    /** The hosts fold both batches into one request, which stays unsent. */
+    /** The hosts fold both mutations into one request, which stays unsent. */
     foldAsOne,
     receiveAsOne: (
-      first: {name: EditorName; batchNumber: number},
-      second: {name: EditorName; batchNumber: number},
+      first: {name: EditorName; mutationNumber: number},
+      second: {name: EditorName; mutationNumber: number},
     ) => {
       publishReceived(foldAsOne(first, second))
     },
-    rewriteAsWholeFieldUnset: (name: EditorName, batchNumber: number) => {
+    rewriteAsWholeFieldUnset: (name: EditorName, mutationNumber: number) => {
       const {server, network} = getSetup()
-      const batch = getBatch(name, batchNumber)
-      network.takeSaveRequest(batch.id)
+      const mutation = getMutation(name, mutationNumber)
+      network.takeSaveRequest(mutation.id)
       publishSaved(
-        [{name, batch}],
+        [{name, mutation}],
         server.receive(
-          {id: batch.id, patches: [unset([])]},
-          getEditor(name).host.getTransactionId(batch.id),
+          {id: mutation.id, patches: [unset([])]},
+          getEditor(name).host.getTransactionId(mutation.id),
         ),
       )
     },
-    loseReply: (name: EditorName, batchNumber: number) => {
-      const batch = getBatch(name, batchNumber)
+    loseReply: (name: EditorName, mutationNumber: number) => {
+      const mutation = getMutation(name, mutationNumber)
 
-      if (batch.final) {
-        throw new Error(`${name}'s batch ${batchNumber} is final: no reply`)
+      if (mutation.final) {
+        throw new Error(
+          `${name}'s mutation ${mutationNumber} is final: no reply`,
+        )
       }
 
-      transactionCarrying(batch.id)
-      getSetup().network.loseReply({editorId: name, batchId: batch.id})
+      transactionCarrying(mutation.id)
+      getSetup().network.loseReply({editorId: name, mutationId: mutation.id})
     },
-    retry: (name: EditorName, batchNumber: number) => {
-      const batch = getBatch(name, batchNumber)
-      getSetup().network.takeLostReply(batch.id)
-      getEditor(name).host.retry(batch.id)
+    retry: (name: EditorName, mutationNumber: number) => {
+      const mutation = getMutation(name, mutationNumber)
+      getSetup().network.takeLostReply(mutation.id)
+      getEditor(name).host.retry(mutation.id)
     },
     failNextRequest: (status: RequestFailure) => {
       getSetup().server.failNextRequest(status)
@@ -834,14 +844,14 @@ export function createWorld(
       )
       network.publish(server.recreate(value, nameTransaction('the recreation')))
     },
-    deliverBatch: (
+    deliverMutation: (
       receiverName: EditorName,
       senderName: EditorName,
-      batchNumber: number,
+      mutationNumber: number,
     ) => {
       getSetup().network.deliver(
         receiverName,
-        transactionCarrying(getBatch(senderName, batchNumber).id),
+        transactionCarrying(getMutation(senderName, mutationNumber).id),
       )
     },
     deliverNamed: (receiverName: EditorName, name: NamedTransaction) => {
@@ -865,17 +875,19 @@ export function createWorld(
       getSetup().network.clock.advance(milliseconds)
     },
 
-    deliverReply: (name: EditorName, batchNumber: number) => {
+    deliverReply: (name: EditorName, mutationNumber: number) => {
       const {network} = getSetup()
-      const batch = getBatch(name, batchNumber)
+      const mutation = getMutation(name, mutationNumber)
 
-      if (!network.getReplies().some((reply) => reply.batchId === batch.id)) {
+      if (
+        !network.getReplies().some((reply) => reply.mutationId === mutation.id)
+      ) {
         throw new Error(
-          `No reply is waiting for ${name}'s batch ${batchNumber}`,
+          `No reply is waiting for ${name}'s mutation ${mutationNumber}`,
         )
       }
 
-      network.deliverReply(batch.id)
+      network.deliverReply(mutation.id)
     },
     resync: (
       name: EditorName,
@@ -886,13 +898,13 @@ export function createWorld(
         editorName: name,
         warningCount: heard.warnings.length,
         screen: document.toTextspec({keys: true}),
-        batchCount: heard.mutations.length,
+        mutationCount: heard.mutations.length,
       }
       host.resync({
         discardUnsent,
         ...(outcomeOf === undefined
           ? {}
-          : {outcomeOf: getBatch(name, outcomeOf).id}),
+          : {outcomeOf: getMutation(name, outcomeOf).id}),
       })
     },
     feedLost: (name: EditorName) => {
@@ -972,7 +984,7 @@ function createWorldEditor({
 }: {
   name: EditorName
   server: Server
-  network: Network<MutationBatch>
+  network: Network<Mutation>
   hostShape: HostShape
 }): WorldEditor {
   const {document, io, heard, received, messages, treeMismatches} =
@@ -1001,9 +1013,9 @@ function createWorldEditor({
         io.send(message)
       },
     },
-    save: (batch) => network.send(name, batch),
+    save: (mutation) => network.send(name, mutation),
     resubmit: (request) => {
-      const result = server.submit(request.batches, request.transactionId)
+      const result = server.submit(request.mutations, request.transactionId)
       const answer: SaveAnswer =
         result.type === 'saved' ? {type: 'saved'} : result
 
@@ -1023,16 +1035,16 @@ function createWorldEditor({
     hasTransaction: server.hasTransaction,
     fetchCopy: () => server.copy(),
     subscription: () => network.getFeed(name),
-    foldBatches: hostShape === 'folding',
+    foldMutations: hostShape === 'folding',
     selfConfirming: hostShape === 'self-confirming',
   })
   const host: PassThroughHost = {
     ...passThroughHost,
-    reportSaved: (batchId, transaction) => {
+    reportSaved: (mutationId, transaction) => {
       arrivingVia = 'save reply'
 
       try {
-        passThroughHost.reportSaved(batchId, transaction)
+        passThroughHost.reportSaved(mutationId, transaction)
       } finally {
         arrivingVia = 'feed'
       }
@@ -1043,7 +1055,8 @@ function createWorldEditor({
     name,
     {
       receiveTransaction: host.forward,
-      receiveReply: (reply) => host.reportFailure(reply.batchId, reply.status),
+      receiveReply: (reply) =>
+        host.reportFailure(reply.mutationId, reply.status),
       receiveSaveTaken: host.reportSaveTaken,
     },
     {listening: hostShape !== 'self-confirming'},
@@ -1057,7 +1070,7 @@ function createWorldEditor({
     received,
     messages,
     treeMismatches,
-    checkedBatchCount: 0,
+    checkedMutationCount: 0,
     checkedErrorCount: 0,
     checkedWarningCount: 0,
     checkedWorkDroppedCount: 0,
@@ -1068,8 +1081,8 @@ function createWorldEditor({
  * A fake document with the protocol's editor side attached, both minting
  * keys from the same generator, and what their listeners heard. The document
  * is listened to before the editor side attaches, so a change is heard
- * before the batch it leads to. `received` records every message io sends
- * the document, `messages` those and every batch io emits, in order, and
+ * before the mutation it leads to. `received` records every message io sends
+ * the document, `messages` those and every mutation io emits, in order, and
  * `treeMismatches` every moment, right after one of those
  * messages or a local change io has booked, that the document's tree
  * differs from io's working copy.
@@ -1148,9 +1161,9 @@ export function createEditorWithIo({
   io.on('*', (event) => {
     switch (event.type) {
       case 'mutation': {
-        const {type: _type, ...batch} = event
-        heard.mutations.push(batch)
-        messages.push({route: 'io to host', type: 'mutation', ...batch})
+        const {type: _type, ...mutation} = event
+        heard.mutations.push(mutation)
+        messages.push({route: 'io to host', type: 'mutation', ...mutation})
         break
       }
       case 'error': {

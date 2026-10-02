@@ -479,7 +479,7 @@ describe('the placeholder', () => {
     }
   })
 
-  test('the first keystroke creates the field and the block in the same batch', () => {
+  test('the first keystroke creates the field and the block in the same mutation', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument({keyGenerator}, {value: undefined})
     const events = listen(document)

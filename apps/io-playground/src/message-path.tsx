@@ -117,7 +117,7 @@ function describeMessage(message: PathMessage): string {
         ? [
             `at ${message.rev ?? 'no document'}`,
             ...Object.entries(message.outcomes ?? {}).map(
-              ([batchId, outcome]) => `${batchId} ${outcome}`,
+              ([mutationId, outcome]) => `${mutationId} ${outcome}`,
             ),
             ...(message.discardUnsent ? ['discarding unsent'] : []),
           ].join(' · ')

@@ -44,9 +44,10 @@ export function App() {
   }
   const [selection, setSelection] = useState<{
     world: World
-    batchIds: Array<string>
+    mutationIds: Array<string>
   } | null>(null)
-  const selectedBatchIds = selection?.world === world ? selection.batchIds : []
+  const selectedMutationIds =
+    selection?.world === world ? selection.mutationIds : []
   const [dismissedWork, setDismissedWork] = useState<{
     world: World
     byEditor: Record<EditorName, Array<number>>
@@ -74,19 +75,19 @@ export function App() {
         : undefined
   const saveRequests = snapshot.network?.saveRequests ?? []
   const selectedRequests = saveRequests.filter((request) =>
-    selectedBatchIds.includes(request.batchId),
+    selectedMutationIds.includes(request.mutationId),
   )
 
-  function toggleSelected(batchId: string) {
+  function toggleSelected(mutationId: string) {
     setSelection({
       world,
-      batchIds: selectedBatchIds.includes(batchId)
-        ? selectedBatchIds.filter((candidate) => candidate !== batchId)
+      mutationIds: selectedMutationIds.includes(mutationId)
+        ? selectedMutationIds.filter((candidate) => candidate !== mutationId)
         : [
-            ...selectedBatchIds.filter((candidate) =>
-              saveRequests.some((request) => request.batchId === candidate),
+            ...selectedMutationIds.filter((candidate) =>
+              saveRequests.some((request) => request.mutationId === candidate),
             ),
-            batchId,
+            mutationId,
           ],
     })
   }
@@ -100,7 +101,7 @@ export function App() {
 
     setSelection(null)
     onStep(
-      `the server receives ${first.editor}'s batch ${first.batchNumber} and ${second.editor}'s batch ${second.batchNumber} as one transaction`,
+      `the server receives ${first.editor}'s mutation ${first.mutationNumber} and ${second.editor}'s mutation ${second.mutationNumber} as one transaction`,
     )
   }
 
@@ -113,7 +114,7 @@ export function App() {
           <h1 className="text-sm font-semibold">I/O protocol playground</h1>
           <p className="flex-1 text-xs text-gray-500">
             Two editors save to one server through a link each. Click any value,
-            batch or transaction to look inside it.
+            mutation or transaction to look inside it.
           </p>
           <Button
             onClick={() =>
@@ -146,7 +147,7 @@ export function App() {
             applicability={network.links['Editor A']}
             onStep={onStep}
             onDeliver={onDeliver}
-            selectedBatchIds={selectedBatchIds}
+            selectedMutationIds={selectedMutationIds}
             onToggleSelected={toggleSelected}
             deadFeed={deadFeeds.includes('Editor A')}
           />
@@ -177,7 +178,7 @@ export function App() {
             applicability={network.links['Editor B']}
             onStep={onStep}
             onDeliver={onDeliver}
-            selectedBatchIds={selectedBatchIds}
+            selectedMutationIds={selectedMutationIds}
             onToggleSelected={toggleSelected}
             deadFeed={deadFeeds.includes('Editor B')}
           />
