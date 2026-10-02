@@ -4,6 +4,12 @@ export function applyPatchToUnknown(
   value: unknown,
   patch: Patch,
 ): JSONValue | undefined {
+  if (patch.path.length > 0 && (value === undefined || value === null)) {
+    // Content Lake selects nothing for a path into a missing value and
+    // applies the patch as a no-op, without failing the transaction.
+    return value as JSONValue | undefined
+  }
+
   if (patch.path.length > 0) {
     throw new Error(
       `Cannot apply deep operations on primitive values. Received patch with type "${
