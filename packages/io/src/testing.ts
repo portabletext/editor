@@ -46,6 +46,8 @@ export type {
   WorldEditor,
   WorldSnapshot,
 } from './scenario/world'
+export {withModelUndo} from './scenario/model-undo'
+export type {ModelUndoIo} from './scenario/model-undo'
 export {stepDefinitions} from './scenario/steps'
 export type {Context} from './scenario/steps'
 export {parameterTypes} from './scenario/parameter-types'

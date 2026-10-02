@@ -24,7 +24,6 @@ import {
 } from '../protocol/host'
 import {
   createIo,
-  extendIo,
   getIoInternals,
   type Clock,
   type Io,
@@ -44,6 +43,7 @@ import type {
   Transaction,
   WorkDropped,
 } from '../protocol/types'
+import {withModelUndo, type ModelUndoIo} from './model-undo'
 
 export type EditorName = 'Editor A' | 'Editor B'
 
@@ -267,13 +267,10 @@ export type WorldSnapshot = {
   network: NetworkSnapshot | null
 }
 
-/** io with the model's undo, a stand-in for the editor's history. */
-export type ModelIo = Io & {undo: () => void}
-
 export type WorldEditor = {
   /** The fake editor, which the user steps act on. */
   document: FakeDocument
-  io: ModelIo
+  io: ModelUndoIo
   host: PassThroughHost
   heard: Heard
   /** Every `mutation sent` the host gave the editor. */
@@ -556,7 +553,7 @@ export function createWorld(
       })),
       outOfStep: ledger.outOfStep,
       readOnly: document.getReadOnly(),
-      undoDepth: ledger.undoDepth,
+      undoDepth: io.getUndoDepth(),
       sentMutations: heard.mutations.map((mutation, index) => ({
         number: index + 1,
         transactionId: host.getTransactionId(mutation.id),
@@ -1097,7 +1094,7 @@ export function createEditorWithIo({
   clock: Clock
 }): {
   document: FakeDocument
-  io: ModelIo
+  io: ModelUndoIo
   heard: Heard
   received: Array<EditorMessageForIo>
   messages: Array<PathMessage>
@@ -1147,11 +1144,8 @@ export function createEditorWithIo({
     keyGenerator,
     transactionIdGenerator: createTestKeyGenerator(`${id}-t`),
     clock,
-    applyLocalEdit: document.applyLocalEdit,
   })
-  const io: ModelIo = extendIo(plainIo, {
-    undo: getIoInternals(plainIo).undo,
-  })
+  const io = withModelUndo(plainIo, document.applyLocalEdit)
 
   document.on('change', (event) => {
     if (event.origin === 'local') {

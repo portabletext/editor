@@ -12,7 +12,7 @@ import {
   resolvePath,
 } from './content-lake'
 import {blocksForEditor, isBelowFloor, isObject, repairToFloor} from './floor'
-import {mapOffsetThrough, textEditPatch, textEditsOf} from './text-edits'
+import {childrenOf, findBlock, isEqual, itemKey, keyOf} from './nodes'
 import type {
   EditorForIo,
   ErrorEvent,
@@ -133,23 +133,52 @@ export type IoLedger = {
     }
   >
   outOfStep: boolean
-  /** How many of the editor's own changes undo can still revert. */
-  undoDepth: number
 }
 
 /**
- * What io holds beyond its snapshot, for the model's tests and world. The
- * base and the working copy, the base with the unconfirmed mutations and the
- * pending changes applied, without the blocks that aren't objects: what the
- * editor shows, the placeholder aside. `undo` reverts the last of the
- * editor's own changes that undo can still revert, through
- * `applyLocalEdit`, as a user action.
+ * What io holds beyond its snapshot, for the model's tests, its world and
+ * its stand-in for the editor's history. The working copy is the base with
+ * the unconfirmed mutations and the pending changes applied, without the
+ * blocks that aren't objects: what the editor shows, the placeholder aside.
+ * `getLayers` returns the base and what lies on it, in order. `warn` emits
+ * a `warning`, and `tap` hears what io is about to do (see `IoTap`).
  */
 export type IoInternals = {
   getBase: () => Load
   getWorkingCopy: () => Array<PortableTextBlock> | undefined
   inspect: () => IoLedger
-  undo: () => void
+  getLayers: () => {
+    base: Array<PortableTextBlock> | undefined
+    unconfirmed: Array<{id: string; patches: Array<Patch>}>
+    pending: Array<Patch>
+  }
+  getStatus: () => IoStatus
+  warn: (message: string) => void
+  tap: (tap: IoTap) => {unsubscribe: () => void}
+}
+
+/**
+ * Moments io reports to a tap, synchronously, before it acts on them:
+ * `localChange` before it books a local change as pending, with the working
+ * copy before the change and how many pending patches come before it,
+ * `mutation` before it emits a mutation, `transaction` before a transaction
+ * moves the base, with the mutations it confirms and the editor's own
+ * patches in it, and `resync` once a resync has taken its copy.
+ */
+export type IoTap = {
+  localChange?: (change: {
+    operations: Array<Patch>
+    workingCopyBefore: Array<PortableTextBlock> | undefined
+    patchOffset: number
+  }) => void
+  mutation?: (id: string) => void
+  transaction?: (transaction: {
+    confirmedMutationIds: Set<string>
+    patches: Array<Patch>
+    valueBefore: Array<PortableTextBlock> | undefined
+    ownPatches: Array<Patch>
+  }) => void
+  resync?: () => void
 }
 
 const internalsByIo = new WeakMap<Io, IoInternals>()
@@ -191,47 +220,6 @@ type SentMutation = {
 type HeldTransaction = {transaction: Transaction; arrivedAt: number}
 
 /**
- * What a local change did, in terms undo can check against the working copy
- * at undo time: text typed into a span at an offset, a block's style set, a
- * block inserted, or a block deleted next to its siblings. Creating the
- * block from the placeholder isn't part of the step.
- */
-type UndoStep =
-  | {
-      type: 'typed'
-      blockKey: string
-      spanKey: string
-      offset: number
-      text: string
-    }
-  | {type: 'styled'; blockKey: string; style: string}
-  | {type: 'inserted'; blockKey: string}
-  | {
-      type: 'deleted'
-      block: PortableTextBlock
-      previousKey: string | undefined
-      nextKey: string | undefined
-    }
-
-/** A block's style, or `undefined` when there is no such block. */
-type BlockStyle = {style: string | undefined} | undefined
-
-const placeholderStyle: BlockStyle = {style: 'normal'}
-
-type HistoryEntry = {
-  step: UndoStep
-  mutationId: string | undefined
-  /** How many patches of the entry's mutation come before the action's own. */
-  patchOffset: number
-  /**
-   * The base's version of the step's block just before the change took
-   * effect there, captured when the change's transaction applied. `undefined`
-   * while the change is unconfirmed.
-   */
-  confirmed: {blockBefore: PortableTextBlock | undefined} | undefined
-}
-
-/**
  * The editor side of the pass-through protocol, speaking to the editor only
  * through `EditorForIo`. It is created during the editor's first commit.
  * Mutation IDs are the editor's `id` plus a counter, so editors with different
@@ -242,9 +230,6 @@ type HistoryEntry = {
  * inserts whose keys the copy has. Keys io mints to repair a received value
  * come from the value's revision and the repaired node's path instead (see
  * `repairToFloor`).
- * `applyLocalEdit` is the model's seam for undo, outside `EditorForIo`: it
- * applies patches to the editor as the user's own edit, which the editor
- * reports as a local `change`, or refuses while read-only.
  */
 export function createIo(options: {
   id: string
@@ -252,17 +237,16 @@ export function createIo(options: {
   keyGenerator: () => string
   transactionIdGenerator?: () => string
   clock: Clock
-  applyLocalEdit: (patches: Array<Patch>) => void
 }): Io {
   const {
     editor,
     keyGenerator,
     transactionIdGenerator = randomTransactionId,
     clock,
-    applyLocalEdit,
   } = options
   const listeners = new Set<(event: IoEvent) => void>()
   const observers = new Set<(snapshot: IoSnapshot) => void>()
+  const taps = new Set<IoTap>()
   const emittedMutationIds = new Set<string>()
 
   let status: IoStatus = 'loading'
@@ -274,10 +258,8 @@ export function createIo(options: {
   let echoedAwaitingBase: Array<SentMutation> = []
   let pending: Array<Array<Patch>> = []
   let held: Array<HeldTransaction> = []
-  let history: Array<HistoryEntry> = []
   let cancelHeldTimeout: (() => void) | undefined
   let cancelInFlightWarning: (() => void) | undefined
-  let reverting: {applied: boolean} | undefined
   const droppedPatches = new WeakSet<Patch>()
   let snapshot: IoSnapshot = {context: readContext()}
   let publishedSnapshot = snapshot
@@ -445,8 +427,11 @@ export function createIo(options: {
     rejected = undefined
     echoedAwaitingBase = []
     outOfStep = false
-    history = []
     releaseHeld()
+
+    for (const tap of taps) {
+      tap.resync?.()
+    }
 
     if (notApplied) {
       pending = [notApplied.patches, ...pending]
@@ -678,8 +663,15 @@ export function createIo(options: {
       (mutation) => mutation.patches,
     )
 
-    captureBlocksBefore(confirmedMutationIds)
-    mapStepsThrough(incoming.patches, valueBefore, ownPatches)
+    for (const tap of taps) {
+      tap.transaction?.({
+        confirmedMutationIds,
+        patches: incoming.patches,
+        valueBefore,
+        ownPatches,
+      })
+    }
+
     base = {value: nextValue, rev: incoming.resultRev}
     echoedAwaitingBase = echoedAwaitingBase.filter(
       (mutation) => !confirmedMutationIds.has(mutation.id),
@@ -738,94 +730,6 @@ export function createIo(options: {
     }
 
     return {}
-  }
-
-  /**
-   * Moves each typing step's offset past the text that `patches` inserted or
-   * deleted before it in its span, applying them to `valueBefore` in turn.
-   * `ownPatches` are the editor's own and move no step: its own work was in
-   * the working copy already.
-   */
-  function mapStepsThrough(
-    patches: Array<Patch>,
-    valueBefore: Array<PortableTextBlock> | undefined,
-    ownPatches: Array<Patch>,
-  ) {
-    const unmatchedOwnPatches = [...ownPatches]
-    let value = valueBefore
-
-    for (const patch of patches) {
-      const ownIndex = unmatchedOwnPatches.findIndex((ownPatch) =>
-        isEqual(ownPatch, patch),
-      )
-      const text = resolvePath(value, patch.path)
-
-      if (ownIndex !== -1) {
-        unmatchedOwnPatches.splice(ownIndex, 1)
-      } else if (patch.type === 'diffMatchPatch' && typeof text === 'string') {
-        const edits = textEditsOf(patch.value, text)
-
-        history = history.map((entry) =>
-          entry.step.type === 'typed' &&
-          isEqual(patch.path, typedPath(entry.step))
-            ? {
-                ...entry,
-                step: {
-                  ...entry.step,
-                  offset: mapOffsetThrough(entry.step.offset, edits),
-                },
-              }
-            : entry,
-        )
-      }
-
-      try {
-        value = applyWithContentLakeSemantics(value, [patch])
-      } catch {
-        return
-      }
-    }
-  }
-
-  /** Runs before the base takes the transaction that confirms the mutations. */
-  function captureBlocksBefore(confirmedMutationIds: Set<string>) {
-    history = history.map((entry) =>
-      entry.mutationId !== undefined &&
-      confirmedMutationIds.has(entry.mutationId)
-        ? {...entry, confirmed: {blockBefore: blockUnder(entry)}}
-        : entry,
-    )
-  }
-
-  /**
-   * The step's block in the base with the editor's own unconfirmed changes
-   * from before the action applied: what the action changed, as far as the
-   * base goes.
-   */
-  function blockUnder(entry: HistoryEntry): PortableTextBlock | undefined {
-    const mutations = [
-      ...unconfirmedMutations(),
-      {id: undefined, patches: pending.flat()},
-    ]
-    const mutationIndex = mutations.findIndex(
-      (mutation) => mutation.id === entry.mutationId,
-    )
-
-    if (mutationIndex === -1) {
-      return undefined
-    }
-
-    const patchesBefore = [
-      ...mutations
-        .slice(0, mutationIndex)
-        .flatMap((mutation) => mutation.patches),
-      ...mutations[mutationIndex].patches.slice(0, entry.patchOffset),
-    ]
-
-    return findBlock(
-      applyWithContentLakeSemantics(base.value, patchesBefore),
-      stepBlockKey(entry.step),
-    )
   }
 
   function fail(error: ErrorEvent): false {
@@ -931,11 +835,7 @@ export function createIo(options: {
     stopInFlightWarning()
   }
 
-  /**
-   * Books a local change as pending and records what undo needs to revert
-   * it, unless the change is an undo's own revert. The steps already
-   * recorded move with the text the change inserted or deleted before them.
-   */
+  /** Books a local change as pending. */
   function takeLocalChange({
     operations,
     patches,
@@ -947,26 +847,12 @@ export function createIo(options: {
       return
     }
 
-    const screenBefore = deriveScreen()
-
-    mapStepsThrough(operations, screenBefore, [])
-
-    if (reverting) {
-      reverting.applied = true
-    } else {
-      const step = undoStepOf(operations, screenBefore)
-
-      if (step) {
-        history = [
-          ...history,
-          {
-            step,
-            mutationId: undefined,
-            patchOffset: pending.flat().length,
-            confirmed: undefined,
-          },
-        ]
-      }
+    for (const tap of taps) {
+      tap.localChange?.({
+        operations,
+        workingCopyBefore: deriveScreen(),
+        patchOffset: pending.flat().length,
+      })
     }
 
     pending = [...pending, keepingStoredNonObjects(patches)]
@@ -1001,109 +887,6 @@ export function createIo(options: {
 
       return kept
     })
-  }
-
-  /**
-   * The editor applies the revert as a local change, which books it. A
-   * read-only editor refuses it, and the step stays.
-   */
-  function undo() {
-    if (status === 'unmounted') {
-      warn('Ignored an undo after the editor unmounted')
-      return
-    }
-
-    if (status !== 'ready') {
-      throw new Error(`The editor is ${status}`)
-    }
-
-    const entry = history.at(-1)
-
-    if (!entry) {
-      return
-    }
-
-    history = history.slice(0, -1)
-
-    const patches = revert(entry)
-
-    if (patches.length === 0) {
-      return
-    }
-
-    const attempt = {applied: false}
-    reverting = attempt
-
-    try {
-      applyLocalEdit(patches)
-    } finally {
-      reverting = undefined
-    }
-
-    if (!attempt.applied) {
-      history = [...history, entry]
-    }
-  }
-
-  function revert(entry: HistoryEntry): Array<Patch> {
-    const {step} = entry
-    const screen = deriveScreen() ?? []
-
-    switch (step.type) {
-      case 'typed':
-        return deleteTyped(screen, step)
-      case 'styled': {
-        const block = findBlock(screen, step.blockKey)
-
-        if (block === undefined) {
-          return []
-        }
-
-        const restored = styleToRestore(entry, step, block)
-        const path = [{_key: step.blockKey}, 'style']
-
-        if (restored === undefined || block.style === restored.style) {
-          return []
-        }
-
-        return [
-          restored.style === undefined
-            ? unset(path)
-            : set(restored.style, path),
-        ]
-      }
-      case 'inserted':
-        return deleteBlockByKey(screen, step.blockKey)
-      case 'deleted': {
-        const block = entry.confirmed
-          ? entry.confirmed.blockBefore
-          : blockUnder(entry)
-
-        return block === undefined ? [] : restoreBlock(screen, {...step, block})
-      }
-    }
-  }
-
-  /**
-   * Once the change is confirmed, a style in the working copy other than the
-   * one it set means another writer changed the style after it, and undo
-   * leaves it. The working copy, not the base alone, since the editor's own
-   * later changes are undone first and may still be unconfirmed. A block the
-   * base didn't have before the change came from the placeholder in the same
-   * action, so its style before the change is the placeholder's.
-   */
-  function styleToRestore(
-    entry: HistoryEntry,
-    step: Extract<UndoStep, {type: 'styled'}>,
-    screenBlock: PortableTextBlock,
-  ): BlockStyle {
-    if (!entry.confirmed) {
-      return styleOf(blockUnder(entry)) ?? placeholderStyle
-    }
-
-    return styleOf(screenBlock)?.style === step.style
-      ? (styleOf(entry.confirmed.blockBefore) ?? placeholderStyle)
-      : undefined
   }
 
   function close() {
@@ -1172,11 +955,10 @@ export function createIo(options: {
 
     pending = []
     emittedMutationIds.add(mutation.id)
-    history = history.map((entry) =>
-      entry.mutationId === undefined
-        ? {...entry, mutationId: mutation.id}
-        : entry,
-    )
+
+    for (const tap of taps) {
+      tap.mutation?.(mutation.id)
+    }
 
     if (!final) {
       inFlight = {
@@ -1291,8 +1073,7 @@ export function createIo(options: {
 
   /**
    * Gives each pending insert whose key its list in the base has a new key,
-   * in its later patches too. Only a resync does this: history is clear by
-   * then.
+   * in its later patches too. Only a resync does this.
    */
   function rekeyPendingInserts(
     screenBefore: Array<PortableTextBlock> | undefined,
@@ -1420,11 +1201,25 @@ export function createIo(options: {
         arrivedAt,
       })),
       outOfStep,
-      undoDepth: history.length,
     }),
-    undo: () => {
-      undo()
-      publish()
+    getLayers: () => ({
+      base: base.value,
+      unconfirmed: unconfirmedMutations().map(({id, patches}) => ({
+        id,
+        patches,
+      })),
+      pending: pending.flat(),
+    }),
+    getStatus: () => status,
+    warn,
+    tap: (tap) => {
+      taps.add(tap)
+
+      return {
+        unsubscribe: () => {
+          taps.delete(tap)
+        },
+      }
     },
   })
 
@@ -1460,218 +1255,6 @@ function describeSentMutation(mutation: SentMutation): IoSentMutation {
     transactionIds: [...mutation.transactionIds],
     patchCount: mutation.patches.length,
   }
-}
-
-/**
- * What undo needs to revert a local change, read from its operations and the
- * working copy before it. Typing, a style, an insert and a delete are steps,
- * and deleting text isn't. A text operation that inserts one run of text is
- * typing, at the offset the operation names.
- */
-function undoStepOf(
-  patches: Array<Patch>,
-  screenBefore: Array<PortableTextBlock> | undefined,
-): UndoStep | undefined {
-  const fromPlaceholder = createsBlock(patches)
-  const value = applyWithContentLakeSemantics(
-    screenBefore,
-    fromPlaceholder ? patches.slice(0, 2) : [],
-  )
-  const [patch] = fromPlaceholder ? patches.slice(2) : patches
-  const [head, field, spanSegment] = patch?.path ?? []
-  const blockKey = keyOf(head)
-
-  if (!patch || blockKey === undefined) {
-    return undefined
-  }
-
-  if (
-    patch.type === 'set' &&
-    patch.path.length === 2 &&
-    field === 'style' &&
-    typeof patch.value === 'string'
-  ) {
-    return {type: 'styled', blockKey, style: patch.value}
-  }
-
-  if (patch.type === 'insert' && patch.path.length === 1) {
-    const [insertedKey] = patch.items.flatMap((item) => itemKey(item))
-
-    return insertedKey === undefined
-      ? undefined
-      : {type: 'inserted', blockKey: insertedKey}
-  }
-
-  if (patch.type === 'unset' && patch.path.length === 1) {
-    const blocks = value ?? []
-    const index = blocks.findIndex((block) => block._key === blockKey)
-
-    return index === -1
-      ? undefined
-      : {
-          type: 'deleted',
-          block: blocks[index],
-          previousKey: blocks[index - 1]?._key,
-          nextKey: blocks[index + 1]?._key,
-        }
-  }
-
-  const spanKey = keyOf(spanSegment)
-  const text = resolvePath(value, patch.path)
-
-  if (
-    patch.type !== 'diffMatchPatch' ||
-    patch.path.length !== 4 ||
-    spanKey === undefined ||
-    typeof text !== 'string'
-  ) {
-    return undefined
-  }
-
-  const edits = textEditsOf(patch.value, text)
-  const [edit] = edits
-
-  return edits.length === 1 && edit.type === 'insert'
-    ? {type: 'typed', blockKey, spanKey, offset: edit.offset, text: edit.text}
-    : undefined
-}
-
-/**
- * Whether a change turns the placeholder into content: it starts with a
- * whole-field `setIfMissing` followed by an `insert`.
- */
-function createsBlock(patches: Array<Patch>): boolean {
-  const [first, second] = patches
-
-  return (
-    first?.type === 'setIfMissing' &&
-    first.path.length === 0 &&
-    second?.type === 'insert'
-  )
-}
-
-/**
- * Removes typed text from its span, at the occurrence nearest its offset.
- * Returns no patches when the span no longer holds the text.
- */
-function deleteTyped(
-  value: Array<PortableTextBlock>,
-  typed: Extract<UndoStep, {type: 'typed'}>,
-): Array<Patch> {
-  const block = findBlock(value, typed.blockKey)
-  const span = block
-    ? childrenOf(block).find((child) => itemKey(child)[0] === typed.spanKey)
-    : undefined
-  const text: unknown =
-    typeof span === 'object' && span !== null
-      ? Reflect.get(span, 'text')
-      : undefined
-
-  if (typeof text !== 'string') {
-    return []
-  }
-
-  const typedOffset = findNearest(text, typed.text, typed.offset)
-
-  if (typedOffset === undefined) {
-    return []
-  }
-
-  return [
-    textEditPatch(
-      text,
-      {offset: typedOffset, deleteLength: typed.text.length},
-      typedPath(typed),
-    ),
-  ]
-}
-
-function typedPath(typed: Extract<UndoStep, {type: 'typed'}>): Patch['path'] {
-  return [{_key: typed.blockKey}, 'children', {_key: typed.spanKey}, 'text']
-}
-
-/**
- * Removes a block, and the field with it when it was the last. Returns no
- * patches when the block is gone.
- */
-function deleteBlockByKey(
-  value: Array<PortableTextBlock>,
-  blockKey: string,
-): Array<Patch> {
-  if (findBlock(value, blockKey) === undefined) {
-    return []
-  }
-
-  return value.length === 1
-    ? [unset([{_key: blockKey}]), unset([])]
-    : [unset([{_key: blockKey}])]
-}
-
-/**
- * Puts a deleted block back after its previous sibling, or else before its
- * next one, or else first. An empty field gets the block as its content.
- * Returns no patches when the block's key is in the working copy.
- */
-function restoreBlock(
-  value: Array<PortableTextBlock>,
-  deleted: Extract<UndoStep, {type: 'deleted'}>,
-): Array<Patch> {
-  const {block} = deleted
-
-  if (findBlock(value, block._key) !== undefined) {
-    return []
-  }
-
-  if (value.length === 0) {
-    return [setIfMissing([], []), insert([block], 'before', [0])]
-  }
-
-  if (
-    deleted.previousKey !== undefined &&
-    findBlock(value, deleted.previousKey) !== undefined
-  ) {
-    return [insert([block], 'after', [{_key: deleted.previousKey}])]
-  }
-
-  const reference =
-    deleted.nextKey !== undefined &&
-    findBlock(value, deleted.nextKey) !== undefined
-      ? deleted.nextKey
-      : value[0]._key
-
-  return [insert([block], 'before', [{_key: reference}])]
-}
-
-/**
- * The start of the occurrence of `search` in `text` nearest `offset`, looking
- * after the offset first at each distance.
- */
-function findNearest(
-  text: string,
-  search: string,
-  offset: number,
-): number | undefined {
-  for (
-    let distance = 0;
-    distance <= Math.max(offset, text.length);
-    distance++
-  ) {
-    for (const candidate of [offset + distance, offset - distance]) {
-      if (candidate >= 0 && text.startsWith(search, candidate)) {
-        return candidate
-      }
-    }
-  }
-
-  return undefined
-}
-
-function keyOf(segment: Patch['path'][number] | undefined): string | undefined {
-  return typeof segment === 'object' &&
-    !Array.isArray(segment) &&
-    typeof segment._key === 'string'
-    ? segment._key
-    : undefined
 }
 
 /**
@@ -2154,27 +1737,6 @@ function isAncestorPath(ancestor: Patch['path'], path: Patch['path']): boolean {
   )
 }
 
-function stepBlockKey(step: UndoStep): string {
-  return step.type === 'deleted' ? step.block._key : step.blockKey
-}
-
-function findBlock(
-  value: Array<PortableTextBlock> | undefined,
-  blockKey: string,
-): PortableTextBlock | undefined {
-  return value?.find((candidate) => candidate._key === blockKey)
-}
-
-function styleOf(block: PortableTextBlock | undefined): BlockStyle {
-  if (!block) {
-    return undefined
-  }
-
-  const style: unknown = block.style
-
-  return {style: typeof style === 'string' ? style : undefined}
-}
-
 function keysAmongSiblings(
   value: Array<PortableTextBlock> | undefined,
   path: Patch['path'],
@@ -2296,46 +1858,4 @@ function renameKeys(
   }
 
   return {...patch, path: renamedPath}
-}
-
-function childrenOf(block: PortableTextBlock): Array<unknown> {
-  const children: unknown = Reflect.get(block, 'children')
-
-  return Array.isArray(children) ? children : []
-}
-
-function itemKey(item: unknown): Array<string> {
-  if (typeof item !== 'object' || item === null || !('_key' in item)) {
-    return []
-  }
-
-  return typeof item._key === 'string' && item._key !== '' ? [item._key] : []
-}
-
-function isEqual(valueA: unknown, valueB: unknown): boolean {
-  if (valueA === valueB) {
-    return true
-  }
-
-  if (
-    typeof valueA !== 'object' ||
-    typeof valueB !== 'object' ||
-    valueA === null ||
-    valueB === null ||
-    Array.isArray(valueA) !== Array.isArray(valueB)
-  ) {
-    return false
-  }
-
-  const keysA = Object.keys(valueA)
-  const keysB = Object.keys(valueB)
-
-  return (
-    keysA.length === keysB.length &&
-    keysA.every(
-      (key) =>
-        Object.hasOwn(valueB, key) &&
-        isEqual(Reflect.get(valueA, key), Reflect.get(valueB, key)),
-    )
-  )
 }
