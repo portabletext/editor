@@ -2,3 +2,5 @@ dist
 node_modules
 .turbo
 *.tsbuildinfo
+.generated
+.runs

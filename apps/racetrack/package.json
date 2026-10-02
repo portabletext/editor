@@ -4,22 +4,31 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b && vite build",
-    "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
-    "check:types:watch": "tsc --watch --project tsconfig.app.json",
-    "clean": "del .turbo && del dist && del node_modules",
-    "dev": "vite",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "check:types": "tsc --noEmit --pretty",
+    "clean": "del .turbo && del .runs && del .generated && del node_modules",
+    "racetrack": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts",
+    "test": "vitest --run",
+    "test:browser:chromium": "vitest --run --project e2e",
+    "test:unit": "vitest --run --project unit"
   },
   "devDependencies": {
+    "@cucumber/cucumber-expressions": "^20.0.0",
+    "@cucumber/gherkin": "^41.0.0",
+    "@cucumber/messages": "^34.0.1",
+    "@portabletext/editor": "workspace:^",
+    "@sanity/tsconfig": "catalog:tooling",
+    "@types/node": "catalog:tooling",
     "@types/react": "catalog:tooling",
     "@types/react-dom": "catalog:tooling",
     "@vitejs/plugin-react": "catalog:tooling",
+    "@vitest/browser": "catalog:tooling",
+    "@vitest/browser-playwright": "catalog:tooling",
+    "oxc-transform-react": "catalog:tooling",
+    "racejar": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:tooling",
-    "vite": "catalog:tooling"
+    "vite": "catalog:tooling",
+    "vitest": "catalog:tooling"
   }
 }
