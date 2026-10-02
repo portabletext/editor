@@ -235,9 +235,10 @@ type HistoryEntry = {
  * The editor side of the pass-through protocol, speaking to the editor only
  * through `EditorForIo`. It is created during the editor's first commit.
  * Mutation IDs are the editor's `id` plus a counter, so editors with different
- * IDs never share one. The proposed transaction IDs come from the same
- * per-editor counter, as `<id>-t<counter>`, so they are as unique as the
- * editor's `id`. `keyGenerator` mints the new keys a resync gives pending
+ * IDs never share one. The transaction ID proposed with each mutation comes
+ * from `transactionIdGenerator`, a random UUID by default, since a
+ * transaction ID must be unique across every writer of the document, not
+ * only among this editor's mutations. `keyGenerator` mints the new keys a resync gives pending
  * inserts whose keys the copy has. Keys io mints to repair a received value
  * come from the value's revision and the repaired node's path instead (see
  * `repairToFloor`).
@@ -249,10 +250,17 @@ export function createIo(options: {
   id: string
   editor: EditorForIo
   keyGenerator: () => string
+  transactionIdGenerator?: () => string
   clock: Clock
   applyLocalEdit: (patches: Array<Patch>) => void
 }): Io {
-  const {editor, keyGenerator, clock, applyLocalEdit} = options
+  const {
+    editor,
+    keyGenerator,
+    transactionIdGenerator = randomTransactionId,
+    clock,
+    applyLocalEdit,
+  } = options
   const listeners = new Set<(event: IoEvent) => void>()
   const observers = new Set<(snapshot: IoSnapshot) => void>()
   const emittedMutationIds = new Set<string>()
@@ -1157,7 +1165,7 @@ export function createIo(options: {
 
     const mutation: Mutation = {
       id: `${options.id}-${mutationCounter}`,
-      transactionId: `${options.id}-t${mutationCounter}`,
+      transactionId: transactionIdGenerator(),
       patches: pending.flat(),
       ...(final ? {final: true as const} : {}),
     }
@@ -1421,6 +1429,22 @@ export function createIo(options: {
   })
 
   return io
+}
+
+/**
+ * A version 4 UUID, from `crypto.randomUUID` where the runtime has it and
+ * from `Math.random` otherwise.
+ */
+function randomTransactionId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (digit) => {
+    const random = Math.floor(Math.random() * 16)
+
+    return (digit === 'x' ? random : (random % 4) + 8).toString(16)
+  })
 }
 
 function isOfType<TType extends IoEvent['type'] | '*'>(

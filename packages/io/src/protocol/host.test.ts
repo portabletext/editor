@@ -115,8 +115,8 @@ describe(createPassThroughHost.name, () => {
       mutationsSent,
       warnings: heard.warnings,
     }).toEqual({
-      transactionId: 'A-t1',
-      inFlight: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+      transactionId: 'A-tk0',
+      inFlight: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
       mutationsSent: [],
       warnings: [],
     })
@@ -162,14 +162,14 @@ describe(createPassThroughHost.name, () => {
 
     expect(results).toEqual([
       {
-        transactionIdsBefore: ['A-t1'],
+        transactionIdsBefore: ['A-tk0'],
         transactionIdsAfter: ['A-1+B-1'],
         savedAs: 'A-1+B-1',
         mutationsSent: [{id: 'A-1', transactionId: 'A-1+B-1'}],
         warnings: [],
       },
       {
-        transactionIdsBefore: ['A-t1'],
+        transactionIdsBefore: ['A-tk0'],
         transactionIdsAfter: ['A-1'],
         savedAs: 'A-1',
         mutationsSent: [{id: 'A-1', transactionId: 'A-1'}],
@@ -187,7 +187,7 @@ describe(createPassThroughHost.name, () => {
       host.reportSaveTaken('A-1')
 
       if (landed) {
-        transactionHistory.add('A-t1')
+        transactionHistory.add('A-tk0')
       }
 
       return {
@@ -202,15 +202,15 @@ describe(createPassThroughHost.name, () => {
     expect(results).toEqual([
       {
         answer: {type: 'duplicate'},
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
         warnings: [],
-        transactionIds: ['A-t1'],
+        transactionIds: ['A-tk0'],
       },
       {
         answer: {type: 'saved'},
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
         warnings: [],
-        transactionIds: ['A-t1'],
+        transactionIds: ['A-tk0'],
       },
     ])
   })
@@ -237,7 +237,7 @@ describe(createPassThroughHost.name, () => {
     })
     const rejected = {
       sync: 'blocked',
-      rejected: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+      rejected: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
       resubmitted: [],
       warnings: [],
     }
@@ -254,19 +254,19 @@ describe(createPassThroughHost.name, () => {
       {
         failure: 500,
         ...retried,
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
       },
       {
         failure: 503,
         ...retried,
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
       },
       {
         failure: 'network error',
         ...retried,
         resubmitted: [
-          {mutationIds: ['A-1'], transactionId: 'A-t1'},
-          {mutationIds: ['A-1'], transactionId: 'A-t1'},
+          {mutationIds: ['A-1'], transactionId: 'A-tk0'},
+          {mutationIds: ['A-1'], transactionId: 'A-tk0'},
         ],
       },
     ])
@@ -388,7 +388,7 @@ describe(createPassThroughHost.name, () => {
       document.type('y')
 
       if (server === 'landed') {
-        transactionHistory.add('A-t1')
+        transactionHistory.add('A-tk0')
       }
 
       if (server === 'fails with 404') {
@@ -411,17 +411,17 @@ describe(createPassThroughHost.name, () => {
     expect(results).toEqual([
       {
         outcomes: [{'A-1': 'applied'}],
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
         warnings: [],
       },
       {
         outcomes: [{'A-1': 'applied'}],
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
         warnings: [],
       },
       {
         outcomes: [{'A-1': 'not applied'}],
-        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-t1'}],
+        resubmitted: [{mutationIds: ['A-1'], transactionId: 'A-tk0'}],
         warnings: [],
       },
       {
@@ -446,7 +446,7 @@ describe(createPassThroughHost.name, () => {
       document.type('x')
       host.reportSaveTaken('A-1')
       host.reportSaved('A-1', {
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         previousRev: 'r1',
         resultRev: 'r2',
         patches: heard.mutations[0].patches,
@@ -475,7 +475,7 @@ describe(createPassThroughHost.name, () => {
     document.type('y')
     document.close()
     host.reportSaved('A-2', {
-      transactionId: 'A-t2',
+      transactionId: 'A-tk1',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[1].patches,
@@ -499,7 +499,7 @@ describe(createPassThroughHost.name, () => {
     expect(saved).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
     ])
@@ -509,12 +509,12 @@ describe(createPassThroughHost.name, () => {
     expect(saved).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
         final: true,
       },
@@ -533,12 +533,12 @@ describe(createPassThroughHost.name, () => {
     expect(saved).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
         final: true,
       },

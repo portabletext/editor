@@ -6,8 +6,8 @@ import {
   unset,
 } from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test} from 'vitest'
-import {parseTextspec} from '../fakes/document'
+import {describe, expect, test, vi} from 'vitest'
+import {createFakeDocument, parseTextspec} from '../fakes/document'
 import {createFakeNetwork} from '../fakes/network'
 import {createEditorWithIo} from '../scenario/world'
 import {applyWithContentLakeSemantics} from './content-lake'
@@ -118,7 +118,7 @@ describe(createIo.name, () => {
     document.type('y')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -127,12 +127,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
       },
     ])
@@ -196,7 +196,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           diffMatchPatch('foo', 'foox', [
             {_key: 'd-k0'},
@@ -208,7 +208,7 @@ describe(createIo.name, () => {
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [
           insert(
             [
@@ -346,7 +346,7 @@ describe(createIo.name, () => {
     document.type('x')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -354,7 +354,7 @@ describe(createIo.name, () => {
     document.type('y')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t2',
+      transactionId: 'A-tk1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: [...heard.mutations[1].patches, remotePatch],
@@ -439,7 +439,7 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -785,7 +785,7 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -794,12 +794,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [set('h2', path)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [set('h1', path)],
       },
     ])
@@ -812,7 +812,7 @@ describe(createIo.name, () => {
     document.setStyle('h2')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -823,12 +823,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [set('h2', path)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [set('normal', path)],
       },
     ])
@@ -848,7 +848,7 @@ describe(createIo.name, () => {
     })
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -857,8 +857,8 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec()).toEqual('H1: foo|')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [set('h2', path)]},
-      {id: 'A-2', transactionId: 'A-t2', patches: [set('h1', path)]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [set('h2', path)]},
+      {id: 'A-2', transactionId: 'A-tk1', patches: [set('h1', path)]},
     ])
   })
 
@@ -881,7 +881,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [set('h2', path)],
       },
     ])
@@ -894,14 +894,14 @@ describe(createIo.name, () => {
     document.setStyle('h1')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
     })
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t2',
+      transactionId: 'A-tk1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[1].patches,
@@ -922,7 +922,7 @@ describe(createIo.name, () => {
     document.setStyle('h1')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -934,7 +934,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           setIfMissing([], []),
           insert(
@@ -953,7 +953,7 @@ describe(createIo.name, () => {
           set('h1', path),
         ],
       },
-      {id: 'A-2', transactionId: 'A-t2', patches: [set('normal', path)]},
+      {id: 'A-2', transactionId: 'A-tk1', patches: [set('normal', path)]},
     ])
   })
 
@@ -977,7 +977,7 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -986,12 +986,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [unset([{_key: 'd-k0'}]), unset([])],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [
           setIfMissing([], []),
           insert([placeholder], 'before', [0]),
@@ -1009,7 +1009,7 @@ describe(createIo.name, () => {
     document.type('x')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1027,12 +1027,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('yfoox', 'yfoo', textPath)],
       },
     ])
@@ -1045,7 +1045,7 @@ describe(createIo.name, () => {
     document.type('foo')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1063,12 +1063,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foofoo', 'foofoofoo', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -1089,14 +1089,14 @@ describe(createIo.name, () => {
     document.deleteBeforeCaret('xyz')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
     })
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t2',
+      transactionId: 'A-tk1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[1].patches,
@@ -1124,7 +1124,7 @@ describe(createIo.name, () => {
     document.type('x')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1142,7 +1142,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           setIfMissing([], []),
           insert(
@@ -1163,7 +1163,7 @@ describe(createIo.name, () => {
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('x', '', textPath)],
       },
     ])
@@ -1179,7 +1179,7 @@ describe(createIo.name, () => {
     document.deleteBlock('bar')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1188,10 +1188,10 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec()).toEqual('B: foo|;;B: bar')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
       },
     ])
@@ -1218,17 +1218,17 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
     })
 
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
       },
     ])
@@ -1244,7 +1244,7 @@ describe(createIo.name, () => {
     document.deleteBlock('bar')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1260,10 +1260,10 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec()).toEqual('B: foo|;;B: bar')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [insert([barBlock], 'after', [{_key: 'd-k0'}])],
       },
     ])
@@ -1279,7 +1279,7 @@ describe(createIo.name, () => {
     document.deleteBlock('bar')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1295,7 +1295,7 @@ describe(createIo.name, () => {
 
     expect(document.toTextspec()).toEqual('B: foo|;;B: bar')
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [unset([{_key: 'd-k2'}])]},
     ])
     expect(heard.errors).toEqual([])
   })
@@ -1323,17 +1323,17 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
     })
 
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k4'}])]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [unset([{_key: 'd-k4'}])]},
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [insert([barBlock], 'before', [{_key: 'd-k6'}])],
       },
     ])
@@ -1370,17 +1370,17 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
     })
 
     expect(heard.mutations).toEqual([
-      {id: 'A-1', transactionId: 'A-t1', patches: [unset([{_key: 'd-k2'}])]},
+      {id: 'A-1', transactionId: 'A-tk0', patches: [unset([{_key: 'd-k2'}])]},
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [insert([barBlock], 'before', [{_key: 'b-k0'}])],
       },
     ])
@@ -1401,7 +1401,7 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1410,12 +1410,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [unset([{_key: 'd-k0'}]), unset([])],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [setIfMissing([], []), insert([fooBlock], 'before', [0])],
       },
     ])
@@ -1451,7 +1451,7 @@ describe(createIo.name, () => {
     document.insertBlock('B: bar')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1463,7 +1463,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           setIfMissing([], []),
           insert(
@@ -1497,7 +1497,7 @@ describe(createIo.name, () => {
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [unset([{_key: 'a-k2'}])],
       },
     ])
@@ -1509,7 +1509,7 @@ describe(createIo.name, () => {
     document.insertBlock('B: bar')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1527,7 +1527,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           insert(
             [
@@ -1565,7 +1565,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           diffMatchPatch('foo', 'foox', [
             {_key: 'd-k0'},
@@ -1594,7 +1594,7 @@ describe(createIo.name, () => {
     })
 
     expect(getIoInternals(editor).inspect()).toEqual({
-      inFlight: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+      inFlight: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
       rejected: undefined,
       echoed: [],
       pending: [
@@ -1620,7 +1620,7 @@ describe(createIo.name, () => {
 
     expect(getIoInternals(editor).inspect()).toEqual({
       inFlight: undefined,
-      rejected: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+      rejected: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
       echoed: [],
       pending: [
         {
@@ -1641,7 +1641,7 @@ describe(createIo.name, () => {
     document.type('x')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -1655,12 +1655,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
       },
     ])
@@ -1748,7 +1748,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [set('16a962f0', [1, '_key'])],
       },
     ])
@@ -1791,7 +1791,7 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [
           set('51491b98', [1, '_key']),
           set('block', [1, '_type']),
@@ -1883,7 +1883,7 @@ describe(createIo.name, () => {
     expect(heard.mutations.slice(1)).toEqual([
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [insert([{...localSpan, _key: 'a-k2'}], 'after', spanPath)],
       },
     ])
@@ -2031,7 +2031,7 @@ describe(createIo.name, () => {
 
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -2199,7 +2199,7 @@ describe(createIo.name, () => {
   })
 
   test('a `mutation sent` with another transaction ID replaces the proposed one as the ID that confirms the mutation', () => {
-    const results = ['A-t1', 'commit-1'].map((transactionId) => {
+    const results = ['A-tk0', 'commit-1'].map((transactionId) => {
       const {editor, document, heard} = createLoadedEditor('B: foo|')
 
       document.type('x')
@@ -2225,15 +2225,15 @@ describe(createIo.name, () => {
 
     expect(results).toEqual([
       {
-        inFlightProposed: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+        inFlightProposed: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
         inFlightNamed: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
         inFlightAfter: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
         warnings: [],
       },
       {
-        inFlightProposed: {id: 'A-1', transactionIds: ['A-t1'], patchCount: 1},
+        inFlightProposed: {id: 'A-1', transactionIds: ['A-tk0'], patchCount: 1},
         inFlightNamed: {id: 'A-1', transactionIds: ['commit-1'], patchCount: 1},
-        inFlightAfter: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 1},
         warnings: [],
       },
     ])
@@ -2271,7 +2271,7 @@ describe(createIo.name, () => {
           transactionIds: ['commit-1', 'retry-1'],
           patchCount: 1,
         },
-        inFlightAfter: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
+        inFlightAfter: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 1},
         warnings: [
           '`mutation sent` names transaction "retry-1" for mutation "A-1", already sent as "commit-1": a retry must reuse the transaction ID',
         ],
@@ -2294,7 +2294,7 @@ describe(createIo.name, () => {
     })
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[0].patches,
@@ -2365,16 +2365,16 @@ describe(createIo.name, () => {
         mutations: [
           {
             id: 'A-1',
-            transactionId: 'A-t1',
+            transactionId: 'A-tk0',
             patches: [diffMatchPatch('foo', 'foox', textPath)],
           },
           {
             id: 'A-2',
-            transactionId: 'A-t2',
+            transactionId: 'A-tk1',
             patches: [diffMatchPatch('foox', 'fooxy', textPath)],
           },
         ],
-        inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 1},
+        inFlight: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 1},
       },
       {
         screenAfterRefusal: 'B: fooxy|',
@@ -2386,19 +2386,19 @@ describe(createIo.name, () => {
         mutations: [
           {
             id: 'A-1',
-            transactionId: 'A-t1',
+            transactionId: 'A-tk0',
             patches: [diffMatchPatch('foo', 'foox', textPath)],
           },
           {
             id: 'A-2',
-            transactionId: 'A-t2',
+            transactionId: 'A-tk1',
             patches: [
               diffMatchPatch('foo', 'foox', textPath),
               diffMatchPatch('foox', 'fooxy', textPath),
             ],
           },
         ],
-        inFlight: {id: 'A-2', transactionIds: ['A-t2'], patchCount: 2},
+        inFlight: {id: 'A-2', transactionIds: ['A-tk1'], patchCount: 2},
       },
     ])
   })
@@ -2416,7 +2416,7 @@ describe(createIo.name, () => {
       document.type('x')
       editor.send({
         type: 'transaction',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         previousRev: 'r1',
         resultRev: 'r2',
         patches: [extraPatch, diffMatchPatch('foo', 'foox', textPath)],
@@ -2443,7 +2443,7 @@ describe(createIo.name, () => {
         errors: [
           {
             reason: 'echo mismatch',
-            transactionId: 'A-t1',
+            transactionId: 'A-tk0',
             patch: ancestorPatch,
           },
         ],
@@ -2465,7 +2465,7 @@ describe(createIo.name, () => {
     syncs.push(editor.getSnapshot().context.sync)
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -2473,7 +2473,7 @@ describe(createIo.name, () => {
     syncs.push(editor.getSnapshot().context.sync)
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t2',
+      transactionId: 'A-tk1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[1].patches,
@@ -2499,7 +2499,7 @@ describe(createIo.name, () => {
     syncs.push(editor.getSnapshot().context.sync)
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t4',
+      transactionId: 'A-tk3',
       previousRev: 'r3',
       resultRev: 'r4',
       patches: heard.mutations[3].patches,
@@ -2535,7 +2535,7 @@ describe(createIo.name, () => {
     document.type('y')
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t1',
+      transactionId: 'A-tk0',
       previousRev: 'r1',
       resultRev: 'r2',
       patches: heard.mutations[0].patches,
@@ -2543,7 +2543,7 @@ describe(createIo.name, () => {
     subscription.unsubscribe()
     editor.send({
       type: 'transaction',
-      transactionId: 'A-t2',
+      transactionId: 'A-tk1',
       previousRev: 'r2',
       resultRev: 'r3',
       patches: heard.mutations[1].patches,
@@ -2566,7 +2566,7 @@ describe(createIo.name, () => {
           status: 'ready',
           sync: 'saving',
           rev: 'r1',
-          inFlight: {id: 'A-1', transactionId: 'A-t1'},
+          inFlight: {id: 'A-1', transactionId: 'A-tk0'},
           pending: 0,
         },
       },
@@ -2575,7 +2575,7 @@ describe(createIo.name, () => {
           status: 'ready',
           sync: 'saving',
           rev: 'r1',
-          inFlight: {id: 'A-1', transactionId: 'A-t1'},
+          inFlight: {id: 'A-1', transactionId: 'A-tk0'},
           pending: 1,
         },
       },
@@ -2584,7 +2584,7 @@ describe(createIo.name, () => {
           status: 'ready',
           sync: 'saving',
           rev: 'r2',
-          inFlight: {id: 'A-2', transactionId: 'A-t2'},
+          inFlight: {id: 'A-2', transactionId: 'A-tk1'},
           pending: 0,
         },
       },
@@ -2635,7 +2635,7 @@ describe(createIo.name, () => {
       {
         type: 'mutation',
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       ...errors,
@@ -2660,12 +2660,12 @@ describe(createIo.name, () => {
     expect(heard.mutations).toEqual([
       {
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [diffMatchPatch('foo', 'foox', textPath)],
       },
       {
         id: 'A-2',
-        transactionId: 'A-t2',
+        transactionId: 'A-tk1',
         patches: [diffMatchPatch('foox', 'fooxy', textPath)],
         final: true,
       },
@@ -2675,10 +2675,56 @@ describe(createIo.name, () => {
         status: 'unmounted',
         sync: 'saving',
         rev: 'r1',
-        inFlight: {id: 'A-1', transactionId: 'A-t1'},
+        inFlight: {id: 'A-1', transactionId: 'A-tk0'},
         pending: 0,
       },
     })
+  })
+
+  test('Scenario: without a `transactionIdGenerator`, each mutation proposes a UUID of its own, with `crypto.randomUUID` or without it', () => {
+    const uuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    const proposedIds = (cryptoGlobal: 'present' | 'missing') => {
+      if (cryptoGlobal === 'missing') {
+        vi.stubGlobal('crypto', undefined)
+      }
+
+      try {
+        const keyGenerator = createTestKeyGenerator('a-')
+        const document = createFakeDocument({keyGenerator}, {value: undefined})
+        const io = createIo({
+          id: 'A',
+          editor: document,
+          keyGenerator,
+          clock: createFakeNetwork().clock,
+          applyLocalEdit: document.applyLocalEdit,
+        })
+        const transactionIds: Array<string> = []
+
+        io.on('mutation', (mutation) => {
+          transactionIds.push(mutation.transactionId)
+        })
+        document.mount()
+        document.type('x')
+        io.send({
+          type: 'mutation rejected',
+          id: 'A-1',
+        })
+        io.send({type: 'resync', value: undefined, rev: undefined})
+        document.type('y')
+
+        return transactionIds
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    }
+    const results = [proposedIds('present'), proposedIds('missing')]
+
+    expect(results).toEqual([
+      [expect.stringMatching(uuid), expect.stringMatching(uuid)],
+      [expect.stringMatching(uuid), expect.stringMatching(uuid)],
+    ])
+    expect(results.map((ids) => new Set(ids).size)).toEqual([2, 2])
   })
 
   test('inputs after the editor closes are ignored, with a warning for each the editor side gets', () => {

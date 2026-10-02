@@ -63,7 +63,7 @@ describe(createWorld.name, () => {
           },
           inFlight: {
             mutationNumber: 1,
-            transactionIds: ['A-t1'],
+            transactionIds: ['A-tk0'],
             patchCount: 1,
             patches: [diffMatchPatch('foo', 'foox', textPath)],
           },
@@ -82,7 +82,7 @@ describe(createWorld.name, () => {
           sentMutations: [
             {
               number: 1,
-              transactionId: 'A-t1',
+              transactionId: 'A-tk0',
               patchCount: 1,
               patches: [diffMatchPatch('foo', 'foox', textPath)],
               final: false,
@@ -126,7 +126,7 @@ describe(createWorld.name, () => {
               route: 'io to host',
               type: 'mutation',
               id: 'A-1',
-              transactionId: 'A-t1',
+              transactionId: 'A-tk0',
               patches: [diffMatchPatch('foo', 'foox', textPath)],
             },
           ],
@@ -161,7 +161,7 @@ describe(createWorld.name, () => {
           },
           inFlight: {
             mutationNumber: 1,
-            transactionIds: ['B-t1'],
+            transactionIds: ['B-tk0'],
             patchCount: 1,
             patches: [set('h1', stylePath)],
           },
@@ -182,7 +182,7 @@ describe(createWorld.name, () => {
           sentMutations: [
             {
               number: 1,
-              transactionId: 'B-t1',
+              transactionId: 'B-tk0',
               patchCount: 1,
               patches: [set('h1', stylePath)],
               final: false,
@@ -223,7 +223,7 @@ describe(createWorld.name, () => {
               route: 'io to host',
               type: 'mutation',
               id: 'B-1',
-              transactionId: 'B-t1',
+              transactionId: 'B-tk0',
               patches: [set('h1', stylePath)],
             },
             {
@@ -251,7 +251,7 @@ describe(createWorld.name, () => {
         rev: 'r3',
         transactions: [
           {
-            id: 'A-t1',
+            id: 'A-tk0',
             previousRev: 'r1',
             resultRev: 'r2',
             mutationIds: ['A-1'],
@@ -293,7 +293,7 @@ describe(createWorld.name, () => {
         feeds: {
           'Editor A': [
             {
-              transactionId: 'A-t1',
+              transactionId: 'A-tk0',
               previousRev: 'r1',
               resultRev: 'r2',
               mutationIds: ['A-1'],
@@ -316,7 +316,7 @@ describe(createWorld.name, () => {
           ],
           'Editor B': [
             {
-              transactionId: 'A-t1',
+              transactionId: 'A-tk0',
               previousRev: 'r1',
               resultRev: 'r2',
               mutationIds: ['A-1'],
@@ -363,14 +363,14 @@ describe(createWorld.name, () => {
         route: 'io to host',
         type: 'mutation',
         id: 'A-1',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         patches: [textPatch],
       },
       {
         route: 'host to io',
         type: 'transaction',
         via: 'save reply',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         previousRev: 'r1',
         resultRev: 'r2',
         patches: [textPatch],
@@ -405,7 +405,7 @@ describe(createWorld.name, () => {
       {
         route: 'host to server',
         type: 're-submit',
-        transactionId: 'A-t1',
+        transactionId: 'A-tk0',
         answer: {type: 'duplicate'},
       },
       {

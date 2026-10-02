@@ -1145,6 +1145,7 @@ export function createEditorWithIo({
       },
     },
     keyGenerator,
+    transactionIdGenerator: createTestKeyGenerator(`${id}-t`),
     clock,
     applyLocalEdit: document.applyLocalEdit,
   })
