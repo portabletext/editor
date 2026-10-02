@@ -3,6 +3,7 @@ import {
   defineSchema,
   type PortableTextBlock,
 } from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import {defineContainer} from '../renderers/renderer.types'
@@ -583,6 +584,257 @@ describe('transformBlockIndexMap', () => {
         ],
         value: 'c9',
       },
+    })
+  })
+
+  test('renaming the second of two root blocks sharing a _key keeps the first block and its spans indexed', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const newBlockKey = keyGenerator()
+    const makeValue = (secondKey: string) => [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+      } as PortableTextBlock,
+      {
+        _key: secondKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'bar'}],
+      } as PortableTextBlock,
+    ]
+    const beforeValue = makeValue(blockKey)
+    const afterValue = makeValue(newBlockKey)
+    const map = new BlockIndexMap()
+    buildIndexMaps(
+      {schema: tableSchema, value: beforeValue, containers: tableContainers},
+      {blockIndexMap: map},
+    )
+    transformBlockIndexMap(
+      map,
+      {
+        type: 'set',
+        path: [1, '_key'],
+        value: newBlockKey,
+        inverse: {type: 'set', path: [1, '_key'], value: blockKey},
+      },
+      beforeValue,
+      afterValue,
+      {schema: tableSchema, containers: tableContainers},
+    )
+
+    expect(Object.fromEntries([...map].sort())).toEqual({
+      '[_key=="k0"]': 0,
+      '[_key=="k0"].children[_key=="k1"]': 0,
+      '[_key=="k2"]': 1,
+      '[_key=="k2"].children[_key=="k1"]': 0,
+    })
+  })
+
+  test('renaming the middle of three root blocks sharing a _key indexes the first block and every span only a later block has', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const newBlockKey = keyGenerator()
+    const makeValue = (middleKey: string) => [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+      } as PortableTextBlock,
+      {
+        _key: middleKey,
+        _type: 'block',
+        children: [{_key: barSpanKey, _type: 'span', text: 'bar'}],
+      } as PortableTextBlock,
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {_key: fooSpanKey, _type: 'span', text: 'baz'},
+          {_key: barSpanKey, _type: 'span', text: 'qux'},
+        ],
+      } as PortableTextBlock,
+    ]
+    const beforeValue = makeValue(blockKey)
+    const afterValue = makeValue(newBlockKey)
+    const map = new BlockIndexMap()
+    buildIndexMaps(
+      {schema: tableSchema, value: beforeValue, containers: tableContainers},
+      {blockIndexMap: map},
+    )
+    transformBlockIndexMap(
+      map,
+      {
+        type: 'set',
+        path: [1, '_key'],
+        value: newBlockKey,
+        inverse: {type: 'set', path: [1, '_key'], value: blockKey},
+      },
+      beforeValue,
+      afterValue,
+      {schema: tableSchema, containers: tableContainers},
+    )
+
+    expect(Object.fromEntries([...map].sort())).toEqual({
+      '[_key=="k0"]': 0,
+      '[_key=="k0"].children[_key=="k1"]': 0,
+      '[_key=="k0"].children[_key=="k2"]': 1,
+      '[_key=="k3"]': 1,
+      '[_key=="k3"].children[_key=="k2"]': 0,
+    })
+  })
+
+  test("renaming a root block to a later sibling's _key indexes the renamed block's spans", () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const laterBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const makeValue = (firstKey: string) => [
+      {
+        _key: firstKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+      } as PortableTextBlock,
+      {
+        _key: laterBlockKey,
+        _type: 'block',
+        children: [
+          {_key: barSpanKey, _type: 'span', text: 'bar'},
+          {_key: fooSpanKey, _type: 'span', text: 'baz'},
+        ],
+      } as PortableTextBlock,
+    ]
+    const beforeValue = makeValue(blockKey)
+    const afterValue = makeValue(laterBlockKey)
+    const map = new BlockIndexMap()
+    buildIndexMaps(
+      {schema: tableSchema, value: beforeValue, containers: tableContainers},
+      {blockIndexMap: map},
+    )
+    transformBlockIndexMap(
+      map,
+      {
+        type: 'set',
+        path: [0, '_key'],
+        value: laterBlockKey,
+        inverse: {type: 'set', path: [0, '_key'], value: blockKey},
+      },
+      beforeValue,
+      afterValue,
+      {schema: tableSchema, containers: tableContainers},
+    )
+
+    expect(Object.fromEntries([...map].sort())).toEqual({
+      '[_key=="k2"]': 0,
+      '[_key=="k2"].children[_key=="k1"]': 0,
+      '[_key=="k2"].children[_key=="k3"]': 0,
+    })
+  })
+
+  test('renaming the second of two spans sharing a _key keeps the first span indexed', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const newSpanKey = keyGenerator()
+    const makeValue = (secondKey: string) => [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {_key: spanKey, _type: 'span', text: 'foo'},
+          {_key: secondKey, _type: 'span', text: 'bar'},
+        ],
+      } as PortableTextBlock,
+    ]
+    const beforeValue = makeValue(spanKey)
+    const afterValue = makeValue(newSpanKey)
+    const map = new BlockIndexMap()
+    buildIndexMaps(
+      {schema: tableSchema, value: beforeValue, containers: tableContainers},
+      {blockIndexMap: map},
+    )
+    transformBlockIndexMap(
+      map,
+      {
+        type: 'set',
+        path: [{_key: blockKey}, 'children', 1, '_key'],
+        value: newSpanKey,
+        inverse: {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          value: spanKey,
+        },
+      },
+      beforeValue,
+      afterValue,
+      {schema: tableSchema, containers: tableContainers},
+    )
+
+    expect(Object.fromEntries([...map].sort())).toEqual({
+      '[_key=="k0"]': 0,
+      '[_key=="k0"].children[_key=="k1"]': 0,
+      '[_key=="k0"].children[_key=="k2"]': 1,
+    })
+  })
+
+  test('renaming the second of two rows sharing a _key keeps the first row and its cells indexed', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const newRowKey = keyGenerator()
+    const makeValue = (secondKey: string) => [
+      {
+        _key: tableKey,
+        _type: 'table',
+        rows: [
+          {
+            _key: rowKey,
+            _type: 'row',
+            cells: [{_key: cellKey, _type: 'cell', content: []}],
+          },
+          {
+            _key: secondKey,
+            _type: 'row',
+            cells: [{_key: cellKey, _type: 'cell', content: []}],
+          },
+        ],
+      } as unknown as PortableTextBlock,
+    ]
+    const beforeValue = makeValue(rowKey)
+    const afterValue = makeValue(newRowKey)
+    const map = new BlockIndexMap()
+    buildIndexMaps(
+      {schema: tableSchema, value: beforeValue, containers: tableContainers},
+      {blockIndexMap: map},
+    )
+    transformBlockIndexMap(
+      map,
+      {
+        type: 'set',
+        path: [{_key: tableKey}, 'rows', 1, '_key'],
+        value: newRowKey,
+        inverse: {
+          type: 'set',
+          path: [{_key: tableKey}, 'rows', 1, '_key'],
+          value: rowKey,
+        },
+      },
+      beforeValue,
+      afterValue,
+      {schema: tableSchema, containers: tableContainers},
+    )
+
+    expect(Object.fromEntries([...map].sort())).toEqual({
+      '[_key=="k0"]': 0,
+      '[_key=="k0"].rows[_key=="k1"]': 0,
+      '[_key=="k0"].rows[_key=="k1"].cells[_key=="k2"]': 0,
+      '[_key=="k0"].rows[_key=="k3"]': 1,
+      '[_key=="k0"].rows[_key=="k3"].cells[_key=="k2"]': 0,
     })
   })
 
