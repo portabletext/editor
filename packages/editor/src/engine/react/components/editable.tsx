@@ -55,6 +55,8 @@ import {
   IS_WECHATBROWSER,
 } from '../../dom/utils/environment'
 import Hotkeys from '../../dom/utils/hotkeys'
+import {after} from '../../editor/after'
+import {before} from '../../editor/before'
 import {end as editorEnd} from '../../editor/end'
 import {range as editorRange} from '../../editor/range'
 import {rangeRef} from '../../editor/range-ref'
@@ -1585,6 +1587,18 @@ export const Editable = forwardRef(
                       return
                     }
 
+                    if (Hotkeys.isExtendBackward(nativeEvent)) {
+                      event.preventDefault()
+                      extendFocus(editor, {reverse: !isRTL})
+                      return
+                    }
+
+                    if (Hotkeys.isExtendForward(nativeEvent)) {
+                      event.preventDefault()
+                      extendFocus(editor, {reverse: isRTL})
+                      return
+                    }
+
                     // COMPAT: If a void node is selected, or a zero-width text node
                     // adjacent to an inline is selected, we need to handle these
                     // hotkeys manually because browsers won't be able to skip over
@@ -2072,4 +2086,22 @@ const handleNativeHistoryEvents = (
     })
     return
   }
+}
+
+function extendFocus(editor: Editor, options: {reverse: boolean}) {
+  const selection = editor.snapshot.context.selection
+
+  if (!selection) {
+    return
+  }
+
+  const focus = options.reverse
+    ? before(editor, selection.focus, {unit: 'character'})
+    : after(editor, selection.focus, {unit: 'character'})
+
+  if (!focus) {
+    return
+  }
+
+  editor.setSelection({anchor: selection.anchor, focus})
 }
