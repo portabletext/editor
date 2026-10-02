@@ -288,7 +288,7 @@ function narrateEditor({
         ? `${name}'s host forwarded ${item.transactionId} from the answer to its own save`
         : `${item.transactionId} came back to ${name}`
 
-    if (before.outOfStep) {
+    if (isOutOfStep(before)) {
       sentences.push(
         ownMutationNumbers.length > 0
           ? `${item.transactionId} came back to ${name} while out of step: it notes that ${describeMutationNumbers(ownMutationNumbers)} came back and applies nothing.`
@@ -359,7 +359,7 @@ function narrateEditor({
         (candidate) => candidate.transactionId === held.transactionId,
       ),
   )
-  if (deliveredItems.length > 0 && !after.outOfStep && released.length > 0) {
+  if (deliveredItems.length > 0 && !isOutOfStep(after) && released.length > 0) {
     const confirmedEchoes = before.echoed
       .filter(
         (mutation) =>
@@ -440,7 +440,7 @@ function narrateEditor({
       )
     }
 
-    if (before.outOfStep && !after.outOfStep) {
+    if (isOutOfStep(before) && !isOutOfStep(after)) {
       parts.push('is back in step')
     }
 
@@ -485,7 +485,7 @@ function narrateEditor({
     )
   }
 
-  if (!before.outOfStep && after.outOfStep) {
+  if (!isOutOfStep(before) && isOutOfStep(after)) {
     sentences.push(
       `${name} is out of step: it stopped applying the feed until a resync.`,
     )
@@ -509,7 +509,9 @@ function narrateEditor({
               : 'their targets are gone'
             : event.reason === 'rejected'
               ? 'the resync dropped the rejected mutation'
-              : 'it closed while sending was blocked'
+              : event.reason === 'closed out of step'
+                ? 'it closed while out of step'
+                : 'it closed while sending was blocked'
         }.`,
       )
     }
@@ -636,6 +638,10 @@ function describeEditorStart(name: EditorName, world: WorldSnapshot): string {
 
 function isLoadOfTheEditor(message: EditorSnapshot['messages'][number]) {
   return message.route === 'io to editor' && message.type === 'load'
+}
+
+function isOutOfStep(editor: EditorSnapshot): boolean {
+  return editor.io.sync === 'out of step'
 }
 
 function mutationNumberOf(editor: EditorSnapshot, mutationId: string): number {

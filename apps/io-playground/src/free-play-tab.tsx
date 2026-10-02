@@ -159,8 +159,8 @@ export function useFreePlay() {
 
     note(`(${name}'s host does nothing)`, [
       editor?.inFlight && elapsed !== undefined
-        ? `${name}'s host never notices. Mutation ${editor.inFlight.mutationNumber} has been in flight for ${elapsed / 1000} s and sync still says ${editor.sync}. The protocol has no stalled state to show: what a user sees when a save never comes back is still an open question.`
-        : `${name}'s host never notices, and sync says ${editor?.sync ?? 'nothing'}.`,
+        ? `${name}'s host never notices. Mutation ${editor.inFlight.mutationNumber} has been in flight for ${elapsed / 1000} s and sync still says ${editor.io.sync}. The protocol has no stalled state to show: what a user sees when a save never comes back is still an open question.`
+        : `${name}'s host never notices, and sync says ${editor?.io.sync ?? 'nothing'}.`,
     ])
   }
 
@@ -630,7 +630,7 @@ function feedDiesApplicability(
     return {enabled: false, why: 'there are no editors yet'}
   }
 
-  if (editor.status !== 'ready') {
+  if (editor.io.status !== 'ready') {
     return {enabled: false, why: 'the feed runs only while the editor is ready'}
   }
 
@@ -641,7 +641,7 @@ function feedDiesApplicability(
     }
   }
 
-  return editor.outOfStep
+  return editor.io.sync === 'out of step'
     ? {enabled: false, why: 'the editor is out of step already: resync'}
     : {
         enabled: true,

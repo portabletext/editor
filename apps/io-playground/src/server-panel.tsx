@@ -326,7 +326,7 @@ function malformedDoors(
     return {reload: notReady, transaction: notReady}
   }
 
-  if (editor.outOfStep) {
+  if (editor.io.sync === 'out of step') {
     return {
       reload: {
         enabled: true,

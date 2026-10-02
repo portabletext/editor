@@ -90,6 +90,7 @@ export function applicableActions(
     }
   }
 
+  const {status, pending} = editor.io
   const edit = editApplicability(editor)
   const resync = resyncApplicability(editor)
 
@@ -97,7 +98,7 @@ export function applicableActions(
     'type': edit,
     'set style': edit,
     'put caret after':
-      editor.status === 'unmounted' ? disabled(whyUnmounted) : enabled,
+      status === 'unmounted' ? disabled(whyUnmounted) : enabled,
     'insert block': edit,
     'delete block': edit,
     'delete before caret': edit,
@@ -106,22 +107,22 @@ export function applicableActions(
         ? disabled('there is nothing to undo')
         : edit,
     'read-only':
-      editor.status === 'unmounted'
+      status === 'unmounted'
         ? disabled(whyUnmounted)
         : editor.readOnly
           ? disabled('the steps have no way to end read-only')
           : enabled,
-    'close': editor.status === 'unmounted' ? disabled(whyUnmounted) : enabled,
+    'close': status === 'unmounted' ? disabled(whyUnmounted) : enabled,
     'resync': {...resync, ...resyncSuggestion(editorName, editor, resync)},
     'resync discarding': !resync.enabled
       ? resync
-      : editor.inFlight
+      : editor.io.inFlight
         ? disabled('the steps discard only when no mutation is in flight')
-        : editor.pending.length === 0
+        : pending === 0
           ? disabled('nothing unsent to discard')
           : {
               enabled: true,
-              why: `the user's choice: load the saved version and throw away ${editor.pending.length} unsent change(s)`,
+              why: `the user's choice: load the saved version and throw away ${pending} unsent change(s)`,
             },
     'load': firstCommitApplicability(
       editorName,
@@ -174,11 +175,11 @@ export function applicableNetworkActions(
 }
 
 function editApplicability(editor: EditorSnapshot): Applicability {
-  if (editor.status === 'unmounted') {
+  if (editor.io.status === 'unmounted') {
     return disabled(whyUnmounted)
   }
 
-  if (editor.status === 'loading') {
+  if (editor.io.status === 'loading') {
     return disabled(whyLoading)
   }
 
@@ -186,20 +187,22 @@ function editApplicability(editor: EditorSnapshot): Applicability {
 }
 
 function resyncApplicability(editor: EditorSnapshot): Applicability {
-  if (editor.status === 'unmounted') {
+  if (editor.io.status === 'unmounted') {
     return disabled(whyUnmounted)
   }
 
-  if (editor.status === 'loading') {
+  if (editor.io.status === 'loading') {
     return disabled('resync is only accepted once ready')
   }
 
-  return editor.inFlight
-    ? {
+  const inFlightNumber = inFlightMutationNumber(editor)
+
+  return inFlightNumber === undefined
+    ? enabled
+    : {
         enabled: true,
-        why: `mutation ${editor.inFlight.mutationNumber} is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome`,
+        why: `mutation ${inFlightNumber} is in flight: the host re-submits it under the same transaction ID to find out whether it landed, and the resync carries that outcome`,
       }
-    : enabled
 }
 
 function resyncSuggestion(
@@ -211,15 +214,18 @@ function resyncSuggestion(
     return {}
   }
 
-  if (editor.outOfStep) {
+  const inFlightNumber = inFlightMutationNumber(editor)
+
+  if (editor.io.sync === 'out of step') {
     return {
-      suggested: editor.inFlight
-        ? `${editorName} is out of step: resync with the outcome of mutation ${editor.inFlight.mutationNumber} to recover`
-        : `${editorName} is out of step: resync to recover`,
+      suggested:
+        inFlightNumber === undefined
+          ? `${editorName} is out of step: resync to recover`
+          : `${editorName} is out of step: resync with the outcome of mutation ${inFlightNumber} to recover`,
     }
   }
 
-  if (editor.rejected) {
+  if (editor.io.sync === 'blocked' && editor.rejected) {
     return {
       suggested: `${editorName}'s mutation ${editor.rejected.mutationNumber} was rejected: sending is blocked until a resync`,
     }
@@ -228,16 +234,29 @@ function resyncSuggestion(
   return {}
 }
 
+/**
+ * The world's number for the mutation io has in flight, which io names by
+ * its ID.
+ */
+function inFlightMutationNumber(editor: EditorSnapshot): number | undefined {
+  const {inFlight} = editor.io
+
+  return inFlight === undefined
+    ? undefined
+    : editor.sentMutations.find((mutation) => mutation.id === inFlight.id)
+        ?.number
+}
+
 function firstCommitApplicability(
   editorName: EditorName,
   editor: EditorSnapshot,
   whyReady: string,
 ): Applicability {
-  if (editor.status === 'unmounted') {
+  if (editor.io.status === 'unmounted') {
     return disabled(whyUnmounted)
   }
 
-  if (editor.status !== 'loading') {
+  if (editor.io.status !== 'loading') {
     return disabled(whyReady)
   }
 
@@ -271,8 +290,9 @@ function linkApplicability(
     ? `${name}'s mutation ${firstReply.mutationNumber} failed with ${firstReply.status}: deliver the reply`
     : undefined
 
+  const inFlightNumber = editor ? inFlightMutationNumber(editor) : undefined
   const firstRetryable = lostReplies.find(
-    (reply) => editor?.inFlight?.mutationNumber === reply.mutationNumber,
+    (reply) => inFlightNumber === reply.mutationNumber,
   )
   const lostReplyPrompt = firstRetryable
     ? `the save reply for ${name}'s mutation ${firstRetryable.mutationNumber} was lost: retry it with the same transaction ID`
@@ -327,7 +347,7 @@ function linkApplicability(
           reply.mutationId,
           reply === firstReply &&
           replyPrompt !== undefined &&
-          editor?.status !== 'unmounted'
+          editor?.io.status !== 'unmounted'
             ? {enabled: true, suggested: replyPrompt}
             : enabled,
         ]),
@@ -337,7 +357,7 @@ function linkApplicability(
           reply.mutationId,
           reply === firstRetryable && lostReplyPrompt !== undefined
             ? {enabled: true, suggested: lostReplyPrompt}
-            : editor?.inFlight?.mutationNumber === reply.mutationNumber
+            : inFlightNumber === reply.mutationNumber
               ? enabled
               : disabled(
                   `mutation ${reply.mutationNumber} isn't in flight anymore: the host knows what became of it`,
@@ -358,11 +378,11 @@ function feedLostApplicability(
     return disabled('there are no editors yet')
   }
 
-  if (editor.status === 'unmounted') {
+  if (editor.io.status === 'unmounted') {
     return disabled(whyUnmounted)
   }
 
-  if (editor.status === 'loading') {
+  if (editor.io.status === 'loading') {
     return disabled('the feed starts once the editor is ready')
   }
 
@@ -370,7 +390,7 @@ function feedLostApplicability(
     return disabled('the host has no listener, so there is no feed to lose')
   }
 
-  return editor.outOfStep
+  return editor.io.sync === 'out of step'
     ? disabled('the editor is out of step already: resync')
     : {
         enabled: true,
@@ -388,7 +408,7 @@ function feedApplicability(
   feed: Array<FeedItem>,
 ): Record<string, Applicability> {
   const entries = feed.map((_item, index) => {
-    if (editor?.status === 'loading') {
+    if (editor?.io.status === 'loading') {
       return disabled('transactions are only accepted once ready')
     }
 
@@ -413,7 +433,7 @@ function feedApplicability(
 
   if (
     editor !== undefined &&
-    editor.status !== 'unmounted' &&
+    editor.io.status !== 'unmounted' &&
     suggestedIndex !== -1
   ) {
     const item = feed[suggestedIndex]

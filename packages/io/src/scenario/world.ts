@@ -29,7 +29,7 @@ import {
   type Io,
   type IoMessage,
   type IoSentMutation,
-  type IoSync,
+  type IoSnapshot,
 } from '../protocol/io'
 import type {
   ChangeEvent,
@@ -158,7 +158,8 @@ export type EditorSnapshot = {
   id: string
   host: HostShape
   status: FakeDocumentStatus
-  sync: IoSync
+  /** io's own snapshot, as `io.getSnapshot()` returns it. */
+  io: IoSnapshot['context']
   /** What the editor shows, with the caret. */
   screen: string
   /** What the editor shows, as blocks, the placeholder included. */
@@ -179,12 +180,12 @@ export type EditorSnapshot = {
     resultRev: string | null
     patches: Array<Patch>
   }>
-  outOfStep: boolean
   readOnly: boolean
   /** How many of the editor's own changes undo can still revert. */
   undoDepth: number
   sentMutations: Array<{
     number: number
+    id: string
     transactionId: string
     patchCount: number
     patches: Array<Patch>
@@ -532,7 +533,7 @@ export function createWorld(
       id: name === 'Editor A' ? 'A' : 'B',
       host: hostShape,
       status: document.getStatus(),
-      sync: io.getSnapshot().context.sync,
+      io: io.getSnapshot().context,
       screen: document.toTextspec(),
       blocks: document.getValue(),
       base: {
@@ -551,11 +552,11 @@ export function createWorld(
         resultRev: transaction.resultRev ?? null,
         patches: server.getTransaction(transaction.transactionId).patches,
       })),
-      outOfStep: ledger.outOfStep,
       readOnly: document.getReadOnly(),
       undoDepth: io.getUndoDepth(),
       sentMutations: heard.mutations.map((mutation, index) => ({
         number: index + 1,
+        id: mutation.id,
         transactionId: host.getTransactionId(mutation.id),
         patchCount: mutation.patches.length,
         patches: mutation.patches,

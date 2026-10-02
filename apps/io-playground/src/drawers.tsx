@@ -331,7 +331,9 @@ function EventDetails({
                 ? 'the changes had nowhere to go: their target is gone, so they did nothing, on the server too once sent'
                 : event.reason === 'rejected'
                   ? 'the resync dropped the mutation the server refused'
-                  : 'the editor closed while sending was blocked by a rejection',
+                  : event.reason === 'closed out of step'
+                    ? 'the editor closed while it was out of step with the server, so the unsent changes never went out'
+                    : 'the editor closed while sending was blocked by a rejection',
             ],
             ['patches', plural(event.patchCount, 'patch')],
           ]}

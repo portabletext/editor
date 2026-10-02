@@ -35,7 +35,13 @@ describe(createWorld.name, () => {
           id: 'A',
           host: 'plain',
           status: 'ready',
-          sync: 'saving',
+          io: {
+            status: 'ready',
+            sync: 'saving',
+            rev: 'r1',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+            pending: 1,
+          },
           screen: 'B: fooxy|',
           blocks: [
             {
@@ -76,12 +82,12 @@ describe(createWorld.name, () => {
             },
           ],
           held: [],
-          outOfStep: false,
           readOnly: false,
           undoDepth: 2,
           sentMutations: [
             {
               number: 1,
+              id: 'A-1',
               transactionId: 'A-tk0',
               patchCount: 1,
               patches: [diffMatchPatch('foo', 'foox', textPath)],
@@ -135,7 +141,13 @@ describe(createWorld.name, () => {
           id: 'B',
           host: 'plain',
           status: 'ready',
-          sync: 'saving',
+          io: {
+            status: 'ready',
+            sync: 'saving',
+            rev: 'r1',
+            inFlight: {id: 'B-1', transactionId: 'B-tk0'},
+            pending: 0,
+          },
           screen: 'H1: foo|',
           blocks: [
             {
@@ -176,12 +188,12 @@ describe(createWorld.name, () => {
               patches: [],
             },
           ],
-          outOfStep: false,
           readOnly: false,
           undoDepth: 1,
           sentMutations: [
             {
               number: 1,
+              id: 'B-1',
               transactionId: 'B-tk0',
               patchCount: 1,
               patches: [set('h1', stylePath)],

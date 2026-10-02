@@ -53,7 +53,15 @@ describe(applicableActions.name, () => {
   test('a mutation in flight resyncs with its outcome, and discarding waits', () => {
     const actions = applicableActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: mutation(1), undoDepth: 1}),
+        editorA: editorSnapshot({
+          inFlight: mutation(1),
+          io: ioContext({
+            sync: 'saving',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          }),
+          sentMutations: [sentMutation(1)],
+          undoDepth: 1,
+        }),
       }),
       'Editor A',
     )
@@ -91,6 +99,8 @@ describe(applicableActions.name, () => {
         editorA: editorSnapshot({
           rejected: mutation(1),
           pending: [mutation(2)],
+          io: ioContext({sync: 'blocked', pending: 1}),
+          sentMutations: [sentMutation(1)],
           undoDepth: 1,
         }),
       }),
@@ -129,7 +139,11 @@ describe(applicableActions.name, () => {
 
   test('an editor out of step suggests a resync', () => {
     const actions = applicableActions(
-      worldSnapshot({editorA: editorSnapshot({outOfStep: true})}),
+      worldSnapshot({
+        editorA: editorSnapshot({
+          io: ioContext({sync: 'out of step'}),
+        }),
+      }),
       'Editor A',
     )
 
@@ -145,7 +159,14 @@ describe(applicableActions.name, () => {
   test('an editor out of step with a mutation in flight suggests a resync with its outcome', () => {
     const actions = applicableActions(
       worldSnapshot({
-        editorA: editorSnapshot({outOfStep: true, inFlight: mutation(1)}),
+        editorA: editorSnapshot({
+          inFlight: mutation(1),
+          io: ioContext({
+            sync: 'out of step',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          }),
+          sentMutations: [sentMutation(1)],
+        }),
       }),
       'Editor A',
     )
@@ -203,8 +224,14 @@ describe(applicableActions.name, () => {
 
   test('an editor in its first commit suggests loading or ending the commit', () => {
     const snapshot = worldSnapshot({
-      editorA: editorSnapshot({status: 'loading'}),
-      editorB: editorSnapshot({status: 'loading'}),
+      editorA: editorSnapshot({
+        status: 'loading',
+        io: ioContext({status: 'loading'}),
+      }),
+      editorB: editorSnapshot({
+        status: 'loading',
+        io: ioContext({status: 'loading'}),
+      }),
     })
     const actions = applicableActions(snapshot, 'Editor A')
 
@@ -248,6 +275,8 @@ describe(applicableActions.name, () => {
         editorA: editorSnapshot({
           status: 'unmounted',
           rejected: mutation(1),
+          io: ioContext({status: 'unmounted', sync: 'blocked'}),
+          sentMutations: [sentMutation(1)],
           undoDepth: 1,
         }),
       }),
@@ -307,7 +336,14 @@ describe(applicableNetworkActions.name, () => {
   test('a waiting save request suggests the server receives it', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: mutation(1)}),
+        editorA: editorSnapshot({
+          inFlight: mutation(1),
+          io: ioContext({
+            sync: 'saving',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          }),
+          sentMutations: [sentMutation(1)],
+        }),
         network: networkSnapshot({
           saveRequests: [
             {
@@ -351,7 +387,14 @@ describe(applicableNetworkActions.name, () => {
   test('a waiting failure reply suggests delivering it', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: mutation(1)}),
+        editorA: editorSnapshot({
+          inFlight: mutation(1),
+          io: ioContext({
+            sync: 'saving',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          }),
+          sentMutations: [sentMutation(1)],
+        }),
         network: networkSnapshot({
           replies: [
             {
@@ -413,7 +456,14 @@ describe(applicableNetworkActions.name, () => {
     ]
     const inFlight = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: mutation(1)}),
+        editorA: editorSnapshot({
+          inFlight: mutation(1),
+          io: ioContext({
+            sync: 'saving',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          }),
+          sentMutations: [sentMutation(1)],
+        }),
         network: networkSnapshot({lostReplies}),
       }),
     )
@@ -451,8 +501,13 @@ describe(applicableNetworkActions.name, () => {
   test('a lost feed can be reported only while the editor is ready and in step', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({outOfStep: true}),
-        editorB: editorSnapshot({status: 'loading'}),
+        editorA: editorSnapshot({
+          io: ioContext({sync: 'out of step'}),
+        }),
+        editorB: editorSnapshot({
+          status: 'loading',
+          io: ioContext({status: 'loading'}),
+        }),
       }),
     )
 
@@ -468,7 +523,14 @@ describe(applicableNetworkActions.name, () => {
   test('a dead feed delivers nothing and suggests nothing', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorA: editorSnapshot({inFlight: mutation(1), sync: 'saving'}),
+        editorA: editorSnapshot({
+          inFlight: mutation(1),
+          io: ioContext({
+            sync: 'saving',
+            inFlight: {id: 'A-1', transactionId: 'A-tk0'},
+          }),
+          sentMutations: [sentMutation(1)],
+        }),
         network: networkSnapshot({
           feeds: {'Editor A': [feedItem('A-1', 'r1', 'r2')], 'Editor B': []},
         }),
@@ -594,7 +656,10 @@ describe(applicableNetworkActions.name, () => {
   test('a transaction for a loading editor cannot be delivered', () => {
     const network = applicableNetworkActions(
       worldSnapshot({
-        editorB: editorSnapshot({status: 'loading'}),
+        editorB: editorSnapshot({
+          status: 'loading',
+          io: ioContext({status: 'loading'}),
+        }),
         network: networkSnapshot({
           feeds: {'Editor A': [], 'Editor B': [feedItem('A-1', 'r1', 'r2')]},
         }),
@@ -646,7 +711,7 @@ function editorSnapshot(overrides: Partial<EditorSnapshot>): EditorSnapshot {
     id: 'A',
     host: 'plain',
     status: 'ready',
-    sync: 'synced',
+    io: ioContext({}),
     screen: 'B: foo|',
     blocks: [],
     base: {textspec: 'B: foo', blocks: [], rev: 'r1'},
@@ -655,7 +720,6 @@ function editorSnapshot(overrides: Partial<EditorSnapshot>): EditorSnapshot {
     echoed: [],
     pending: [],
     held: [],
-    outOfStep: false,
     readOnly: false,
     undoDepth: 0,
     sentMutations: [],
@@ -674,6 +738,32 @@ function networkSnapshot(overrides: Partial<NetworkSnapshot>): NetworkSnapshot {
     carriesServerCopy: false,
     now: 0,
     ...overrides,
+  }
+}
+
+function ioContext(
+  overrides: Partial<EditorSnapshot['io']>,
+): EditorSnapshot['io'] {
+  return {
+    status: 'ready',
+    sync: 'synced',
+    rev: 'r1',
+    inFlight: undefined,
+    pending: 0,
+    ...overrides,
+  }
+}
+
+function sentMutation(
+  mutationNumber: number,
+): EditorSnapshot['sentMutations'][number] {
+  return {
+    number: mutationNumber,
+    id: `A-${mutationNumber}`,
+    transactionId: `A-tk${mutationNumber - 1}`,
+    patchCount: 1,
+    patches: [],
+    final: false,
   }
 }
 

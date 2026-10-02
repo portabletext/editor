@@ -76,11 +76,11 @@ export function EditorPanel({
               </Label>
             ) : null}
             <Label concept="sync">
-              <span aria-label={`sync: ${editor.sync}`}>
-                <Badge tone={syncTones[editor.sync]}>{editor.sync}</Badge>
+              <span aria-label={`sync: ${editor.io.sync}`}>
+                <Badge tone={syncTones[editor.io.sync]}>{editor.io.sync}</Badge>
               </span>
             </Label>
-            {editor.sync === 'saving' && savingFor !== undefined ? (
+            {editor.io.sync === 'saving' && savingFor !== undefined ? (
               <span
                 aria-label="time the mutation in flight has been out"
                 title="how long the mutation in flight has been out, on the world's clock"
@@ -241,7 +241,7 @@ function EditorDetails({
             {editor.rejected ? mutationLink(editor.rejected) : 'nothing'}
           </LedgerRow>
           <LedgerRow concept="out of step" label="out of step">
-            {editor.outOfStep ? 'yes' : 'no'}
+            {editor.io.sync === 'out of step' ? 'yes' : 'no'}
           </LedgerRow>
           <LedgerRow concept="read-only" label="read-only">
             {editor.readOnly ? 'yes' : 'no'}
