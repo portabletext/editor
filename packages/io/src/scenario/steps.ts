@@ -776,6 +776,15 @@ function userSteps() {
           run(context, name, argument),
       ),
     ]),
+    When('the block is split at the caret', (context: Context) => {
+      context.world.splitAtCaret('Editor A')
+    }),
+    When(
+      'the block is split at the caret in {editor}',
+      (context: Context, name: EditorName) => {
+        context.world.splitAtCaret(name)
+      },
+    ),
     When('undo is performed', (context: Context) => {
       context.world.undo('Editor A')
     }),

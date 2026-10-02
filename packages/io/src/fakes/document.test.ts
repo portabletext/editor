@@ -318,6 +318,47 @@ describe(createFakeDocument.name, () => {
     expect(document.toTextspec()).toEqual('B: foo;;H2: baz|')
   })
 
+  test("splitting at the caret cuts the caret's span and inserts the rest after the block, the span's key kept, as the editor's `insert.break` does", () => {
+    const keyGenerator = createTestKeyGenerator()
+    const document = createReadyDocument(
+      {keyGenerator},
+      parseTextspec({keyGenerator}, 'B: foo|bar;;B: baz'),
+    )
+    const events = listen(document)
+    const before = document.getValue()
+
+    const patches = [
+      diffMatchPatch('foobar', 'foo', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+            style: 'normal',
+          },
+        ],
+        'after',
+        [{_key: 'k0'}],
+      ),
+    ]
+
+    document.splitAtCaret()
+
+    expect(events.splice(0)).toEqual([
+      {type: 'change', origin: 'local', operations: patches, patches: patches},
+    ])
+    expect(document.toTextspec({keys: true})).toEqual(
+      'B _key="k0": foo;;B _key="k4": |bar;;B _key="k2": baz',
+    )
+    expect(applyAll(before, patches)).toEqual(document.getValue())
+  })
+
   test('deleting the caret block moves the caret to the end of the previous block', () => {
     const keyGenerator = createTestKeyGenerator()
     const document = createReadyDocument(

@@ -219,3 +219,25 @@ Feature: Concurrent edits
     Then Editor A shows "B: foox"
     And Editor A is in step
     And Editor A's sync is "synced"
+
+  Scenario: Editor B splits the block Editor A types at the end of, the split lands first, and A's word lands at the end of the first block, where A's text diff finds its context
+    Given the document is "B: foobar|"
+    When "x" is typed
+    Then Editor A shows "B: foobarx|"
+    And Editor A has sent mutation 1
+    When the caret is put after "foo" in Editor B
+    And the block is split at the caret in Editor B
+    Then Editor B shows "B: foo;;B: |bar"
+    And Editor B has sent mutation 1
+    When the server receives Editor B's mutation 1
+    And the server receives Editor A's mutation 1
+    Then the server has "B: foox;;B: bar"
+    When Editor A receives Editor B's mutation 1
+    Then Editor A shows "B: foox|;;B: bar"
+    When Editor A's mutation 1 comes back
+    Then Editor A shows "B: foox|;;B: bar"
+    And Editor A's sync is "synced"
+    And Editor A is in step
+    When Editor B's mutation 1 comes back
+    And Editor B receives Editor A's mutation 1
+    Then Editor B shows "B: foox;;B: |bar"

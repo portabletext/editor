@@ -93,6 +93,14 @@ export type FakeDocument = EditorForIo & {
   putCaretAfter: (text: string) => void
   insertBlock: (textspec: string) => void
   deleteBlock: (text: string) => void
+  /**
+   * Splits the caret's block at the caret, as the editor's `insert.break`
+   * does: a `diffMatchPatch` that cuts the caret's span at the caret, an
+   * `unset` of each child after it, and an `insert` after the block of a new
+   * block with the rest. The rest of the caret's span keeps the span's key,
+   * and the caret goes to the start of the new block.
+   */
+  splitAtCaret: () => void
   applyLocalEdit: (patches: Array<Patch>) => void
 }
 
@@ -438,6 +446,58 @@ export function createFakeDocument(
     return patches
   }
 
+  function splitAtCaret(): Array<Patch> {
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
+    const {span, offset} = locateSpan(block, caret.offset)
+    const spanIndex = block.children.findIndex(
+      (child) => child._key === span._key,
+    )
+    const head = span.text.slice(0, offset)
+    const movedChildren = block.children.slice(spanIndex + 1)
+    const newBlock: PortableTextTextBlock = {
+      ...block,
+      _key: generateUniqueKey(
+        context.keyGenerator,
+        new Set(value.map((candidate) => candidate._key)),
+      ),
+      children: [{...span, text: span.text.slice(offset)}, ...movedChildren],
+    }
+    const blockPath = [{_key: block._key}]
+    const patches = withPlaceholderCreation([
+      ...(head === span.text
+        ? []
+        : [
+            diffMatchPatch(span.text, head, [
+              ...blockPath,
+              'children',
+              {_key: span._key},
+              'text',
+            ]),
+          ]),
+      ...movedChildren.map((child) =>
+        unset([...blockPath, 'children', {_key: child._key}]),
+      ),
+      insert([newBlock], 'after', blockPath),
+    ])
+
+    value = [
+      ...value.slice(0, blockIndex),
+      {
+        ...block,
+        children: [
+          ...block.children.slice(0, spanIndex),
+          {...span, text: head},
+        ],
+      },
+      newBlock,
+      ...value.slice(blockIndex + 1),
+    ]
+    caret = {blockKey: newBlock._key, offset: 0}
+
+    return patches
+  }
+
   function deleteBlock(text: string): Array<Patch> {
     const matches = value.filter((block) => getTextBlock(block).text === text)
 
@@ -525,6 +585,7 @@ export function createFakeDocument(
     },
     insertBlock: (textspec) => act(() => insertBlock(textspec)),
     deleteBlock: (text) => act(() => deleteBlock(text)),
+    splitAtCaret: () => act(splitAtCaret),
     applyLocalEdit: (patches) =>
       act(() => {
         applyPatches(patches)

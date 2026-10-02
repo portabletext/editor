@@ -946,6 +946,9 @@ export function createWorld(
     deleteBlock: (name: EditorName, text: string) => {
       getEditor(name).document.deleteBlock(text)
     },
+    splitAtCaret: (name: EditorName) => {
+      getEditor(name).document.splitAtCaret()
+    },
     undo: (name: EditorName) => {
       getEditor(name).io.undo()
     },
