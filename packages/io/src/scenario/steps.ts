@@ -576,7 +576,7 @@ export const stepDefinitions = [
     (context: Context, name: EditorName, sync: ExpectedSync) => {
       checkEqual(
         `${name}'s sync`,
-        context.world.getEditor(name).io.getSync(),
+        context.world.getEditor(name).io.getSnapshot().context.sync,
         sync,
       )
     },

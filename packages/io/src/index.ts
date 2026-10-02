@@ -3,8 +3,8 @@ export type {
   Clock,
   Io,
   IoEvent,
-  IoLedger,
-  IoSentBatch,
+  IoMessage,
+  IoSnapshot,
   IoStatus,
   IoSync,
 } from './protocol/io'

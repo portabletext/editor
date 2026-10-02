@@ -154,11 +154,7 @@ export function createPassThroughHost({
   let coveredRevs = new Set<string>()
   const previousRevs = new Map<string, string | undefined>()
 
-  io.on((event) => {
-    if (event.type !== 'mutation') {
-      return
-    }
-
+  io.on('mutation', (event) => {
     const {type: _type, ...batch} = event
     batches.set(batch.id, batch)
 
@@ -248,7 +244,8 @@ export function createPassThroughHost({
       inFlightBatchId = undefined
     }
 
-    io.transaction({
+    io.send({
+      type: 'transaction',
       transactionId: transaction.transactionId,
       previousRev: transaction.previousRev,
       resultRev: transaction.resultRev,
@@ -284,7 +281,7 @@ export function createPassThroughHost({
       inFlightBatchId = undefined
     }
 
-    io.mutationRejected({id: batchId})
+    io.send({type: 'mutation rejected', id: batchId})
   }
 
   function findOutcome(batchId: string): 'applied' | 'not applied' {
@@ -328,7 +325,11 @@ export function createPassThroughHost({
   function formRequest(batchId: string, request: FrozenRequest): FrozenRequest {
     const frozen = freezeRequest(request)
     requests.set(batchId, frozen)
-    io.mutationSent({id: batchId, transactionId: frozen.transactionId})
+    io.send({
+      type: 'mutation sent',
+      id: batchId,
+      transactionId: frozen.transactionId,
+    })
 
     return frozen
   }
@@ -399,10 +400,10 @@ export function createPassThroughHost({
       return answer
     },
     feedLost: () => {
-      io.feedLost()
+      io.send({type: 'feed lost'})
     },
     load: () => {
-      io.load(fetchCoveredCopy())
+      io.send({type: 'load', ...fetchCoveredCopy()})
     },
     resync: ({discardUnsent, outcomeOf}) => {
       const outcomes =
@@ -414,7 +415,8 @@ export function createPassThroughHost({
         inFlightBatchId = undefined
       }
 
-      io.resync({
+      io.send({
+        type: 'resync',
         ...fetchCoveredCopy(),
         ...(discardUnsent ? {discardUnsent: true as const} : {}),
         ...(outcomes ? {outcomes} : {}),

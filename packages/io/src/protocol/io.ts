@@ -51,6 +51,62 @@ export type IoEvent =
   | {type: 'warning'; message: string}
 
 /**
+ * What the host tells io: the first content, a transaction from the feed,
+ * what became of a batch, a lost feed, a fresh copy, and that io is done.
+ * `load` is accepted only before the editor's `ready`, and a second `load`
+ * replaces the first. `close` does what the editor's `closing` does.
+ */
+export type IoMessage =
+  | ({type: 'load'} & Load)
+  | ({type: 'transaction'} & Transaction)
+  | ({type: 'mutation sent'} & MutationSent)
+  | ({type: 'mutation rejected'} & MutationRejected)
+  | {type: 'feed lost'}
+  | ({type: 'resync'} & Resync)
+  | {type: 'close'}
+
+/**
+ * io's state, shaped like the editor's snapshot. `rev` is the base's
+ * revision, `inFlight` the batch in flight with the transaction ID it is
+ * saved under, and `pending` how many local changes wait to be sent.
+ */
+export type IoSnapshot = {
+  context: {
+    status: IoStatus
+    sync: IoSync
+    rev: string | undefined
+    inFlight: {id: string; transactionId: string} | undefined
+    pending: number
+  }
+}
+
+/**
+ * io as a store, shaped like the editor: `getSnapshot` returns the same
+ * object until something in it changes, `subscribe` calls `next` after
+ * every change, `on` listens to what io tells the host, and `send` takes
+ * what the host tells io.
+ */
+export type Io = {
+  getSnapshot: () => IoSnapshot
+  subscribe: (
+    observer:
+      | {
+          next?: (snapshot: IoSnapshot) => void
+          error?: (error: unknown) => void
+          complete?: () => void
+        }
+      | ((snapshot: IoSnapshot) => void),
+  ) => {unsubscribe: () => void}
+  on: <TType extends IoEvent['type'] | '*'>(
+    type: TType,
+    listener: (
+      event: IoEvent & (TType extends '*' ? unknown : {type: TType}),
+    ) => void,
+  ) => {unsubscribe: () => void}
+  send: (message: IoMessage) => void
+}
+
+/**
  * A batch the editor has sent and the base doesn't hold yet.
  * `transactionIds` holds the proposed transaction ID until the host names
  * another with `mutation sent`.
@@ -81,36 +137,43 @@ export type IoLedger = {
   undoDepth: number
 }
 
-export type Io = {
-  getStatus: () => IoStatus
-  getSync: () => IoSync
+/**
+ * What io holds beyond its snapshot, for the model's tests and world. The
+ * base and the working copy, the base with the unconfirmed batches and the
+ * pending changes applied, without the blocks that aren't objects: what the
+ * editor shows, the placeholder aside. `undo` reverts the last of the
+ * editor's own changes that undo can still revert, through
+ * `applyLocalEdit`, as a user action.
+ */
+export type IoInternals = {
   getBase: () => Load
-  /**
-   * The base with the unconfirmed batches and the pending changes applied,
-   * without the blocks that aren't objects: what the editor shows, the
-   * placeholder aside.
-   */
   getWorkingCopy: () => Array<PortableTextBlock> | undefined
   inspect: () => IoLedger
-  on: (listener: (event: IoEvent) => void) => () => void
-
-  /**
-   * The first content, accepted only before the editor's `ready`. A second
-   * `load` replaces the first.
-   */
-  load: (load: Load) => void
-  resync: (resync: Resync) => void
-  transaction: (transaction: Transaction) => void
-  mutationSent: (mutationSent: MutationSent) => void
-  mutationRejected: (mutationRejected: MutationRejected) => void
-  feedLost: () => void
-  /**
-   * Reverts the last of the editor's own changes that undo can still revert,
-   * through `applyLocalEdit`, as a user action. The undo ledger lives here,
-   * driven by the editor's local changes and the transactions, as a stand-in
-   * for the editor's own history until that is designed.
-   */
   undo: () => void
+}
+
+const internalsByIo = new WeakMap<Io, IoInternals>()
+
+export function getIoInternals(io: Io): IoInternals {
+  const internals = internalsByIo.get(io)
+
+  if (!internals) {
+    throw new Error('Not an io made by `createIo`')
+  }
+
+  return internals
+}
+
+/** `io` with `extension` on top, sharing its internals. */
+export function extendIo<TExtension extends object>(
+  io: Io,
+  extension: TExtension,
+): Io & TExtension {
+  const extended = {...io, ...extension}
+
+  internalsByIo.set(extended, getIoInternals(io))
+
+  return extended
 }
 
 type SentBatch = {
@@ -191,6 +254,7 @@ export function createIo(options: {
 }): Io {
   const {editor, keyGenerator, clock, applyLocalEdit} = options
   const listeners = new Set<(event: IoEvent) => void>()
+  const observers = new Set<(snapshot: IoSnapshot) => void>()
   const emittedBatchIds = new Set<string>()
 
   let status: IoStatus = 'loading'
@@ -207,14 +271,104 @@ export function createIo(options: {
   let cancelInFlightWarning: (() => void) | undefined
   let reverting: {applied: boolean} | undefined
   const droppedPatches = new WeakSet<Patch>()
+  let snapshot: IoSnapshot = {context: readContext()}
+  let publishedSnapshot = snapshot
 
-  editor.on('ready', becomeReady)
-  editor.on('closing', close)
-  editor.on('change', (event) => {
-    if (event.origin === 'local') {
-      takeLocalChange(event)
+  const editorSubscriptions = [
+    editor.on('ready', () => {
+      becomeReady()
+      publish()
+    }),
+    editor.on('closing', () => {
+      close()
+      publish()
+    }),
+    editor.on('change', (event) => {
+      if (event.origin === 'local') {
+        takeLocalChange(event)
+        publish()
+      }
+    }),
+  ]
+
+  function readContext(): IoSnapshot['context'] {
+    const transactionId = inFlight
+      ? [...inFlight.transactionIds].at(-1)
+      : undefined
+
+    return {
+      status,
+      sync: getSync(),
+      rev: base.rev,
+      inFlight:
+        inFlight && transactionId !== undefined
+          ? {id: inFlight.id, transactionId}
+          : undefined,
+      pending: pending.length,
     }
-  })
+  }
+
+  function getSnapshot(): IoSnapshot {
+    const context = readContext()
+
+    if (!isEqual(context, snapshot.context)) {
+      snapshot = {context}
+    }
+
+    return snapshot
+  }
+
+  function publish() {
+    const current = getSnapshot()
+
+    if (current === publishedSnapshot) {
+      return
+    }
+
+    publishedSnapshot = current
+
+    for (const observer of observers) {
+      observer(current)
+    }
+  }
+
+  function receive(message: IoMessage) {
+    switch (message.type) {
+      case 'load': {
+        const {type: _type, ...incoming} = message
+        load(incoming)
+        break
+      }
+      case 'transaction': {
+        const {type: _type, ...incoming} = message
+        transaction(incoming)
+        break
+      }
+      case 'mutation sent': {
+        const {type: _type, ...incoming} = message
+        mutationSent(incoming)
+        break
+      }
+      case 'mutation rejected': {
+        const {type: _type, ...incoming} = message
+        mutationRejected(incoming)
+        break
+      }
+      case 'feed lost':
+        feedLost()
+        break
+      case 'resync': {
+        const {type: _type, ...incoming} = message
+        resync(incoming)
+        break
+      }
+      case 'close':
+        close()
+        break
+    }
+
+    publish()
+  }
 
   function emit(event: IoEvent) {
     for (const listener of listeners) {
@@ -684,6 +838,7 @@ export function createIo(options: {
           reason: 'out of order',
           transactionId: oldest.transaction.transactionId,
         })
+        publish()
       },
     )
   }
@@ -970,6 +1125,10 @@ export function createIo(options: {
     status = 'unmounted'
     releaseHeld()
     stopInFlightWarning()
+
+    for (const subscription of editorSubscriptions) {
+      subscription.unsubscribe()
+    }
   }
 
   function flush() {
@@ -1187,9 +1346,42 @@ export function createIo(options: {
     return inFlight || pending.length > 0 ? 'saving' : 'synced'
   }
 
-  return {
-    getStatus: () => status,
-    getSync,
+  const io: Io = {
+    getSnapshot,
+    subscribe: (observer) => {
+      const next =
+        typeof observer === 'function'
+          ? observer
+          : observer.next?.bind(observer)
+      const callNext = (current: IoSnapshot) => next?.(current)
+
+      observers.add(callNext)
+
+      return {
+        unsubscribe: () => {
+          observers.delete(callNext)
+        },
+      }
+    },
+    on: (type, listener) => {
+      const listenToType = (event: IoEvent) => {
+        if (isOfType(event, type)) {
+          listener(event)
+        }
+      }
+
+      listeners.add(listenToType)
+
+      return {
+        unsubscribe: () => {
+          listeners.delete(listenToType)
+        },
+      }
+    },
+    send: receive,
+  }
+
+  internalsByIo.set(io, {
     getBase: () => base,
     getWorkingCopy: () => deriveScreen(),
     inspect: () => ({
@@ -1209,20 +1401,20 @@ export function createIo(options: {
       outOfStep,
       undoDepth: history.length,
     }),
-    on: (listener) => {
-      listeners.add(listener)
-      return () => {
-        listeners.delete(listener)
-      }
+    undo: () => {
+      undo()
+      publish()
     },
-    load,
-    resync,
-    transaction,
-    mutationSent,
-    mutationRejected,
-    feedLost,
-    undo,
-  }
+  })
+
+  return io
+}
+
+function isOfType<TType extends IoEvent['type'] | '*'>(
+  event: IoEvent,
+  type: TType,
+): event is IoEvent & (TType extends '*' ? unknown : {type: TType}) {
+  return type === '*' || event.type === type
 }
 
 function describeSentBatch(batch: SentBatch): IoSentBatch {

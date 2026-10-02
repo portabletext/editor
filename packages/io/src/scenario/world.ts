@@ -24,8 +24,11 @@ import {
 } from '../protocol/host'
 import {
   createIo,
+  extendIo,
+  getIoInternals,
   type Clock,
   type Io,
+  type IoMessage,
   type IoSentBatch,
   type IoSync,
 } from '../protocol/io'
@@ -261,10 +264,13 @@ export type WorldSnapshot = {
   network: NetworkSnapshot | null
 }
 
+/** io with the model's undo, a stand-in for the editor's history. */
+export type ModelIo = Io & {undo: () => void}
+
 export type WorldEditor = {
   /** The fake editor, which the user steps act on. */
   document: FakeDocument
-  io: Io
+  io: ModelIo
   host: PassThroughHost
   heard: Heard
   /** Every `mutation sent` the host gave the editor. */
@@ -509,8 +515,9 @@ export function createWorld(
   function snapshotEditor(name: EditorName): EditorSnapshot {
     const {document, io, host, heard, messages} = getEditor(name)
     const {server} = getSetup()
-    const ledger = io.inspect()
-    const base = io.getBase()
+    const internals = getIoInternals(io)
+    const ledger = internals.inspect()
+    const base = internals.getBase()
     const describeBatch = (batch: IoSentBatch): BatchSnapshot => ({
       batchNumber: locateBatch(batch.id).batchNumber,
       transactionIds: batch.transactionIds,
@@ -522,7 +529,7 @@ export function createWorld(
       id: name === 'Editor A' ? 'A' : 'B',
       host: hostShape,
       status: document.getStatus(),
-      sync: io.getSync(),
+      sync: io.getSnapshot().context.sync,
       screen: document.toTextspec(),
       blocks: document.getValue(),
       base: {
@@ -979,43 +986,19 @@ function createWorldEditor({
   const passThroughHost = createPassThroughHost({
     io: {
       ...io,
-      load: (load) => {
-        messages.push({route: 'host to io', type: 'load', ...load})
-        io.load(load)
-      },
-      resync: (resync) => {
-        messages.push({route: 'host to io', type: 'resync', ...resync})
-        io.resync(resync)
-      },
-      transaction: (transaction) => {
-        messages.push({
-          route: 'host to io',
-          type: 'transaction',
-          via: arrivingVia,
-          ...transaction,
-        })
-        io.transaction(transaction)
-      },
-      mutationSent: (mutationSent) => {
-        mutationsSent.push(mutationSent)
-        messages.push({
-          route: 'host to io',
-          type: 'mutation sent',
-          ...mutationSent,
-        })
-        io.mutationSent(mutationSent)
-      },
-      mutationRejected: (mutationRejected) => {
-        messages.push({
-          route: 'host to io',
-          type: 'mutation rejected',
-          ...mutationRejected,
-        })
-        io.mutationRejected(mutationRejected)
-      },
-      feedLost: () => {
-        messages.push({route: 'host to io', type: 'feed lost'})
-        io.feedLost()
+      send: (message) => {
+        const pathMessage = toPathMessage(message, arrivingVia)
+
+        if (pathMessage) {
+          messages.push(pathMessage)
+        }
+
+        if (message.type === 'mutation sent') {
+          const {type: _type, ...mutationSent} = message
+          mutationsSent.push(mutationSent)
+        }
+
+        io.send(message)
       },
     },
     save: (batch) => network.send(name, batch),
@@ -1101,7 +1084,7 @@ export function createEditorWithIo({
   clock: Clock
 }): {
   document: FakeDocument
-  io: Io
+  io: ModelIo
   heard: Heard
   received: Array<EditorMessageForIo>
   messages: Array<PathMessage>
@@ -1137,7 +1120,7 @@ export function createEditorWithIo({
       treeMismatches.push(mismatch)
     }
   }
-  const io: Io = createIo({
+  const plainIo = createIo({
     id,
     editor: {
       on: document.on,
@@ -1152,6 +1135,9 @@ export function createEditorWithIo({
     clock,
     applyLocalEdit: document.applyLocalEdit,
   })
+  const io: ModelIo = extendIo(plainIo, {
+    undo: getIoInternals(plainIo).undo,
+  })
 
   document.on('change', (event) => {
     if (event.origin === 'local') {
@@ -1159,7 +1145,7 @@ export function createEditorWithIo({
     }
   })
 
-  io.on((event) => {
+  io.on('*', (event) => {
     switch (event.type) {
       case 'mutation': {
         const {type: _type, ...batch} = event
@@ -1214,7 +1200,7 @@ function findTreeMismatch(
     placeholderKey !== undefined && isPlaceholder(value, placeholderKey)
       ? []
       : value
-  const workingCopy = io.getWorkingCopy() ?? []
+  const workingCopy = getIoInternals(io).getWorkingCopy() ?? []
 
   return isEqual(tree, workingCopy)
     ? undefined
@@ -1308,6 +1294,21 @@ function corruptionPatches(
     }
     case 'string':
       return [set(corruption.value, path)]
+  }
+}
+
+/** A host message as the editor's path records it. */
+function toPathMessage(
+  message: IoMessage,
+  via: 'feed' | 'save reply',
+): PathMessage | undefined {
+  switch (message.type) {
+    case 'transaction':
+      return {route: 'host to io', via, ...message}
+    case 'close':
+      return undefined
+    default:
+      return {route: 'host to io', ...message}
   }
 }
 

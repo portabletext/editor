@@ -17,6 +17,46 @@ This package is private. It exists to prove the host contract before it lands in
 | The server                                                                                                                                                                                                                                                                                                                                                                 | `src/fakes/server.ts`          | Fake. One document with a revision counter. Records a transaction for every batch it receives, changed or not, as Content Lake does, stores whatever the patches leave behind, malformed blocks included, and fails the next request with the status a step injects                                                           |
 | The network                                                                                                                                                                                                                                                                                                                                                                | `src/fakes/network.ts`         | Fake. Queues that only the test steps drain, and a virtual clock. Per world, it carries each transaction with the field as the server held it right after                                                                                                                                                                     |
 
+## API
+
+`createIo` returns io as a store, shaped like the editor: `getSnapshot`, `subscribe`, `on` and `send`, and nothing else.
+
+```ts
+type Io = {
+  getSnapshot: () => IoSnapshot
+  subscribe: (
+    observer:
+      | {
+          next?: (snapshot: IoSnapshot) => void
+          error?: (error: unknown) => void
+          complete?: () => void
+        }
+      | ((snapshot: IoSnapshot) => void),
+  ) => {unsubscribe: () => void}
+  on: <TType extends IoEvent['type'] | '*'>(
+    type: TType,
+    listener: (
+      event: IoEvent & (TType extends '*' ? unknown : {type: TType}),
+    ) => void,
+  ) => {unsubscribe: () => void}
+  send: (message: IoMessage) => void
+}
+
+type IoSnapshot = {
+  context: {
+    status: 'loading' | 'ready' | 'unmounted'
+    sync: 'synced' | 'saving' | 'blocked' | 'out of step'
+    rev: string | undefined
+    inFlight: {id: string; transactionId: string} | undefined
+    pending: number
+  }
+}
+```
+
+`getSnapshot` returns the same object until something in the snapshot changes, and `subscribe` calls `next` once after every change, so `useSyncExternalStore` and `useSelector` from `@xstate/react` work against io as they work against the editor. `status` is `'loading'` until the editor's `ready` and `'unmounted'` after its `closing` or the host's `close`. `sync` is `'saving'` while a batch is in flight or changes are pending, `'blocked'` after a rejection and `'out of step'` after an error or a lost feed, both until the next resync. `rev` is the base's revision, `inFlight` the batch in flight and the transaction ID it is saved under, and `pending` how many local changes wait to be sent.
+
+`on` listens to what io tells the host: `mutation` (a batch to save), `error` (io is out of step until a resync), `work dropped` (the user's unsaved work io gave up on) and `warning` (a message for the host's log), or all of them with `'*'`. `send` takes what the host tells io: `load`, `transaction`, `mutation sent`, `mutation rejected`, `feed lost`, `resync` and `close`. `close` does what the editor's `closing` does: io sends the final batch, or drops the pending changes while sending is blocked or io is out of step, and stops.
+
 ## The editor seam
 
 `createIo` takes an editor as the structural type `EditorForIo`, two functions and nothing else:

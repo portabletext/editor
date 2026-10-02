@@ -5,6 +5,7 @@ import {parseTextspec} from '../fakes/document'
 import {createFakeNetwork} from '../fakes/network'
 import {createEditorWithIo, createWorld} from '../scenario/world'
 import {createPassThroughHost, type RequestFailure} from './host'
+import {getIoInternals} from './io'
 import type {Load, MutationBatch, MutationSent, Transaction} from './types'
 
 describe(createPassThroughHost.name, () => {
@@ -37,12 +38,12 @@ describe(createPassThroughHost.name, () => {
     clock.advance(10_000)
 
     expect(heard.errors).toEqual([])
-    expect(editor.getBase().rev).toEqual('r2')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r2')
     expect(document.toTextspec()).toEqual('H1: foo|')
 
     host.forward(nextTransaction)
 
-    expect(editor.getBase().rev).toEqual('r3')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r3')
     expect(document.toTextspec()).toEqual('H2: foo|')
   })
 
@@ -76,7 +77,7 @@ describe(createPassThroughHost.name, () => {
     clock.advance(10_000)
 
     expect(heard.errors).toEqual([])
-    expect(editor.getBase().rev).toEqual('r3')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r3')
     expect(document.toTextspec()).toEqual('H2: foo|')
   })
 
@@ -97,7 +98,7 @@ describe(createPassThroughHost.name, () => {
     })
 
     expect(heard.errors).toEqual([])
-    expect(editor.getBase().rev).toEqual('r3')
+    expect(getIoInternals(editor).getBase().rev).toEqual('r3')
     expect(document.toTextspec()).toEqual('H2: foo|')
   })
 
@@ -110,7 +111,7 @@ describe(createPassThroughHost.name, () => {
 
     expect({
       transactionId: host.getTransactionId('A-1'),
-      inFlight: editor.inspect().inFlight,
+      inFlight: getIoInternals(editor).inspect().inFlight,
       mutationsSent,
       warnings: heard.warnings,
     }).toEqual({
@@ -137,7 +138,8 @@ describe(createPassThroughHost.name, () => {
       )
 
       document.type('x')
-      const transactionIdsBefore = editor.inspect().inFlight?.transactionIds
+      const transactionIdsBefore =
+        getIoInternals(editor).inspect().inFlight?.transactionIds
 
       if (folded) {
         host.foldIntoRequest('A-1', {
@@ -150,7 +152,8 @@ describe(createPassThroughHost.name, () => {
 
       return {
         transactionIdsBefore,
-        transactionIdsAfter: editor.inspect().inFlight?.transactionIds,
+        transactionIdsAfter:
+          getIoInternals(editor).inspect().inFlight?.transactionIds,
         savedAs: host.getTransactionId('A-1'),
         mutationsSent,
         warnings: heard.warnings,
@@ -191,7 +194,8 @@ describe(createPassThroughHost.name, () => {
         answer: host.retry('A-1'),
         resubmitted,
         warnings: heard.warnings,
-        transactionIds: editor.inspect().inFlight?.transactionIds,
+        transactionIds:
+          getIoInternals(editor).inspect().inFlight?.transactionIds,
       }
     })
 
@@ -225,8 +229,8 @@ describe(createPassThroughHost.name, () => {
 
       return {
         failure,
-        sync: editor.getSync(),
-        rejected: editor.inspect().rejected,
+        sync: editor.getSnapshot().context.sync,
+        rejected: getIoInternals(editor).inspect().rejected,
         resubmitted,
         warnings: heard.warnings,
       }
@@ -389,10 +393,13 @@ describe(createPassThroughHost.name, () => {
         failures.push(404)
       }
 
-      const resync = editor.resync
-      editor.resync = (incoming) => {
-        outcomes.push(incoming.outcomes)
-        resync(incoming)
+      const {send} = editor
+      editor.send = (message) => {
+        if (message.type === 'resync') {
+          outcomes.push(message.outcomes)
+        }
+
+        send(message)
       }
       host.resync({discardUnsent: false, outcomeOf: 'A-1'})
 
@@ -444,9 +451,9 @@ describe(createPassThroughHost.name, () => {
       })
 
       return {
-        sync: editor.getSync(),
-        rev: editor.getBase().rev,
-        inFlight: editor.inspect().inFlight?.id,
+        sync: editor.getSnapshot().context.sync,
+        rev: getIoInternals(editor).getBase().rev,
+        inFlight: getIoInternals(editor).inspect().inFlight?.id,
       }
     })
 
@@ -475,7 +482,7 @@ describe(createPassThroughHost.name, () => {
     expect({
       final: heard.mutations[1].final,
       warnings: heard.warnings,
-      rev: editor.getBase().rev,
+      rev: getIoInternals(editor).getBase().rev,
     }).toEqual({final: true, warnings: [], rev: 'r1'})
   })
 
@@ -571,10 +578,14 @@ function createHostedEditor(
   const transactionHistory = new Set<string>()
   const failures: Array<RequestFailure> = []
   const mutationsSent: Array<MutationSent> = []
-  const {mutationSent} = editor
-  editor.mutationSent = (incoming) => {
-    mutationsSent.push(incoming)
-    mutationSent(incoming)
+  const {send} = editor
+  editor.send = (message) => {
+    if (message.type === 'mutation sent') {
+      const {type: _type, ...mutationSent} = message
+      mutationsSent.push(mutationSent)
+    }
+
+    send(message)
   }
   const host = createPassThroughHost({
     io: editor,
