@@ -126,6 +126,7 @@ src/
   testing.ts            the fakes, the world, the step library and the runner
   protocol/
     io.ts               the protocol's editor side, speaking EditorForIo
+    apply.ts            the keyed instructions io authors for the editor's tree
     host.ts             the model host (plain, folding, self-confirming), as a reference host
     types.ts            the host messages and events, and EditorForIo
     content-lake.ts     applyAll with Content Lake semantics, and hasTarget
