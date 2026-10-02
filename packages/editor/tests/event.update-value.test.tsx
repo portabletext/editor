@@ -1,12 +1,21 @@
+import {
+  applyAll,
+  diffMatchPatch,
+  insert,
+  setIfMissing,
+} from '@portabletext/patches'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import {useEffect, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
   defineSchema,
   type EditorEmittedEvent,
+  useEditor,
   type MutationEvent,
   type Patch,
+  type PortableTextBlock,
 } from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
@@ -2728,3 +2737,595 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     })
   })
 })
+
+describe('event.update value: empty echoes of a local clear', () => {
+  test('Scenario: Undoing a lonely block object deletion after the host echoed `[]`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const image = {_type: 'image', _key: keyGenerator()}
+    const echoes: Array<Array<PortableTextBlock> | undefined> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [image],
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      children: (
+        <HostValueMirror
+          initialValue={[image]}
+          emptyValue={[]}
+          echoes={echoes}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(echoes).toEqual([[image], []])
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k3',
+        children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([image])
+      expect(echoes).toEqual([[image], [], [image]])
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k3',
+          children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: The host echoing `[]` after a lonely block object deletion emits no events', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const image = {_type: 'image', _key: keyGenerator()}
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [image],
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            events.push(event)
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(events.at(-1)).toEqual({
+        type: 'mutation',
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}], origin: 'local'},
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: [],
+      })
+    })
+
+    const eventCountBeforeEcho = events.length
+    editor.send({type: 'update value', value: []})
+    editor.send({type: 'history.undo'})
+
+    const placeholder = {
+      _type: 'block',
+      _key: 'k3',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+    }
+
+    await vi.waitFor(() => {
+      expect(events.slice(eventCountBeforeEcho)).toEqual([
+        {
+          type: 'operation',
+          operation: {
+            type: 'unset',
+            path: [{_key: 'k3'}],
+            inverse: {
+              type: 'insert',
+              path: [0],
+              node: placeholder,
+              position: 'before',
+            },
+          },
+          origin: 'local',
+        },
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert',
+            path: [0],
+            node: image,
+            position: 'before',
+            inverse: {type: 'unset', path: [{_key: 'k0'}]},
+          },
+          origin: 'local',
+        },
+        {
+          type: 'patch',
+          patch: {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            items: [placeholder],
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {type: 'unset', path: [{_key: 'k3'}], origin: 'local'},
+        },
+        {
+          type: 'patch',
+          patch: {type: 'unset', path: [], origin: 'local'},
+        },
+        {
+          type: 'patch',
+          patch: {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            items: [image],
+            origin: 'local',
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k0'}], offset: 0},
+            focus: {path: [{_key: 'k0'}], offset: 0},
+            backward: false,
+          },
+        },
+        {
+          type: 'mutation',
+          patches: [
+            {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              items: [placeholder],
+              origin: 'local',
+            },
+            {type: 'unset', path: [{_key: 'k3'}], origin: 'local'},
+            {type: 'unset', path: [], origin: 'local'},
+            {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              items: [image],
+              origin: 'local',
+            },
+          ],
+          value: [image],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Undo does nothing after a remote `unset` of the field following a lonely block object deletion', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const image = {_type: 'image', _key: keyGenerator()}
+    const mutations: Array<MutationEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [image],
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(mutations).toEqual([
+        {
+          type: 'mutation',
+          patches: [
+            {type: 'unset', path: [{_key: 'k0'}], origin: 'local'},
+            {type: 'unset', path: [], origin: 'local'},
+          ],
+          value: [],
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [{type: 'unset', path: [], origin: 'remote'}],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k5',
+          children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k5'}, 'children', {_key: 'k6'}], offset: 0},
+      focus: {path: [{_key: 'k5'}, 'children', {_key: 'k6'}], offset: 0},
+      backward: false,
+    })
+  })
+
+  test('Scenario: Undoing a lonely block object deletion after the host echoed `undefined`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const image = {_type: 'image', _key: keyGenerator()}
+    const echoes: Array<Array<PortableTextBlock> | undefined> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [image],
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      children: (
+        <HostValueMirror
+          initialValue={[image]}
+          emptyValue={undefined}
+          echoes={echoes}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(echoes).toEqual([[image], undefined])
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k3',
+        children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([image])
+      expect(echoes).toEqual([[image], undefined, [image]])
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k3',
+          children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: A value restored by the host after an empty echo still syncs', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const image = {_type: 'image', _key: keyGenerator()}
+    const echoes: Array<Array<PortableTextBlock> | undefined> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [image],
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      children: (
+        <HostValueMirror
+          initialValue={[image]}
+          emptyValue={[]}
+          echoes={echoes}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(echoes).toEqual([[image], []])
+    })
+
+    editor.send({type: 'update value', value: [image]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([image])
+    })
+  })
+
+  test('Scenario: Clearing a persisted empty text block with `[]` rebuilds the field on the next keystroke', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const emptyBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [{_type: 'span', _key: keyGenerator(), text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    let foreignValue: Array<PortableTextBlock> | undefined = [emptyBlock]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+              foreignValue = applyAll(foreignValue, [patch])
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: foreignValue})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([emptyBlock])
+    })
+
+    foreignValue = []
+    editor.send({type: 'update value', value: foreignValue})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'f')
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [{_type: 'span', _key: 'k5', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k4',
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        diffMatchPatch('', 'f', [
+          {_key: 'k4'},
+          'children',
+          {_key: 'k5'},
+          'text',
+        ]),
+      ])
+    })
+  })
+
+  test('Scenario: An empty echo keeps a placeholder recorded by a stale echo after a local clear', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      },
+    })
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(mutations.at(-1)?.patches.at(-1)).toEqual({
+        type: 'unset',
+        path: [],
+        origin: 'local',
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+
+    editor.send({type: 'update value', value: []})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+
+    const patchCountBeforeRetype = patches.length
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(patches.slice(patchCountBeforeRetype)).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        diffMatchPatch('', 'b', [
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+          'text',
+        ]),
+      ])
+    })
+  })
+})
+
+function HostValueMirror(props: {
+  initialValue: Array<PortableTextBlock>
+  emptyValue: Array<PortableTextBlock> | undefined
+  echoes: Array<Array<PortableTextBlock> | undefined>
+}) {
+  const editor = useEditor()
+  const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
+    props.initialValue,
+  )
+  const {echoes} = props
+
+  useEffect(() => {
+    editor.send({type: 'update value', value})
+    echoes.push(value)
+  }, [editor, value, echoes])
+
+  return (
+    <EventListenerPlugin
+      on={(event) => {
+        if (event.type === 'mutation') {
+          setValue(
+            event.value && event.value.length > 0
+              ? event.value
+              : props.emptyValue,
+          )
+        }
+      }}
+    />
+  )
+}
