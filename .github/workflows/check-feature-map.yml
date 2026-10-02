@@ -1,0 +1,23 @@
+name: check-feature-map
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check-feature-map:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Test the feature map checker
+        run: pnpm test:feature-map
+
+      - name: Check feature map paths
+        run: pnpm check:feature-map
