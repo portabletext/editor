@@ -13,10 +13,11 @@ export type SpanEntry = {
 }
 
 /**
- * Find the spans nearest to `path` in document order: the last span
- * strictly before it (`previousSpan`) and the first span strictly after
- * it (`nextSpan`). `path` itself is never returned, but its descendants
- * come after it in document order, so they are `nextSpan` candidates.
+ * Find the spans nearest to `path` in document order, outside the
+ * subtree at `path`: the last span before it (`previousSpan`) and the
+ * first span after its subtree (`nextSpan`). Neither is ever `path`
+ * itself or one of its descendants, so both stay valid once the node at
+ * `path` is removed.
  *
  * Anchored replacement for scanning the whole document with `getNodes`
  * from the start: walks outward from `path` level by level (siblings
@@ -49,14 +50,6 @@ function findNextSpan(
   snapshot: TraversalSnapshot,
   path: Path,
 ): SpanEntry | undefined {
-  // Descendants of `path` come first in document order after `path`
-  // itself, so the node's own subtree is the nearest place a next span
-  // can live.
-  const descendantSpan = firstSpanIn(snapshot, path)
-  if (descendantSpan) {
-    return descendantSpan
-  }
-
   let currentPath = path
   while (currentPath.length > 0) {
     const parentPath = nodeParentPath(currentPath)
@@ -133,7 +126,7 @@ function findPreviousSpan(
  * First span inside the subtree at `path`, in document order. Bounded
  * by the subtree size.
  */
-function firstSpanIn(
+export function firstSpanIn(
   snapshot: TraversalSnapshot,
   path: Path,
 ): SpanEntry | undefined {

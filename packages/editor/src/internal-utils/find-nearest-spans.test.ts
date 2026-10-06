@@ -2,6 +2,7 @@ import {compileSchema, defineSchema, isSpan} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import type {Path} from '../engine/interfaces/path'
 import {comparePaths} from '../engine/path/compare-paths'
+import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {pathEquals} from '../engine/path/path-equals'
 import {serializePath} from '../paths/serialize-path'
 import {getNodes} from '../traversal/get-nodes'
@@ -47,27 +48,23 @@ describe(findNearestSpans.name, () => {
     })
   })
 
-  test('Scenario: Removing the first block yields its own descendant as next', () => {
-    // Descendants of the removed node come after it in document order,
-    // matching the document scan the fallback used before.
+  test('Scenario: Removing the first block skips its own spans', () => {
     expect(
       findNearestSpans(testbed.snapshot, [{_key: testbed.textBlock1._key}]),
     ).toEqual({
       previousSpan: undefined,
       nextSpan: {
-        node: testbed.span1,
+        node: testbed.span3,
         path: [
-          {_key: testbed.textBlock1._key},
+          {_key: testbed.textBlock2._key},
           'children',
-          {_key: testbed.span1._key},
+          {_key: testbed.span3._key},
         ],
       },
     })
   })
 
   test('Scenario: Removing a nested cell block reaches across container boundaries', () => {
-    // `cellBlock3` lives in `cell2`; the previous span is in `cell1`'s
-    // last block, the next span is `cellBlock3`'s own descendant.
     expect(
       findNearestSpans(testbed.snapshot, [
         {_key: testbed.table._key},
@@ -94,17 +91,17 @@ describe(findNearestSpans.name, () => {
         ],
       },
       nextSpan: {
-        node: testbed.cellSpan3,
+        node: testbed.emptySpan,
         path: [
           {_key: testbed.table._key},
           'rows',
-          {_key: testbed.row1._key},
+          {_key: testbed.row2._key},
           'cells',
-          {_key: testbed.cell2._key},
+          {_key: testbed.cell3._key},
           'content',
-          {_key: testbed.cellBlock3._key},
+          {_key: testbed.emptyBlock._key},
           'children',
-          {_key: testbed.cellSpan3._key},
+          {_key: testbed.emptySpan._key},
         ],
       },
     })
@@ -169,7 +166,7 @@ describe(findNearestSpans.name, () => {
 /**
  * Keep-in-sync: the document-scan implementation that
  * `findNearestSpans` replaced in `applyOperation`'s `unset` case,
- * kept as the oracle.
+ * kept as the oracle, restricted to spans outside the subtree at `path`.
  */
 function referenceNearestSpans(
   snapshot: TraversalSnapshot,
@@ -185,7 +182,7 @@ function referenceNearestSpans(
     if (!isSpan({schema: snapshot.context.schema}, node)) {
       continue
     }
-    if (pathEquals(nodePath, path)) {
+    if (pathEquals(nodePath, path) || isAncestorPath(path, nodePath)) {
       continue
     }
     if (comparePaths(nodePath, path, snapshot.context) === -1) {
