@@ -241,4 +241,118 @@ describe('event.move.block', () => {
       expect(editor.getSnapshot().context.value).toEqual([bar, foo])
     })
   })
+
+  test('Scenario: Moving the block holding the caret keeps the caret in the moved block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const fooBlock = textBlock(fooBlockKey, fooSpanKey, 'foo')
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const barBlock = textBlock(barBlockKey, barSpanKey, 'bar')
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const bazBlock = textBlock(bazBlockKey, bazSpanKey, 'baz')
+    const fooSpanPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
+    const {editor} = await createTestEditor({
+      initialValue: [fooBlock, barBlock, bazBlock],
+      keyGenerator,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 1},
+        focus: {path: fooSpanPath, offset: 1},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 1},
+        focus: {path: fooSpanPath, offset: 1},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: fooBlockKey}],
+      to: [{_key: bazBlockKey}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        barBlock,
+        bazBlock,
+        fooBlock,
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 1},
+        focus: {path: fooSpanPath, offset: 1},
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Moving the block holding an expanded selection keeps the selection in the moved block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const fooBlock = textBlock(fooBlockKey, fooSpanKey, 'foo')
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const barBlock = textBlock(barBlockKey, barSpanKey, 'bar')
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const bazBlock = textBlock(bazBlockKey, bazSpanKey, 'baz')
+    const bazSpanPath = [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}]
+    const {editor} = await createTestEditor({
+      initialValue: [fooBlock, barBlock, bazBlock],
+      keyGenerator,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: bazSpanPath, offset: 1},
+        focus: {path: bazSpanPath, offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: bazSpanPath, offset: 1},
+        focus: {path: bazSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: bazBlockKey}],
+      to: [{_key: fooBlockKey}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        bazBlock,
+        fooBlock,
+        barBlock,
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: bazSpanPath, offset: 1},
+        focus: {path: bazSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+  })
 })
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _key: blockKey,
+    _type: 'block',
+    children: [{_key: spanKey, _type: 'span', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
