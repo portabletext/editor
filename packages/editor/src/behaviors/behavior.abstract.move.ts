@@ -3,6 +3,7 @@ import {pathEquals} from '../engine/path/path-equals'
 import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getSibling} from '../traversal/get-sibling'
+import {pathContains} from '../traversal/path-contains'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -41,14 +42,27 @@ export const abstractMoveBehaviors = [
         destinationIndex !== -1 &&
         originIndex < destinationIndex
 
+      const selection = snapshot.context.selection
+      const movedSelection =
+        selection &&
+        pathEquals(
+          parentPath(originEntry.path),
+          parentPath(destinationEntry.path),
+        ) &&
+        (pathContains(originEntry.path, selection.anchor.path) ||
+          pathContains(originEntry.path, selection.focus.path))
+          ? selection
+          : undefined
+
       return {
         originEntry,
         destinationEntry,
         movingDown,
+        movedSelection,
       }
     },
     actions: [
-      (_, {originEntry, destinationEntry, movingDown}) => [
+      (_, {originEntry, destinationEntry, movingDown, movedSelection}) => [
         raise({type: 'unset', at: originEntry.path}),
         raise({
           type: 'insert',
@@ -56,6 +70,9 @@ export const abstractMoveBehaviors = [
           value: originEntry.node,
           position: movingDown ? 'after' : 'before',
         }),
+        ...(movedSelection
+          ? [raise({type: 'select', at: movedSelection})]
+          : []),
       ],
     ],
   }),
