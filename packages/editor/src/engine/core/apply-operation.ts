@@ -6,7 +6,10 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {findNearestSpans} from '../../internal-utils/find-nearest-spans'
+import {
+  findNearestSpans,
+  firstSpanIn,
+} from '../../internal-utils/find-nearest-spans'
 import {getValue} from '../../internal-utils/get-value'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getChildFieldName} from '../../paths/get-child-field-name'
@@ -343,7 +346,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           for (const [point, key] of rangePoints(selection)) {
             const result = transformPoint(point, op)
 
-            if (selection != null && result != null) {
+            if (result != null) {
               selection[key] = result
             } else {
               // The point sat inside the removed subtree; move it to
@@ -354,26 +357,29 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
                 path,
               )
 
-              let preferNext = false
-              if (previousSpan && nextSpan) {
-                if (isSiblingPath(previousSpan.path, path)) {
-                  preferNext = false
-                } else {
-                  preferNext =
-                    commonPath(previousSpan.path, path).length <
-                    commonPath(nextSpan.path, path).length
-                }
-              }
+              const preferNext =
+                nextSpan !== undefined &&
+                (previousSpan === undefined ||
+                  (!isSiblingPath(previousSpan.path, path) &&
+                    commonPath(previousSpan.path, path).length <=
+                      commonPath(nextSpan.path, path).length))
 
-              if (previousSpan && !preferNext) {
-                selection![key] = {
+              if (preferNext) {
+                selection[key] = {path: nextSpan.path, offset: 0}
+              } else if (previousSpan) {
+                selection[key] = {
                   path: previousSpan.path,
                   offset: previousSpan.node.text.length,
                 }
-              } else if (nextSpan) {
-                selection![key] = {path: nextSpan.path, offset: 0}
               } else {
-                selection = null
+                const ownSpan = firstSpanIn(editor.snapshot, path)
+
+                if (!ownSpan) {
+                  selection = null
+                  break
+                }
+
+                selection[key] = {path: ownSpan.path, offset: 0}
               }
             }
           }
