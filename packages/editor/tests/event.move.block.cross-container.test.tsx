@@ -274,4 +274,120 @@ describe('event.move.block cross-container', () => {
       ])
     })
   })
+
+  test('Scenario: Moving a selected root block into a container that holds a block with the same key leaves the caret on the nearest remaining span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sharedKey = keyGenerator()
+    const rootSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+    const rootBlock = {
+      _key: sharedKey,
+      _type: 'block',
+      children: [{_key: rootSpanKey, _type: 'span', text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const callout = {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: sharedKey,
+          children: [
+            {_type: 'span', _key: innerSpanKey, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    }
+
+    const {editor} = await createTestEditor({
+      initialValue: [rootBlock, callout],
+      keyGenerator,
+      schemaDefinition,
+      children: <NodePlugin nodes={calloutContainer} />,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: sharedKey}, 'children', {_key: rootSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: sharedKey}, 'children', {_key: rootSpanKey}],
+          offset: 1,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: sharedKey}],
+      to: [{_key: calloutKey}, 'content', {_key: sharedKey}],
+    })
+
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect({
+        value: editor.getSnapshot().context.value,
+        selection: editor.getSnapshot().context.selection,
+      }).toEqual({
+        value: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _key: 'k6',
+                _type: 'block',
+                children: [
+                  {_key: rootSpanKey, _type: 'span', text: 'foo', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: sharedKey,
+                children: [
+                  {_type: 'span', _key: innerSpanKey, text: 'xbar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: sharedKey},
+              'children',
+              {_key: innerSpanKey},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: sharedKey},
+              'children',
+              {_key: innerSpanKey},
+            ],
+            offset: 1,
+          },
+          backward: false,
+        },
+      })
+    })
+  })
 })

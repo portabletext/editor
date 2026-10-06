@@ -2034,6 +2034,790 @@ describe('event.patches', () => {
     })
   })
 
+  describe('`unset` of the node holding the selection', () => {
+    test('Scenario: Removing a middle block moves the caret to the start of the next block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const fooBlock = {
+        _key: fooBlockKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const bazBlock = {
+        _key: bazBlockKey,
+        _type: 'block',
+        children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          fooBlock,
+          {
+            _key: barBlockKey,
+            _type: 'block',
+            children: [
+              {_key: barSpanKey, _type: 'span', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          bazBlock,
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: foo\nB: b|ar\nB: baz',
+        )
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', origin: 'remote', path: [{_key: barBlockKey}]},
+        ],
+        snapshot: [fooBlock, bazBlock],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock, bazBlock])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Removing the first block moves the caret to the start of the next block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const barBlock = {
+        _key: barBlockKey,
+        _type: 'block',
+        children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _key: fooBlockKey,
+            _type: 'block',
+            children: [
+              {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          barBlock,
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: f|oo\nB: bar',
+        )
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', origin: 'remote', path: [{_key: fooBlockKey}]},
+        ],
+        snapshot: [barBlock],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([barBlock])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Removing the only block moves the caret to the start of the placeholder block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _key: fooBlockKey,
+            _type: 'block',
+            children: [
+              {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|oo')
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', origin: 'remote', path: [{_key: fooBlockKey}]},
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_key: 'k5', _type: 'span', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+          focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Removing the block holding the focus of an expanded selection moves the focus to the start of the next block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const fooBlock = {
+        _key: fooBlockKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const bazBlock = {
+        _key: bazBlockKey,
+        _type: 'block',
+        children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          fooBlock,
+          {
+            _key: barBlockKey,
+            _type: 'block',
+            children: [
+              {_key: barSpanKey, _type: 'span', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          bazBlock,
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: f^oo\nB: b|ar\nB: baz',
+        )
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', origin: 'remote', path: [{_key: barBlockKey}]},
+        ],
+        snapshot: [fooBlock, bazBlock],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock, bazBlock])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Removing the last block moves the caret to the end of the previous block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const fooBlock = {
+        _key: fooBlockKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          fooBlock,
+          {
+            _key: barBlockKey,
+            _type: 'block',
+            children: [
+              {_key: barSpanKey, _type: 'span', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: foo\nB: b|ar',
+        )
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', origin: 'remote', path: [{_key: barBlockKey}]},
+        ],
+        snapshot: [fooBlock],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 3,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Removing a table cell block keeps the caret in the same cell', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const fooCellKey = keyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazCellKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const fooBlock = {
+        _key: fooBlockKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const bazCell = {
+        _key: bazCellKey,
+        _type: 'cell',
+        content: [
+          {
+            _key: bazBlockKey,
+            _type: 'block',
+            children: [
+              {_key: bazSpanKey, _type: 'span', text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      }
+      const barSpanPath = [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: fooCellKey},
+        'content',
+        {_key: barBlockKey},
+        'children',
+        {_key: barSpanKey},
+      ]
+      const fooSpanPath = [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: fooCellKey},
+        'content',
+        {_key: fooBlockKey},
+        'children',
+        {_key: fooSpanKey},
+      ]
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {
+              name: 'table',
+              fields: [
+                {
+                  name: 'rows',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'row',
+                      fields: [
+                        {
+                          name: 'cells',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'object',
+                              name: 'cell',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: fooCellKey,
+                    _type: 'cell',
+                    content: [
+                      fooBlock,
+                      {
+                        _key: barBlockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: barSpanKey,
+                            _type: 'span',
+                            text: 'bar',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                  bazCell,
+                ],
+              },
+            ],
+          },
+        ],
+        children: (
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'table',
+                arrayField: 'rows',
+                render: ({children}) => <>{children}</>,
+              }),
+              defineContainer({
+                type: 'row',
+                arrayField: 'cells',
+                render: ({children}) => <>{children}</>,
+              }),
+              defineContainer({
+                type: 'cell',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: barSpanPath, offset: 1},
+          focus: {path: barSpanPath, offset: 1},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: barSpanPath, offset: 1},
+          focus: {path: barSpanPath, offset: 1},
+          backward: false,
+        })
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'unset',
+            origin: 'remote',
+            path: [
+              {_key: tableKey},
+              'rows',
+              {_key: rowKey},
+              'cells',
+              {_key: fooCellKey},
+              'content',
+              {_key: barBlockKey},
+            ],
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {_key: fooCellKey, _type: 'cell', content: [fooBlock]},
+                  bazCell,
+                ],
+              },
+            ],
+          },
+        ])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: fooSpanPath, offset: 3},
+          focus: {path: fooSpanPath, offset: 3},
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Removing the only span and inserting a replacement in one batch clears the selection', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const barBlock = {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|oo')
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'unset',
+            origin: 'remote',
+            path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          },
+          {
+            type: 'insert',
+            origin: 'remote',
+            path: [{_key: blockKey}, 'children', 0],
+            position: 'before',
+            items: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+        snapshot: [barBlock],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([barBlock])
+        expect(editor.getSnapshot().context.selection).toEqual(null)
+      })
+    })
+
+    test('Scenario: Removing a selected image when only images remain clears the selection', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooImageKey = keyGenerator()
+      const barImageKey = keyGenerator()
+      const fooImage = {_key: fooImageKey, _type: 'image'}
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+        initialValue: [fooImage, {_key: barImageKey, _type: 'image'}],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: barImageKey}], offset: 0},
+          focus: {path: [{_key: barImageKey}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: barImageKey}], offset: 0},
+          focus: {path: [{_key: barImageKey}], offset: 0},
+          backward: false,
+        })
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {type: 'unset', origin: 'remote', path: [{_key: barImageKey}]},
+        ],
+        snapshot: [fooImage],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooImage])
+        expect(editor.getSnapshot().context.selection).toEqual(null)
+      })
+    })
+
+    test('Scenario: Removing a span next to an inline object keeps typing before the inline object', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const stockTickerKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}],
+          inlineObjects: [{name: 'stock-ticker'}],
+        }),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+              {_key: stockTickerKey, _type: 'stock-ticker'},
+              {_key: barSpanKey, _type: 'span', text: 'bar', marks: ['strong']},
+              {_key: bazSpanKey, _type: 'span', text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          backward: false,
+        })
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'unset',
+            origin: 'remote',
+            path: [{_key: blockKey}, 'children', {_key: barSpanKey}],
+          },
+        ],
+        snapshot: undefined,
+      })
+      editor.send({type: 'insert.text', text: 'x'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {_key: fooSpanKey, _type: 'span', text: 'foox', marks: []},
+              {_key: stockTickerKey, _type: 'stock-ticker'},
+              {_key: bazSpanKey, _type: 'span', text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+  })
+
   describe('Feature: diffMatchPatch', () => {
     async function createEditor(text: string) {
       const keyGenerator = createTestKeyGenerator()
