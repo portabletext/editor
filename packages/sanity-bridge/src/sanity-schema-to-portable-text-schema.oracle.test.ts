@@ -250,6 +250,25 @@ describe('conversion oracle', () => {
  * ```
  */
 let referenceRootBlockObjects = new Set<SchemaType>()
+// Inline-object and annotation instances whose fields have been
+// converted, first completed expansion wins (mirrors `completedFields`).
+let referenceCompletedFields = new Map<unknown, Array<unknown>>()
+
+function referenceMemoFields<T>(
+  key: unknown,
+  compute: () => Array<T>,
+): Array<T> {
+  const completed = referenceCompletedFields.get(key)
+  if (completed !== undefined) {
+    return completed as Array<T>
+  }
+  const fields = compute()
+  if (!referenceCompletedFields.has(key)) {
+    referenceCompletedFields.set(key, fields)
+  }
+  return fields
+}
+
 let referenceActiveAnonymousObjects = new Set<SchemaType>()
 
 function referenceSanitySchemaToPortableTextSchema(
@@ -320,6 +339,7 @@ function sanitySchemaTypeToSchema(
 
   referenceRootBlockObjects = new Set<SchemaType>(blockObjectTypes)
   referenceActiveAnonymousObjects = new Set<SchemaType>()
+  referenceCompletedFields = new Map<unknown, Array<unknown>>()
 
   return {
     block: {
@@ -346,8 +366,10 @@ function sanitySchemaTypeToSchema(
     annotations: annotations.map((annotation) => ({
       name: annotation.name,
       title: annotation.title,
-      fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set(), memo),
+      fields: referenceMemoFields(annotation, () =>
+        annotation.fields.map((field) =>
+          sanityFieldToSchemaField(field, new Set(), memo),
+        ),
       ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
@@ -360,8 +382,10 @@ function sanitySchemaTypeToSchema(
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
-      fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
+      fields: referenceMemoFields(inlineObject, () =>
+        inlineObject.fields.map((field) =>
+          sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
+        ),
       ),
     })),
   }
@@ -438,19 +462,23 @@ function resolveBlockOfMember(
       (annotation) => ({
         name: annotation.name,
         title: annotation.title,
-        fields: annotation.fields.map((field) =>
-          sanityFieldToSchemaField(field, ancestorNames, memo),
+        fields: referenceMemoFields(annotation, () =>
+          annotation.fields.map((field) =>
+            sanityFieldToSchemaField(field, ancestorNames, memo),
+          ),
         ),
       }),
     ),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
-      fields: (inlineObject.fields ?? []).map((field) =>
-        sanityFieldToSchemaField(
-          field,
-          new Set([...ancestorNames, inlineObject.name]),
-          memo,
+      fields: referenceMemoFields(inlineObject, () =>
+        (inlineObject.fields ?? []).map((field) =>
+          sanityFieldToSchemaField(
+            field,
+            new Set([...ancestorNames, inlineObject.name]),
+            memo,
+          ),
         ),
       ),
     })),

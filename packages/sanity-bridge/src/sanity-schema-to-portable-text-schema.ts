@@ -188,6 +188,7 @@ function sanitySchemaTypeToSchema(
     memo: new Map<SchemaType, OfDefinition>(),
     activeAnonymousObjects: new Set<SchemaType>(),
     inFlight: new Map<unknown, Array<number>>(),
+    completedFields: new Map<unknown, Array<FieldDefinition>>(),
     rootBlockObjects: new Set<SchemaType>(blockObjectTypes),
   }
   const pendingWork: Array<Work> = []
@@ -361,6 +362,15 @@ type Conversion = {
    */
   inFlight: Map<unknown, Array<number>>
   /**
+   * Inline-object and annotation instances whose field expansion has
+   * finished, with the fields it produced. Sanity compiles one instance
+   * per named type and reaches it from every block that lists it, so
+   * without this every nested rich-text field re-expanded every inline
+   * object below it and the output multiplied per nesting level. Like
+   * `memo`, the first finished expansion wins.
+   */
+  completedFields: Map<unknown, Array<FieldDefinition>>
+  /**
    * The canonical instances of the root-level block object types. Members
    * reaching one of these at any `of` position emit a bare
    * `{type: name}` reference instead of an inline expansion: the root
@@ -455,6 +465,11 @@ function buildFields(
   const holes: Array<FieldDefinition> = []
   const work = () => {
     if (inFlightKey !== undefined) {
+      const completed = conversion.completedFields.get(inFlightKey)
+      if (completed !== undefined) {
+        holes.push(...completed)
+        return
+      }
       const entrySizes = conversion.inFlight.get(inFlightKey)
       const stateSize = recursionStateSize(conversion)
       if (
@@ -473,6 +488,11 @@ function buildFields(
       } else {
         entrySizes.push(stateSize)
       }
+      conversion.work.push(() => {
+        if (!conversion.completedFields.has(inFlightKey)) {
+          conversion.completedFields.set(inFlightKey, holes)
+        }
+      })
       conversion.work.push(() => {
         const sizes = conversion.inFlight.get(inFlightKey)
         sizes?.pop()
