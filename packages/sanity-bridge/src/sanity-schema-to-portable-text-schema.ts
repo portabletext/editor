@@ -259,8 +259,67 @@ function sanitySchemaTypeToSchema(
 
   pushInOrder(conversion, pendingWork)
   drain(conversion)
+  assertPortableTextSchemaTreeSize(result)
 
   return result
+}
+
+const MAX_SCHEMA_TREE_NODES = 50_000_000
+
+function assertPortableTextSchemaTreeSize(result: object): void {
+  const subtreeSizes = new Map<object, number>()
+  const active = new Set<object>()
+  const referenceCounts = new Map<object, number>()
+
+  function count(value: unknown): number {
+    if (typeof value !== 'object' || value === null) {
+      return 1
+    }
+    referenceCounts.set(value, (referenceCounts.get(value) ?? 0) + 1)
+    const memoized = subtreeSizes.get(value)
+    if (memoized !== undefined) {
+      return memoized
+    }
+    if (active.has(value)) {
+      return 1
+    }
+    active.add(value)
+    let size = 1
+    for (const child of Array.isArray(value)
+      ? value
+      : Object.values(value as Record<string, unknown>)) {
+      size = Math.min(MAX_SCHEMA_TREE_NODES + 1, size + count(child))
+    }
+    active.delete(value)
+    subtreeSizes.set(value, size)
+    return size
+  }
+
+  const treeSize = count(result)
+  if (treeSize <= MAX_SCHEMA_TREE_NODES) {
+    return
+  }
+
+  const contributors = [...referenceCounts]
+    .filter((entry): entry is [Record<string, unknown>, number] => {
+      const [value, references] = entry
+      return !Array.isArray(value) && references > 1 && 'name' in value
+    })
+    .map(([value, references]) => ({
+      name: String(value['name']),
+      multipliedNodes: (references - 1) * (subtreeSizes.get(value) ?? 1),
+    }))
+    .sort((left, right) => right.multipliedNodes - left.multipliedNodes)
+    .slice(0, 3)
+    .map(({name}) => name)
+
+  const contribution =
+    contributors.length > 0
+      ? ` Shared types contributing most to the multiplication: ${contributors.join(', ')}.`
+      : ''
+  throw new Error(
+    `Portable Text schema is too large to convert: its expanded tree exceeds ${MAX_SCHEMA_TREE_NODES.toLocaleString('en-US')} nodes.${contribution}`,
+  )
 }
 
 type Work = () => void
