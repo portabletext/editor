@@ -1,5 +1,7 @@
 import {describe, expect, test, vi} from 'vitest'
 import {compileSchema} from './compile-schema'
+import type {SchemaDefinition} from './define-schema'
+import type {InlineObjectOfDefinition} from './schema'
 
 describe(compileSchema.name, () => {
   describe('block fields', () => {
@@ -764,4 +766,51 @@ describe(compileSchema.name, () => {
       ])
     })
   })
+
+  test('compiles shared field and of-member objects once per inheritance position', () => {
+    const definition = createSharedTypeDefinition(24)
+    const startedAt = performance.now()
+    const compiled = compileSchema(definition)
+    const durationMs = performance.now() - startedAt
+
+    expect(compiled.blockObjects).toHaveLength(1)
+    expect(durationMs).toBeLessThan(2_000)
+  })
+
+  test('shared compilation is structurally equal to compiling the same input as a tree', () => {
+    const definition = createSharedTypeDefinition(8)
+    const expandedDefinition = JSON.parse(
+      JSON.stringify(definition),
+    ) as SchemaDefinition
+
+    expect(compileSchema(definition)).toEqual(compileSchema(expandedDefinition))
+  })
 })
+
+function createSharedTypeDefinition(typeCount: number): SchemaDefinition {
+  let member: InlineObjectOfDefinition = {
+    type: 'object',
+    name: `t${typeCount - 1}`,
+    fields: [{name: 'value', type: 'string'}],
+  }
+
+  for (let index = typeCount - 2; index >= 0; index--) {
+    member = {
+      type: 'object',
+      name: `t${index}`,
+      fields: [
+        {name: 'first', type: 'array', of: [member]},
+        {name: 'second', type: 'array', of: [member]},
+      ],
+    }
+  }
+
+  return {
+    blockObjects: [
+      {
+        name: 'root',
+        fields: [{name: 'content', type: 'array', of: [member]}],
+      },
+    ],
+  }
+}
