@@ -1,7 +1,9 @@
 import {
   compileSchema,
   getSubSchema,
+  type BlockOfDefinition,
   type FieldDefinition,
+  type InlineObjectOfDefinition,
   type OfDefinition,
   type Schema,
 } from '@portabletext/schema'
@@ -52,6 +54,14 @@ const defaultBlockOfMember = {
       fields: [{name: 'href', title: 'Link', type: 'string'}],
     },
   ],
+  inlineObjects: [],
+}
+
+const rootBlockOfMember = {
+  type: 'block',
+  styles: defaultBlockOfMember.styles,
+  lists: defaultBlockOfMember.lists,
+  decorators: defaultBlockOfMember.decorators,
   inlineObjects: [],
 }
 
@@ -1687,7 +1697,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
               name: 'nested',
               type: 'array',
               title: 'Nested',
-              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
+              of: [rootBlockOfMember, {type: 'callout', title: 'Callout'}],
             },
           ],
         },
@@ -1743,7 +1753,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
               type: 'array',
               title: 'Body',
               of: [
-                defaultBlockOfMember,
+                rootBlockOfMember,
                 {type: 'callout', title: 'Callout'},
                 {type: 'note', title: 'Note'},
               ],
@@ -1918,6 +1928,1052 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         .find((object) => object.name === 'widget')
         ?.fields.map((field) => field.name),
     ).toEqual(['b'])
+  })
+
+  test('nested blocks that allow exactly the root inline objects and annotations inherit them instead of redeclaring them', () => {
+    const textBlock = defineArrayMember({
+      type: 'block',
+      styles: [{title: 'Normal', value: 'normal'}],
+      lists: [],
+      marks: {
+        decorators: [{title: 'Strong', value: 'strong'}],
+        annotations: [{type: 'comment'}],
+      },
+      of: [{type: 'footnote'}, {type: 'mention'}],
+    })
+    const commentType = defineType({
+      type: 'object',
+      name: 'comment',
+      fields: [
+        defineField({name: 'text', type: 'string'}),
+        defineField({name: 'body', type: 'array', of: [textBlock]}),
+      ],
+    })
+    const footnoteType = defineType({
+      type: 'object',
+      name: 'footnote',
+      fields: [
+        defineField({name: 'number', type: 'number'}),
+        defineField({name: 'content', type: 'array', of: [textBlock]}),
+      ],
+    })
+    const mentionType = defineType({
+      type: 'object',
+      name: 'mention',
+      fields: [
+        defineField({name: 'handle', type: 'string'}),
+        defineField({name: 'content', type: 'array', of: [textBlock]}),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [textBlock],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [portableTextType, commentType, footnoteType, mentionType],
+      }).get('body'),
+    )
+
+    expect(schema).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [
+            {name: 'text', type: 'string', title: 'Text'},
+            {
+              name: 'body',
+              type: 'array',
+              title: 'Body',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [
+            {name: 'number', type: 'number', title: 'Number'},
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'mention',
+          title: 'Mention',
+          fields: [
+            {name: 'handle', type: 'string', title: 'Handle'},
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const compiled = compileSchema(schema)
+    const footnoteContent = compiled.inlineObjects
+      .find((inlineObject) => inlineObject.name === 'footnote')
+      ?.fields.find((field) => field.name === 'content')
+    if (footnoteContent?.type !== 'array' || footnoteContent.of === undefined) {
+      throw new Error('footnote.content should be an array field')
+    }
+
+    expect(getSubSchema(compiled, footnoteContent.of)).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [
+            {name: 'text', type: 'string', title: 'Text'},
+            {
+              name: 'body',
+              type: 'array',
+              title: 'Body',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [
+            {name: 'number', type: 'number', title: 'Number'},
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'mention',
+          title: 'Mention',
+          fields: [
+            {name: 'handle', type: 'string', title: 'Handle'},
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test('a block nested inside an inherited inline object resolves to the root inline objects', () => {
+    const footnoteMember = defineArrayMember({type: 'footnote'})
+    const textBlock = defineArrayMember({
+      type: 'block',
+      styles: [{title: 'Normal', value: 'normal'}],
+      lists: [],
+      marks: {
+        decorators: [{title: 'Strong', value: 'strong'}],
+        annotations: [],
+      },
+      of: [footnoteMember],
+    })
+    const footnoteType = defineType({
+      type: 'object',
+      name: 'footnote',
+      fields: [defineField({name: 'content', type: 'array', of: [textBlock]})],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [textBlock],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [portableTextType, footnoteType],
+      }).get('body'),
+    )
+
+    expect(schema).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                  annotations: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const compiled = compileSchema(schema)
+    const depthOneContent = compiled.inlineObjects
+      .find((inlineObject) => inlineObject.name === 'footnote')
+      ?.fields.find((field) => field.name === 'content')
+    if (depthOneContent?.type !== 'array' || depthOneContent.of === undefined) {
+      throw new Error('footnote.content should be an array field')
+    }
+    const depthOneBlock = depthOneContent.of.find(
+      (member): member is BlockOfDefinition => member.type === 'block',
+    )
+    if (depthOneBlock === undefined) {
+      throw new Error('footnote.content should allow a block')
+    }
+    const depthTwoContent = depthOneBlock.inlineObjects
+      ?.find((inlineObject) => inlineObject.name === 'footnote')
+      ?.fields?.find((field) => field.name === 'content')
+    if (depthTwoContent?.type !== 'array' || depthTwoContent.of === undefined) {
+      throw new Error('the inherited footnote.content should be an array field')
+    }
+
+    expect(getSubSchema(compiled, depthTwoContent.of)).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                  annotations: [],
+                  inlineObjects: [
+                    {
+                      name: 'footnote',
+                      title: 'Footnote',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          title: 'Content',
+                          of: [
+                            {
+                              type: 'block',
+                              styles: [
+                                {
+                                  name: 'normal',
+                                  title: 'Normal',
+                                  value: 'normal',
+                                },
+                              ],
+                              lists: [],
+                              decorators: [
+                                {
+                                  name: 'strong',
+                                  title: 'Strong',
+                                  value: 'strong',
+                                },
+                              ],
+                              annotations: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test('a nested block that allows a subset of the root inline objects keeps its own inline objects and annotations', () => {
+    const mentionMember = defineArrayMember({type: 'mention'})
+    const footnoteType = defineType({
+      type: 'object',
+      name: 'footnote',
+      fields: [
+        defineField({
+          name: 'content',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              styles: [{title: 'Normal', value: 'normal'}],
+              lists: [],
+              marks: {
+                decorators: [{title: 'Strong', value: 'strong'}],
+                annotations: [],
+              },
+              of: [mentionMember],
+            }),
+          ],
+        }),
+      ],
+    })
+    const mentionType = defineType({
+      type: 'object',
+      name: 'mention',
+      fields: [defineField({name: 'handle', type: 'string'})],
+    })
+    const commentType = defineType({
+      type: 'object',
+      name: 'comment',
+      fields: [defineField({name: 'text', type: 'string'})],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          styles: [{title: 'Normal', value: 'normal'}],
+          lists: [],
+          marks: {
+            decorators: [{title: 'Strong', value: 'strong'}],
+            annotations: [{type: 'comment'}],
+          },
+          of: [{type: 'footnote'}, mentionMember],
+        }),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [portableTextType, commentType, footnoteType, mentionType],
+      }).get('body'),
+    )
+
+    expect(schema).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [{name: 'text', type: 'string', title: 'Text'}],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                  annotations: [],
+                  inlineObjects: [
+                    {
+                      name: 'mention',
+                      title: 'Mention',
+                      fields: [
+                        {name: 'handle', type: 'string', title: 'Handle'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'mention',
+          title: 'Mention',
+          fields: [{name: 'handle', type: 'string', title: 'Handle'}],
+        },
+      ],
+    })
+  })
+
+  test('a block beside a restricting block keeps its own inline objects and annotations even when they match the root', () => {
+    const footnoteMember = defineArrayMember({type: 'footnote'})
+    const commentMember = defineArrayMember({type: 'comment'})
+    const textBlock = defineArrayMember({
+      type: 'block',
+      styles: [{title: 'Normal', value: 'normal'}],
+      lists: [],
+      marks: {
+        decorators: [{title: 'Strong', value: 'strong'}],
+        annotations: [commentMember],
+      },
+      of: [footnoteMember],
+    })
+    const footnoteType = defineType({
+      type: 'object',
+      name: 'footnote',
+      fields: [defineField({name: 'number', type: 'number'})],
+    })
+    const commentType = defineType({
+      type: 'object',
+      name: 'comment',
+      fields: [defineField({name: 'text', type: 'string'})],
+    })
+    const calloutType = defineType({
+      type: 'object',
+      name: 'callout',
+      fields: [
+        defineField({
+          name: 'cells',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              styles: [{title: 'Normal', value: 'normal'}],
+              lists: [],
+              marks: {decorators: [], annotations: []},
+              of: [],
+            }),
+            defineArrayMember({
+              type: 'object',
+              name: 'aside',
+              fields: [
+                defineField({name: 'content', type: 'array', of: [textBlock]}),
+              ],
+            }),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [textBlock, {type: 'callout'}],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [portableTextType, footnoteType, commentType, calloutType],
+      }).get('body'),
+    )
+
+    expect(schema).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [{name: 'text', type: 'string', title: 'Text'}],
+        },
+      ],
+      blockObjects: [
+        {
+          name: 'callout',
+          title: 'Callout',
+          fields: [
+            {
+              name: 'cells',
+              type: 'array',
+              title: 'Cells',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [],
+                  annotations: [],
+                  inlineObjects: [],
+                },
+                {
+                  type: 'object',
+                  name: 'aside',
+                  title: 'Aside',
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'array',
+                      title: 'Content',
+                      of: [
+                        {
+                          type: 'block',
+                          styles: [
+                            {name: 'normal', title: 'Normal', value: 'normal'},
+                          ],
+                          lists: [],
+                          decorators: [
+                            {name: 'strong', title: 'Strong', value: 'strong'},
+                          ],
+                          annotations: [
+                            {
+                              name: 'comment',
+                              title: 'Comment',
+                              fields: [
+                                {name: 'text', type: 'string', title: 'Text'},
+                              ],
+                            },
+                          ],
+                          inlineObjects: [
+                            {
+                              name: 'footnote',
+                              title: 'Footnote',
+                              fields: [
+                                {
+                                  name: 'number',
+                                  type: 'number',
+                                  title: 'Number',
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [{name: 'number', type: 'number', title: 'Number'}],
+        },
+      ],
+    })
+
+    const compiled = compileSchema(schema)
+    const cells = compiled.blockObjects
+      .find((blockObject) => blockObject.name === 'callout')
+      ?.fields.find((field) => field.name === 'cells')
+    if (cells?.type !== 'array' || cells.of === undefined) {
+      throw new Error('callout.cells should be an array field')
+    }
+    const aside = cells.of.find(
+      (member): member is InlineObjectOfDefinition =>
+        member.type === 'object' && member.name === 'aside',
+    )
+    if (aside === undefined) {
+      throw new Error('callout.cells should allow an aside')
+    }
+    const asideContent = aside.fields.find((field) => field.name === 'content')
+    if (asideContent?.type !== 'array' || asideContent.of === undefined) {
+      throw new Error('aside.content should be an array field')
+    }
+
+    expect(getSubSchema(compiled, asideContent.of)).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [{name: 'text', type: 'string', title: 'Text'}],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [{name: 'number', type: 'number', title: 'Number'}],
+        },
+      ],
+    })
+  })
+
+  test('an object reached both inside and outside the root context keeps its nested block declarations outside it', () => {
+    const footnoteMember = defineArrayMember({type: 'footnote'})
+    const commentMember = defineArrayMember({type: 'comment'})
+    const noteMember = defineArrayMember({type: 'note'})
+    const textBlock = defineArrayMember({
+      type: 'block',
+      styles: [{title: 'Normal', value: 'normal'}],
+      lists: [],
+      marks: {
+        decorators: [{title: 'Strong', value: 'strong'}],
+        annotations: [commentMember],
+      },
+      of: [footnoteMember],
+    })
+    const footnoteType = defineType({
+      type: 'object',
+      name: 'footnote',
+      fields: [defineField({name: 'number', type: 'number'})],
+    })
+    const noteType = defineType({
+      type: 'object',
+      name: 'note',
+      fields: [defineField({name: 'content', type: 'array', of: [textBlock]})],
+    })
+    const commentType = defineType({
+      type: 'object',
+      name: 'comment',
+      fields: [defineField({name: 'notes', type: 'array', of: [noteMember]})],
+    })
+    const calloutType = defineType({
+      type: 'object',
+      name: 'callout',
+      fields: [
+        defineField({
+          name: 'cells',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              styles: [{title: 'Normal', value: 'normal'}],
+              lists: [],
+              marks: {decorators: [], annotations: []},
+              of: [],
+            }),
+            noteMember,
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [textBlock, {type: 'callout'}],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [
+          portableTextType,
+          footnoteType,
+          noteType,
+          commentType,
+          calloutType,
+        ],
+      }).get('body'),
+    )
+
+    expect(schema).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [
+            {
+              name: 'notes',
+              type: 'array',
+              title: 'Notes',
+              of: [
+                {
+                  type: 'object',
+                  name: 'note',
+                  title: 'Note',
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'array',
+                      title: 'Content',
+                      of: [
+                        {
+                          type: 'block',
+                          styles: [
+                            {name: 'normal', title: 'Normal', value: 'normal'},
+                          ],
+                          lists: [],
+                          decorators: [
+                            {name: 'strong', title: 'Strong', value: 'strong'},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      blockObjects: [
+        {
+          name: 'callout',
+          title: 'Callout',
+          fields: [
+            {
+              name: 'cells',
+              type: 'array',
+              title: 'Cells',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [],
+                  annotations: [],
+                  inlineObjects: [],
+                },
+                {
+                  type: 'object',
+                  name: 'note',
+                  title: 'Note',
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'array',
+                      title: 'Content',
+                      of: [
+                        {
+                          type: 'block',
+                          styles: [
+                            {name: 'normal', title: 'Normal', value: 'normal'},
+                          ],
+                          lists: [],
+                          decorators: [
+                            {name: 'strong', title: 'Strong', value: 'strong'},
+                          ],
+                          annotations: [
+                            {
+                              name: 'comment',
+                              title: 'Comment',
+                              fields: [
+                                {
+                                  name: 'notes',
+                                  type: 'array',
+                                  title: 'Notes',
+                                  of: [{type: 'note', title: 'Note'}],
+                                },
+                              ],
+                            },
+                          ],
+                          inlineObjects: [
+                            {
+                              name: 'footnote',
+                              title: 'Footnote',
+                              fields: [
+                                {
+                                  name: 'number',
+                                  type: 'number',
+                                  title: 'Number',
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [{name: 'number', type: 'number', title: 'Number'}],
+        },
+      ],
+    })
+
+    const compiled = compileSchema(schema)
+    const cells = compiled.blockObjects
+      .find((blockObject) => blockObject.name === 'callout')
+      ?.fields.find((field) => field.name === 'cells')
+    if (cells?.type !== 'array' || cells.of === undefined) {
+      throw new Error('callout.cells should be an array field')
+    }
+    const note = cells.of.find(
+      (member): member is InlineObjectOfDefinition =>
+        member.type === 'object' && member.name === 'note',
+    )
+    if (note === undefined) {
+      throw new Error('callout.cells should allow a note')
+    }
+    const noteContent = note.fields.find((field) => field.name === 'content')
+    if (noteContent?.type !== 'array' || noteContent.of === undefined) {
+      throw new Error('note.content should be an array field')
+    }
+
+    expect(getSubSchema(compiled, noteContent.of)).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [
+            {
+              name: 'notes',
+              type: 'array',
+              title: 'Notes',
+              of: [{type: 'note', title: 'Note'}],
+            },
+          ],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [{name: 'number', type: 'number', title: 'Number'}],
+        },
+      ],
+    })
+  })
+
+  test('a nested block inherits the root inline objects while keeping its own restricted annotations', () => {
+    const footnoteMember = defineArrayMember({type: 'footnote'})
+    const mentionMember = defineArrayMember({type: 'mention'})
+    const commentMember = defineArrayMember({type: 'comment'})
+    const linkMember = defineArrayMember({type: 'link'})
+    const footnoteType = defineType({
+      type: 'object',
+      name: 'footnote',
+      fields: [
+        defineField({
+          name: 'content',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              type: 'block',
+              styles: [{title: 'Normal', value: 'normal'}],
+              lists: [],
+              marks: {
+                decorators: [{title: 'Strong', value: 'strong'}],
+                annotations: [commentMember],
+              },
+              of: [footnoteMember, mentionMember],
+            }),
+          ],
+        }),
+      ],
+    })
+    const mentionType = defineType({
+      type: 'object',
+      name: 'mention',
+      fields: [defineField({name: 'handle', type: 'string'})],
+    })
+    const commentType = defineType({
+      type: 'object',
+      name: 'comment',
+      fields: [defineField({name: 'text', type: 'string'})],
+    })
+    const linkType = defineType({
+      type: 'object',
+      name: 'link',
+      fields: [defineField({name: 'href', type: 'string'})],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          styles: [{title: 'Normal', value: 'normal'}],
+          lists: [],
+          marks: {
+            decorators: [{title: 'Strong', value: 'strong'}],
+            annotations: [commentMember, linkMember],
+          },
+          of: [footnoteMember, mentionMember],
+        }),
+      ],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(
+      SanitySchema.compile({
+        types: [
+          portableTextType,
+          footnoteType,
+          mentionType,
+          commentType,
+          linkType,
+        ],
+      }).get('body'),
+    )
+
+    expect(schema).toEqual({
+      block: {name: 'block'},
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+      decorators: [{name: 'strong', title: 'Strong', value: 'strong'}],
+      annotations: [
+        {
+          name: 'comment',
+          title: 'Comment',
+          fields: [{name: 'text', type: 'string', title: 'Text'}],
+        },
+        {
+          name: 'link',
+          title: 'Link',
+          fields: [{name: 'href', type: 'string', title: 'Href'}],
+        },
+      ],
+      blockObjects: [],
+      inlineObjects: [
+        {
+          name: 'footnote',
+          title: 'Footnote',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              title: 'Content',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+                  lists: [],
+                  decorators: [
+                    {name: 'strong', title: 'Strong', value: 'strong'},
+                  ],
+                  annotations: [
+                    {
+                      name: 'comment',
+                      title: 'Comment',
+                      fields: [{name: 'text', type: 'string', title: 'Text'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'mention',
+          title: 'Mention',
+          fields: [{name: 'handle', type: 'string', title: 'Handle'}],
+        },
+      ],
+    })
   })
 })
 
@@ -2401,7 +3457,7 @@ describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
               name: 'nested',
               type: 'array',
               title: 'Nested',
-              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
+              of: [rootBlockOfMember, {type: 'callout', title: 'Callout'}],
             },
           ],
         },

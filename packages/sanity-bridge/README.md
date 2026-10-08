@@ -5,18 +5,22 @@ Converts between Sanity schemas and Portable Text schemas.
 The main job is `sanitySchemaToPortableTextSchema`. A compiled Sanity
 schema is lazy: types resolve through getters and class instances, and
 finding out what is allowed inside a Portable Text field means walking
-that graph. The editor wants the opposite, one plain, self-contained
-object it can read synchronously, serialize, and hand to renderers and
-plugins without knowing anything about Sanity. So the bridge walks the
-type graph once, up front, and expands it into exactly that: which
-styles, lists, decorators, annotations, block objects, and inline
-objects a field allows, with every nested block inside a container
-carrying the restrictions that apply at that exact position.
+that graph. The editor wants the opposite, one plain object it can read
+synchronously, serialize, and hand to renderers and plugins without
+knowing anything about Sanity. So the bridge walks the type graph once,
+up front, and expands it into exactly that: which styles, lists,
+decorators, annotations, block objects, and inline objects a field
+allows, and what each nested block inside a container allows.
 
-Expanding up front is also why the output can be bigger than the schema
-that produced it. A type shows up in the output at every position that
-embeds it, and self-referencing types are cut off rather than expanded
-forever (see "Recursive schemas" below).
+The output is a schema definition for
+[`@portabletext/schema`](../schema/README.md). Pass it to `compileSchema`
+and use `getSubSchema` to find out what a position inside a container
+allows. A nested block that reuses the root block's inline objects or
+annotations leaves that property out, and `getSubSchema` resolves it to
+the root's (see
+[how a nested block overrides and inherits](../schema/README.md#how-a-nested-block-overrides-and-inherits)).
+Self-referencing types are cut off rather than expanded forever (see
+"Recursive schemas" below).
 
 ## Installation
 
@@ -168,10 +172,19 @@ expanding, it stops and leaves a marker instead of expanding again:
   `fields` at the point of repetition. Everything up to that point is
   fully declared.
 
-One thing to keep in mind: every place a type is embedded gets its own
-resolved sub-schema, so a schema where many types embed each other
-produces output that grows with the number of embedding positions, not
-just the number of types.
+Output size depends on how containers embed Portable Text. A container
+field that reuses the root's named array type (for example
+`type: 'blockContent'`) inherits the root block's inline objects and
+annotations, so they are declared once in the output, however many
+types embed that field. That stops at a container whose block declares
+its own inline objects or annotations, even when the list names the
+same types as the root block: that block gets its own copy of them, and
+so does every Portable Text field nested beneath the container. When
+those inline objects and annotations carry Portable Text fields of
+their own, every copy expands them again, and the output grows quickly
+with the number of types that embed each other this way. Reuse the
+root's named array type wherever a container does not need to restrict
+its text.
 
 ### Convert an uncompiled definition
 

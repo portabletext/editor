@@ -197,7 +197,13 @@ describe('conversion oracle', () => {
         {
           name: 'footnote',
           type: 'object',
-          fields: [{name: 'body', type: 'blockContent'}],
+          fields: [
+            {
+              name: 'body',
+              type: 'array',
+              of: [{type: 'block', of: [{type: 'footnote'}]}],
+            },
+          ],
         },
       ],
     })
@@ -251,6 +257,13 @@ describe('conversion oracle', () => {
  */
 let referenceRootBlockObjects = new Set<SchemaType>()
 let referenceActiveAnonymousObjects = new Set<SchemaType>()
+let referenceRootInlineObjects: ReadonlyArray<SchemaType> = []
+let referenceRootAnnotations: ReadonlyArray<SchemaType> = []
+
+type ReferenceMemo = {
+  inRootContext: Map<SchemaType, OfDefinition>
+  outsideRootContext: Map<SchemaType, OfDefinition>
+}
 
 function referenceSanitySchemaToPortableTextSchema(
   sanitySchema: ArraySchemaType<unknown> | ArrayDefinition,
@@ -312,14 +325,24 @@ function sanitySchemaTypeToSchema(
 
   // Sanity compiles a shared canonical type instance for each named type,
   // so the same member instance is reached through every position that
-  // embeds it. Converting each instance once and sharing the result keeps
-  // the walk linear in the size of the compiled schema. Without it, the
-  // per-branch ancestor sets below enumerate every simple path through
-  // mutually-embedding types, which grows combinatorially.
-  const memo = new Map<SchemaType, OfDefinition>()
+  // embeds it. Converting each `of` member instance once per inheritance
+  // context and sharing the result keeps the per-branch ancestor sets
+  // below from enumerating every simple path through mutually-embedding
+  // object types, which grows combinatorially. Inline objects and
+  // annotations are not shared: every nested block that declares them
+  // expands them again. Nested blocks in the root context omit lists
+  // that match the root's, so the root's inline objects and annotations
+  // expand once. Outside the root context, recursive inline objects and
+  // annotations still expand once per simple path through them.
+  const memo: ReferenceMemo = {
+    inRootContext: new Map(),
+    outsideRootContext: new Map(),
+  }
 
   referenceRootBlockObjects = new Set<SchemaType>(blockObjectTypes)
   referenceActiveAnonymousObjects = new Set<SchemaType>()
+  referenceRootInlineObjects = inlineObjectTypes
+  referenceRootAnnotations = annotations
 
   return {
     block: {
@@ -347,21 +370,31 @@ function sanitySchemaTypeToSchema(
       name: annotation.name,
       title: annotation.title,
       fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set(), memo),
+        sanityFieldToSchemaField(field, new Set(), memo, true),
       ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
       fields: blockObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([blockObject.name]), memo),
+        sanityFieldToSchemaField(
+          field,
+          new Set([blockObject.name]),
+          memo,
+          true,
+        ),
       ),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
       fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
+        sanityFieldToSchemaField(
+          field,
+          new Set([inlineObject.name]),
+          memo,
+          true,
+        ),
       ),
     })),
   }
@@ -374,9 +407,10 @@ function sanitySchemaTypeToSchema(
  * field options, `decorators`/`annotations` on the span, inline objects as
  * the non-span `of` members of `children`. Sanity resolves these for every
  * block (an undeclared list becomes Sanity's defaults, not the root block's
- * values; a block's inline objects are exactly its own `of`), so there is
- * nothing to inherit and nothing to merge: emit the member's own resolved
- * lists and let `getSubSchema` read them directly.
+ * values; a block's inline objects are exactly its own `of`), so the
+ * member always declares its own `styles`, `lists`, and `decorators`, and
+ * declares its inline objects and annotations unless
+ * `referenceBlockInheritance` finds them inherited from the root.
  *
  * This is what keeps a restricted nested block (a code-block line that
  * strips marks and styles, or declares `of: []`) from leaking the root's
@@ -385,7 +419,8 @@ function sanitySchemaTypeToSchema(
 function resolveBlockOfMember(
   blockType: BlockSchemaType,
   ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
+  memo: ReferenceMemo,
+  inRootContext: boolean,
 ): BlockOfDefinition {
   const styleList = blockType.fields?.find((field) => field.name === 'style')
     ?.type.options?.list
@@ -409,7 +444,8 @@ function resolveBlockOfMember(
       decorators?: ReadonlyArray<BlockDecoratorDefinition>
     }
   )?.decorators
-  const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
+  const annotationTypes = referenceAnnotationTypes(blockType)
+  const inheritance = referenceBlockInheritance(blockType, inRootContext)
 
   return {
     type: 'block',
@@ -434,27 +470,107 @@ function resolveBlockOfMember(
         value: decorator.value,
       }),
     ),
-    annotations: (Array.isArray(spanAnnotations) ? spanAnnotations : []).map(
-      (annotation) => ({
-        name: annotation.name,
-        title: annotation.title,
-        fields: annotation.fields.map((field) =>
-          sanityFieldToSchemaField(field, ancestorNames, memo),
-        ),
-      }),
-    ),
-    inlineObjects: inlineObjectTypes.map((inlineObject) => ({
-      name: inlineObject.name,
-      title: inlineObject.title,
-      fields: (inlineObject.fields ?? []).map((field) =>
-        sanityFieldToSchemaField(
-          field,
-          new Set([...ancestorNames, inlineObject.name]),
-          memo,
-        ),
-      ),
-    })),
+    ...(inheritance.inheritsAnnotations
+      ? {}
+      : {
+          annotations: annotationTypes.map((annotation) => ({
+            name: annotation.name,
+            title: annotation.title,
+            fields: annotation.fields.map((field) =>
+              sanityFieldToSchemaField(
+                field,
+                ancestorNames,
+                memo,
+                inRootContext,
+              ),
+            ),
+          })),
+        }),
+    ...(inheritance.inheritsInlineObjects
+      ? {}
+      : {
+          inlineObjects: inlineObjectTypes.map((inlineObject) => ({
+            name: inlineObject.name,
+            title: inlineObject.title,
+            fields: (inlineObject.fields ?? []).map((field) =>
+              sanityFieldToSchemaField(
+                field,
+                new Set([...ancestorNames, inlineObject.name]),
+                memo,
+                inRootContext,
+              ),
+            ),
+          })),
+        }),
   }
+}
+
+/**
+ * Mirrors `compileSchema`: a block member resolves against the context
+ * enclosing its container, its sibling `of` members resolve against the
+ * block's resolved sets, and an omitted list resolves to the context's.
+ * The context is the root's at the root collections, and stays the root's
+ * past a block only when that block's inline objects and annotations are
+ * both exactly the root's instances. A block in the root context omits a
+ * non-empty list that is exactly the root's instances.
+ */
+function referenceBlockInheritance(
+  blockType: BlockSchemaType,
+  inRootContext: boolean,
+): {
+  inheritsInlineObjects: boolean
+  inheritsAnnotations: boolean
+  siblingsInRootContext: boolean
+} {
+  const inlineObjectTypes = referenceInlineObjectTypes(blockType)
+  const annotationTypes = referenceAnnotationTypes(blockType)
+  const inlineObjectsAreRoot =
+    inlineObjectTypes.length === referenceRootInlineObjects.length &&
+    inlineObjectTypes.every(
+      (type, index) => type === referenceRootInlineObjects[index],
+    )
+  const annotationsAreRoot =
+    annotationTypes.length === referenceRootAnnotations.length &&
+    annotationTypes.every(
+      (type, index) => type === referenceRootAnnotations[index],
+    )
+  return {
+    inheritsInlineObjects:
+      inRootContext && inlineObjectsAreRoot && inlineObjectTypes.length > 0,
+    inheritsAnnotations:
+      inRootContext && annotationsAreRoot && annotationTypes.length > 0,
+    siblingsInRootContext:
+      inRootContext && inlineObjectsAreRoot && annotationsAreRoot,
+  }
+}
+
+function referenceChildrenOf(
+  blockType: BlockSchemaType,
+): ReadonlyArray<SchemaType> {
+  const childrenOf = (
+    blockType.fields?.find((field) => field.name === 'children') as
+      | {type: ArraySchemaType}
+      | undefined
+  )?.type.of
+  return Array.isArray(childrenOf) ? childrenOf : []
+}
+
+function referenceInlineObjectTypes(
+  blockType: BlockSchemaType,
+): Array<SchemaType> {
+  return referenceChildrenOf(blockType).filter(
+    (memberType) => memberType.name !== 'span',
+  )
+}
+
+function referenceAnnotationTypes(
+  blockType: BlockSchemaType,
+): Array<ObjectSchemaType> {
+  const spanType = referenceChildrenOf(blockType).find(
+    (memberType) => memberType.name === 'span',
+  ) as SpanSchemaType | undefined
+  const spanAnnotations = spanType?.annotations
+  return Array.isArray(spanAnnotations) ? spanAnnotations : []
 }
 
 function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
@@ -475,17 +591,30 @@ function sanityFieldToSchemaField(
     type: SchemaType
   },
   ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
+  memo: ReferenceMemo,
+  inRootContext: boolean,
 ): FieldDefinition {
   if (field.type.jsonType === 'array') {
     const ofMembers = safeGetOf(field.type)
+    const blockMember = ofMembers?.find(findBlockType) as
+      | BlockSchemaType
+      | undefined
+    const siblingsInRootContext = blockMember
+      ? referenceBlockInheritance(blockMember, inRootContext)
+          .siblingsInRootContext
+      : inRootContext
     return {
       name: field.name,
       type: 'array',
       ...(field.type.title ? {title: field.type.title} : {}),
       of: ofMembers
         ? ofMembers.map((member) =>
-            sanityOfMemberToOfDefinition(member, ancestorNames, memo),
+            sanityOfMemberToOfDefinition(
+              member,
+              ancestorNames,
+              memo,
+              member === blockMember ? inRootContext : siblingsInRootContext,
+            ),
           )
         : [],
     }
@@ -501,7 +630,8 @@ function sanityFieldToSchemaField(
 function sanityOfMemberToOfDefinition(
   memberType: SchemaType,
   ancestorNames: ReadonlySet<string>,
-  memo: Map<SchemaType, OfDefinition>,
+  memo: ReferenceMemo,
+  inRootContext: boolean,
 ): OfDefinition {
   // `findBlockType` walks up the `type.type` chain to the base `block`, so
   // it only detects *whether* this member is a block. A block member's own
@@ -512,6 +642,7 @@ function sanityOfMemberToOfDefinition(
       memberType as BlockSchemaType,
       ancestorNames,
       memo,
+      inRootContext,
     )
   }
 
@@ -547,11 +678,15 @@ function sanityOfMemberToOfDefinition(
     }
   }
 
-  // Each distinct member instance is expanded exactly once per conversion;
-  // every later position that reaches the same instance shares the first
-  // expansion. Keyed by instance (not name) so that same-named but
-  // structurally different inline declarations keep their own shapes.
-  const memoized = memo.get(memberType)
+  // Each distinct member instance is expanded once per inheritance
+  // context; every later position that reaches the same instance in the
+  // same context shares the first expansion. Keyed by instance (not name)
+  // so that same-named but structurally different inline declarations
+  // keep their own shapes.
+  const contextMemo = inRootContext
+    ? memo.inRootContext
+    : memo.outsideRootContext
+  const memoized = contextMemo.get(memberType)
   if (memoized) {
     return memoized
   }
@@ -566,11 +701,11 @@ function sanityOfMemberToOfDefinition(
     name: memberType.name,
     ...(memberType.title ? {title: memberType.title} : {}),
     fields: (memberType as ObjectSchemaType).fields.map((field) =>
-      sanityFieldToSchemaField(field, nextAncestors, memo),
+      sanityFieldToSchemaField(field, nextAncestors, memo, inRootContext),
     ),
   }
   referenceActiveAnonymousObjects.delete(memberType)
-  memo.set(memberType, definition)
+  contextMemo.set(memberType, definition)
   return definition
 }
 

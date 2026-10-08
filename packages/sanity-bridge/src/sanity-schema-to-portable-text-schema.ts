@@ -167,10 +167,15 @@ function sanitySchemaTypeToSchema(
 
   // Sanity compiles a shared canonical type instance for each named type,
   // so the same member instance is reached through every position that
-  // embeds it. Converting each instance once and sharing the result keeps
-  // the walk linear in the size of the compiled schema. Without it, the
-  // per-branch ancestor sets below enumerate every simple path through
-  // mutually-embedding types, which grows combinatorially.
+  // embeds it. Converting each `of` member instance once per inheritance
+  // context and sharing the result keeps the per-branch ancestor sets
+  // below from enumerating every simple path through mutually-embedding
+  // object types, which grows combinatorially. Inline objects and
+  // annotations are not shared: every nested block that declares them
+  // expands them again. Nested blocks in the root context omit lists
+  // that match the root's, so the root's inline objects and annotations
+  // expand once. Outside the root context, recursive inline objects and
+  // annotations still expand once per simple path through them.
   //
   // The walk itself runs on an explicit LIFO work stack instead of the
   // call stack: children are pushed in reverse so the drain order is
@@ -185,10 +190,18 @@ function sanitySchemaTypeToSchema(
     work: [],
     ancestors: new Map<string, number>(),
     distinctAncestorCount: 0,
-    memo: new Map<SchemaType, OfDefinition>(),
+    memo: {
+      inRootContext: new Map<SchemaType, OfDefinition>(),
+      outsideRootContext: new Map<SchemaType, OfDefinition>(),
+    },
     activeAnonymousObjects: new Set<SchemaType>(),
-    inFlight: new Map<unknown, Array<number>>(),
+    inFlight: {
+      inRootContext: new Map<unknown, Array<number>>(),
+      outsideRootContext: new Map<unknown, Array<number>>(),
+    },
     rootBlockObjects: new Set<SchemaType>(blockObjectTypes),
+    rootInlineObjects: inlineObjectTypes,
+    rootAnnotations: annotations,
   }
   const pendingWork: Array<Work> = []
 
@@ -219,6 +232,7 @@ function sanitySchemaTypeToSchema(
         conversion,
         annotation.fields,
         undefined,
+        true,
         annotation,
       )
       pendingWork.push(built.work)
@@ -233,6 +247,7 @@ function sanitySchemaTypeToSchema(
         conversion,
         blockObject.fields,
         blockObject.name,
+        true,
       )
       pendingWork.push(built.work)
       return {
@@ -246,6 +261,7 @@ function sanitySchemaTypeToSchema(
         conversion,
         inlineObject.fields,
         inlineObject.name,
+        true,
         inlineObject,
       )
       pendingWork.push(built.work)
@@ -279,7 +295,13 @@ type Conversion = {
    */
   ancestors: Map<string, number>
   distinctAncestorCount: number
-  memo: Map<SchemaType, OfDefinition>
+  /**
+   * Split by inheritance context: an expansion made in the root context
+   * omits inline objects and annotations that `compileSchema` fills in
+   * from the root, so reusing it outside the root context would inherit
+   * the wrong sets.
+   */
+  memo: ByContext<Map<SchemaType, OfDefinition>>
   /**
    * Anonymous object member instances (name `object`) whose expansion is
    * on the active path. Every anonymous inline object shares the name
@@ -295,12 +317,13 @@ type Conversion = {
    * grows the recursion state (richer ancestors and active anonymous
    * objects cut the inner expansion earlier) and recurses forever
    * exactly when the recursion state repeats: same instance, same
-   * ancestor names, same active anonymous objects. Both sets grow
-   * monotonically along a branch, so "same instance at the same or
-   * smaller state size" identifies the repeated state, and cutting
-   * there changes output only for schemas that recursed forever.
+   * inheritance context, same ancestor names, same active anonymous
+   * objects. Both sets grow monotonically along a branch, so "same
+   * instance in the same context at the same or smaller state size"
+   * identifies the repeated state, and cutting there changes output only
+   * for schemas that recursed forever.
    */
-  inFlight: Map<unknown, Array<number>>
+  inFlight: ByContext<Map<unknown, Array<number>>>
   /**
    * The canonical instances of the root-level block object types. Members
    * reaching one of these at any `of` position emit a bare
@@ -316,6 +339,23 @@ type Conversion = {
    * own inline shape.
    */
   rootBlockObjects: Set<SchemaType>
+  /**
+   * The root block's inline object instances and the root span's
+   * annotation instances, in order. A nested block in the root
+   * inheritance context whose list is exactly these instances omits it,
+   * and `compileSchema` and `getSubSchema` resolve the omission to the
+   * root's. Declaring it would re-expand those inline objects and
+   * annotations inside every nested block that reuses them, which grows
+   * exponentially when they carry Portable Text fields of their own.
+   */
+  rootInlineObjects: ReadonlyArray<SchemaType>
+  rootAnnotations: ReadonlyArray<SchemaType>
+}
+
+type ByContext<T> = {inRootContext: T; outsideRootContext: T}
+
+function forContext<T>(byContext: ByContext<T>, inRootContext: boolean): T {
+  return inRootContext ? byContext.inRootContext : byContext.outsideRootContext
 }
 
 function pushAncestor(conversion: Conversion, name: string): void {
@@ -391,34 +431,36 @@ function buildFields(
   conversion: Conversion,
   fields: ReadonlyArray<{name: string; type: SchemaType}>,
   seedName: string | undefined,
+  inRootContext: boolean,
   inFlightKey?: unknown,
 ): {holes: Array<FieldDefinition>; work: Work} {
   const holes: Array<FieldDefinition> = []
   const work = () => {
     if (inFlightKey !== undefined) {
-      const entrySizes = conversion.inFlight.get(inFlightKey)
+      const inFlight = forContext(conversion.inFlight, inRootContext)
+      const entrySizes = inFlight.get(inFlightKey)
       const stateSize = recursionStateSize(conversion)
       if (
         entrySizes !== undefined &&
         entrySizes.length > 0 &&
         stateSize <= entrySizes[entrySizes.length - 1]!
       ) {
-        // The recursion state (this instance, these ancestor names,
-        // these active anonymous objects) is already in flight on the
-        // current branch, so expanding would repeat forever. Leave the
-        // fields empty.
+        // The recursion state (this instance, this context, these
+        // ancestor names, these active anonymous objects) is already in
+        // flight on the current branch, so expanding would repeat
+        // forever. Leave the fields empty.
         return
       }
       if (entrySizes === undefined) {
-        conversion.inFlight.set(inFlightKey, [stateSize])
+        inFlight.set(inFlightKey, [stateSize])
       } else {
         entrySizes.push(stateSize)
       }
       conversion.work.push(() => {
-        const sizes = conversion.inFlight.get(inFlightKey)
+        const sizes = inFlight.get(inFlightKey)
         sizes?.pop()
         if (sizes !== undefined && sizes.length === 0) {
-          conversion.inFlight.delete(inFlightKey)
+          inFlight.delete(inFlightKey)
         }
       })
     }
@@ -429,7 +471,9 @@ function buildFields(
     holes.length = fields.length
     for (let index = fields.length - 1; index >= 0; index--) {
       const field = fields[index]!
-      conversion.work.push(() => scheduleField(conversion, field, holes, index))
+      conversion.work.push(() =>
+        scheduleField(conversion, field, holes, index, inRootContext),
+      )
     }
   }
   return {holes, work}
@@ -446,6 +490,7 @@ function scheduleField(
   field: {name: string; type: SchemaType},
   target: Array<FieldDefinition>,
   index: number,
+  inRootContext: boolean,
 ): void {
   if (field.type.jsonType !== 'array') {
     target[index] = {
@@ -465,14 +510,32 @@ function scheduleField(
     of,
   }
   if (ofMembers) {
+    // `compileSchema` resolves the first block member against the
+    // enclosing context and every other member against that block's
+    // resolved sets.
+    const blockMember = ofMembers.find(findBlockType) as
+      | BlockSchemaType
+      | undefined
+    const siblingsInRootContext = blockMember
+      ? resolveBlockInheritance(conversion, blockMember, inRootContext)
+          .siblingsInRootContext
+      : inRootContext
     for (
       let memberIndex = ofMembers.length - 1;
       memberIndex >= 0;
       memberIndex--
     ) {
       const member = ofMembers[memberIndex]!
+      const memberInRootContext =
+        member === blockMember ? inRootContext : siblingsInRootContext
       conversion.work.push(() =>
-        scheduleOfMember(conversion, member, of, memberIndex),
+        scheduleOfMember(
+          conversion,
+          member,
+          of,
+          memberIndex,
+          memberInRootContext,
+        ),
       )
     }
   }
@@ -483,6 +546,7 @@ function scheduleOfMember(
   memberType: SchemaType,
   target: Array<OfDefinition>,
   index: number,
+  inRootContext: boolean,
 ): void {
   // `findBlockType` walks up the `type.type` chain to the base `block`, so
   // it only detects *whether* this member is a block. A block member's own
@@ -494,6 +558,7 @@ function scheduleOfMember(
       memberType as BlockSchemaType,
       target,
       index,
+      inRootContext,
     )
     return
   }
@@ -537,16 +602,17 @@ function scheduleOfMember(
     return
   }
 
-  // Each distinct member instance is expanded exactly once per conversion;
-  // every later position that reaches the same instance shares the first
-  // expansion. Keyed by instance (not name) so that same-named but
-  // structurally different inline declarations keep their own shapes.
-  // The memo entry lands before the subtree drains, which is
-  // output-neutral: any path re-entering this instance mid-expansion is
-  // cut above before the memo is consulted (by name for a named member,
-  // by instance for an anonymous one), and every other position runs
-  // after this subtree has fully drained (exact DFS order).
-  const memoized = conversion.memo.get(memberType)
+  // Each distinct member instance is expanded once per inheritance
+  // context; every later position that reaches the same instance in the
+  // same context shares the first expansion. Keyed by instance (not name)
+  // so that same-named but structurally different inline declarations
+  // keep their own shapes. The memo entry lands before the subtree
+  // drains, which is output-neutral: any path re-entering this instance
+  // mid-expansion is cut above before the memo is consulted (by name for
+  // a named member, by instance for an anonymous one), and every other
+  // position runs after this subtree has fully drained (exact DFS order).
+  const memo = forContext(conversion.memo, inRootContext)
+  const memoized = memo.get(memberType)
   if (memoized) {
     target[index] = memoized
     return
@@ -560,7 +626,7 @@ function scheduleOfMember(
     ...(memberType.title ? {title: memberType.title} : {}),
     fields: holes,
   }
-  conversion.memo.set(memberType, definition)
+  memo.set(memberType, definition)
   target[index] = definition
 
   if (isAnonymousObject) {
@@ -574,7 +640,7 @@ function scheduleOfMember(
   for (let fieldIndex = fields.length - 1; fieldIndex >= 0; fieldIndex--) {
     const field = fields[fieldIndex]!
     conversion.work.push(() =>
-      scheduleField(conversion, field, holes, fieldIndex),
+      scheduleField(conversion, field, holes, fieldIndex, inRootContext),
     )
   }
 }
@@ -586,9 +652,10 @@ function scheduleOfMember(
  * field options, `decorators`/`annotations` on the span, inline objects as
  * the non-span `of` members of `children`. Sanity resolves these for every
  * block (an undeclared list becomes Sanity's defaults, not the root block's
- * values; a block's inline objects are exactly its own `of`), so there is
- * nothing to inherit and nothing to merge: emit the member's own resolved
- * lists and let `getSubSchema` read them directly.
+ * values; a block's inline objects are exactly its own `of`), so the
+ * member always declares its own `styles`, `lists`, and `decorators`, and
+ * declares its inline objects and annotations unless
+ * `resolveBlockInheritance` finds them inherited from the root.
  *
  * This is what keeps a restricted nested block (a code-block line that
  * strips marks and styles, or declares `of: []`) from leaking the root's
@@ -599,30 +666,25 @@ function scheduleBlockOfMember(
   blockType: BlockSchemaType,
   target: Array<OfDefinition>,
   index: number,
+  inRootContext: boolean,
 ): void {
   const styleList = blockType.fields?.find((field) => field.name === 'style')
     ?.type.options?.list
   const listItemList = blockType.fields?.find(
     (field) => field.name === 'listItem',
   )?.type.options?.list
-
-  const childrenOf = (
-    blockType.fields?.find((field) => field.name === 'children') as
-      | {type: ArraySchemaType}
-      | undefined
-  )?.type.of
-  const spanType = childrenOf?.find(
-    (memberType) => memberType.name === 'span',
-  ) as ObjectSchemaType | undefined
-  const inlineObjectTypes = (
-    Array.isArray(childrenOf) ? childrenOf : []
-  ).filter((memberType) => memberType.name !== 'span') as ObjectSchemaType[]
+  const {spanType, inlineObjectTypes, annotationTypes} =
+    readBlockChildren(blockType)
   const spanDecorators = (
     spanType as unknown as {
       decorators?: ReadonlyArray<BlockDecoratorDefinition>
     }
   )?.decorators
-  const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
+  const {inheritsInlineObjects, inheritsAnnotations} = resolveBlockInheritance(
+    conversion,
+    blockType,
+    inRootContext,
+  )
 
   const pendingWork: Array<Work> = []
 
@@ -649,40 +711,118 @@ function scheduleBlockOfMember(
         value: decorator.value,
       }),
     ),
-    annotations: (Array.isArray(spanAnnotations) ? spanAnnotations : []).map(
-      (annotation) => {
-        const built = buildFields(
-          conversion,
-          annotation.fields,
-          undefined,
-          annotation,
-        )
-        pendingWork.push(built.work)
-        return {
-          name: annotation.name,
-          title: annotation.title,
-          fields: built.holes,
-        }
-      },
-    ),
-    inlineObjects: inlineObjectTypes.map((inlineObject) => {
-      const built = buildFields(
-        conversion,
-        inlineObject.fields ?? [],
-        inlineObject.name,
-        inlineObject,
-      )
-      pendingWork.push(built.work)
-      return {
-        name: inlineObject.name,
-        title: inlineObject.title,
-        fields: built.holes,
-      }
-    }),
+    ...(inheritsAnnotations
+      ? {}
+      : {
+          annotations: annotationTypes.map((annotation) => {
+            const built = buildFields(
+              conversion,
+              annotation.fields,
+              undefined,
+              inRootContext,
+              annotation,
+            )
+            pendingWork.push(built.work)
+            return {
+              name: annotation.name,
+              title: annotation.title,
+              fields: built.holes,
+            }
+          }),
+        }),
+    ...(inheritsInlineObjects
+      ? {}
+      : {
+          inlineObjects: inlineObjectTypes.map((inlineObject) => {
+            const built = buildFields(
+              conversion,
+              inlineObject.fields ?? [],
+              inlineObject.name,
+              inRootContext,
+              inlineObject,
+            )
+            pendingWork.push(built.work)
+            return {
+              name: inlineObject.name,
+              title: inlineObject.title,
+              fields: built.holes,
+            }
+          }),
+        }),
   }
   target[index] = definition
 
   pushInOrder(conversion, pendingWork)
+}
+
+/**
+ * Mirror `compileSchema`'s inheritance for a block member. Inheriting a
+ * non-empty list means omitting it, which `compileSchema` fills in from
+ * the enclosing context, so it is only safe where that context is the
+ * root's. The block's resolved sets become the context of its sibling
+ * `of` members, which stays the root's only when both sets are exactly
+ * the root's.
+ */
+function resolveBlockInheritance(
+  conversion: Conversion,
+  blockType: BlockSchemaType,
+  inRootContext: boolean,
+): {
+  inheritsInlineObjects: boolean
+  inheritsAnnotations: boolean
+  siblingsInRootContext: boolean
+} {
+  const {inlineObjectTypes, annotationTypes} = readBlockChildren(blockType)
+  const inlineObjectsMatchRoot = sameInstances(
+    inlineObjectTypes,
+    conversion.rootInlineObjects,
+  )
+  const annotationsMatchRoot = sameInstances(
+    annotationTypes,
+    conversion.rootAnnotations,
+  )
+  return {
+    inheritsInlineObjects:
+      inRootContext && inlineObjectsMatchRoot && inlineObjectTypes.length > 0,
+    inheritsAnnotations:
+      inRootContext && annotationsMatchRoot && annotationTypes.length > 0,
+    siblingsInRootContext:
+      inRootContext && inlineObjectsMatchRoot && annotationsMatchRoot,
+  }
+}
+
+function readBlockChildren(blockType: BlockSchemaType): {
+  spanType: ObjectSchemaType | undefined
+  inlineObjectTypes: Array<ObjectSchemaType>
+  annotationTypes: Array<ObjectSchemaType>
+} {
+  const childrenOf = (
+    blockType.fields?.find((field) => field.name === 'children') as
+      | {type: ArraySchemaType}
+      | undefined
+  )?.type.of
+  const spanType = childrenOf?.find(
+    (memberType) => memberType.name === 'span',
+  ) as ObjectSchemaType | undefined
+  const inlineObjectTypes = (
+    Array.isArray(childrenOf) ? childrenOf : []
+  ).filter((memberType) => memberType.name !== 'span') as ObjectSchemaType[]
+  const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
+  return {
+    spanType,
+    inlineObjectTypes,
+    annotationTypes: Array.isArray(spanAnnotations) ? spanAnnotations : [],
+  }
+}
+
+function sameInstances(
+  types: ReadonlyArray<SchemaType>,
+  rootTypes: ReadonlyArray<SchemaType>,
+): boolean {
+  return (
+    types.length === rootTypes.length &&
+    types.every((type, index) => type === rootTypes[index])
+  )
 }
 
 function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {

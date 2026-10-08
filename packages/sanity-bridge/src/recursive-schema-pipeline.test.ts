@@ -146,3 +146,103 @@ test('an inline declaration sharing a root type name keeps its own shape', () =>
     fields: [{name: 'rootField', type: 'string', title: 'Root Field'}],
   })
 })
+
+test('inline objects and an annotation that each embed the shared Portable Text field convert and compile small and fast', () => {
+  const inlineObjectNames = ['inlineObject0', 'inlineObject1', 'inlineObject2']
+  const portableText = {
+    type: 'array',
+    of: [
+      {
+        type: 'block',
+        of: inlineObjectNames.map((name) => ({type: name})),
+        marks: {annotations: [{type: 'comment'}]},
+      },
+    ],
+  }
+  const types: Array<Record<string, unknown>> = inlineObjectNames.map(
+    (name) => ({
+      type: 'object',
+      name,
+      fields: [
+        {name: 'label', type: 'string'},
+        {...portableText, name: 'content'},
+      ],
+    }),
+  )
+  types.push({
+    type: 'object',
+    name: 'comment',
+    fields: [
+      {name: 'label', type: 'string'},
+      {...portableText, name: 'content'},
+    ],
+  })
+  types.push({
+    type: 'document',
+    name: 'article',
+    fields: [{...portableText, name: 'body'}],
+  })
+
+  const sanitySchema = SanitySchema.compile({name: 'test', types})
+  const article = sanitySchema.get('article') as unknown as {
+    fields: Array<{name: string; type: unknown}>
+  }
+  const bodyType = article.fields.find((field) => field.name === 'body')!.type
+
+  const startedAt = performance.now()
+  const definition = sanitySchemaToPortableTextSchema(bodyType as never)
+  const compiled = compileSchema(definition as never)
+  const durationMs = performance.now() - startedAt
+
+  expect(definition.inlineObjects).toHaveLength(inlineObjectNames.length)
+  expect(compiled.inlineObjects).toHaveLength(inlineObjectNames.length)
+  expect(definition.annotations).toHaveLength(1)
+  expect(compiled.annotations).toHaveLength(1)
+  expect(JSON.stringify(definition).length).toBeLessThan(50_000)
+  expect(durationMs).toBeLessThan(2_000)
+})
+
+test('annotations that each embed the shared Portable Text field convert and compile small and fast', () => {
+  const annotationNames = Array.from(
+    {length: 6},
+    (_, index) => `annotation${index}`,
+  )
+  const portableText = {
+    type: 'array',
+    of: [
+      {
+        type: 'block',
+        marks: {annotations: annotationNames.map((name) => ({type: name}))},
+      },
+    ],
+  }
+  const types: Array<Record<string, unknown>> = annotationNames.map((name) => ({
+    type: 'object',
+    name,
+    fields: [
+      {name: 'label', type: 'string'},
+      {...portableText, name: 'content'},
+    ],
+  }))
+  types.push({
+    type: 'document',
+    name: 'article',
+    fields: [{...portableText, name: 'body'}],
+  })
+
+  const sanitySchema = SanitySchema.compile({name: 'test', types})
+  const article = sanitySchema.get('article') as unknown as {
+    fields: Array<{name: string; type: unknown}>
+  }
+  const bodyType = article.fields.find((field) => field.name === 'body')!.type
+
+  const startedAt = performance.now()
+  const definition = sanitySchemaToPortableTextSchema(bodyType as never)
+  const compiled = compileSchema(definition as never)
+  const durationMs = performance.now() - startedAt
+
+  expect(definition.annotations).toHaveLength(annotationNames.length)
+  expect(compiled.annotations).toHaveLength(annotationNames.length)
+  expect(JSON.stringify(definition).length).toBeLessThan(50_000)
+  expect(durationMs).toBeLessThan(2_000)
+})
