@@ -81,9 +81,14 @@ function findInlineFields(
   type: string,
 ): ReadonlyArray<FieldDefinition> | undefined {
   let best: ReadonlyArray<FieldDefinition> | undefined
+  const visited = new Set<OfDefinition>()
 
   function walk(of: ReadonlyArray<OfDefinition>): void {
     for (const member of of) {
+      if (visited.has(member)) {
+        continue
+      }
+      visited.add(member)
       if (
         member.type === 'object' &&
         'name' in member &&
