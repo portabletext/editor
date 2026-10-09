@@ -1919,6 +1919,64 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         ?.fields.map((field) => field.name),
     ).toEqual(['b'])
   })
+
+  test('an inline object nested in its own Portable Text field keeps its fields at the nested position', () => {
+    const sanitySchema = SanitySchema.compile({
+      name: 'test',
+      types: [
+        {
+          name: 'blockContent',
+          type: 'array',
+          of: [{type: 'block', of: [{type: 'note'}]}, {type: 'section'}],
+        },
+        {
+          name: 'section',
+          type: 'object',
+          fields: [{name: 'content', type: 'blockContent'}],
+        },
+        {
+          name: 'note',
+          type: 'object',
+          fields: [
+            {name: 'label', type: 'string'},
+            {name: 'body', type: 'blockContent'},
+          ],
+        },
+      ],
+    })
+
+    const schema = compileSchema(
+      sanitySchemaToPortableTextSchema(sanitySchema.get('blockContent')),
+    )
+    const bodyField = schema.inlineObjects
+      .find((object) => object.name === 'note')
+      ?.fields.find((field) => field.name === 'body') as
+      | {of: ReadonlyArray<OfDefinition>}
+      | undefined
+    const bodySchema = getSubSchema(schema, bodyField?.of ?? [])
+
+    expect(
+      bodySchema.inlineObjects.find((object) => object.name === 'note'),
+    ).toEqual({
+      name: 'note',
+      title: 'Note',
+      fields: [
+        {name: 'label', type: 'string', title: 'Label'},
+        {
+          name: 'body',
+          type: 'array',
+          title: 'Body',
+          of: [
+            {
+              ...defaultBlockOfMember,
+              inlineObjects: [{name: 'note', title: 'Note', fields: []}],
+            },
+            {type: 'section', title: 'Section'},
+          ],
+        },
+      ],
+    })
+  })
 })
 
 describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
