@@ -1,5 +1,44 @@
 # Changelog
 
+## 4.1.3
+
+### Patch Changes
+
+- [#3372](https://github.com/portabletext/editor/pull/3372) [`4f89794`](https://github.com/portabletext/editor/commit/4f89794b1e7bfd59cfac6b7073951ef0b6b44904) Thanks [@christianhg](https://github.com/christianhg)! - fix: fall back to a compact conversion for recursive schemas in `sanitySchemaToPortableTextSchema`
+  
+  A schema where several inline objects or annotations carry a rich-text field that allows them again now converts in about 100 ms. Every nested block used to expand all of those types again, so the output multiplied with each one: five inline objects ran out of memory, which in Studio left the document on "Loading" until the tab crashed or the conversion gave up:
+  
+  ```ts
+  import {compileSchema} from '@portabletext/schema'
+  import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
+  import {Schema} from '@sanity/schema'
+  
+  const inlineObjects = ['callout', 'footnote', 'quote', 'sidenote', 'aside']
+  
+  const schema = Schema.compile({
+    name: 'default',
+    types: [
+      {
+        name: 'body',
+        type: 'array',
+        of: [{type: 'block', of: inlineObjects.map((name) => ({type: name}))}],
+      },
+      ...inlineObjects.map((name) => ({
+        name,
+        type: 'object',
+        fields: [{name: 'content', type: 'body'}],
+      })),
+    ],
+  })
+  
+  // Previously ran out of memory
+  compileSchema(sanitySchemaToPortableTextSchema(schema.get('body')))
+  ```
+  
+  A schema whose full conversion expands inline objects and annotations at most 100,000 times produces exactly the same output as before. Past that, the schema gets a compact form, which reuses each inline object and annotation instead of expanding it again, and leaves out a nested block's lists where `compileSchema` fills them in from the root. In the compact form, some positions nested several levels deep inside recursive structures resolve an object type with no fields, so content inserted there, for example by pasting, loses those fields.
+- Updated dependencies [[`e81e09e`](https://github.com/portabletext/editor/commit/e81e09e5885039fd3891ae0b091d9ae0d487f293)]:
+  - @portabletext/schema@3.0.1
+
 ## 4.1.2
 
 ### Patch Changes

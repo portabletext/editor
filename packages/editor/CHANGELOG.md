@@ -1,5 +1,32 @@
 # Changelog
 
+## 8.2.4
+
+### Patch Changes
+
+- [#3366](https://github.com/portabletext/editor/pull/3366) [`5225c37`](https://github.com/portabletext/editor/commit/5225c371cc428b6ec0839c4c451d44871b5b8645) Thanks [@christianhg](https://github.com/christianhg)! - fix: skip `collapseToEnd` during composition when the DOM selection has no ranges
+  
+  The editor no longer crashes when the browser selection is cleared in the middle of an IME composition, for example when focus briefly moves away or a browser extension clears the selection while a Japanese, Chinese, or Korean input method is composing. The editor's next render previously threw `InvalidStateError: Failed to execute 'collapseToEnd' on 'Selection': there is no selection.` and unmounted the editor. It now skips moving the DOM selection when there is none to move.
+
+- [#3352](https://github.com/portabletext/editor/pull/3352) [`978a442`](https://github.com/portabletext/editor/commit/978a44220cdae1bbfb8cb1a4ffe239fa417cd013) Thanks [@christianhg](https://github.com/christianhg)! - fix: address nodes by `_key` in emitted patch paths
+  
+  Operations raised with numeric path segments now emit patches that address blocks and children by `_key` instead of by array index. For example, removing an inline object by index:
+  
+  ```ts
+  editor.send({type: 'unset', at: [0, 'children', 1]})
+  ```
+  
+  This previously emitted `{type: 'unset', path: [0, 'children', 1]}` and now emits:
+  
+  ```ts
+  {type: 'unset', path: [{_key: 'b1'}, 'children', {_key: 'io1'}]}
+  ```
+  
+  Keyed paths keep pointing at the intended node when concurrent edits shift array positions. This applies to `set`, `unset`, `insert`, `insert.text` and `remove.text`. An index is kept when the array element has no unique, non-empty `_key` or when the array holds non-object items, such as a span's `marks`.
+- Updated dependencies [[`e81e09e`](https://github.com/portabletext/editor/commit/e81e09e5885039fd3891ae0b091d9ae0d487f293)]:
+  - @portabletext/schema@3.0.1
+  - @portabletext/html@2.0.1
+
 ## 8.2.3
 
 ### Patch Changes
