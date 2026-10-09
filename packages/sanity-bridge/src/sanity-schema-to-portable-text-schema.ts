@@ -165,34 +165,21 @@ function sanitySchemaTypeToSchema(
   const lists = resolveEnabledListItems(blockType)
   const annotations = (spanType as SpanSchemaType).annotations
 
-  // Sanity compiles a shared canonical type instance for each named type,
-  // so the same member instance is reached through every position that
-  // embeds it. Converting each instance once and sharing the result keeps
-  // the walk linear in the size of the compiled schema. Without it, the
-  // per-branch ancestor sets below enumerate every simple path through
-  // mutually-embedding types, which grows combinatorially.
-  //
-  // The walk itself runs on an explicit LIFO work stack instead of the
-  // call stack: children are pushed in reverse so the drain order is
-  // exact DFS pre-order (which the memo's first-expansion-wins
-  // semantics depend on), results land in pre-indexed holes so
-  // construction order matches the recursive version, and the branch's
-  // ancestor names live in one shared set scoped by pop-markers pushed
-  // beneath each subtree (O(1) per level where copying the set per
-  // level made the walk quadratic, and heap-bounded where call-stack
-  // recursion overflowed beyond ~1.5k mutually-embedding types).
-  const conversion: Conversion = {
-    work: [],
-    ancestors: new Map<string, number>(),
-    distinctAncestorCount: 0,
-    memo: new Map<SchemaType, OfDefinition>(),
-    activeAnonymousObjects: new Set<SchemaType>(),
-    inFlight: new Map<unknown, Array<number>>(),
-    rootBlockObjects: new Set<SchemaType>(blockObjectTypes),
-  }
-  const pendingWork: Array<Work> = []
+  const members =
+    convertMemberTypes(
+      'exact',
+      annotations,
+      blockObjectTypes,
+      inlineObjectTypes,
+    ) ??
+    convertMemberTypes(
+      'bounded',
+      annotations,
+      blockObjectTypes,
+      inlineObjectTypes,
+    )
 
-  const result = {
+  return {
     block: {
       name: blockType.name,
     },
@@ -214,11 +201,99 @@ function sanitySchemaTypeToSchema(
       title: decorator.title,
       value: decorator.value,
     })),
+    ...members,
+  }
+}
+
+/**
+ * Output below this budget must stay identical to the `exact` conversion's,
+ * so lowering it changes output for real schemas.
+ */
+const LIST_EXPANSION_BUDGET = 100_000
+
+/**
+ * `exact` gives every nested block its own `annotations` and
+ * `inlineObjects`, expanded under that block's ancestors. `bounded` omits
+ * a nested block's lists where they match the root's (see `Inheritance`),
+ * and expands each inline object and annotation instance once per
+ * `Inheritance`, sharing the first finished expansion with every later
+ * position. The first finished expansion is the innermost, most heavily
+ * cut one, so sharing can drop fields that `exact` keeps.
+ */
+type ConversionMode = 'exact' | 'bounded'
+
+type ConvertedMemberTypes = Pick<
+  Schema,
+  'annotations' | 'blockObjects' | 'inlineObjects'
+>
+
+function convertMemberTypes(
+  mode: 'exact',
+  annotations: ReadonlyArray<ObjectSchemaType>,
+  blockObjectTypes: ReadonlyArray<ObjectSchemaType>,
+  inlineObjectTypes: ReadonlyArray<ObjectSchemaType>,
+): ConvertedMemberTypes | undefined
+function convertMemberTypes(
+  mode: 'bounded',
+  annotations: ReadonlyArray<ObjectSchemaType>,
+  blockObjectTypes: ReadonlyArray<ObjectSchemaType>,
+  inlineObjectTypes: ReadonlyArray<ObjectSchemaType>,
+): ConvertedMemberTypes
+function convertMemberTypes(
+  mode: ConversionMode,
+  annotations: ReadonlyArray<ObjectSchemaType>,
+  blockObjectTypes: ReadonlyArray<ObjectSchemaType>,
+  inlineObjectTypes: ReadonlyArray<ObjectSchemaType>,
+): ConvertedMemberTypes | undefined {
+  // Sanity compiles a shared canonical type instance for each named type,
+  // so the same member instance is reached through every position that
+  // embeds it. Converting each instance once and sharing the result keeps
+  // the walk linear in the size of the compiled schema. Without it, the
+  // per-branch ancestor sets below enumerate every simple path through
+  // mutually-embedding types, which grows combinatorially.
+  //
+  // The walk itself runs on an explicit LIFO work stack instead of the
+  // call stack: children are pushed in reverse so the drain order is
+  // exact DFS pre-order (which the memo's first-expansion-wins
+  // semantics depend on), results land in pre-indexed holes so
+  // construction order matches the recursive version, and the branch's
+  // ancestor names live in one shared set scoped by pop-markers pushed
+  // beneath each subtree (O(1) per level where copying the set per
+  // level made the walk quadratic, and heap-bounded where call-stack
+  // recursion overflowed beyond ~1.5k mutually-embedding types).
+  const conversion: Conversion = {
+    work: [],
+    ancestors: new Map<string, number>(),
+    distinctAncestorCount: 0,
+    memo: new Map<SchemaType, Array<OfDefinition | undefined>>(),
+    activeAnonymousObjects: new Set<SchemaType>(),
+    inFlight: new Map<unknown, Array<number>>(),
+    mode,
+    completedFields: new Map<
+      unknown,
+      Array<Array<FieldDefinition> | undefined>
+    >(),
+    listExpansions: 0,
+    rootBlockObjects: new Set<SchemaType>(blockObjectTypes),
+    rootAnnotations: annotations,
+    rootInlineObjects: inlineObjectTypes,
+  }
+  const rootInheritance =
+    mode === 'bounded' ? INHERITS_ROOT_LISTS : INHERITS_NOTHING
+  // A bare reference reaches a root block object from positions whose
+  // lists differ from the root's, and `getSubSchema` on the raw output
+  // resolves its fields against those.
+  const rootBlockObjectInheritance =
+    mode === 'bounded' ? COMPILED_INHERITS_ROOT_LISTS : INHERITS_NOTHING
+  const pendingWork: Array<Work> = []
+
+  const members: ConvertedMemberTypes = {
     annotations: annotations.map((annotation) => {
       const built = buildFields(
         conversion,
         annotation.fields,
         undefined,
+        rootInheritance,
         annotation,
       )
       pendingWork.push(built.work)
@@ -233,6 +308,7 @@ function sanitySchemaTypeToSchema(
         conversion,
         blockObject.fields,
         blockObject.name,
+        rootBlockObjectInheritance,
       )
       pendingWork.push(built.work)
       return {
@@ -246,6 +322,7 @@ function sanitySchemaTypeToSchema(
         conversion,
         inlineObject.fields,
         inlineObject.name,
+        rootInheritance,
         inlineObject,
       )
       pendingWork.push(built.work)
@@ -258,9 +335,11 @@ function sanitySchemaTypeToSchema(
   }
 
   pushInOrder(conversion, pendingWork)
-  drain(conversion)
+  if (!drain(conversion)) {
+    return undefined
+  }
 
-  return result
+  return members
 }
 
 type Work = () => void
@@ -279,7 +358,11 @@ type Conversion = {
    */
   ancestors: Map<string, number>
   distinctAncestorCount: number
-  memo: Map<SchemaType, OfDefinition>
+  /**
+   * Indexed by `Inheritance`: the same instance converts differently where
+   * its nested blocks may omit the root's lists.
+   */
+  memo: Map<SchemaType, Array<OfDefinition | undefined>>
   /**
    * Anonymous object member instances (name `object`) whose expansion is
    * on the active path. Every anonymous inline object shares the name
@@ -301,6 +384,14 @@ type Conversion = {
    * there changes output only for schemas that recursed forever.
    */
   inFlight: Map<unknown, Array<number>>
+  mode: ConversionMode
+  /**
+   * The first finished field expansion of each inline-object and
+   * annotation instance, indexed by `Inheritance`. Only the `bounded`
+   * conversion records and shares them.
+   */
+  completedFields: Map<unknown, Array<Array<FieldDefinition> | undefined>>
+  listExpansions: number
   /**
    * The canonical instances of the root-level block object types. Members
    * reaching one of these at any `of` position emit a bare
@@ -316,7 +407,27 @@ type Conversion = {
    * own inline shape.
    */
   rootBlockObjects: Set<SchemaType>
+  rootAnnotations: ReadonlyArray<ObjectSchemaType>
+  rootInlineObjects: ReadonlyArray<ObjectSchemaType>
 }
+
+/**
+ * Whether a list omitted by a nested block at this position resolves to
+ * the root block's lists in `compileSchema` (which fills it from the
+ * enclosing resolved block) and in `getSubSchema` called on the raw output
+ * (which falls back to the schema it is handed). Only the `bounded`
+ * conversion sets either flag. A nested block omits only where both hold,
+ * and omits its `annotations` and `inlineObjects` together: an inherited
+ * member's own rich-text fields resolve against the lists of the block
+ * that inherits it, so inheriting one list but not the other hands them
+ * the wrong lists.
+ */
+type Inheritance = number
+const INHERITS_NOTHING = 0
+const COMPILED_INHERITS_ROOT_LISTS = 1
+const RAW_INHERITS_ROOT_LISTS = 2
+const INHERITS_ROOT_LISTS =
+  COMPILED_INHERITS_ROOT_LISTS | RAW_INHERITS_ROOT_LISTS
 
 function pushAncestor(conversion: Conversion, name: string): void {
   const count = conversion.ancestors.get(name) ?? 0
@@ -354,9 +465,15 @@ function recursionStateSize(conversion: Conversion): number {
   )
 }
 
-function drain(conversion: Conversion): void {
+function drain(conversion: Conversion): boolean {
   let steps = 0
   while (conversion.work.length > 0) {
+    if (
+      conversion.mode === 'exact' &&
+      conversion.listExpansions > LIST_EXPANSION_BUDGET
+    ) {
+      return false
+    }
     conversion.work.pop()!()
     if (++steps > 100_000_000) {
       // Circuit breaker: legal schemas stay far below this (the output
@@ -372,6 +489,7 @@ function drain(conversion: Conversion): void {
       )
     }
   }
+  return true
 }
 
 /**
@@ -391,11 +509,20 @@ function buildFields(
   conversion: Conversion,
   fields: ReadonlyArray<{name: string; type: SchemaType}>,
   seedName: string | undefined,
+  inheritance: Inheritance,
   inFlightKey?: unknown,
 ): {holes: Array<FieldDefinition>; work: Work} {
   const holes: Array<FieldDefinition> = []
   const work = () => {
     if (inFlightKey !== undefined) {
+      const completed =
+        conversion.mode === 'bounded'
+          ? conversion.completedFields.get(inFlightKey)?.[inheritance]
+          : undefined
+      if (completed !== undefined) {
+        holes.push(...completed)
+        return
+      }
       const entrySizes = conversion.inFlight.get(inFlightKey)
       const stateSize = recursionStateSize(conversion)
       if (
@@ -414,6 +541,12 @@ function buildFields(
       } else {
         entrySizes.push(stateSize)
       }
+      conversion.listExpansions++
+      if (conversion.mode === 'bounded') {
+        conversion.work.push(() =>
+          recordCompletedFields(conversion, inFlightKey, inheritance, holes),
+        )
+      }
       conversion.work.push(() => {
         const sizes = conversion.inFlight.get(inFlightKey)
         sizes?.pop()
@@ -429,10 +562,26 @@ function buildFields(
     holes.length = fields.length
     for (let index = fields.length - 1; index >= 0; index--) {
       const field = fields[index]!
-      conversion.work.push(() => scheduleField(conversion, field, holes, index))
+      conversion.work.push(() =>
+        scheduleField(conversion, field, holes, index, inheritance),
+      )
     }
   }
   return {holes, work}
+}
+
+function recordCompletedFields(
+  conversion: Conversion,
+  inFlightKey: unknown,
+  inheritance: Inheritance,
+  fields: Array<FieldDefinition>,
+): void {
+  let byInheritance = conversion.completedFields.get(inFlightKey)
+  if (byInheritance === undefined) {
+    byInheritance = []
+    conversion.completedFields.set(inFlightKey, byInheritance)
+  }
+  byInheritance[inheritance] ??= fields
 }
 
 function pushInOrder(conversion: Conversion, works: Array<Work>): void {
@@ -446,6 +595,7 @@ function scheduleField(
   field: {name: string; type: SchemaType},
   target: Array<FieldDefinition>,
   index: number,
+  inheritance: Inheritance,
 ): void {
   if (field.type.jsonType !== 'array') {
     target[index] = {
@@ -465,14 +615,33 @@ function scheduleField(
     of,
   }
   if (ofMembers) {
+    // `compileSchema` fills the sibling members' omitted lists from the
+    // block member's resolved lists. `getSubSchema` falls back to the
+    // schema in hand instead, and a bare reference can resolve a sibling
+    // member from a position with narrower lists, so sibling members never
+    // carry `RAW_INHERITS_ROOT_LISTS`.
+    const blockMember = ofMembers.find((member) => findBlockType(member))
+    const siblingInheritance = !blockMember
+      ? inheritance & COMPILED_INHERITS_ROOT_LISTS
+      : matchesRootLists(conversion, blockMember as BlockSchemaType)
+        ? COMPILED_INHERITS_ROOT_LISTS
+        : INHERITS_NOTHING
     for (
       let memberIndex = ofMembers.length - 1;
       memberIndex >= 0;
       memberIndex--
     ) {
       const member = ofMembers[memberIndex]!
+      const memberInheritance =
+        member === blockMember ? inheritance : siblingInheritance
       conversion.work.push(() =>
-        scheduleOfMember(conversion, member, of, memberIndex),
+        scheduleOfMember(
+          conversion,
+          member,
+          of,
+          memberIndex,
+          memberInheritance,
+        ),
       )
     }
   }
@@ -483,6 +652,7 @@ function scheduleOfMember(
   memberType: SchemaType,
   target: Array<OfDefinition>,
   index: number,
+  inheritance: Inheritance,
 ): void {
   // `findBlockType` walks up the `type.type` chain to the base `block`, so
   // it only detects *whether* this member is a block. A block member's own
@@ -494,6 +664,7 @@ function scheduleOfMember(
       memberType as BlockSchemaType,
       target,
       index,
+      inheritance,
     )
     return
   }
@@ -537,18 +708,20 @@ function scheduleOfMember(
     return
   }
 
-  // Each distinct member instance is expanded exactly once per conversion;
-  // every later position that reaches the same instance shares the first
-  // expansion. Keyed by instance (not name) so that same-named but
-  // structurally different inline declarations keep their own shapes.
+  // Each distinct member instance is expanded exactly once per conversion
+  // and `Inheritance`. Every later position that reaches the same instance
+  // shares the first expansion. Keyed by instance (not name) so that
+  // same-named but structurally different inline declarations keep their
+  // own shapes.
   // The memo entry lands before the subtree drains, which is
   // output-neutral: any path re-entering this instance mid-expansion is
   // cut above before the memo is consulted (by name for a named member,
   // by instance for an anonymous one), and every other position runs
   // after this subtree has fully drained (exact DFS order).
-  const memoized = conversion.memo.get(memberType)
-  if (memoized) {
-    target[index] = memoized
+  let memoized = conversion.memo.get(memberType)
+  const memoizedDefinition = memoized?.[inheritance]
+  if (memoizedDefinition) {
+    target[index] = memoizedDefinition
     return
   }
 
@@ -560,7 +733,11 @@ function scheduleOfMember(
     ...(memberType.title ? {title: memberType.title} : {}),
     fields: holes,
   }
-  conversion.memo.set(memberType, definition)
+  if (memoized === undefined) {
+    memoized = []
+    conversion.memo.set(memberType, memoized)
+  }
+  memoized[inheritance] = definition
   target[index] = definition
 
   if (isAnonymousObject) {
@@ -574,7 +751,7 @@ function scheduleOfMember(
   for (let fieldIndex = fields.length - 1; fieldIndex >= 0; fieldIndex--) {
     const field = fields[fieldIndex]!
     conversion.work.push(() =>
-      scheduleField(conversion, field, holes, fieldIndex),
+      scheduleField(conversion, field, holes, fieldIndex, inheritance),
     )
   }
 }
@@ -588,7 +765,9 @@ function scheduleOfMember(
  * block (an undeclared list becomes Sanity's defaults, not the root block's
  * values; a block's inline objects are exactly its own `of`), so there is
  * nothing to inherit and nothing to merge: emit the member's own resolved
- * lists and let `getSubSchema` read them directly.
+ * lists and let `getSubSchema` read them directly. The one exception is
+ * the `bounded` conversion omitting `annotations` and `inlineObjects`
+ * that match the root's (see `Inheritance`).
  *
  * This is what keeps a restricted nested block (a code-block line that
  * strips marks and styles, or declares `of: []`) from leaking the root's
@@ -599,6 +778,7 @@ function scheduleBlockOfMember(
   blockType: BlockSchemaType,
   target: Array<OfDefinition>,
   index: number,
+  inheritance: Inheritance,
 ): void {
   const styleList = blockType.fields?.find((field) => field.name === 'style')
     ?.type.options?.list
@@ -606,23 +786,19 @@ function scheduleBlockOfMember(
     (field) => field.name === 'listItem',
   )?.type.options?.list
 
-  const childrenOf = (
-    blockType.fields?.find((field) => field.name === 'children') as
-      | {type: ArraySchemaType}
-      | undefined
-  )?.type.of
-  const spanType = childrenOf?.find(
-    (memberType) => memberType.name === 'span',
-  ) as ObjectSchemaType | undefined
-  const inlineObjectTypes = (
-    Array.isArray(childrenOf) ? childrenOf : []
-  ).filter((memberType) => memberType.name !== 'span') as ObjectSchemaType[]
+  const {spanType, annotations, inlineObjects} = blockMemberLists(blockType)
   const spanDecorators = (
     spanType as unknown as {
       decorators?: ReadonlyArray<BlockDecoratorDefinition>
     }
   )?.decorators
-  const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
+  const matchesRoot = matchesRootLists(conversion, blockType)
+  // `compileSchema` resolves the fields of a block's own annotations and
+  // inline objects against the block's enclosing lists, `getSubSchema`
+  // against the block's own.
+  const membersInheritance =
+    (inheritance & COMPILED_INHERITS_ROOT_LISTS) |
+    (matchesRoot ? RAW_INHERITS_ROOT_LISTS : INHERITS_NOTHING)
 
   const pendingWork: Array<Work> = []
 
@@ -649,40 +825,145 @@ function scheduleBlockOfMember(
         value: decorator.value,
       }),
     ),
-    annotations: (Array.isArray(spanAnnotations) ? spanAnnotations : []).map(
-      (annotation) => {
-        const built = buildFields(
-          conversion,
-          annotation.fields,
-          undefined,
-          annotation,
-        )
-        pendingWork.push(built.work)
-        return {
-          name: annotation.name,
-          title: annotation.title,
-          fields: built.holes,
-        }
-      },
-    ),
-    inlineObjects: inlineObjectTypes.map((inlineObject) => {
-      const built = buildFields(
-        conversion,
-        inlineObject.fields ?? [],
-        inlineObject.name,
-        inlineObject,
-      )
-      pendingWork.push(built.work)
-      return {
-        name: inlineObject.name,
-        title: inlineObject.title,
-        fields: built.holes,
-      }
-    }),
+    ...(matchesRoot && inheritance === INHERITS_ROOT_LISTS
+      ? {}
+      : {
+          annotations: annotations.map((annotation) => {
+            const built = buildFields(
+              conversion,
+              annotation.fields,
+              undefined,
+              membersInheritance,
+              annotation,
+            )
+            pendingWork.push(built.work)
+            return {
+              name: annotation.name,
+              title: annotation.title,
+              fields: built.holes,
+            }
+          }),
+          inlineObjects: inlineObjects.map((inlineObject) => {
+            const built = buildFields(
+              conversion,
+              inlineObject.fields ?? [],
+              inlineObject.name,
+              membersInheritance,
+              inlineObject,
+            )
+            pendingWork.push(built.work)
+            return {
+              name: inlineObject.name,
+              title: inlineObject.title,
+              fields: built.holes,
+            }
+          }),
+        }),
   }
   target[index] = definition
 
   pushInOrder(conversion, pendingWork)
+}
+
+function matchesRootLists(
+  conversion: Conversion,
+  blockType: BlockSchemaType,
+): boolean {
+  if (conversion.mode === 'exact') {
+    return false
+  }
+  const {annotations, inlineObjects} = blockMemberLists(blockType)
+  return (
+    sameMembers(annotations, conversion.rootAnnotations) &&
+    sameMembers(inlineObjects, conversion.rootInlineObjects)
+  )
+}
+
+function blockMemberLists(blockType: BlockSchemaType): {
+  spanType: ObjectSchemaType | undefined
+  annotations: ReadonlyArray<ObjectSchemaType>
+  inlineObjects: ReadonlyArray<ObjectSchemaType>
+} {
+  const childrenOf = (
+    blockType.fields?.find((field) => field.name === 'children') as
+      | {type: ArraySchemaType}
+      | undefined
+  )?.type.of
+  const spanType = childrenOf?.find(
+    (memberType) => memberType.name === 'span',
+  ) as ObjectSchemaType | undefined
+  const annotations = (spanType as SpanSchemaType | undefined)?.annotations
+  return {
+    spanType,
+    annotations: Array.isArray(annotations) ? annotations : [],
+    inlineObjects: (Array.isArray(childrenOf) ? childrenOf : []).filter(
+      (memberType) => memberType.name !== 'span',
+    ) as Array<ObjectSchemaType>,
+  }
+}
+
+function sameMembers(
+  members: ReadonlyArray<ObjectSchemaType>,
+  otherMembers: ReadonlyArray<ObjectSchemaType>,
+): boolean {
+  return (
+    members.length === otherMembers.length &&
+    members.every((member, index) => sameShape(member, otherMembers[index]!))
+  )
+}
+
+/**
+ * Sanity compiles a fresh member instance for every `of` declaration, so
+ * the same named type listed by two blocks is two instances and only their
+ * shape can match. Array fields must hold the very same member instances:
+ * the memo and the cycle cuts key on instances, so structurally equal but
+ * distinct members can convert differently.
+ */
+function sameShape(
+  member: ObjectSchemaType,
+  otherMember: ObjectSchemaType,
+): boolean {
+  if (member === otherMember) {
+    return true
+  }
+  if (
+    member.name !== otherMember.name ||
+    member.title !== otherMember.title ||
+    member.jsonType !== otherMember.jsonType
+  ) {
+    return false
+  }
+  const fields = member.fields
+  const otherFields = otherMember.fields
+  if (fields === otherFields) {
+    return true
+  }
+  if (
+    !Array.isArray(fields) ||
+    !Array.isArray(otherFields) ||
+    fields.length !== otherFields.length
+  ) {
+    return false
+  }
+  return fields.every((field, index) => {
+    const otherField = otherFields[index]!
+    if (
+      field.name !== otherField.name ||
+      field.type.jsonType !== otherField.type.jsonType ||
+      field.type.title !== otherField.type.title
+    ) {
+      return false
+    }
+    if (field.type.jsonType !== 'array' || field.type === otherField.type) {
+      return true
+    }
+    const of = safeGetOf(field.type) ?? []
+    const otherOf = safeGetOf(otherField.type) ?? []
+    return (
+      of.length === otherOf.length &&
+      of.every((ofMember, ofIndex) => ofMember === otherOf[ofIndex])
+    )
+  })
 }
 
 function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
