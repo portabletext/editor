@@ -136,19 +136,19 @@ describe('same _type in two different lexical positions', () => {
           _type: 'table',
           rows: [
             {
-              _key: expect.any(String),
+              _key: 'k2',
               _type: 'row',
               cells: [
                 {
-                  _key: expect.any(String),
+                  _key: 'k3',
                   _type: 'cell',
                   content: [
                     {
-                      _key: expect.any(String),
+                      _key: 'k4',
                       _type: 'block',
                       children: [
                         {
-                          _key: expect.any(String),
+                          _key: 'k5',
                           _type: 'span',
                           marks: [],
                           text: '',
@@ -168,15 +168,15 @@ describe('same _type in two different lexical positions', () => {
           _type: 'organism',
           parts: [
             {
-              _key: expect.any(String),
+              _key: 'k6',
               _type: 'cell',
               content: [
                 {
-                  _key: expect.any(String),
+                  _key: 'k7',
                   _type: 'block',
                   children: [
                     {
-                      _key: expect.any(String),
+                      _key: 'k8',
                       _type: 'span',
                       marks: [],
                       text: '',

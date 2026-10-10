@@ -30,9 +30,24 @@ describe('Value validation', () => {
 
     await vi.waitFor(() => {
       expect(events).toEqual([
-        expect.objectContaining({
+        {
           type: 'invalid value',
-        }),
+          resolution: {
+            action: 'Remove the item',
+            description:
+              "Child at index '0' in block with _key 'k0' is not an object.",
+            i18n: {
+              action:
+                'inputs.portable-text.invalid-value.non-object-child.action',
+              description:
+                'inputs.portable-text.invalid-value.non-object-child.description',
+              values: {index: 0, key: 'k0'},
+            },
+            item: {_type: 'block', _key: 'k0', children: [null]},
+            patches: [{type: 'unset', path: [{_key: 'k0'}, 'children', 0]}],
+          },
+          value: [{_type: 'block', _key: 'k0', children: [null]}],
+        },
         {type: 'ready'},
       ])
     })

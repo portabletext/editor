@@ -1,5 +1,37 @@
 # Changelog
 
+## 8.2.2
+
+### Patch Changes
+
+- [#3328](https://github.com/portabletext/editor/pull/3328) [`34fc8c7`](https://github.com/portabletext/editor/commit/34fc8c7a438cffa9b59877f5d215a6046c138ee8) Thanks [@bjoerge](https://github.com/bjoerge)! - fix: record a pristine block inserted into an empty field as persisted, so the next edit does not insert it again
+  
+  Undoing the deletion of the only block, then typing, no longer emits a second `insert` of the restored block. Before, the editor took the restored block for its local placeholder and inserted it again on the next edit, so a host applying the emitted patches ended up with two blocks sharing the same `_key`.
+
+- [#3318](https://github.com/portabletext/editor/pull/3318) [`2657861`](https://github.com/portabletext/editor/commit/265786175ba5e62300508cdd2e5c3611a5f72f2c) Thanks [@christianhg](https://github.com/christianhg)! - fix: walk nested container registrations in `getUnionSchema`
+  
+  `getUnionSchema` now includes the members declared by containers registered in another container's `of`, at any depth, such as the cells of a table registered with `defineTable`. Decorators, annotations, lists, styles, inline objects, and block objects that only a table cell declares now show up in `useToolbarSchema` from `@portabletext/toolbar`, and the built-in decorator shortcuts (for example `code`) now toggle those decorators inside the cell.
+  
+  ```ts
+  // The root allows `strong`, table cells allow `strong` and `code`
+  defineSchema({
+    decorators: [{name: 'strong'}],
+    blockObjects: [
+      {
+        name: 'table',
+        // rows > cells > content:
+        //   [{type: 'block', decorators: [{name: 'strong'}, {name: 'code'}]}]
+      },
+    ],
+  })
+  
+  // With `table.Plugin` mounted
+  getUnionSchema(snapshot.context.schema, snapshot.context.containers)
+    .decorators.map((decorator) => decorator.name)
+  // Before: ['strong']
+  // After: ['strong', 'code']
+  ```
+
 ## 8.2.1
 
 ### Patch Changes

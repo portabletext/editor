@@ -1,4 +1,9 @@
-import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
+import {
+  defineSchema,
+  type Editor,
+  type EditorSelectionPoint,
+  type EditorSnapshot,
+} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {getEnclosingBlock} from '@portabletext/editor/traversal'
 import {createTestKeyGenerator} from '@portabletext/test'
@@ -7,7 +12,7 @@ import {userEvent} from 'vitest/browser'
 import {TablePlugin} from '../plugin.table'
 import {createTableGuards, defaultTableConfig} from '../table-config'
 
-const {isCell} = createTableGuards(defaultTableConfig)
+const {isCell, isRow} = createTableGuards(defaultTableConfig)
 
 const schemaDefinition = defineSchema({
   lists: [{name: 'bullet'}],
@@ -117,6 +122,14 @@ function focusCellKey(snapshot: EditorSnapshot): string | undefined {
   return getEnclosingBlock(snapshot, focus, {match: isCell})?.node._key
 }
 
+function focusRowKey(snapshot: EditorSnapshot): string | undefined {
+  const focus = snapshot.context.selection?.focus.path
+  if (!focus) {
+    return undefined
+  }
+  return getEnclosingBlock(snapshot, focus, {match: isRow})?.node._key
+}
+
 function focusBlockKey(snapshot: EditorSnapshot): string | undefined {
   const focus = snapshot.context.selection?.focus.path
   if (!focus) {
@@ -139,11 +152,7 @@ async function navFrom(
     children: <TablePlugin />,
   })
   editor.send({type: 'focus'})
-  const point = {path: spanPath(cellKey), offset}
-  editor.send({type: 'select', at: {anchor: point, focus: point}})
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
-  })
+  await placeCaret(editor, {path: spanPath(cellKey), offset})
   await userEvent.keyboard(`{${key}}`)
   return editor
 }
@@ -455,7 +464,7 @@ describe('table keyboard navigation', () => {
       children: <TablePlugin />,
     })
     editor.send({type: 'focus'})
-    const point = {
+    await placeCaret(editor, {
       path: [
         {_key: 't0'},
         'rows',
@@ -468,53 +477,95 @@ describe('table keyboard navigation', () => {
         {_key: 's-g00'},
       ],
       offset: 0,
-    }
-    editor.send({type: 'select', at: {anchor: point, focus: point}})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
     })
 
-    // Pass 1 down: walks the rows and escapes below (nothing lies beyond).
-    for (let press = 0; press < 5; press++) {
-      await userEvent.keyboard('{ArrowDown}')
-    }
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}')
     await vi.waitFor(() => {
       expect(
         editor.getSnapshot().context.value?.map((block) => block._type),
       ).toEqual(['block', 'table', 'block'])
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('k2')
+      expectDomCaretAtModelFocus(editor)
+    })
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('k2')
+      expectDomCaretAtModelFocus(editor)
     })
 
-    // Two more full passes: up to "above", down to the escape block, up
-    // again. Every neighbor now exists, so no press may insert.
-    for (let press = 0; press < 6; press++) {
-      await userEvent.keyboard('{ArrowUp}')
-    }
-    for (let press = 0; press < 6; press++) {
-      await userEvent.keyboard('{ArrowDown}')
-    }
-    for (let press = 0; press < 6; press++) {
-      await userEvent.keyboard('{ArrowUp}')
-    }
+    // Entering the table from outside is native caret movement, which
+    // reaches the model through the throttled DOM selection sync, so each
+    // entry is its own press.
+    await userEvent.keyboard('{ArrowUp}')
     await vi.waitFor(() => {
-      expect(
-        editor.getSnapshot().context.value?.map((block) => block._type),
-      ).toEqual(['block', 'table', 'block'])
+      expect(focusRowKey(editor.getSnapshot())).toEqual('gr2')
+      expectDomCaretAtModelFocus(editor)
     })
-  })
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}{ArrowUp}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('above')
+      expectDomCaretAtModelFocus(editor)
+    })
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('above')
+      expectDomCaretAtModelFocus(editor)
+    })
+
+    await userEvent.keyboard('{ArrowDown}')
+    await vi.waitFor(() => {
+      expect(focusRowKey(editor.getSnapshot())).toEqual('gr0')
+      expectDomCaretAtModelFocus(editor)
+    })
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('k2')
+      expectDomCaretAtModelFocus(editor)
+    })
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('k2')
+      expectDomCaretAtModelFocus(editor)
+    })
+
+    await userEvent.keyboard('{ArrowUp}')
+    await vi.waitFor(() => {
+      expect(focusRowKey(editor.getSnapshot())).toEqual('gr2')
+      expectDomCaretAtModelFocus(editor)
+    })
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}{ArrowUp}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('above')
+      expectDomCaretAtModelFocus(editor)
+    })
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}')
+    await vi.waitFor(() => {
+      expect(focusBlockKey(editor.getSnapshot())).toEqual('above')
+      expectDomCaretAtModelFocus(editor)
+    })
+    expect(
+      editor.getSnapshot().context.value?.map((block) => block._type),
+    ).toEqual(['block', 'table', 'block'])
+    // The 23 key presses are each a round trip to the browser, and their
+    // cost scales with machine load: Firefox on a busy CI runner has
+    // measured 10-15 s, against vitest's 15 s default.
+  }, 60_000)
 
   test('repeated ArrowDown escapes reuse the block below instead of accumulating', async () => {
     const editor = await navFrom('c10', 1, 'ArrowDown')
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toHaveLength(2)
       expect(focusBlockKey(editor.getSnapshot())).toEqual('k2')
+      expectDomCaretAtModelFocus(editor)
     })
 
     // Back into the table's bottom row, then out again. The placeholder
     // from the first escape already lies below; navigation must land in
-    // it without inserting another.
+    // it without inserting another. The browser moves the caret up, and
+    // Chromium and Firefox pick different cells of the bottom row.
     await userEvent.keyboard('{ArrowUp}')
     await vi.waitFor(() => {
-      expect(focusCellKey(editor.getSnapshot())).toEqual('c11')
+      expect(focusRowKey(editor.getSnapshot())).toEqual('r1')
     })
     await userEvent.keyboard('{ArrowDown}')
     await vi.waitFor(() => {
@@ -730,3 +781,32 @@ describe('table keyboard navigation preserves the caret column', () => {
     })
   })
 })
+
+async function placeCaret(editor: Editor, point: EditorSelectionPoint) {
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
+    expectDomCaretAtModelFocus(editor)
+  })
+}
+
+function expectDomCaretAtModelFocus(editor: Editor) {
+  const snapshot = editor.getSnapshot()
+  const domSelection = window.getSelection()
+  const domFocusNode = domSelection?.focusNode ?? null
+  expect(document.activeElement).toBe(editor.dom.getEditorElement())
+  expect(
+    editor.dom.getStartBlockElement(snapshot)?.contains(domFocusNode),
+  ).toBe(true)
+  if (
+    domFocusNode?.nodeType !== Node.TEXT_NODE ||
+    domFocusNode.textContent === '\uFEFF'
+  ) {
+    // An element position, or the zero-width character an empty span
+    // renders, has no text offset to compare with the model's.
+    return
+  }
+  expect(domSelection?.focusOffset).toBe(
+    snapshot.context.selection?.focus.offset,
+  )
+}

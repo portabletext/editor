@@ -122,27 +122,22 @@ describe('Setup', () => {
     await fooBarMutationPromise
 
     await vi.waitFor(() => {
-      expect(mutationEvent).toEqual(
-        expect.objectContaining({
-          type: 'mutation',
-          value: expect.arrayContaining([
+      expect(mutationEvent?.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
             {
-              _type: 'block',
-              _key: expect.any(String),
-              children: [
-                {
-                  _type: 'span',
-                  _key: expect.any(String),
-                  text: 'foo bar',
-                  marks: [],
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
+              _type: 'span',
+              _key: 'k1',
+              text: 'foo bar',
+              marks: [],
             },
-          ]),
-        }),
-      )
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 })

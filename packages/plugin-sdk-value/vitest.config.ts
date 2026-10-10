@@ -12,7 +12,7 @@ export default defineConfig({
         plugins: [react({compiler: {target: '19'}})],
         test: {
           name: 'browser',
-          include: ['src/**/*.browser.test.tsx'],
+          include: ['src/**/*.test.tsx'],
           browser: {
             enabled: true,
             headless: true,

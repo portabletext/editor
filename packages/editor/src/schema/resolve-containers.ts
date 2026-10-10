@@ -19,7 +19,6 @@ export type {
 } from './container-types'
 export {descendToParent} from './descend-to-parent'
 export {resolveContainerByPath} from './resolve-container-by-path'
-export {resolveContainerField} from './resolve-container-field'
 export {
   resolveContainers,
   resolveContainersRich,

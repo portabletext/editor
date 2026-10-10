@@ -33,3 +33,29 @@ function App() {
   )
 }
 ```
+
+## Soft line breaks
+
+The plugin keeps the value to one block, but Shift+Enter still inserts a soft line break (a `\n` inside the text). That suits inputs like comment fields, where Enter submits and Shift+Enter starts a new line.
+
+To disallow soft line breaks as well, register a Behavior that drops `insert.soft break`:
+
+```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
+
+const noSoftBreakBehavior = defineBehavior({
+  on: 'insert.soft break',
+  actions: [],
+})
+
+function App() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition: defineSchema({})}}>
+      <PortableTextEditable />
+      <OneLinePlugin />
+      <BehaviorPlugin behaviors={[noSoftBreakBehavior]} />
+    </EditorProvider>
+  )
+}
+```

@@ -195,12 +195,6 @@ describe('event.decorator.add', () => {
       text: 'foo',
       marks: [],
     }
-    const fooBar = {
-      _key: keyGenerator(),
-      _type: 'span',
-      text: 'foo bar',
-      marks: [],
-    }
     const stockTicker = {
       _key: keyGenerator(),
       _type: 'stock-ticker',
@@ -376,7 +370,20 @@ describe('event.decorator.add', () => {
     })
 
     test('Scenario: Adding decorator at the end of span', async () => {
-      const block = createBlock([fooBar])
+      const keyGenerator = createTestKeyGenerator()
+      const fooBar = {
+        _key: keyGenerator(),
+        _type: 'span',
+        text: 'foo bar',
+        marks: [],
+      }
+      const block = {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [fooBar],
+        markDefs: [],
+        style: 'normal',
+      }
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -414,7 +421,7 @@ describe('event.decorator.add', () => {
               text: 'foo ',
             },
             {
-              _key: expect.any(String),
+              _key: 'k4',
               _type: 'span',
               text: 'bar',
               marks: ['strong'],
