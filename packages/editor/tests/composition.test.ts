@@ -1880,3 +1880,88 @@ describe.skipIf(!isChromium)('Composition (IME)', () => {
     })
   })
 })
+
+describe('Selection sync during composition', () => {
+  test('Scenario: Rendering while composing with an empty DOM selection', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    const editableElement = locator.element()
+    editableElement.dispatchEvent(
+      new CompositionEvent('compositionstart', {bubbles: true}),
+    )
+    editableElement.dispatchEvent(
+      new CompositionEvent('compositionupdate', {bubbles: true, data: 'a'}),
+    )
+    window.getSelection()?.removeAllRanges()
+
+    editor.send({type: 'insert.text', text: 'bar'})
+
+    await expect.element(locator).toHaveTextContent('foobar')
+
+    editableElement.dispatchEvent(
+      new CompositionEvent('compositionend', {bubbles: true}),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 6,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.toString()).toEqual('foobar')
+    })
+  })
+})

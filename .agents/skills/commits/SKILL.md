@@ -29,7 +29,7 @@ Dense technical prose, wrapped at ~72 columns, structured as:
 
 1. **Old mechanism and why it was wrong**, with the precise failure sequence, name the functions, the inputs, and what the wrong output was.
 2. **The new mechanism.**
-3. **Explicitly scoped behavioral changes** (never the words "delta" or "rides along"): "Net behavior unchanged", "Emitted patches only change in the narrow case of...", "One additional change: ...".
+3. **Explicitly scoped behavioral changes** (never the words "delta" or "rides along", and no labels such as "One additional change:"): "Net behavior unchanged", "Emitted patches only change in the narrow case of...", or the secondary change as a plain sentence ("A paste over a selection of only block objects now also emits `unset([])` between the removals and the inserts.").
 
 Trivial commits get **no body**. One logical change per commit: tests pinning a contract get their own `test:` commit; refactors are split from fixes.
 

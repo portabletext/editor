@@ -233,6 +233,93 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Clearing the text of a span applies no empty `insert.text`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+    const operationEvents: Array<EditorEmittedEvent> = []
+    editor.on('operation', (event) => {
+      operationEvents.push(event)
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ])
+    })
+    expect(operationEvents).toEqual([
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+          inverse: {
+            type: 'set',
+            path: [{_key: blockKey}, 'markDefs'],
+            value: [],
+          },
+        },
+        origin: 'remote',
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+          value: [],
+          inverse: {
+            type: 'set',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+            value: [],
+          },
+        },
+        origin: 'remote',
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'remove.text',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+          text: 'foo',
+        },
+        origin: 'remote',
+      },
+    ])
+  })
+
   test("Scenario: Updating before 'ready'", async () => {
     const keyGenerator = createTestKeyGenerator()
     const onEvent = vi.fn<() => EditorEmittedEvent>()

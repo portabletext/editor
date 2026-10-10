@@ -23,7 +23,7 @@ function CodeBlockContainer(props: ContainerRenderProps): JSX.Element {
 }
 
 const codeBlockContainer = defineContainer({
-  type: 'code-block',
+  type: 'code',
   arrayField: 'lines',
   render: (props) => <CodeBlockContainer {...props} />,
 })

@@ -23,9 +23,10 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
 
 /**
  * Oracle: the work-stack conversion must produce output deep-equal to
- * the recursive implementation it replaced, across randomized schema
- * graphs (mutual embedding, cycles, anonymous nesting, inline objects,
- * annotations, restricted nested blocks).
+ * a recursive reference implementation, across randomized schema graphs
+ * (mutual embedding, cycles, anonymous nesting, inline objects,
+ * annotations, restricted nested blocks). The reference and its rules
+ * are described in its doc comment below.
  */
 describe('conversion oracle', () => {
   test('Scenario: Fuzzed schema graphs convert identically to the recursive implementation', () => {
@@ -48,6 +49,41 @@ describe('conversion oracle', () => {
         {length: typeCount},
         (_, index) => `type${index}`,
       )
+      const listTypeNames = Array.from(
+        {length: 1 + Math.floor(random() * 3)},
+        (_, index) => `list${index}`,
+      )
+
+      // Anonymous object array member, nesting another anonymous member
+      // and referencing named object and list types, so both named cycles
+      // and same-instance re-entries through named list types route
+      // through anonymous objects.
+      const anonymousMember = (depth: number): Record<string, unknown> => {
+        const fields: Array<Record<string, unknown>> = [
+          {name: 'label', type: 'string'},
+        ]
+        if (random() < 0.5) {
+          fields.push({
+            name: 'items',
+            type: 'array',
+            of: [ofMember(depth + 1)],
+          })
+        }
+        if (random() < 0.4) {
+          fields.push({name: 'children', type: pick(listTypeNames)})
+        }
+        return {type: 'object', fields}
+      }
+      const ofMember = (depth: number): Record<string, unknown> =>
+        depth < 2 && random() < 0.4
+          ? anonymousMember(depth)
+          : {type: pick(typeNames)}
+
+      const listTypes = listTypeNames.map((listTypeName) => ({
+        name: listTypeName,
+        type: 'array',
+        of: [anonymousMember(0)],
+      }))
 
       const objectTypes = typeNames.map((typeName) => {
         const fieldCount = 1 + Math.floor(random() * 4)
@@ -71,6 +107,17 @@ describe('conversion oracle', () => {
           if (kind < 0.65) {
             // Portable Text array embedding the shared blockContent.
             return {name: `field${fieldIndex}`, type: 'blockContent'}
+          }
+          if (kind < 0.75) {
+            // Array mixing anonymous object members with named ones.
+            return {
+              name: `field${fieldIndex}`,
+              type: 'array',
+              of: [ofMember(0), {type: pick(typeNames)}],
+            }
+          }
+          if (kind < 0.8) {
+            return {name: `field${fieldIndex}`, type: pick(listTypeNames)}
           }
           // Anonymous inline object.
           return {
@@ -110,7 +157,7 @@ describe('conversion oracle', () => {
 
       const schema = SanitySchema.compile({
         name: `fuzz${round}`,
-        types: [blockContent, ...objectTypes],
+        types: [blockContent, ...objectTypes, ...listTypes],
       })
       const target = schema.get('blockContent')
 
@@ -171,11 +218,14 @@ describe('conversion oracle', () => {
 })
 
 /**
- * The pre-rework recursive conversion, kept verbatim as the oracle the
- * fuzz above compares against. Do not edit: its whole value is being
- * the old implementation. The only deliberate deviations: the function
- * is renamed, unexported, and inlined here so it can never be mistaken
- * for package surface.
+ * The pre-rework recursive conversion, the oracle the fuzz above compares
+ * against. Its value is being an independent, naive formulation of the
+ * same output rules, so it only changes when those rules change, never to
+ * match a work-stack detail. Deliberate deviations from the old
+ * implementation: the function is renamed, unexported, and inlined here so
+ * it can never be mistaken for package surface, and an anonymous object
+ * member (name `object`) cuts only when the same instance re-enters its
+ * own expansion, emitting `fields: []`.
  */
 /**
  * Compile a Sanity schema to a Portable Text `Schema`.
@@ -200,6 +250,7 @@ describe('conversion oracle', () => {
  * ```
  */
 let referenceRootBlockObjects = new Set<SchemaType>()
+let referenceActiveAnonymousObjects = new Set<SchemaType>()
 
 function referenceSanitySchemaToPortableTextSchema(
   sanitySchema: ArraySchemaType<unknown> | ArrayDefinition,
@@ -268,6 +319,7 @@ function sanitySchemaTypeToSchema(
   const memo = new Map<SchemaType, OfDefinition>()
 
   referenceRootBlockObjects = new Set<SchemaType>(blockObjectTypes)
+  referenceActiveAnonymousObjects = new Set<SchemaType>()
 
   return {
     block: {
@@ -463,18 +515,19 @@ function sanityOfMemberToOfDefinition(
     )
   }
 
-  // If this member has fields and isn't already in the ancestor chain,
-  // emit an INLINE declaration (`type: 'object'` + name + fields). If the
-  // type is in the ancestor chain (cycle) or has no fields, emit a bare
-  // REFERENCE (just `type: <name>`).
+  // A member with fields emits an INLINE declaration (`type: 'object'` +
+  // name + fields). A member without fields, or a named member whose name
+  // is already in the ancestor chain (cycle), emits a bare REFERENCE (just
+  // `type: <name>`). Anonymous members cut on instance identity below.
   const hasFields =
     memberType.jsonType === 'object' &&
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
+  const isAnonymousObject = memberType.name === 'object'
 
   if (
     !hasFields ||
-    ancestorNames.has(memberType.name) ||
+    (!isAnonymousObject && ancestorNames.has(memberType.name)) ||
     referenceRootBlockObjects.has(memberType)
   ) {
     // Bare reference, mirroring the production emission rule: root block
@@ -482,6 +535,15 @@ function sanityOfMemberToOfDefinition(
     return {
       type: memberType.name,
       ...(memberType.title ? {title: memberType.title} : {}),
+    }
+  }
+
+  if (referenceActiveAnonymousObjects.has(memberType)) {
+    return {
+      type: 'object',
+      name: memberType.name,
+      ...(memberType.title ? {title: memberType.title} : {}),
+      fields: [],
     }
   }
 
@@ -496,6 +558,9 @@ function sanityOfMemberToOfDefinition(
 
   const nextAncestors = new Set(ancestorNames)
   nextAncestors.add(memberType.name)
+  if (isAnonymousObject) {
+    referenceActiveAnonymousObjects.add(memberType)
+  }
   const definition: OfDefinition = {
     type: 'object',
     name: memberType.name,
@@ -504,6 +569,7 @@ function sanityOfMemberToOfDefinition(
       sanityFieldToSchemaField(field, nextAncestors, memo),
     ),
   }
+  referenceActiveAnonymousObjects.delete(memberType)
   memo.set(memberType, definition)
   return definition
 }

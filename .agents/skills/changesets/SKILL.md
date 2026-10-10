@@ -32,8 +32,9 @@ description: How to write changesets in the Portable Text Editor monorepo. Use w
 - **API changesets enumerate the exact exported names** and show a fenced usage example. Include a resolution-order list when the API has ordering semantics (see the `defineX` render-prop-types and `'*'` catch-all entries in `editor/CHANGELOG.md`).
 - Call out the upgrade action explicitly when the change shifts something consumers iterate, switch over, or type against: "Code that iterates the map will see the new serialized-path keys", "exhaustive switches over `event.type` gain a case".
 - Perf fixes state the numbers.
-- Secondary behavioral changes shipping in the same release are named explicitly ("One additional change: ...").
-- Banned vocabulary in changeset prose (and any artifact prose): "delta" (write "change") and "rides along"/"ride along" (write "One additional change:" or "Also changed:").
+- Fix changesets show the case they fix, so a consumer recognizes their own code in it. When the bug depends on something the consumer writes (a schema, a document), a runnable fenced block right after the sentence stating the fix shows a minimal version of it and the public call that failed, with the old outcome in a comment (`// Previously threw: TypeError: ...`). Input alone is not enough: the reader must see which call to look for in their own code. Run the snippet against the old and new code before committing it. When the bug depends on an action (a keystroke, a paste), the changeset names the exact steps and content.
+- Secondary behavioral changes shipping in the same release are named explicitly, in a plain sentence that belongs to the paragraph ("Removing a decorator from part of a selection made left to right also no longer marks the selection as backward."). Never behind a label such as "One additional change:" or "Also changed:": a label tacked onto every changeset reads as boilerplate.
+- Banned vocabulary in changeset prose (and any artifact prose): "delta" (write "change") and "rides along"/"ride along" (name the change in a plain sentence instead).
 - Small self-explanatory changes can be **subject-only**.
 
 ## Exemplars (real, from the repo history)
@@ -52,10 +53,12 @@ Backspacing through empty blocks, and any other edit that removes the node the s
 One narrow behavioral fix rides along: when the removed node was addressed by a numeric path, the fallback previously moved the selection to the document's first span; it now moves it to the actual nearest span.
 ```
 
-Why it's good: observable symptom first ("backspacing ... no longer slows down"), numbers with context, and the secondary behavioral change explicitly fenced
-off. One phrase in it is retired vocabulary: this exemplar predates the ban on
-"rides along", so imitate its structure (the secondary change named, fenced,
-last), not that phrase; write "One additional change: ...".
+Why it's good: observable symptom first ("backspacing ... no longer slows down"), numbers with context, and the secondary behavioral change named
+explicitly, last. One phrase in it is retired: this exemplar predates the ban on
+"rides along" and on labels, so imitate its structure (the secondary change
+named, last), not its wording. Today the last paragraph reads: "Removing a
+node addressed by a numeric path also moves the selection to the actual
+nearest span instead of the document's first span."
 
 ### minor: new API with enumerated name + example
 

@@ -19,6 +19,7 @@ import {
   type TextBlockRenderProps,
 } from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
+import {getAncestors} from '@portabletext/editor/traversal'
 import {portableTextToMarkdown} from '@portabletext/markdown'
 import {DndProvider} from '@portabletext/plugin-dnd'
 import {ListIndexProvider} from '@portabletext/plugin-list-index'
@@ -186,14 +187,7 @@ export function Editor(props: {
                   ) : null}
                   {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
                   {featureFlags.typographyPlugin ? (
-                    <TypographyPlugin
-                      guard={createDecoratorGuard({
-                        decorators: ({context}) =>
-                          context.schema.decorators.flatMap((decorator) =>
-                            decorator.name === 'code' ? [] : [decorator.name],
-                          ),
-                      })}
-                    />
+                    <TypographyPlugin guard={typographyGuard} />
                   ) : null}
                   {featureFlags.presencePlugin ? (
                     <PresencePlugin
@@ -220,6 +214,22 @@ export function Editor(props: {
       </ErrorBoundary>
     </div>
   )
+}
+
+const codeDecoratorGuard = createDecoratorGuard({
+  decorators: ({context}) =>
+    context.schema.decorators.flatMap((decorator) =>
+      decorator.name === 'code' ? [] : [decorator.name],
+    ),
+})
+
+const typographyGuard: typeof codeDecoratorGuard = (input) => {
+  const insideCodeBlock = getAncestors(
+    input.snapshot,
+    input.event.focusBlock.path,
+  ).some((ancestor) => ancestor.node._type === 'code')
+
+  return insideCodeBlock ? false : codeDecoratorGuard(input)
 }
 
 function FullscreenAwareEditable(props: {featureFlags: EditorFeatureFlags}) {
@@ -561,7 +571,7 @@ function PlaygroundBlockObject(props: BlockObjectRenderProps) {
         focused={props.focused}
       />
     )
-  } else if (props.node._type === 'code-block') {
+  } else if (props.node._type === 'code') {
     const language = (props.node as {language?: string}).language
     content = (
       <MarkdownFallback

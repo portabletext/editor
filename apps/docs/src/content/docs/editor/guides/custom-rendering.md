@@ -105,7 +105,7 @@ Marks join the same `nodes` array as your other registrations, mounted through o
 
 ## Lists
 
-Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Visual nesting comes from CSS, and list numbering comes from [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index). We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
+Lists are a bit unique. A list in Portable Text is flat: a run of sibling text blocks carrying `listItem` and `level`, with no wrapper node. ([Containers](/editor/concepts/containers/) nest blocks through object fields, but lists stay flat.) Your text block render draws the bullets and numbers, and [`@portabletext/plugin-list-index`](https://github.com/portabletext/editor/tree/main/packages/plugin-list-index) gives each list item its position in its list. The [Render lists](/editor/guides/render-lists/) guide walks through the setup.
 
 ## Placeholder text
 
