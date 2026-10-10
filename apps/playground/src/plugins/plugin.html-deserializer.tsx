@@ -26,16 +26,14 @@ const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
 }
 
 // Map html→pt's flat `{_type:'code', code:'a\nb\nc', language?}` into
-// the playground's editable code-block container shape. Each source line
-// becomes its own text block inside `lines` (the same shape produced by
+// the playground's `code` container shape. Each source line becomes its
+// own text block inside `lines` (the same shape produced by
 // MarkdownDeserializerPlugin's `code` matcher).
 const codeMatcher: ObjectMatcher<{
   language: string | undefined
   code: string
 }> = ({context, value}) => {
-  if (
-    !context.schema.blockObjects.some((object) => object.name === 'code-block')
-  ) {
+  if (!context.schema.blockObjects.some((object) => object.name === 'code')) {
     return undefined
   }
 
@@ -55,7 +53,7 @@ const codeMatcher: ObjectMatcher<{
   }))
 
   return {
-    _type: 'code-block',
+    _type: 'code',
     _key: context.keyGenerator(),
     lines,
   }
