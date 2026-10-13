@@ -53,6 +53,12 @@ Guidance for coding agents working on the Portable Text Editor monorepo.
 - Conditional rendering in JSX uses a ternary with an explicit `: null`,
   never `&&`.
 
+## Editor API
+
+- Before raising a Behavior event or using a traversal util, read the
+  `editor-internals` skill in `.agents/skills/`. It points to the docs
+  for what exists and lists behaviors the types do not show.
+
 ## Commits and PRs
 
 - Conventional commit subjects, lowercase, imperative, naming the
