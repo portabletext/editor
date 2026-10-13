@@ -1,0 +1,998 @@
+import {
+  diffMatchPatch,
+  insert,
+  set,
+  setIfMissing,
+  unset,
+  type Patch,
+} from '@portabletext/patches'
+import {
+  compileSchema,
+  defineSchema,
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
+import {
+  createTestKeyGenerator,
+  fromTextspec,
+  toTextspec,
+  type TextspecSelection,
+} from '@portabletext/test'
+import {parse} from '@textspec/notation'
+import {applyWithContentLakeSemantics} from '../protocol/content-lake'
+import {
+  mapOffsetThrough,
+  textEditPatch,
+  textEditsOf,
+} from '../protocol/text-edits'
+import type {
+  EditorEventForIo,
+  EditorForIo,
+  EditorMessageForIo,
+} from '../protocol/types'
+
+const schema = compileSchema(
+  defineSchema({styles: [{name: 'h1'}, {name: 'h2'}, {name: 'h3'}]}),
+)
+
+/**
+ * A collapsed selection: a block key plus a character offset into the
+ * block's text.
+ */
+export type Caret = {blockKey: string; offset: number}
+
+/** `'loading'` until the first commit ends with `mount`. */
+export type FakeDocumentStatus = 'loading' | 'ready' | 'unmounted'
+
+/**
+ * What a user action did: `operations` with the positions it acted at, and
+ * the `patches` that save it. Typing and deleting text differ: a patch is
+ * computed from the text before and after, as the editor computes it, so
+ * typing `foo` before `foofoo` saves as an insertion at the end, while the
+ * operation says the start.
+ */
+type LocalEdit = {operations: Array<Patch>; patches: Array<Patch>}
+
+/**
+ * The fake editor. It satisfies `EditorForIo`: every user action that
+ * changes the content emits a local `change` with the action's patches,
+ * `load`, `resync` and `apply` replace or patch the content, `mount` ends
+ * the first commit with `ready`, and `close` emits `closing` before it
+ * stops. Actions before `mount` throw, and actions after `close` or while
+ * read-only do nothing.
+ *
+ * `applyLocalEdit` is the user action behind the model's undo: it applies
+ * the patches as the user's own edit. It isn't part of `EditorForIo`.
+ */
+export type FakeDocument = EditorForIo & {
+  getStatus: () => FakeDocumentStatus
+  getReadOnly: () => boolean
+  /** Ends the first commit. */
+  mount: () => void
+  close: () => void
+  updateReadOnly: (readOnly: boolean) => void
+  /** The content on screen, the placeholder included. */
+  getValue: () => Array<PortableTextBlock>
+  getCaret: () => Caret
+  /** Puts the caret at a block key and offset. Throws if either is invalid. */
+  setCaret: (caret: Caret) => void
+  getSelection: () => TextspecSelection
+  /** The key of the placeholder block, while one is shown. */
+  getPlaceholderKey: () => string | undefined
+  toTextspec: (options?: {keys?: boolean}) => string
+  setStyle: (style: string) => void
+  type: (text: string) => void
+  /**
+   * Deletes text that ends at the caret within the caret's span, as a run of
+   * backspaces. Throws if the text isn't right before the caret.
+   */
+  deleteBeforeCaret: (text: string) => void
+  putCaretAfter: (text: string) => void
+  insertBlock: (textspec: string) => void
+  deleteBlock: (text: string) => void
+  /**
+   * Splits the caret's block at the caret, as the editor's `insert.break`
+   * does: a `diffMatchPatch` that cuts the caret's span at the caret, an
+   * `unset` of each child after it, and an `insert` after the block of a new
+   * block with the rest. The rest of the caret's span keeps the span's key,
+   * and the caret goes to the start of the new block.
+   */
+  splitAtCaret: () => void
+  applyLocalEdit: (patches: Array<Patch>) => void
+}
+
+export function createFakeDocument(
+  context: {keyGenerator: () => string},
+  initial: {value: Array<PortableTextBlock> | undefined; caret?: Caret},
+): FakeDocument {
+  const listeners = new Set<(event: EditorEventForIo) => void>()
+  let status: FakeDocumentStatus = 'loading'
+  let readOnly = false
+  let value: Array<PortableTextBlock> = []
+  let placeholderKey: string | undefined
+  let caret: Caret = {blockKey: '', offset: 0}
+
+  setValue(initial.value)
+
+  if (initial.caret) {
+    placeCaret(initial.caret)
+  }
+
+  function emit(event: EditorEventForIo) {
+    for (const listener of listeners) {
+      listener(event)
+    }
+  }
+
+  function mount() {
+    if (status === 'ready') {
+      throw new Error('The editor is already mounted')
+    }
+
+    if (status === 'unmounted') {
+      throw new Error('The editor is unmounted')
+    }
+
+    status = 'ready'
+    emit({type: 'ready'})
+  }
+
+  function close() {
+    if (status === 'unmounted') {
+      return
+    }
+
+    emit({type: 'closing'})
+    status = 'unmounted'
+  }
+
+  function canAct(): boolean {
+    if (status === 'unmounted') {
+      return false
+    }
+
+    if (status !== 'ready') {
+      throw new Error(`The editor is ${status}`)
+    }
+
+    return !readOnly
+  }
+
+  function act(run: () => Array<Patch> | LocalEdit) {
+    if (!canAct()) {
+      return
+    }
+
+    const result = run()
+    const {operations, patches} = Array.isArray(result)
+      ? {operations: result, patches: result}
+      : result
+
+    if (patches.length > 0) {
+      emit({type: 'change', origin: 'local', operations, patches})
+    }
+  }
+
+  function send(message: EditorMessageForIo) {
+    switch (message.type) {
+      case 'load':
+        if (status !== 'loading') {
+          throw new Error(
+            '`load` is only accepted in the first commit, before the editor is ready',
+          )
+        }
+
+        setValue(message.value)
+        return
+      case 'resync':
+        changeRemotely(() => setValue(message.value))
+        return
+      case 'apply':
+        changeRemotely(() => applyPatches(message.patches))
+    }
+  }
+
+  function changeRemotely(run: () => void) {
+    if (status === 'unmounted') {
+      return
+    }
+
+    const before = value
+    run()
+
+    if (!isEqual(before, value)) {
+      emit({type: 'change', origin: 'remote', operations: [set(value, [])]})
+    }
+  }
+
+  /**
+   * Applies patches to the content one at a time, the placeholder left out,
+   * by Content Lake's rules and with no normalization, and moves the caret
+   * by each patch: through a new `_key` of its block, to the end of the
+   * previous block (or else the start of the next) when its block is
+   * removed, and past text a patch inserted or deleted before it in its
+   * span: by the edits of a text patch on the span, and by the change
+   * between the common prefix and suffix of the span's text for any other
+   * patch that changes it, a `set` of the block included. Anything else,
+   * a span inserted before it included, leaves the caret in its span at
+   * its offset there.
+   */
+  function applyPatches(patches: Array<Patch>) {
+    let content: Array<PortableTextBlock> | undefined =
+      placeholderKey === undefined ? value : undefined
+
+    for (const patch of patches) {
+      const nextContent = applyWithContentLakeSemantics(content, [patch])
+      caret = followCaret(caret, patch, content ?? [], nextContent ?? [])
+      content = nextContent
+    }
+
+    setValue(content)
+  }
+
+  function setValue(nextValue: Array<PortableTextBlock> | undefined) {
+    if (nextValue === undefined || nextValue.length === 0) {
+      if (placeholderKey === undefined) {
+        const placeholder = createPlaceholder(context.keyGenerator)
+        placeholderKey = placeholder._key
+        value = [placeholder]
+      }
+    } else {
+      placeholderKey = undefined
+      value = nextValue
+    }
+
+    const caretBlock = value.find((block) => block._key === caret.blockKey)
+
+    caret = caretBlock
+      ? {
+          blockKey: caret.blockKey,
+          offset: Math.min(caret.offset, getTextBlock(caretBlock).text.length),
+        }
+      : {blockKey: value[0]._key, offset: 0}
+  }
+
+  function placeCaret(nextCaret: Caret) {
+    const block = value.find(
+      (candidate) => candidate._key === nextCaret.blockKey,
+    )
+
+    if (!block) {
+      throw new Error(`No block with key "${nextCaret.blockKey}"`)
+    }
+
+    if (nextCaret.offset > getTextBlock(block).text.length) {
+      throw new Error(
+        `Offset ${nextCaret.offset} is past the end of block "${nextCaret.blockKey}"`,
+      )
+    }
+
+    caret = nextCaret
+  }
+
+  function getSelection(): TextspecSelection {
+    const block = getTextBlock(findBlock(caret.blockKey))
+    const {span, offset} = locateSpan(block.block, caret.offset)
+    const point = {
+      path: [{_key: block.block._key}, 'children', {_key: span._key}],
+      offset,
+    }
+
+    return {anchor: point, focus: point}
+  }
+
+  function findBlock(key: string) {
+    const block = value.find((candidate) => candidate._key === key)
+
+    if (!block) {
+      throw new Error(`No block with key "${key}"`)
+    }
+
+    return block
+  }
+
+  function withPlaceholderCreation(patches: Array<Patch>): Array<Patch> {
+    if (placeholderKey === undefined) {
+      return patches
+    }
+
+    const placeholder = findBlock(placeholderKey)
+    placeholderKey = undefined
+
+    return [
+      setIfMissing([], []),
+      insert([placeholder], 'before', [0]),
+      ...patches,
+    ]
+  }
+
+  function setStyle(style: string): Array<Patch> {
+    if (!schema.styles.some((definition) => definition.name === style)) {
+      throw new Error(`Unknown style "${style}"`)
+    }
+
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
+    const patches = withPlaceholderCreation([
+      set(style, [{_key: block._key}, 'style']),
+    ])
+
+    value = replaceAt(value, blockIndex, {...block, style})
+
+    return patches
+  }
+
+  function type(text: string): LocalEdit {
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
+    const {span, offset} = locateSpan(block, caret.offset)
+    const nextText = span.text.slice(0, offset) + text + span.text.slice(offset)
+    const path = [{_key: block._key}, 'children', {_key: span._key}, 'text']
+    const patches = withPlaceholderCreation([
+      diffMatchPatch(span.text, nextText, path),
+    ])
+    const operations = [
+      ...patches.slice(0, -1),
+      textEditPatch(span.text, {offset, insertText: text}, path),
+    ]
+
+    value = replaceAt(value, blockIndex, {
+      ...block,
+      children: block.children.map((child) =>
+        child._key === span._key ? {...span, text: nextText} : child,
+      ),
+    })
+    caret = {blockKey: block._key, offset: caret.offset + text.length}
+
+    return {operations, patches}
+  }
+
+  function deleteBeforeCaret(text: string): LocalEdit {
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
+    const {span, offset} = locateSpan(block, caret.offset)
+    const start = offset - text.length
+
+    if (text === '' || start < 0 || span.text.slice(start, offset) !== text) {
+      throw new Error(
+        `Expected "${text}" right before the caret, found "${span.text.slice(0, offset)}"`,
+      )
+    }
+
+    const nextText = span.text.slice(0, start) + span.text.slice(offset)
+    const path = [{_key: block._key}, 'children', {_key: span._key}, 'text']
+
+    value = replaceAt(value, blockIndex, {
+      ...block,
+      children: block.children.map((child) =>
+        child._key === span._key ? {...span, text: nextText} : child,
+      ),
+    })
+    caret = {blockKey: block._key, offset: caret.offset - text.length}
+
+    return {
+      operations: [
+        textEditPatch(
+          span.text,
+          {offset: start, deleteLength: text.length},
+          path,
+        ),
+      ],
+      patches: [diffMatchPatch(span.text, nextText, path)],
+    }
+  }
+
+  function putCaretAfter(text: string) {
+    const matches = value.flatMap((block) => {
+      const blockText = getTextBlock(block).text
+      const offsets: Array<Caret> = []
+      let index = blockText.indexOf(text)
+
+      while (index !== -1) {
+        offsets.push({blockKey: block._key, offset: index + text.length})
+        index = blockText.indexOf(text, index + 1)
+      }
+
+      return offsets
+    })
+
+    if (matches.length !== 1) {
+      throw new Error(
+        `Expected "${text}" to occur once, found it ${matches.length} times`,
+      )
+    }
+
+    caret = matches[0]
+  }
+
+  function insertBlock(textspec: string): Array<Patch> {
+    const {blocks} = fromTextspec(
+      {schema, keyGenerator: context.keyGenerator},
+      textspec,
+    )
+
+    if (blocks.length !== 1) {
+      throw new Error(
+        `Expected one block in "${textspec}", found ${blocks.length}`,
+      )
+    }
+
+    const siblingKeys = new Set(value.map((block) => block._key))
+    const newBlock = siblingKeys.has(blocks[0]._key)
+      ? {
+          ...blocks[0],
+          _key: generateUniqueKey(context.keyGenerator, siblingKeys),
+        }
+      : blocks[0]
+    const caretBlockKey = caret.blockKey
+    const blockIndex = value.findIndex((block) => block._key === caretBlockKey)
+    const patches = withPlaceholderCreation([
+      insert([newBlock], 'after', [{_key: caretBlockKey}]),
+    ])
+
+    value = [
+      ...value.slice(0, blockIndex + 1),
+      newBlock,
+      ...value.slice(blockIndex + 1),
+    ]
+    caret = {
+      blockKey: newBlock._key,
+      offset: getTextBlock(newBlock).text.length,
+    }
+
+    return patches
+  }
+
+  function splitAtCaret(): Array<Patch> {
+    const blockIndex = value.findIndex((block) => block._key === caret.blockKey)
+    const block = getTextBlock(value[blockIndex]).block
+    const {span, offset} = locateSpan(block, caret.offset)
+    const spanIndex = block.children.findIndex(
+      (child) => child._key === span._key,
+    )
+    const head = span.text.slice(0, offset)
+    const movedChildren = block.children.slice(spanIndex + 1)
+    const newBlock: PortableTextTextBlock = {
+      ...block,
+      _key: generateUniqueKey(
+        context.keyGenerator,
+        new Set(value.map((candidate) => candidate._key)),
+      ),
+      children: [{...span, text: span.text.slice(offset)}, ...movedChildren],
+    }
+    const blockPath = [{_key: block._key}]
+    const patches = withPlaceholderCreation([
+      ...(head === span.text
+        ? []
+        : [
+            diffMatchPatch(span.text, head, [
+              ...blockPath,
+              'children',
+              {_key: span._key},
+              'text',
+            ]),
+          ]),
+      ...movedChildren.map((child) =>
+        unset([...blockPath, 'children', {_key: child._key}]),
+      ),
+      insert([newBlock], 'after', blockPath),
+    ])
+
+    value = [
+      ...value.slice(0, blockIndex),
+      {
+        ...block,
+        children: [
+          ...block.children.slice(0, spanIndex),
+          {...span, text: head},
+        ],
+      },
+      newBlock,
+      ...value.slice(blockIndex + 1),
+    ]
+    caret = {blockKey: newBlock._key, offset: 0}
+
+    return patches
+  }
+
+  function deleteBlock(text: string): Array<Patch> {
+    const matches = value.filter((block) => getTextBlock(block).text === text)
+
+    if (matches.length !== 1) {
+      throw new Error(
+        `Expected one block with the text "${text}", found ${matches.length}`,
+      )
+    }
+
+    const block = matches[0]
+
+    if (block._key === placeholderKey) {
+      return []
+    }
+
+    const blockKey = block._key
+    const blockIndex = value.indexOf(block)
+    const previousBlock = value[blockIndex - 1]
+    const nextBlock = value[blockIndex + 1]
+    const remainingValue = value.filter(
+      (candidate) => candidate._key !== blockKey,
+    )
+
+    if (remainingValue.length === 0) {
+      setValue(undefined)
+
+      return [unset([{_key: blockKey}]), unset([])]
+    }
+
+    if (caret.blockKey === blockKey) {
+      caret = previousBlock
+        ? {
+            blockKey: previousBlock._key,
+            offset: getTextBlock(previousBlock).text.length,
+          }
+        : {blockKey: nextBlock._key, offset: 0}
+    }
+
+    value = remainingValue
+
+    return [unset([{_key: blockKey}])]
+  }
+
+  return {
+    on: (type, listener) => {
+      const listenToType = (event: EditorEventForIo) => {
+        if (isOfType(event, type)) {
+          listener(event)
+        }
+      }
+      listeners.add(listenToType)
+
+      return {
+        unsubscribe: () => {
+          listeners.delete(listenToType)
+        },
+      }
+    },
+    send,
+    getStatus: () => status,
+    getReadOnly: () => readOnly,
+    mount,
+    close,
+    updateReadOnly: (nextReadOnly) => {
+      readOnly = nextReadOnly
+    },
+    getValue: () => value,
+    getCaret: () => caret,
+    setCaret: placeCaret,
+    getSelection,
+    getPlaceholderKey: () => placeholderKey,
+    toTextspec: (options) =>
+      serializeTextspec({
+        value,
+        selection: getSelection(),
+        keys: options?.keys ?? false,
+      }),
+    setStyle: (style) => act(() => setStyle(style)),
+    type: (text) => act(() => type(text)),
+    deleteBeforeCaret: (text) => act(() => deleteBeforeCaret(text)),
+    putCaretAfter: (text) => {
+      if (status !== 'unmounted') {
+        putCaretAfter(text)
+      }
+    },
+    insertBlock: (textspec) => act(() => insertBlock(textspec)),
+    deleteBlock: (text) => act(() => deleteBlock(text)),
+    splitAtCaret: () => act(splitAtCaret),
+    applyLocalEdit: (patches) =>
+      act(() => {
+        applyPatches(patches)
+        return patches
+      }),
+  }
+}
+
+function isOfType<TType extends EditorEventForIo['type']>(
+  event: EditorEventForIo,
+  type: TType,
+): event is EditorEventForIo & {type: TType} {
+  return event.type === type
+}
+
+/**
+ * Calls the key generator until it returns a key that isn't taken, and marks
+ * that key as taken.
+ */
+function generateUniqueKey(
+  keyGenerator: () => string,
+  takenKeys: Set<string>,
+): string {
+  let key = keyGenerator()
+
+  while (takenKeys.has(key)) {
+    key = keyGenerator()
+  }
+
+  takenKeys.add(key)
+
+  return key
+}
+
+/**
+ * Parses textspec into content and a caret. The caret is `undefined` when the
+ * notation has none.
+ */
+export function parseTextspec(
+  context: {keyGenerator: () => string},
+  textspec: string,
+): {value: Array<PortableTextBlock>; caret: Caret | undefined} {
+  const {blocks, selection} = fromTextspec(
+    {schema, keyGenerator: context.keyGenerator},
+    textspec,
+  )
+
+  if (!hasCaret(textspec) || !selection) {
+    return {value: blocks, caret: undefined}
+  }
+
+  const [blockSegment, , spanSegment] = selection.focus.path
+  const block = blocks.find(
+    (candidate) =>
+      typeof blockSegment === 'object' &&
+      '_key' in blockSegment &&
+      candidate._key === blockSegment._key,
+  )
+
+  if (!block) {
+    throw new Error(`The caret in "${textspec}" is not in a block`)
+  }
+
+  const textBlock = getTextBlock(block).block
+  let offset = selection.focus.offset
+
+  for (const child of textBlock.children) {
+    if (
+      typeof spanSegment === 'object' &&
+      '_key' in spanSegment &&
+      child._key === spanSegment._key
+    ) {
+      break
+    }
+
+    offset += isSpan({schema}, child) ? child.text.length : 0
+  }
+
+  return {value: blocks, caret: {blockKey: block._key, offset}}
+}
+
+/**
+ * Turns an actual state and an expected notation into two strings to compare.
+ * Keys are compared only for the blocks whose keys the expected notation
+ * names, and the caret only when the expected notation has one.
+ */
+export function comparableTextspec(
+  actual: {value: Array<PortableTextBlock>; selection: TextspecSelection},
+  expected: string,
+): {actual: string; expected: string} {
+  const parsed = fromTextspec(
+    {schema, keyGenerator: createTestKeyGenerator('expected-')},
+    expected,
+  )
+  const namedKeys = new Set(
+    parse(hasCaret(expected) ? expected : `${expected}|`).blocks.flatMap(
+      (block) =>
+        typeof block.attrs?.['_key'] === 'string' ? [block.attrs['_key']] : [],
+    ),
+  )
+  const keys = namedKeys.size > 0 ? namedKeys : false
+  const compareCaret = hasCaret(expected)
+
+  return {
+    actual: serializeTextspec({
+      value: actual.value,
+      selection: compareCaret ? actual.selection : null,
+      keys,
+    }),
+    expected: serializeTextspec({
+      value: parsed.blocks,
+      selection: compareCaret ? parsed.selection : null,
+      keys,
+    }),
+  }
+}
+
+/**
+ * Content as one line of textspec, without a caret. Empty content is an empty
+ * string.
+ */
+export function formatTextspec(
+  value: Array<PortableTextBlock>,
+  options?: {keys?: boolean},
+): string {
+  return serializeTextspec({
+    value,
+    selection: null,
+    keys: options?.keys ?? false,
+  })
+}
+
+/**
+ * Whether a mutation turns the placeholder into content: it starts with a
+ * whole-field `setIfMissing` followed by an `insert`.
+ */
+export function createsBlock(patches: Array<Patch>): boolean {
+  const [first, second] = patches
+
+  return (
+    first?.type === 'setIfMissing' &&
+    first.path.length === 0 &&
+    second?.type === 'insert'
+  )
+}
+
+/**
+ * Whether a mutation empties the field: it contains a whole-field `unset`.
+ */
+export function emptiesField(patches: Array<Patch>): boolean {
+  return patches.some(
+    (patch) => patch.type === 'unset' && patch.path.length === 0,
+  )
+}
+
+function followCaret(
+  caret: Caret,
+  patch: Patch,
+  before: Array<PortableTextBlock>,
+  after: Array<PortableTextBlock>,
+): Caret {
+  const [head, field, spanSegment] = patch.path
+
+  if (
+    typeof head !== 'object' ||
+    Array.isArray(head) ||
+    head._key !== caret.blockKey
+  ) {
+    return caret
+  }
+
+  if (
+    patch.type === 'set' &&
+    patch.path.length === 2 &&
+    field === '_key' &&
+    typeof patch.value === 'string'
+  ) {
+    return {blockKey: patch.value, offset: caret.offset}
+  }
+
+  if (patch.type === 'unset' && patch.path.length === 1) {
+    const index = before.findIndex((block) => block._key === caret.blockKey)
+    const survives = (block: PortableTextBlock) =>
+      after.find((candidate) => candidate._key === block._key)
+    const previous = before.slice(0, index).reverse().find(survives)
+    const next = before.slice(index + 1).find(survives)
+
+    if (previous) {
+      return {
+        blockKey: previous._key,
+        offset: getTextBlock(survives(previous)).text.length,
+      }
+    }
+
+    return next ? {blockKey: next._key, offset: 0} : caret
+  }
+
+  const beforeBlock = before.find((block) => block._key === caret.blockKey)
+  const afterBlock = after.find((block) => block._key === caret.blockKey)
+
+  if (!beforeBlock || !afterBlock) {
+    return caret
+  }
+
+  const {span, offset} = locateSpan(
+    getTextBlock(beforeBlock).block,
+    caret.offset,
+  )
+  const onCaretSpan =
+    patch.path.length === 4 &&
+    field === 'children' &&
+    typeof spanSegment === 'object' &&
+    !Array.isArray(spanSegment) &&
+    spanSegment._key === span._key &&
+    patch.path[3] === 'text'
+  const afterSpan = getTextBlock(afterBlock).block.children.find(
+    (child) => child._key === span._key,
+  )
+  let spanOffset = offset
+
+  if (onCaretSpan && patch.type === 'diffMatchPatch') {
+    spanOffset = mapOffsetThrough(offset, textEditsOf(patch.value, span.text))
+  } else if (afterSpan && isSpan({schema}, afterSpan)) {
+    spanOffset = mapOffset(offset, span.text, afterSpan.text)
+  }
+
+  return {
+    blockKey: caret.blockKey,
+    offset: blockOffset(getTextBlock(afterBlock).block, span._key, spanOffset),
+  }
+}
+
+/**
+ * The offset in a block of an offset in one of its spans, clamped to the
+ * span's text. A span the block no longer has puts it at the block's end.
+ */
+function blockOffset(
+  block: PortableTextTextBlock,
+  spanKey: string,
+  spanOffset: number,
+): number {
+  let offset = 0
+
+  for (const child of block.children) {
+    if (!isSpan({schema}, child)) {
+      continue
+    }
+
+    if (child._key === spanKey) {
+      return offset + Math.min(spanOffset, child.text.length)
+    }
+
+    offset += child.text.length
+  }
+
+  return offset
+}
+
+/**
+ * Where an offset in `before` lands in `after`, taking the change as the
+ * span between their common prefix and common suffix. An offset inside the
+ * changed span goes to its end.
+ */
+function mapOffset(offset: number, before: string, after: string): number {
+  let prefix = 0
+
+  while (
+    prefix < before.length &&
+    prefix < after.length &&
+    before[prefix] === after[prefix]
+  ) {
+    prefix++
+  }
+
+  let suffix = 0
+
+  while (
+    suffix < before.length - prefix &&
+    suffix < after.length - prefix &&
+    before[before.length - 1 - suffix] === after[after.length - 1 - suffix]
+  ) {
+    suffix++
+  }
+
+  if (offset <= prefix) {
+    return offset
+  }
+
+  if (offset >= before.length - suffix) {
+    return offset + after.length - before.length
+  }
+
+  return after.length - suffix
+}
+
+/** Whether two plain values are deeply equal, key order aside. */
+export function isEqual(valueA: unknown, valueB: unknown): boolean {
+  if (valueA === valueB) {
+    return true
+  }
+
+  if (
+    typeof valueA !== 'object' ||
+    typeof valueB !== 'object' ||
+    valueA === null ||
+    valueB === null ||
+    Array.isArray(valueA) !== Array.isArray(valueB)
+  ) {
+    return false
+  }
+
+  const keysA = Object.keys(valueA)
+  const keysB = Object.keys(valueB)
+
+  return (
+    keysA.length === keysB.length &&
+    keysA.every(
+      (key) =>
+        Object.hasOwn(valueB, key) &&
+        isEqual(Reflect.get(valueA, key), Reflect.get(valueB, key)),
+    )
+  )
+}
+
+function createPlaceholder(keyGenerator: () => string): PortableTextTextBlock {
+  return {
+    _type: 'block',
+    _key: keyGenerator(),
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: keyGenerator(), text: '', marks: []}],
+  }
+}
+
+function getTextBlock(block: PortableTextBlock | undefined): {
+  block: PortableTextTextBlock
+  text: string
+} {
+  if (!block || !isTextBlock({schema}, block)) {
+    throw new Error(`Expected a text block, got ${JSON.stringify(block)}`)
+  }
+
+  const text = block.children
+    .map((child) => (isSpan({schema}, child) ? child.text : ''))
+    .join('')
+
+  return {block, text}
+}
+
+function locateSpan(
+  block: PortableTextTextBlock,
+  blockOffset: number,
+): {span: PortableTextSpan; offset: number} {
+  const spans = block.children.filter((child) => isSpan({schema}, child))
+  let remaining = blockOffset
+
+  for (const span of spans) {
+    if (remaining <= span.text.length) {
+      return {span, offset: remaining}
+    }
+
+    remaining -= span.text.length
+  }
+
+  throw new Error(
+    `Offset ${blockOffset} is past the end of block "${block._key}"`,
+  )
+}
+
+function replaceAt<TItem>(
+  items: Array<TItem>,
+  index: number,
+  item: TItem,
+): Array<TItem> {
+  return items.map((candidate, candidateIndex) =>
+    candidateIndex === index ? item : candidate,
+  )
+}
+
+function hasCaret(textspec: string): boolean {
+  return /(?<!\\)[|^]/.test(textspec)
+}
+
+/**
+ * Serializes single-line textspec, one block at a time so each block's prefix
+ * can be written the way the scenarios write it: `H1: foo` rather than the
+ * `B style="h1": foo` that `toTextspec` produces.
+ */
+function serializeTextspec({
+  value,
+  selection,
+  keys,
+}: {
+  value: Array<PortableTextBlock>
+  selection: TextspecSelection
+  keys: boolean | Set<string>
+}): string {
+  return value
+    .map((block) =>
+      toTextspec(
+        {schema, value: [block], selection},
+        {singleLine: true, keys},
+      ).replace(
+        /^B( _key="[^"]*")? style="([a-z][a-z0-9]*)"(?=:)/,
+        (_match, keyAttribute: string | undefined, style: string) =>
+          `${style.toUpperCase()}${keyAttribute ?? ''}`,
+      ),
+    )
+    .join(';;')
+}

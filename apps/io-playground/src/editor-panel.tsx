@@ -1,0 +1,366 @@
+import type {
+  MutationSnapshot,
+  EditorName,
+  EditorSnapshot,
+  HeardEvent,
+} from '@portabletext/io/testing'
+import type {ReactNode} from 'react'
+import {hostPresetOf, type ConceptName} from './concepts'
+import {useOpenDetails} from './drawers'
+import {MessagePath} from './message-path'
+import {describePatches} from './narration'
+import {
+  Badge,
+  DetailsLink,
+  Empty,
+  ItemList,
+  Label,
+  plural,
+  Prompts,
+  Revision,
+  RevisionStep,
+  Section,
+  TextspecValue,
+  useFlash,
+} from './ui'
+import {WorkDroppedNotices} from './work-dropped'
+
+export function EditorPanel({
+  name,
+  editor,
+  waitingCount,
+  prompts,
+  savingFor,
+  dismissedWork,
+  onDismissWork,
+}: {
+  name: EditorName
+  editor: EditorSnapshot | undefined
+  /** How long the mutation in flight has been out, on the world's clock. */
+  savingFor?: number | undefined
+  /** Transactions waiting in this editor's feed. */
+  waitingCount: number
+  /** What the editor's state calls for. */
+  prompts: Array<string>
+  /** The `work dropped` events, by index, whose notice was dismissed. */
+  dismissedWork: Array<number>
+  onDismissWork: (index: number) => void
+}) {
+  const flash = useFlash(JSON.stringify(editor ?? null))
+
+  return (
+    <section
+      aria-label={name}
+      className={`flex min-h-0 flex-col gap-3 overflow-auto rounded border border-gray-200 p-3 ${flash}`}
+    >
+      <header className="flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-semibold">{name}</h2>
+        {editor ? (
+          <>
+            <Badge
+              tone={
+                editor.status === 'ready'
+                  ? 'green'
+                  : editor.status === 'loading'
+                    ? 'amber'
+                    : 'gray'
+              }
+            >
+              {editor.status}
+            </Badge>
+            {editor.status === 'loading' ? (
+              <Label concept="first commit">
+                <span className="rounded border border-dashed border-amber-500 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                  first commit
+                </span>
+              </Label>
+            ) : null}
+            <Label concept="sync">
+              <span aria-label={`sync: ${editor.io.sync}`}>
+                <Badge tone={syncTones[editor.io.sync]}>{editor.io.sync}</Badge>
+              </span>
+            </Label>
+            {editor.io.sync === 'saving' && savingFor !== undefined ? (
+              <span
+                aria-label="time the mutation in flight has been out"
+                title="how long the mutation in flight has been out, on the world's clock"
+                className={`font-mono text-xs ${savingFor >= 10_000 ? 'font-semibold text-red-700' : 'text-gray-500'}`}
+              >
+                {savingFor / 1000} s
+              </span>
+            ) : null}
+            {waitingCount > 0 ? (
+              <Badge tone="amber">{waitingCount} waiting</Badge>
+            ) : null}
+            {editor.readOnly ? <Badge tone="blue">read-only</Badge> : null}
+            <span className="text-xs text-gray-500">
+              <Label concept="host">{hostPresetOf(editor.host).label}</Label>
+            </span>
+          </>
+        ) : null}
+      </header>
+
+      {editor ? (
+        <WorkDroppedNotices
+          name={name}
+          events={editor.events}
+          dismissed={dismissedWork}
+          onDismiss={onDismissWork}
+        />
+      ) : null}
+
+      <Prompts prompts={prompts} />
+
+      {editor ? (
+        <EditorDetails name={name} editor={editor} />
+      ) : (
+        <Empty>No editors yet</Empty>
+      )}
+    </section>
+  )
+}
+
+function EditorDetails({
+  name,
+  editor,
+}: {
+  name: EditorName
+  editor: EditorSnapshot
+}) {
+  const openDetails = useOpenDetails()
+  const mutationLink = (mutation: MutationSnapshot) => (
+    <DetailsLink
+      label={`Details of ${name}'s mutation ${mutation.mutationNumber}`}
+      onClick={() =>
+        openDetails({
+          type: 'mutation',
+          editor: name,
+          mutationNumber: mutation.mutationNumber,
+        })
+      }
+    >
+      mutation {mutation.mutationNumber} → {describeTransactionIds(mutation)} ·{' '}
+      {plural(mutation.patchCount, 'patch')}
+    </DetailsLink>
+  )
+
+  return (
+    <>
+      <Section title="screen" concept="screen">
+        <TextspecValue textspec={editor.screen} blocks={editor.blocks} />
+      </Section>
+
+      <Section
+        title="base"
+        concept="base"
+        suffix={
+          editor.base.rev === null ? (
+            <>· the server's copy, no document yet</>
+          ) : (
+            <>
+              · the server's copy at <Label concept="revision">revision</Label>{' '}
+              <Revision rev={editor.base.rev} />
+            </>
+          )
+        }
+      >
+        {editor.base.textspec === null ? (
+          <Empty>no field</Empty>
+        ) : (
+          <TextspecValue
+            textspec={editor.base.textspec}
+            blocks={editor.base.blocks}
+          />
+        )}
+      </Section>
+
+      <Section title="ledger">
+        <ItemList>
+          <LedgerRow concept="in flight" label="in flight">
+            {editor.inFlight ? mutationLink(editor.inFlight) : 'nothing'}
+          </LedgerRow>
+          <LedgerRow concept="pending" label="pending">
+            {editor.pending.length === 0 ? (
+              'nothing'
+            ) : (
+              <span className="flex flex-col">
+                {editor.pending.map((change, index) => (
+                  <DetailsLink
+                    key={index}
+                    label={`Details of ${name}'s pending change ${index + 1}`}
+                    onClick={() =>
+                      openDetails({type: 'pending', editor: name, index})
+                    }
+                  >
+                    change {index + 1} · {describePatches(change.patches)}
+                  </DetailsLink>
+                ))}
+              </span>
+            )}
+          </LedgerRow>
+          <LedgerRow concept="held" label="held">
+            {editor.held.length === 0 ? (
+              'nothing'
+            ) : (
+              <span className="flex flex-col">
+                {editor.held.map((transaction) => (
+                  <span key={transaction.transactionId}>
+                    <DetailsLink
+                      label={`Details of transaction ${transaction.transactionId}`}
+                      onClick={() =>
+                        openDetails({
+                          type: 'transaction',
+                          transactionId: transaction.transactionId,
+                        })
+                      }
+                    >
+                      {transaction.transactionId}
+                    </DetailsLink>
+                    :{' '}
+                    <RevisionStep
+                      from={transaction.previousRev}
+                      to={transaction.resultRev}
+                    />
+                  </span>
+                ))}
+              </span>
+            )}
+          </LedgerRow>
+          {editor.echoed.length > 0 ? (
+            <LedgerRow concept="held echo" label="held echo">
+              <span className="flex flex-col">
+                {editor.echoed.map((mutation) => (
+                  <span key={mutation.mutationNumber}>
+                    {mutationLink(mutation)}
+                  </span>
+                ))}
+              </span>
+            </LedgerRow>
+          ) : null}
+          <LedgerRow concept="rejected" label="rejected">
+            {editor.rejected ? mutationLink(editor.rejected) : 'nothing'}
+          </LedgerRow>
+          <LedgerRow concept="out of step" label="out of step">
+            {editor.io.sync === 'out of step' ? 'yes' : 'no'}
+          </LedgerRow>
+          <LedgerRow concept="read-only" label="read-only">
+            {editor.readOnly ? 'yes' : 'no'}
+          </LedgerRow>
+        </ItemList>
+      </Section>
+
+      <MessagePath name={name} messages={editor.messages} />
+
+      <Section title="sent mutations" concept="mutation">
+        {editor.sentMutations.length === 0 ? (
+          <Empty>none</Empty>
+        ) : (
+          <ItemList>
+            {editor.sentMutations.map((mutation) => (
+              <li key={mutation.number}>
+                <DetailsLink
+                  label={`Details of ${name}'s mutation ${mutation.number}`}
+                  onClick={() =>
+                    openDetails({
+                      type: 'mutation',
+                      editor: name,
+                      mutationNumber: mutation.number,
+                    })
+                  }
+                >
+                  mutation {mutation.number} → {mutation.transactionId} ·{' '}
+                  {plural(mutation.patchCount, 'patch')}
+                  {mutation.final ? ' · final' : null}
+                </DetailsLink>
+              </li>
+            ))}
+          </ItemList>
+        )}
+      </Section>
+
+      <Section title="events">
+        {editor.events.length === 0 ? (
+          <Empty>none</Empty>
+        ) : (
+          <ItemList>
+            {editor.events.map((event, index) => (
+              <li key={index} className={eventTone(event)}>
+                <Label concept={event.type}>{event.type}</Label>{' '}
+                {event.type === 'error' || event.type === 'work dropped' ? (
+                  <DetailsLink
+                    label={`Details of ${name}'s event ${index + 1}`}
+                    onClick={() =>
+                      openDetails({type: 'event', editor: name, index})
+                    }
+                  >
+                    {describeEvent(event)}
+                  </DetailsLink>
+                ) : (
+                  describeEvent(event)
+                )}
+              </li>
+            ))}
+          </ItemList>
+        )}
+      </Section>
+    </>
+  )
+}
+
+function LedgerRow({
+  concept,
+  label,
+  children,
+}: {
+  concept: ConceptName
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <li className="flex gap-1">
+      <span className="shrink-0 text-gray-500">
+        <Label concept={concept}>{label}:</Label>
+      </span>
+      <span className="min-w-0">{children}</span>
+    </li>
+  )
+}
+
+const syncTones = {
+  'synced': 'green',
+  'saving': 'blue',
+  'blocked': 'red',
+  'out of step': 'amber',
+} as const
+
+function describeTransactionIds(mutation: MutationSnapshot): string {
+  return mutation.transactionIds.length === 0
+    ? '?'
+    : mutation.transactionIds.join(' / ')
+}
+
+function describeEvent(event: HeardEvent): string {
+  switch (event.type) {
+    case 'change':
+      return `· ${event.origin} · ${plural(event.patchCount, 'patch')}`
+    case 'error':
+      return `· ${event.reason}${event.transactionId === undefined ? '' : ` · ${event.transactionId}`}`
+    case 'work dropped':
+      return `· ${event.reason} · ${plural(event.patchCount, 'patch')}`
+    case 'warning':
+      return `· ${event.message}`
+  }
+}
+
+function eventTone(event: HeardEvent): string {
+  switch (event.type) {
+    case 'change':
+      return 'text-gray-700'
+    case 'error':
+      return 'text-red-700'
+    case 'work dropped':
+      return 'text-orange-700'
+    case 'warning':
+      return 'text-amber-700'
+  }
+}

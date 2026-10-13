@@ -1,0 +1,42 @@
+{
+  "name": "@portabletext/io",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A model of the editor I/O protocol, tested with Gherkin scenarios",
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts",
+    "./gherkin-spec/*": "./gherkin-spec/*",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del node_modules",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit"
+  },
+  "dependencies": {
+    "@cucumber/gherkin": "^41.0.0",
+    "@cucumber/messages": "^34.0.1",
+    "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:^",
+    "@portabletext/test": "workspace:^",
+    "@sanity/diff-match-patch": "catalog:",
+    "@textspec/notation": "^1.0.2",
+    "racejar": "workspace:^"
+  },
+  "devDependencies": {
+    "@sanity/tsconfig": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
+    "vitest": "catalog:tooling"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
