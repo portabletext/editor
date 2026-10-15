@@ -31,12 +31,16 @@ export type EditorEvent =
   | {
       /**
        * Hands the editor the host's latest snapshot of the value so it can
-       * reconcile. This is not a setter: the snapshot is compared against
-       * the previous snapshot the host sent, not against the editor's
-       * current content, and only the remote change that comparison implies
-       * is applied. A snapshot equal to the previous one is ignored, even
-       * if the editor's content has since diverged from it through local
-       * edits.
+       * reconcile. A snapshot equal to the previous one the host sent is
+       * ignored, even if the editor's content has since diverged from it
+       * through local edits. Any other snapshot is reconciled against the
+       * editor's current content, block by block: each block that differs
+       * from the snapshot is replaced by the snapshot's version.
+       *
+       * This includes blocks with local edits the snapshot doesn't contain
+       * yet, so those edits are lost. Only send snapshots that include
+       * everything the editor has emitted. To apply other writers' changes
+       * while the user is editing, send them as `patches` instead.
        *
        * Reconciliation is not an edit: it emits no `patch` or `mutation`
        * events and adds no history step. While local changes are in
