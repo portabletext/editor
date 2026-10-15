@@ -1,5 +1,42 @@
 # Changelog
 
+## 3.0.1
+
+### Patch Changes
+
+- [#3373](https://github.com/portabletext/editor/pull/3373) [`e81e09e`](https://github.com/portabletext/editor/commit/e81e09e5885039fd3891ae0b091d9ae0d487f293) Thanks [@christianhg](https://github.com/christianhg)! - fix: compile shared schema objects once per block inheritance in `compileSchema`
+  
+  A schema definition that reuses the same field or object at several positions, like the output of `sanitySchemaToPortableTextSchema`, now compiles each reused object once instead of once per position. A chain of types that each list the next type twice used to run out of memory at 24 levels and now compiles in under a millisecond:
+  
+  ```ts
+  import {compileSchema, type InlineObjectOfDefinition} from '@portabletext/schema'
+  
+  let member: InlineObjectOfDefinition = {
+    type: 'object',
+    name: 't23',
+    fields: [{name: 'value', type: 'string'}],
+  }
+  for (let index = 22; index >= 0; index--) {
+    member = {
+      type: 'object',
+      name: `t${index}`,
+      fields: [
+        {name: 'first', type: 'array', of: [member]},
+        {name: 'second', type: 'array', of: [member]},
+      ],
+    }
+  }
+  
+  // Previously ran out of memory
+  compileSchema({
+    blockObjects: [
+      {name: 'root', fields: [{name: 'content', type: 'array', of: [member]}]},
+    ],
+  })
+  ```
+  
+  The compiled schema is unchanged. Where the definition shares an object, the compiled schema shares the compiled object too.
+
 ## 3.0.0
 
 ### Major Changes

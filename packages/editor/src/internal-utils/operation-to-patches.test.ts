@@ -1,4 +1,10 @@
-import {diffMatchPatch, insert, set, unset} from '@portabletext/patches'
+import {
+  applyAll,
+  diffMatchPatch,
+  insert,
+  set,
+  unset,
+} from '@portabletext/patches'
 import {
   compileSchema,
   defineSchema,
@@ -19,6 +25,7 @@ import {
   insertNodePatch,
   operationToPatches,
   textPatch,
+  toKeyedPatchPath,
 } from './operation-to-patches'
 
 function buildBlockIndexMap(
@@ -84,15 +91,18 @@ const createDefaultChildren = () =>
 describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {
     expect(
-      insertNodePatch({
-        type: 'insert',
-        path: [{_key: 'k2'}],
-        position: 'before',
-        node: {
-          _key: 'k2',
-          _type: 'image',
+      insertNodePatch(
+        {
+          type: 'insert',
+          path: [{_key: 'k2'}],
+          position: 'before',
+          node: {
+            _key: 'k2',
+            _type: 'image',
+          },
         },
-      }),
+        [],
+      ),
     ).toEqual([
       {
         path: [{_key: 'k2'}],
@@ -110,16 +120,19 @@ describe(insertNodePatch.name, () => {
 
   it('produce correct insert block patch', () => {
     expect(
-      insertNodePatch({
-        type: 'insert',
-        path: [{_key: '1f2e64b47787'}],
-        position: 'before',
-        node: {
-          _type: 'someObject',
-          _key: 'c130395c640c',
-          title: 'The Object',
+      insertNodePatch(
+        {
+          type: 'insert',
+          path: [{_key: '1f2e64b47787'}],
+          position: 'before',
+          node: {
+            _type: 'someObject',
+            _key: 'c130395c640c',
+            title: 'The Object',
+          },
         },
-      }),
+        createDefaultChildren(),
+      ),
     ).toMatchInlineSnapshot(`
       [
         {
@@ -146,15 +159,18 @@ describe(insertNodePatch.name, () => {
     editor.snapshot.context.value = []
     editor.onChange()
     expect(
-      insertNodePatch({
-        type: 'insert',
-        path: [{_key: 'c130395c640c'}],
-        position: 'before',
-        node: {
-          _type: 'someObject',
-          _key: 'c130395c640c',
+      insertNodePatch(
+        {
+          type: 'insert',
+          path: [{_key: 'c130395c640c'}],
+          position: 'before',
+          node: {
+            _type: 'someObject',
+            _key: 'c130395c640c',
+          },
         },
-      }),
+        [],
+      ),
     ).toMatchInlineSnapshot(`
       [
         {
@@ -178,16 +194,19 @@ describe(insertNodePatch.name, () => {
 
   test('produce correct insert child patch', () => {
     expect(
-      insertNodePatch({
-        type: 'insert',
-        path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
-        position: 'after',
-        node: {
-          _type: 'someObject',
-          _key: 'c130395c640c',
-          title: 'The Object',
+      insertNodePatch(
+        {
+          type: 'insert',
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
+          position: 'after',
+          node: {
+            _type: 'someObject',
+            _key: 'c130395c640c',
+            title: 'The Object',
+          },
         },
-      }),
+        createDefaultChildren(),
+      ),
     ).toEqual([
       {
         type: 'setIfMissing',
@@ -359,17 +378,20 @@ describe('defensive setIfMissing patches', () => {
 
   describe(insertNodePatch.name, () => {
     test('includes setIfMissing before inserting a span into children', () => {
-      const patches = insertNodePatch({
-        type: 'insert',
-        path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
-        position: 'after',
-        node: {
-          _type: 'span',
-          _key: 'new-span',
-          text: 'hello',
-          marks: [],
+      const patches = insertNodePatch(
+        {
+          type: 'insert',
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
+          position: 'after',
+          node: {
+            _type: 'span',
+            _key: 'new-span',
+            text: 'hello',
+            marks: [],
+          },
         },
-      })
+        createDefaultChildren(),
+      )
 
       expect(patches).toEqual([
         {
@@ -387,16 +409,19 @@ describe('defensive setIfMissing patches', () => {
     })
 
     test('includes setIfMissing before inserting an inline object into children', () => {
-      const patches = insertNodePatch({
-        type: 'insert',
-        path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
-        position: 'after',
-        node: {
-          _type: 'someObject',
-          _key: 'new-object',
-          title: 'New Object',
+      const patches = insertNodePatch(
+        {
+          type: 'insert',
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
+          position: 'after',
+          node: {
+            _type: 'someObject',
+            _key: 'new-object',
+            title: 'New Object',
+          },
         },
-      })
+        createDefaultChildren(),
+      )
 
       expect(patches).toEqual([
         {
@@ -589,6 +614,316 @@ describe(operationToPatches.name, () => {
         },
       ),
     ).toEqual([])
+  })
+})
+
+describe(toKeyedPatchPath.name, () => {
+  test('rewrites indices of keyed blocks and children to keyed segments', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [textBlock(blockKey, spanKey, 'foo')],
+        [0, 'children', 0, 'text'],
+      ),
+    ).toEqual([{_key: blockKey}, 'children', {_key: spanKey}, 'text'])
+  })
+
+  test('keeps indices into arrays of strings', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo', marks: ['strong']},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        [0, 'children', 0, 'marks', 0],
+      ),
+    ).toEqual([{_key: blockKey}, 'children', {_key: spanKey}, 'marks', 0])
+  })
+
+  test('keeps indices past the end of the array', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath([textBlock(blockKey, spanKey, 'foo')], [1]),
+    ).toEqual([1])
+    expect(
+      toKeyedPatchPath(
+        [textBlock(blockKey, spanKey, 'foo')],
+        [0, 'children', 1],
+      ),
+    ).toEqual([{_key: blockKey}, 'children', 1])
+    expect(toKeyedPatchPath([], [0])).toEqual([0])
+  })
+
+  test('keeps indices of array elements without a string `_key`', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [{_type: 'table', _key: tableKey, rows: [{cells: []}, {_key: 1}]}],
+        [0, 'rows', 0, 'cells'],
+      ),
+    ).toEqual([{_key: tableKey}, 'rows', 0, 'cells'])
+    expect(
+      toKeyedPatchPath(
+        [{_type: 'table', _key: tableKey, rows: [{cells: []}, {_key: 1}]}],
+        [0, 'rows', 1],
+      ),
+    ).toEqual([{_key: tableKey}, 'rows', 1])
+  })
+
+  test('keeps indices into arrays with a `null` or primitive element', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const tagKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [{_type: 'table', _key: tableKey, tags: [null, {_key: tagKey}]}],
+        [0, 'tags', 1, 'name'],
+      ),
+    ).toEqual([{_key: tableKey}, 'tags', 1, 'name'])
+    expect(
+      toKeyedPatchPath(
+        [{_type: 'table', _key: tableKey, tags: [{_key: tagKey}, 'foo']}],
+        [0, 'tags', 0, 'name'],
+      ),
+    ).toEqual([{_key: tableKey}, 'tags', 0, 'name'])
+  })
+
+  test('emits paths that `applyAll` applies', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const fooTagKey = keyGenerator()
+    const barTagKey = keyGenerator()
+    const value = [
+      {
+        _type: 'table',
+        _key: tableKey,
+        keyedTags: [
+          {_key: fooTagKey, name: 'foo'},
+          {_key: barTagKey, name: 'bar'},
+        ],
+        tags: [null, {_key: barTagKey, name: 'bar'}],
+      },
+    ]
+
+    expect(
+      applyAll(value, [
+        set('baz', toKeyedPatchPath(value, [0, 'keyedTags', 1, 'name'])),
+        set('baz', toKeyedPatchPath(value, [0, 'tags', 1, 'name'])),
+      ]),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: tableKey,
+        keyedTags: [
+          {_key: fooTagKey, name: 'foo'},
+          {_key: barTagKey, name: 'baz'},
+        ],
+        tags: [null, {_key: barTagKey, name: 'baz'}],
+      },
+    ])
+  })
+
+  test('keeps indices of array elements with an empty or duplicate `_key`', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [
+          textBlock(fooBlockKey, fooSpanKey, 'foo'),
+          textBlock(fooBlockKey, barSpanKey, 'bar'),
+        ],
+        [1, '_key'],
+      ),
+    ).toEqual([1, '_key'])
+    expect(
+      toKeyedPatchPath(
+        [
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [
+              {_type: 'span', _key: '', text: 'foo', marks: []},
+              {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+              {_type: 'span', _key: barSpanKey, text: 'baz', marks: []},
+              {_type: 'span', _key: bazSpanKey, text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        [0, 'children', 0, '_key'],
+      ),
+    ).toEqual([{_key: fooBlockKey}, 'children', 0, '_key'])
+    expect(
+      toKeyedPatchPath(
+        [
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [
+              {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+              {_type: 'span', _key: barSpanKey, text: 'baz', marks: []},
+              {_type: 'span', _key: bazSpanKey, text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        [0, 'children', 1, 'text'],
+      ),
+    ).toEqual([{_key: fooBlockKey}, 'children', 1, 'text'])
+  })
+
+  test('resolves indices after keyed segments, into `markDefs`', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const linkKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo', marks: [linkKey]},
+            ],
+            markDefs: [{_type: 'link', _key: linkKey, href: 'https://foo'}],
+            style: 'normal',
+          },
+        ],
+        [{_key: blockKey}, 'markDefs', 0, 'href'],
+      ),
+    ).toEqual([{_key: blockKey}, 'markDefs', {_key: linkKey}, 'href'])
+  })
+
+  test('resolves indices through container fields and nested objects', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const tagKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [
+          {
+            _type: 'table',
+            _key: tableKey,
+            meta: {tags: [{_key: tagKey, name: 'foo'}]},
+            rows: [
+              {
+                _type: 'row',
+                _key: rowKey,
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: cellKey,
+                    content: [textBlock(blockKey, spanKey, 'bar')],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        [
+          0,
+          'rows',
+          {_key: rowKey},
+          'cells',
+          0,
+          'content',
+          0,
+          'children',
+          0,
+          'text',
+        ],
+      ),
+    ).toEqual([
+      {_key: tableKey},
+      'rows',
+      {_key: rowKey},
+      'cells',
+      {_key: cellKey},
+      'content',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+      'text',
+    ])
+    expect(
+      toKeyedPatchPath(
+        [
+          {
+            _type: 'table',
+            _key: tableKey,
+            meta: {tags: [{_key: tagKey, name: 'foo'}]},
+          },
+        ],
+        [0, 'meta', 'tags', 0, 'name'],
+      ),
+    ).toEqual([{_key: tableKey}, 'meta', 'tags', {_key: tagKey}, 'name'])
+  })
+
+  test('keeps indices below a segment that does not resolve', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const missingBlockKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [textBlock(blockKey, spanKey, 'foo')],
+        [{_key: missingBlockKey}, 'children', 0],
+      ),
+    ).toEqual([{_key: missingBlockKey}, 'children', 0])
+    expect(
+      toKeyedPatchPath([textBlock(blockKey, spanKey, 'foo')], [0, 'baz', 0]),
+    ).toEqual([{_key: blockKey}, 'baz', 0])
+  })
+
+  test('keeps paths without indices', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      toKeyedPatchPath(
+        [textBlock(blockKey, spanKey, 'foo')],
+        [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+      ),
+    ).toEqual([{_key: blockKey}, 'children', {_key: spanKey}, 'text'])
+    expect(toKeyedPatchPath([textBlock(blockKey, spanKey, 'foo')], [])).toEqual(
+      [],
+    )
   })
 })
 

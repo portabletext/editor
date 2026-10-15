@@ -233,6 +233,93 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Clearing the text of a span applies no empty `insert.text`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+    const operationEvents: Array<EditorEmittedEvent> = []
+    editor.on('operation', (event) => {
+      operationEvents.push(event)
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ])
+    })
+    expect(operationEvents).toEqual([
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+          inverse: {
+            type: 'set',
+            path: [{_key: blockKey}, 'markDefs'],
+            value: [],
+          },
+        },
+        origin: 'remote',
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+          value: [],
+          inverse: {
+            type: 'set',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+            value: [],
+          },
+        },
+        origin: 'remote',
+      },
+      {
+        type: 'operation',
+        operation: {
+          type: 'remove.text',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+          text: 'foo',
+        },
+        origin: 'remote',
+      },
+    ])
+  })
+
   test("Scenario: Updating before 'ready'", async () => {
     const keyGenerator = createTestKeyGenerator()
     const onEvent = vi.fn<() => EditorEmittedEvent>()
@@ -4369,6 +4456,72 @@ describe('event.update value: mechanically repaired invalid blocks', () => {
       // flushes and re-checks on a 1s timer.
       {timeout: 5000},
     )
+  })
+
+  test('Scenario: typing into a lone block repaired on load does not insert it again', async () => {
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'b0'}, 'children'],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', 0],
+          position: 'before',
+          items: [{_key: 'k2', _type: 'span', text: '', marks: []}],
+          origin: 'local',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'f'})
+
+    await vi.waitFor(() => {
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
   })
 
   test('Scenario: an acknowledged repair, later genuinely re-emptied, repairs anew with a fresh key', async () => {

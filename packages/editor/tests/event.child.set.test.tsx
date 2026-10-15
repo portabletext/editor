@@ -1,6 +1,6 @@
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema, type Patch} from '../src'
+import {defineSchema, type Operation, type Patch} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -364,6 +364,84 @@ describe('event.child.set', () => {
               marks: ['strong'],
             },
           ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Setting text on an empty span emits no empty `remove.text`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+    const operations: Array<Operation> = []
+    editor.on('operation', (event) => {
+      operations.push(event.operation)
+    })
+
+    editor.send({
+      type: 'child.set',
+      at: [{_key: blockKey}, 'children', {_key: spanKey}],
+      props: {text: 'foo'},
+    })
+
+    await vi.waitFor(() => {
+      expect(operations).toEqual([
+        {
+          type: 'insert.text',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+          text: 'foo',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Clearing the text of a span emits no empty `insert.text`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+    const operations: Array<Operation> = []
+    editor.on('operation', (event) => {
+      operations.push(event.operation)
+    })
+
+    editor.send({
+      type: 'child.set',
+      at: [{_key: blockKey}, 'children', {_key: spanKey}],
+      props: {text: ''},
+    })
+
+    await vi.waitFor(() => {
+      expect(operations).toEqual([
+        {
+          type: 'remove.text',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+          text: 'foo',
         },
       ])
     })

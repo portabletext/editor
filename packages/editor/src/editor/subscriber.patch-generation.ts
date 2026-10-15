@@ -26,6 +26,8 @@ export function subscribePatchGeneration({
 
     const {initialValue, schema} = editorActor.getSnapshot().context
     const {operation, beforeValue} = event
+    const intakeRepair =
+      isInNormalization(event.context) && hasRemoteFrame(event.context)
 
     const {patches, state} = addFieldLifecyclePatches(
       {
@@ -40,15 +42,13 @@ export function subscribePatchGeneration({
           beforeValue,
           afterSnapshot: editor.snapshot,
         }),
+        intakeRepair,
       },
       {schema, initialValue},
     )
 
     editor.lastSyncedValue = state.lastSyncedValue
     editor.valueUnsetEmitted = state.valueUnsetEmitted
-
-    const intakeRepair =
-      isInNormalization(event.context) && hasRemoteFrame(event.context)
 
     for (const patch of patches) {
       editorActor.send({

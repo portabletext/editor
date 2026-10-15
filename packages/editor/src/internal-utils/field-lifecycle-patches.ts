@@ -17,13 +17,18 @@ export function addFieldLifecyclePatches(
     beforeValue: Array<PortableTextBlock>
     afterValue: Array<PortableTextBlock>
     patches: Array<Patch>
+    /**
+     * Whether the operation is the engine repairing content it was handed
+     * (a load, a value sync or a remote patch), as opposed to an edit.
+     */
+    intakeRepair?: boolean
   },
   context: {
     schema: EditorSchema
     initialValue: Array<PortableTextBlock> | undefined
   },
 ): {patches: Array<Patch>; state: FieldLifecycleState} {
-  const {operation, beforeValue, afterValue} = edit
+  const {operation, beforeValue, afterValue, intakeRepair = false} = edit
   const {schema, initialValue} = context
   let lastSyncedValue = state.lastSyncedValue
   let valueUnsetEmitted = state.valueUnsetEmitted
@@ -49,11 +54,23 @@ export function addFieldLifecyclePatches(
     patches = [insert(beforeValue, 'before', [0]), ...patches]
   }
 
-  if (
-    !wasPlaceholder &&
+  const isInsertIntoEmptyValue =
+    operation.type === 'insert' && beforeValue.length === 0
+  const isRootUnset = operation.type === 'unset' && operation.path.length === 0
+  // Repairing handed-in content into the placeholder shape (a lone block
+  // whose `children` was empty, say) emits the repair, so the host holds
+  // that block: the field is not cleared.
+  const isIntakeRepairToPlaceholder =
+    intakeRepair && isPlaceholder && !wasPlaceholder
+  const becamePlaceholder =
     isPlaceholder &&
-    ['set', 'unset', 'remove.text'].includes(operation.type)
-  ) {
+    !wasPlaceholder &&
+    !isInsertIntoEmptyValue &&
+    !isIntakeRepairToPlaceholder
+  const becameEmpty =
+    beforeValue.length > 0 && afterValue.length === 0 && !isRootUnset
+
+  if (becamePlaceholder || becameEmpty) {
     patches = [...patches, unset([])]
   }
 

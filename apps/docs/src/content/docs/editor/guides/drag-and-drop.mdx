@@ -1,0 +1,202 @@
+---
+title: Drag and drop blocks
+description: Let users drag blocks to move them in the Portable Text Editor, with your own drag handles and drop indicators.
+---
+
+import {PackageManagers} from 'starlight-package-managers'
+
+Users can move blocks around the document by dragging them. The work splits in two:
+
+- The editor moves the content. On drop, it takes the dragged blocks out of their old place and inserts them where the user let go. Drops respect the destination's schema: blocks the destination doesn't accept are left out.
+- Your render owns everything the user sees during the drag: the element they grab (the drag source) and the line that shows where the blocks will land (the drop indicator).
+
+The editor draws no drag handles and no drop indicators of its own. This guide adds both. It assumes you have a text block registration, as set up in the [getting started guide](/editor/getting-started/).
+
+## Set up the plugin
+
+`@portabletext/plugin-dnd` tracks where a drop would land, so your render can draw the indicator.
+
+<PackageManagers pkg="@portabletext/plugin-dnd" />
+
+Wrap `PortableTextEditable` in `DndProvider`, inside the `EditorProvider`:
+
+```tsx
+import {DndProvider} from '@portabletext/plugin-dnd'
+
+function MyEditor() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition}}>
+      <NodePlugin nodes={nodes} />
+      <DndProvider>
+        <PortableTextEditable />
+      </DndProvider>
+    </EditorProvider>
+  )
+}
+```
+
+:::note
+The `@portabletext/plugin-dnd` API is in beta and can still change.
+:::
+
+## Add a drag handle to text blocks
+
+Text blocks have no drag source until you give them one. A drag handle is any element inside the block's outer element with `contentEditable={false}`, `draggable={!props.readOnly}`, and some visible content to grab. The editor works out which block to move from the block around the handle, so the handle needs no other attributes.
+
+```tsx
+import {defineTextBlock, type TextBlockRenderProps} from '@portabletext/editor'
+
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => <TextBlock {...props} />,
+})
+
+function TextBlock(props: TextBlockRenderProps) {
+  return (
+    <div {...props.attributes} style={{position: 'relative'}}>
+      <span
+        contentEditable={false}
+        draggable={!props.readOnly}
+        style={{
+          position: 'absolute',
+          left: '-1.5em',
+          cursor: 'grab',
+          userSelect: 'none',
+        }}
+      >
+        ⠿
+      </span>
+      {props.children}
+      <DropIndicator path={props.path} />
+    </div>
+  )
+}
+```
+
+`DropIndicator` is the component from the [next section](#draw-drop-indicators). The negative `left` puts the handle in the margin next to the text, so give the editor some padding on the left.
+
+Keep `draggable` on the handle. Don't put it on the block's outer element: Firefox never starts a drag from it, and Chromium only starts one from empty space next to the text.
+
+If the user has selected text across several blocks and grabs a handle inside that selection, the drag moves all the selected blocks, in full.
+
+## Block objects and inline objects
+
+Block objects and inline objects have no editable text, so the visible content itself can be the drag source. The [custom blocks guide](/editor/guides/custom-blocks/) covers the setup: block objects wrap their visible content in an element with `contentEditable={false}` and `draggable={!props.readOnly}`, and inline objects put `draggable={!props.readOnly}` on an inner wrapper.
+
+Images are draggable in the browser by default. The block still moves when the user drags the image, but the drag also carries the image's URL, and in Firefox the image file, so dropping it outside the editor hands over the image. Set `draggable={false}` on an `<img>` inside a block object so the drag carries only the block. The `contentEditable={false}` wrapper matters here too: without it, Firefox drags the image even with `draggable={false}`. This image block also renders the `DropIndicator` from the [next section](#draw-drop-indicators), so users can drop blocks next to it:
+
+```tsx
+import {defineBlockObject} from '@portabletext/editor'
+
+const imageBlock = defineBlockObject({
+  type: 'image',
+  render: (props) =>
+    typeof props.node.src === 'string' ? (
+      <div {...props.attributes} style={{position: 'relative'}}>
+        {props.children}
+        <div contentEditable={false} draggable={!props.readOnly}>
+          <img src={props.node.src} alt="" draggable={false} />
+        </div>
+        <DropIndicator path={props.path} />
+      </div>
+    ) : (
+      props.renderDefault(props)
+    ),
+})
+```
+
+## Draw drop indicators
+
+`useDropPosition` returns where a drop would land relative to the block at a path: `'start'` (before the block), `'end'` (after it), or `undefined` when it would land somewhere else. It is a React hook, and the editor calls `render` as a plain function, so call it from a component your render returns. A small component that reads the hook and draws a line works in every block render:
+
+```tsx
+import type {Path} from '@portabletext/editor'
+import {useDropPosition} from '@portabletext/plugin-dnd'
+
+function DropIndicator(props: {path: Path}) {
+  const dropPosition = useDropPosition(props.path)
+
+  return dropPosition === undefined ? null : (
+    <div
+      contentEditable={false}
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: dropPosition === 'start' ? 0 : undefined,
+        bottom: dropPosition === 'end' ? 0 : undefined,
+        borderTop: '2px solid dodgerblue',
+        pointerEvents: 'none',
+      }}
+    />
+  )
+}
+```
+
+Render it inside the block's outer element and give that element `position: relative`, as `TextBlock` above does. `position: absolute` keeps the line out of the text flow, so the block doesn't shift when it appears. `pointerEvents: 'none'` lets the drag keep reaching the block underneath. Add the same `<DropIndicator path={props.path} />` to every block render that should show one, as the image block above does.
+
+The position is only set while the user drags whole blocks, and it stays `undefined`:
+
+- for a drag of part of a block's text,
+- over the blocks being dragged,
+- over the middle of a non-empty text block. A drop there splits the block, and the browser's own caret shows where.
+
+While an indicator shows, the plugin hides the browser's caret, so the user sees one drop target at a time. A component that reads `useDropPosition` re-renders only when the position at its own path changes, so moving the drag from one block to the next re-renders just those two blocks.
+
+`useDropPosition` throws when it is called outside a `DndProvider`.
+
+## Blocks inside containers
+
+A handle in a [container's](/editor/concepts/containers/) own chrome drags the whole container. Put it in the container render, next to `children`:
+
+```tsx
+import {defineContainer} from '@portabletext/editor'
+
+const callout = defineContainer({
+  type: 'callout',
+  arrayField: 'content',
+  render: (props) => (
+    <aside {...props.attributes} style={{position: 'relative'}}>
+      <span contentEditable={false} draggable={!props.readOnly}>
+        ⠿
+      </span>
+      {props.children}
+      <DropIndicator path={props.path} />
+    </aside>
+  ),
+})
+```
+
+Text blocks inside the container render through your text block registration, handle included. Their handle drags that one block, which lets users move it within the container or out of it. Drop positions work at every depth: dragging over a block inside a container puts the indicator on that block, not on the container.
+
+## Customize drops with behaviors
+
+Every drag reaches the [Behavior API](/editor/concepts/behavior/) as `drag.*` events: `drag.dragstart`, `drag.drag`, `drag.dragend`, `drag.dragenter`, `drag.dragover`, `drag.dragleave`, and `drag.drop`. Listen to one with its exact name, or to all of them with `on: 'drag.*'`. A behavior that matches an event takes it over. Return `forward(event)` from its actions to let the editor carry on as usual, or leave it out to stop the event.
+
+`drag.drop` and `drag.dragover` events carry the drop `position` and the browser's `dataTransfer`. A drag that started in this editor also carries `dragOrigin`, the selection being dragged. This behavior uses that to ignore anything dropped from outside the editor, such as text from another page or files from the desktop:
+
+```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
+
+const ignoreOutsideDrops = defineBehavior({
+  on: 'drag.drop',
+  guard: ({event}) => event.dragOrigin === undefined,
+  actions: [],
+})
+
+function MyEditor() {
+  return (
+    <EditorProvider initialConfig={{schemaDefinition}}>
+      <BehaviorPlugin behaviors={[ignoreOutsideDrops]} />
+      <PortableTextEditable />
+    </EditorProvider>
+  )
+}
+```
+
+Blocks dragged within the editor still move, because their drop events carry a `dragOrigin` and the guard lets them through. The [Behavior API reference](/editor/reference/behavior-api/) lists the actions you can return instead, for example to insert the dropped content somewhere else.
+
+## Read-only editors
+
+The editor ignores drag starts while it is read-only. Use `draggable={!props.readOnly}` on every drag source, as the examples on this page do, so the browser doesn't offer a drag the editor won't act on.

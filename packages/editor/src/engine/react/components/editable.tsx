@@ -528,7 +528,9 @@ export const Editable = forwardRef(
 
         if (newDomRange) {
           if (editor.composing && !IS_ANDROID) {
-            domSelection.collapseToEnd()
+            if (domSelection.rangeCount > 0) {
+              domSelection.collapseToEnd()
+            }
           } else if (isBackwardRange(selection!, editor.snapshot.context)) {
             domSelection.setBaseAndExtent(
               newDomRange.endContainer,

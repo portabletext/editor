@@ -155,7 +155,7 @@ whatever a container should allow on the block member itself. The resulting
 
 Schemas are allowed to reference themselves. An accordion whose body is
 the same Portable Text array it lives in, or a footnote that carries a
-rich-text field of its own, both convert fine; the conversion doesn't
+rich-text field of its own, both convert fine. The conversion doesn't
 loop forever trying to expand them.
 
 When the conversion runs into a type it is already in the middle of
@@ -172,6 +172,25 @@ One thing to keep in mind: every place a type is embedded gets its own
 resolved sub-schema, so a schema where many types embed each other
 produces output that grows with the number of embedding positions, not
 just the number of types.
+
+That growth is steepest when rich-text fields sit inside the inline
+objects they list, because every nested block expands its inline objects
+again. When the full conversion would expand inline objects and
+annotations more than 100,000 times, the schema converts to a compact
+form instead. Up to that, the output is the full conversion.
+
+The compact form differs from the full conversion in two ways:
+
+- A nested block whose annotations and inline objects both match the
+  root block's leaves both out, but only where `compileSchema`, and
+  `getSubSchema` called on the output without `compileSchema`, both fill
+  them in from the root's lists. Elsewhere it keeps them, for example
+  directly inside an array without a block member, next to a block that
+  lists different types, or inside an object type listed in an array.
+- Each inline object and annotation is expanded once and reused at the
+  positions that list it. Some positions deep inside recursive
+  structures resolve an object type with no fields, so content inserted
+  there loses those fields.
 
 ### Convert an uncompiled definition
 

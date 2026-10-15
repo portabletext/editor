@@ -375,3 +375,9 @@ A large E2E test suite, generated from a [human-readable Gherkin spec](./gherkin
    pnpm link <path-to-this-repo>/packages/editor
    ```
 4. Run `pnpm dev:test-studio` in the sanity repo
+
+## Acknowledgements
+
+The Portable Text Editor stands on [Slate](https://github.com/ianstormtaylor/slate). It has run on Slate since 2016, first as a dependency and, since 2026, as the fork that became its engine. Much of how the editor turns browser input into edits, keeps the DOM selection in sync, and handles IME and Android input is still Slate's work, and we keep porting fixes from upstream.
+
+Thank you to Ian Storm Taylor for creating Slate, and to everyone who has contributed to it.

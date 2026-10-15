@@ -1,6 +1,7 @@
 import {defineSchema, type PortableTextChild} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.decorator.add', () => {
@@ -182,6 +183,86 @@ describe('event.decorator.add', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {...block, children: [foo, {...bar, marks: ['strong']}]},
+      ])
+    })
+  })
+
+  test('Scenario: Adding a decorator at an explicit range keeps a decorator toggled on at the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+      },
+    })
+
+    editor.send({type: 'decorator.toggle', decorator: 'em'})
+
+    editor.send({
+      type: 'decorator.add',
+      decorator: 'strong',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: f[strong:oob]a|r',
+      )
+    })
+
+    await userEvent.keyboard('baz')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'f', marks: []},
+            {_type: 'span', _key: 'k5', text: 'oob', marks: ['strong']},
+            {_type: 'span', _key: 'k4', text: 'a', marks: []},
+            {_type: 'span', _key: 'k6', text: 'baz', marks: ['em']},
+            {_type: 'span', _key: 'k7', text: 'r', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
   })

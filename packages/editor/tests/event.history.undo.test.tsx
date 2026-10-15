@@ -9,6 +9,7 @@ import {
   raise,
 } from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
@@ -419,6 +420,90 @@ describe('event.history.undo', () => {
       await vi.waitFor(() => {
         expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
       })
+    })
+  })
+
+  test('Scenario: An empty `remove.text` starting an action set keeps its undo boundary', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({styles: [{name: 'h1'}, {name: 'h2'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'custom.set h1',
+              actions: [
+                () => [
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: 'h1'},
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior({
+              on: 'custom.set h2',
+              actions: [
+                () => [
+                  execute({
+                    type: 'remove.text',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    offset: 0,
+                    text: '',
+                  }),
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {style: 'h2'},
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'custom.set h1'})
+    editor.send({type: 'custom.set h2'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h2',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
     })
   })
 
@@ -935,6 +1020,72 @@ describe('event.history.undo', () => {
     // After undo: back to original value
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('Scenario: Undoing a bold shortcut over part of a span restores the selection', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    await userEvent.keyboard(
+      IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
+    )
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: f[strong:^oob|]ar',
+      )
+    })
+
+    await userEvent.keyboard(
+      IS_MAC ? '{Meta>}z{/Meta}' : '{Control>}z{/Control}',
+    )
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+        backward: false,
+      })
     })
   })
 

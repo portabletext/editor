@@ -25,6 +25,7 @@ You'll need to:
 - Create a schema that defines your content elements.
 - Create a toolbar to toggle and insert these elements.
 - Set up rendering for your text blocks and inline formatting, like bold and italic.
+- Add bulleted and numbered lists.
 - Render the editor.
 
 ## Parts of the editor
@@ -93,8 +94,7 @@ const schemaDefinition = defineSchema({
   // Annotations are more complex marks that can hold data (for example, hyperlinks).
   annotations: [],
   // Lists apply to entire text blocks as well (for example, bullet, numbered).
-  // Lists render inside your registered text-block render; ordered-list
-  // numbering comes from `@portabletext/plugin-list-index`.
+  // You'll add them in the "Add lists" step.
   lists: [],
   // Inline objects hold arbitrary data that can be inserted into the text (for example, custom emoji).
   inlineObjects: [],
@@ -364,11 +364,141 @@ The `useStyleSelector` and `useDecoratorButton` hooks give you access to the act
   href="/editor/guides/customize-toolbar/"
 />
 
-In the next step, you'll add the toolbar to the editor.
+## Add lists
+
+A list in Portable Text is a run of text blocks that each carry a list type (`listItem`) and an indentation `level`. The editor doesn't draw bullets or numbers. Your text block render does, with help from `@portabletext/plugin-list-index`, which tells each list item its position in its list.
+
+<PackageManagers pkg="@portabletext/plugin-list-index" />
+
+Add the list types to your schema:
+
+```tsx
+const schemaDefinition = defineSchema({
+  // ...
+  lists: [
+    {name: 'bullet', title: 'Bulleted list'},
+    {name: 'number', title: 'Numbered list'},
+  ],
+})
+```
+
+Then update the text block render. It reads the list position with `useListIndex`, which is a React hook, so the render returns a `TextBlock` component that calls it. The component puts the list type, level, and position on the wrapper as `data-*` attributes, and the style element moves inside the wrapper, since a list item can have a style too:
+
+```tsx
+import type {TextBlockRenderProps} from '@portabletext/editor'
+import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
+
+const textBlock = defineTextBlock({
+  type: 'block',
+  render: (props) => <TextBlock {...props} />,
+})
+
+function TextBlock(props: TextBlockRenderProps) {
+  // The 1-based position within the list, or `undefined` for a block that
+  // is not a list item
+  const listIndex = useListIndex(props.path)
+
+  let children = props.children
+  if (props.node.style === 'h1') {
+    children = <h1>{children}</h1>
+  } else if (props.node.style === 'h2') {
+    children = <h2>{children}</h2>
+  } else if (props.node.style === 'h3') {
+    children = <h3>{children}</h3>
+  } else if (props.node.style === 'blockquote') {
+    children = <blockquote>{children}</blockquote>
+  }
+
+  return (
+    <div
+      {...props.attributes}
+      data-list-item={props.node.listItem}
+      data-level={props.node.level}
+      data-list-index={listIndex}
+    >
+      {children}
+    </div>
+  )
+}
+```
+
+React leaves out attributes whose value is `undefined`, so blocks that are not list items render without them.
+
+With the attributes in place, a few lines of CSS draw the markers and indent nested levels:
+
+```css
+[data-list-item] {
+  display: flex;
+  gap: 0.5rem;
+}
+
+[data-list-item='bullet']::before {
+  content: '•';
+}
+
+[data-list-item='number']::before {
+  content: attr(data-list-index) '.';
+}
+
+[data-level='2'] {
+  padding-left: 1.5em;
+}
+
+[data-level='3'] {
+  padding-left: 3em;
+}
+```
+
+Finally, add a button per list type to the toolbar with `useListButton`:
+
+```tsx
+import {useListButton, type ToolbarListSchemaType} from '@portabletext/toolbar'
+
+const ListButton = (props: {schemaType: ToolbarListSchemaType}) => {
+  const listButton = useListButton(props)
+  return (
+    <button
+      type="button"
+      onClick={() => listButton.send({type: 'toggle'})}
+      className={
+        listButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''
+      }
+    >
+      {props.schemaType.title}
+    </button>
+  )
+}
+```
+
+Render one per list type inside `Toolbar`, next to the other buttons:
+
+```tsx
+function Toolbar() {
+  // ...
+  return (
+    <div>
+      {/* ...decorator and style buttons */}
+      {toolbarSchema.lists.map((list) => (
+        <ListButton key={list.name} schemaType={list} />
+      ))}
+    </div>
+  )
+}
+```
+
+In a list item, Tab indents the item one level and Shift+Tab outdents it.
+
+<LinkCard
+  title="Render lists"
+  description="Number each level in its own style, render markers in React, and handle lists inside containers."
+  href="/editor/guides/render-lists/"
+/>
+
+In the next step, you'll add the toolbar and the list position provider to the editor.
 
 ## Bring it all together
 
-With the registrations created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
+With the registrations created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`, and wrap `PortableTextEditable` in `ListIndexProvider` so the text block render can read list positions.
 
 ```tsx
 // App.tsx
@@ -395,9 +525,11 @@ function App() {
         />
         <NodePlugin nodes={nodes} />
         <Toolbar />
-        <PortableTextEditable
-          style={{border: '1px solid black', padding: '0.5em'}}
-        />
+        <ListIndexProvider>
+          <PortableTextEditable
+            style={{border: '1px solid black', padding: '0.5em'}}
+          />
+        </ListIndexProvider>
       </EditorProvider>
     </>
   )
@@ -405,7 +537,7 @@ function App() {
 // ...
 ```
 
-You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](/editor/guides/custom-rendering/) and the [toolbar customization guide](/editor/guides/customize-toolbar/) for options.
+You can now enter text and interact with the toolbar buttons to toggle the styles, decorators, and lists. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](/editor/guides/custom-rendering/) and the [toolbar customization guide](/editor/guides/customize-toolbar/) for options.
 
 ## View the Portable Text data
 

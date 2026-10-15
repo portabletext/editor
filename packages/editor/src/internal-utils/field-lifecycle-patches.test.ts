@@ -507,7 +507,57 @@ describe(addFieldLifecyclePatches.name, () => {
     })
   })
 
-  test('removing a lone block object unsets the block only', () => {
+  test('inserting the empty span that makes the lone block pristine unsets the field', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          operation: {
+            type: 'insert',
+            path: [{_key: blockKey}, 'children', 0],
+            node: {_type: 'span', _key: spanKey, text: '', marks: []},
+            position: 'before',
+          },
+          beforeValue: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              children: [],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          afterValue: [textBlock(blockKey, spanKey, '')],
+          patches: [
+            setIfMissing([], [{_key: blockKey}, 'children']),
+            insert(
+              [{_type: 'span', _key: spanKey, text: '', marks: []}],
+              'before',
+              [{_key: blockKey}, 'children', 0],
+            ),
+          ],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [
+        setIfMissing([], [{_key: blockKey}, 'children']),
+        insert(
+          [{_type: 'span', _key: spanKey, text: '', marks: []}],
+          'before',
+          [{_key: blockKey}, 'children', 0],
+        ),
+        unset([]),
+      ],
+      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+    })
+  })
+
+  test('removing a lone block object unsets the block, then the field', () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 
@@ -523,12 +573,12 @@ describe(addFieldLifecyclePatches.name, () => {
         {schema, initialValue: [image(imageKey)]},
       ),
     ).toEqual({
-      patches: [unset([{_key: imageKey}])],
-      state: {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: false},
+      patches: [unset([{_key: imageKey}]), unset([])],
+      state: {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: true},
     })
   })
 
-  test('removing the placeholder of a field without a value inserts the placeholder, then unsets it', () => {
+  test('removing the placeholder of a field without a value inserts the placeholder, then unsets it and the field', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -549,8 +599,57 @@ describe(addFieldLifecyclePatches.name, () => {
         setIfMissing([], []),
         insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
         unset([{_key: blockKey}]),
+        unset([]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+    })
+  })
+
+  test('removing the placeholder after the field was unset rebuilds the field, then unsets it again', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          operation: {type: 'unset', path: [{_key: blockKey}]},
+          beforeValue: [textBlock(blockKey, spanKey, '')],
+          afterValue: [],
+          patches: [unset([{_key: blockKey}])],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [
+        setIfMissing([], []),
+        insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
+        unset([{_key: blockKey}]),
+        unset([]),
+      ],
+      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+    })
+  })
+
+  test('removing a lone block object after the field was unset unsets the block, then the field', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: true},
+        {
+          operation: {type: 'unset', path: [{_key: imageKey}]},
+          beforeValue: [image(imageKey)],
+          afterValue: [],
+          patches: [unset([{_key: imageKey}])],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [unset([{_key: imageKey}]), unset([])],
+      state: {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: true},
     })
   })
 
@@ -873,6 +972,32 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [set([textBlock(blockKey, spanKey, 'foo')], [])],
       state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+    })
+  })
+
+  test('a root `set` of an unset empty value to a pristine block sets the field, then unsets it', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          operation: {
+            type: 'set',
+            path: [],
+            value: [textBlock(blockKey, spanKey, '')],
+          },
+          beforeValue: [],
+          afterValue: [textBlock(blockKey, spanKey, '')],
+          patches: [set([textBlock(blockKey, spanKey, '')], [])],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [set([textBlock(blockKey, spanKey, '')], []), unset([])],
+      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
     })
   })
 })

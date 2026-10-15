@@ -74,6 +74,108 @@ describe('event.operation', () => {
     })
   })
 
+  test('Scenario: Inserting a text block at the end of a span emits no empty `remove.text`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: fooBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+        },
+      ],
+    })
+    const fooSpanPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+      },
+    })
+    const operations = collectOperations(editor)
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        _key: barBlockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(operations).toEqual([
+        {
+          type: 'set',
+          path: [{_key: fooBlockKey}, 'markDefs'],
+          value: [],
+          inverse: {
+            type: 'set',
+            path: [{_key: fooBlockKey}, 'markDefs'],
+            value: [],
+          },
+        },
+        {
+          type: 'insert',
+          path: fooSpanPath,
+          node: {_type: 'span', _key: 'k6', text: '', marks: []},
+          position: 'after',
+          inverse: {
+            type: 'unset',
+            path: [{_key: fooBlockKey}, 'children', {_key: 'k6'}],
+          },
+        },
+        {
+          type: 'insert',
+          path: fooSpanPath,
+          node: {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+          position: 'after',
+          inverse: {
+            type: 'unset',
+            path: [{_key: fooBlockKey}, 'children', {_key: barSpanKey}],
+          },
+        },
+        {
+          type: 'insert.text',
+          path: fooSpanPath,
+          offset: 3,
+          text: 'bar',
+        },
+        {
+          type: 'unset',
+          path: [{_key: fooBlockKey}, 'children', {_key: barSpanKey}],
+          inverse: {
+            type: 'insert',
+            path: fooSpanPath,
+            node: {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+            position: 'after',
+          },
+        },
+        {
+          type: 'unset',
+          path: [{_key: fooBlockKey}, 'children', {_key: 'k6'}],
+          inverse: {
+            type: 'insert',
+            path: fooSpanPath,
+            node: {_type: 'span', _key: 'k6', text: '', marks: []},
+            position: 'after',
+          },
+        },
+      ])
+    })
+  })
+
   test('Scenario: Operations from value sync are observed alongside patches', async () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)

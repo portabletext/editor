@@ -144,14 +144,14 @@ const commands: CommandMatch[] = [
     },
   },
   {
-    key: 'code-block',
+    key: 'code',
     label: 'Code Block',
     description: 'Formatted code snippet',
     icon: <CodeIcon className="size-4" />,
     keywords: ['code', 'code block', 'pre', 'snippet'],
     action: {
       type: 'insert.block',
-      block: {_type: 'code-block'},
+      block: {_type: 'code'},
     },
   },
   {

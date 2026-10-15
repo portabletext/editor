@@ -10,6 +10,7 @@ import {resolveRangeAffinities} from '../engine/range/resolve-range-affinities'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {applySelect} from './apply-selection'
 
 /**
  * Split a node at the given path and position using only patch-compliant
@@ -104,7 +105,7 @@ export function applySplitNode(
     }
   }
 
-  // Pre-transform editor.snapshot.context.selection
+  let splitSelection = editor.snapshot.context.selection
   if (editor.snapshot.context.selection) {
     const anchor = transformPointForSplit(
       editor.snapshot.context.selection.anchor,
@@ -123,7 +124,7 @@ export function applySplitNode(
       'forward',
     )
     if (anchor && focus) {
-      editor.snapshot.context.selection = {
+      splitSelection = {
         anchor,
         focus,
         backward: isBackwardRange({anchor, focus}, editor.snapshot.context),
@@ -140,22 +141,20 @@ export function applySplitNode(
   editor.pointRefs.clear()
   editor.rangeRefs.clear()
 
-  // Save the pre-transformed selection so decomposed operations don't
-  // double-transform it
-  const savedSelection = editor.snapshot.context.selection
-
   try {
     withoutNormalizing(editor, () => {
       if (isSpan({schema: editor.snapshot.context.schema}, node)) {
         const {text: _text, ...properties} = node
         const afterText = node.text.slice(position)
         const newNode = {...properties, _key: newKey, text: afterText} as Node
-        editor.apply({
-          type: 'remove.text',
-          path,
-          offset: position,
-          text: afterText,
-        })
+        if (afterText.length > 0) {
+          editor.apply({
+            type: 'remove.text',
+            path,
+            offset: position,
+            text: afterText,
+          })
+        }
         editor.apply({
           type: 'insert',
           path,
@@ -187,10 +186,6 @@ export function applySplitNode(
       }
     })
   } finally {
-    // Restore pre-transformed selection (decomposed ops may have
-    // double-transformed it)
-    editor.snapshot.context.selection = savedSelection
-
     // Restore all refs
     for (const ref of pathRefs) {
       editor.pathRefs.add(ref)
@@ -201,6 +196,12 @@ export function applySplitNode(
     for (const ref of rangeRefs) {
       editor.rangeRefs.add(ref)
     }
+  }
+
+  if (splitSelection) {
+    const decoratorState = editor.snapshot.decoratorState
+    applySelect(editor, splitSelection)
+    editor.snapshot.decoratorState = decoratorState
   }
 }
 
