@@ -7,7 +7,6 @@ import {
 } from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
 import {getNodes} from '../../../traversal/get-nodes'
-import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
@@ -172,9 +171,12 @@ const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   // be because accepting an IME suggestion when at the start of a block (no
   // preceding \uFEFF) removes one or more DOM elements that `toEditorSelection`
   // depends on.
+  //
+  // Android needs it too: without a text node in an empty leaf, the IME has to
+  // create one to compose into, and no render can preserve a node it created.
   return (
     <span {...attributes}>
-      {!IS_ANDROID || !isLineBreak ? '\uFEFF' : null}
+      {'\uFEFF'}
       {isLineBreak ? <br /> : null}
     </span>
   )

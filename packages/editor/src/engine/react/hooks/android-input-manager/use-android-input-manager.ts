@@ -1,4 +1,4 @@
-import {useState, type RefObject} from 'react'
+import {useEffect, useState, type RefObject} from 'react'
 import type {EditorActor} from '../../../../editor/editor-machine'
 import {IS_ANDROID} from '../../../dom/utils/environment'
 import {useEngineStatic} from '../use-engine-static'
@@ -50,6 +50,10 @@ export const useAndroidInputManager = !IS_ANDROID
         inputManager.handleDomMutations,
         MUTATION_OBSERVER_CONFIG,
       )
+
+      // oxlint-disable-next-line react-hooks/rules-of-hooks -- engine's platform-conditional hook pattern (Android-only)
+      useEffect(() => inputManager.teardown, [inputManager])
+
       editor.scheduleFlush = inputManager.scheduleFlush
       if (isMounted) {
         inputManager.flush()
