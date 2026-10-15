@@ -24,7 +24,7 @@ export const createEditor = (): Editor => {
     operationListeners: {before: [], after: []},
     marks: null,
     dirtyPaths: [],
-    dirtyPathKeys: new Set(),
+    dirtyPathKeys: new Map(),
     flushing: false,
     normalizing: true,
     pathRefs: new Set(),

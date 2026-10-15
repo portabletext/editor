@@ -1,8 +1,13 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {getDirtyPaths} from '../../paths/get-dirty-paths'
+import {
+  toKeyedPatchPath,
+  type KeyCountCache,
+} from '../../internal-utils/operation-to-patches'
+import {getDirtyPaths, getRemovalAdjacency} from '../../paths/get-dirty-paths'
 import {getSibling} from '../../traversal/get-sibling'
 import {getSpan} from '../../traversal/get-span'
 import {normalize} from '../editor/normalize'
+import type {DirtyPath} from '../interfaces/dirty-path-entry'
 import type {Editor} from '../interfaces/editor'
 import {PathRef} from '../interfaces/path-ref'
 import {PointRef} from '../interfaces/point-ref'
@@ -11,6 +16,7 @@ import {pathEquals} from '../path/path-equals'
 import {transformRangeRef} from '../range-ref/transform-range-ref'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import type {WithEditorFirstArg} from '../utils/types'
+import {hasRemoteFrame, isInNormalization} from './apply-context'
 import {applyOperation} from './apply-operation'
 import {createOperationEvent, emitOperationEvent} from './operation-channel'
 import {updateDirtyPaths} from './update-dirty-paths'
@@ -38,12 +44,36 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     transformRangeRef(ref, op, editor.snapshot.context)
   }
 
+  const removalAdjacency = getRemovalAdjacency(editor.snapshot, op)
+
   // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op)
 
-  updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
+  const dirtyPaths = getDirtyPaths(editor.snapshot.context, op)
+
+  if (removalAdjacency) {
+    dirtyPaths.push(removalAdjacency)
+  }
+
+  const keyCounts: KeyCountCache = new Map()
+
+  updateDirtyPaths(
+    editor,
+    dirtyPaths.map((dirtyPath) =>
+      resolveIndexedDirtyPath(
+        editor.snapshot.context.value,
+        keyCounts,
+        dirtyPath,
+      ),
+    ),
+    hasRemoteFrame(editor.applyContext)
+      ? 'remote'
+      : isInNormalization(editor.applyContext)
+        ? 'normalization'
+        : 'local',
+  )
 
   editor.operations.push(op)
   normalize(editor, {
@@ -146,5 +176,31 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     // Emitted last so that, when normalization fixes re-enter `apply`, a fix
     // operation's `after` listeners run before the triggering operation's.
     emitOperationEvent(editor.operationListeners.after, operationEvent)
+  }
+}
+
+function resolveIndexedDirtyPath(
+  value: unknown,
+  keyCounts: KeyCountCache,
+  dirtyPath: DirtyPath,
+): DirtyPath {
+  if (dirtyPath.kind === 'adjacency') {
+    return {
+      ...dirtyPath,
+      path: toKeyedPatchPath(value, dirtyPath.path, keyCounts),
+      adjacency: {
+        previous: toKeyedPatchPath(
+          value,
+          dirtyPath.adjacency.previous,
+          keyCounts,
+        ),
+        next: toKeyedPatchPath(value, dirtyPath.adjacency.next, keyCounts),
+      },
+    }
+  }
+
+  return {
+    ...dirtyPath,
+    path: toKeyedPatchPath(value, dirtyPath.path, keyCounts),
   }
 }

@@ -1,5 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import type {DirtyPath} from '../engine/interfaces/dirty-path-entry'
 import type {Node} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
@@ -10,9 +11,12 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
+import type {KeyedSegment} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getChildFieldName} from './get-child-field-name'
+import {getChildFieldName, resolveNodeChildren} from './get-child-field-name'
 import {nodeSegment} from './node-segment'
+import {serializePath} from './serialize-path'
 
 /**
  * Recursively collect descendant paths using numeric indices.
@@ -31,7 +35,7 @@ function collectDescendantPaths(
   },
   node: Node,
   parentPath: Path,
-  paths: Array<Path>,
+  paths: Array<DirtyPath>,
   parent?: RegisteredContainer,
 ): void {
   // Text blocks always use 'children'
@@ -39,7 +43,7 @@ function collectDescendantPaths(
     const children = node.children
     if (Array.isArray(children)) {
       for (let i = 0; i < children.length; i++) {
-        paths.push([...parentPath, 'children', i])
+        paths.push({path: [...parentPath, 'children', i], kind: 'descendant'})
       }
     }
     return
@@ -72,7 +76,7 @@ function collectDescendantPaths(
     for (let i = 0; i < fieldValue.length; i++) {
       const child = fieldValue[i] as Node
       const childPath: Path = [...parentPath, arrayField.name, i]
-      paths.push(childPath)
+      paths.push({path: childPath, kind: 'descendant'})
       collectDescendantPaths(context, child, childPath, paths, resolved)
     }
   }
@@ -88,17 +92,17 @@ export function getDirtyPaths(
     value: Array<Node>
   },
   op: EngineOperation,
-): Array<Path> {
+): Array<DirtyPath> {
   switch (op.type) {
     case 'insert.text':
     case 'remove.text': {
-      return pathLevels(op.path)
+      return nodeLevels(op.path)
     }
 
     case 'set': {
       // Root-level value replacement: dirty all new children
       if (op.path.length === 0) {
-        const levels: Array<Path> = [[]]
+        const levels: Array<DirtyPath> = [{path: [], kind: 'node'}]
         if (Array.isArray(op.value)) {
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
@@ -107,7 +111,7 @@ export function getDirtyPaths(
             }
             const childNode = child as Node
             const childPath: Path = [nodeSegment(childNode, i)]
-            levels.push(childPath)
+            levels.push({path: childPath, kind: 'descendant'})
             // Seed the walker with the child's own registration so it
             // can recurse into the child's container fields. At root,
             // a child is registered globally if at all.
@@ -130,7 +134,9 @@ export function getDirtyPaths(
 
       // Full node replacement: path ends at a keyed segment
       if (isKeyedSegment(propertyName)) {
-        const levels = pathLevels(op.path)
+        const levels = nodeLevels(op.path, {
+          sidecarOwner: isSidecarElementPath(context, op.path),
+        })
         // Dirty descendants of the new value
         if (
           op.value !== null &&
@@ -169,7 +175,9 @@ export function getDirtyPaths(
         }
       }
 
-      const levels = pathLevels(dirtyPath)
+      const levels = nodeLevels(dirtyPath, {
+        sidecarOwner: isSidecarElementPath(context, dirtyPath),
+      })
 
       // When a child array field is replaced, dirty the new children
       if (Array.isArray(op.value) && typeof propertyName === 'string') {
@@ -200,7 +208,7 @@ export function getDirtyPaths(
               propertyName,
               nodeSegment(childNode, i),
             ]
-            levels.push(childPath)
+            levels.push({path: childPath, kind: 'descendant'})
             collectDescendantPaths(context, childNode, childPath, levels, seed)
           }
         }
@@ -212,9 +220,16 @@ export function getDirtyPaths(
     case 'unset': {
       const lastSegment = op.path[op.path.length - 1]
 
-      if (isKeyedSegment(lastSegment)) {
-        const ancestors = pathLevels(op.path).slice(0, -1)
-        return [...ancestors]
+      if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
+        const ownerKind = isSidecarElementPath(context, op.path)
+          ? 'node'
+          : 'ancestor'
+        const ancestorLevels = pathLevels(op.path).slice(0, -1)
+
+        return ancestorLevels.map((path, index) => ({
+          path,
+          kind: index === ancestorLevels.length - 1 ? ownerKind : 'ancestor',
+        }))
       }
 
       const nodePath = op.path.slice(0, -1)
@@ -264,12 +279,14 @@ export function getDirtyPaths(
           )
 
           if (index !== -1) {
-            return pathLevels([...nodePath.slice(0, -1), index])
+            return nodeLevels([...nodePath.slice(0, -1), index])
           }
         }
       }
 
-      return pathLevels(nodePath)
+      return nodeLevels(nodePath, {
+        sidecarOwner: isSidecarElementPath(context, nodePath),
+      })
     }
 
     case 'insert': {
@@ -278,7 +295,30 @@ export function getDirtyPaths(
       // The operation path is the reference sibling (for position-based
       // inserts), not the inserted node's final location. Dirty the
       // ancestors of the reference path AND the inserted node's own path.
-      const levels = pathLevels(path)
+      const referenceSegment = path[path.length - 1]
+      const referenceKind =
+        typeof referenceSegment === 'number'
+          ? op.position === 'before' && referenceSegment >= 0
+            ? 'node'
+            : 'neighbour'
+          : isKeyedSegment(referenceSegment)
+            ? 'neighbour'
+            : 'ancestor'
+      const referenceLevels = pathLevels(path)
+      const ownerIndex = isSidecarElementPath(context, path)
+        ? referenceLevels.length - 2
+        : -1
+      const levels: Array<DirtyPath> = referenceLevels.map(
+        (levelPath, index) => ({
+          path: levelPath,
+          kind:
+            index === referenceLevels.length - 1
+              ? referenceKind
+              : index === ownerIndex
+                ? 'node'
+                : 'ancestor',
+        }),
+      )
 
       const nodePath = [...path]
       for (let i = nodePath.length - 1; i >= 0; i--) {
@@ -287,7 +327,7 @@ export function getDirtyPaths(
           break
         }
       }
-      levels.push(nodePath)
+      levels.push({path: nodePath, kind: 'node'})
 
       if (isSpan(context, node)) {
         return levels
@@ -321,4 +361,126 @@ export function getDirtyPaths(
       return []
     }
   }
+}
+
+/**
+ * Get the dirty path recording which siblings became adjacent when an
+ * `unset` removes a node from its parent's child array. Reads the tree
+ * before the operation is applied: afterwards the removed node's position
+ * is gone. The sibling paths address the post-removal tree.
+ */
+export function getRemovalAdjacency(
+  snapshot: TraversalSnapshot,
+  op: EngineOperation,
+): DirtyPath | undefined {
+  if (op.type !== 'unset' || op.path.length === 0) {
+    return undefined
+  }
+
+  const removedSegment = op.path[op.path.length - 1]
+
+  if (!isKeyedSegment(removedSegment) && typeof removedSegment !== 'number') {
+    return undefined
+  }
+
+  const siblingPrefix = op.path.slice(0, -1)
+  const removedParentPath = parentPath(op.path)
+  const childArray = resolveNodeChildren(
+    snapshot.context,
+    removedParentPath,
+  )?.nodeChildren
+
+  if (!childArray) {
+    return undefined
+  }
+
+  const fieldSegment = siblingPrefix[siblingPrefix.length - 1]
+
+  if (
+    typeof fieldSegment === 'string' &&
+    fieldSegment !== childArray.fieldName
+  ) {
+    return undefined
+  }
+
+  const siblings = childArray.children
+  const removedIndex = isKeyedSegment(removedSegment)
+    ? resolveSiblingIndex(
+        snapshot.blockIndexMap,
+        op.path,
+        removedSegment,
+        siblings,
+      )
+    : removedSegment
+  const previous = removedIndex > 0 ? siblings[removedIndex - 1] : undefined
+  const next = removedIndex >= 0 ? siblings[removedIndex + 1] : undefined
+
+  if (!previous || !next) {
+    return undefined
+  }
+
+  return {
+    path: removedParentPath,
+    kind: 'adjacency',
+    adjacency: {
+      previous: [...siblingPrefix, nodeSegment(previous, removedIndex - 1)],
+      next: [...siblingPrefix, nodeSegment(next, removedIndex)],
+    },
+  }
+}
+
+function resolveSiblingIndex(
+  blockIndexMap: ReadonlyMap<string, number>,
+  path: Path,
+  segment: KeyedSegment,
+  siblings: Array<Node>,
+): number {
+  const index = blockIndexMap.get(serializePath(path))
+
+  if (index !== undefined && siblings[index]?._key === segment._key) {
+    return index
+  }
+
+  return siblings.findIndex((sibling) => sibling._key === segment._key)
+}
+
+function nodeLevels(
+  path: Path,
+  {sidecarOwner}: {sidecarOwner: boolean} = {sidecarOwner: false},
+): Array<DirtyPath> {
+  const levels = pathLevels(path)
+  const ownerIndex = sidecarOwner ? levels.length - 2 : -1
+
+  return levels.map((levelPath, index) => ({
+    path: levelPath,
+    kind:
+      index === levels.length - 1 || index === ownerIndex ? 'node' : 'ancestor',
+  }))
+}
+
+function isSidecarElementPath(
+  context: {
+    schema: EditorSchema
+    containers: Containers
+    value: Array<Node>
+  },
+  path: Path,
+): boolean {
+  const lastSegment = path[path.length - 1]
+  const fieldSegment = path[path.length - 2]
+
+  if (
+    (!isKeyedSegment(lastSegment) && typeof lastSegment !== 'number') ||
+    typeof fieldSegment !== 'string'
+  ) {
+    return false
+  }
+
+  const owner = resolveNodeChildren(context, path.slice(0, -2))
+
+  if (!owner) {
+    return false
+  }
+
+  return owner.nodeChildren?.fieldName !== fieldSegment
 }
