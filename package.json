@@ -38,6 +38,7 @@
     "format": "oxfmt . && prettier --cache --write \"**/*.{astro,feature}\"",
     "lint:fix": "oxlint --fix",
     "postinstall": "husky",
+    "racetrack": "pnpm --silent --filter racetrack racetrack",
     "release": "pnpm build --filter=./packages/* && changeset publish",
     "test": "turbo test",
     "test:browser:chromium": "turbo test:browser:chromium",

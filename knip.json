@@ -57,6 +57,19 @@
         "sharp"
       ]
     },
+    "apps/racetrack": {
+      "entry": [
+        "src/cli.ts!",
+        "src/harness/catalogue.ts!",
+        "src/harness/run-feature.ts!",
+        "src/harness/stubs/*.ts!"
+      ],
+      "ignoreDependencies": [
+        "@vitest/browser",
+        "oxc-transform-react",
+        "react-dom"
+      ]
+    },
     "apps/studio": {
       "ignoreDependencies": [
         "@portabletext/block-tools",

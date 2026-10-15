@@ -15,6 +15,7 @@ import {
 } from '../../editor/Editable'
 import {EditorProvider} from '../../editor/editor-provider'
 import type {EditorEmittedEvent} from '../../editor/relay'
+import {useEditor} from '../../editor/use-editor'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
@@ -23,6 +24,34 @@ import type {Context} from './step-context'
 // synced in batches of 10 blocks per task, so a large value on a loaded
 // runner can take over a second.
 const editableTimeout = 5_000
+
+/**
+ * @internal
+ */
+export type TestEditorCreatedListener = (created: {
+  name: 'A' | 'B'
+  editor: Editor
+}) => void
+
+const testEditorCreatedListeners = new Set<TestEditorCreatedListener>()
+
+/**
+ * @internal
+ * Calls `listener` with every editor that `createTestEditor` and
+ * `createTestEditors` create, before the editor starts, so an `editor.on`
+ * subscription made inside `listener` receives the startup events. `name` is
+ * `B` for the second editor of `createTestEditors` and `A` otherwise.
+ * Returns a function that removes the listener.
+ */
+export function onTestEditorCreated(
+  listener: TestEditorCreatedListener,
+): () => void {
+  testEditorCreatedListeners.add(listener)
+
+  return () => {
+    testEditorCreatedListeners.delete(listener)
+  }
+}
 
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
@@ -52,6 +81,7 @@ export async function createTestEditor(
         initialValue: options.initialValue,
       }}
     >
+      <TestEditorCreatedPlugin name="A" />
       <EditorRefPlugin ref={editorRef} />
       <PortableTextEditable {...options.editableProps} />
       {options.children}
@@ -68,6 +98,7 @@ export async function createTestEditor(
               initialValue: newOptions.initialValue,
             }}
           >
+            <TestEditorCreatedPlugin name="A" />
             <EditorRefPlugin ref={editorRef} />
             <PortableTextEditable {...newOptions.editableProps} />
             {newOptions.children}
@@ -81,6 +112,7 @@ export async function createTestEditor(
               initialValue: options.initialValue,
             }}
           >
+            <TestEditorCreatedPlugin name="A" />
             <EditorRefPlugin ref={editorRef} />
             <PortableTextEditable {...options.editableProps} />
             {options.children}
@@ -127,6 +159,7 @@ export async function createTestEditors(
           initialValue: options.initialValue,
         }}
       >
+        <TestEditorCreatedPlugin name="A" />
         <EditorRefPlugin ref={editorRef} />
         <PortableTextEditable
           {...options.editableProps}
@@ -160,6 +193,7 @@ export async function createTestEditors(
           initialValue: options.initialValue,
         }}
       >
+        <TestEditorCreatedPlugin name="B" />
         <EditorRefPlugin ref={editorBRef} />
         <PortableTextEditable
           {...options.editableProps}
@@ -203,4 +237,18 @@ export async function createTestEditors(
     locatorB,
     onEditorBEvent,
   }
+}
+
+function TestEditorCreatedPlugin(props: {name: 'A' | 'B'}) {
+  const editor = useEditor()
+
+  // `EditorProvider` starts the editor in its own effect, which runs after
+  // this child effect.
+  React.useEffect(() => {
+    for (const listener of testEditorCreatedListeners) {
+      listener({name: props.name, editor})
+    }
+  }, [editor, props.name])
+
+  return null
 }
