@@ -1957,6 +1957,1387 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Removing a block and changing the text of another keeps the caret in a block below the removed one', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [block1, block3, textBlock(block4Key, span4Key, 'quux')],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'quux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Removing a middle block keeps the caret in a block below it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [block1, block3, block4]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Removing a middle block keeps an expanded selection across two blocks below it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block4Key}, 'children', {_key: span4Key}],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block4Key}, 'children', {_key: span4Key}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [block1, block3, block4]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block4Key}, 'children', {_key: span4Key}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Removing a middle block keeps a backward selection inside a block below it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: true,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: true,
+      })
+    })
+
+    editor.send({type: 'update value', value: [block1, block3, block4]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: true,
+      })
+    })
+  })
+
+  test('Scenario: Removing the block holding the caret moves the caret to the start of the document', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block2Key}, 'children', {_key: span2Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block2Key}, 'children', {_key: span2Key}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block2Key}, 'children', {_key: span2Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block2Key}, 'children', {_key: span2Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [block1, block3, block4]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Removing the last block while it holds the caret moves the caret to the start of the document', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [block1, block2]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block2Key,
+          _type: 'block',
+          children: [{_key: span2Key, _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Updating with a `null` block reports an invalid value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const events: Array<EditorEmittedEvent> = []
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'invalid value') {
+              events.push(event)
+            }
+          }}
+        />
+      ),
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1],
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [block1, null] as unknown as Array<typeof block1>,
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'invalid value',
+          resolution: {
+            action: 'Unset invalid item',
+            description: 'Block must be an object, got null',
+            i18n: {
+              action: 'inputs.portable-text.invalid-value.not-an-object.action',
+              description:
+                'inputs.portable-text.invalid-value.not-an-object.description',
+              values: {index: 0},
+            },
+            item: null,
+            patches: [{type: 'unset', path: [0]}],
+          },
+          value: [
+            {
+              _key: block1Key,
+              _type: 'block',
+              children: [
+                {_key: span1Key, _type: 'span', text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            null,
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Removing a middle block keeps local undo in a block below it', async () => {
+    const mutations: Array<MutationEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: block3Key}, 'children', {_key: span3Key}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(mutations.at(-1)?.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block2Key,
+          _type: 'block',
+          children: [{_key: span2Key, _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [block1, textBlock(block3Key, span3Key, 'baz!'), block4],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz!', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Removing a middle block keeps the DOM elements of the blocks below it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    const elementsBefore = Array.from(
+      locator.element().querySelectorAll('[data-pt-block]'),
+    )
+    expect(elementsBefore.map((element) => element.textContent)).toEqual([
+      'foo',
+      'bar',
+      'baz',
+      'qux',
+    ])
+
+    editor.send({type: 'update value', value: [block1, block3, block4]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      const elementsAfter = Array.from(
+        locator.element().querySelectorAll('[data-pt-block]'),
+      )
+      expect(elementsAfter.map((element) => element.textContent)).toEqual([
+        'foo',
+        'baz',
+        'qux',
+      ])
+      expect(elementsAfter[0]).toBe(elementsBefore[0])
+      expect(elementsAfter[1]).toBe(elementsBefore[2])
+      expect(elementsAfter[2]).toBe(elementsBefore[3])
+    })
+  })
+
+  test('Scenario: Changing the key of one block in a same-length update replaces it in place', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const newBlockKey = keyGenerator()
+    const newSpanKey = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const newBlock = textBlock(newBlockKey, newSpanKey, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3],
+    })
+
+    editor.send({type: 'update value', value: [block1, newBlock, block3]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: newBlockKey,
+          _type: 'block',
+          children: [{_key: newSpanKey, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: A shorter update with all-new block keys ends with exactly the new value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const newBlock1Key = keyGenerator()
+    const newSpan1Key = keyGenerator()
+    const newBlock2Key = keyGenerator()
+    const newSpan2Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const newBlock1 = textBlock(newBlock1Key, newSpan1Key, 'qux')
+    const newBlock2 = textBlock(newBlock2Key, newSpan2Key, 'quux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3],
+    })
+
+    editor.send({type: 'update value', value: [newBlock1, newBlock2]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: newBlock1Key,
+          _type: 'block',
+          children: [
+            {_key: newSpan1Key, _type: 'span', text: 'qux', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: newBlock2Key,
+          _type: 'block',
+          children: [
+            {_key: newSpan2Key, _type: 'span', text: 'quux', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Removing two blocks and adding one in their place ends with exactly the new value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const newBlockKey = keyGenerator()
+    const newSpanKey = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+    const newBlock = textBlock(newBlockKey, newSpanKey, 'quux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({type: 'update value', value: [block1, newBlock, block4]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: newBlockKey,
+          _type: 'block',
+          children: [
+            {_key: newSpanKey, _type: 'span', text: 'quux', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Removing a block and reordering two others in one update emits no patches', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.on('patch', (event) => {
+      patches.push(event.patch)
+    })
+    editor.on('mutation', (event) => {
+      mutations.push(event)
+    })
+
+    editor.send({type: 'update value', value: [block1, block4, block3]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block4Key,
+          _type: 'block',
+          children: [{_key: span4Key, _type: 'span', text: 'qux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(mutations).toEqual([
+        {
+          type: 'mutation',
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              path: [{_key: block1Key}, 'children', {_key: span1Key}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+              origin: 'local',
+            },
+          ],
+          value: [
+            {
+              _key: block1Key,
+              _type: 'block',
+              children: [
+                {_key: span1Key, _type: 'span', text: 'foo!', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _key: block4Key,
+              _type: 'block',
+              children: [
+                {_key: span4Key, _type: 'span', text: 'qux', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _key: block3Key,
+              _type: 'block',
+              children: [
+                {_key: span3Key, _type: 'span', text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(patches).toEqual([
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: block1Key}, 'children', {_key: span1Key}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+        origin: 'local',
+      },
+    ])
+  })
+
+  test('Scenario: Removing several non-adjacent blocks at once keeps the caret in a block below them', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block5Key = keyGenerator()
+    const span5Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+    const block5 = textBlock(block5Key, span5Key, 'quux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4, block5],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block5Key}, 'children', {_key: span5Key}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: block5Key}, 'children', {_key: span5Key}],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block5Key}, 'children', {_key: span5Key}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: block5Key}, 'children', {_key: span5Key}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [block1, block3, block5]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block5Key,
+          _type: 'block',
+          children: [{_key: span5Key, _type: 'span', text: 'quux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block5Key}, 'children', {_key: span5Key}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: block5Key}, 'children', {_key: span5Key}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: A shorter update with a duplicate block key gives the second occurrence a new key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const block5Key = keyGenerator()
+    const span5Key = keyGenerator()
+    const newBlockKey = keyGenerator()
+    const newSpan1Key = keyGenerator()
+    const newSpan2Key = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+    const block5 = textBlock(block5Key, span5Key, 'quux')
+    const newBlock = textBlock(newBlockKey, newSpan1Key, 'bar')
+    const duplicateKeyBlock = textBlock(newBlockKey, newSpan2Key, 'baz')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4, block5],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [block1, newBlock, duplicateKeyBlock, block5],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: newBlockKey,
+          _type: 'block',
+          children: [
+            {_key: newSpan1Key, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'k15',
+          _type: 'block',
+          children: [
+            {_key: newSpan2Key, _type: 'span', text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block5Key,
+          _type: 'block',
+          children: [{_key: span5Key, _type: 'span', text: 'quux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test("Scenario: A shorter update that reuses a dropped block's key on another block ends with exactly the new value", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+    const block4Key = keyGenerator()
+    const span4Key = keyGenerator()
+    const newSpanKey = keyGenerator()
+    const block1 = textBlock(block1Key, span1Key, 'foo')
+    const block2 = textBlock(block2Key, span2Key, 'bar')
+    const block3 = textBlock(block3Key, span3Key, 'baz')
+    const block4 = textBlock(block4Key, span4Key, 'qux')
+    const reusedKeyBlock = textBlock(block2Key, newSpanKey, 'quux')
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3, block4],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [block1, block3, reusedKeyBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: block1Key,
+          _type: 'block',
+          children: [{_key: span1Key, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block3Key,
+          _type: 'block',
+          children: [{_key: span3Key, _type: 'span', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: block2Key,
+          _type: 'block',
+          children: [
+            {_key: newSpanKey, _type: 'span', text: 'quux', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: block1Key}, 'children', {_key: span1Key}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
   test("Scenario: Updating an inline object's `text` field", async () => {
     const schemaDefinition = defineSchema({
       inlineObjects: [
@@ -2728,3 +4109,13 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     })
   })
 })
+
+function textBlock(_key: string, spanKey: string, text: string) {
+  return {
+    _key,
+    _type: 'block',
+    children: [{_key: spanKey, _type: 'span', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
