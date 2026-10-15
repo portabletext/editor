@@ -39,6 +39,13 @@ const RESOLVE_DELAY = 25
 // Time with no user interaction before the current user action is considered as done.
 const FLUSH_DELAY = 200
 
+// Time with no composition input after which a composition that never ended is
+// treated as stale. Long enough that pausing mid-word does not cut a live
+// composition short.
+const COMPOSITION_IDLE_TIMEOUT = 5000
+
+const COMPOSITION_RECHECK_DELAY = 50
+
 // Replace with `const debug = console.log` to debug
 const debug = (..._: unknown[]) => {}
 
@@ -85,6 +92,8 @@ export function createAndroidInputManager({
   let compositionEndTimeoutId: ReturnType<typeof setTimeout> | null = null
   let flushTimeoutId: ReturnType<typeof setTimeout> | null = null
   let actionTimeoutId: ReturnType<typeof setTimeout> | null = null
+  let lastCompositionActivity = 0
+  let compositionCleared = false
 
   let idCounter = 0
   let insertPositionHint: StringDiff | null | false = false
@@ -133,6 +142,35 @@ export function createAndroidInputManager({
     action.run()
   }
 
+  // `compositionend` is not fired reliably in every browser. A composition
+  // that has gone quiet, or that has lost focus, no longer holds flushes back,
+  // so the typed text is never stranded outside the value.
+  const isCompositionLive = () => {
+    if (!editor.composing || compositionCleared) {
+      return false
+    }
+
+    const editable = editor.domElement
+
+    if (editable) {
+      const {activeElement} = DOMEditor.findDocumentOrShadowRoot(editor)
+
+      if (activeElement !== editable && !editable.contains(activeElement)) {
+        return false
+      }
+    }
+
+    return Date.now() - lastCompositionActivity < COMPOSITION_IDLE_TIMEOUT
+  }
+
+  // Applying a diff to an empty span re-renders its leaf from a zero-width
+  // string to a text string, which replaces the text node the IME composes in
+  // and cancels the composition.
+  const hasPendingDiffsInEmptyLeaf = () =>
+    editor.pendingDiffs.some(
+      ({path}) => getSpan(editor.snapshot, path)?.node.text === '',
+    )
+
   const flush = () => {
     if (flushTimeoutId) {
       clearTimeout(flushTimeoutId)
@@ -142,6 +180,12 @@ export function createAndroidInputManager({
     if (actionTimeoutId) {
       clearTimeout(actionTimeoutId)
       actionTimeoutId = null
+    }
+
+    if (isCompositionLive() && hasPendingDiffsInEmptyLeaf()) {
+      debug('deferring flush during composition in empty leaf')
+      flushTimeoutId = setTimeout(flush, COMPOSITION_RECHECK_DELAY)
+      return
     }
 
     if (!hasPendingDiffs() && !hasPendingAction()) {
@@ -247,9 +291,26 @@ export function createAndroidInputManager({
       clearTimeout(compositionEndTimeoutId)
     }
 
+    if (hasPendingDiffsInEmptyLeaf() && !flushing) {
+      // IMEs that compose one syllable at a time start the next composition
+      // right after this event. Applying the deferred diffs now, instead of
+      // after `RESOLVE_DELAY`, lets React commit the re-render right after
+      // this event, before the next composition event arrives.
+      editor.composing = false
+      flush()
+      return
+    }
+
     compositionEndTimeoutId = setTimeout(() => {
       editor.composing = false
       flush()
+
+      if (compositionCleared) {
+        // A cancelled composition can take the empty leaf's text node with it.
+        // A forced render lets `RestoreDOM` put the leaf back before the next
+        // composition starts.
+        editor.forceRender?.()
+      }
     }, RESOLVE_DELAY)
   }
 
@@ -259,6 +320,8 @@ export function createAndroidInputManager({
     debug('composition start')
 
     editor.composing = true
+    lastCompositionActivity = Date.now()
+    compositionCleared = false
 
     if (compositionEndTimeoutId) {
       clearTimeout(compositionEndTimeoutId)
@@ -337,6 +400,31 @@ export function createAndroidInputManager({
     }
 
     const {inputType: type} = event
+
+    if (type === 'insertCompositionText' || type === 'deleteCompositionText') {
+      lastCompositionActivity = Date.now()
+
+      if (event.data) {
+        compositionCleared = false
+      } else {
+        compositionCleared = true
+
+        // The IME discarded its composition. Diffs deferred in empty leaves
+        // never reached the value, so the value is already right: applying and
+        // then deleting them would churn the DOM mid-composition, which can
+        // make Android close the keyboard.
+        if (
+          editor.pendingDiffs.length > 0 &&
+          editor.pendingDiffs.every(
+            ({path}) => getSpan(editor.snapshot, path)?.node.text === '',
+          )
+        ) {
+          editor.pendingDiffs = []
+          editor.pendingSelection = null
+        }
+      }
+    }
+
     let targetRange: Range | null = null
     const data: DataTransfer | string | undefined =
       (event as any).dataTransfer || event.data || undefined
