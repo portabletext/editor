@@ -1,3 +1,4 @@
+import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -12,7 +13,7 @@ import type {EditorEmittedEvent} from '../src/editor/relay'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
-import {getBlockStartPoint} from '../src/utils'
+import {getBlockStartPoint, isEqualSelectionPoints} from '../src/utils'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
@@ -954,4 +955,923 @@ describe('event.select', () => {
       })
     })
   })
+
+  describe('Shift+ArrowLeft/Right', () => {
+    test('Scenario: Extending forward and back across empty blocks moves the focus one block per press', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockA = keyGenerator()
+      const spanA = keyGenerator()
+      const blockB = keyGenerator()
+      const spanB = keyGenerator()
+      const blockC = keyGenerator()
+      const spanC = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          emptyBlock(blockA, spanA),
+          emptyBlock(blockB, spanB),
+          emptyBlock(blockC, spanC),
+        ],
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockC}, 'children', {_key: spanC}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Extending backward and forward across empty blocks moves the focus one block per press', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockA = keyGenerator()
+      const spanA = keyGenerator()
+      const blockB = keyGenerator()
+      const spanB = keyGenerator()
+      const blockC = keyGenerator()
+      const spanC = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          emptyBlock(blockA, spanA),
+          emptyBlock(blockB, spanB),
+          emptyBlock(blockC, spanC),
+        ],
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockC}, 'children', {_key: spanC}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockC}, 'children', {_key: spanC}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockC}, 'children', {_key: spanC}], offset: 0},
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Extending inside text moves the focus one character per press', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const block = keyGenerator()
+      const span = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [textBlock(block, span, 'foo')],
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 2},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Extending over a multi-code-point grapheme moves the focus past it in one press', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const block = keyGenerator()
+      const span = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [textBlock(block, span, 'foo👨‍👩‍👧bar')],
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 11},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 3},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 2},
+          backward: true,
+        })
+      })
+    })
+
+    test('Scenario: Extending forward over an inline object stops on the inline object first', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const block = keyGenerator()
+      const fooSpan = keyGenerator()
+      const stockTicker = keyGenerator()
+      const barSpan = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _key: block,
+            _type: 'block',
+            children: [
+              {_key: fooSpan, _type: 'span', marks: [], text: 'foo'},
+              {_key: stockTicker, _type: 'stock-ticker'},
+              {_key: barSpan, _type: 'span', marks: [], text: 'bar'},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        schemaDefinition: defineSchema({
+          inlineObjects: [{name: 'stock-ticker'}],
+        }),
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: block}, 'children', {_key: fooSpan}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: block}, 'children', {_key: fooSpan}],
+            offset: 3,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: block}, 'children', {_key: fooSpan}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: block}, 'children', {_key: fooSpan}],
+            offset: 3,
+          },
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: block}, 'children', {_key: fooSpan}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: block}, 'children', {_key: stockTicker}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: block}, 'children', {_key: fooSpan}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: block}, 'children', {_key: barSpan}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Extending forward from a block object moves the focus to the next block start', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const image = keyGenerator()
+      const block = keyGenerator()
+      const span = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {_key: image, _type: 'image'},
+          textBlock(block, span, 'foo'),
+        ],
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: image}], offset: 0},
+          focus: {path: [{_key: image}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: image}], offset: 0},
+          focus: {path: [{_key: image}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: image}], offset: 0},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 0},
+          backward: false,
+        })
+      })
+    })
+
+    test('Scenario: Extending backward at the document start leaves the selection unchanged', async () => {
+      const events: Array<EditorEmittedEvent> = []
+      const keyGenerator = createTestKeyGenerator()
+      const blockA = keyGenerator()
+      const spanA = keyGenerator()
+      const blockB = keyGenerator()
+      const spanB = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [emptyBlock(blockA, spanA), emptyBlock(blockB, spanB)],
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              events.push(event)
+            }}
+          />
+        ),
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockA}, 'children', {_key: spanA}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+          backward: false,
+        })
+      })
+
+      const eventsBeforeBoundaryPress = events.length
+      const arrowKeydowns: Array<{key: string; defaultPrevented: boolean}> = []
+
+      function recordArrowKeydown(event: KeyboardEvent) {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          arrowKeydowns.push({
+            key: event.key,
+            defaultPrevented: event.defaultPrevented,
+          })
+        }
+      }
+
+      document.addEventListener('keydown', recordArrowKeydown)
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+
+      document.removeEventListener('keydown', recordArrowKeydown)
+
+      expect(arrowKeydowns).toEqual([
+        {key: 'ArrowLeft', defaultPrevented: true},
+        {key: 'ArrowRight', defaultPrevented: true},
+      ])
+
+      await vi.waitFor(() => {
+        expect(events.slice(eventsBeforeBoundaryPress)).toEqual([
+          {
+            type: 'selection',
+            selection: {
+              anchor: {
+                path: [{_key: blockA}, 'children', {_key: spanA}],
+                offset: 0,
+              },
+              focus: {
+                path: [{_key: blockB}, 'children', {_key: spanB}],
+                offset: 0,
+              },
+              backward: false,
+            },
+          },
+        ])
+      })
+    })
+
+    test('Scenario: Extending forward at the document end leaves the selection unchanged', async () => {
+      const events: Array<EditorEmittedEvent> = []
+      const keyGenerator = createTestKeyGenerator()
+      const blockA = keyGenerator()
+      const spanA = keyGenerator()
+      const blockB = keyGenerator()
+      const spanB = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [emptyBlock(blockA, spanA), emptyBlock(blockB, spanB)],
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              events.push(event)
+            }}
+          />
+        ),
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockB}, 'children', {_key: spanB}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockB}, 'children', {_key: spanB}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: false,
+        })
+      })
+
+      const eventsBeforeBoundaryPress = events.length
+      const arrowKeydowns: Array<{key: string; defaultPrevented: boolean}> = []
+
+      function recordArrowKeydown(event: KeyboardEvent) {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          arrowKeydowns.push({
+            key: event.key,
+            defaultPrevented: event.defaultPrevented,
+          })
+        }
+      }
+
+      document.addEventListener('keydown', recordArrowKeydown)
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+
+      document.removeEventListener('keydown', recordArrowKeydown)
+
+      expect(arrowKeydowns).toEqual([
+        {key: 'ArrowRight', defaultPrevented: true},
+        {key: 'ArrowLeft', defaultPrevented: true},
+      ])
+
+      await vi.waitFor(() => {
+        expect(events.slice(eventsBeforeBoundaryPress)).toEqual([
+          {
+            type: 'selection',
+            selection: {
+              anchor: {
+                path: [{_key: blockB}, 'children', {_key: spanB}],
+                offset: 0,
+              },
+              focus: {
+                path: [{_key: blockA}, 'children', {_key: spanA}],
+                offset: 0,
+              },
+              backward: true,
+            },
+          },
+        ])
+      })
+    })
+
+    test('Scenario: A `select` Behavior can redirect the extended focus', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockA = keyGenerator()
+      const spanA = keyGenerator()
+      const blockB = keyGenerator()
+      const spanB = keyGenerator()
+      const blockC = keyGenerator()
+      const spanC = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          emptyBlock(blockA, spanA),
+          emptyBlock(blockB, spanB),
+          emptyBlock(blockC, spanC),
+        ],
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                guard: ({snapshot, event}) => {
+                  if (
+                    snapshot.context.selection &&
+                    isEqualSelectionPoints(snapshot.context.selection.anchor, {
+                      path: [{_key: blockC}, 'children', {_key: spanC}],
+                      offset: 0,
+                    }) &&
+                    isEqualSelectionPoints(snapshot.context.selection.focus, {
+                      path: [{_key: blockB}, 'children', {_key: spanB}],
+                      offset: 0,
+                    }) &&
+                    event.at &&
+                    isEqualSelectionPoints(event.at.anchor, {
+                      path: [{_key: blockC}, 'children', {_key: spanC}],
+                      offset: 0,
+                    }) &&
+                    isEqualSelectionPoints(event.at.focus, {
+                      path: [{_key: blockC}, 'children', {_key: spanC}],
+                      offset: 0,
+                    })
+                  ) {
+                    return {anchor: event.at.anchor}
+                  }
+
+                  return false
+                },
+                actions: [
+                  (_, {anchor}) => [
+                    raise({
+                      type: 'select',
+                      at: {
+                        anchor,
+                        focus: {
+                          path: [{_key: blockA}, 'children', {_key: spanA}],
+                          offset: 0,
+                        },
+                      },
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockC}, 'children', {_key: spanC}], offset: 0},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockC}, 'children', {_key: spanC}], offset: 0},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockB}, 'children', {_key: spanB}], offset: 0},
+          backward: true,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockC}, 'children', {_key: spanC}],
+            offset: 0,
+          },
+          focus: {path: [{_key: blockA}, 'children', {_key: spanA}], offset: 0},
+          backward: true,
+        })
+      })
+    })
+
+    test('Scenario: Shift+Arrow with Alt, Ctrl, or Meta is left to the browser', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const block = keyGenerator()
+      const span = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [textBlock(block, span, 'foo bar baz')],
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 5},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 5},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 5},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 5},
+          backward: false,
+        })
+      })
+
+      const arrowKeydowns: Array<{
+        key: string
+        altKey: boolean
+        ctrlKey: boolean
+        metaKey: boolean
+        defaultPrevented: boolean
+      }> = []
+
+      function recordArrowKeydown(event: KeyboardEvent) {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          arrowKeydowns.push({
+            key: event.key,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            defaultPrevented: event.defaultPrevented,
+          })
+        }
+      }
+
+      document.addEventListener('keydown', recordArrowKeydown)
+
+      await userEvent.keyboard('{Shift>}{Alt>}{ArrowLeft}{/Alt}{/Shift}')
+      await userEvent.keyboard('{Shift>}{Alt>}{ArrowRight}{/Alt}{/Shift}')
+      await userEvent.keyboard(
+        '{Shift>}{Control>}{ArrowLeft}{/Control}{/Shift}',
+      )
+      await userEvent.keyboard(
+        '{Shift>}{Control>}{ArrowRight}{/Control}{/Shift}',
+      )
+      await userEvent.keyboard('{Shift>}{Meta>}{ArrowLeft}{/Meta}{/Shift}')
+      await userEvent.keyboard('{Shift>}{Meta>}{ArrowRight}{/Meta}{/Shift}')
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+
+      document.removeEventListener('keydown', recordArrowKeydown)
+
+      expect(arrowKeydowns).toEqual([
+        {
+          key: 'ArrowLeft',
+          altKey: true,
+          ctrlKey: false,
+          metaKey: false,
+          defaultPrevented: false,
+        },
+        {
+          key: 'ArrowRight',
+          altKey: true,
+          ctrlKey: false,
+          metaKey: false,
+          defaultPrevented: false,
+        },
+        {
+          key: 'ArrowLeft',
+          altKey: false,
+          ctrlKey: true,
+          metaKey: false,
+          defaultPrevented: false,
+        },
+        {
+          key: 'ArrowRight',
+          altKey: false,
+          ctrlKey: true,
+          metaKey: false,
+          defaultPrevented: false,
+        },
+        {
+          key: 'ArrowLeft',
+          altKey: false,
+          ctrlKey: false,
+          metaKey: true,
+          defaultPrevented: false,
+        },
+        {
+          key: 'ArrowRight',
+          altKey: false,
+          ctrlKey: false,
+          metaKey: true,
+          defaultPrevented: false,
+        },
+        {
+          key: 'ArrowLeft',
+          altKey: false,
+          ctrlKey: false,
+          metaKey: false,
+          defaultPrevented: true,
+        },
+      ])
+    })
+
+    test('Scenario: Shift+ArrowLeft in right-to-left text moves the focus forward', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const block = keyGenerator()
+      const span = keyGenerator()
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: [textBlock(block, span, 'שלום')],
+      })
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 2},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          backward: false,
+        })
+      })
+
+      await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: [{_key: block}, 'children', {_key: span}], offset: 1},
+          focus: {path: [{_key: block}, 'children', {_key: span}], offset: 0},
+          backward: true,
+        })
+      })
+    })
+  })
 })
+
+function emptyBlock(blockKey: string, spanKey: string) {
+  return textBlock(blockKey, spanKey, '')
+}
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _key: blockKey,
+    _type: 'block',
+    children: [{_key: spanKey, _type: 'span', marks: [], text}],
+    markDefs: [],
+    style: 'normal',
+  }
+}

@@ -1,4 +1,4 @@
-import {toTextspec} from '@portabletext/test'
+import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
@@ -201,6 +201,120 @@ describe('event.keyboard.keydown', () => {
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
         ['B: foo', 'B: new|bar', 'B: baz'].join('\n'),
+      )
+    })
+  })
+
+  test('Scenario: `raise` overwrites a native Shift+ArrowLeft in an empty block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlock = keyGenerator()
+    const fooSpan = keyGenerator()
+    const emptyBlock = keyGenerator()
+    const emptySpan = keyGenerator()
+    const barBlock = keyGenerator()
+    const barSpan = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: fooBlock,
+          children: [{_type: 'span', _key: fooSpan, text: 'foo'}],
+        },
+        {
+          _type: 'block',
+          _key: emptyBlock,
+          children: [{_type: 'span', _key: emptySpan, text: ''}],
+        },
+        {
+          _type: 'block',
+          _key: barBlock,
+          children: [{_type: 'span', _key: barSpan, text: 'bar'}],
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'keyboard.keydown',
+              guard: ({event}) =>
+                event.originEvent.key === 'ArrowLeft' &&
+                event.originEvent.shiftKey,
+              actions: [
+                () => [
+                  raise({
+                    type: 'select',
+                    at: {
+                      anchor: {
+                        path: [{_key: barBlock}, 'children', {_key: barSpan}],
+                        offset: 0,
+                      },
+                      focus: {
+                        path: [{_key: barBlock}, 'children', {_key: barSpan}],
+                        offset: 0,
+                      },
+                    },
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: emptyBlock}, 'children', {_key: emptySpan}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: emptyBlock}, 'children', {_key: emptySpan}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: emptyBlock}, 'children', {_key: emptySpan}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: emptyBlock}, 'children', {_key: emptySpan}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: barBlock}, 'children', {_key: barSpan}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: barBlock}, 'children', {_key: barSpan}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+
+    await userEvent.type(locator, 'new')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: ', 'B: new|bar'].join('\n'),
       )
     })
   })
