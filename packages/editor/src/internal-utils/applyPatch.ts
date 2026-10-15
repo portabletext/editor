@@ -21,9 +21,8 @@ import type {Node} from '../engine/interfaces/node'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
-import {isEqualValues} from './equality'
+import {isUnsavedPlaceholder} from './field-lifecycle-patches'
 import {getValue} from './get-value'
-import {isEqualToEmptyEditor} from './values'
 
 /**
  * Creates a function that can apply a patch onto a PortableTextEditorEngine.
@@ -146,20 +145,7 @@ function insertPatch(
 
   const editorWasEmptyBefore =
     patch.path.length === 1 &&
-    isEqualToEmptyEditor(
-      context.initialValue,
-      editor.snapshot.context.value,
-      context.schema,
-    ) &&
-    (editor.valueUnsetEmitted ||
-      // Mirrors `editorWasEmpty` in `subscriber.patch-generation.ts`: once
-      // this editor's stream has unset the field, a value-equal recording
-      // is not proof of persistence.
-      !isEqualValues(
-        {schema: context.schema},
-        editor.lastSyncedValue,
-        editor.snapshot.context.value,
-      ))
+    isUnsavedPlaceholder(editor, editor.snapshot.context.value, context)
 
   const arrayFieldPath = patch.path.slice(0, -1)
 

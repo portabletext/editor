@@ -29,16 +29,7 @@ export function addFieldLifecyclePatches(
   let valueUnsetEmitted = state.valueUnsetEmitted
   let patches = edit.patches
 
-  const wasPlaceholder =
-    beforeValue.length === 1 &&
-    isEqualToEmptyEditor(initialValue, beforeValue, schema) &&
-    // After this editor emits `unset([])`, its own stream must
-    // re-materialize the field before targeting it again, no matter what
-    // value sync recorded in between: a mirroring host's stale echo of
-    // the cleared state syncs as a genuine write and would otherwise
-    // pass the placeholder off as persisted content.
-    (valueUnsetEmitted ||
-      !isEqualValues({schema}, lastSyncedValue, beforeValue))
+  const wasPlaceholder = isUnsavedPlaceholder(state, beforeValue, context)
 
   const isPlaceholder =
     afterValue.length === 1 &&
@@ -114,4 +105,24 @@ export function addFieldLifecyclePatches(
   }
 
   return {patches, state: {lastSyncedValue, valueUnsetEmitted}}
+}
+
+export function isUnsavedPlaceholder(
+  state: FieldLifecycleState,
+  value: Array<PortableTextBlock>,
+  context: {
+    schema: EditorSchema
+    initialValue: Array<PortableTextBlock> | undefined
+  },
+): boolean {
+  return (
+    isEqualToEmptyEditor(context.initialValue, value, context.schema) &&
+    // After this editor emits `unset([])`, its own stream must
+    // re-materialize the field before targeting it again, no matter what
+    // value sync recorded in between: a mirroring host's stale echo of
+    // the cleared state syncs as a genuine write and would otherwise
+    // pass the placeholder off as persisted content.
+    (state.valueUnsetEmitted ||
+      !isEqualValues({schema: context.schema}, state.lastSyncedValue, value))
+  )
 }
