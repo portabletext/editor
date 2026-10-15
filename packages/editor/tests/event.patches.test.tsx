@@ -4500,7 +4500,6 @@ describe('event.patches', () => {
       ])
       expect(patches).toEqual([
         set('', [{_key: blockKey}, 'children', {_key: spanKey}, 'text']),
-        unset([]),
       ])
     })
   })

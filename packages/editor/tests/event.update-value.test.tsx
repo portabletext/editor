@@ -4458,6 +4458,72 @@ describe('event.update value: mechanically repaired invalid blocks', () => {
     )
   })
 
+  test('Scenario: typing into a lone block repaired on load does not insert it again', async () => {
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'b0'}, 'children'],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', 0],
+          position: 'before',
+          items: [{_key: 'k2', _type: 'span', text: '', marks: []}],
+          origin: 'local',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'f'})
+
+    await vi.waitFor(() => {
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: an acknowledged repair, later genuinely re-emptied, repairs anew with a fresh key', async () => {
     const patches: Array<Patch> = []
     const {editor} = await createTestEditor({
