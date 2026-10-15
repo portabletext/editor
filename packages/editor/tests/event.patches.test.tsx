@@ -2816,6 +2816,86 @@ describe('event.patches', () => {
         ])
       })
     })
+
+    test('Scenario: Removing the last span by index keeps the caret at the end of the previous span', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        initialValue: [
+          {
+            _key: fooBlockKey,
+            _type: 'block',
+            children: [
+              {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+              {_key: barSpanKey, _type: 'span', text: 'bar', marks: ['strong']},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: bazBlockKey,
+            _type: 'block',
+            children: [
+              {_key: bazSpanKey, _type: 'span', text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          backward: false,
+        })
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'unset',
+            origin: 'remote',
+            path: [{_key: fooBlockKey}, 'children', 1],
+          },
+        ],
+        snapshot: undefined,
+      })
+      editor.send({type: 'insert.text', text: 'x'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: foox|\nB: baz',
+        )
+      })
+    })
   })
 
   describe('Feature: diffMatchPatch', () => {

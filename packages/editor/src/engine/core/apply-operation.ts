@@ -11,6 +11,7 @@ import {
   firstSpanIn,
 } from '../../internal-utils/find-nearest-spans'
 import {getValue} from '../../internal-utils/get-value'
+import {toKeyedPatchPath} from '../../internal-utils/operation-to-patches'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {serializePath} from '../../paths/serialize-path'
@@ -343,8 +344,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
             ...editor.snapshot.context.selection,
           }
 
+          // Selection paths are keyed, so key the removed path too. A
+          // numeric segment would neither match the selection in
+          // `transformPoint` nor count as a sibling in `isSiblingPath`.
+          const removedPath = toKeyedPatchPath(
+            editor.snapshot.context.value,
+            path,
+          )
+
           for (const [point, key] of rangePoints(selection)) {
-            const result = transformPoint(point, op)
+            const result = transformPoint(point, {...op, path: removedPath})
 
             if (result != null) {
               selection[key] = result
@@ -354,15 +363,15 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
               // order.
               const {previousSpan, nextSpan} = findNearestSpans(
                 editor.snapshot,
-                path,
+                removedPath,
               )
 
               const preferNext =
                 nextSpan !== undefined &&
                 (previousSpan === undefined ||
-                  (!isSiblingPath(previousSpan.path, path) &&
-                    commonPath(previousSpan.path, path).length <=
-                      commonPath(nextSpan.path, path).length))
+                  (!isSiblingPath(previousSpan.path, removedPath) &&
+                    commonPath(previousSpan.path, removedPath).length <=
+                      commonPath(nextSpan.path, removedPath).length))
 
               if (preferNext) {
                 selection[key] = {path: nextSpan.path, offset: 0}
@@ -372,7 +381,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
                   offset: previousSpan.node.text.length,
                 }
               } else {
-                const ownSpan = firstSpanIn(editor.snapshot, path)
+                const ownSpan = firstSpanIn(editor.snapshot, removedPath)
 
                 if (!ownSpan) {
                   selection = null
