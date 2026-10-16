@@ -179,6 +179,37 @@
       }
     },
     {
+      // The repair rules are pure functions of the node and plain data. Only
+      // these leaf modules are allowed, so nothing reaches the engine, the
+      // editor or React transitively.
+      "files": ["packages/editor/src/repair/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {"name": "react", "message": "Repair rules must not use React."},
+              {
+                "name": "react-dom",
+                "message": "Repair rules must not use React."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!../types/paths",
+                  "!../paths/node-segment",
+                  "!../paths/serialize-path"
+                ],
+                "message": "Repair rules may only import leaf modules outside `src/repair` that don't reach the engine, the editor or React."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["**/*.test-d.ts"],
       "rules": {
         "require-await": "off"
