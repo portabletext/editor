@@ -88,9 +88,9 @@ export type TableDefinition = {
 /**
  * Builds a table definition over role-keyed container definitions. The
  * consumer owns each definition (type name, array field, render, and the
- * cell's `of`); the plugin owns the nesting, grafting `table.of → row.of →
- * cell` itself, because every behavior and the clipboard format depend
- * on the three-level shape. An `of` on the table or row
+ * cell's `of`); the plugin owns the nesting, grafting
+ * `table.of → row.of → cell` itself, because every behavior and the
+ * clipboard format depend on the three-level shape. An `of` on the table or row
  * definition draws a warning instead of being honored.
  *
  * No argument yields the canonical definition: `table`/`row`/`cell` type
