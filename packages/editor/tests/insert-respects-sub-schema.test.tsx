@@ -457,6 +457,7 @@ describe('insert respects sub-schema', () => {
   })
 
   test('Scenario: `block.set` on a block object inside a container filters undeclared fields against the path sub-schema', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const embedKey = keyGenerator()
@@ -505,6 +506,10 @@ describe('insert respects sub-schema', () => {
         },
       ])
     })
+    expect(consoleError.mock.calls).toEqual([
+      ['Unable to find Block Object "embed-card" in Schema'],
+    ])
+    consoleError.mockRestore()
   })
 
   test('Scenario: `decorator.add` of an allowed decorator inside a container applies the mark', async () => {
@@ -747,6 +752,7 @@ describe('insert respects sub-schema', () => {
   })
 
   test('Scenario: `annotation.add` of a disallowed annotation inside a container does not apply the mark', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()
@@ -832,6 +838,14 @@ describe('insert respects sub-schema', () => {
         },
       ])
     })
+    expect(consoleError.mock.calls).toEqual([
+      [
+        new Error(
+          'Performing "annotation.add" failed due to: Failed to parse annotation {"_key":"k3","name":"comment","value":{"text":"a comment"}}',
+        ),
+      ],
+    ])
+    consoleError.mockRestore()
   })
 
   test('Scenario: `decorator.add` of a decorator not declared at root does not apply the mark', async () => {
@@ -885,6 +899,7 @@ describe('insert respects sub-schema', () => {
   })
 
   test('Scenario: `annotation.add` of an annotation not declared at root does not apply the mark', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -940,5 +955,13 @@ describe('insert respects sub-schema', () => {
         },
       ])
     })
+    expect(consoleError.mock.calls).toEqual([
+      [
+        new Error(
+          'Performing "annotation.add" failed due to: Failed to parse annotation {"_key":"k2","name":"footnote","value":{"text":"unused"}}',
+        ),
+      ],
+    ])
+    consoleError.mockRestore()
   })
 })
