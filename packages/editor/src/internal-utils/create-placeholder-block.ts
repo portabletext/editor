@@ -26,7 +26,7 @@ export function createPlaceholderBlock(
   snapshot: PlaceholderSnapshot,
   path?: Path,
 ) {
-  const style = resolveDefaultStyle(snapshot, path)
+  const style = resolvePlaceholderStyle(snapshot, path)
   return {
     _type: snapshot.context.schema.block.name,
     _key: snapshot.context.keyGenerator(),
@@ -43,7 +43,7 @@ export function createPlaceholderBlock(
   }
 }
 
-function resolveDefaultStyle(
+export function resolvePlaceholderStyle(
   snapshot: PlaceholderSnapshot,
   path?: Path,
 ): string {
