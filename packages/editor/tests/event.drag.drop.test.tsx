@@ -1,5 +1,5 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {assert, describe, expect, test, vi} from 'vitest'
+import {assert, describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
@@ -2603,6 +2603,18 @@ describe('event.drag.drop', () => {
   // payload, resurrecting the remotely deleted block and overwriting the
   // remote edit.
   test.fails('Scenario: a remotely deleted block does not reappear when its drag is dropped', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => {
+      const calls = consoleError.mock.calls
+      consoleError.mockRestore()
+      expect(calls).toEqual([
+        [
+          new Error(
+            'Performing "delete" failed due to: Unable to delete without a selection',
+          ),
+        ],
+      ])
+    })
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()

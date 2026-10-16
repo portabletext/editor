@@ -780,6 +780,7 @@ describe('createDecorationLayer: events', () => {
   })
 
   test("Scenario: a throwing `on` handler does not prevent delivery to another layer's handler", async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -831,6 +832,8 @@ describe('createDecorationLayer: events', () => {
       expect(onSucceeds).toHaveBeenCalledTimes(1)
     })
     expect(onThrows).toHaveBeenCalledTimes(1)
+    expect(consoleError.mock.calls).toEqual([[new Error('listener boom')]])
+    consoleError.mockRestore()
   })
 
   test('Scenario: two registrations each deliver their own `moved` event to their own `on` handler', async () => {

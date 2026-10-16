@@ -2156,6 +2156,7 @@ describe('event.update value: auto-resolved invalid blocks', () => {
   }
 
   test('Scenario: a mid-session update with a keyless child is repaired once and the sync survives', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const patches: Array<Patch> = []
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -2244,9 +2245,16 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       // take a beat over a second to land.
       {timeout: 5000},
     )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        "Set a new random _key on the object for block with _key 'b0'. Child at index 0 is missing required _key in block with _key b0.",
+      ],
+    ])
+    consoleWarn.mockRestore()
   })
 
   test('Scenario: a mid-session update with an unused markDef is repaired on both sides', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const patches: Array<Patch> = []
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -2338,6 +2346,12 @@ describe('event.update value: auto-resolved invalid blocks', () => {
         },
       ])
     })
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        "Remove unused mark definition item for block with _key 'b0'. Block contains orphaned data (unused mark definitions): m1.",
+      ],
+    ])
+    consoleWarn.mockRestore()
   })
 
   test('Scenario: a startup value with a keyless child is repaired in the engine without emitting patches', async () => {
