@@ -25,6 +25,7 @@ export function repairMissingType(
       : context.schema.block.name
 
   return {
+    rule: 'missing-type',
     type: 'set',
     path: [...path, '_type'],
     value: typeName,

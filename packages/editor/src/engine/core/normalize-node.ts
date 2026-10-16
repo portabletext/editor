@@ -1,7 +1,4 @@
-import type {
-  PortableTextObject,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextObject} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {withoutPatching} from '../../engine-plugins/engine-plugin.without-patching'
 import {applyInsertNodeAtPath} from '../../internal-utils/apply-insert-node'
@@ -13,17 +10,7 @@ import {
 } from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
-import {
-  repairContainerField,
-  repairDuplicateKey,
-  repairEmptyTextBlockChildren,
-  repairInlineObjectBracketing,
-  repairMissingKey,
-  repairMissingTextBlockChildren,
-  repairMissingType,
-  repairSpanText,
-  type RepairContext,
-} from '../../repair'
+import {repairNode, type RepairContext, type RepairFix} from '../../repair'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
 import {getParent} from '../../traversal/get-parent'
@@ -32,9 +19,9 @@ import {getTextBlock} from '../../traversal/get-text-block'
 import {isObject} from '../../traversal/is-object'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
-import type {Node} from '../interfaces/node'
-import {isSpanNode} from '../node/is-span-node'
+import type {Path} from '../interfaces/path'
 import {isTextBlockNode} from '../node/is-text-block-node'
+import {isAncestorPath} from '../path/is-ancestor-path'
 import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
@@ -46,7 +33,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   entry,
 ) => {
   const [node, path] = entry
-  const nodeRecord = node as Record<string, unknown>
 
   /**
    * Add a placeholder block when the editor is empty
@@ -59,6 +45,63 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         [0],
       )
     })
+    return
+  }
+
+  const repairContext: RepairContext = {
+    schema: editor.snapshot.context.schema,
+    keyGenerator: editor.snapshot.context.keyGenerator,
+    verifiedUniqueGroups: editor.verifiedUniqueChildGroups,
+  }
+  const parent = getParent(editor.snapshot, path)
+
+  const fix = repairNode(
+    {
+      node,
+      path,
+      parent,
+      siblings: () => getSiblings(editor, path, parent),
+      container: () => {
+        if (!isObject(editor.snapshot, node)) {
+          return undefined
+        }
+        const resolved = resolveContainerByPath(
+          {
+            containers: editor.containers,
+            schema: editor.snapshot.context.schema,
+            value: editor.snapshot.context.value,
+          },
+          path,
+          node,
+        )
+        if (!resolved || !('container' in resolved)) {
+          return undefined
+        }
+        const field = resolved.field
+        return {
+          field,
+          placeholderStyle: () =>
+            resolvePlaceholderStyle(editor.snapshot, [...path, field.name, 0]),
+        }
+      },
+    },
+    repairContext,
+  )
+
+  if (fix) {
+    if (!isAncestorPath(path, fix.path)) {
+      // A fix outside this node's subtree does not dirty this node, so
+      // nothing would visit it again. Queue it below the fix's dirty paths so
+      // the rest of the repairs still run for it. For a duplicate key fix
+      // this also renames the next copy, since nodes sharing a key share one
+      // dirty path and a third copy is never visited as itself.
+      updateDirtyPaths(editor, [path])
+    }
+    const {rule, ...operation} = fix
+    debug.normalization(
+      repairMessage(fix, editor.snapshot.context.schema.span.name),
+    )
+    editor.apply(operation)
     return
   }
 
@@ -85,65 +128,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         applyMergeNode(editor, nextChildPath, child.text.length)
         return
       }
-    }
-  }
-
-  const repairContext: RepairContext = {
-    schema: editor.snapshot.context.schema,
-    keyGenerator: editor.snapshot.context.keyGenerator,
-    verifiedUniqueGroups: editor.verifiedUniqueChildGroups,
-  }
-  const parent = getParent(editor.snapshot, path)
-
-  const missingTypeFix = repairMissingType({node, path, parent}, repairContext)
-  if (missingTypeFix) {
-    debug.normalization(
-      missingTypeFix.value === editor.snapshot.context.schema.span.name
-        ? 'Setting span type on node without a type'
-        : 'Setting block type on node without a type',
-    )
-    editor.apply(missingTypeFix)
-    return
-  }
-
-  const missingKeyFix = repairMissingKey({node, path, parent}, repairContext)
-  if (missingKeyFix) {
-    debug.normalization('Setting missing key on node')
-    editor.apply(missingKeyFix)
-    return
-  }
-
-  if (path.length > 0 && nodeRecord['_key'] !== undefined) {
-    // The child array holding this node is the field segment right after
-    // the parent's path. Read it straight off the parent node rather than
-    // re-resolving children from the root through the schema; fall back to
-    // `getChildren` only if that field isn't a plain array.
-    const childFieldName = parent
-      ? (path[parent.path.length] as string)
-      : undefined
-    const rawSiblings =
-      parent && typeof childFieldName === 'string'
-        ? (parent.node as Record<string, unknown>)[childFieldName]
-        : undefined
-    const siblings: ReadonlyArray<{_key?: string}> = !parent
-      ? editor.snapshot.context.value
-      : Array.isArray(rawSiblings)
-        ? (rawSiblings as ReadonlyArray<{_key?: string}>)
-        : getChildren(editor.snapshot, parent.path).map((entry) => entry.node)
-
-    const duplicateKeyFix = repairDuplicateKey(
-      {node, path, parent, siblings},
-      repairContext,
-    )
-    if (duplicateKeyFix) {
-      // Nodes sharing a key share one dirty path, so a third copy of this
-      // key is never visited as itself. Queue this node again, below the
-      // renamed one, so the next visit renames the next copy and the checks
-      // after this return still run for this node.
-      updateDirtyPaths(editor, [path])
-      debug.normalization('Fixing duplicate key on node')
-      editor.apply(duplicateKeyFix)
-      return
     }
   }
 
@@ -176,13 +160,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       applyNodeProperties(editor, {style: defaultStyle}, path)
       return
     }
-  }
-
-  const spanTextFix = repairSpanText({node, path, parent}, repairContext)
-  if (spanTextFix) {
-    debug.normalization('Adding .text to span node')
-    editor.apply(spanTextFix)
-    return
   }
 
   /**
@@ -278,138 +255,96 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }
   }
 
-  if (isSpanNode({schema: editor.snapshot.context.schema}, node)) {
-    return
-  }
-
-  if (isObject(editor.snapshot, node)) {
-    const resolved = resolveContainerByPath(
-      {
-        containers: editor.containers,
-        schema: editor.snapshot.context.schema,
-        value: editor.snapshot.context.value,
-      },
-      path,
-      node,
-    )
-    const field =
-      resolved && 'container' in resolved ? resolved.field : undefined
-    const containerFieldFix = repairContainerField(
-      {node, path, parent},
-      field
-        ? {
-            field,
-            placeholderStyle: () =>
-              resolvePlaceholderStyle(editor.snapshot, [
-                ...path,
-                field.name,
-                0,
-              ]),
-          }
-        : undefined,
-      repairContext,
-    )
-    if (containerFieldFix) {
-      editor.apply(containerFieldFix)
-    }
-    return
-  }
-
-  // Text blocks must always have at least one child span.
-  if (isTextBlockNode({schema: editor.snapshot.context.schema}, node)) {
-    const missingChildrenFix = repairMissingTextBlockChildren(
-      {node, path, parent},
-      repairContext,
-    )
-    if (missingChildrenFix) {
-      editor.apply(missingChildrenFix)
-      return
-    }
-
-    const emptyChildrenFix = repairEmptyTextBlockChildren(
-      {node, path, parent},
-      repairContext,
-    )
+  if (
+    !hasRemoteFrame(editor.applyContext) &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+  ) {
     // We will have to refetch the element any time we modify its children
     // since it clones to a new immutable reference when we do.
-    let element = node as unknown as PortableTextTextBlock
+    let element = node
 
-    if (emptyChildrenFix) {
-      editor.apply(emptyChildrenFix)
+    // Since we'll be applying operations while iterating, we also modify
+    // `n` when removing nodes.
+    for (let n = 1; n < element.children.length; n++) {
+      const child = element.children[n]!
+      const prev = element.children[n - 1]!
+
+      if (
+        !isSpan({schema: editor.snapshot.context.schema}, child) ||
+        !isSpan({schema: editor.snapshot.context.schema}, prev)
+      ) {
+        continue
+      }
+
+      const childPath = [...path, 'children', {_key: child._key}]
+
+      // Merge adjacent text nodes that are empty or match.
+      if (child.text === '') {
+        editor.apply({type: 'unset', path: childPath})
+      } else if (prev.text === '') {
+        const prevPath = [...path, 'children', {_key: prev._key}]
+        editor.apply({type: 'unset', path: prevPath})
+      } else if (textEquals(child, prev, {loose: true})) {
+        applyMergeNode(editor, childPath, prev.text.length)
+      } else {
+        continue
+      }
+
       const refetched = getTextBlock(editor.snapshot, path)?.node
       if (!refetched) {
         return
       }
       element = refetched
+      n--
     }
+  }
+}
 
-    // Since we'll be applying operations while iterating, we also modify
-    // `n` when adding/removing nodes.
-    for (let n = 0; n < element.children.length; n++) {
-      const child = element.children[n]!
+function getSiblings(
+  editor: Editor,
+  path: Path,
+  parent: {node: unknown; path: Path} | undefined,
+): ReadonlyArray<{_key?: string}> {
+  if (!parent) {
+    return editor.snapshot.context.value
+  }
 
-      const prev: Node | undefined = element.children[n - 1]
-      const childPath = [...path, 'children', {_key: child._key}]
+  // The child array holding this node is the field segment right after the
+  // parent's path. Read it straight off the parent node rather than
+  // re-resolving children from the root through the schema; fall back to
+  // `getChildren` only if that field isn't a plain array.
+  const childFieldName = path[parent.path.length]
+  const rawSiblings =
+    typeof childFieldName === 'string'
+      ? (parent.node as Record<string, unknown>)[childFieldName]
+      : undefined
 
-      if (isSpan({schema: editor.snapshot.context.schema}, child)) {
-        if (
-          prev != null &&
-          isSpan({schema: editor.snapshot.context.schema}, prev) &&
-          // Only this merge/empty-drop arm defers; the inline-object
-          // bracketing below is a repair and keeps running.
-          !hasRemoteFrame(editor.applyContext)
-        ) {
-          // Merge adjacent text nodes that are empty or match.
-          if (child.text === '') {
-            editor.apply({type: 'unset', path: childPath})
-            const refetched = getTextBlock(editor.snapshot, path)?.node
-            if (!refetched) {
-              return
-            }
-            element = refetched
-            n--
-          } else if (prev.text === '') {
-            const prevPath = [...path, 'children', {_key: prev._key}]
-            editor.apply({type: 'unset', path: prevPath})
-            const refetched = getTextBlock(editor.snapshot, path)?.node
-            if (!refetched) {
-              return
-            }
-            element = refetched
-            n--
-          } else if (textEquals(child, prev, {loose: true})) {
-            applyMergeNode(editor, childPath, prev.text.length)
-            const refetched = getTextBlock(editor.snapshot, path)?.node
-            if (!refetched) {
-              return
-            }
-            element = refetched
-            n--
-          }
-        }
-      } else if (isObject(editor.snapshot, child)) {
-        let bracketingFix = repairInlineObjectBracketing(
-          {children: element.children, path},
-          n,
-          repairContext,
-        )
-        while (bracketingFix) {
-          editor.apply(bracketingFix)
-          const refetched = getTextBlock(editor.snapshot, path)?.node
-          if (!refetched) {
-            return
-          }
-          element = refetched
-          n++
-          bracketingFix = repairInlineObjectBracketing(
-            {children: element.children, path},
-            n,
-            repairContext,
-          )
-        }
-      }
-    }
+  if (Array.isArray(rawSiblings)) {
+    return rawSiblings as ReadonlyArray<{_key?: string}>
+  }
 
-    return
+  return getChildren(editor.snapshot, parent.path).map((entry) => entry.node)
+}
+
+function repairMessage(fix: RepairFix, spanTypeName: string): string {
+  switch (fix.rule) {
+    case 'missing-type':
+      return fix.type === 'set' && fix.value === spanTypeName
+        ? 'Setting span type on node without a type'
+        : 'Setting block type on node without a type'
+    case 'missing-key':
+      return 'Setting missing key on node'
+    case 'duplicate-key':
+      return 'Fixing duplicate key on node'
+    case 'span-text':
+      return 'Adding .text to span node'
+    case 'container-field':
+      return 'Adding missing child array field to container node'
+    case 'missing-children':
+      return 'Adding .children to text block node'
+    case 'empty-children':
+      return 'Adding a span to text block node without children'
+    case 'inline-object-bracketing':
+      return 'Adding a span next to inline object'
   }
 }

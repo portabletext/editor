@@ -8,15 +8,17 @@ import type {RepairContext, RepairEntry, RepairSetFix} from './types'
  * one node.
  */
 export function repairDuplicateKey(
-  entry: RepairEntry & {siblings: ReadonlyArray<{_key?: string}>},
+  entry: RepairEntry & {siblings: () => ReadonlyArray<{_key?: string}>},
   context: RepairContext,
 ): RepairSetFix | undefined {
-  const {node, path, parent, siblings} = entry
+  const {node, path, parent} = entry
   const key = (node as Record<string, unknown>)['_key']
 
   if (path.length === 0 || key === undefined) {
     return undefined
   }
+
+  const siblings = entry.siblings()
 
   // A group of zero or one child can't hold a duplicate key, so it needs
   // neither a scan nor a cache entry: re-checking it is already O(1). This
@@ -67,6 +69,7 @@ export function repairDuplicateKey(
   if (duplicateIndexOfKey !== -1) {
     const numericPath: Path = [...groupPath, duplicateIndexOfKey]
     return {
+      rule: 'duplicate-key',
       type: 'set',
       path: [...numericPath, '_key'],
       value: context.keyGenerator(),

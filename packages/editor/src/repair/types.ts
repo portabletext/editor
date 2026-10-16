@@ -21,7 +21,22 @@ export type RepairNode =
  */
 export type RepairFix = RepairSetFix | RepairInsertFix
 
+/**
+ * Which rule produced a fix, so the engine can say what it repaired. It
+ * isn't part of the operation and is dropped before the fix is applied.
+ */
+export type RepairRule =
+  | 'missing-type'
+  | 'missing-key'
+  | 'duplicate-key'
+  | 'span-text'
+  | 'container-field'
+  | 'missing-children'
+  | 'empty-children'
+  | 'inline-object-bracketing'
+
 export type RepairSetFix = {
+  rule: RepairRule
   type: 'set'
   path: Path
   value: unknown
@@ -31,6 +46,7 @@ export type RepairSetFix = {
 }
 
 export type RepairInsertFix = {
+  rule: RepairRule
   type: 'insert'
   path: Path
   node: RepairNode
@@ -45,6 +61,22 @@ export type RepairEntry = {
   node: unknown
   path: Path
   parent: {node: unknown; path: Path} | undefined
+}
+
+/**
+ * What the rules need from the engine beyond the node itself, as functions
+ * so they're only resolved for the nodes a rule actually inspects.
+ * `siblings` is the child array holding the node. `container` is the child
+ * array field the engine resolved for the node at this position, or
+ * `undefined` when the node isn't a container here; `placeholderStyle` is
+ * only called when a placeholder text block is created, since resolving it
+ * walks the node's ancestors.
+ */
+export type RepairNodeEntry = RepairEntry & {
+  siblings: () => ReadonlyArray<{_key?: string}>
+  container: () =>
+    | {field: RepairContainerField; placeholderStyle: () => string}
+    | undefined
 }
 
 export type RepairContext = {
