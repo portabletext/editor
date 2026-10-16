@@ -22,6 +22,7 @@ export function repairMissingTextBlockChildren(
   }
 
   return {
+    rule: 'missing-children',
     type: 'set',
     path: [...path, 'children'],
     value: [],
@@ -44,6 +45,7 @@ export function repairEmptyTextBlockChildren(
   }
 
   return {
+    rule: 'empty-children',
     type: 'insert',
     path: [...path, 'children', 0],
     node: createSpan(context),

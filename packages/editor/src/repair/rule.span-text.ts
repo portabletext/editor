@@ -12,6 +12,7 @@ export function repairSpanText(
   }
 
   return {
+    rule: 'span-text',
     type: 'set',
     path: [...path, 'text'],
     value: '',
