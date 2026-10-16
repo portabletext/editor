@@ -19,6 +19,7 @@ export function repairMissingKey(
   // keys exist, numeric indices where they don't (see `nodeSegment`), so
   // the `set` applies to it as-is.
   return {
+    rule: 'missing-key',
     type: 'set',
     path: [...path, '_key'],
     value: context.keyGenerator(),

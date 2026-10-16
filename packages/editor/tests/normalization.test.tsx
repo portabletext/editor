@@ -2210,15 +2210,6 @@ describe('normalization', () => {
           ],
         },
         {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-        },
-        {
           type: 'setIfMissing',
           path: [{_key: blockKey}, 'children'],
           value: [],
@@ -2228,6 +2219,15 @@ describe('normalization', () => {
           path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
           position: 'after',
           items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
         },
       ])
     })
@@ -2302,10 +2302,6 @@ describe('normalization', () => {
           ],
         },
         {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
-        },
-        {
           type: 'setIfMissing',
           path: [{_key: blockKey}, 'children'],
           value: [],
@@ -2315,6 +2311,10 @@ describe('normalization', () => {
           path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
           position: 'after',
           items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
         },
       ])
     })
@@ -2397,24 +2397,6 @@ describe('normalization', () => {
           ],
         },
         {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
-          value: '@@ -1,6 +1,9 @@\n foobar\n+baz\n',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
-        },
-        {
           type: 'setIfMissing',
           path: [{_key: blockKey}, 'children'],
           value: [],
@@ -2435,6 +2417,24 @@ describe('normalization', () => {
           path: [{_key: blockKey}, 'children', {_key: stockTickerBarKey}],
           position: 'after',
           items: [{_type: 'span', _key: 'k10', text: '', marks: []}],
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
+          value: '@@ -1,6 +1,9 @@\n foobar\n+baz\n',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
         },
       ])
     })
@@ -2509,10 +2509,6 @@ describe('normalization', () => {
           ],
         },
         {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
-        },
-        {
           type: 'setIfMissing',
           path: [{_key: blockKey}, 'children'],
           value: [],
@@ -2522,6 +2518,10 @@ describe('normalization', () => {
           path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
           position: 'after',
           items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
         },
       ])
     })
@@ -2613,10 +2613,6 @@ describe('normalization', () => {
           items: [{_type: 'span', _key: 'k8', text: '', marks: []}],
         },
         {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
-        },
-        {
           type: 'setIfMissing',
           path: [{_key: blockKey}, 'children'],
           value: [],
@@ -2626,6 +2622,10 @@ describe('normalization', () => {
           path: [{_key: blockKey}, 'children', {_key: stockTickerBarKey}],
           position: 'after',
           items: [{_type: 'span', _key: 'k9', text: '', marks: []}],
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
         },
       ])
     })

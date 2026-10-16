@@ -1,4 +1,5 @@
 import {createTextBlock} from './create-nodes'
+import {isObjectNode} from './node-kinds'
 import type {
   RepairContainerField,
   RepairContext,
@@ -9,19 +10,23 @@ import type {
 
 /**
  * Ensures a container's child array field exists and holds at least one
- * child. `container` is what the engine resolved for the node at this
- * position, or `undefined` when the node isn't a container here.
- * `placeholderStyle` is only called when a placeholder text block is
- * created, since resolving it walks the node's ancestors.
+ * child.
  */
 export function repairContainerField(
-  entry: RepairEntry,
-  container:
-    | {field: RepairContainerField; placeholderStyle: () => string}
-    | undefined,
+  entry: RepairEntry & {
+    container: () =>
+      | {field: RepairContainerField; placeholderStyle: () => string}
+      | undefined
+  },
   context: RepairContext,
 ): RepairFix | undefined {
   const {node, path} = entry
+
+  if (!isObjectNode(context.schema, node)) {
+    return undefined
+  }
+
+  const container = entry.container()
 
   if (!container) {
     return undefined
@@ -64,6 +69,7 @@ export function repairContainerField(
     // Set the field with its initial child in a single operation instead
     // of two (set empty array + insert child).
     return {
+      rule: 'container-field',
       type: 'set',
       path: [...path, field.name],
       value: childNode ? [childNode] : [],
@@ -75,6 +81,7 @@ export function repairContainerField(
 
   if (childNode) {
     return {
+      rule: 'container-field',
       type: 'insert',
       path: [...path, field.name, 0],
       node: childNode,
