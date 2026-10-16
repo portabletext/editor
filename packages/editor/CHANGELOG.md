@@ -1,5 +1,55 @@
 # Changelog
 
+## 8.2.5
+
+### Patch Changes
+
+- [#3377](https://github.com/portabletext/editor/pull/3377) [`393967f`](https://github.com/portabletext/editor/commit/393967f597bd210d11445ab860efda0946f9cbff) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove the container when `delete.block` targets a container
+  
+  Sending `delete.block` with the path of a container now removes the container and everything in it. Previously it removed the blocks inside the container and left the empty container in the document:
+  
+  ```ts
+  editor.send({type: 'delete.block', at: [{_key: 'code1'}]})
+  // Previously left {_type: 'code-block', _key: 'code1', lines: []}
+  ```
+
+- [#3369](https://github.com/portabletext/editor/pull/3369) [`9ff953a`](https://github.com/portabletext/editor/commit/9ff953a877296722044ce84568b2e1a3d66563da) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep the selection where it was when `move.block` moves a block within its parent
+  
+  Sending `move.block` for a block that holds the selection now keeps the selection exactly where it was inside the moved block when the block moves among its siblings. Previously the caret ended at the start of the moved block.
+
+- [#3383](https://github.com/portabletext/editor/pull/3383) [`3715a78`](https://github.com/portabletext/editor/commit/3715a78d2dfb0a043648e4488bef04ed8af6a3cd) Thanks [@christianhg](https://github.com/christianhg)! - fix: re-key every repeat of a duplicate sibling `_key` that arrives in patches
+  
+  When patches sent to the editor repeat a `_key` among blocks, or among the spans and inline objects of one block, every repeat after the first now gets a new key. This is how remote changes reach the editor. Previously only the second copy was re-keyed, so a third copy kept the duplicate key and React warned about two children with the same key:
+  
+  ```ts
+  editor.send({
+    type: 'patches',
+    patches: [
+      {
+        type: set,
+        path: [],
+        value: [
+          {_type: block, _key: b1, children: [{_type: span, _key: s1, text: one}]},
+          {_type: 'block', _key: 'b1', children: [{_type: span, _key: s2, text: two}]},
+          {_type: 'block', _key: 'b1', children: [{_type: span, _key: s3, text: three}]},
+        ],
+      },
+    ],
+    snapshot: undefined,
+  })
+  // Previously the block keys ended as 'b1', <new key>, 'b1'
+  ```
+  
+  Values passed as `initialValue` or through `update value`, and the children of containers, were already re-keyed in full.
+
+- [#3369](https://github.com/portabletext/editor/pull/3369) [`f0afabc`](https://github.com/portabletext/editor/commit/f0afabc1e15d2e089b6ae4ee55b84eb6a61eebf1) Thanks [@christianhg](https://github.com/christianhg)! - fix: move the selection out of a node removed by an index path
+  
+  An `unset` patch that addresses a node by index, such as `[{_key: 'b1'}, 'children', 1]`, now moves the selection out of the removed node the same way a keyed path does. Previously the selection kept pointing at the removed node, so the next keystroke was lost.
+
+- [#3369](https://github.com/portabletext/editor/pull/3369) [`bf6292a`](https://github.com/portabletext/editor/commit/bf6292af7bc61d2042558475ce10776e5b3088f6) Thanks [@christianhg](https://github.com/christianhg)! - fix: move the selection out of a removed node to the nearest remaining span
+  
+  When a block or other node that holds the selection is removed, for example by a remote patch that deletes the block with the caret or by `delete.block`, the selection now moves to the start of the next block, or to the end of the previous block when nothing follows. Previously it could stay on the removed block, pointing at content that no longer exists. Inside a container such as a table cell, the selection stays in the same container when it can.
+
 ## 8.2.4
 
 ### Patch Changes
