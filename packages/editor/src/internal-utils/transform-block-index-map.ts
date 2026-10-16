@@ -242,6 +242,12 @@ function resolveChildIndexInValue(
   return -1
 }
 
+type SiblingContext = {
+  children: ReadonlyArray<Node>
+  keyedPrefix: Path
+  serializedPrefix: string
+}
+
 /**
  * Resolve the sibling array an op path points into, together with the
  * serialized path prefix shared by every sibling's map key. Returns
@@ -253,14 +259,9 @@ function resolveSiblingContext(
   context: PureTransformContext,
   value: ReadonlyArray<Node>,
   opPath: Path,
-):
-  | {
-      children: ReadonlyArray<Node>
-      serializedPrefix: string
-    }
-  | undefined {
+): SiblingContext | undefined {
   if (opPath.length === 1) {
-    return {children: value, serializedPrefix: ''}
+    return {children: value, keyedPrefix: [], serializedPrefix: ''}
   }
   const fieldSegment = opPath[opPath.length - 2]
   if (typeof fieldSegment !== 'string') {
@@ -282,9 +283,11 @@ function resolveSiblingContext(
   if (!childrenResult || childrenResult.fieldName !== fieldSegment) {
     return undefined
   }
+  const keyedPrefix: Path = [...keyedParentPath, fieldSegment]
   return {
     children: childrenResult.children,
-    serializedPrefix: serializePath([...keyedParentPath, fieldSegment]),
+    keyedPrefix,
+    serializedPrefix: serializePath(keyedPrefix),
   }
 }
 
@@ -298,10 +301,7 @@ function resolveSiblingContext(
  */
 function reindexSiblings(
   map: BlockIndexMap,
-  siblingContext: {
-    children: ReadonlyArray<Node>
-    serializedPrefix: string
-  },
+  siblingContext: SiblingContext,
   startIndex: number,
 ): void {
   for (
@@ -564,7 +564,84 @@ function handleKeyChange(
   }
   const parentSegments = nodePath.slice(0, -1)
   const newKeyedNodePath: Path = [...parentSegments, childIndex]
-  addSubtree(map, context, afterValue, newKeyedNodePath)
+  rebuildEntriesForSiblingsWithKeys(
+    map,
+    context,
+    afterValue,
+    newKeyedNodePath,
+    [
+      resolveNodeAtPath(beforeValue, nodePath)?._key,
+      resolveNodeAtPath(afterValue, newKeyedNodePath)?._key,
+    ],
+  )
+}
+
+function rebuildEntriesForSiblingsWithKeys(
+  map: BlockIndexMap,
+  context: PureTransformContext,
+  afterValue: ReadonlyArray<Node>,
+  nodePath: Path,
+  keys: ReadonlyArray<string | undefined>,
+): void {
+  const siblingContext = resolveSiblingContext(context, afterValue, nodePath)
+  if (!siblingContext) {
+    return
+  }
+  for (const key of new Set(keys)) {
+    if (key !== undefined) {
+      rebuildEntriesForSiblingsWithKey(
+        map,
+        context,
+        afterValue,
+        siblingContext,
+        key,
+      )
+    }
+  }
+}
+
+function rebuildEntriesForSiblingsWithKey(
+  map: BlockIndexMap,
+  context: PureTransformContext,
+  afterValue: ReadonlyArray<Node>,
+  siblingContext: SiblingContext,
+  key: string,
+): void {
+  const siblingPath: Path = [...siblingContext.keyedPrefix, {_key: key}]
+  const siblingEntryKey = serializePath(siblingPath)
+  const siblingIndexes: Array<number> = []
+  siblingContext.children.forEach((sibling, index) => {
+    if (sibling._key === key) {
+      siblingIndexes.push(index)
+    }
+  })
+  map.delete(siblingEntryKey)
+  for (const index of siblingIndexes) {
+    walkKeyedChildrenInValue(
+      siblingContext.children[index]!,
+      siblingPath,
+      (childPath) => {
+        map.delete(serializePath(childPath))
+      },
+    )
+  }
+  const resolved =
+    siblingIndexes.length > 0
+      ? resolveIndexableNode(context, afterValue, siblingPath)
+      : undefined
+  if (!resolved) {
+    return
+  }
+  map.set(siblingEntryKey, siblingIndexes[0]!)
+  for (const index of siblingIndexes) {
+    collectDescendantIndexes(
+      context,
+      siblingContext.children[index]!,
+      siblingPath,
+      resolved.containerOfParent,
+      map,
+    )
+  }
 }
 
 /**

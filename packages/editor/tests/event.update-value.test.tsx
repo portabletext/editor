@@ -1957,6 +1957,108 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Deleting backward after a remote update removed a block above the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const quxBlockKey = keyGenerator()
+    const quxSpanKey = keyGenerator()
+
+    const fooBlock = {
+      _type: 'block',
+      _key: fooBlockKey,
+      children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const barBlock = {
+      _type: 'block',
+      _key: barBlockKey,
+      children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const bazBlock = {
+      _type: 'block',
+      _key: bazBlockKey,
+      children: [{_type: 'span', _key: bazSpanKey, text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const quxBlock = {
+      _type: 'block',
+      _key: quxBlockKey,
+      children: [{_type: 'span', _key: quxSpanKey, text: 'qux', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [fooBlock, barBlock, bazBlock, quxBlock],
+    })
+
+    const endOfBaz = {
+      anchor: {
+        path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+        offset: 3,
+      },
+    }
+
+    editor.send({type: 'select', at: endOfBaz})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...endOfBaz,
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [fooBlock, bazBlock, quxBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        fooBlock,
+        bazBlock,
+        quxBlock,
+      ])
+    })
+
+    editor.send({type: 'select', at: endOfBaz})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...endOfBaz,
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        fooBlock,
+        {
+          ...bazBlock,
+          children: [{_type: 'span', _key: bazSpanKey, text: 'ba', marks: []}],
+        },
+        quxBlock,
+      ])
+    })
+  })
+
   test("Scenario: Updating an inline object's `text` field", async () => {
     const schemaDefinition = defineSchema({
       inlineObjects: [

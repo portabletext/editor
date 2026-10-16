@@ -688,6 +688,89 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `unset` by a `_key` shared by sibling blocks after renaming the middle one', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: fooBlockKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barBlockKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: bazBlockKey,
+          children: [{_type: 'span', _key: bazSpanKey, text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const renamedBlockKey = keyGenerator()
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: barBlockKey}, '_key'],
+          value: fooBlockKey,
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: bazBlockKey}, '_key'],
+          value: fooBlockKey,
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [1, '_key'],
+          value: renamedBlockKey,
+        },
+        {type: 'unset', origin: 'remote', path: [{_key: fooBlockKey}]},
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: renamedBlockKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: fooBlockKey,
+          children: [{_type: 'span', _key: bazSpanKey, text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: `set` block object key', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
