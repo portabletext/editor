@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -237,6 +237,7 @@ describe('normalisation walks registered container chains to completion', () => 
   })
 
   test('schema has row, value skips it: cell directly under table.rows is not a registered container at this position', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 
     const schemaWithRow = defineSchema({
@@ -353,5 +354,9 @@ describe('normalisation walks registered container chains to completion', () => 
     expect(table.rows).toHaveLength(1)
     expect(table.rows[0]!._type).toBe('cell')
     expect(table.rows[0]!.content).toHaveLength(0)
+    expect(consoleError.mock.calls).toEqual([
+      ['Unable to find Block Object "cell" in Schema'],
+    ])
+    consoleError.mockRestore()
   })
 })
