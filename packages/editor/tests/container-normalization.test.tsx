@@ -821,6 +821,141 @@ describe('container normalization', () => {
     })
   })
 
+  test('three container children sharing a `_key` each end with a distinct key', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: fooSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={calloutContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: fooSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: bazSpanKey, text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: fooSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'k7',
+              children: [
+                {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'k8',
+              children: [
+                {_type: 'span', _key: bazSpanKey, text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content', 1, '_key'],
+          value: 'k7',
+        },
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content', 2, '_key'],
+          value: 'k8',
+        },
+      ])
+    })
+  })
+
   test('incoming patch unsets container field and normalization restores it', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
