@@ -2897,4 +2897,974 @@ describe('container normalization', () => {
       ])
     })
   })
+
+  test('emptying a container through an incoming patch inserts a placeholder block', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: calloutKey}, 'content', {_key: contentBlockKey}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: calloutKey}, 'content'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: calloutKey}, 'content', 0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('unsetting a container field through an incoming patch sets the field with a placeholder block', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: calloutKey}, 'content'],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('a typeless node inserted into a container gets the block type', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: calloutKey}, 'content', {_key: contentBlockKey}],
+          position: 'after',
+          items: [
+            {
+              _key: 'typeless-block',
+              children: [
+                {_type: 'span', _key: 'typeless-span', text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'typeless-block',
+              children: [
+                {_type: 'span', _key: 'typeless-span', text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: 'typeless-block'},
+            '_type',
+          ],
+          value: 'block',
+        },
+      ])
+    })
+  })
+
+  test('a row inserted with a duplicate `_key` is renamed via numeric index', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const cellBlockKey = keyGenerator()
+    const cellSpanKey = keyGenerator()
+    const row = {
+      _type: 'row',
+      _key: rowKey,
+      cells: [
+        {
+          _type: 'cell',
+          _key: cellKey,
+          content: [
+            {
+              _type: 'block',
+              _key: cellBlockKey,
+              children: [
+                {_type: 'span', _key: cellSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    }
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'table',
+        _key: tableKey,
+        rows: [row],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={tableContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: tableKey}, 'rows', {_key: rowKey}],
+          position: 'after',
+          items: [row],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [row, {...row, _key: 'k9'}],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: tableKey}, 'rows', 1, '_key'],
+          value: 'k9',
+        },
+      ])
+    })
+  })
+
+  test('undoing a local unset of a container field unsets the field set with a placeholder block', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({type: 'unset', at: [{_key: calloutKey}, 'content']})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {type: 'unset', path: [{_key: calloutKey}, 'content']},
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+        {type: 'unset', path: [{_key: calloutKey}, 'content']},
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('undoing a local set of a container field to `null` sets the field back to `null`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({type: 'set', at: [{_key: calloutKey}, 'content'], value: null})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {type: 'set', path: [{_key: calloutKey}, 'content'], value: null},
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+        {type: 'set', path: [{_key: calloutKey}, 'content'], value: null},
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('undoing a local emptying of a container field removes the inserted placeholder block', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({type: 'set', at: [{_key: calloutKey}, 'content'], value: []})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {type: 'set', path: [{_key: calloutKey}, 'content'], value: []},
+        {
+          type: 'setIfMissing',
+          path: [{_key: calloutKey}, 'content'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: calloutKey}, 'content', 0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+        {type: 'unset', path: [{_key: calloutKey}, 'content', {_key: 'k7'}]},
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('undo keeps the placeholder block an incoming container field unset produced', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: contentBlockKey,
+            children: [
+              {_type: 'span', _key: contentSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={calloutContainers} />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: calloutKey}, 'content'],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+    editor.send({type: 'set', at: [{_key: blockKey}, 'style'], value: 'h1'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k7',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            },
+          ],
+        },
+        {type: 'set', path: [{_key: blockKey}, 'style'], value: 'h1'},
+      ])
+    })
+  })
 })

@@ -1894,4 +1894,1614 @@ describe('normalization', () => {
       ])
     })
   })
+
+  test('Scenario: duplicate span `_key` in a text block is fixed via numeric index', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          items: [
+            {_type: 'span', _key: spanKey, text: 'bar', marks: ['strong']},
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          value: 'k4',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: adjacent inline objects get spans before, between and after them', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'stock-ticker', _key: fooKey},
+            {_type: 'stock-ticker', _key: barKey},
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k6', text: '', marks: []},
+            {_type: 'stock-ticker', _key: fooKey},
+            {_type: 'span', _key: 'k7', text: '', marks: []},
+            {_type: 'stock-ticker', _key: barKey},
+            {_type: 'span', _key: 'k8', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a span with non-string `text` gets an empty string', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockFooKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockFooKey,
+          children: [{_type: 'span', _key: spanFooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [{_type: 'span', _key: spanBarKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockBarKey}, 'children', {_key: spanBarKey}, 'text'],
+          value: 42,
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockFooKey,
+          children: [{_type: 'span', _key: spanFooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [{_type: 'span', _key: spanBarKey, text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockBarKey}, 'children', {_key: spanBarKey}, 'text'],
+          value: '',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: one local edit merges spans and brackets the inline object they precede', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [
+        {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+        {_type: 'span', _key: spanBarKey, text: 'bar', marks: []},
+        {_type: 'stock-ticker', _key: stockTickerKey},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanFooKey, text: 'foobar', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: 'k7', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: spanBarKey, text: 'bar', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+          ],
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: one local edit drops an empty span and brackets the inline object next to it', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const spanEmptyKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [
+        {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+        {_type: 'span', _key: spanEmptyKey, text: '', marks: []},
+        {_type: 'stock-ticker', _key: stockTickerKey},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: 'k7', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: spanEmptyKey, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+          ],
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: one local edit brackets inline objects at both ends and merges the spans between them', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const stockTickerFooKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const spanBazKey = keyGenerator()
+    const stockTickerBarKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [
+        {_type: 'stock-ticker', _key: stockTickerFooKey},
+        {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+        {_type: 'span', _key: spanBarKey, text: 'bar', marks: []},
+        {_type: 'span', _key: spanBazKey, text: 'baz', marks: []},
+        {_type: 'stock-ticker', _key: stockTickerBarKey},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k9', text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerFooKey},
+            {_type: 'span', _key: spanFooKey, text: 'foobarbaz', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerBarKey},
+            {_type: 'span', _key: 'k10', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'stock-ticker', _key: stockTickerFooKey},
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: spanBarKey, text: 'bar', marks: []},
+            {_type: 'span', _key: spanBazKey, text: 'baz', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerBarKey},
+          ],
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+bar\n',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}, 'text'],
+          value: '@@ -1,6 +1,9 @@\n foobar\n+baz\n',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBazKey}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerFooKey}],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k9', text: '', marks: []}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerBarKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k10', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+  test('Scenario: one local edit drops an empty span with other marks and brackets the inline object after it', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const spanEmptyKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [
+        {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+        {_type: 'span', _key: spanEmptyKey, text: '', marks: ['strong']},
+        {_type: 'stock-ticker', _key: stockTickerKey},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: 'k7', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: spanEmptyKey, text: '', marks: ['strong']},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+          ],
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: one local edit brackets inline objects at both ends and drops an empty span with other marks between them', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const stockTickerFooKey = keyGenerator()
+    const spanEmptyKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const stockTickerBarKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [
+        {_type: 'stock-ticker', _key: stockTickerFooKey},
+        {_type: 'span', _key: spanEmptyKey, text: '', marks: ['strong']},
+        {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+        {_type: 'stock-ticker', _key: stockTickerBarKey},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k8', text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerFooKey},
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerBarKey},
+            {_type: 'span', _key: 'k9', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'stock-ticker', _key: stockTickerFooKey},
+            {_type: 'span', _key: spanEmptyKey, text: '', marks: ['strong']},
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerBarKey},
+          ],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerFooKey}],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanEmptyKey}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerBarKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k9', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit unsets the `_key` minted for a keyless span', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [{_type: 'span', text: 'bar', marks: []}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', text: 'bar', marks: []}],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 0, '_key'],
+          value: 'k6',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'k6'}, '_key'],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit unsets the `_key` minted for a span with an empty `_key`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [{_type: 'span', _key: '', text: 'bar', marks: []}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: '', text: 'bar', marks: []}],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 0, '_key'],
+          value: 'k6',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'k6'}, '_key'],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit unsets the `text` given to a span without `text`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [{_type: 'span', _key: spanBarKey, marks: []}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanBarKey, text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanBarKey, marks: []}],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}, 'text'],
+          value: '',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}, 'text'],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit unsets the `text` that replaced non-string span `text`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [{_type: 'span', _key: spanBarKey, text: 1, marks: []}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanBarKey, text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanBarKey, text: 1, marks: []}],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}, 'text'],
+          value: '',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}, 'text'],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit sets a renamed duplicate `_key` back to the original key', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [
+        {_type: 'span', _key: spanBarKey, text: 'foo', marks: []},
+        {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanBarKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'k7', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [
+            {_type: 'span', _key: spanBarKey, text: 'foo', marks: []},
+            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
+          ],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          value: 'k7',
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: 'k7'}, '_key'],
+          value: spanBarKey,
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit removes the span inserted into emptied `children`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'set', at: [{_key: blockKey}, 'children'], value: []})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {type: 'set', path: [{_key: blockKey}, 'children'], value: []},
+        {type: 'setIfMissing', path: [{_key: blockKey}, 'children'], value: []},
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        },
+        {type: 'unset', path: [{_key: blockKey}, 'children', {_key: 'k6'}]},
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit unsets the `children` set on a block without `children`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'unset', at: [{_key: blockKey}, 'children']})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {type: 'unset', path: [{_key: blockKey}, 'children']},
+        {type: 'set', path: [{_key: blockKey}, 'children'], value: []},
+        {type: 'setIfMissing', path: [{_key: blockKey}, 'children'], value: []},
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        },
+        {type: 'unset', path: [{_key: blockKey}, 'children', {_key: 'k6'}]},
+        {type: 'unset', path: [{_key: blockKey}, 'children']},
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit removes the spans inserted around an inline object', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [{_type: 'stock-ticker', _key: stockTickerKey}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k7', text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: 'k8', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'stock-ticker', _key: stockTickerKey}],
+        },
+        {type: 'setIfMissing', path: [{_key: blockKey}, 'children'], value: []},
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+        },
+        {type: 'setIfMissing', path: [{_key: blockKey}, 'children'], value: []},
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+        },
+        {type: 'unset', path: [{_key: blockKey}, 'children', {_key: 'k8'}]},
+        {type: 'unset', path: [{_key: blockKey}, 'children', {_key: 'k7'}]},
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: undoing a local edit unsets the `_type` given to a typeless text block child', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const blockBarKey = keyGenerator()
+    const spanBarKeyInitial = keyGenerator()
+    const spanBarKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBarKey,
+        children: [
+          {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: blockKey}, 'children'],
+      value: [{_key: spanBarKey, text: 'bar', marks: []}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanBarKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBarKey,
+          children: [
+            {_type: 'span', _key: spanBarKeyInitial, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_key: spanBarKey, text: 'bar', marks: []}],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}, '_type'],
+          value: 'span',
+        },
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}, '_type'],
+        },
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children'],
+          value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
 })
