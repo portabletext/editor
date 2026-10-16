@@ -10,7 +10,6 @@ import {applyNodeProperties} from '../../internal-utils/apply-node-properties'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
-import {getChildFieldName} from '../../paths/get-child-field-name'
 import {hasUsableKey} from '../../paths/node-segment'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
@@ -31,6 +30,7 @@ import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {hasRemoteFrame} from './apply-context'
+import {updateDirtyPaths} from './update-dirty-paths'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
@@ -188,6 +188,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         }
 
         if (duplicateIndexOfKey !== -1) {
+          // Nodes sharing a key share one dirty path, so a third copy of
+          // this key is never visited as itself. Queue this node again, below
+          // the renamed one, so the next visit renames the next copy and the
+          // checks after this return still run for this node.
+          updateDirtyPaths(editor, [path])
           const newKey = editor.snapshot.context.keyGenerator()
           debug.normalization('Fixing duplicate key on node')
           const numericPath: Path =
@@ -445,47 +450,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }
   }
 
-  // Fix duplicate _key among children of container/object nodes.
-  // The sibling-level handler above catches duplicates when each child is
-  // visited individually, but container children may not be visited if
-  // containers gates traversal. Handle it at the parent level as well.
   if (isObject(editor.snapshot, node)) {
-    const children = [...getChildren(editor.snapshot, path)]
-
-    if (children.length > 1) {
-      const seen = new Map<string, number>()
-
-      for (let i = 0; i < children.length; i++) {
-        const key = children[i]!.node._key
-        if (key !== undefined && seen.has(key)) {
-          const newKey = editor.snapshot.context.keyGenerator()
-          debug.normalization('Fixing duplicate key on container child')
-          // Use numeric index to address the duplicate since keyed path
-          // is ambiguous for nodes with the same key.
-          const arrayFieldName = getChildFieldName(
-            editor.snapshot.context,
-            path,
-          )
-          if (arrayFieldName) {
-            editor.apply({
-              type: 'set',
-              path: [...path, arrayFieldName, i, '_key'],
-              value: newKey,
-              inverse: {
-                type: 'set',
-                path: [...path, arrayFieldName, i, '_key'],
-                value: key,
-              },
-            })
-            return
-          }
-        }
-        if (key !== undefined) {
-          seen.set(key, i)
-        }
-      }
-    }
-
     return
   }
 
