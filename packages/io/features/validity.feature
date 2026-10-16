@@ -182,6 +182,24 @@ Feature: Validity
       """
     Then io sends mutation 2 that makes it "B _key=\"b1\": food;;B: bar", only at revision 3
 
+  Scenario: A refused repair is not sent again once another writer's repair arrives
+    Given the document is "B _key=\"b1\": foo;;B _key=\"b2\": bar"
+    When the host delivers a transaction from revision 1 to 2:
+      """
+      [{"unset": ["[_key==\"b2\"]._key"]}]
+      """
+    And the host asks io to repair
+    Then io sends mutation 1 that makes it "B _key=\"b1\": foo;;B: bar", only at revision 2
+    When the host reports mutation 1 is rejected because the document moved
+    And the host delivers a transaction from revision 2 to 3:
+      """
+      [{"set": {"[1]._key": "b3"}}]
+      """
+    Then io sends no mutation
+    And the editor shows "B _key=\"b1\": foo;;B _key=\"b3\": bar"
+    And the editor is not read-only
+    And io's sync is "synced"
+
   Scenario: A repair rejected for another reason is dropped and the field stays invalid
     Given the document is "B _key=\"b1\": foo;;B _key=\"b2\": bar"
     When the host delivers a transaction from revision 1 to 2:
