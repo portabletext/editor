@@ -1,43 +1,51 @@
-import {isSpan, type PortableTextTextBlock} from '@portabletext/schema'
-import type {Path} from '../types/paths'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {createSpan} from './create-nodes'
 import {isObjectNode} from './node-kinds'
-import type {RepairContext, RepairInsertFix} from './types'
+import type {RepairContext, RepairEntry, RepairInsertFix} from './types'
 
 /**
- * Returns the next span the inline object at `index` needs, before it and
- * then, when it ends the block, after it. Called once per fix, against
- * `children` re-read after the previous fix, because the engine interleaves
- * it with span merging in a single pass over the block.
+ * Returns the next span an inline object in the text block needs: before it,
+ * then after it when it ends the block.
  */
 export function repairInlineObjectBracketing(
-  block: {children: PortableTextTextBlock['children']; path: Path},
-  index: number,
+  entry: RepairEntry,
   context: RepairContext,
 ): RepairInsertFix | undefined {
-  const child = block.children[index]
+  const {node, path} = entry
 
-  if (!isObjectNode(context.schema, child)) {
+  if (!isTextBlock({schema: context.schema}, node)) {
     return undefined
   }
 
-  const previous = block.children[index - 1]
+  const children = node.children
 
-  if (previous == null || !isSpan({schema: context.schema}, previous)) {
-    return {
-      type: 'insert',
-      path: [...block.path, 'children', {_key: child._key}],
-      node: createSpan(context),
-      position: 'before',
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index]
+
+    if (!isObjectNode(context.schema, child)) {
+      continue
     }
-  }
 
-  if (index === block.children.length - 1) {
-    return {
-      type: 'insert',
-      path: [...block.path, 'children', {_key: child._key}],
-      node: createSpan(context),
-      position: 'after',
+    const previous = children[index - 1]
+
+    if (previous == null || !isSpan({schema: context.schema}, previous)) {
+      return {
+        rule: 'inline-object-bracketing',
+        type: 'insert',
+        path: [...path, 'children', {_key: child._key}],
+        node: createSpan(context),
+        position: 'before',
+      }
+    }
+
+    if (index === children.length - 1) {
+      return {
+        rule: 'inline-object-bracketing',
+        type: 'insert',
+        path: [...path, 'children', {_key: child._key}],
+        node: createSpan(context),
+        position: 'after',
+      }
     }
   }
 
