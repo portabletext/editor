@@ -7,9 +7,9 @@ import type {
   BlockObjectConfig,
   BlockObjectRenderProps,
 } from '../renderers/renderer.types'
-import type {EditorSchema} from './editor-schema'
 import {renderDefaultBlockObject} from './render.default'
 import {useIsFocusedLeaf, useIsSelectedLeaf} from './selection-state-context'
+import {useBlockSubSchema} from './use-block-sub-schema'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
@@ -18,13 +18,14 @@ export function RenderBlockObject(props: {
   blockObjectConfig?: BlockObjectConfig
   path: Path
   readOnly: boolean
-  schema: EditorSchema
 }) {
   const serializedPath = serializePath(props.path)
   const selected = useIsSelectedLeaf(serializedPath)
   const focused = useIsFocusedLeaf(serializedPath)
 
-  const blockObjectSchemaType = props.schema.blockObjects.find(
+  const subSchema = useBlockSubSchema(props.path)
+
+  const blockObjectSchemaType = subSchema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
   )
 

@@ -259,7 +259,6 @@ export function RenderElement(props: {
       blockObjectConfig={blockObjectConfig}
       path={props.path}
       readOnly={props.readOnly}
-      schema={schema}
     >
       {props.children}
     </RenderBlockObject>
