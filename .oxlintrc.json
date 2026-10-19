@@ -205,8 +205,7 @@
                   "!../structural-correction",
                   "!../internal-utils/equality",
                   "!../types/paths",
-                  "!../paths/node-segment",
-                  "!../paths/serialize-path"
+                  "!../paths/node-segment"
                 ],
                 "message": "Structural, caret and canonical correction rules may only import leaf modules that don't reach the engine, the editor or React."
               }

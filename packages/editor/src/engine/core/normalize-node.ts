@@ -12,6 +12,7 @@ import {
   resolvePlaceholderStyle,
 } from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
+import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {
   getStructuralCorrection,
@@ -54,7 +55,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   const structuralContext: StructuralContext = {
     schema: editor.snapshot.context.schema,
     keyGenerator: editor.snapshot.context.keyGenerator,
-    verifiedUniqueGroups: editor.verifiedUniqueChildGroups,
   }
   const parent = getParent(editor.snapshot, path)
 
@@ -166,7 +166,56 @@ function applyCorrection(
   editor.apply(operation)
 }
 
+/**
+ * The child array holding the node, or `undefined` when it is already
+ * verified to hold unique keys. The verdict survives edits elsewhere in the
+ * tree: the op stream drops it only when the group's own membership changes
+ * (see `invalidateVerifiedGroups`). Caching it keeps a bulk insert of n
+ * pre-keyed siblings at O(n) instead of O(n^2).
+ */
 function getSiblings(
+  editor: Editor,
+  path: Path,
+  parent: {node: unknown; path: Path} | undefined,
+): ReadonlyArray<{_key?: string}> | undefined {
+  const siblings = readSiblings(editor, path, parent)
+
+  // A group of zero or one child can't hold a duplicate key, so it needs
+  // neither a scan nor a cache entry. This is the common shape for
+  // container fields (a row's single cell, a cell's single content block)
+  // and single-span text blocks, so only groups with two or more children
+  // ever cost a serialized id.
+  if (siblings.length <= 1) {
+    return siblings
+  }
+
+  const childFieldName = parent ? path[parent.path.length] : undefined
+  const groupId = serializePath(
+    parent && typeof childFieldName === 'string'
+      ? [...parent.path, childFieldName]
+      : [],
+  )
+
+  if (editor.verifiedUniqueChildGroups.has(groupId)) {
+    return undefined
+  }
+
+  const seenKeys = new Set<string>()
+  for (const sibling of siblings) {
+    if (sibling._key === undefined) {
+      continue
+    }
+    if (seenKeys.has(sibling._key)) {
+      return siblings
+    }
+    seenKeys.add(sibling._key)
+  }
+
+  editor.verifiedUniqueChildGroups.add(groupId)
+  return siblings
+}
+
+function readSiblings(
   editor: Editor,
   path: Path,
   parent: {node: unknown; path: Path} | undefined,
