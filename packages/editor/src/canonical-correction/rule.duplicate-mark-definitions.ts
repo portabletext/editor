@@ -25,7 +25,6 @@ export function getDuplicateMarkDefinitionsCorrection(
     ? undefined
     : setNodePropertyCorrection(
         'duplicate-mark-definitions',
-        entry.node,
         entry.path,
         'markDefs',
         newMarkDefs,

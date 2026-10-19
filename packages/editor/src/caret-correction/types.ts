@@ -20,9 +20,6 @@ export type CaretCorrection =
       type: 'set'
       path: Path
       value: unknown
-      inverse:
-        | {type: 'set'; path: Path; value: unknown}
-        | {type: 'unset'; path: Path}
     }
   | {
       rule: CaretRule

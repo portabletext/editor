@@ -68,9 +68,6 @@ export function getContainerFieldCorrection(
       type: 'set',
       path: [...path, field.name],
       value: childNode ? [childNode] : [],
-      inverse: nodeRecord.hasOwnProperty(field.name)
-        ? {type: 'set', path: [...path, field.name], value: fieldValue}
-        : {type: 'unset', path: [...path, field.name]},
     }
   }
 
