@@ -1,16 +1,16 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isObjectNode, type CorrectionEntry} from '../structural-correction'
 import {createSpan} from './create-nodes'
-import {isObjectNode} from './node-kinds'
-import type {RepairContext, RepairEntry, RepairInsertFix} from './types'
+import type {CaretContext, CaretCorrection} from './types'
 
 /**
  * Returns the next span an inline object in the text block needs: before it,
  * then after it when it ends the block.
  */
-export function repairInlineObjectBracketing(
-  entry: RepairEntry,
-  context: RepairContext,
-): RepairInsertFix | undefined {
+export function getInlineObjectBracketingCorrection(
+  entry: CorrectionEntry,
+  context: CaretContext,
+): CaretCorrection | undefined {
   const {node, path} = entry
 
   if (!isTextBlock({schema: context.schema}, node)) {

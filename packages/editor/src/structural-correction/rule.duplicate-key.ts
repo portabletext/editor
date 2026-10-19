@@ -1,6 +1,10 @@
 import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../types/paths'
-import type {RepairContext, RepairEntry, RepairSetFix} from './types'
+import type {
+  CorrectionEntry,
+  StructuralContext,
+  StructuralCorrection,
+} from './types'
 
 /**
  * Renames the second occurrence of the node's own `_key` among its
@@ -8,9 +12,9 @@ import type {RepairContext, RepairEntry, RepairSetFix} from './types'
  * one node.
  */
 export function repairDuplicateKey(
-  entry: RepairEntry & {siblings: () => ReadonlyArray<{_key?: string}>},
-  context: RepairContext,
-): RepairSetFix | undefined {
+  entry: CorrectionEntry & {siblings: () => ReadonlyArray<{_key?: string}>},
+  context: StructuralContext,
+): StructuralCorrection | undefined {
   const {node, path, parent} = entry
   const key = (node as Record<string, unknown>)['_key']
 
