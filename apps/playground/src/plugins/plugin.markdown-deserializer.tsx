@@ -21,8 +21,8 @@ export function MarkdownDeserializerPlugin() {
             html: {inline: 'skip'},
             types: {
               // Map md→pt's flat `{_type:'code', code:'a\nb\nc', language?}` into
-              // the playground's editable code-block container shape. Each source
-              // line becomes its own text block inside `lines`.
+              // the playground's `code` container shape. Each source line
+              // becomes its own text block inside `lines`.
               code: ({context, value, isInline}) => {
                 if (isInline) {
                   return undefined
@@ -52,8 +52,9 @@ export function MarkdownDeserializerPlugin() {
                   markDefs: [],
                 }))
                 return {
-                  _type: 'code-block',
+                  _type: 'code',
                   _key: context.keyGenerator(),
+                  ...(value.language ? {language: value.language} : {}),
                   lines,
                 }
               },

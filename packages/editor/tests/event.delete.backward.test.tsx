@@ -66,9 +66,9 @@ describe('event.delete.backward', () => {
           style: 'normal',
         },
       ])
-      expect(foreignValue).toEqual([])
+      expect(foreignValue).toEqual(undefined)
 
-      expect(patches).toEqual([unset([{_key: imageKey}])])
+      expect(patches).toEqual([unset([{_key: imageKey}]), unset([])])
     })
 
     editor.send({
@@ -93,7 +93,7 @@ describe('event.delete.backward', () => {
 
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
-      expect(patches.slice(1)).toEqual([
+      expect(patches.slice(2)).toEqual([
         setIfMissing([], []),
         insert(
           [

@@ -10,6 +10,7 @@ import {
   type ReconciliationReport,
 } from './apply-markdown-edit'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
+import {DefaultUnknownTypeRenderer} from './from-portable-text/renderers/type'
 
 function block(
   blockKey: string,
@@ -407,25 +408,647 @@ describe('the reconciliation report', () => {
   test('a whole-document skip of key matching reports round-trip-mismatch with no preserved keys', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
+      block('b1', 's1', 'foo'),
       {
         _type: 'block',
-        _key: 'b1',
+        _key: 'b2',
         style: 'h1',
         markDefs: [],
-        children: [{_type: 'span', _key: 's1', text: 'one\ntwo', marks: []}],
+        children: [{_type: 'span', _key: 's2', text: 'bar\nbaz', marks: []}],
       },
     ]
     const markdown = portableTextToMarkdown(structuredClone(stored))
     let report!: ReconciliationReport
-    applyMarkdownEdit(stored, markdown, {
+    const result = applyMarkdownEdit(stored, markdown, {
       deserialize: {keyGenerator},
       onReconciliation: (r) => {
         report = r
       },
     })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'h1',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+      block('k4', 'k5', 'baz'),
+    ])
     expect(report).toEqual({
       keyMatching: 'skipped',
       reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        message:
+          "The block's text came back different, starting at the text `\\nbaz`",
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch from an inline object reparsing as text reports the inline object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'bar ', marks: []},
+          {_type: 'wikilink', _key: 'w1'},
+        ],
+      },
+      block('b3', 's3', 'baz'),
+    ]
+    const serialize = {types: {wikilink: () => '[[foo]]'}}
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      block('k2', 'k3', 'bar [[foo]]'),
+      block('k4', 'k5', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b2'}, 'children', {_key: 'w1'}],
+        message:
+          "The block's text came back different, starting at the `wikilink` inline object",
+        snippet: '[[foo]]',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch from a mark renderer rewriting span text reports the span', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'foo ', marks: []},
+          {_type: 'span', _key: 's3', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 's4', text: ' baz', marks: []},
+        ],
+      },
+      block('b3', 's5', 'baz'),
+    ]
+    const serialize = {
+      marks: {
+        strong: ({children}: {children: string}) => children.toUpperCase(),
+      },
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      block('k2', 'k3', 'foo BAR baz'),
+      block('k4', 'k5', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b2'}, 'children', {_key: 's3'}],
+        message:
+          "The block's text came back different, starting at the text `bar`",
+        snippet: 'BAR baz',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch past leading whitespace reports the child at the untrimmed offset', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: '  foo ', marks: []},
+          {_type: 'span', _key: 's3', text: 'bar ', marks: []},
+          {_type: 'wikilink', _key: 'w1'},
+        ],
+      },
+    ]
+    const serialize = {types: {wikilink: () => '[[baz]]'}}
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      block('k2', 'k3', 'foo bar [[baz]]'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b2'}, 'children', {_key: 'w1'}],
+        message:
+          "The block's text came back different, starting at the `wikilink` inline object",
+        snippet: '[[baz]]',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch where the stored text is a prefix of what came back reports the block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo', marks: []},
+          {_type: 'span', _key: 's2', text: 'bar', marks: ['strong']},
+        ],
+      },
+    ]
+    const serialize = {
+      marks: {strong: ({children}: {children: string}) => `${children} baz`},
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([block('k0', 'k1', 'foobar baz')])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b1'}],
+        message: "The block's text came back with more text at the end",
+        snippet: 'baz',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch from one inline object going missing reports the position where the text first differs without claiming a loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {_type: 'wikilink', _key: 'w1'},
+          {_type: 'wikilink', _key: 'w2'},
+        ],
+      },
+    ]
+    const serialize = {
+      types: {
+        wikilink: (options: Parameters<typeof DefaultUnknownTypeRenderer>[0]) =>
+          options.value._key === 'w1'
+            ? ''
+            : DefaultUnknownTypeRenderer(options),
+      },
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+          {_type: 'wikilink', _key: 'w2'},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b1'}, 'children', {_key: 'w2'}],
+        message:
+          "The block's text came back different, starting at the `wikilink` inline object",
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch from a changed emoji keeps the message and snippet on whole code points', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {_type: 'span', _key: 's2', text: '😀', marks: ['strong']},
+        ],
+      },
+    ]
+    const serialize = {
+      marks: {
+        strong: ({children}: {children: string}) =>
+          children.replace('😀', '😁'),
+      },
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([block('k0', 'k1', 'foo 😁')])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        message:
+          "The block's text came back different, starting at the text `😀`",
+        snippet: '😁',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch from an emoji changing only its high surrogate keeps the message and snippet on whole code points', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {_type: 'span', _key: 's2', text: '😀 bar', marks: ['strong']},
+        ],
+      },
+    ]
+    const serialize = {
+      marks: {
+        strong: ({children}: {children: string}) =>
+          children.replace('😀', '🈀'),
+      },
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([block('k0', 'k1', 'foo 🈀 bar')])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        message:
+          "The block's text came back different, starting at the text `😀 bar`",
+        snippet: '🈀 bar',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch whose round-tripped text differs only by an inline object reports no snippet', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {_type: 'span', _key: 's2', text: 'bar', marks: ['strong']},
+          {_type: 'wikilink', _key: 'w1'},
+        ],
+      },
+    ]
+    const serialize = {marks: {strong: () => ''}}
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+          {_type: 'wikilink', _key: 'w1'},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        message:
+          "The block's text came back different, starting at the text `bar`",
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch from a block object reparsing as a text block reports the block object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'callout', _key: 'c1', text: 'bar'},
+      block('b3', 's3', 'baz'),
+    ]
+    const serialize = {
+      types: {
+        callout: ({value}: {value: {text: string}}) => value.text,
+      },
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      block('k2', 'k3', 'bar'),
+      block('k4', 'k5', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'type-changed',
+        storedPath: [{_key: 'c1'}],
+        message: 'The `callout` block came back as a `block`',
+        snippet: 'bar',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch on a keyless block reports indexes in the stored value, counting empty blocks', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      block('e1', 'es1', ''),
+      {
+        _type: 'block',
+        style: 'h1',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'bar', marks: []},
+          {_type: 'span', text: '\nbaz', marks: []},
+        ],
+      } as unknown as PortableTextBlock,
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'h1',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+      block('k4', 'k5', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [2, 'children', 1],
+        message:
+          "The block's text came back different, starting at the text `\\nbaz`",
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch that drops stored blocks reports the first block past the surviving prefix', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'table', _key: 't1', rows: []},
+      {_type: 'table', _key: 't2', rows: []},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([block('k0', 'k1', 'foo')])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'block-count-changed',
+        storedPath: [{_key: 't1'}],
+        message: '2 blocks did not come back, starting with the `table` block',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch that adds blocks reports the last stored block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'html', _key: 'h1', html: '<div>bar</div>\n\nbaz'},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      {_type: 'html', _key: 'k2', html: '<div>bar</div>'},
+      block('k3', 'k4', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'block-count-changed',
+        storedPath: [{_key: 'h1'}],
+        message: 'The round trip added 1 block after the `html` block',
+        snippet: 'baz',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch where every stored block is an empty paragraph reports the last stored block', () => {
+    const stored = [block('e1', 'es1', ''), block('e2', 'es2', '')]
+    const serialize = {
+      block: {normal: () => ' '},
+      blockSpacing: () => '\n\n---\n\n',
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator: createTestKeyGenerator()},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([{_type: 'horizontal-rule', _key: 'k0'}])
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        serialize,
+        deserialize: {keyGenerator: createTestKeyGenerator()},
+      }),
+    ).toEqual(result)
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'block-count-changed',
+        storedPath: [{_key: 'e2'}],
+        message: 'The empty paragraphs came back as 1 block',
+      },
+      renamedKeys: [],
+    })
+  })
+
+  test('a round-trip-mismatch reports the earliest failing block, a text mismatch before a later type mismatch', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'bar ', marks: []},
+          {_type: 'mention', _key: 'm1'},
+        ],
+      },
+      {_type: 'callout', _key: 'c1', text: 'baz'},
+    ]
+    const serialize = {
+      types: {
+        mention: () => '[[foo]]',
+        callout: ({value}: {value: {text: string}}) => value.text,
+      },
+    }
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'foo'),
+      block('k2', 'k3', 'bar [[foo]]'),
+      block('k4', 'k5', 'baz'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b2'}, 'children', {_key: 'm1'}],
+        message:
+          "The block's text came back different, starting at the `mention` inline object",
+        snippet: '[[foo]]',
+      },
       renamedKeys: [],
     })
   })

@@ -10,7 +10,7 @@ npm install @portabletext/plugin-dnd
 
 ## Usage
 
-When a consumer takes over block rendering through the `defineX` pipeline, the engine renders no drop-indicator chrome: where a dragged block would land is deliberately left to the consumer, since drop indication is pointer-driven UI, not document structure. This plugin tracks the position for you, derived from the editor's public `drag.*` behavior events.
+The editor never draws a drop indicator: showing where a dragged block would land is left to your render, since drop indication is pointer-driven UI, not document structure. This plugin tracks the position for you, derived from the editor's public `drag.*` behavior events. The [Drag and drop blocks guide](https://www.portabletext.org/editor/guides/drag-and-drop/) walks through drag handles and drop indicators.
 
 ```tsx
 import {DndProvider, useDropPosition} from '@portabletext/plugin-dnd'

@@ -39,19 +39,23 @@ export const childSetOperationImplementation: OperationImplementation<
 
     if (typeof text === 'string') {
       if (child.text !== text) {
-        operation.editor.apply({
-          type: 'remove.text',
-          path: textPath,
-          offset: 0,
-          text: child.text,
-        })
+        if (child.text.length > 0) {
+          operation.editor.apply({
+            type: 'remove.text',
+            path: textPath,
+            offset: 0,
+            text: child.text,
+          })
+        }
 
-        operation.editor.apply({
-          type: 'insert.text',
-          path: textPath,
-          offset: 0,
-          text,
-        })
+        if (text.length > 0) {
+          operation.editor.apply({
+            type: 'insert.text',
+            path: textPath,
+            offset: 0,
+            text,
+          })
+        }
       }
     }
 

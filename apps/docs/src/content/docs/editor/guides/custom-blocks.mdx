@@ -48,7 +48,7 @@ Register each block object type with `defineBlockObject`. The registration's `re
 
 - Spread `attributes` onto the outer element.
 - Always render `children`, the engine's caret spacer that lets the browser place the cursor next to the block.
-- Wrap the visible content in a `contentEditable={false}` element with `draggable={!readOnly}`. Block objects are void, and this makes them drag-movable while the outer element stays the caret anchor.
+- Wrap the visible content in a `contentEditable={false}` element with `draggable={!readOnly}`. Block objects are void, and this makes them drag-movable while the outer element stays the caret anchor. The [Drag and drop blocks](/editor/guides/drag-and-drop/) guide adds drop indicators.
 - Check for a field before using it: the registration already guarantees `node._type`, but individual fields can be absent on a partially-filled value. Fall back to `props.renderDefault(props)`, the engine's placeholder, when a field the render needs is missing.
 
 ```tsx

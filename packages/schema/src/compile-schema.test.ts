@@ -1,5 +1,7 @@
 import {describe, expect, test, vi} from 'vitest'
 import {compileSchema} from './compile-schema'
+import type {SchemaDefinition} from './define-schema'
+import type {InlineObjectOfDefinition} from './schema'
 
 describe(compileSchema.name, () => {
   describe('block fields', () => {
@@ -764,4 +766,87 @@ describe(compileSchema.name, () => {
       ])
     })
   })
+
+  test('compiles a shared of member once per block inheritance', () => {
+    const fieldReads: Record<string, number> = {}
+    let member = createCountingMember(
+      't3',
+      [{name: 'value', type: 'string'}],
+      fieldReads,
+    )
+    for (let index = 2; index >= 0; index--) {
+      member = createCountingMember(
+        `t${index}`,
+        [
+          {name: 'first', type: 'array', of: [member]},
+          {name: 'second', type: 'array', of: [member]},
+        ],
+        fieldReads,
+      )
+    }
+
+    compileSchema({
+      blockObjects: [
+        {
+          name: 'root',
+          fields: [{name: 'content', type: 'array', of: [member]}],
+        },
+      ],
+    })
+
+    expect(fieldReads).toEqual({t0: 1, t1: 1, t2: 1, t3: 1})
+  })
+
+  test('shared compilation is structurally equal to compiling the same input as a tree', () => {
+    const definition = createSharedTypeDefinition(8)
+    const expandedDefinition = JSON.parse(
+      JSON.stringify(definition),
+    ) as SchemaDefinition
+
+    expect(compileSchema(definition)).toEqual(compileSchema(expandedDefinition))
+  })
 })
+
+function createCountingMember(
+  name: string,
+  fields: InlineObjectOfDefinition['fields'],
+  fieldReads: Record<string, number>,
+): InlineObjectOfDefinition {
+  const member: InlineObjectOfDefinition = {type: 'object', name, fields}
+  Object.defineProperty(member, 'fields', {
+    enumerable: false,
+    get: () => {
+      fieldReads[name] = (fieldReads[name] ?? 0) + 1
+      return fields
+    },
+  })
+  return member
+}
+
+function createSharedTypeDefinition(typeCount: number): SchemaDefinition {
+  let member: InlineObjectOfDefinition = {
+    type: 'object',
+    name: `t${typeCount - 1}`,
+    fields: [{name: 'value', type: 'string'}],
+  }
+
+  for (let index = typeCount - 2; index >= 0; index--) {
+    member = {
+      type: 'object',
+      name: `t${index}`,
+      fields: [
+        {name: 'first', type: 'array', of: [member]},
+        {name: 'second', type: 'array', of: [member]},
+      ],
+    }
+  }
+
+  return {
+    blockObjects: [
+      {
+        name: 'root',
+        fields: [{name: 'content', type: 'array', of: [member]}],
+      },
+    ],
+  }
+}

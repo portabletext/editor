@@ -1,5 +1,6 @@
 import type {PortableTextBlock, Schema} from '@portabletext/schema'
 import {cleanupEfficiency, makeDiff} from '@sanity/diff-match-patch'
+import {truncateSnippet} from './from-portable-text/degradation-report'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {defaultKeyGenerator} from './key-generator'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
@@ -56,10 +57,10 @@ export type ApplyMarkdownEditOptions = {
    * `preservedKeys` was not preserved from the stored value, whether
    * it is a fresh key or a `json:object` payload key that carried its
    * own; the report does not distinguish the two. Which keys
-   * survived, every `key` and `path`, and `renamedKeys` are facts of
-   * that invocation, safe to branch on for that invocation; a skipped
-   * report's `reason` is advisory only, since near the evidence caps
-   * it can vary with machine speed, and should never drive behavior.
+   * survived, every `key` and `path`, `renamedKeys`, and a skipped
+   * report's `reason`, and a `round-trip-mismatch` report's
+   * `mismatch.type` and `mismatch.storedPath` are facts of that
+   * invocation, safe to branch on for that invocation.
    *
    * @beta
    */
@@ -67,9 +68,11 @@ export type ApplyMarkdownEditOptions = {
 }
 
 /**
- * A path segment into the value `applyMarkdownEdit` returns: a string
- * field name for container nesting (`rows`, `cells`, `value`, and the
- * like), `{_key}` wherever the path lands on a keyed array element,
+ * A path segment into the value `applyMarkdownEdit` returns (except in
+ * a skipped report's `mismatch.storedPath`, the one path that
+ * addresses the stored value passed in instead): a string field name
+ * for container nesting (`rows`, `cells`, `value`, and the like),
+ * `{_key}` wherever the path lands on a keyed array element,
  * and a number wherever it lands on a keyless one instead. A block's
  * own path is a single `{_key}` segment, or a single number for a
  * keyless top-level block; a child's path is
@@ -179,14 +182,85 @@ export type ReconciliationReport =
   | {
       keyMatching: 'skipped'
       /**
-       * `round-trip-mismatch` when the stored value's own
-       * canonicalization changed its node count, type sequence, or
-       * per-position text; `document-too-large` when the document
-       * holds more distinct block forms than alignment can token.
-       * Advisory only, since near the evidence caps it can vary with
-       * machine speed, and should never drive behavior.
+       * The stored value's own serialize→parse round trip changed its
+       * node count, type sequence, or per-position text. A fact of
+       * that invocation, safe to branch on.
        */
-      reason: 'round-trip-mismatch' | 'document-too-large'
+      reason: 'round-trip-mismatch'
+      /**
+       * Where and why the round trip first went wrong. The scan walks
+       * the stored blocks in document order, skipping empty paragraphs
+       * and comparing text without leading and trailing whitespace, and
+       * stops at the first block whose type or text came back
+       * different.
+       */
+      mismatch: {
+        /**
+         * `type-changed` when the first failing block came back as
+         * another type, `text-changed` when it kept its type but its
+         * text came back different (a custom renderer writing syntax
+         * the parser reads back as other text, say). Both apply even
+         * when the round trip also changed the block count.
+         * `block-count-changed` when every compared block came back
+         * intact but the round trip dropped or added blocks, or when
+         * every stored block is an empty paragraph. A fact of that
+         * invocation, safe to branch on. Match on `type`, not
+         * `message`.
+         */
+        type: 'type-changed' | 'text-changed' | 'block-count-changed'
+        /**
+         * Unlike every other path in the report, this one addresses
+         * the stored value as passed, not the returned value: a
+         * `{_key}` segment for a keyed node, its index for a keyless
+         * one, empty paragraphs counted. For `text-changed` it reaches
+         * the child (span or inline object) where the text first
+         * differs, `[{_key: 'b2'}, 'children', {_key: 'w1'}]`, or stays
+         * on the block when the stored text is a prefix of what came
+         * back. Otherwise it names a block: the failing block for
+         * `type-changed`, and for `block-count-changed` the first stored
+         * block with no counterpart when blocks were dropped, the last
+         * compared stored block when blocks were added, or the last
+         * stored block when every stored block is an empty paragraph.
+         * A fact of that invocation, safe to branch on.
+         */
+        storedPath: ReconciliationKeyPath
+        /**
+         * Human-readable, naming where the round trip first went
+         * wrong. May change between releases.
+         */
+        message: string
+        /**
+         * The span text that came back, inline objects skipped,
+         * truncated to 40 characters with an ellipsis: for
+         * `text-changed`, starting where it first differs, otherwise
+         * the round-tripped block's text (the first added block when
+         * blocks were added). Absent when there is no span text to
+         * quote, such as a block object, dropped blocks, or text that
+         * went missing.
+         */
+        snippet?: string
+      }
+      /**
+       * One entry per key `applyMarkdownEdit` rewrote to keep
+       * siblings unique, most commonly a `json:object` payload
+       * duplicating a key already present elsewhere in the document.
+       * The sibling-uniqueness pass still runs on a skipped document:
+       * a pasted duplicate `json:object` fence key still gets
+       * renamed even though nothing else adopted.
+       */
+      renamedKeys: Array<{
+        previousKey: string
+        key: string
+        path: ReconciliationKeyPath
+      }>
+    }
+  | {
+      keyMatching: 'skipped'
+      /**
+       * The document holds more distinct block forms than alignment
+       * can token. A fact of that invocation, safe to branch on.
+       */
+      reason: 'document-too-large'
       /**
        * One entry per key `applyMarkdownEdit` rewrote to keep
        * siblings unique, most commonly a `json:object` payload
@@ -285,7 +359,7 @@ export function applyMarkdownEdit(
         renamePreviousKey: new WeakMap(),
         annotationKeyConflicts: [],
         ambiguousRegionGroups: [],
-        skipReason: undefined,
+        skip: undefined,
       }
     : undefined
   const result = structuredClone(
@@ -296,7 +370,12 @@ export function applyMarkdownEdit(
   ) as unknown as Array<Node>
   const canonical = canonicalizeStored(storedPortableText, options)
   const nonEmptyStored = nonEmptyBlocks(storedPortableText, options)
-  const originOf = traceOrigins(nonEmptyStored, canonical, recorder)
+  const originOf = traceOrigins(
+    storedPortableText,
+    nonEmptyStored,
+    canonical,
+    recorder,
+  )
   const adoptedNodes: AdoptedNodes = new WeakSet()
   if (originOf) {
     const alignment = alignBlocks(canonical, result, recorder)
@@ -376,8 +455,16 @@ type ReconciliationRecorder = {
   renamePreviousKey: WeakMap<Node, string>
   annotationKeyConflicts: Array<Node>
   ambiguousRegionGroups: Array<Array<Node>>
-  skipReason: 'round-trip-mismatch' | 'document-too-large' | undefined
+  skip:
+    | {reason: 'round-trip-mismatch'; mismatch: RoundTripMismatch}
+    | {reason: 'document-too-large'}
+    | undefined
 }
+
+type RoundTripMismatch = Extract<
+  ReconciliationReport,
+  {reason: 'round-trip-mismatch'}
+>['mismatch']
 
 /**
  * Re-expresses the stored value in the parser's dialect by serializing
@@ -427,40 +514,285 @@ function stripOnDegradation<T extends object>(
  * either, and `reinsertEmptyRuns` restores them afterward.
  */
 function traceOrigins(
+  storedPortableText: ReadonlyArray<PortableTextBlock>,
   stored: ReadonlyArray<PortableTextBlock>,
   canonical: ReadonlyArray<Node>,
   recorder: ReconciliationRecorder | undefined,
 ): ((canonicalIndex: number) => Node) | undefined {
   if (canonical.length !== stored.length) {
-    if (recorder) {
-      recorder.skipReason = 'round-trip-mismatch'
-    }
+    recordRoundTripMismatch(storedPortableText, stored, canonical, recorder)
     return undefined
   }
   for (let index = 0; index < stored.length; index++) {
     if ((stored[index] as Node)['_type'] !== canonical[index]?.['_type']) {
-      if (recorder) {
-        recorder.skipReason = 'round-trip-mismatch'
-      }
+      recordRoundTripMismatch(storedPortableText, stored, canonical, recorder)
       return undefined
     }
   }
   for (let index = 0; index < stored.length; index++) {
-    const storedNode = stored[index] as unknown as Node
-    const canonicalNode = canonical[index]!
-    if (isTextBlock(storedNode) && isTextBlock(canonicalNode)) {
-      if (blockText(storedNode).trim() !== blockText(canonicalNode).trim()) {
-        // CommonMark trims whitespace on reparse, so text identity
-        // compares trimmed text.
-        if (recorder) {
-          recorder.skipReason = 'round-trip-mismatch'
-        }
-        return undefined
-      }
+    if (
+      !textSurvivesRoundTrip(
+        stored[index] as unknown as Node,
+        canonical[index]!,
+      )
+    ) {
+      recordRoundTripMismatch(storedPortableText, stored, canonical, recorder)
+      return undefined
     }
   }
   return (canonicalIndex: number): Node =>
     stored[canonicalIndex] as unknown as Node
+}
+
+function textSurvivesRoundTrip(storedNode: Node, canonicalNode: Node): boolean {
+  if (!(isTextBlock(storedNode) && isTextBlock(canonicalNode))) {
+    return true
+  }
+  // CommonMark trims whitespace on reparse, so text identity compares
+  // trimmed text.
+  return blockText(storedNode).trim() === blockText(canonicalNode).trim()
+}
+
+function recordRoundTripMismatch(
+  storedPortableText: ReadonlyArray<PortableTextBlock>,
+  stored: ReadonlyArray<PortableTextBlock>,
+  canonical: ReadonlyArray<Node>,
+  recorder: ReconciliationRecorder | undefined,
+): void {
+  if (!recorder) {
+    return
+  }
+  const commonLength = Math.min(stored.length, canonical.length)
+  let failingIndex = 0
+  while (
+    failingIndex < commonLength &&
+    (stored[failingIndex] as Node)['_type'] ===
+      canonical[failingIndex]!['_type'] &&
+    textSurvivesRoundTrip(
+      stored[failingIndex] as unknown as Node,
+      canonical[failingIndex]!,
+    )
+  ) {
+    failingIndex++
+  }
+  const storedIndexes: Array<number> = []
+  storedPortableText.forEach((node, index) => {
+    if (node === stored[storedIndexes.length]) {
+      storedIndexes.push(index)
+    }
+  })
+  const blockSegmentAt = (
+    nonEmptyIndex: number,
+  ): ReconciliationKeyPath[number] => {
+    const storedIndex =
+      stored.length === 0
+        ? storedPortableText.length - 1
+        : storedIndexes[nonEmptyIndex]!
+    return pathSegment(
+      storedPortableText[storedIndex] as unknown as Node,
+      storedIndex,
+    )
+  }
+  recorder.skip = {
+    reason: 'round-trip-mismatch',
+    mismatch:
+      failingIndex < commonLength
+        ? positionMismatch(
+            stored[failingIndex] as unknown as Node,
+            canonical[failingIndex]!,
+            blockSegmentAt(failingIndex),
+          )
+        : blockCountMismatch(stored, canonical, blockSegmentAt),
+  }
+}
+
+function positionMismatch(
+  storedNode: Node,
+  canonicalNode: Node,
+  blockSegment: ReconciliationKeyPath[number],
+): RoundTripMismatch {
+  const storedType = String(storedNode['_type'])
+  const canonicalType = String(canonicalNode['_type'])
+  if (storedType !== canonicalType) {
+    return withSnippet(
+      {
+        type: 'type-changed',
+        storedPath: [blockSegment],
+        message: `${describeBlock(storedType)} came back as ${withArticle(`\`${canonicalType}\``, canonicalType)}`,
+      },
+      roundTrippedSnippet(canonicalNode),
+    )
+  }
+  const storedText = blockText(storedNode)
+  const storedTrimmed = storedText.trim()
+  const canonicalText = blockText(canonicalNode)
+  const canonicalTrimmed = canonicalText.trim()
+  const sharedLength = Math.min(storedTrimmed.length, canonicalTrimmed.length)
+  let differsAt = 0
+  while (
+    differsAt < sharedLength &&
+    storedTrimmed[differsAt] === canonicalTrimmed[differsAt]
+  ) {
+    differsAt++
+  }
+  if (
+    splitsSurrogatePair(storedTrimmed, differsAt) ||
+    splitsSurrogatePair(canonicalTrimmed, differsAt)
+  ) {
+    differsAt--
+  }
+  const child =
+    differsAt < storedTrimmed.length
+      ? childAtOffset(storedNode, leadingWhitespace(storedText) + differsAt)
+      : undefined
+  return withSnippet(
+    {
+      type: 'text-changed',
+      storedPath: child
+        ? [blockSegment, 'children', pathSegment(child.node, child.index)]
+        : [blockSegment],
+      message: child
+        ? `The block's text came back different, starting at ${describeChildFrom(child)}`
+        : "The block's text came back with more text at the end",
+    },
+    truncateSnippet(
+      spanTextFrom(
+        canonicalNode,
+        leadingWhitespace(canonicalText) + differsAt,
+      ).trim(),
+    ),
+  )
+}
+
+function blockCountMismatch(
+  stored: ReadonlyArray<PortableTextBlock>,
+  canonical: ReadonlyArray<Node>,
+  blockSegmentAt: (nonEmptyIndex: number) => ReconciliationKeyPath[number],
+): RoundTripMismatch {
+  if (stored.length === 0) {
+    return withSnippet(
+      {
+        type: 'block-count-changed',
+        storedPath: [blockSegmentAt(0)],
+        message: `The empty paragraphs came back as ${blockCount(canonical.length)}`,
+      },
+      roundTrippedSnippet(canonical[0]!),
+    )
+  }
+  if (stored.length > canonical.length) {
+    const firstDropped = stored[canonical.length] as unknown as Node
+    return {
+      type: 'block-count-changed',
+      storedPath: [blockSegmentAt(canonical.length)],
+      message: `${blockCount(stored.length - canonical.length)} did not come back, starting with ${lowercaseFirst(describeBlock(String(firstDropped['_type'])))}`,
+    }
+  }
+  const lastStored = stored[stored.length - 1] as unknown as Node
+  return withSnippet(
+    {
+      type: 'block-count-changed',
+      storedPath: [blockSegmentAt(stored.length - 1)],
+      message: `The round trip added ${blockCount(canonical.length - stored.length)} after ${lowercaseFirst(describeBlock(String(lastStored['_type'])))}`,
+    },
+    roundTrippedSnippet(canonical[stored.length]!),
+  )
+}
+
+function childAtOffset(
+  block: Node,
+  offset: number,
+): {node: Node; index: number; offset: number} | undefined {
+  const children = block['children']
+  if (!isTypedObjectArray(children)) {
+    return undefined
+  }
+  let start = 0
+  for (let index = 0; index < children.length; index++) {
+    const end = start + childText(children[index]!).length
+    if (offset < end) {
+      return {node: children[index]!, index, offset: offset - start}
+    }
+    start = end
+  }
+  return undefined
+}
+
+function describeChildFrom(child: {node: Node; offset: number}): string {
+  const text = child.node['text']
+  return typeof text === 'string'
+    ? `the text \`${truncateSnippet(text.slice(child.offset))}\``
+    : `the \`${String(child.node['_type'])}\` inline object`
+}
+
+function spanTextFrom(block: Node, offset: number): string {
+  const children = block['children']
+  if (!isTypedObjectArray(children)) {
+    return ''
+  }
+  let start = 0
+  let text = ''
+  for (const child of children) {
+    const childLength = childText(child).length
+    if (typeof child['text'] === 'string' && start + childLength > offset) {
+      text += child['text'].slice(Math.max(0, offset - start))
+    }
+    start += childLength
+  }
+  return text
+}
+
+function leadingWhitespace(text: string): number {
+  return text.length - text.trimStart().length
+}
+
+function splitsSurrogatePair(text: string, offset: number): boolean {
+  return (
+    offset > 0 &&
+    isHighSurrogate(text.charCodeAt(offset - 1)) &&
+    isLowSurrogate(text.charCodeAt(offset))
+  )
+}
+
+function isHighSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xd800 && codeUnit <= 0xdbff
+}
+
+function isLowSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xdc00 && codeUnit <= 0xdfff
+}
+
+function pathSegment(node: Node, index: number): ReconciliationKeyPath[number] {
+  const key = node['_key']
+  return typeof key === 'string' ? {_key: key} : index
+}
+
+function roundTrippedSnippet(canonicalNode: Node): string | undefined {
+  return isTextBlock(canonicalNode)
+    ? truncateSnippet(spanTextFrom(canonicalNode, 0).trim())
+    : undefined
+}
+
+function withSnippet(
+  mismatch: RoundTripMismatch,
+  snippet: string | undefined,
+): RoundTripMismatch {
+  return snippet === undefined ? mismatch : {...mismatch, snippet}
+}
+
+function describeBlock(type: string): string {
+  return type === 'block' ? 'The text block' : `The \`${type}\` block`
+}
+
+function lowercaseFirst(text: string): string {
+  return `${text.charAt(0).toLowerCase()}${text.slice(1)}`
+}
+
+function withArticle(phrase: string, word: string): string {
+  return `${/^[aeiou]/i.test(word) ? 'an' : 'a'} ${phrase}`
+}
+
+function blockCount(count: number): string {
+  return count === 1 ? '1 block' : `${count} blocks`
 }
 
 type Anchor = {canonicalIndex: number; resultIndex: number}
@@ -490,7 +822,7 @@ function alignBlocks(
   const resultTokens = result.map(tokenOf).join('')
   if (tokenByNeutral.size > MAX_DISTINCT_BLOCK_FORMS) {
     if (recorder) {
-      recorder.skipReason = 'document-too-large'
+      recorder.skip = {reason: 'document-too-large'}
     }
     return undefined
   }
@@ -1479,13 +1811,13 @@ function blockText(block: Node): string {
   if (!isTypedObjectArray(children)) {
     return ''
   }
-  return children
-    .map((child) =>
-      typeof child['text'] === 'string'
-        ? child['text']
-        : INLINE_OBJECT_SENTINEL,
-    )
-    .join('')
+  return children.map(childText).join('')
+}
+
+function childText(child: Node): string {
+  return typeof child['text'] === 'string'
+    ? child['text']
+    : INLINE_OBJECT_SENTINEL
 }
 
 /**
@@ -2077,8 +2409,8 @@ function buildReconciliationReport(
     walk(block, [typeof key === 'string' ? {_key: key} : index])
   })
 
-  if (recorder.skipReason) {
-    return {keyMatching: 'skipped', reason: recorder.skipReason, renamedKeys}
+  if (recorder.skip) {
+    return {keyMatching: 'skipped', ...recorder.skip, renamedKeys}
   }
 
   const keyFallbacks: Extract<

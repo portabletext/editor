@@ -1,4 +1,5 @@
 import {
+  DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
   type PortableTextRenderers,
   type PortableTextTypeRenderer,
@@ -24,10 +25,11 @@ export const markdownOptions: Partial<PortableTextRenderers> = {
       return `@${value.username || value.name || ''}`
     },
 
-    // Adapter from playground's `{lines: [...text blocks]}` shape to a
-    // standard fenced code block. Reads span text directly so the output
-    // doesn't pick up list/style formatting from the inner blocks.
-    'code-block': ({value}: {value: {lines?: Array<Block>}}) => {
+    // Adapter from playground's `{language?, lines: [...text blocks]}` shape
+    // to a standard fenced code block. Reads span text directly so the
+    // output doesn't pick up list/style formatting from the inner blocks.
+    'code': ((options) => {
+      const value = options.value as {language?: string; lines?: Array<Block>}
       const lines = value.lines ?? []
       const code = lines
         .map((line) =>
@@ -36,8 +38,11 @@ export const markdownOptions: Partial<PortableTextRenderers> = {
             .join(''),
         )
         .join('\n')
-      return `\`\`\`\n${code}\n\`\`\``
-    },
+      return DefaultCodeBlockRenderer({
+        ...options,
+        value: {_type: 'code', code, language: value.language},
+      })
+    }) satisfies PortableTextTypeRenderer,
 
     // No native markdown for fact-box. Render inner content as a
     // collapsible `<details>` block so the preview still surfaces the

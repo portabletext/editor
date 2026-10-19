@@ -160,8 +160,14 @@ export const syncMachine = setup({
       assertEvent(event, 'done syncing')
       if (event.changed) {
         // A sync that wrote nothing is not a host persistence claim; see
-        // `lastSyncedValue`.
-        context.editorEngine.lastSyncedValue = event.value
+        // `lastSyncedValue`. When the host value has blocks, record what
+        // the engine holds after repairing them: the repairs are emitted, so
+        // the host ends up holding the repaired blocks. An empty host value
+        // is recorded as is, since the placeholder block is not the host's.
+        context.editorEngine.lastSyncedValue =
+          event.value && event.value.length > 0
+            ? context.editorEngine.snapshot.context.value
+            : event.value
       }
     },
     'emit done syncing value': emit({
@@ -1150,12 +1156,14 @@ export function updateBlock({
                 )
               }
 
-              editorEngine.apply({
-                type: 'insert.text',
-                path,
-                offset: 0,
-                text: currentBlockChild.text,
-              })
+              if (currentBlockChild.text.length > 0) {
+                editorEngine.apply({
+                  type: 'insert.text',
+                  path,
+                  offset: 0,
+                  text: currentBlockChild.text,
+                })
+              }
 
               editorEngine.onChange()
             } else if (!isSpanNode) {
