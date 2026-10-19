@@ -506,9 +506,7 @@ describe('insert respects sub-schema', () => {
         },
       ])
     })
-    expect(consoleError.mock.calls).toEqual([
-      ['Unable to find Block Object "embed-card" in Schema'],
-    ])
+    expect(consoleError.mock.calls).toEqual([])
     consoleError.mockRestore()
   })
 
