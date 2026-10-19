@@ -40,6 +40,7 @@ import {
   removeChildren,
 } from '../utils/modify'
 import {hasRemoteFrame} from './apply-context'
+import {getSetInverse} from './get-set-inverse'
 
 export function applyOperation(editor: Editor, op: EngineOperation): void {
   let transformSelection = false
@@ -176,24 +177,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       const {path, value} = op
 
       if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
-        const previousValue = getValue(editor.snapshot.context.value, path)
-        const lastSegment = path[path.length - 1]
-
-        // Renaming a node's own `_key` moves how it resolves: from here on
-        // it's found by the new key, so the inverse (which runs after the
-        // rename) has to target that key too, or it can never find the
-        // node to restore.
-        const inversePath =
-          lastSegment === '_key' &&
-          typeof value === 'string' &&
-          isKeyedSegment(path[path.length - 2])
-            ? [...path.slice(0, -2), {_key: value}, '_key']
-            : path
-
-        op.inverse =
-          previousValue === undefined
-            ? {type: 'unset', path: inversePath}
-            : {type: 'set', path: inversePath, value: previousValue}
+        op.inverse = getSetInverse(editor, path, value)
       }
 
       // Root-level value replacement: set editor.snapshot.context.value directly
