@@ -2,19 +2,13 @@ import type {Schema} from '@portabletext/schema'
 import type {Path} from '../types/paths'
 
 /**
- * One structural correction, shaped as the engine operation that applies
- * it. Inverses are part of the correction because they can't be derived from the
- * before and after values: an unusable `_key` of `''` is still undone
- * with `unset`.
+ * One structural correction: set `value` at `path`.
  */
 export type StructuralCorrection = {
   rule: StructuralRule
   type: 'set'
   path: Path
   value: unknown
-  inverse:
-    | {type: 'set'; path: Path; value: unknown}
-    | {type: 'unset'; path: Path}
 }
 
 /**

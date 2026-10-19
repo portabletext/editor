@@ -24,6 +24,5 @@ export function repairMissingTextBlockChildren(
     type: 'set',
     path: [...path, 'children'],
     value: [],
-    inverse: {type: 'unset', path: [...path, 'children']},
   }
 }
