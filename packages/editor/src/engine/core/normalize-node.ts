@@ -12,7 +12,6 @@ import {
   resolvePlaceholderStyle,
 } from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
-import {getValue} from '../../internal-utils/get-value'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {
@@ -31,6 +30,7 @@ import type {Path} from '../interfaces/path'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import type {WithEditorFirstArg} from '../utils/types'
 import {hasRemoteFrame} from './apply-context'
+import {getSetInverse} from './get-set-inverse'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
@@ -168,20 +168,12 @@ function applyCorrection(
     editor.apply(operation)
     return
   }
-  // Corrections carry no inverse. Build it here rather than
-  // leaving it to `apply`, which skips inverses for remote changes, so a
-  // correction behaves the same whichever change triggered it. Undo
-  // restores whatever was at the path before.
-  const previousValue: unknown = getValue(
-    editor.snapshot.context.value,
-    operation.path,
-  )
+  // Corrections carry no inverse. Build it here rather than leaving it to
+  // `apply`, which skips inverses for remote changes, so a correction
+  // behaves the same whichever change triggered it.
   editor.apply({
     ...operation,
-    inverse:
-      previousValue === undefined
-        ? {type: 'unset', path: operation.path}
-        : {type: 'set', path: operation.path, value: previousValue},
+    inverse: getSetInverse(editor, operation.path, operation.value),
   })
 }
 
