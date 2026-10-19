@@ -41,18 +41,15 @@ export type CorrectionEntry = {
 
 /**
  * `siblings` is the child array holding the node, as a function so it's
- * only resolved when the duplicate key rule inspects a keyed node.
+ * only resolved when the duplicate key rule inspects a keyed node. It may
+ * return `undefined` when the caller already knows the array holds no
+ * duplicate keys, which skips the scan.
  */
 export type StructuralEntry = CorrectionEntry & {
-  siblings: () => ReadonlyArray<{_key?: string}>
+  siblings: () => ReadonlyArray<{_key?: string}> | undefined
 }
 
 export type StructuralContext = {
   schema: Schema
   keyGenerator: () => string
-  /**
-   * Serialized paths of sibling groups already verified to hold unique
-   * keys. The engine owns and invalidates it. Rules only read and add.
-   */
-  verifiedUniqueGroups: Set<string>
 }
