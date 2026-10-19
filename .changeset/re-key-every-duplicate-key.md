@@ -11,12 +11,12 @@ editor.send({
   type: 'patches',
   patches: [
     {
-      type: set,
+      type: 'set',
       path: [],
       value: [
-        {_type: block, _key: b1, children: [{_type: span, _key: s1, text: one}]},
-        {_type: 'block', _key: 'b1', children: [{_type: span, _key: s2, text: two}]},
-        {_type: 'block', _key: 'b1', children: [{_type: span, _key: s3, text: three}]},
+        {_type: 'block', _key: 'b1', children: [{_type: 'span', _key: 's1', text: 'one'}]},
+        {_type: 'block', _key: 'b1', children: [{_type: 'span', _key: 's2', text: 'two'}]},
+        {_type: 'block', _key: 'b1', children: [{_type: 'span', _key: 's3', text: 'three'}]},
       ],
     },
   ],
