@@ -257,9 +257,7 @@ describe('code-block resolution through normalisation', () => {
     const cellContent = table.rows[0]!.cells[0]!.content
     expect(cellContent.length).toBeGreaterThan(0)
     expect(cellContent.some((child) => child._type === 'code-block')).toBe(true)
-    expect(consoleError.mock.calls).toEqual([
-      ['Unable to find Block Object "code-block" in Schema'],
-    ])
+    expect(consoleError.mock.calls).toEqual([])
 
     warn.mockRestore()
     consoleError.mockRestore()
