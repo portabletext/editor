@@ -59,7 +59,6 @@ export function repairDuplicateKey(
       type: 'set',
       path: [...numericPath, '_key'],
       value: context.keyGenerator(),
-      inverse: {type: 'set', path: [...numericPath, '_key'], value: key},
     }
   }
 

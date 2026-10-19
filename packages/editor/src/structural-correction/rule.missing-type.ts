@@ -33,6 +33,5 @@ export function repairMissingType(
     type: 'set',
     path: [...path, '_type'],
     value: typeName,
-    inverse: {type: 'unset', path: [...path, '_type']},
   }
 }

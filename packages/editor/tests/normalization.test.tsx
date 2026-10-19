@@ -2727,7 +2727,7 @@ describe('normalization', () => {
     })
   })
 
-  test('Scenario: undoing a local edit unsets the `_key` minted for a span with an empty `_key`', async () => {
+  test('Scenario: undoing a local edit restores the empty `_key` it replaced', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -2811,8 +2811,9 @@ describe('normalization', () => {
           value: 'k6',
         },
         {
-          type: 'unset',
+          type: 'set',
           path: [{_key: blockKey}, 'children', {_key: 'k6'}, '_key'],
+          value: '',
         },
         {
           type: 'set',
@@ -2920,7 +2921,7 @@ describe('normalization', () => {
     })
   })
 
-  test('Scenario: undoing a local edit unsets the `text` that replaced non-string span `text`', async () => {
+  test('Scenario: undoing a local edit restores the non-string span `text` it replaced', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3005,8 +3006,9 @@ describe('normalization', () => {
           value: '',
         },
         {
-          type: 'unset',
+          type: 'set',
           path: [{_key: blockKey}, 'children', {_key: spanBarKey}, 'text'],
+          value: 1,
         },
         {
           type: 'set',

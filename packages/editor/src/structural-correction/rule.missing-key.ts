@@ -27,6 +27,5 @@ export function repairMissingKey(
     type: 'set',
     path: [...path, '_key'],
     value: context.keyGenerator(),
-    inverse: {type: 'unset', path: [...path, '_key']},
   }
 }

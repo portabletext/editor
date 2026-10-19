@@ -20,6 +20,5 @@ export function repairSpanText(
     type: 'set',
     path: [...path, 'text'],
     value: '',
-    inverse: {type: 'unset', path: [...path, 'text']},
   }
 }
