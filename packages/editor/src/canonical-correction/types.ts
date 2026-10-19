@@ -8,9 +8,6 @@ export type CanonicalCorrection =
       type: 'set'
       path: Path
       value: unknown
-      inverse:
-        | {type: 'set'; path: Path; value: unknown}
-        | {type: 'unset'; path: Path}
     }
   | {rule: CanonicalRule; type: 'unset'; path: Path}
   | {rule: CanonicalRule; type: 'merge'; path: Path; position: number}

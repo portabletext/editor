@@ -21,7 +21,6 @@ export function getMissingStyleCorrection(
   return defaultStyle
     ? setNodePropertyCorrection(
         'missing-style',
-        entry.node,
         entry.path,
         'style',
         defaultStyle,

@@ -164,11 +164,11 @@ function applyCorrection(
     return
   }
   const {rule, ...operation} = correction
-  if (operation.type !== 'set' || 'inverse' in operation) {
+  if (operation.type !== 'set') {
     editor.apply(operation)
     return
   }
-  // Structural corrections carry no inverse. Build it here rather than
+  // Corrections carry no inverse. Build it here rather than
   // leaving it to `apply`, which skips inverses for remote changes, so a
   // correction behaves the same whichever change triggered it. Undo
   // restores whatever was at the path before.

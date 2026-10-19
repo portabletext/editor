@@ -15,7 +15,6 @@ export function getMissingMarkDefinitionsCorrection(
 
   return setNodePropertyCorrection(
     'missing-mark-definitions',
-    entry.node,
     entry.path,
     'markDefs',
     [],

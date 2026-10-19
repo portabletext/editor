@@ -14,11 +14,5 @@ export function getMissingMarksCorrection(
     return undefined
   }
 
-  return setNodePropertyCorrection(
-    'missing-marks',
-    entry.node,
-    entry.path,
-    'marks',
-    [],
-  )
+  return setNodePropertyCorrection('missing-marks', entry.path, 'marks', [])
 }

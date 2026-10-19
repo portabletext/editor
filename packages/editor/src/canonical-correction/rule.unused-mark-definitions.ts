@@ -25,7 +25,6 @@ export function getUnusedMarkDefinitionsCorrection(
   return node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)
     ? setNodePropertyCorrection(
         'unused-mark-definitions',
-        node,
         entry.path,
         'markDefs',
         newMarkDefs,

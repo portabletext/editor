@@ -25,7 +25,6 @@ export function getEmptySpanAnnotationsCorrection(
 
   return setNodePropertyCorrection(
     'empty-span-annotations',
-    entry.node,
     entry.path,
     'marks',
     entry.node.marks?.filter((mark) => !annotations.includes(mark)),
