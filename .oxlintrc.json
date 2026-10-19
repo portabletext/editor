@@ -179,10 +179,14 @@
       }
     },
     {
-      // The repair rules are pure functions of the node and plain data. Only
-      // these leaf modules are allowed, so nothing reaches the engine, the
-      // editor or React transitively.
-      "files": ["packages/editor/src/repair/**"],
+      // Structural, caret and canonical correction rules are pure functions
+      // of the node and plain data. Only leaf modules are allowed, so nothing
+      // reaches the engine, the editor or React transitively.
+      "files": [
+        "packages/editor/src/structural-correction/**",
+        "packages/editor/src/caret-correction/**",
+        "packages/editor/src/canonical-correction/**"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -198,11 +202,13 @@
               {
                 "group": [
                   "../**",
+                  "!../structural-correction",
+                  "!../internal-utils/equality",
                   "!../types/paths",
                   "!../paths/node-segment",
                   "!../paths/serialize-path"
                 ],
-                "message": "Repair rules may only import leaf modules outside `src/repair` that don't reach the engine, the editor or React."
+                "message": "Structural, caret and canonical correction rules may only import leaf modules that don't reach the engine, the editor or React."
               }
             ]
           }

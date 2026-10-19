@@ -1,14 +1,18 @@
 import {isTextBlock} from '@portabletext/schema'
-import type {RepairContext, RepairEntry, RepairSetFix} from './types'
+import type {
+  CorrectionEntry,
+  StructuralContext,
+  StructuralCorrection,
+} from './types'
 
 /**
  * Children of text blocks default to the span type, everything else to the
  * text block type.
  */
 export function repairMissingType(
-  entry: RepairEntry,
-  context: RepairContext,
-): RepairSetFix | undefined {
+  entry: CorrectionEntry,
+  context: StructuralContext,
+): StructuralCorrection | undefined {
   const {node, path, parent} = entry
 
   if ((node as Record<string, unknown>)['_type'] !== undefined) {

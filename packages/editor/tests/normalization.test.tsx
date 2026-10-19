@@ -3504,4 +3504,57 @@ describe('normalization', () => {
       ])
     })
   })
+  test('Scenario: a local edit removes every empty span in a long run', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const emptySpans = Array.from({length: 150}, (_, index) => ({
+      _type: 'span',
+      _key: keyGenerator(),
+      text: '',
+      marks: [index % 2 === 0 ? 'strong' : 'em'],
+    }))
+    const barKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            ...emptySpans,
+            {_type: 'span', _key: barKey, text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+    })
+
+    const point = {
+      path: [{_key: blockKey}, 'children', {_key: fooKey}],
+      offset: 3,
+    }
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo!', marks: []},
+            {_type: 'span', _key: barKey, text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })

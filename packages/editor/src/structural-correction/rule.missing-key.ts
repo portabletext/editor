@@ -1,10 +1,14 @@
 import {hasUsableKey} from '../paths/node-segment'
-import type {RepairContext, RepairEntry, RepairSetFix} from './types'
+import type {
+  CorrectionEntry,
+  StructuralContext,
+  StructuralCorrection,
+} from './types'
 
 export function repairMissingKey(
-  entry: RepairEntry,
-  context: RepairContext,
-): RepairSetFix | undefined {
+  entry: CorrectionEntry,
+  context: StructuralContext,
+): StructuralCorrection | undefined {
   const {node, path} = entry
 
   if (hasUsableKey((node as Record<string, unknown>)['_key'])) {

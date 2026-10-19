@@ -1,10 +1,14 @@
 import {isSpanNode} from './node-kinds'
-import type {RepairContext, RepairEntry, RepairSetFix} from './types'
+import type {
+  CorrectionEntry,
+  StructuralContext,
+  StructuralCorrection,
+} from './types'
 
 export function repairSpanText(
-  entry: RepairEntry,
-  context: RepairContext,
-): RepairSetFix | undefined {
+  entry: CorrectionEntry,
+  context: StructuralContext,
+): StructuralCorrection | undefined {
   const {node, path} = entry
 
   if (!isSpanNode(context.schema, node) || typeof node.text === 'string') {

@@ -1,25 +1,20 @@
+import {isObjectNode} from '../structural-correction'
 import {createTextBlock} from './create-nodes'
-import {isObjectNode} from './node-kinds'
 import type {
-  RepairContainerField,
-  RepairContext,
-  RepairEntry,
-  RepairFix,
-  RepairNode,
+  CaretContext,
+  CaretCorrection,
+  CaretEntry,
+  CaretNode,
 } from './types'
 
 /**
  * Ensures a container's child array field exists and holds at least one
  * child.
  */
-export function repairContainerField(
-  entry: RepairEntry & {
-    container: () =>
-      | {field: RepairContainerField; placeholderStyle: () => string}
-      | undefined
-  },
-  context: RepairContext,
-): RepairFix | undefined {
+export function getContainerFieldCorrection(
+  entry: CaretEntry,
+  context: CaretContext,
+): CaretCorrection | undefined {
   const {node, path} = entry
 
   if (!isObjectNode(context.schema, node)) {
@@ -48,7 +43,7 @@ export function repairContainerField(
   )
   const firstChildType = field.of.at(0)
 
-  let childNode: RepairNode | undefined
+  let childNode: CaretNode | undefined
   if (acceptsBlocks) {
     childNode = createTextBlock(context, container.placeholderStyle())
   } else if (firstChildType && firstChildType.type !== 'block') {
@@ -62,7 +57,7 @@ export function repairContainerField(
     childNode = {
       _type: childTypeName,
       _key: context.keyGenerator(),
-    } as RepairNode
+    } as CaretNode
   }
 
   if (needsField) {
