@@ -21,11 +21,25 @@ import {isBlock} from '../traversal/is-block'
 import {isInline} from '../traversal/is-inline'
 import {isObject} from '../traversal/is-object'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import type {OperationImplementation} from './operation.types'
 
 export const deleteOperationImplementation: OperationImplementation<
   'delete'
 > = ({operation}) => {
+  if (
+    operation.unit === 'block' &&
+    operation.at &&
+    isEqualSelectionPoints(operation.at.anchor, operation.at.focus)
+  ) {
+    const entry = getNode(operation.editor.snapshot, operation.at.anchor.path)
+
+    if (entry && isBlock(operation.editor.snapshot, entry.path)) {
+      operation.editor.apply({type: 'unset', path: entry.path})
+      return
+    }
+  }
+
   const at = operation.at
     ? resolveSelection(operation.editor, operation.at)
     : operation.editor.snapshot.context.selection

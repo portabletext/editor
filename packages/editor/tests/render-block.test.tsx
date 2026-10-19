@@ -81,7 +81,7 @@ describe('registered render: blocks', () => {
       children: <NodePlugin nodes={[textBlock]} />,
     })
 
-    const barSpanLocator = locator.getByText('b')
+    const barSpanLocator = locator.getByText('bar')
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
     await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
 

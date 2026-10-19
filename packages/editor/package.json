@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "8.2.4",
+  "version": "8.2.5",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "collaborative",
@@ -113,7 +113,7 @@
     "@vitejs/plugin-react": "catalog:tooling",
     "@vitest/browser": "catalog:tooling",
     "@vitest/browser-playwright": "catalog:tooling",
-    "@vitest/coverage-istanbul": "^4.1.11",
+    "@vitest/coverage-istanbul": "^5.0.4",
     "jsdom": "catalog:tooling",
     "oxc-transform-react": "catalog:tooling",
     "racejar": "workspace:*",

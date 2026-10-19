@@ -28,12 +28,12 @@ catalogs:
     "@tailwindcss/vite": ^4.3.3
     "@tsdown/css": ^0.22.14
     "@types/jsdom": ^27.0.0
-    "@types/node": ^20
+    "@types/node": ^24
     "@types/react": ^19.2.17
     "@types/react-dom": ^19.2.3
     "@vitejs/plugin-react": ^6.1.0
-    "@vitest/browser": ^4.1.11
-    "@vitest/browser-playwright": ^4.1.11
+    "@vitest/browser": ^5.0.4
+    "@vitest/browser-playwright": ^5.0.4
     jsdom: ^27.2.0
     lucide-react: ^0.562.0
     oxc-transform-react: ^0.145.0
@@ -45,8 +45,8 @@ catalogs:
     tailwindcss: ^4.1.18
     typescript: ^7.0.2
     vite: ^8.2.0
-    vitest: ^4.1.11
-    vitest-browser-react: ^2.2.0
+    vitest: ^5.0.4
+    vitest-browser-react: ^2.3.0
 
 minimumReleaseAge: 4320
 

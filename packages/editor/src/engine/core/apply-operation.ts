@@ -6,8 +6,12 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {findNearestSpans} from '../../internal-utils/find-nearest-spans'
+import {
+  findNearestSpans,
+  firstSpanIn,
+} from '../../internal-utils/find-nearest-spans'
 import {getValue} from '../../internal-utils/get-value'
+import {toKeyedPatchPath} from '../../internal-utils/operation-to-patches'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {serializePath} from '../../paths/serialize-path'
@@ -36,6 +40,7 @@ import {
   removeChildren,
 } from '../utils/modify'
 import {hasRemoteFrame} from './apply-context'
+import {getSetInverse} from './get-set-inverse'
 
 export function applyOperation(editor: Editor, op: EngineOperation): void {
   let transformSelection = false
@@ -172,24 +177,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       const {path, value} = op
 
       if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
-        const previousValue = getValue(editor.snapshot.context.value, path)
-        const lastSegment = path[path.length - 1]
-
-        // Renaming a node's own `_key` moves how it resolves: from here on
-        // it's found by the new key, so the inverse (which runs after the
-        // rename) has to target that key too, or it can never find the
-        // node to restore.
-        const inversePath =
-          lastSegment === '_key' &&
-          typeof value === 'string' &&
-          isKeyedSegment(path[path.length - 2])
-            ? [...path.slice(0, -2), {_key: value}, '_key']
-            : path
-
-        op.inverse =
-          previousValue === undefined
-            ? {type: 'unset', path: inversePath}
-            : {type: 'set', path: inversePath, value: previousValue}
+        op.inverse = getSetInverse(editor, path, value)
       }
 
       // Root-level value replacement: set editor.snapshot.context.value directly
@@ -340,10 +328,18 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
             ...editor.snapshot.context.selection,
           }
 
-          for (const [point, key] of rangePoints(selection)) {
-            const result = transformPoint(point, op)
+          // Selection paths are keyed, so key the removed path too. A
+          // numeric segment would neither match the selection in
+          // `transformPoint` nor count as a sibling in `isSiblingPath`.
+          const removedPath = toKeyedPatchPath(
+            editor.snapshot.context.value,
+            path,
+          )
 
-            if (selection != null && result != null) {
+          for (const [point, key] of rangePoints(selection)) {
+            const result = transformPoint(point, {...op, path: removedPath})
+
+            if (result != null) {
               selection[key] = result
             } else {
               // The point sat inside the removed subtree; move it to
@@ -351,29 +347,32 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
               // order.
               const {previousSpan, nextSpan} = findNearestSpans(
                 editor.snapshot,
-                path,
+                removedPath,
               )
 
-              let preferNext = false
-              if (previousSpan && nextSpan) {
-                if (isSiblingPath(previousSpan.path, path)) {
-                  preferNext = false
-                } else {
-                  preferNext =
-                    commonPath(previousSpan.path, path).length <
-                    commonPath(nextSpan.path, path).length
-                }
-              }
+              const preferNext =
+                nextSpan !== undefined &&
+                (previousSpan === undefined ||
+                  (!isSiblingPath(previousSpan.path, removedPath) &&
+                    commonPath(previousSpan.path, removedPath).length <=
+                      commonPath(nextSpan.path, removedPath).length))
 
-              if (previousSpan && !preferNext) {
-                selection![key] = {
+              if (preferNext) {
+                selection[key] = {path: nextSpan.path, offset: 0}
+              } else if (previousSpan) {
+                selection[key] = {
                   path: previousSpan.path,
                   offset: previousSpan.node.text.length,
                 }
-              } else if (nextSpan) {
-                selection![key] = {path: nextSpan.path, offset: 0}
               } else {
-                selection = null
+                const ownSpan = firstSpanIn(editor.snapshot, removedPath)
+
+                if (!ownSpan) {
+                  selection = null
+                  break
+                }
+
+                selection[key] = {path: ownSpan.path, offset: 0}
               }
             }
           }

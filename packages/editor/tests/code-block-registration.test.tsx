@@ -196,6 +196,7 @@ describe('code-block resolution through normalisation', () => {
 
   test('B: registering `code-block` with a field the schema does not have warns at register time and the node renders as a non-editable placeholder', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 
     const initialValue = initialTableValue()
@@ -256,7 +257,9 @@ describe('code-block resolution through normalisation', () => {
     const cellContent = table.rows[0]!.cells[0]!.content
     expect(cellContent.length).toBeGreaterThan(0)
     expect(cellContent.some((child) => child._type === 'code-block')).toBe(true)
+    expect(consoleError.mock.calls).toEqual([])
 
     warn.mockRestore()
+    consoleError.mockRestore()
   })
 })

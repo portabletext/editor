@@ -656,7 +656,7 @@ type CellDescriptor = {
  * The reference render for the `cell` container. Cells read the derived
  * `getTableSelection` (a rectangle) and draw the grey grid + selection
  * outline + overlay per cell. Position and header state come from resolving
- * the cell -> row -> table by path.
+ * the cell → row → table by path.
  *
  * @public
  */

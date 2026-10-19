@@ -179,6 +179,42 @@
       }
     },
     {
+      // Structural, caret and canonical correction rules are pure functions
+      // of the node and plain data. Only leaf modules are allowed, so nothing
+      // reaches the engine, the editor or React transitively.
+      "files": [
+        "packages/editor/src/structural-correction/**",
+        "packages/editor/src/caret-correction/**",
+        "packages/editor/src/canonical-correction/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {"name": "react", "message": "Repair rules must not use React."},
+              {
+                "name": "react-dom",
+                "message": "Repair rules must not use React."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!../structural-correction",
+                  "!../internal-utils/equality",
+                  "!../types/paths",
+                  "!../paths/node-segment"
+                ],
+                "message": "Structural, caret and canonical correction rules may only import leaf modules that don't reach the engine, the editor or React."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["**/*.test-d.ts"],
       "rules": {
         "require-await": "off"
