@@ -326,6 +326,39 @@ describe(toMergeableMarkDefsPatches.name, () => {
     },
   ] as unknown as PortableTextBlock[]
 
+  test('keyed unsets of store-referenced definitions are dropped', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'unset',
+            path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([])
+  })
+
+  test('keyed unsets of unreferenced definitions pass through', () => {
+    expect(
+      toMergeableMarkDefsPatches(
+        [
+          {
+            type: 'unset',
+            path: [{_key: 'b1'}, 'markDefs', {_key: 'm2'}],
+          },
+        ],
+        () => storeValue,
+      ),
+    ).toEqual([
+      {
+        type: 'unset',
+        path: [{_key: 'b1'}, 'markDefs', {_key: 'm2'}],
+      },
+    ])
+  })
+
   test('new definitions become inserts', () => {
     expect(
       toMergeableMarkDefsPatches(
