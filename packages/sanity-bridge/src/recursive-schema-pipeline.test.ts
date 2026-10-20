@@ -67,7 +67,7 @@ test('a wide mutually recursive schema converts and compiles small and fast', ()
 
   expect(definition.blockObjects).toHaveLength(containerCount)
   expect(compiled.blockObjects).toHaveLength(containerCount)
-  expect(JSON.stringify(definition).length).toBeLessThan(200_000)
+  expect(countDistinctObjects(definition)).toBeLessThan(500)
   expect(durationMs).toBeLessThan(2_000)
 })
 
@@ -201,9 +201,13 @@ test('Scenario: Rich text nested in inline objects that list fewer inline object
     )
 
     expect(
-      JSON.stringify(definition).length,
+      countDistinctObjects(definition),
       `${embeddingTypeCount} embedding types`,
-    ).toBeLessThan(500_000)
+    ).toBeLessThan(200)
+    expect(
+      countDistinctObjects(compileSchema(definition)),
+      `${embeddingTypeCount} embedding types`,
+    ).toBeLessThan(200)
   }
 })
 
@@ -219,31 +223,30 @@ test('Scenario: Rich text nested in its own inline objects keeps their fields at
     outerBodySchema,
     arrayFieldOf(outerBodySchema.inlineObjects, 'inlineObject1', 'body'),
   )
+  const innermostBodySchema = getSubSchema(
+    innerBodySchema,
+    arrayFieldOf(innerBodySchema.inlineObjects, 'inlineObject1', 'body'),
+  )
 
-  expect(
-    innerBodySchema.inlineObjects.find(
-      (object) => object.name === 'inlineObject1',
-    ),
-  ).toEqual({
-    name: 'inlineObject1',
-    title: 'Inline Object 1',
-    fields: [
-      {name: 'label', type: 'string', title: 'Label'},
-      {
-        name: 'body',
-        type: 'array',
-        title: 'Body',
-        of: [
-          {
-            type: 'block',
-            styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-            lists: [],
-            decorators: [],
-          },
-        ],
-      },
+  const selfNestingBody = {
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [],
+    inlineObjects: [
+      {name: 'inlineObject0', fields: ['label', 'body']},
+      {name: 'inlineObject1', fields: ['label', 'body']},
+      {name: 'inlineObject2', fields: ['label', 'body']},
+      {name: 'inlineObject3', fields: ['label', 'body', 'aside']},
     ],
-  })
+    blockObjects: [],
+  }
+  expect(describeSchema(innerBodySchema)).toEqual(selfNestingBody)
+  expect(describeSchema(innermostBodySchema)).toEqual(selfNestingBody)
+  // The nesting closes on one compiled body rather than unrolling.
+  expect(
+    arrayFieldOf(innerBodySchema.inlineObjects, 'inlineObject1', 'body'),
+  ).toBe(arrayFieldOf(outerBodySchema.inlineObjects, 'inlineObject1', 'body'))
 })
 
 test('Scenario: Rich text nested in a narrower rich-text field resolves its own inline objects from the enclosing sub-schema', () => {
@@ -262,468 +265,33 @@ test('Scenario: Rich text nested in a narrower rich-text field resolves its own 
     asideSchema,
     arrayFieldOf(asideSchema.inlineObjects, 'inlineObject0', 'body'),
   )
+  const nestedAsideSchema = getSubSchema(
+    asideBodySchema,
+    arrayFieldOf(asideBodySchema.inlineObjects, 'inlineObject3', 'aside'),
+  )
 
-  expect(asideSchema.inlineObjects).toEqual([
-    {
-      name: 'inlineObject0',
-      title: 'Inline Object 0',
-      fields: [
-        {name: 'label', type: 'string', title: 'Label'},
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-              annotations: [],
-              inlineObjects: [
-                {
-                  name: 'inlineObject0',
-                  title: 'Inline Object 0',
-                  fields: [
-                    {name: 'label', type: 'string', title: 'Label'},
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  name: 'inlineObject1',
-                  title: 'Inline Object 1',
-                  fields: [
-                    {name: 'label', type: 'string', title: 'Label'},
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  name: 'inlineObject2',
-                  title: 'Inline Object 2',
-                  fields: [
-                    {name: 'label', type: 'string', title: 'Label'},
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  name: 'inlineObject3',
-                  title: 'Inline Object 3',
-                  fields: [
-                    {name: 'label', type: 'string', title: 'Label'},
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                      ],
-                    },
-                    {
-                      name: 'aside',
-                      type: 'array',
-                      title: 'Aside',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                          annotations: [],
-                          inlineObjects: [
-                            {
-                              name: 'inlineObject0',
-                              title: 'Inline Object 0',
-                              fields: [
-                                {name: 'label', type: 'string', title: 'Label'},
-                                {
-                                  name: 'body',
-                                  type: 'array',
-                                  title: 'Body',
-                                  of: [
-                                    {
-                                      type: 'block',
-                                      styles: [
-                                        {
-                                          name: 'normal',
-                                          title: 'Normal',
-                                          value: 'normal',
-                                        },
-                                      ],
-                                      lists: [],
-                                      decorators: [],
-                                      annotations: [],
-                                      inlineObjects: [
-                                        {
-                                          name: 'inlineObject0',
-                                          title: 'Inline Object 0',
-                                          fields: [
-                                            {
-                                              name: 'label',
-                                              type: 'string',
-                                              title: 'Label',
-                                            },
-                                            {
-                                              name: 'body',
-                                              type: 'array',
-                                              title: 'Body',
-                                              of: [
-                                                {
-                                                  type: 'block',
-                                                  styles: [
-                                                    {
-                                                      name: 'normal',
-                                                      title: 'Normal',
-                                                      value: 'normal',
-                                                    },
-                                                  ],
-                                                  lists: [],
-                                                  decorators: [],
-                                                },
-                                              ],
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          name: 'inlineObject1',
-                                          title: 'Inline Object 1',
-                                          fields: [
-                                            {
-                                              name: 'label',
-                                              type: 'string',
-                                              title: 'Label',
-                                            },
-                                            {
-                                              name: 'body',
-                                              type: 'array',
-                                              title: 'Body',
-                                              of: [
-                                                {
-                                                  type: 'block',
-                                                  styles: [
-                                                    {
-                                                      name: 'normal',
-                                                      title: 'Normal',
-                                                      value: 'normal',
-                                                    },
-                                                  ],
-                                                  lists: [],
-                                                  decorators: [],
-                                                },
-                                              ],
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          name: 'inlineObject2',
-                                          title: 'Inline Object 2',
-                                          fields: [
-                                            {
-                                              name: 'label',
-                                              type: 'string',
-                                              title: 'Label',
-                                            },
-                                            {
-                                              name: 'body',
-                                              type: 'array',
-                                              title: 'Body',
-                                              of: [
-                                                {
-                                                  type: 'block',
-                                                  styles: [
-                                                    {
-                                                      name: 'normal',
-                                                      title: 'Normal',
-                                                      value: 'normal',
-                                                    },
-                                                  ],
-                                                  lists: [],
-                                                  decorators: [],
-                                                },
-                                              ],
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          name: 'inlineObject3',
-                                          title: 'Inline Object 3',
-                                          fields: [],
-                                        },
-                                      ],
-                                    },
-                                  ],
-                                },
-                              ],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ])
-  expect(asideBodySchema.inlineObjects).toEqual([
-    {
-      name: 'inlineObject0',
-      title: 'Inline Object 0',
-      fields: [
-        {name: 'label', type: 'string', title: 'Label'},
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'inlineObject1',
-      title: 'Inline Object 1',
-      fields: [
-        {name: 'label', type: 'string', title: 'Label'},
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'inlineObject2',
-      title: 'Inline Object 2',
-      fields: [
-        {name: 'label', type: 'string', title: 'Label'},
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'inlineObject3',
-      title: 'Inline Object 3',
-      fields: [
-        {name: 'label', type: 'string', title: 'Label'},
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-          ],
-        },
-        {
-          name: 'aside',
-          type: 'array',
-          title: 'Aside',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-              annotations: [],
-              inlineObjects: [
-                {
-                  name: 'inlineObject0',
-                  title: 'Inline Object 0',
-                  fields: [
-                    {name: 'label', type: 'string', title: 'Label'},
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                          annotations: [],
-                          inlineObjects: [
-                            {
-                              name: 'inlineObject0',
-                              title: 'Inline Object 0',
-                              fields: [
-                                {name: 'label', type: 'string', title: 'Label'},
-                                {
-                                  name: 'body',
-                                  type: 'array',
-                                  title: 'Body',
-                                  of: [
-                                    {
-                                      type: 'block',
-                                      styles: [
-                                        {
-                                          name: 'normal',
-                                          title: 'Normal',
-                                          value: 'normal',
-                                        },
-                                      ],
-                                      lists: [],
-                                      decorators: [],
-                                    },
-                                  ],
-                                },
-                              ],
-                            },
-                            {
-                              name: 'inlineObject1',
-                              title: 'Inline Object 1',
-                              fields: [
-                                {name: 'label', type: 'string', title: 'Label'},
-                                {
-                                  name: 'body',
-                                  type: 'array',
-                                  title: 'Body',
-                                  of: [
-                                    {
-                                      type: 'block',
-                                      styles: [
-                                        {
-                                          name: 'normal',
-                                          title: 'Normal',
-                                          value: 'normal',
-                                        },
-                                      ],
-                                      lists: [],
-                                      decorators: [],
-                                    },
-                                  ],
-                                },
-                              ],
-                            },
-                            {
-                              name: 'inlineObject2',
-                              title: 'Inline Object 2',
-                              fields: [
-                                {name: 'label', type: 'string', title: 'Label'},
-                                {
-                                  name: 'body',
-                                  type: 'array',
-                                  title: 'Body',
-                                  of: [
-                                    {
-                                      type: 'block',
-                                      styles: [
-                                        {
-                                          name: 'normal',
-                                          title: 'Normal',
-                                          value: 'normal',
-                                        },
-                                      ],
-                                      lists: [],
-                                      decorators: [],
-                                    },
-                                  ],
-                                },
-                              ],
-                            },
-                            {
-                              name: 'inlineObject3',
-                              title: 'Inline Object 3',
-                              fields: [],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ])
+  expect(describeSchema(asideSchema)).toEqual({
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [],
+    inlineObjects: [{name: 'inlineObject0', fields: ['label', 'body']}],
+    blockObjects: [],
+  })
+  expect(describeSchema(asideBodySchema)).toEqual({
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [],
+    inlineObjects: [
+      {name: 'inlineObject0', fields: ['label', 'body']},
+      {name: 'inlineObject1', fields: ['label', 'body']},
+      {name: 'inlineObject2', fields: ['label', 'body']},
+      {name: 'inlineObject3', fields: ['label', 'body', 'aside']},
+    ],
+    blockObjects: [],
+  })
+  expect(describeSchema(nestedAsideSchema)).toEqual(describeSchema(asideSchema))
 })
 
 test("Scenario: Rich text inside a nested block's own members resolves the root lists when the block keeps only one of them", () => {
@@ -787,168 +355,32 @@ test("Scenario: Rich text inside a nested block's own members resolves the root 
     noteOnlySchema,
     arrayFieldOf(noteOnlySchema.annotations, 'link', 'body'),
   )
+  const nestedLinkBodySchema = getSubSchema(
+    noteBodySchema,
+    arrayFieldOf(noteBodySchema.annotations, 'link', 'body'),
+  )
 
-  expect(noteBodySchema.annotations).toEqual([
-    {
-      name: 'link',
-      title: 'Link',
-      fields: [
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-              annotations: [
-                {
-                  name: 'link',
-                  title: 'Link',
-                  fields: [
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                        {type: 'aside', title: 'Aside'},
-                        {type: 'load', title: 'Load'},
-                      ],
-                    },
-                  ],
-                },
-              ],
-              inlineObjects: [
-                {
-                  name: 'note',
-                  title: 'Note',
-                  fields: [
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                        {type: 'aside', title: 'Aside'},
-                        {type: 'load', title: 'Load'},
-                      ],
-                    },
-                  ],
-                },
-                {
-                  name: 'tag',
-                  title: 'Tag',
-                  fields: [{name: 'label', type: 'string', title: 'Label'}],
-                },
-              ],
-            },
-            {type: 'aside', title: 'Aside'},
-            {type: 'load', title: 'Load'},
-          ],
-        },
-      ],
-    },
+  expect(withoutAnnotationsSchema.annotations).toEqual([])
+  expect(describeSchema(noteOnlySchema).inlineObjects).toEqual([
+    {name: 'note', fields: ['body']},
   ])
-  expect(linkBodySchema.inlineObjects).toEqual([
-    {
-      name: 'note',
-      title: 'Note',
-      fields: [
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-              annotations: [
-                {
-                  name: 'link',
-                  title: 'Link',
-                  fields: [
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                        {type: 'aside', title: 'Aside'},
-                        {type: 'load', title: 'Load'},
-                      ],
-                    },
-                  ],
-                },
-              ],
-              inlineObjects: [
-                {
-                  name: 'note',
-                  title: 'Note',
-                  fields: [
-                    {
-                      name: 'body',
-                      type: 'array',
-                      title: 'Body',
-                      of: [
-                        {
-                          type: 'block',
-                          styles: [
-                            {name: 'normal', title: 'Normal', value: 'normal'},
-                          ],
-                          lists: [],
-                          decorators: [],
-                        },
-                        {type: 'aside', title: 'Aside'},
-                        {type: 'load', title: 'Load'},
-                      ],
-                    },
-                  ],
-                },
-                {
-                  name: 'tag',
-                  title: 'Tag',
-                  fields: [{name: 'label', type: 'string', title: 'Label'}],
-                },
-              ],
-            },
-            {type: 'aside', title: 'Aside'},
-            {type: 'load', title: 'Load'},
-          ],
-        },
-      ],
-    },
-    {
-      name: 'tag',
-      title: 'Tag',
-      fields: [{name: 'label', type: 'string', title: 'Label'}],
-    },
-  ])
+  const richText = {
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [{name: 'link', fields: ['body']}],
+    inlineObjects: [
+      {name: 'note', fields: ['body']},
+      {name: 'tag', fields: ['label']},
+    ],
+    blockObjects: [
+      {name: 'aside', fields: ['withoutAnnotations', 'noteOnly']},
+      {name: 'load', fields: ['body']},
+    ],
+  }
+  expect(describeSchema(noteBodySchema)).toEqual(richText)
+  expect(describeSchema(linkBodySchema)).toEqual(richText)
+  expect(describeSchema(nestedLinkBodySchema)).toEqual(richText)
 })
 
 test('Scenario: Rich text inside an object-only array resolves the root lists without compileSchema', () => {
@@ -998,52 +430,23 @@ test('Scenario: Rich text inside an object-only array resolves the root lists wi
     arrayFieldOf(itemsSchema.blockObjects, 'card', 'body'),
   )
 
-  expect(boxBodySchema.inlineObjects).toEqual([
-    {
-      name: 'note',
-      title: 'Note',
-      fields: [
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-            {type: 'card', title: 'Card'},
-            {type: 'load', title: 'Load'},
-          ],
-        },
-      ],
-    },
-  ])
-  expect(cardBodySchema.inlineObjects).toEqual([
-    {
-      name: 'note',
-      title: 'Note',
-      fields: [
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-            {type: 'card', title: 'Card'},
-            {type: 'load', title: 'Load'},
-          ],
-        },
-      ],
-    },
-  ])
+  const richText = {
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [{name: 'holder', fields: ['items']}],
+    inlineObjects: [{name: 'note', fields: ['body']}],
+    blockObjects: [
+      {name: 'card', fields: ['body']},
+      {name: 'load', fields: ['body']},
+    ],
+  }
+  expect(describeSchema(boxBodySchema)).toEqual(richText)
+  expect(describeSchema(cardBodySchema)).toEqual(richText)
+  // Every `richText` position is the one shared definition.
+  expect(arrayFieldOf(boxBodySchema.inlineObjects, 'note', 'body')).toBe(
+    arrayFieldOf(definition.inlineObjects, 'note', 'body'),
+  )
 })
 
 test('Scenario: Rich text inside an object type that a narrower block references by name resolves the root lists', () => {
@@ -1089,8 +492,7 @@ test('Scenario: Rich text inside an object type that a narrower block references
 
   // The sub-schemas `parseBlocks` hands down along
   // `link.body > link.body > link.body > card.aside > note.cards > card.body`:
-  // a block object parses against the schema of the position holding it,
-  // and a bare reference resolves from the `blockObjects` of that schema.
+  // a block object parses against the schema of the position holding it.
   const schema = compileSchema(
     sanitySchemaToPortableTextSchema(sanitySchema.get('richText')),
   )
@@ -1110,37 +512,39 @@ test('Scenario: Rich text inside an object type that a narrower block references
       'aside',
     ),
   )
-  const cardBodySchema = getSubSchema(
+  const cardsSchema = getSubSchema(
     asideSchema,
-    arrayFieldOf(asideSchema.blockObjects, 'card', 'body'),
+    arrayFieldOf(asideSchema.inlineObjects, 'note', 'cards'),
+  )
+  const cardBodySchema = getSubSchema(
+    cardsSchema,
+    arrayFieldOf(cardsSchema.blockObjects, 'card', 'body'),
+  )
+  const cardLinkBodySchema = getSubSchema(
+    cardBodySchema,
+    arrayFieldOf(cardBodySchema.annotations, 'link', 'body'),
   )
 
   expect(asideSchema.annotations).toEqual([])
-  expect(arrayFieldOf(asideSchema.inlineObjects, 'note', 'cards')).toEqual([
-    {type: 'card', title: 'Card'},
+  expect(describeSchema(cardsSchema).blockObjects).toEqual([
+    {name: 'card', fields: ['body', 'aside']},
   ])
-  expect(cardBodySchema.annotations).toEqual([
-    {
-      name: 'link',
-      title: 'Link',
-      fields: [
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              type: 'block',
-              styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-              lists: [],
-              decorators: [],
-            },
-            {type: 'card', title: 'Card'},
-          ],
-        },
-      ],
-    },
-  ])
+  expect(describeSchema(cardBodySchema)).toEqual({
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [{name: 'link', fields: ['body']}],
+    inlineObjects: [{name: 'note', fields: ['cards']}],
+    blockObjects: [{name: 'load', fields: ['body']}],
+  })
+  expect(describeSchema(cardLinkBodySchema)).toEqual({
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [{name: 'link', fields: ['body']}],
+    inlineObjects: [{name: 'note', fields: ['cards']}],
+    blockObjects: [{name: 'card', fields: ['body', 'aside']}],
+  })
 })
 
 test('Scenario: An inline object with three rich-text fields sharing the root rich text converts small and keeps its fields', () => {
@@ -1150,9 +554,13 @@ test('Scenario: An inline object with three rich-text fields sharing the root ri
     )
 
     expect(
-      JSON.stringify(definition).length,
+      countDistinctObjects(definition),
       `${embeddingTypeCount} embedding types`,
-    ).toBeLessThan(50_000)
+    ).toBeLessThan(200)
+    expect(
+      countDistinctObjects(compileSchema(definition)),
+      `${embeddingTypeCount} embedding types`,
+    ).toBeLessThan(200)
   }
 
   const schema = compileSchema(
@@ -1162,79 +570,34 @@ test('Scenario: An inline object with three rich-text fields sharing the root ri
     schema,
     arrayFieldOf(schema.inlineObjects, 'layout', 'tertiary'),
   )
+  const nestedTertiarySchema = getSubSchema(
+    tertiarySchema,
+    arrayFieldOf(tertiarySchema.inlineObjects, 'layout', 'tertiary'),
+  )
+  const inlineTypeBodySchema = getSubSchema(
+    tertiarySchema,
+    arrayFieldOf(tertiarySchema.inlineObjects, 'inlineType0', 'body'),
+  )
 
-  expect(
-    tertiarySchema.inlineObjects.find((object) => object.name === 'layout'),
-  ).toEqual({
-    name: 'layout',
-    title: 'Layout',
-    fields: [
-      {name: 'title', type: 'string', title: 'Title'},
-      {
-        name: 'primary',
-        type: 'array',
-        title: 'Primary',
-        of: [
-          {
-            type: 'block',
-            styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-            lists: [],
-            decorators: [],
-          },
-        ],
-      },
-      {
-        name: 'secondary',
-        type: 'array',
-        title: 'Secondary',
-        of: [
-          {
-            type: 'block',
-            styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-            lists: [],
-            decorators: [],
-          },
-        ],
-      },
-      {
-        name: 'tertiary',
-        type: 'array',
-        title: 'Tertiary',
-        of: [
-          {
-            type: 'block',
-            styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-            lists: [],
-            decorators: [],
-          },
-        ],
-      },
+  const richText = {
+    styles: ['normal'],
+    lists: [],
+    decorators: [],
+    annotations: [],
+    inlineObjects: [
+      {name: 'layout', fields: ['title', 'primary', 'secondary', 'tertiary']},
+      {name: 'inlineType0', fields: ['label', 'body']},
+      {name: 'inlineType1', fields: ['label', 'body']},
+      ...[2, 3, 4, 5, 6, 7].map((index) => ({
+        name: `inlineType${index}`,
+        fields: ['label'],
+      })),
     ],
-  })
-  expect(
-    tertiarySchema.inlineObjects.find(
-      (object) => object.name === 'inlineType0',
-    ),
-  ).toEqual({
-    name: 'inlineType0',
-    title: 'Inline Type 0',
-    fields: [
-      {name: 'label', type: 'string', title: 'Label'},
-      {
-        name: 'body',
-        type: 'array',
-        title: 'Body',
-        of: [
-          {
-            type: 'block',
-            styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
-            lists: [],
-            decorators: [],
-          },
-        ],
-      },
-    ],
-  })
+    blockObjects: [],
+  }
+  expect(describeSchema(tertiarySchema)).toEqual(richText)
+  expect(describeSchema(nestedTertiarySchema)).toEqual(richText)
+  expect(describeSchema(inlineTypeBodySchema)).toEqual(richText)
 })
 
 function arrayFieldOf(
@@ -1365,4 +728,56 @@ function createLayoutRichText(embeddingTypeCount: number) {
     fields: Array<{name: string; type: ArraySchemaType}>
   }
   return article.fields.find((field) => field.name === 'body')!.type
+}
+
+function countDistinctObjects(
+  value: unknown,
+  seen = new Set<object>(),
+): number {
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return 0
+  }
+  seen.add(value)
+  return (
+    1 +
+    Object.values(value).reduce(
+      (count, child) => count + countDistinctObjects(child, seen),
+      0,
+    )
+  )
+}
+
+function describeSchema(schema: {
+  styles: ReadonlyArray<{name: string}>
+  lists: ReadonlyArray<{name: string}>
+  decorators: ReadonlyArray<{name: string}>
+  annotations: ReadonlyArray<{
+    name: string
+    fields: ReadonlyArray<{name: string}>
+  }>
+  inlineObjects: ReadonlyArray<{
+    name: string
+    fields: ReadonlyArray<{name: string}>
+  }>
+  blockObjects: ReadonlyArray<{
+    name: string
+    fields: ReadonlyArray<{name: string}>
+  }>
+}) {
+  const names = (entries: ReadonlyArray<{name: string}>) =>
+    entries.map((entry) => entry.name)
+  const withFields = (
+    entries: ReadonlyArray<{
+      name: string
+      fields: ReadonlyArray<{name: string}>
+    }>,
+  ) => entries.map((entry) => ({name: entry.name, fields: names(entry.fields)}))
+  return {
+    styles: names(schema.styles),
+    lists: names(schema.lists),
+    decorators: names(schema.decorators),
+    annotations: withFields(schema.annotations),
+    inlineObjects: withFields(schema.inlineObjects),
+    blockObjects: withFields(schema.blockObjects),
+  }
 }

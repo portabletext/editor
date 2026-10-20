@@ -77,7 +77,7 @@ describe('mutually-embedding block objects', () => {
     // with ~25. Every consumer walks the tree (`compileSchema`, React,
     // serialization), so tree size is the contract, and conversion time
     // alone cannot pin it.
-    expect(JSON.stringify(schema).length).toBeLessThan(100_000)
+    expect(countDistinctObjects(schema)).toBeLessThan(200)
   }, 10_000)
 
   test('a marketing-site schema converts to a PTE schema that container resolution can walk at every depth', () => {
@@ -222,7 +222,7 @@ describe('mutually-embedding block objects', () => {
         throw new Error(`${blockObject.name}.body should be an array field`)
       }
       const memberTypeNames = bodyField.of
-        .map((member) => (member.type === 'object' ? member.name : member.type))
+        .map((member) => ('fields' in member ? member.name : member.type))
         .sort()
       expect(memberTypeNames).toEqual(allowedMemberTypes)
     }
@@ -279,3 +279,20 @@ describe('mutually-embedding block objects', () => {
     // flaked on CI where the whole test body takes ~7-8s.
   }, 30_000)
 })
+
+function countDistinctObjects(
+  value: unknown,
+  seen = new Set<object>(),
+): number {
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return 0
+  }
+  seen.add(value)
+  return (
+    1 +
+    Object.values(value).reduce(
+      (count, child) => count + countDistinctObjects(child, seen),
+      0,
+    )
+  )
+}
