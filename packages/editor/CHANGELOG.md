@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.2.6
+
+### Patch Changes
+
+- [#3260](https://github.com/portabletext/editor/pull/3260) [`dabaea4`](https://github.com/portabletext/editor/commit/dabaea4a182054032a83324799a1d480cd2b7c9e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react to ^19.3.1
+
+- [#3397](https://github.com/portabletext/editor/pull/3397) [`365f336`](https://github.com/portabletext/editor/commit/365f33697ddcd222acf428e45194e43c9dbeb986) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `isTextBlockNode` and `isSpanNode` from `@portabletext/schema`
+- Updated dependencies [[`a2c9bb2`](https://github.com/portabletext/editor/commit/a2c9bb2d59f87d50387526314e9578c030d5a5ee), [`329cd2e`](https://github.com/portabletext/editor/commit/329cd2e27dc27f81ff4577e9d02c95471a56c846)]:
+  - @portabletext/patches@3.0.2
+  - @portabletext/schema@3.1.0
+  - @portabletext/html@2.0.2
+
 ## 8.2.5
 
 ### Patch Changes

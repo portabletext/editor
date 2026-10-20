@@ -1,5 +1,13 @@
 # @portabletext/plugin-emoji-picker
 
+## 8.0.20
+
+### Patch Changes
+
+- [#3260](https://github.com/portabletext/editor/pull/3260) [`dabaea4`](https://github.com/portabletext/editor/commit/dabaea4a182054032a83324799a1d480cd2b7c9e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react to ^19.3.1
+- Updated dependencies [[`dabaea4`](https://github.com/portabletext/editor/commit/dabaea4a182054032a83324799a1d480cd2b7c9e)]:
+  - @portabletext/plugin-input-rule@7.0.20
+
 ## 8.0.19
 
 ### Patch Changes

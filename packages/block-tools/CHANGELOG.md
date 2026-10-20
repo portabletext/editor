@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`329cd2e`](https://github.com/portabletext/editor/commit/329cd2e27dc27f81ff4577e9d02c95471a56c846)]:
+  - @portabletext/schema@3.1.0
+  - @portabletext/html@2.0.2
+  - @portabletext/sanity-bridge@4.1.4
+
 ## 6.0.4
 
 ### Patch Changes
