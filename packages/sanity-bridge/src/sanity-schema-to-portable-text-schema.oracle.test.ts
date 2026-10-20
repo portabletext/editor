@@ -23,14 +23,17 @@ import {describe, expect, test} from 'vitest'
 import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
 
 /**
- * Oracle: conversion must produce the same bounded schema expansion as
- * a recursive reference implementation, across randomized schema graphs
- * (mutual embedding, cycles, anonymous nesting, inline objects,
- * annotations, restricted nested blocks). The reference and its rules
- * are described in its doc comment below.
+ * Oracle: across randomized schema graphs (mutual embedding, cycles,
+ * anonymous nesting, inline objects, annotations, restricted nested
+ * blocks), the compiled conversion must unfold to the same tree as the
+ * compiled output of a recursive reference implementation. On acyclic
+ * schemas both unfold completely and must be deep-equal. On cyclic
+ * schemas the reference cuts repeated types into markers, so the
+ * comparison is bounded and stops at each marker. The reference and its
+ * rules are described in its doc comment below.
  */
 describe('conversion oracle', () => {
-  test('Scenario: Fuzzed schema graphs compile to deterministic bounded expansions', () => {
+  test('Scenario: Fuzzed schema graphs unfold to the reference conversion', () => {
     let seed = 1337
     const random = () => {
       seed = (seed * 16807) % 2147483647
@@ -39,7 +42,15 @@ describe('conversion oracle', () => {
     const pick = <T>(items: Array<T>): T =>
       items[Math.floor(random() * items.length)]!
 
+    let acyclicRounds = 0
+    let cyclicRoundsComparedToReference = 0
+
     for (let round = 0; round < 40; round++) {
+      // Even rounds generate acyclic schemas: every named type ranks,
+      // types and lists only reference types and lists ranked after
+      // them, and nothing references `blockContent` back, so no inline
+      // object or annotation re-enters the root rich text.
+      const generateAcyclic = round % 2 === 0
       // Sized so the recursive reference stays comparable: block <->
       // inline-object Portable Text cycles make its output grow
       // exponentially with type count even when it terminates (154MB
@@ -54,12 +65,40 @@ describe('conversion oracle', () => {
         {length: 1 + Math.floor(random() * 3)},
         (_, index) => `list${index}`,
       )
+      const richTextNames = Array.from(
+        {length: 1 + Math.floor(random() * 2)},
+        (_, index) => `richText${index}`,
+      )
+      const typeRanks = typeNames.map((_, index) => 2 * index + 1)
+      const listRanks = listTypeNames.map(() =>
+        generateAcyclic ? 2 * Math.floor(random() * (typeCount + 1)) : 0,
+      )
+      const richTextRanks = richTextNames.map(() =>
+        generateAcyclic ? 2 * Math.floor(random() * (typeCount + 1)) : 0,
+      )
+      const typesAfter = (rank: number) =>
+        generateAcyclic
+          ? typeNames.filter((_, index) => typeRanks[index]! > rank)
+          : typeNames
+      const listsAfter = (rank: number) =>
+        generateAcyclic
+          ? listTypeNames.filter((_, index) => listRanks[index]! > rank)
+          : listTypeNames
+      const richTextsAfter = (rank: number) =>
+        generateAcyclic
+          ? richTextNames.filter((_, index) => richTextRanks[index]! > rank)
+          : richTextNames
+      const subset = <T>(items: Array<T>): Array<T> =>
+        items.filter(() => random() < 0.5)
 
       // Anonymous object array member, nesting another anonymous member
       // and referencing named object and list types, so both named cycles
       // and same-instance re-entries through named list types route
       // through anonymous objects.
-      const anonymousMember = (depth: number): Record<string, unknown> => {
+      const anonymousMember = (
+        depth: number,
+        rank: number,
+      ): Record<string, unknown> => {
         const fields: Array<Record<string, unknown>> = [
           {name: 'label', type: 'string'},
         ]
@@ -67,33 +106,90 @@ describe('conversion oracle', () => {
           fields.push({
             name: 'items',
             type: 'array',
-            of: [ofMember(depth + 1)],
+            of: [ofMember(depth + 1, rank)],
           })
         }
-        if (random() < 0.4) {
-          fields.push({name: 'children', type: pick(listTypeNames)})
+        const lists = listsAfter(rank)
+        if (random() < 0.4 && lists.length > 0) {
+          fields.push({name: 'children', type: pick(lists)})
         }
         return {type: 'object', fields}
       }
-      const ofMember = (depth: number): Record<string, unknown> =>
-        depth < 2 && random() < 0.4
-          ? anonymousMember(depth)
-          : {type: pick(typeNames)}
+      const ofMember = (
+        depth: number,
+        rank: number,
+      ): Record<string, unknown> => {
+        const types = typesAfter(rank)
+        if (depth < 2 && random() < 0.4) {
+          return anonymousMember(depth, rank)
+        }
+        if (types.length === 0) {
+          return {type: 'object', fields: [{name: 'label', type: 'string'}]}
+        }
+        return {type: pick(types)}
+      }
 
-      const listTypes = listTypeNames.map((listTypeName) => ({
+      const listTypes = listTypeNames.map((listTypeName, index) => ({
         name: listTypeName,
         type: 'array',
-        of: [anonymousMember(0)],
+        of: [anonymousMember(0, listRanks[index]!)],
       }))
 
-      const objectTypes = typeNames.map((typeName) => {
+      // Portable Text arrays other than `blockContent`, whose block
+      // restricts styles, decorators, lists, annotations and inline
+      // objects, so nested blocks with their own lists appear in acyclic
+      // rounds too.
+      const richTextTypes = richTextNames.map((richTextName, index) => {
+        const types = typesAfter(richTextRanks[index]!)
+        return {
+          name: richTextName,
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              styles: [
+                {title: 'Normal', value: 'normal'},
+                ...subset([
+                  {title: 'Heading', value: 'h1'},
+                  {title: 'Code', value: 'code'},
+                ]),
+              ],
+              lists: subset([
+                {title: 'Bullet', value: 'bullet'},
+                {title: 'Number', value: 'number'},
+              ]),
+              marks: {
+                decorators: subset([
+                  {title: 'Strong', value: 'strong'},
+                  {title: 'Code', value: 'code'},
+                ]),
+                annotations: subset(types)
+                  .slice(0, 2)
+                  .map((typeName) => ({type: typeName})),
+              },
+              of: subset(types)
+                .slice(0, 2)
+                .map((typeName) => ({type: typeName})),
+            },
+            ...subset(types)
+              .slice(0, 2)
+              .map((typeName) => ({type: typeName})),
+          ],
+        }
+      })
+
+      const objectTypes = typeNames.map((typeName, typeIndex) => {
+        const rank = typeRanks[typeIndex]!
+        const types = typesAfter(rank)
+        const lists = listsAfter(rank)
+        const richTexts = richTextsAfter(rank)
         const fieldCount = 1 + Math.floor(random() * 4)
         const fields = Array.from({length: fieldCount}, (_, fieldIndex) => {
           const kind = random()
           if (kind < 0.35) {
             return {name: `field${fieldIndex}`, type: 'string'}
           }
-          if (kind < 0.55) {
+          if (kind < 0.55 && types.length > 0) {
             // Array referencing random named types: mutual embedding and
             // cycles.
             const memberCount = 1 + Math.floor(random() * 3)
@@ -101,11 +197,11 @@ describe('conversion oracle', () => {
               name: `field${fieldIndex}`,
               type: 'array',
               of: Array.from({length: memberCount}, () => ({
-                type: pick(typeNames),
+                type: pick(types),
               })),
             }
           }
-          if (kind < 0.65) {
+          if (kind < 0.65 && !generateAcyclic) {
             // Portable Text array embedding the shared blockContent.
             return {name: `field${fieldIndex}`, type: 'blockContent'}
           }
@@ -114,11 +210,18 @@ describe('conversion oracle', () => {
             return {
               name: `field${fieldIndex}`,
               type: 'array',
-              of: [ofMember(0), {type: pick(typeNames)}],
+              of: [
+                ofMember(0, rank),
+                ...(types.length > 0 ? [{type: pick(types)}] : []),
+              ],
             }
           }
-          if (kind < 0.8) {
-            return {name: `field${fieldIndex}`, type: pick(listTypeNames)}
+          if (kind < 0.8 && lists.length > 0) {
+            return {name: `field${fieldIndex}`, type: pick(lists)}
+          }
+          if (kind < 0.9 && richTexts.length > 0) {
+            // Portable Text array with its own restricted block.
+            return {name: `field${fieldIndex}`, type: pick(richTexts)}
           }
           // Anonymous inline object.
           return {
@@ -156,20 +259,68 @@ describe('conversion oracle', () => {
         ],
       }
 
+      const definitions = [
+        blockContent,
+        ...objectTypes,
+        ...listTypes,
+        ...richTextTypes,
+      ]
+      const acyclic = !hasNamedTypeCycle(definitions)
+      if (generateAcyclic) {
+        expect(acyclic, `round ${round} generated acyclic`).toBe(true)
+      }
+
       const schema = SanitySchema.compile({
         name: `fuzz${round}`,
-        types: [blockContent, ...objectTypes, ...listTypes],
+        types: definitions,
       })
       const target = schema.get('blockContent')
+      const label = `round ${round} (typeCount ${typeCount}, ${acyclic ? 'acyclic' : 'cyclic'})`
 
-      const converted = sanitySchemaToPortableTextSchema(target)
-      const convertedAgain = sanitySchemaToPortableTextSchema(target)
+      const converted = compileSchema(sanitySchemaToPortableTextSchema(target))
 
+      if (acyclic) {
+        acyclicRounds++
+        const reference = compileSchema(
+          referenceSanitySchemaToPortableTextSchema(target),
+        )
+        expect(unfoldSchemaGraph(converted, Infinity), label).toEqual(
+          unfoldSchemaGraph(reference, Infinity),
+        )
+        continue
+      }
+
+      expect(unfoldSchemaGraph(converted, 2), label).toEqual(
+        unfoldSchemaGraph(
+          compileSchema(sanitySchemaToPortableTextSchema(target)),
+          2,
+        ),
+      )
+
+      let reference: Schema
+      try {
+        reference = compileSchema(
+          referenceSanitySchemaToPortableTextSchema(target),
+        )
+      } catch (error) {
+        // The reference recurses forever when an inline object or
+        // annotation re-enters the block that lists it.
+        expect(error, label).toBeInstanceOf(RangeError)
+        continue
+      }
+      cyclicRoundsComparedToReference++
+      const unfoldedReference = unfoldSchemaGraph(reference, 3)
       expect(
-        unfoldSchemaGraph(compileSchema(converted), 2),
-        `round ${round} (typeCount ${typeCount})`,
-      ).toEqual(unfoldSchemaGraph(compileSchema(convertedAgain), 2))
+        cutAtReferenceMarkers(
+          unfoldSchemaGraph(converted, 3),
+          unfoldedReference,
+        ),
+        label,
+      ).toEqual(unfoldedReference)
     }
+
+    expect(acyclicRounds).toBeGreaterThanOrEqual(15)
+    expect(cyclicRoundsComparedToReference).toBeGreaterThan(0)
   })
 
   test('Scenario: A block whose inline object carries a Portable Text field converts instead of recursing forever', () => {
@@ -625,6 +776,75 @@ function compileType(rawType: any) {
   }).get(rawType.name)
 }
 
+function hasNamedTypeCycle(
+  definitions: ReadonlyArray<{name: string}>,
+): boolean {
+  const names = new Set(definitions.map((definition) => definition.name))
+  const references = new Map(
+    definitions.map((definition) => [
+      definition.name,
+      collectTypeReferences(definition, names),
+    ]),
+  )
+  const finished = new Set<string>()
+  const active = new Set<string>()
+  const visit = (name: string): boolean => {
+    if (active.has(name)) {
+      return true
+    }
+    if (finished.has(name)) {
+      return false
+    }
+    active.add(name)
+    const cyclic = [...(references.get(name) ?? [])].some(visit)
+    active.delete(name)
+    finished.add(name)
+    return cyclic
+  }
+  return [...names].some(visit)
+}
+
+function collectTypeReferences(
+  definition: object,
+  names: ReadonlySet<string>,
+): Set<string> {
+  const references = new Set<string>()
+  const walk = (value: unknown, isDefinitionRoot: boolean) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => walk(item, false))
+      return
+    }
+    if (typeof value !== 'object' || value === null) {
+      return
+    }
+    for (const [key, item] of Object.entries(value)) {
+      if (
+        key === 'type' &&
+        !isDefinitionRoot &&
+        typeof item === 'string' &&
+        names.has(item)
+      ) {
+        references.add(item)
+      }
+      walk(item, false)
+    }
+  }
+  walk(definition, true)
+  return references
+}
+
+/**
+ * Unfold a compiled schema into a tree: resolve every bare `{type: name}`
+ * reference to the root block or inline object of that name, and expand
+ * every shared object at each position. Objects with fields unfold
+ * `depth` levels deep, then collapse to their name and title; with an
+ * infinite depth a cycle throws.
+ *
+ * The one normalization drops `type: 'object'` from objects with fields:
+ * `compileSchema` and `getSubSchema` treat `{type: 'object', fields}` and
+ * `{fields}` alike, and the conversion only omits it on root objects it
+ * shares with nested positions.
+ */
 function unfoldSchemaGraph(schema: Schema, depth: number): unknown {
   const roots = new Map(
     [...schema.blockObjects, ...schema.inlineObjects].map((object) => [
@@ -633,16 +853,17 @@ function unfoldSchemaGraph(schema: Schema, depth: number): unknown {
     ]),
   )
 
-  return unfoldGraphValue(schema, roots, depth)
+  return unfoldGraphValue(schema, roots, depth, new Set())
 }
 
 function unfoldGraphValue(
   value: unknown,
   roots: ReadonlyMap<string, Record<string, unknown>>,
   depth: number,
+  active: Set<object>,
 ): unknown {
   if (Array.isArray(value)) {
-    return value.map((item) => unfoldGraphValue(item, roots, depth))
+    return value.map((item) => unfoldGraphValue(item, roots, depth, active))
   }
   if (typeof value !== 'object' || value === null) {
     return value
@@ -657,24 +878,90 @@ function unfoldGraphValue(
       ? roots.get(object['type'])
       : undefined
   const definition = referenced ?? object
-  if (Array.isArray(definition['fields'])) {
-    if (depth === 0) {
-      return {
-        name: definition['name'],
-        ...(definition['title'] ? {title: definition['title']} : {}),
-      }
-    }
-    return Object.fromEntries(
-      Object.entries(definition)
-        .filter(([key]) => key !== 'type')
-        .map(([key, item]) => [key, unfoldGraphValue(item, roots, depth - 1)]),
+  if (depth === Infinity && active.has(definition)) {
+    throw new Error(
+      `Cycle through ${String(definition['name'] ?? definition['type'])}`,
     )
+  }
+  active.add(definition)
+  try {
+    if (Array.isArray(definition['fields'])) {
+      if (depth === 0) {
+        return {
+          name: definition['name'],
+          ...(definition['title'] ? {title: definition['title']} : {}),
+        }
+      }
+      return Object.fromEntries(
+        Object.entries(definition)
+          .filter(([key]) => key !== 'type')
+          .map(([key, item]) => [
+            key,
+            unfoldGraphValue(item, roots, depth - 1, active),
+          ]),
+      )
+    }
+
+    return Object.fromEntries(
+      Object.entries(definition).map(([key, item]) => [
+        key,
+        unfoldGraphValue(item, roots, depth, active),
+      ]),
+    )
+  } finally {
+    active.delete(definition)
+  }
+}
+
+/**
+ * Where the unfolded reference holds a cut marker, replace the unfolded
+ * conversion at the same position with that marker if it names the same
+ * type, so the comparison stops there and covers everything else. The
+ * reference cuts a named type already on its ancestor path into a bare
+ * `{type: name}` (unresolved when it is not a root type) and an anonymous
+ * object re-entering itself into `fields: []`; its first expansion of a
+ * type is reused at later positions with those cuts in place. Every other
+ * position of the reference is a full expansion.
+ */
+function cutAtReferenceMarkers(
+  converted: unknown,
+  reference: unknown,
+): unknown {
+  if (Array.isArray(converted) && Array.isArray(reference)) {
+    return converted.map((item, index) =>
+      cutAtReferenceMarkers(item, reference[index]),
+    )
+  }
+  if (
+    typeof converted !== 'object' ||
+    converted === null ||
+    typeof reference !== 'object' ||
+    reference === null
+  ) {
+    return converted
+  }
+
+  const convertedObject = converted as Record<string, unknown>
+  const referenceObject = reference as Record<string, unknown>
+  const isBareReference =
+    typeof referenceObject['type'] === 'string' &&
+    referenceObject['type'] !== 'block' &&
+    !('fields' in referenceObject)
+  if (isBareReference && convertedObject['name'] === referenceObject['type']) {
+    return referenceObject
+  }
+  const isAnonymousCut =
+    referenceObject['name'] === 'object' &&
+    Array.isArray(referenceObject['fields']) &&
+    referenceObject['fields'].length === 0
+  if (isAnonymousCut && convertedObject['name'] === 'object') {
+    return {...convertedObject, fields: []}
   }
 
   return Object.fromEntries(
-    Object.entries(object).map(([key, item]) => [
+    Object.entries(convertedObject).map(([key, item]) => [
       key,
-      unfoldGraphValue(item, roots, depth),
+      cutAtReferenceMarkers(item, referenceObject[key]),
     ]),
   )
 }
