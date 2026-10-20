@@ -1,11 +1,11 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
+import type {CorrectionEntry} from '../caret-correction/correction-entry'
 import {isDeepEqual} from '../internal-utils/equality'
-import type {CorrectionEntry} from '../structural-correction'
 import type {CanonicalContext, CanonicalCorrection} from './types'
 
 export function getAdjacentSpansCorrection(
-  entry: CorrectionEntry,
   context: CanonicalContext,
+  entry: CorrectionEntry,
 ): CanonicalCorrection | undefined {
   if (!isTextBlock({schema: context.schema}, entry.node)) {
     return undefined

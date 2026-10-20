@@ -1,4 +1,9 @@
 import {
+  getStructuralCorrection,
+  type StructuralContext,
+  type StructuralCorrection,
+} from '@portabletext/repair'
+import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
   type CanonicalCorrection,
@@ -14,11 +19,6 @@ import {
 import {debug} from '../../internal-utils/debug'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
-import {
-  getStructuralCorrection,
-  type StructuralContext,
-  type StructuralCorrection,
-} from '../../structural-correction'
 import {getChildren} from '../../traversal/get-children'
 import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
@@ -67,66 +67,71 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     schema: structuralContext.schema,
   }
 
-  const fix =
-    getStructuralCorrection(
-      {node, path, parent, siblings: () => getSiblings(editor, path, parent)},
-      structuralContext,
-    ) ??
-    getCaretCorrection(
-      {
-        node,
-        path,
-        parent,
-        container: () => {
-          if (!isObject(editor.snapshot, node)) {
-            return undefined
-          }
-          const resolved = resolveContainerByPath(
-            {
-              containers: editor.containers,
-              schema: editor.snapshot.context.schema,
-              value: editor.snapshot.context.value,
-            },
-            path,
-            node,
-          )
-          if (!resolved || !('container' in resolved)) {
-            return undefined
-          }
-          const field = resolved.field
-          return {
-            field,
-            placeholderStyle: () =>
-              resolvePlaceholderStyle(editor.snapshot, [
-                ...path,
-                field.name,
-                0,
-              ]),
-          }
-        },
-      },
-      caretContext,
-    ) ??
-    (hasRemoteFrame(editor.applyContext)
-      ? undefined
-      : getCanonicalCorrection(
-          {
-            node,
-            path,
-            parent,
-            defaultStyle: () =>
-              getPathSubSchema(editor.snapshot, path).styles.at(0)?.name,
-          },
-          canonicalContext,
-        ))
+  const structural = getStructuralCorrection(structuralContext, {
+    node,
+    path,
+    parent,
+    siblings: () => getSiblings(editor, path, parent),
+  })
 
-  if (fix) {
-    if (!isAncestorPath(path, fix.path)) {
+  if (structural) {
+    if (structural.patches.some((patch) => !isAncestorPath(path, patch.path))) {
       // A fix outside this node's subtree does not dirty this node, so
       // nothing would visit it again. Queue it below the fix's dirty paths so
       // the rest of the repairs still run for it. For a duplicate key fix
       // this also renames the next copy, since nodes sharing a key share one
       // dirty path and a third copy is never visited as itself.
+      updateDirtyPaths(editor, [path])
+    }
+    debug.normalization(
+      structuralMessage(structural, editor.snapshot.context.schema.span.name),
+    )
+    applyStructuralCorrection(editor, structural)
+    return
+  }
+
+  const fix =
+    getCaretCorrection(caretContext, {
+      node,
+      path,
+      parent,
+      container: () => {
+        if (!isObject(editor.snapshot, node)) {
+          return undefined
+        }
+        const resolved = resolveContainerByPath(
+          {
+            containers: editor.containers,
+            schema: editor.snapshot.context.schema,
+            value: editor.snapshot.context.value,
+          },
+          path,
+          node,
+        )
+        if (!resolved || !('container' in resolved)) {
+          return undefined
+        }
+        const field = resolved.field
+        return {
+          field,
+          placeholderStyle: () =>
+            resolvePlaceholderStyle(editor.snapshot, [...path, field.name, 0]),
+        }
+      },
+    }) ??
+    (hasRemoteFrame(editor.applyContext)
+      ? undefined
+      : getCanonicalCorrection(canonicalContext, {
+          node,
+          path,
+          parent,
+          defaultStyle: () =>
+            getPathSubSchema(editor.snapshot, path).styles.at(0)?.name,
+        }))
+
+  if (fix) {
+    if (!isAncestorPath(path, fix.path)) {
+      // Same as for structural fixes above.
       updateDirtyPaths(editor, [path])
     }
     if (fix.rule === 'adjacent-spans') {
@@ -140,24 +145,45 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (!block) {
           return
         }
-        next = getAdjacentSpansCorrection(
-          {node: block.node, path, parent},
-          canonicalContext,
-        )
+        next = getAdjacentSpansCorrection(canonicalContext, {
+          node: block.node,
+          path,
+          parent,
+        })
       }
       return
     }
-    debug.normalization(
-      correctionMessage(fix, editor.snapshot.context.schema.span.name),
-    )
+    debug.normalization(correctionMessage(fix))
     applyCorrection(editor, fix)
     return
   }
 }
 
+function applyStructuralCorrection(
+  editor: Editor,
+  correction: StructuralCorrection,
+): void {
+  for (const patch of correction.patches) {
+    if (patch.type !== 'set') {
+      throw new Error(
+        `Unsupported ${patch.type} patch in ${correction.type} correction`,
+      )
+    }
+    // Build the inverse here rather than leaving it to `apply`, which skips
+    // inverses for remote changes, so a correction behaves the same whichever
+    // change triggered it.
+    editor.apply({
+      type: 'set',
+      path: patch.path,
+      value: patch.value,
+      inverse: getSetInverse(editor, patch.path, patch.value),
+    })
+  }
+}
+
 function applyCorrection(
   editor: Editor,
-  correction: StructuralCorrection | CaretCorrection | CanonicalCorrection,
+  correction: CaretCorrection | CanonicalCorrection,
 ): void {
   if (correction.type === 'merge') {
     applyMergeNode(editor, correction.path, correction.position)
@@ -252,13 +278,15 @@ function readSiblings(
   return getChildren(editor.snapshot, parent.path).map((entry) => entry.node)
 }
 
-function correctionMessage(
-  fix: StructuralCorrection | CaretCorrection | CanonicalCorrection,
+function structuralMessage(
+  correction: StructuralCorrection,
   spanTypeName: string,
 ): string {
-  switch (fix.rule) {
+  switch (correction.type) {
     case 'missing-type':
-      return fix.type === 'set' && fix.value === spanTypeName
+      return correction.patches.some(
+        (patch) => patch.type === 'set' && patch.value === spanTypeName,
+      )
         ? 'Setting span type on node without a type'
         : 'Setting block type on node without a type'
     case 'missing-key':
@@ -267,10 +295,15 @@ function correctionMessage(
       return 'Fixing duplicate key on node'
     case 'span-text':
       return 'Adding .text to span node'
-    case 'container-field':
-      return 'Adding missing child array field to container node'
     case 'missing-children':
       return 'Adding .children to text block node'
+  }
+}
+
+function correctionMessage(fix: CaretCorrection | CanonicalCorrection): string {
+  switch (fix.rule) {
+    case 'container-field':
+      return 'Adding missing child array field to container node'
     case 'empty-children':
       return 'Adding a span to text block node without children'
     case 'inline-object-bracketing':

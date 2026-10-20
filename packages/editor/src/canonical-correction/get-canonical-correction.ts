@@ -17,17 +17,17 @@ import type {
  * `undefined`. The engine runs this group for local changes only.
  */
 export function getCanonicalCorrection(
-  entry: CanonicalEntry,
   context: CanonicalContext,
+  entry: CanonicalEntry,
 ): CanonicalCorrection | undefined {
   return (
-    getMergeSpansSameMarksCorrection(entry, context) ??
-    getMissingMarkDefinitionsCorrection(entry, context) ??
-    getMissingStyleCorrection(entry, context) ??
-    getMissingMarksCorrection(entry, context) ??
-    getEmptySpanAnnotationsCorrection(entry, context) ??
-    getDuplicateMarkDefinitionsCorrection(entry, context) ??
-    getUnusedMarkDefinitionsCorrection(entry, context) ??
-    getAdjacentSpansCorrection(entry, context)
+    getMergeSpansSameMarksCorrection(context, entry) ??
+    getMissingMarkDefinitionsCorrection(context, entry) ??
+    getMissingStyleCorrection(context, entry) ??
+    getMissingMarksCorrection(context, entry) ??
+    getEmptySpanAnnotationsCorrection(context, entry) ??
+    getDuplicateMarkDefinitionsCorrection(context, entry) ??
+    getUnusedMarkDefinitionsCorrection(context, entry) ??
+    getAdjacentSpansCorrection(context, entry)
   )
 }

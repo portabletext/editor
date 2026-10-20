@@ -1,5 +1,5 @@
 import type {Schema} from '@portabletext/schema'
-import type {CorrectionEntry} from '../structural-correction'
+import type {CorrectionEntry} from '../caret-correction/correction-entry'
 import type {Path} from '../types/paths'
 
 export type CanonicalCorrection =

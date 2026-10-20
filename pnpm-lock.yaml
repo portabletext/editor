@@ -606,6 +606,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
+      '@portabletext/repair':
+        specifier: workspace:^
+        version: link:../repair
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
@@ -23337,4 +23340,3 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.3.1)
 
   zwitch@2.0.4: {}
-                                                                                             

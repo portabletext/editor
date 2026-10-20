@@ -6,8 +6,8 @@ import type {
   PortableTextTextBlock,
   Schema,
 } from '@portabletext/schema'
-import type {CorrectionEntry} from '../structural-correction'
 import type {Path} from '../types/paths'
+import type {CorrectionEntry} from './correction-entry'
 
 export type CaretNode =
   | PortableTextTextBlock
