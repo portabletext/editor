@@ -23,6 +23,7 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | Package                                        | Description                                                    |
 | ---------------------------------------------- | -------------------------------------------------------------- |
 | [`@portabletext/editor`](./packages/editor/)   | The official editor for editing Portable Text                  |
+| [`@portabletext/repair`](./packages/repair/)   | Structural corrections for Portable Text values                |
 | [`@portabletext/schema`](./packages/schema/)   | Define and compile Portable Text schemas with full type safety |
 | [`@portabletext/toolbar`](./packages/toolbar/) | React hooks for building toolbars and related UI components    |
 

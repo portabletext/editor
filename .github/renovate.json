@@ -17,6 +17,7 @@
         "packages/keyboard-shortcuts/package.json",
         "packages/patches/package.json",
         "packages/racejar/package.json",
+        "packages/repair/package.json",
         "packages/sanity-bridge/package.json",
         "packages/schema/package.json",
         "packages/toolbar/package.json"
