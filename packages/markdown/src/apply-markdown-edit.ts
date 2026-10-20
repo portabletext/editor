@@ -1,7 +1,14 @@
 import type {PortableTextBlock, Schema} from '@portabletext/schema'
 import {cleanupEfficiency, makeDiff} from '@sanity/diff-match-patch'
-import {truncateSnippet} from './from-portable-text/degradation-report'
-import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
+import {
+  truncateSnippet,
+  type SerializeDegradation,
+  type SerializeDegradationContent,
+} from './from-portable-text/degradation-report'
+import {
+  portableTextToMarkdown,
+  portableTextToMarkdownWithLostContent,
+} from './from-portable-text/portable-text-to-markdown'
 import {defaultKeyGenerator} from './key-generator'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 
@@ -60,7 +67,13 @@ export type ApplyMarkdownEditOptions = {
    * survived, every `key` and `path`, `renamedKeys`, and a skipped
    * report's `reason`, and a `round-trip-mismatch` report's
    * `mismatch.type` and `mismatch.storedPath` are facts of that
-   * invocation, safe to branch on for that invocation.
+   * invocation, safe to branch on for that invocation, and so is
+   * `hiddenLosses`: every entry names content that is missing from the
+   * returned value although the markdown never showed it, and content
+   * the edit's restoration put back is not listed. Losses on a stored
+   * block the edit deleted are not listed either. `serialize.onDegradation`
+   * stays excluded: `hiddenLosses` is where serialize losses that
+   * matter to the returned value surface.
    *
    * @beta
    */
@@ -69,8 +82,9 @@ export type ApplyMarkdownEditOptions = {
 
 /**
  * A path segment into the value `applyMarkdownEdit` returns (except in
- * a skipped report's `mismatch.storedPath`, the one path that
- * addresses the stored value passed in instead): a string field name
+ * a skipped report's `mismatch.storedPath`, which addresses the stored
+ * value passed in instead, as every `hiddenLosses` entry's `path`
+ * does): a string field name
  * for container nesting (`rows`, `cells`, `value`, and the like),
  * `{_key}` wherever the path lands on a keyed array element,
  * and a number wherever it lands on a keyless one instead. A block's
@@ -101,7 +115,11 @@ export type ReconciliationKeyPath = Array<{_key: string} | string | number>
  * semantics: a swap reports one block `content-moved` and its partner
  * `content-unchanged`. The report carries no edit intent: a deleted
  * stored node is not listed at all, so derive deletions as stored
- * keys minus the keys `applyMarkdownEdit` returned.
+ * keys minus the keys `applyMarkdownEdit` returned. Both variants carry
+ * `hiddenLosses`: stored content the `serialize` options could not
+ * express in markdown that is also missing from the returned value, so
+ * whoever edited the markdown never saw it go. Refuse or retry the
+ * write when it is non-empty and the loss matters.
  *
  * @beta
  */
@@ -178,6 +196,39 @@ export type ReconciliationReport =
         key: string
         path: ReconciliationKeyPath
       }>
+      /**
+       * One entry per serialize degradation of the stored value (an
+       * annotation, decorator, block style, or list-item kind the
+       * `serialize` options have no renderer for, see
+       * `SerializeDegradation`) whose content is missing from the
+       * returned value: the markdown never showed it, so the edit could
+       * not have removed it on purpose. A degradation the edit's
+       * restoration repaired is not listed. In stored document order;
+       * `path` addresses the stored value, like `SerializeDegradation`'s.
+       * Each entry is checked against the returned node at the same key
+       * path: the top-level block by `_key`, then down to the stored
+       * text block that held the degraded node, located by identity
+       * rather than by `path` (which can name a sibling reusing the
+       * span's `_key`). Where a custom renderer rendered a copy of that
+       * text block, the whole top-level block is searched instead. An
+       * annotation counts as kept when that block's `markDefs` holds an
+       * equal definition (`_key` aside) that one of its spans carries; a
+       * decorator when one of its spans carries it; a style or list-item
+       * kind when the block's own `style` or `listItem` matches. Only
+       * `span` children count: an inline object's own `marks` field
+       * carries nothing. A stored top-level
+       * block whose `_key` is absent from the returned value was deleted
+       * by the edit, and its losses are not listed. A nested node whose
+       * own path no longer resolves inside a surviving top-level block
+       * is listed: it came back with a fresh key, and fresh content
+       * comes from the markdown alone, which never had it. A keyless
+       * stored top-level block (a number as `path`'s first segment) has
+       * no key to correspond by, so its entries are checked against the
+       * whole returned value, as on a skipped report. A stored empty
+       * text block restored next to its neighbor corresponds by its own
+       * `_key`, whether or not `preservedKeys` lists it.
+       */
+      hiddenLosses: Array<SerializeDegradation>
     }
   | {
       keyMatching: 'skipped'
@@ -209,8 +260,9 @@ export type ReconciliationReport =
          */
         type: 'type-changed' | 'text-changed' | 'block-count-changed'
         /**
-         * Unlike every other path in the report, this one addresses
-         * the stored value as passed, not the returned value: a
+         * Unlike every other path in the report but `hiddenLosses`',
+         * this one addresses the stored value as passed, not the
+         * returned value: a
          * `{_key}` segment for a keyed node, its index for a keyless
          * one, empty paragraphs counted. For `text-changed` it reaches
          * the child (span or inline object) where the text first
@@ -253,6 +305,25 @@ export type ReconciliationReport =
         key: string
         path: ReconciliationKeyPath
       }>
+      /**
+       * One entry per serialize degradation of the stored value (an
+       * annotation, decorator, block style, or list-item kind the
+       * `serialize` options have no renderer for, see
+       * `SerializeDegradation`) whose content is missing from the
+       * returned value: the markdown never showed it, so the edit could
+       * not have removed it on purpose. A degradation the edit's
+       * restoration repaired is not listed. In stored document order;
+       * `path` addresses the stored value, like `SerializeDegradation`'s.
+       * Key matching was skipped, so nothing corresponds by key and
+       * nothing was restored: an entry is listed when no text block
+       * anywhere in the returned value carries its content (an equal
+       * annotation definition, `_key` aside, carried by a span of the
+       * same block; the decorator on some span; the style or list-item
+       * kind on some block). Content found elsewhere in the document
+       * masks a loss, so on a skipped report an empty list is weaker
+       * than on a performed one.
+       */
+      hiddenLosses: Array<SerializeDegradation>
     }
   | {
       keyMatching: 'skipped'
@@ -274,6 +345,25 @@ export type ReconciliationReport =
         key: string
         path: ReconciliationKeyPath
       }>
+      /**
+       * One entry per serialize degradation of the stored value (an
+       * annotation, decorator, block style, or list-item kind the
+       * `serialize` options have no renderer for, see
+       * `SerializeDegradation`) whose content is missing from the
+       * returned value: the markdown never showed it, so the edit could
+       * not have removed it on purpose. A degradation the edit's
+       * restoration repaired is not listed. In stored document order;
+       * `path` addresses the stored value, like `SerializeDegradation`'s.
+       * Key matching was skipped, so nothing corresponds by key and
+       * nothing was restored: an entry is listed when no text block
+       * anywhere in the returned value carries its content (an equal
+       * annotation definition, `_key` aside, carried by a span of the
+       * same block; the decorator on some span; the style or list-item
+       * kind on some block). Content found elsewhere in the document
+       * masks a loss, so on a skipped report an empty list is weaker
+       * than on a performed one.
+       */
+      hiddenLosses: Array<SerializeDegradation>
     }
 
 /**
@@ -368,7 +458,10 @@ export function applyMarkdownEdit(
       schema: options?.schema,
     }),
   ) as unknown as Array<Node>
-  const canonical = canonicalizeStored(storedPortableText, options)
+  const {canonical, degradations} = canonicalizeStored(
+    storedPortableText,
+    options,
+  )
   const nonEmptyStored = nonEmptyBlocks(storedPortableText, options)
   const originOf = traceOrigins(
     storedPortableText,
@@ -421,7 +514,17 @@ export function applyMarkdownEdit(
     recorder,
   )
   if (recorder && onReconciliation) {
-    onReconciliation(buildReconciliationReport(result, recorder))
+    onReconciliation(
+      buildReconciliationReport(
+        result,
+        recorder,
+        findHiddenLosses(
+          degradations,
+          result,
+          recorder.skip ? 'skipped' : 'performed',
+        ),
+      ),
+    )
   }
   return result as unknown as Array<PortableTextBlock>
 }
@@ -479,21 +582,25 @@ type RoundTripMismatch = Extract<
 function canonicalizeStored(
   stored: ReadonlyArray<PortableTextBlock>,
   options: ApplyMarkdownEditOptions | undefined,
-): Array<Node> {
+): {canonical: Array<Node>; degradations: Array<LostContentDegradation>} {
   const storedClone = structuredClone(stored) as Array<PortableTextBlock>
-  const storedMarkdown = portableTextToMarkdown(storedClone, {
-    ...stripOnDegradation(options?.serialize),
-    schema: options?.schema,
-  })
+  const {markdown: storedMarkdown, degradations} =
+    portableTextToMarkdownWithLostContent(storedClone, {
+      ...stripOnDegradation(options?.serialize),
+      schema: options?.schema,
+    })
   const {onDegradation, ...canonicalDeserializeOptions} =
     options?.deserialize ?? {}
   let canonicalKeyCounter = 0
-  return markdownToPortableText(storedMarkdown, {
+  const canonical = markdownToPortableText(storedMarkdown, {
     ...canonicalDeserializeOptions,
     schema: options?.schema,
     keyGenerator: () => `__canonical_${canonicalKeyCounter++}`,
   }) as unknown as Array<Node>
+  return {canonical, degradations}
 }
+
+type LostContentDegradation = SerializeDegradation & SerializeDegradationContent
 
 function stripOnDegradation<T extends object>(
   value: T | undefined,
@@ -2337,6 +2444,7 @@ function buildMarkDefKeyRewriter(
 function buildReconciliationReport(
   result: Array<Node>,
   recorder: ReconciliationRecorder,
+  hiddenLosses: Array<SerializeDegradation>,
 ): ReconciliationReport {
   const preservedKeys: Extract<
     ReconciliationReport,
@@ -2410,7 +2518,7 @@ function buildReconciliationReport(
   })
 
   if (recorder.skip) {
-    return {keyMatching: 'skipped', ...recorder.skip, renamedKeys}
+    return {keyMatching: 'skipped', ...recorder.skip, renamedKeys, hiddenLosses}
   }
 
   const keyFallbacks: Extract<
@@ -2435,7 +2543,290 @@ function buildReconciliationReport(
     })
   }
 
-  return {keyMatching: 'performed', preservedKeys, keyFallbacks, renamedKeys}
+  return {
+    keyMatching: 'performed',
+    preservedKeys,
+    keyFallbacks,
+    renamedKeys,
+    hiddenLosses,
+  }
+}
+
+/**
+ * Keeps the stored value's serialize degradations whose content the
+ * returned value no longer carries, so a degradation the edit's
+ * restoration repaired is not reported. Listed implies gone; the
+ * reverse only holds where a stored block has a key to correspond by.
+ * The indexes are built at most once per scope, so the check stays
+ * linear in the document however many degradations it has.
+ */
+function findHiddenLosses(
+  degradations: ReadonlyArray<LostContentDegradation>,
+  result: Array<Node>,
+  keyMatching: 'performed' | 'skipped',
+): Array<SerializeDegradation> {
+  if (degradations.length === 0) {
+    return []
+  }
+  const lookup: HiddenLossLookup = {
+    topLevelByKey: new Map(),
+    childrenByKey: new WeakMap(),
+    contentByScope: new WeakMap(),
+    contentByTextBlock: new WeakMap(),
+  }
+  for (const node of result) {
+    const key = node['_key']
+    if (typeof key === 'string' && !lookup.topLevelByKey.has(key)) {
+      lookup.topLevelByKey.set(key, node)
+    }
+  }
+  return degradations
+    .filter((degradation) =>
+      isHiddenLoss(degradation, result, keyMatching, lookup),
+    )
+    .map(({type, message, path, snippet}) =>
+      snippet === undefined
+        ? {type, message, path}
+        : {type, message, path, snippet},
+    )
+}
+
+type HiddenLossLookup = {
+  topLevelByKey: Map<string, Node>
+  childrenByKey: WeakMap<Array<unknown>, Map<string, unknown>>
+  contentByScope: WeakMap<object, CarriedContent>
+  contentByTextBlock: WeakMap<Node, CarriedContent>
+}
+
+/**
+ * Everything the text blocks inside one scope carry, in the shape
+ * `hasLostContent` looks degradations up by.
+ */
+type CarriedContent = {
+  annotations: Set<string>
+  decorators: Set<string>
+  styles: Set<unknown>
+  listItems: Set<unknown>
+}
+
+function isHiddenLoss(
+  degradation: LostContentDegradation,
+  result: Array<Node>,
+  keyMatching: 'performed' | 'skipped',
+  lookup: HiddenLossLookup,
+): boolean {
+  const [topSegment] = degradation.path
+  if (
+    keyMatching === 'skipped' ||
+    typeof topSegment !== 'object' ||
+    topSegment === null
+  ) {
+    // Nothing corresponds by key: a keyless stored block's key is
+    // filled in fresh, and a skipped document's keys are all fresh.
+    return !hasLostContent(carriedContent(result, lookup), degradation)
+  }
+  const topLevelBlock = lookup.topLevelByKey.get(topSegment._key)
+  if (!topLevelBlock) {
+    return false
+  }
+  if (degradation.ownerPath === undefined) {
+    // A renderer rendered a copy of the stored text block, so which
+    // block held the content is unknown: search the whole top-level
+    // block rather than report a loss that cannot be confirmed.
+    return !hasLostContent(carriedContent(topLevelBlock, lookup), degradation)
+  }
+  const owner = resolveNestedPath(
+    topLevelBlock,
+    degradation.ownerPath.slice(1),
+    lookup,
+  )
+  return !(
+    typeof owner === 'object' &&
+    owner !== null &&
+    isTextBlock(owner as Node) &&
+    hasLostContent(textBlockContent(owner as Node, lookup), degradation)
+  )
+}
+
+function resolveNestedPath(
+  root: unknown,
+  path: ReadonlyArray<SerializeDegradation['path'][number]>,
+  lookup: HiddenLossLookup,
+): unknown {
+  let current = root
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      current =
+        typeof current === 'object' && current !== null
+          ? (current as Node)[segment]
+          : undefined
+    } else if (typeof segment === 'number') {
+      current = Array.isArray(current) ? current[segment] : undefined
+    } else {
+      current = Array.isArray(current)
+        ? childrenByKey(current, lookup).get(segment._key)
+        : undefined
+    }
+    if (current === undefined) {
+      return undefined
+    }
+  }
+  return current
+}
+
+function childrenByKey(
+  items: Array<unknown>,
+  lookup: HiddenLossLookup,
+): Map<string, unknown> {
+  const cached = lookup.childrenByKey.get(items)
+  if (cached) {
+    return cached
+  }
+  const byKey = new Map<string, unknown>()
+  for (const item of items) {
+    const key =
+      typeof item === 'object' && item !== null
+        ? (item as Node)['_key']
+        : undefined
+    if (typeof key === 'string' && !byKey.has(key)) {
+      byKey.set(key, item)
+    }
+  }
+  lookup.childrenByKey.set(items, byKey)
+  return byKey
+}
+
+/**
+ * Merges what `scope` and every text block nested inside it carry,
+ * built once per scope and reused by every degradation looked up in it.
+ */
+function carriedContent(
+  scope: object,
+  lookup: HiddenLossLookup,
+): CarriedContent {
+  const cached = lookup.contentByScope.get(scope)
+  if (cached) {
+    return cached
+  }
+  const content: CarriedContent = {
+    annotations: new Set(),
+    decorators: new Set(),
+    styles: new Set(),
+    listItems: new Set(),
+  }
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach(visit)
+      return
+    }
+    if (typeof value !== 'object' || value === null) {
+      return
+    }
+    const node = value as Node
+    if (isTextBlock(node)) {
+      addTextBlockContent(node, content)
+    }
+    Object.values(node).forEach(visit)
+  }
+  visit(scope)
+  lookup.contentByScope.set(scope, content)
+  return content
+}
+
+function textBlockContent(
+  block: Node,
+  lookup: HiddenLossLookup,
+): CarriedContent {
+  const cached = lookup.contentByTextBlock.get(block)
+  if (cached) {
+    return cached
+  }
+  const content: CarriedContent = {
+    annotations: new Set(),
+    decorators: new Set(),
+    styles: new Set(),
+    listItems: new Set(),
+  }
+  addTextBlockContent(block, content)
+  lookup.contentByTextBlock.set(block, content)
+  return content
+}
+
+/**
+ * Only real spans count as carrying a mark: an inline object's own
+ * `marks` field is arbitrary data, and a definition only it references
+ * still renders as nothing.
+ */
+function addTextBlockContent(block: Node, content: CarriedContent): void {
+  content.styles.add(block['style'])
+  content.listItems.add(block['listItem'])
+  const carriedMarks = new Set<unknown>()
+  for (const child of block['children'] as Array<unknown>) {
+    const marks =
+      typeof child === 'object' &&
+      child !== null &&
+      (child as Node)['_type'] === 'span'
+        ? (child as Node)['marks']
+        : undefined
+    if (Array.isArray(marks)) {
+      for (const mark of marks) {
+        carriedMarks.add(mark)
+        content.decorators.add(mark)
+      }
+    }
+  }
+  const markDefs = block['markDefs']
+  if (!Array.isArray(markDefs)) {
+    return
+  }
+  for (const markDef of markDefs) {
+    if (typeof markDef !== 'object' || markDef === null) {
+      continue
+    }
+    const {_key: key, ...definition} = markDef as Node
+    if (carriedMarks.has(key)) {
+      content.annotations.add(encodeDefinition(definition))
+    }
+  }
+}
+
+function hasLostContent(
+  content: CarriedContent,
+  degradation: LostContentDegradation,
+): boolean {
+  switch (degradation.type) {
+    case 'annotation-dropped': {
+      const {_key: _storedKey, ...storedDefinition} =
+        degradation.markDefinition as Node
+      return content.annotations.has(encodeDefinition(storedDefinition))
+    }
+    case 'decorator-dropped':
+      return content.decorators.has(degradation.decorator)
+    case 'style-fallback':
+      return content.styles.has(degradation.style)
+    case 'list-item-fallback':
+      return content.listItems.has(degradation.listItem)
+  }
+}
+
+/**
+ * The same equality as `deepEqualNodes`, as a string to index by:
+ * field order is noise, array order and nested `_key`s are not.
+ */
+function encodeDefinition(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(encodeDefinition).join(',')}]`
+  }
+  if (typeof value === 'object' && value !== null) {
+    const entries = Object.entries(value as Node)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(
+        ([field, fieldValue]) =>
+          `${JSON.stringify(field)}:${encodeDefinition(fieldValue)}`,
+      )
+    return `{${entries.join(',')}}`
+  }
+  return JSON.stringify(value) ?? 'undefined'
 }
 
 /**
