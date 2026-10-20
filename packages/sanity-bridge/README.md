@@ -155,42 +155,22 @@ whatever a container should allow on the block member itself. The resulting
 
 Schemas are allowed to reference themselves. An accordion whose body is
 the same Portable Text array it lives in, or a footnote that carries a
-rich-text field of its own, both convert fine. The conversion doesn't
-loop forever trying to expand them.
+rich-text field of its own, both convert fine.
 
-When the conversion runs into a type it is already in the middle of
-expanding, it stops and leaves a marker instead of expanding again:
+The conversion returns one definition object per distinct Sanity type.
+Every position that embeds a type points at that same object, so a type
+that contains itself is a cycle in the output rather than an expansion
+that has to stop somewhere:
 
-- A named object type becomes a bare reference, just `{type: 'accordion'}`.
-  The full declaration still exists at the top level, and that is where
-  the editor looks it up.
-- An inline object or annotation that loops back into itself gets empty
-  `fields` at the point of repetition. Everything up to that point is
-  fully declared.
+- Every position keeps the type's full fields, at any depth.
+- A nested block lists its own styles, decorators, lists, annotations and
+  inline objects, so a block that narrows them does not pick up the
+  root's.
+- The output grows with the number of distinct types, not with the number
+  of positions that embed them.
 
-One thing to keep in mind: every place a type is embedded gets its own
-resolved sub-schema, so a schema where many types embed each other
-produces output that grows with the number of embedding positions, not
-just the number of types.
-
-That growth is steepest when rich-text fields sit inside the inline
-objects they list, because every nested block expands its inline objects
-again. When the full conversion would expand inline objects and
-annotations more than 100,000 times, the schema converts to a compact
-form instead. Up to that, the output is the full conversion.
-
-The compact form differs from the full conversion in two ways:
-
-- A nested block whose annotations and inline objects both match the
-  root block's leaves both out, but only where `compileSchema`, and
-  `getSubSchema` called on the output without `compileSchema`, both fill
-  them in from the root's lists. Elsewhere it keeps them, for example
-  directly inside an array without a block member, next to a block that
-  lists different types, or inside an object type listed in an array.
-- Each inline object and annotation is expanded once and reused at the
-  positions that list it. Some positions deep inside recursive
-  structures resolve an object type with no fields, so content inserted
-  there loses those fields.
+Because recursive output contains cycles, it is not JSON-serializable.
+Walk it with a `Set` of visited objects, or compare it by identity.
 
 ### Convert an uncompiled definition
 

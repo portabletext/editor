@@ -30,10 +30,13 @@ type BlockInheritance = {
 type CompileContext = {
   fields: WeakMap<FieldDefinition, WeakMap<BlockInheritance, FieldDefinition>>
   members: WeakMap<OfDefinition, WeakMap<BlockInheritance, OfDefinition>>
-  inheritance: WeakMap<
-    BlockOfDefinition,
-    WeakMap<BlockInheritance, BlockInheritance>
-  >
+  inheritance: WeakMap<BlockOfDefinition, KeyedMemo<BlockInheritance>>
+  explicitInheritance: WeakMap<BlockOfDefinition, BlockInheritance>
+}
+
+type KeyedMemo<Value> = {
+  value?: Value
+  next: WeakMap<object, KeyedMemo<Value>>
 }
 
 function isBlockOfMember(member: OfDefinition): member is BlockOfDefinition {
@@ -43,7 +46,14 @@ function isBlockOfMember(member: OfDefinition): member is BlockOfDefinition {
 function isInlineObjectOfMember(
   member: OfDefinition,
 ): member is InlineObjectOfDefinition {
-  return member.type === 'object'
+  const candidate = member as unknown as {
+    fields?: unknown
+    type?: string
+  }
+  return (
+    candidate.type === 'object' ||
+    (candidate.type === undefined && Array.isArray(candidate.fields))
+  )
 }
 
 function compileOfMember(
@@ -55,16 +65,23 @@ function compileOfMember(
   if (memoized) {
     return memoized
   }
-  let compiled: OfDefinition
   if (isBlockOfMember(member)) {
-    compiled = compileBlockOfMember(member, inheritance, context)
-  } else if (isInlineObjectOfMember(member)) {
-    compiled = compileInlineObjectOfMember(member, inheritance, context)
-  } else {
-    compiled = member
+    const compiled: BlockOfDefinition = {...member}
+    setPairMemo(context.members, member, inheritance, compiled)
+    Object.assign(compiled, compileBlockOfMember(member, inheritance, context))
+    return compiled
   }
-  setPairMemo(context.members, member, inheritance, compiled)
-  return compiled
+  if (isInlineObjectOfMember(member)) {
+    const compiled: InlineObjectOfDefinition = {...member, fields: []}
+    setPairMemo(context.members, member, inheritance, compiled)
+    Object.assign(
+      compiled,
+      compileInlineObjectOfMember(member, inheritance, context),
+    )
+    return compiled
+  }
+  setPairMemo(context.members, member, inheritance, member)
+  return member
 }
 
 /**
@@ -80,11 +97,41 @@ function resolveBlockInheritance(
   inheritance: BlockInheritance,
   context: CompileContext,
 ): BlockInheritance {
-  const memoized = context.inheritance.get(member)?.get(inheritance)
+  if (
+    member.styles &&
+    member.decorators &&
+    member.annotations &&
+    member.lists &&
+    member.inlineObjects
+  ) {
+    const resolved = context.explicitInheritance.get(member)
+    if (resolved) {
+      return resolved
+    }
+  }
+  // The resolution reads only the inherited lists the member does not
+  // override, plus the whole inheritance when annotation or inline object
+  // fields compile under it. Keying on those rather than the inheritance
+  // object lets a cycle through a container next to this block, which
+  // re-enters with the previous resolution as its inheritance, find that
+  // resolution again.
+  const inheritanceKey: Array<object> = [
+    ...(member.styles ? [] : [inheritance.styles]),
+    ...(member.decorators ? [] : [inheritance.decorators]),
+    ...(member.annotations ? [] : [inheritance.annotations]),
+    ...(member.lists ? [] : [inheritance.lists]),
+    ...(member.inlineObjects ? [] : [inheritance.inlineObjects]),
+    ...(member.annotations || member.inlineObjects ? [inheritance] : []),
+  ]
+  const memoized = getKeyedMemo(context.inheritance, member, inheritanceKey)
   if (memoized) {
     return memoized
   }
-  const resolved = {
+  // Positions that re-enter this block while its members compile copy the
+  // `resolved` arrays, so the member arrays are filled in place.
+  const annotations: Array<AnnotationSchemaType> = []
+  const inlineObjects: Array<InlineObjectSchemaType> = []
+  const resolved: BlockInheritance = {
     styles: member.styles
       ? member.styles.map((style) => ({...style, value: style.name}))
       : inheritance.styles,
@@ -94,29 +141,42 @@ function resolveBlockInheritance(
           value: decorator.name,
         }))
       : inheritance.decorators,
-    annotations: member.annotations
-      ? member.annotations.map((annotation) => ({
-          ...annotation,
-          fields:
-            annotation.fields?.map((field) =>
-              compileField(field, inheritance, context),
-            ) ?? [],
-        }))
-      : inheritance.annotations,
+    annotations: member.annotations ? annotations : inheritance.annotations,
     lists: member.lists
       ? member.lists.map((list) => ({...list, value: list.name}))
       : inheritance.lists,
     inlineObjects: member.inlineObjects
-      ? member.inlineObjects.map((inlineObject) => ({
-          ...inlineObject,
-          fields:
-            inlineObject.fields?.map((field) =>
-              compileField(field, inheritance, context),
-            ) ?? [],
-        }))
+      ? inlineObjects
       : inheritance.inlineObjects,
   }
-  setPairMemo(context.inheritance, member, inheritance, resolved)
+  setKeyedMemo(context.inheritance, member, inheritanceKey, resolved)
+  if (
+    member.styles &&
+    member.decorators &&
+    member.annotations &&
+    member.lists &&
+    member.inlineObjects
+  ) {
+    context.explicitInheritance.set(member, resolved)
+  }
+  for (const annotation of member.annotations ?? []) {
+    annotations.push({
+      ...annotation,
+      fields:
+        annotation.fields?.map((field) =>
+          compileField(field, inheritance, context),
+        ) ?? [],
+    })
+  }
+  for (const inlineObject of member.inlineObjects ?? []) {
+    inlineObjects.push({
+      ...inlineObject,
+      fields:
+        inlineObject.fields?.map((field) =>
+          compileField(field, inheritance, context),
+        ) ?? [],
+    })
+  }
   return resolved
 }
 
@@ -150,7 +210,6 @@ function compileField(
   if (memoized) {
     return memoized
   }
-  let compiled: FieldDefinition = field
   if (field.type === 'array' && field.of) {
     // A container's `{type: 'block'}` member defines the text schema at this
     // position, and its sibling containers inherit that block rather than the
@@ -160,20 +219,24 @@ function compileField(
     const childInheritance = blockMember
       ? resolveBlockInheritance(blockMember, inheritance, context)
       : inheritance
-    compiled = {
+    const compiled: FieldDefinition = {
       ...field,
-      of: field.of.map((member) =>
-        // The block member is `childInheritance` already resolved against the
-        // enclosing `inheritance`; reuse it rather than resolving twice. Its
-        // sibling containers inherit it.
-        member === blockMember
-          ? compileOfMember(member, inheritance, context)
-          : compileOfMember(member, childInheritance, context),
-      ),
+      of: [],
     }
+    setPairMemo(context.fields, field, inheritance, compiled)
+    const of = field.of.map((member) =>
+      // The block member is `childInheritance` already resolved against the
+      // enclosing `inheritance`; reuse it rather than resolving twice. Its
+      // sibling containers inherit it.
+      member === blockMember
+        ? compileOfMember(member, inheritance, context)
+        : compileOfMember(member, childInheritance, context),
+    )
+    Object.assign(compiled, {of})
+    return compiled
   }
-  setPairMemo(context.fields, field, inheritance, compiled)
-  return compiled
+  setPairMemo(context.fields, field, inheritance, field)
+  return field
 }
 
 function setPairMemo<Key extends object, Context extends object, Value>(
@@ -190,6 +253,40 @@ function setPairMemo<Key extends object, Context extends object, Value>(
   }
 }
 
+function getKeyedMemo<Key extends object, Value>(
+  memo: WeakMap<Key, KeyedMemo<Value>>,
+  key: Key,
+  path: ReadonlyArray<object>,
+): Value | undefined {
+  let entry = memo.get(key)
+  for (const part of path) {
+    entry = entry?.next.get(part)
+  }
+  return entry?.value
+}
+
+function setKeyedMemo<Key extends object, Value>(
+  memo: WeakMap<Key, KeyedMemo<Value>>,
+  key: Key,
+  path: ReadonlyArray<object>,
+  value: Value,
+): void {
+  let entry: KeyedMemo<Value> | undefined = memo.get(key)
+  if (!entry) {
+    entry = {next: new WeakMap()}
+    memo.set(key, entry)
+  }
+  for (const part of path) {
+    let next: KeyedMemo<Value> | undefined = entry.next.get(part)
+    if (!next) {
+      next = {next: new WeakMap()}
+      entry.next.set(part, next)
+    }
+    entry = next
+  }
+  entry.value = value
+}
+
 function compileBaseDefinitionWithValue<T extends BaseDefinition>(
   definition: T,
 ): T & {value: string} {
@@ -204,6 +301,7 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     fields: new WeakMap(),
     members: new WeakMap(),
     inheritance: new WeakMap(),
+    explicitInheritance: new WeakMap(),
   }
   const userStyles = (definition.styles ?? []).map(
     compileBaseDefinitionWithValue,
@@ -288,19 +386,36 @@ export function compileSchema(definition: SchemaDefinition): Schema {
           compileField(field, inheritance, context),
         ) ?? [],
     })),
-    blockObjects: (definition.blockObjects ?? []).map((blockObject) => ({
-      ...blockObject,
-      fields:
-        blockObject.fields?.map((field) =>
-          compileField(field, inheritance, context),
-        ) ?? [],
-    })),
-    inlineObjects: (definition.inlineObjects ?? []).map((inlineObject) => ({
-      ...inlineObject,
-      fields:
-        inlineObject.fields?.map((field) =>
-          compileField(field, inheritance, context),
-        ) ?? [],
-    })),
+    blockObjects: (definition.blockObjects ?? []).map((blockObject) =>
+      compileRootObject(blockObject, inheritance, context),
+    ),
+    inlineObjects: (definition.inlineObjects ?? []).map((inlineObject) =>
+      compileRootObject(inlineObject, inheritance, context),
+    ),
+  }
+}
+
+function compileRootObject(
+  object: {
+    name: string
+    title?: string
+    fields?: ReadonlyArray<FieldDefinition>
+  },
+  inheritance: BlockInheritance,
+  context: CompileContext,
+): InlineObjectSchemaType {
+  if (object.fields && (!('type' in object) || object.type === 'object')) {
+    return compileOfMember(
+      object as InlineObjectOfDefinition,
+      inheritance,
+      context,
+    ) as InlineObjectSchemaType
+  }
+  return {
+    ...object,
+    fields:
+      object.fields?.map((field) =>
+        compileField(field, inheritance, context),
+      ) ?? [],
   }
 }

@@ -600,86 +600,41 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
 
     const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
 
-    expect(schema.blockObjects).toEqual([
-      {
-        name: 'table',
-        title: 'Table',
-        fields: [
-          {
-            name: 'rows',
-            type: 'array',
-            title: 'Rows',
-            of: [
-              {
-                type: 'object',
-                name: 'object',
-                title: 'Object',
-                fields: [
-                  {
-                    name: 'label',
-                    type: 'string',
-                    title: 'Label',
-                  },
-                  {
-                    name: 'children',
-                    type: 'array',
-                    title: 'Children',
-                    of: [
-                      {
-                        type: 'object',
-                        name: 'object',
-                        title: 'Object',
-                        fields: [],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+    const table = schema.blockObjects[0]!
+    const rows = table.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const row = rows.of![0] as Extract<OfDefinition, {type: 'object'}>
+    const children = row.fields[1] as Extract<FieldDefinition, {type: 'array'}>
+
+    expect({table, rows, rowFields: row.fields, children}).toEqual({
+      table: {name: 'table', title: 'Table', fields: [rows]},
+      rows: {name: 'rows', type: 'array', title: 'Rows', of: [row]},
+      rowFields: [
+        {name: 'label', type: 'string', title: 'Label'},
+        {name: 'children', type: 'array', title: 'Children', of: [row]},
+      ],
+      children: {
+        name: 'children',
+        type: 'array',
+        title: 'Children',
+        of: [row],
       },
-    ])
-    expect(compileSchema(schema).blockObjects).toEqual([
-      {
-        name: 'table',
-        title: 'Table',
-        fields: [
-          {
-            name: 'rows',
-            type: 'array',
-            title: 'Rows',
-            of: [
-              {
-                type: 'object',
-                name: 'object',
-                title: 'Object',
-                fields: [
-                  {
-                    name: 'label',
-                    type: 'string',
-                    title: 'Label',
-                  },
-                  {
-                    name: 'children',
-                    type: 'array',
-                    title: 'Children',
-                    of: [
-                      {
-                        type: 'object',
-                        name: 'object',
-                        title: 'Object',
-                        fields: [],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ])
+    })
+    expect(children.of![0]).toBe(row)
+
+    const compiledTable = compileSchema(schema).blockObjects[0]!
+    const compiledRows = compiledTable.fields[0] as Extract<
+      FieldDefinition,
+      {type: 'array'}
+    >
+    const compiledRow = compiledRows.of![0] as Extract<
+      OfDefinition,
+      {type: 'object'}
+    >
+    const compiledChildren = compiledRow.fields[1] as Extract<
+      FieldDefinition,
+      {type: 'array'}
+    >
+    expect(compiledChildren.of![0]).toBe(compiledRow)
   })
 
   test('compiled schema with an annotation that contains itself through distinct anonymous objects unfolds until an anonymous object repeats', () => {
@@ -741,89 +696,44 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
 
     const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
 
-    expect(schema.blockObjects[0]?.fields[0]).toEqual({
-      name: 'rows',
-      type: 'array',
-      title: 'Rows',
-      of: [
-        {
-          type: 'object',
-          name: 'object',
-          title: 'Object',
-          fields: [
-            {
-              name: 'content',
-              type: 'array',
-              title: 'Content',
-              of: [
-                {
-                  ...defaultBlockOfMember,
-                  annotations: [
-                    {
-                      name: 'note',
-                      title: 'Note',
-                      fields: [
-                        {name: 'label', type: 'string', title: 'Label'},
-                        {
-                          name: 'items',
-                          type: 'array',
-                          title: 'Items',
-                          of: [
-                            {
-                              type: 'object',
-                              name: 'object',
-                              title: 'Object',
-                              fields: [
-                                {
-                                  name: 'content',
-                                  type: 'array',
-                                  title: 'Content',
-                                  of: [
-                                    {
-                                      ...defaultBlockOfMember,
-                                      annotations: [
-                                        {
-                                          name: 'note',
-                                          title: 'Note',
-                                          fields: [
-                                            {
-                                              name: 'label',
-                                              type: 'string',
-                                              title: 'Label',
-                                            },
-                                            {
-                                              name: 'items',
-                                              type: 'array',
-                                              title: 'Items',
-                                              of: [
-                                                {
-                                                  type: 'object',
-                                                  name: 'object',
-                                                  title: 'Object',
-                                                  fields: [],
-                                                },
-                                              ],
-                                            },
-                                          ],
-                                        },
-                                      ],
-                                    },
-                                  ],
-                                },
-                              ],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+    const rows = schema.blockObjects[0]!.fields[0] as Extract<
+      FieldDefinition,
+      {type: 'array'}
+    >
+    const row = rows.of![0] as Extract<OfDefinition, {type: 'object'}>
+    const content = row.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const block = content.of![0] as Extract<OfDefinition, {type: 'block'}>
+    const note = block.annotations![0]!
+    const items = note.fields![1] as Extract<FieldDefinition, {type: 'array'}>
+    const item = items.of![0] as Extract<OfDefinition, {type: 'object'}>
+    const nestedContent = item.fields[0] as Extract<
+      FieldDefinition,
+      {type: 'array'}
+    >
+
+    expect({
+      rows,
+      rowFields: row.fields,
+      noteFields: note.fields,
+      items,
+    }).toEqual({
+      rows: {name: 'rows', type: 'array', title: 'Rows', of: [row]},
+      rowFields: [
+        {name: 'content', type: 'array', title: 'Content', of: [block]},
       ],
+      noteFields: [
+        {name: 'label', type: 'string', title: 'Label'},
+        {name: 'items', type: 'array', title: 'Items', of: [item]},
+      ],
+      items: {name: 'items', type: 'array', title: 'Items', of: [item]},
     })
+    expect(nestedContent).toEqual({
+      name: 'content',
+      type: 'array',
+      title: 'Content',
+      of: [block],
+    })
+    expect(nestedContent.of![0]).toBe(block)
     expect(compileSchema(schema).annotations).toEqual([
       {
         name: 'link',
@@ -886,49 +796,32 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
     const table = schema.blockObjects?.find((b) => b.name === 'table')
 
-    // The nested `table` member inside a cell's `content` is detected as
-    // a cycle (its name is already an ancestor on the walk) and emitted
-    // as a stub `{type, name, title}` without fields. Everything before
-    // that point unfolds fully.
-    expect(table?.fields).toEqual([
-      {
-        name: 'rows',
-        type: 'array',
-        title: 'Rows',
-        of: [
-          {
-            type: 'object',
-            name: 'row',
-            title: 'Row',
-            fields: [
-              {
-                name: 'cells',
-                type: 'array',
-                title: 'Cells',
-                of: [
-                  {
-                    type: 'object',
-                    name: 'cell',
-                    title: 'Cell',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        title: 'Content',
-                        of: [
-                          defaultBlockOfMember,
-                          {type: 'table', title: 'Table'},
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ])
+    const rows = table!.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const row = rows.of![0] as Extract<OfDefinition, {type: 'object'}>
+    const cells = row.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const cell = cells.of![0] as Extract<OfDefinition, {type: 'object'}>
+    const content = cell.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+
+    expect(rows).toEqual({
+      name: 'rows',
+      type: 'array',
+      title: 'Rows',
+      of: [row],
+    })
+    expect(cells).toEqual({
+      name: 'cells',
+      type: 'array',
+      title: 'Cells',
+      of: [cell],
+    })
+    expect({...content, of: []}).toEqual({
+      name: 'content',
+      type: 'array',
+      title: 'Content',
+      of: [],
+    })
+    expect(content.of![0]).toEqual(defaultBlockOfMember)
+    expect(content.of![1]).toBe(table)
   })
 
   test('compiled schema with a recursive object type unfolds until the recursion is detected', () => {
@@ -966,18 +859,20 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
     const aiTask = schema.blockObjects?.find((b) => b.name === 'aiTask')
 
-    // The nested `aiTask` reference inside `input.of` is detected as a
-    // cycle (its name is already an ancestor on the walk) and emitted
-    // as a stub `{type, name, title}` without fields.
-    expect(aiTask?.fields).toEqual([
-      {name: 'instruction', type: 'string', title: 'Instruction'},
-      {
-        name: 'input',
-        type: 'array',
-        title: 'Input',
-        of: [defaultBlockOfMember, {type: 'aiTask', title: 'Ai Task'}],
-      },
-    ])
+    const input = aiTask!.fields[1] as Extract<FieldDefinition, {type: 'array'}>
+    expect(aiTask!.fields[0]).toEqual({
+      name: 'instruction',
+      type: 'string',
+      title: 'Instruction',
+    })
+    expect({...input, of: []}).toEqual({
+      name: 'input',
+      type: 'array',
+      title: 'Input',
+      of: [],
+    })
+    expect(input.of![0]).toEqual(defaultBlockOfMember)
+    expect(input.of![1]).toBe(aiTask)
   })
 
   test('mutually-recursive block-objects unfold one level then emit cycle stubs', () => {
@@ -1030,56 +925,24 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     const a = schema.blockObjects?.find((bo) => bo.name === 'a')
     const b = schema.blockObjects?.find((bo) => bo.name === 'b')
 
-    // A's `content.of` inlines B (one level), and B (inlined inside A)
-    // emits a cycle stub for A.
-    expect(a?.fields).toEqual([
-      {
-        name: 'content',
-        type: 'array',
-        title: 'Content',
-        of: [
-          defaultBlockOfMember,
-          {
-            type: 'object',
-            name: 'b',
-            title: 'B',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                title: 'Content',
-                of: [defaultBlockOfMember, {type: 'a', title: 'A'}],
-              },
-            ],
-          },
-        ],
-      },
-    ])
-    // Symmetrically, B's `content.of` inlines A (one level), and A
-    // (inlined inside B) emits a cycle stub for B.
-    expect(b?.fields).toEqual([
-      {
-        name: 'content',
-        type: 'array',
-        title: 'Content',
-        of: [
-          defaultBlockOfMember,
-          {
-            type: 'object',
-            name: 'a',
-            title: 'A',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                title: 'Content',
-                of: [defaultBlockOfMember, {type: 'b', title: 'B'}],
-              },
-            ],
-          },
-        ],
-      },
-    ])
+    const aContent = a!.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const bContent = b!.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    expect({...aContent, of: []}).toEqual({
+      name: 'content',
+      type: 'array',
+      title: 'Content',
+      of: [],
+    })
+    expect({...bContent, of: []}).toEqual({
+      name: 'content',
+      type: 'array',
+      title: 'Content',
+      of: [],
+    })
+    expect(aContent.of![0]).toEqual(defaultBlockOfMember)
+    expect(bContent.of![0]).toEqual(defaultBlockOfMember)
+    expect(aContent.of![1]).toBe(b)
+    expect(bContent.of![1]).toBe(a)
   })
 
   test('three-way cycle (A -> B -> C -> A) unfolds two levels then stubs', () => {
@@ -1143,46 +1006,23 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
     const a = schema.blockObjects?.find((bo) => bo.name === 'a')
 
-    // A's content inlines B; B's content inlines C; C's content stubs A
-    // (cycle: A is in the ancestor chain when walking C's content).
-    expect(a?.fields).toEqual([
-      {
+    const b = schema.blockObjects.find((bo) => bo.name === 'b')
+    const c = schema.blockObjects.find((bo) => bo.name === 'c')
+    const aContent = a!.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const bContent = b!.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    const cContent = c!.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    for (const content of [aContent, bContent, cContent]) {
+      expect({...content, of: []}).toEqual({
         name: 'content',
         type: 'array',
         title: 'Content',
-        of: [
-          defaultBlockOfMember,
-          {
-            type: 'object',
-            name: 'b',
-            title: 'B',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                title: 'Content',
-                of: [
-                  defaultBlockOfMember,
-                  {
-                    type: 'object',
-                    name: 'c',
-                    title: 'C',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        title: 'Content',
-                        of: [defaultBlockOfMember, {type: 'a', title: 'A'}],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ])
+        of: [],
+      })
+      expect(content.of![0]).toEqual(defaultBlockOfMember)
+    }
+    expect(aContent.of![1]).toBe(b)
+    expect(bContent.of![1]).toBe(c)
+    expect(cContent.of![1]).toBe(a)
   })
 
   test('shared type referenced from two block-objects unfolds in each', () => {
@@ -1240,20 +1080,14 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
     const a = schema.blockObjects?.find((bo) => bo.name === 'a')
     const b = schema.blockObjects?.find((bo) => bo.name === 'b')
-
-    const cInline = {
-      type: 'object',
-      name: 'c',
-      title: 'C',
-      fields: [{name: 'label', type: 'string', title: 'Label'}],
-    }
+    const c = schema.blockObjects.find((bo) => bo.name === 'c')
 
     expect(a?.fields).toEqual([
       {
         name: 'content',
         type: 'array',
         title: 'Content',
-        of: [defaultBlockOfMember, cInline],
+        of: [defaultBlockOfMember, c],
       },
     ])
     expect(b?.fields).toEqual([
@@ -1261,9 +1095,15 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         name: 'content',
         type: 'array',
         title: 'Content',
-        of: [defaultBlockOfMember, cInline],
+        of: [defaultBlockOfMember, c],
       },
     ])
+    expect(
+      (a!.fields[0] as Extract<FieldDefinition, {type: 'array'}>).of![1],
+    ).toBe(c)
+    expect(
+      (b!.fields[0] as Extract<FieldDefinition, {type: 'array'}>).of![1],
+    ).toBe(c)
   })
 
   test('a container whose block member restricts marks/styles/lists produces a sub-schema that does not leak the root schema', () => {
@@ -1676,23 +1516,19 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
 
     const schema = sanitySchemaToPortableTextSchema(richText)
 
-    expect(schema).toEqual({
-      ...defaultSchema,
-      blockObjects: [
-        {
-          name: 'callout',
-          title: 'Callout',
-          fields: [
-            {
-              name: 'nested',
-              type: 'array',
-              title: 'Nested',
-              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
-            },
-          ],
-        },
-      ],
-    })
+    const callout = schema.blockObjects[0]!
+    expect({...schema, blockObjects: []}).toEqual(defaultSchema)
+    expect(callout.fields).toEqual([
+      {
+        name: 'nested',
+        type: 'array',
+        title: 'Nested',
+        of: [defaultBlockOfMember, callout],
+      },
+    ])
+    expect(
+      (callout.fields[0] as Extract<FieldDefinition, {type: 'array'}>).of![1],
+    ).toBe(callout)
   })
 
   test('a root array definition named like a `builtinTypes` extra compiles', () => {
@@ -1705,7 +1541,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     expect(sanitySchemaToPortableTextSchema(richText)).toEqual(defaultSchema)
   })
 
-  test('a block object reached through a same-named root reference stays a bare reference', () => {
+  test('block objects reached through root references share their full definitions', () => {
     const richText: ArrayDefinition = {
       type: 'array',
       name: 'richText',
@@ -1726,32 +1562,25 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
 
     const schema = sanitySchemaToPortableTextSchema(richText)
 
-    expect(schema).toEqual({
-      ...defaultSchema,
-      blockObjects: [
-        {
-          name: 'callout',
-          title: 'Callout',
-          fields: [{name: 'title', type: 'string', title: 'Title'}],
-        },
-        {
-          name: 'note',
-          title: 'Note',
-          fields: [
-            {
-              name: 'body',
-              type: 'array',
-              title: 'Body',
-              of: [
-                defaultBlockOfMember,
-                {type: 'callout', title: 'Callout'},
-                {type: 'note', title: 'Note'},
-              ],
-            },
-          ],
-        },
-      ],
+    const callout = schema.blockObjects[0]!
+    const note = schema.blockObjects[1]!
+    expect({...schema, blockObjects: []}).toEqual(defaultSchema)
+    expect(callout).toEqual({
+      name: 'callout',
+      title: 'Callout',
+      fields: [{name: 'title', type: 'string', title: 'Title'}],
     })
+    expect(note.fields).toEqual([
+      {
+        name: 'body',
+        type: 'array',
+        title: 'Body',
+        of: [defaultBlockOfMember, callout, note],
+      },
+    ])
+    const body = note.fields[0] as Extract<FieldDefinition, {type: 'array'}>
+    expect(body.of![1]).toBe(callout)
+    expect(body.of![2]).toBe(note)
   })
 
   test('a member field named like a Sanity built-in type resolves to the built-in type instead of the same-named root definition', () => {
@@ -1955,27 +1784,25 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       | undefined
     const bodySchema = getSubSchema(schema, bodyField?.of ?? [])
 
-    expect(
-      bodySchema.inlineObjects.find((object) => object.name === 'note'),
-    ).toEqual({
-      name: 'note',
-      title: 'Note',
-      fields: [
-        {name: 'label', type: 'string', title: 'Label'},
-        {
-          name: 'body',
-          type: 'array',
-          title: 'Body',
-          of: [
-            {
-              ...defaultBlockOfMember,
-              inlineObjects: [{name: 'note', title: 'Note', fields: []}],
-            },
-            {type: 'section', title: 'Section'},
-          ],
-        },
-      ],
+    const note = bodySchema.inlineObjects.find(
+      (object) => object.name === 'note',
+    )
+    const section = bodySchema.blockObjects.find(
+      (object) => object.name === 'section',
+    )
+
+    expect(note?.name).toBe('note')
+    expect(note?.title).toBe('Note')
+    expect(note?.fields.map((field) => field.name)).toEqual(['label', 'body'])
+    expect(note?.fields[0]).toEqual({
+      name: 'label',
+      type: 'string',
+      title: 'Label',
     })
+    expect(section?.title).toBe('Section')
+    expect(section?.fields.map((field) => field.name)).toEqual(['content'])
+    // The nested position closes on the one compiled `blockContent`.
+    expect(note?.fields[1]).toBe(bodyField)
   })
 })
 
@@ -2415,7 +2242,8 @@ describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
 
     const schema = sanitySchemaDefinitionToPortableTextSchema(richText)
 
-    expect(schema).toEqual({
+    const callout = schema.blockObjects[0]!
+    expect({...schema, blockObjects: []}).toEqual({
       block: {
         name: 'block',
       },
@@ -2450,21 +2278,19 @@ describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
           fields: [{name: 'href', type: 'string', title: 'Link'}],
         },
       ],
-      blockObjects: [
-        {
-          name: 'callout',
-          title: 'Callout',
-          fields: [
-            {
-              name: 'nested',
-              type: 'array',
-              title: 'Nested',
-              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
-            },
-          ],
-        },
-      ],
+      blockObjects: [],
       inlineObjects: [],
     })
+    expect(callout.fields).toEqual([
+      {
+        name: 'nested',
+        type: 'array',
+        title: 'Nested',
+        of: [defaultBlockOfMember, callout],
+      },
+    ])
+    expect(
+      (callout.fields[0] as Extract<FieldDefinition, {type: 'array'}>).of![1],
+    ).toBe(callout)
   })
 })
