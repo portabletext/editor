@@ -90,11 +90,9 @@ describe('event.delete | unified primitives matrix', () => {
 
     editor.send({type: 'delete', unit: 'block'})
 
-    // The block holding the selection is unset; the selection ref points at
-    // the dead block key, so textspec renders no cursor.
-    await assertValue(editor, ['B: bar'])
+    await assertValue(editor, ['B: |bar'])
     expect(editor.getSnapshot().context.selection).toEqual(
-      collapsed({_key: 'b0'}, 'children', {_key: 's0'}, 0),
+      collapsed({_key: 'b1'}, 'children', {_key: 's1'}, 0),
     )
   })
 

@@ -10,6 +10,8 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.delete.block', () => {
@@ -158,4 +160,164 @@ describe('event.delete.block', () => {
       ])
     })
   })
+
+  test('Scenario: Deleting a container removes the container and its content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const codeBlockKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'code-block',
+            fields: [{name: 'lines', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        {
+          _type: 'code-block',
+          _key: codeBlockKey,
+          lines: [
+            textBlock(line1Key, line1SpanKey, 'a'),
+            textBlock(line2Key, line2SpanKey, 'b'),
+          ],
+        },
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'code-block',
+              arrayField: 'lines',
+              render: ({attributes, children}) => (
+                <pre {...attributes}>{children}</pre>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({type: 'delete.block', at: [{_key: codeBlockKey}]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ])
+    })
+  })
+
+  test('Scenario: Deleting a block object through a path into one of its fields', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'caption', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        {_type: 'image', _key: imageKey, caption: 'bar'},
+      ],
+    })
+
+    editor.send({type: 'delete.block', at: [{_key: imageKey}, 'caption']})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock(fooKey, fooSpanKey, 'foo'),
+      ])
+    })
+  })
+
+  test('Scenario: Deleting a selected block object between text blocks moves the caret to the start of the next block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const fooBlock = {
+      _key: fooBlockKey,
+      _type: 'block',
+      children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const bazBlock = {
+      _key: bazBlockKey,
+      _type: 'block',
+      children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [fooBlock, {_key: imageKey, _type: 'image'}, bazBlock],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'delete.block',
+      at: [{_key: imageKey}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([fooBlock, bazBlock])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
 })
+
+function textBlock(key: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: key,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}

@@ -725,7 +725,6 @@ describe('event.block.unset', () => {
       expect(patches.slice(4)).toEqual([
         unset([{_key: textBlockKey}, 'children']),
         unset([{_key: textBlockKey}, 'style']),
-        set('normal', [{_key: textBlockKey}, 'style']),
         set([], [{_key: textBlockKey}, 'children']),
         setIfMissing([], [{_key: textBlockKey}, 'children']),
         insert([{_key: 'k4', _type: 'span', text: '', marks: []}], 'before', [
@@ -733,6 +732,7 @@ describe('event.block.unset', () => {
           'children',
           0,
         ]),
+        set('normal', [{_key: textBlockKey}, 'style']),
         unset([]),
       ])
       expect(foreignValue).toEqual(undefined)

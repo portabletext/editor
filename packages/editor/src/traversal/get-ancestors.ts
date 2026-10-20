@@ -11,10 +11,13 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Get all ancestors of the node at a given path, from nearest to furthest.
  *
- * For a path like [{_key:'t1'}, 'rows', {_key:'r1'}, 'cells', {_key:'c1'}],
+ * For a path like `[{_key:'t1'}, 'rows', {_key:'r1'}, 'cells', {_key:'c1'}]`,
  * the ancestors are (nearest first):
- *   [{_key:'t1'}, 'rows', {_key:'r1'}]
- *   [{_key:'t1'}]
+ *
+ * ```ts
+ * [{_key:'t1'}, 'rows', {_key:'r1'}]
+ * [{_key:'t1'}]
+ * ```
  *
  * Walks from root to the target in a single pass collecting each ancestor
  * as it goes.

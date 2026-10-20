@@ -7,7 +7,7 @@ sidebar:
 
 Marks (decorators and annotations) render through node registrations: `defineDecorator` and `defineAnnotation`, mounted with `NodePlugin` alongside the editor's other registrations. [Rendering](/editor/concepts/rendering/) covers the model every registration shares: markup ownership, dispatch precedence, and `renderDefault`. [Containers](/editor/concepts/containers/) covers positional overrides, rendering a mark differently only inside one part of the document.
 
-`renderPlaceholder` and `rangeDecorations`, the remaining rendering props without a registration equivalent, stay on `<PortableTextEditable>`; this guide documents them below.
+`renderPlaceholder` and `rangeDecorations` stay on `<PortableTextEditable>`, and this guide documents them below. `renderPlaceholder` has no registration equivalent. The registered counterpart of `rangeDecorations` is `editor.registerDecorations`, which `@portabletext/plugin-decorations` builds on.
 
 The `renderDecorator`, `renderAnnotation`, `renderBlock`, `renderChild`, `renderStyle`, and `renderListItem` props are removed in this major; the [migration guide](/editor/guides/migrate-render-props/) walks through moving to registrations. None of these choices affect the Portable Text output: they only change how the editor itself renders content.
 
@@ -144,6 +144,8 @@ const decorations: RangeDecoration[] = [
 ```
 
 You can apply styles, libraries like Tailwind, or use custom react components within the rendering functions.
+
+To decorate from several independent parts of your app, track decorations by `id`, or read their live positions, use decoration layers instead: see [Decorate content](/editor/guides/decorate-content/).
 
 ### Following a range across edits
 

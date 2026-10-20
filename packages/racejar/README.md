@@ -32,6 +32,14 @@ Feature({
 })
 ```
 
+`racejar` registers its tests while the test file runs. `vitest list` parses test files statically by default, so it finds no Gherkin tests, and a single `racejar` file in scope leaves the whole listing empty. Pass `--no-static-parse` to list them:
+
+```sh
+vitest list --no-static-parse
+```
+
+`vitest run` and watch mode are not affected.
+
 ## Usage with Jest
 
 Using `racejar` with Jest is similar to Vitest. Just import `Feature` from `racejar/jest` instead.
