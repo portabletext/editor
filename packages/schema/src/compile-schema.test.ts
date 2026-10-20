@@ -1,7 +1,12 @@
 import {describe, expect, test, vi} from 'vitest'
 import {compileSchema} from './compile-schema'
 import type {SchemaDefinition} from './define-schema'
-import type {InlineObjectOfDefinition} from './schema'
+import type {
+  BlockOfDefinition,
+  FieldDefinition,
+  InlineObjectOfDefinition,
+  OfDefinition,
+} from './schema'
 
 describe(compileSchema.name, () => {
   describe('block fields', () => {
@@ -805,6 +810,210 @@ describe(compileSchema.name, () => {
 
     expect(compileSchema(definition)).toEqual(compileSchema(expandedDefinition))
   })
+
+  test('compiles self-recursive and mutually recursive definition objects', () => {
+    const self: InlineObjectOfDefinition = {
+      type: 'object',
+      name: 'self',
+      fields: [],
+    }
+    const left: InlineObjectOfDefinition = {
+      type: 'object',
+      name: 'left',
+      fields: [],
+    }
+    const right: InlineObjectOfDefinition = {
+      type: 'object',
+      name: 'right',
+      fields: [],
+    }
+    Object.assign(self, {
+      fields: [{name: 'children', type: 'array', of: [self]}],
+    })
+    Object.assign(left, {
+      fields: [{name: 'children', type: 'array', of: [right]}],
+    })
+    Object.assign(right, {
+      fields: [{name: 'children', type: 'array', of: [left]}],
+    })
+
+    const compiled = compileSchema({blockObjects: [self, left, right]})
+    const compiledSelf = compiled.blockObjects[0]!
+    const compiledLeft = compiled.blockObjects[1]!
+    const compiledRight = compiled.blockObjects[2]!
+
+    expect(compiledSelf.fields[0]).toEqual({
+      name: 'children',
+      type: 'array',
+      of: [compiledSelf],
+    })
+    expect(compiledLeft.fields[0]).toEqual({
+      name: 'children',
+      type: 'array',
+      of: [compiledRight],
+    })
+    expect(compiledRight.fields[0]).toEqual({
+      name: 'children',
+      type: 'array',
+      of: [compiledLeft],
+    })
+  })
+
+  test('compiles a shared root object without `type` when it is also an of-member', () => {
+    const recursiveObject = {
+      name: 'recursiveObject',
+      fields: [] as Array<FieldDefinition>,
+    }
+    recursiveObject.fields = [
+      {
+        name: 'children',
+        type: 'array',
+        of: [recursiveObject as unknown as OfDefinition],
+      },
+    ]
+
+    const compiled = compileSchema({blockObjects: [recursiveObject]})
+
+    expect(compiled.blockObjects[0]!.fields[0]).toEqual({
+      name: 'children',
+      type: 'array',
+      of: [compiled.blockObjects[0]],
+    })
+  })
+
+  test('a block re-entered through its own inline object keeps its inline objects', () => {
+    const block: BlockOfDefinition = {type: 'block', inlineObjects: []}
+    const note = {
+      name: 'note',
+      fields: [{name: 'body', type: 'array', of: [block]}],
+    }
+    Object.assign(block, {inlineObjects: [note]})
+
+    const compiled = compileSchema({
+      blockObjects: [
+        {name: 'card', fields: [{name: 'body', type: 'array', of: [block]}]},
+      ],
+    })
+    const compiledBlock = (
+      compiled.blockObjects[0]!.fields[0] as {of: ReadonlyArray<OfDefinition>}
+    ).of[0] as BlockOfDefinition
+
+    expect(compiledBlock.inlineObjects).toEqual([
+      {
+        name: 'note',
+        fields: [{name: 'body', type: 'array', of: [compiledBlock]}],
+      },
+    ])
+  })
+
+  test('compiles a recursive object next to a block member without overrides', () => {
+    const container = {
+      name: 'container',
+      fields: [] as Array<FieldDefinition>,
+    }
+    container.fields = [
+      {
+        name: 'content',
+        type: 'array',
+        of: [{type: 'block'}, container as unknown as OfDefinition],
+      },
+    ]
+
+    const compiled = compileSchema({blockObjects: [container]})
+
+    expect(compiled.blockObjects[0]!.fields[0]).toEqual({
+      name: 'content',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+          decorators: [],
+          annotations: [],
+          lists: [],
+          inlineObjects: [],
+        },
+        compiled.blockObjects[0],
+      ],
+    })
+  })
+
+  test('compiles a recursive object next to a block member that overrides its styles', () => {
+    const container = {
+      name: 'container',
+      fields: [] as Array<FieldDefinition>,
+    }
+    container.fields = [
+      {
+        name: 'content',
+        type: 'array',
+        of: [
+          {type: 'block', styles: [{name: 'code'}]},
+          container as unknown as OfDefinition,
+        ],
+      },
+    ]
+
+    const compiled = compileSchema({blockObjects: [container]})
+
+    expect(compiled.blockObjects[0]!.fields[0]).toEqual({
+      name: 'content',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{name: 'code', value: 'code'}],
+          decorators: [],
+          annotations: [],
+          lists: [],
+          inlineObjects: [],
+        },
+        compiled.blockObjects[0],
+      ],
+    })
+  })
+
+  test.fails('compiles a recursive object next to a block member that overrides its annotations', () => {
+    const container = {
+      name: 'container',
+      fields: [] as Array<FieldDefinition>,
+    }
+    container.fields = [
+      {
+        name: 'content',
+        type: 'array',
+        of: [
+          {type: 'block', annotations: [{name: 'link'}]},
+          container as unknown as OfDefinition,
+        ],
+      },
+    ]
+
+    const compiled = compileSchema({blockObjects: [container]})
+
+    expect(compiled.blockObjects[0]!.fields[0]).toEqual({
+      name: 'content',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+          decorators: [],
+          annotations: [{name: 'link', fields: []}],
+          lists: [],
+          inlineObjects: [],
+        },
+        compiled.blockObjects[0],
+      ],
+    })
+  })
+
+  test('compiles a diamond graph with one object per definition and inheritance', () => {
+    const definition = createSharedTypeDefinition(30)
+    const compiled = compileSchema(definition)
+
+    expect(countDistinctObjects(compiled)).toBeLessThan(200)
+  })
 })
 
 function createCountingMember(
@@ -849,4 +1058,21 @@ function createSharedTypeDefinition(typeCount: number): SchemaDefinition {
       },
     ],
   }
+}
+
+function countDistinctObjects(
+  value: unknown,
+  seen = new Set<object>(),
+): number {
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return 0
+  }
+  seen.add(value)
+  return (
+    1 +
+    Object.values(value).reduce(
+      (count, child) => count + countDistinctObjects(child, seen),
+      0,
+    )
+  )
 }
