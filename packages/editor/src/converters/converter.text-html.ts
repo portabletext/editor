@@ -4,6 +4,12 @@ import {getFragment} from '../selectors/selector.get-fragment'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
+/**
+ * The fragment has no HTML form: every selected block is a block object,
+ * which `toHTML` renders as nothing.
+ */
+export const emptyHtmlReason = 'Serialized HTML is empty'
+
 export const converterTextHtml = defineConverter({
   mimeType: 'text/html',
   serialize: ({snapshot, event}) => {
@@ -33,7 +39,7 @@ export const converterTextHtml = defineConverter({
         type: 'serialization.failure',
         mimeType: 'text/html',
         originEvent: event.originEvent,
-        reason: 'Serialized HTML is empty',
+        reason: emptyHtmlReason,
       }
     }
 

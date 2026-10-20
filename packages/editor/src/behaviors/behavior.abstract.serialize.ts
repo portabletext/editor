@@ -1,3 +1,4 @@
+import {emptyHtmlReason} from '../converters/converter.text-html'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -97,6 +98,11 @@ export const abstractSerializeBehaviors = [
   }),
   defineBehavior({
     on: 'serialization.failure',
+    // Copying or dragging only block objects leaves `text/html` with
+    // nothing to carry. The other MIME types still carry the fragment, so
+    // this is an expected outcome, not a failure worth a warning.
+    guard: ({event}) =>
+      !(event.mimeType === 'text/html' && event.reason === emptyHtmlReason),
     actions: [
       ({event}) => [
         {
