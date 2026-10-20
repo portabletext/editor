@@ -1,7 +1,6 @@
 ---
 "@portabletext/editor": patch
 "@portabletext/toolbar": patch
-"studio": patch
 "@portabletext/plugin-character-pair-decorator": patch
 "@portabletext/plugin-decorations": patch
 "@portabletext/plugin-dnd": patch
