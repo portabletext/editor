@@ -552,6 +552,7 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
 
   test.each(SEEDS)('seed %i', (seed) => {
     const random = mulberry32(seed)
+    let nonEmptyHiddenLossReports = 0
 
     for (let caseIndex = 0; caseIndex < CASES_PER_SEED; caseIndex++) {
       const storedKeyGenerator = createTestKeyGenerator('stored-')
@@ -650,7 +651,16 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
         storedKeys,
         storedNodesByKey,
       )
+      assertHiddenLossesMissing(report!, withReport, storedSnapshot)
+      if (report!.hiddenLosses.length > 0) {
+        nonEmptyHiddenLossReports++
+      }
     }
+
+    // Every seed's corpus edits blocks holding `lead` or `highlight`, so
+    // a regression that empties `hiddenLosses` cannot pass the invariant
+    // above vacuously.
+    expect(nonEmptyHiddenLossReports).toBeGreaterThanOrEqual(2)
   })
 })
 
@@ -836,5 +846,63 @@ function assertReconciliationReportConsistency(
         `${JSON.stringify(renamedKey.path)}:${renamedKey.key}`,
       ),
     ).toBe(false)
+  }
+}
+
+/**
+ * Every `hiddenLosses` entry names content the returned value really
+ * lacks: on a performed report, the returned block wearing the stored
+ * block's `_key` (a deleted block is never listed) has another style,
+ * or none of its spans carries the stored span's decorator; on a
+ * skipped report, no returned block or span carries it at all.
+ * `generateStored` emits no annotation markdown drops and only list
+ * kinds markdown expresses, so decorators and styles are the losses
+ * to check.
+ */
+function assertHiddenLossesMissing(
+  report: ReconciliationReport,
+  result: ReadonlyArray<PortableTextBlock>,
+  stored: ReadonlyArray<PortableTextBlock>,
+): void {
+  for (const hiddenLoss of report.hiddenLosses) {
+    const storedNode = resolveReconciliationKeyPath(stored, hiddenLoss.path)
+    const topSegment = hiddenLoss.path[0]!
+    const resultScope =
+      report.keyMatching === 'performed'
+        ? resolveReconciliationKeyPath(result, [topSegment])
+        : result
+    if (resultScope === undefined) {
+      throw new Error(
+        `assertHiddenLossesMissing: hidden loss on deleted block ${JSON.stringify(topSegment)}`,
+      )
+    }
+    const resultBlocks = [resultScope].flat() as Array<Record<string, unknown>>
+    if (hiddenLoss.type === 'style-fallback') {
+      const style = (storedNode as Record<string, unknown>)['style']
+      expect(
+        resultBlocks.some((resultBlock) => resultBlock['style'] === style),
+      ).toBe(false)
+    } else if (hiddenLoss.type === 'decorator-dropped') {
+      const marks = (storedNode as Record<string, unknown>)[
+        'marks'
+      ] as Array<string>
+      expect(
+        resultBlocks.some((resultBlock) =>
+          (
+            (resultBlock['children'] ?? []) as Array<Record<string, unknown>>
+          ).some(
+            (child) =>
+              Array.isArray(child['marks']) &&
+              marks.some((mark) =>
+                (child['marks'] as Array<string>).includes(mark),
+              ),
+          ),
+        ),
+      ).toBe(false)
+    } else {
+      throw new Error(
+        `assertHiddenLossesMissing: unexpected hidden loss type "${hiddenLoss.type}"`,
+      )
+    }
   }
 }

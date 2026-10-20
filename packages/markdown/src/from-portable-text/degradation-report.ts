@@ -55,6 +55,30 @@ export type SerializeDegradation = {
   snippet?: string
 }
 
+/**
+ * What a degradation left out of the markdown. Not part of the public
+ * payload.
+ */
+export type SerializeDegradationLoss =
+  | {type: 'annotation-dropped'; markDefinition: object}
+  | {type: 'decorator-dropped'; decorator: string}
+  | {type: 'style-fallback'; style: string}
+  | {type: 'list-item-fallback'; listItem: string}
+
+/**
+ * A degradation's loss and the text block that held it, for
+ * `applyMarkdownEdit` to look for in the value an edit returns. Not
+ * part of the public payload.
+ */
+export type SerializeDegradationContent = SerializeDegradationLoss & {
+  /**
+   * The text block holding the lost content, found by reference, so
+   * unlike the public `path` it never lands on a sibling that reuses a
+   * `_key`. `undefined` when a renderer rendered a copy of the block.
+   */
+  ownerPath: Array<SerializeDegradation['path'][number]> | undefined
+}
+
 type PathSegment = SerializeDegradation['path'][number]
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -168,6 +192,42 @@ function findDescendantPath(
  * (rows, table cells): whichever one the search reaches first wins, even
  * if it isn't the one that degraded.
  */
+/**
+ * Every object reachable from `topLevelBlock` mapped to its path, by
+ * reference alone: built once per top-level block, so looking up many
+ * nodes in it stays linear. Unlike `buildSerializeDegradationPath` it
+ * never falls back to a `_key` match, so it cannot land on a sibling
+ * that reuses the key; a copy a renderer made is simply absent.
+ */
+export function buildNodePathIndex(
+  topLevelBlock: object,
+  topSegment: PathSegment,
+): Map<object, Array<PathSegment>> {
+  const index = new Map<object, Array<PathSegment>>()
+  const visit = (value: unknown, path: Array<PathSegment>): void => {
+    if (Array.isArray(value)) {
+      value.forEach((child: unknown, position) => {
+        visit(child, [
+          ...path,
+          isPlainObject(child) && typeof child['_key'] === 'string'
+            ? {_key: child['_key']}
+            : position,
+        ])
+      })
+      return
+    }
+    if (!isPlainObject(value) || index.has(value)) {
+      return
+    }
+    index.set(value, path)
+    for (const key of Object.keys(value)) {
+      visit(value[key], [...path, key])
+    }
+  }
+  visit(topLevelBlock, [topSegment])
+  return index
+}
+
 export function buildSerializeDegradationPath(
   topLevelBlock: object,
   topSegment: PathSegment,

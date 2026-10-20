@@ -19,6 +19,7 @@ import type {
 import {serializeDegradationMessage} from './degradation-messages'
 import {
   truncateSnippet,
+  type SerializeDegradationLoss,
   type SerializeDegradationType,
 } from './degradation-report'
 import {planLeafEscaping} from './escape-plain-text'
@@ -31,12 +32,14 @@ import {DefaultUnknownMarkRenderer} from './renderers/marks'
 import {DefaultUnknownStyleRenderer} from './renderers/style'
 import type {PortableTextRenderers, RenderNode, Serializable} from './types'
 
-type ReportDegradation = (entry: {
-  type: SerializeDegradationType
-  message: string
-  snippet: string | undefined
-  node: object
-}) => void
+type ReportDegradation = (
+  entry: SerializeDegradationLoss & {
+    message: string
+    snippet: string | undefined
+    node: object
+    owner: object
+  },
+) => void
 
 /**
  * ATX headings are single-line, inline-only leaf blocks: an ATX heading's
@@ -73,6 +76,12 @@ export const createRenderNode = (
   // rendered output, and `planLeafEscaping` needs to know that up front.
   const hardBreakOutputHasNewline = renderers.hardBreak().includes('\n')
 
+  // The text block whose children are being rendered, so a mark
+  // degradation can name the block that held the span: a marks-tree
+  // `@span` wrapper keeps only the span's `_key`, which sibling table
+  // cells may reuse.
+  let currentTextBlock: TypedObject | undefined
+
   // Shared by `renderBlock` and `renderListItem`, whatever the block's
   // style: both flatten `node.children` into the same text/mark tree and
   // need it escaped and keyed before rendering it.
@@ -89,11 +98,15 @@ export const createRenderNode = (
     const tree = buildMarksTree(node)
     assignEscapedText(tree, chunks)
 
-    return tree
+    const enclosingTextBlock = currentTextBlock
+    currentTextBlock = reportedNodeAliases.get(node) ?? node
+    const rendered = tree
       .map((child, i) =>
         renderNode({node: child, isInline: true, index: i, renderNode}),
       )
       .join('')
+    currentTextBlock = enclosingTextBlock
+    return rendered
   }
 
   // Walks the tree in the same left-to-right, opaque-object-skipping order
@@ -169,11 +182,13 @@ export const createRenderNode = (
     ) {
       reportDegradation?.({
         type: 'list-item-fallback',
+        listItem: node.listItem,
         message: serializeDegradationMessage['list-item-fallback'](
           node.listItem,
         ),
         snippet: truncateSnippet(toPlainText(node)),
         node,
+        owner: node,
       })
     }
 
@@ -222,10 +237,13 @@ export const createRenderNode = (
         ? 'annotation-dropped'
         : 'decorator-dropped'
       reportDegradation?.({
-        type,
+        ...(markDef
+          ? {type: 'annotation-dropped', markDefinition: markDef}
+          : {type: 'decorator-dropped', decorator: markType}),
         message: serializeDegradationMessage[type](markType),
         snippet: truncateSnippet(spanToPlainText(node)),
         node,
+        owner: currentTextBlock ?? node,
       })
     }
 
@@ -267,9 +285,11 @@ export const createRenderNode = (
     ) {
       reportDegradation?.({
         type: 'style-fallback',
+        style,
         message: serializeDegradationMessage['style-fallback'](style),
         snippet: truncateSnippet(toPlainText(node)),
         node: reportedNodeAliases.get(node) ?? node,
+        owner: reportedNodeAliases.get(node) ?? node,
       })
     }
 

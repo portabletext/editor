@@ -81,6 +81,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -129,6 +130,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -195,6 +197,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -239,6 +242,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -283,6 +287,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -315,6 +320,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -347,6 +353,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -402,6 +409,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -446,6 +454,7 @@ describe('the reconciliation report', () => {
           "The block's text came back different, starting at the text `\\nbaz`",
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -491,6 +500,7 @@ describe('the reconciliation report', () => {
         snippet: '[[foo]]',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -541,6 +551,7 @@ describe('the reconciliation report', () => {
         snippet: 'BAR baz',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -585,6 +596,7 @@ describe('the reconciliation report', () => {
         snippet: '[[baz]]',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -625,6 +637,7 @@ describe('the reconciliation report', () => {
         snippet: 'baz',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -682,6 +695,7 @@ describe('the reconciliation report', () => {
           "The block's text came back different, starting at the `wikilink` inline object",
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -726,6 +740,7 @@ describe('the reconciliation report', () => {
         snippet: '😁',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -770,6 +785,7 @@ describe('the reconciliation report', () => {
         snippet: '🈀 bar',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -820,6 +836,7 @@ describe('the reconciliation report', () => {
           "The block's text came back different, starting at the text `bar`",
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -859,6 +876,7 @@ describe('the reconciliation report', () => {
         snippet: 'bar',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -906,6 +924,7 @@ describe('the reconciliation report', () => {
           "The block's text came back different, starting at the text `\\nbaz`",
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -934,6 +953,7 @@ describe('the reconciliation report', () => {
         message: '2 blocks did not come back, starting with the `table` block',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -966,6 +986,7 @@ describe('the reconciliation report', () => {
         snippet: 'baz',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1000,6 +1021,7 @@ describe('the reconciliation report', () => {
         message: 'The empty paragraphs came back as 1 block',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1050,6 +1072,7 @@ describe('the reconciliation report', () => {
         snippet: '[[foo]]',
       },
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1115,6 +1138,7 @@ describe('the reconciliation report', () => {
         },
       ],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1154,6 +1178,7 @@ describe('the reconciliation report', () => {
       renamedKeys: [
         {previousKey: 'b1', key: 'fresh5', path: [{_key: 'fresh5'}]},
       ],
+      hiddenLosses: [],
     })
   })
 
@@ -1213,6 +1238,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1282,6 +1308,7 @@ describe('the reconciliation report', () => {
           path: [{_key: 'w1'}, 'rows', 0, 'cells', {_key: 'k2'}],
         },
       ],
+      hiddenLosses: [],
     })
   })
 
@@ -1350,6 +1377,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [{previousKey: 'dup', key: 'k4', path: [{_key: 'k4'}]}],
+      hiddenLosses: [],
     })
   })
 
@@ -1417,6 +1445,7 @@ describe('the reconciliation report', () => {
           path: [1, 'rows', 0, 'cells', {_key: 'k2'}],
         },
       ],
+      hiddenLosses: [],
     })
   })
 
@@ -1438,6 +1467,7 @@ describe('the reconciliation report', () => {
       preservedKeys: [],
       keyFallbacks: [{type: 'ambiguous-region-too-large', keys: editedKeys}],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1503,6 +1533,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1566,6 +1597,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1641,6 +1673,7 @@ describe('the reconciliation report', () => {
           path: [{_key: 'empty1'}, 'children', {_key: 'k2'}],
         },
       ],
+      hiddenLosses: [],
     })
   })
 
@@ -1707,6 +1740,7 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1774,6 +1808,686 @@ describe('the reconciliation report', () => {
       ],
       keyFallbacks: [],
       renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
+  test('an edited block whose stored annotation has no markdown form reports the dropped annotation as a hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [internalLinkBlock('b1'), block('b2', 's4', 'bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'baz.',
+      'baz now.',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 'k1', 'Read foo before baz now.'),
+      block('b2', 's4', 'bar'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's4',
+          path: [{_key: 'b2'}, 'children', {_key: 's4'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'annotation-dropped',
+          message:
+            'Removed the `internalLink` annotation, kept its text: no `internalLink` mark renderer',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          snippet: 'foo',
+        },
+      ],
+    })
+  })
+
+  test('a stored annotation with no markdown form on a block the edit left alone is not a hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [internalLinkBlock('b1'), block('b2', 's4', 'bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'qux',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([internalLinkBlock('b1'), block('b2', 's4', 'qux')])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'm1',
+          path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's3',
+          path: [{_key: 'b1'}, 'children', {_key: 's3'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's4',
+          path: [{_key: 'b2'}, 'children', {_key: 's4'}],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
+  test('a whole-document skip of key matching reports every stored loss as a hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      internalLinkBlock('b1'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'h1',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'bar\nqux', marks: []}],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'Read foo before baz.'),
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'h1',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+      block('k4', 'k5', 'qux'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b2'}, 'children', {_key: 's4'}],
+        message:
+          "The block's text came back different, starting at the text `\\nqux`",
+      },
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'annotation-dropped',
+          message:
+            'Removed the `internalLink` annotation, kept its text: no `internalLink` mark renderer',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          snippet: 'foo',
+        },
+      ],
+    })
+  })
+
+  test('an edited block whose custom style and decorator markdown cannot show were restored reports no hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const leadBlock = {
+      _type: 'block',
+      _key: 'b1',
+      style: 'lead',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: 's1', text: 'foo baz.', marks: ['highlight']},
+      ],
+    }
+    const stored = [leadBlock, block('b2', 's2', 'bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'baz.',
+      'baz now.',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'lead',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 's1',
+            text: 'foo baz now.',
+            marks: ['highlight'],
+          },
+        ],
+      },
+      block('b2', 's2', 'bar'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
+  test('an edit to one table cell reports a loss in an untouched sibling cell, since the table block came back changed', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {_type: 'cell', _key: 'c1', value: [internalLinkBlock('cb1')]},
+              {_type: 'cell', _key: 'c2', value: [block('cb2', 's4', 'bar')]},
+            ],
+          },
+        ],
+      },
+      block('b2', 's5', 'qux'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'bar now',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [block('cb1', 's1', 'Read foo before baz.')],
+              },
+              {
+                _type: 'cell',
+                _key: 'c2',
+                value: [block('cb2', 's4', 'bar now')],
+              },
+            ],
+          },
+        ],
+      },
+      block('b2', 's5', 'qux'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 't1',
+          path: [{_key: 't1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'r1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'c1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'cb1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-merged',
+          key: 's1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's1'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'c2',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'cb2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's4',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+            'children',
+            {_key: 's4'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's5',
+          path: [{_key: 'b2'}, 'children', {_key: 's5'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'annotation-dropped',
+          message:
+            'Removed the `internalLink` annotation, kept its text: no `internalLink` mark renderer',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's2'},
+          ],
+          snippet: 'foo',
+        },
+      ],
+    })
+  })
+
+  test('an inline object carrying a lost annotation key in its own `marks` does not hide the loss of that annotation', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [
+          {
+            _type: 'internalLink',
+            _key: 'm1',
+            reference: {_type: 'reference', _ref: 'foo'},
+          },
+        ],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo', marks: ['m1']},
+          {_type: 'span', _key: 's2', text: ' bar ', marks: []},
+          {_type: 'wikilink', _key: 'w1', marks: ['m1']},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'bar [](foo)',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {
+        keyGenerator,
+        marks: {
+          link: ({context, value}) => ({
+            _type: 'internalLink',
+            _key: context.keyGenerator(),
+            reference: {_type: 'reference', _ref: value.href},
+          }),
+        },
+      },
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [
+          {
+            _type: 'internalLink',
+            _key: 'm1',
+            reference: {_type: 'reference', _ref: 'foo'},
+          },
+        ],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo bar  ', marks: []},
+          {_type: 'wikilink', _key: 'w1', marks: ['m1']},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'w1',
+          path: [{_key: 'b1'}, 'children', {_key: 'w1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'm1',
+          path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'annotation-dropped',
+          message:
+            'Removed the `internalLink` annotation, kept its text: no `internalLink` mark renderer',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          snippet: 'foo',
+        },
+      ],
+    })
+  })
+
+  test('an unchanged table whose cells reuse a span key reports no hidden loss for the decorator on the second cell', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const table = {
+      _type: 'table',
+      _key: 't1',
+      headerRows: 0,
+      rows: [
+        {
+          _type: 'row',
+          _key: 'r1',
+          cells: [
+            {_type: 'cell', _key: 'c1', value: [block('cb1', 's1', 'foo')]},
+            {
+              _type: 'cell',
+              _key: 'c2',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'cb2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 's1',
+                      text: 'bar',
+                      marks: ['highlight'],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const stored = [table, block('b2', 's2', 'baz')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'baz',
+      'qux',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([table, block('b2', 's2', 'qux')])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 't1',
+          path: [{_key: 't1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'r1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c2',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+            'children',
+            {_key: 's1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's2',
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
     })
   })
 
@@ -1820,6 +2534,26 @@ describe('the reconciliation report', () => {
     expect(onReconciliation).toHaveBeenCalledTimes(1)
   })
 })
+
+function internalLinkBlock(blockKey: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [
+      {
+        _type: 'internalLink',
+        _key: 'm1',
+        reference: {_type: 'reference', _ref: 'foo'},
+      },
+    ],
+    children: [
+      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+      {_type: 'span', _key: 's3', text: ' before baz.', marks: []},
+    ],
+  }
+}
 
 function manyBlocks(count: number, prefix: string): Array<PortableTextBlock> {
   return Array.from({length: count}, (_, index) =>
