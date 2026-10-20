@@ -1535,6 +1535,31 @@ importers:
         specifier: catalog:tooling
         version: 5.0.4(@types/node@24.12.2)(@vitest/browser-playwright@5.0.4)(@vitest/coverage-istanbul@5.0.4)(@vitest/coverage-v8@5.0.4)(@vitest/ui@5.0.4)(jsdom@27.2.0)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
 
+  packages/repair:
+    dependencies:
+      '@portabletext/patches':
+        specifier: workspace:*
+        version: link:../patches
+      '@portabletext/schema':
+        specifier: workspace:^
+        version: link:../schema
+    devDependencies:
+      '@sanity/pkg-utils':
+        specifier: catalog:tooling
+        version: 12.3.0(@babel/runtime@7.29.7)(@tsdown/css@0.22.14)(@types/node@24.12.2)(@volar/typescript@2.4.28)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3))(oxc-transform-react@0.145.0)(typescript@7.0.2)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+      '@sanity/tsconfig':
+        specifier: catalog:tooling
+        version: 2.1.0
+      typescript:
+        specifier: catalog:tooling
+        version: 7.0.2
+      vite:
+        specifier: catalog:tooling
+        version: 8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
+      vitest:
+        specifier: catalog:tooling
+        version: 5.0.4(@types/node@24.12.2)(@vitest/browser-playwright@5.0.4)(@vitest/coverage-istanbul@5.0.4)(@vitest/coverage-v8@5.0.4)(@vitest/ui@5.0.4)(jsdom@27.2.0)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+
   packages/sanity-bridge:
     dependencies:
       '@portabletext/schema':
@@ -23312,3 +23337,4 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.3.1)
 
   zwitch@2.0.4: {}
+                                                                                             
