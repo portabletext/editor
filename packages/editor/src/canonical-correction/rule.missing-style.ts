@@ -1,4 +1,4 @@
-import {isTextBlockNode} from '../structural-correction'
+import {isTextBlockNode} from '@portabletext/schema'
 import {setNodePropertyCorrection} from './set-node-property'
 import type {
   CanonicalContext,
@@ -7,11 +7,11 @@ import type {
 } from './types'
 
 export function getMissingStyleCorrection(
-  entry: CanonicalEntry,
   context: CanonicalContext,
+  entry: CanonicalEntry,
 ): CanonicalCorrection | undefined {
   if (
-    !isTextBlockNode(context.schema, entry.node) ||
+    !isTextBlockNode({schema: context.schema}, entry.node) ||
     typeof (entry.node as Record<string, unknown>)['style'] !== 'undefined'
   ) {
     return undefined

@@ -93,6 +93,7 @@
     "@portabletext/html": "workspace:^",
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@portabletext/patches": "workspace:^",
+    "@portabletext/repair": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^6.0.0",
     "@sanity/diff-match-patch": "catalog:",
