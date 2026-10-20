@@ -1,7 +1,6 @@
+import {isSpanNode, isTextBlockNode} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import {isSpanNode} from '../engine/node/is-span-node'
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {getNode} from './get-node'
 import {getParent} from './get-parent'
 import type {TraversalSnapshot} from './traversal-snapshot'

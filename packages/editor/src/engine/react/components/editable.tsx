@@ -3,7 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, isTextBlockNode} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -63,7 +63,6 @@ import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
-import {isTextBlockNode} from '../../node/is-text-block-node'
 import {pathEquals} from '../../path/path-equals'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'

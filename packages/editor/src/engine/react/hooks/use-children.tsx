@@ -3,7 +3,12 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {
+  isSpan,
+  isSpanNode,
+  isTextBlock,
+  isTextBlockNode,
+} from '@portabletext/schema'
 import React, {useCallback, useContext, type JSX} from 'react'
 import {NewPipelineContext} from '../../../editor/new-pipeline-context'
 import {
@@ -17,8 +22,6 @@ import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {isSpanNode} from '../../node/is-span-node'
-import {isTextBlockNode} from '../../node/is-text-block-node'
 import type {
   RenderElementProps,
   RenderLeafProps,

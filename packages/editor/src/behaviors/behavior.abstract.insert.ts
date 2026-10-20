@@ -1,6 +1,6 @@
+import {isTextBlockNode} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../engine/interfaces/path'
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {siblingPath} from '../engine/path/sibling-path'
 import {serializePath} from '../paths/serialize-path'
 import {isSelectionExpanded} from '../selectors'
