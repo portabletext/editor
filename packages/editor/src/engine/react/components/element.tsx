@@ -1,3 +1,4 @@
+import {isTextBlockNode} from '@portabletext/schema'
 import type {
   PortableTextObject,
   PortableTextTextBlock,
@@ -9,7 +10,6 @@ import {isInline as isInlinePath} from '../../../traversal/is-inline'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {isTextBlockNode} from '../../node/is-text-block-node'
 import {pathEquals} from '../../path/path-equals'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
