@@ -677,6 +677,36 @@ function removeExtraBlocks({
   withRemoteChanges(editorEngine, remoteSource, () => {
     withoutNormalizing(editorEngine, () => {
       withoutPatching(editorEngine, () => {
+        const removedBlockKeys = getRemovedBlockKeys({
+          liveKeys: editorEngine.snapshot.context.value.map(
+            (block) => block._key,
+          ),
+          incomingKeys: value.map((block) => block?._key),
+        })
+
+        if (removedBlockKeys) {
+          const selection = editorEngine.snapshot.context.selection
+          const selectionInRemovedBlock =
+            selection &&
+            [selection.anchor, selection.focus].some((point) => {
+              const blockSegment = point.path[0]
+              return (
+                isKeyedSegment(blockSegment) &&
+                removedBlockKeys.has(blockSegment._key)
+              )
+            })
+
+          if (selectionInRemovedBlock) {
+            applyDeselect(editorEngine)
+          }
+
+          for (const removedBlockKey of removedBlockKeys) {
+            editorEngine.apply({type: 'unset', path: [{_key: removedBlockKey}]})
+          }
+
+          isChanged = true
+        }
+
         const childrenLength = editorEngine.snapshot.context.value.length
 
         if (value.length < childrenLength) {
@@ -698,6 +728,39 @@ function removeExtraBlocks({
   })
 
   return isChanged
+}
+
+function getRemovedBlockKeys({
+  liveKeys,
+  incomingKeys,
+}: {
+  liveKeys: Array<string>
+  incomingKeys: Array<string | undefined>
+}): Set<string> | undefined {
+  if (
+    incomingKeys.length >= liveKeys.length ||
+    new Set(liveKeys).size !== liveKeys.length ||
+    new Set(incomingKeys).size !== incomingKeys.length
+  ) {
+    return undefined
+  }
+
+  const removedBlockKeys = new Set<string>()
+  let incomingIndex = 0
+
+  for (const liveKey of liveKeys) {
+    if (liveKey === incomingKeys[incomingIndex]) {
+      incomingIndex++
+    } else {
+      removedBlockKeys.add(liveKey)
+    }
+  }
+
+  if (incomingIndex !== incomingKeys.length) {
+    return undefined
+  }
+
+  return removedBlockKeys
 }
 
 function syncBlock({
