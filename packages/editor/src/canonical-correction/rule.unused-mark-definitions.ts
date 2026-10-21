@@ -1,12 +1,12 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import type {CorrectionEntry} from '../caret-correction/correction-entry'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import type {CorrectionEntry} from '../structural-correction'
 import {setNodePropertyCorrection} from './set-node-property'
 import type {CanonicalContext, CanonicalCorrection} from './types'
 
 export function getUnusedMarkDefinitionsCorrection(
-  entry: CorrectionEntry,
   context: CanonicalContext,
+  entry: CorrectionEntry,
 ): CanonicalCorrection | undefined {
   if (!isTextBlock({schema: context.schema}, entry.node)) {
     return undefined

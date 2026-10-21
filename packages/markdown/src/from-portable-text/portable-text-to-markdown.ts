@@ -5,9 +5,14 @@ import type {
   TypedObject,
 } from '@portabletext/types'
 import {buildListIndexMap} from './build-list-index-map'
-import type {SerializeDegradation} from './degradation-report'
+import type {
+  SerializeDegradation,
+  SerializeDegradationContent,
+  SerializeDegradationLoss,
+} from './degradation-report'
 import {
   buildSerializeDegradationMessage,
+  buildNodePathIndex,
   buildSerializeDegradationPath,
 } from './degradation-report'
 import {createRenderNode} from './render-node'
@@ -136,6 +141,39 @@ type Options = Partial<PortableTextRenderers> & {
 export function portableTextToMarkdown<
   Block extends TypedObject = PortableTextBlock | ArbitraryTypedObject,
 >(blocks: Array<Block>, options: Options = {}): string {
+  return renderMarkdown(blocks, options, undefined)
+}
+
+/**
+ * `portableTextToMarkdown`, plus each degradation paired with the
+ * content it left out of the markdown, for `applyMarkdownEdit` to look
+ * for in the value an edit returns.
+ */
+export function portableTextToMarkdownWithLostContent(
+  blocks: Array<TypedObject>,
+  options: Omit<Options, 'onDegradation'>,
+): {
+  markdown: string
+  degradations: Array<SerializeDegradation & SerializeDegradationContent>
+} {
+  const degradations: Array<
+    SerializeDegradation & SerializeDegradationContent
+  > = []
+  const markdown = renderMarkdown(blocks, options, (degradation) => {
+    degradations.push(degradation)
+  })
+  return {markdown, degradations}
+}
+
+function renderMarkdown(
+  blocks: Array<TypedObject>,
+  options: Options,
+  onLostContent:
+    | ((
+        degradation: SerializeDegradation & SerializeDegradationContent,
+      ) => void)
+    | undefined,
+): string {
   const renderers = {
     block: {
       ...defaultRenderers.block,
@@ -164,7 +202,8 @@ export function portableTextToMarkdown<
   }
   const renderBlockSpacing = options.blockSpacing ?? DefaultBlockSpacingRenderer
 
-  const originalBlockKeys = options.onDegradation
+  const tracksDegradations = Boolean(options.onDegradation || onLostContent)
+  const originalBlockKeys = tracksDegradations
     ? blocks.map((node) => node._key)
     : undefined
 
@@ -175,13 +214,27 @@ export function portableTextToMarkdown<
   const internalDegradations: Array<SerializeDegradation & {topIndex: number}> =
     []
   let currentBlock: {block: TypedObject; index: number; topSegment: PathSegment}
-  const reportDegradation = options.onDegradation
-    ? (entry: {
-        type: SerializeDegradation['type']
-        message: string
-        snippet: string | undefined
-        node: object
-      }) => {
+  let nodePathIndex:
+    | {block: TypedObject; paths: Map<object, Array<PathSegment>>}
+    | undefined
+  const findOwnerPath = (owner: object) => {
+    if (nodePathIndex?.block !== currentBlock.block) {
+      nodePathIndex = {
+        block: currentBlock.block,
+        paths: buildNodePathIndex(currentBlock.block, currentBlock.topSegment),
+      }
+    }
+    return nodePathIndex.paths.get(owner)
+  }
+  const reportDegradation = tracksDegradations
+    ? (
+        entry: SerializeDegradationLoss & {
+          message: string
+          snippet: string | undefined
+          node: object
+          owner: object
+        },
+      ) => {
         const degradation: SerializeDegradation = {
           type: entry.type,
           message: entry.message,
@@ -198,6 +251,13 @@ export function portableTextToMarkdown<
           ...degradation,
           topIndex: currentBlock.index,
         })
+        if (onLostContent) {
+          onLostContent({
+            ...degradation,
+            ...lostContent(entry),
+            ownerPath: findOwnerPath(entry.owner),
+          })
+        }
       }
     : undefined
 
@@ -280,4 +340,19 @@ function gateDefaultTypeRenderers(
       },
     ]),
   )
+}
+
+function lostContent(
+  entry: SerializeDegradationLoss,
+): SerializeDegradationLoss {
+  switch (entry.type) {
+    case 'annotation-dropped':
+      return {type: entry.type, markDefinition: entry.markDefinition}
+    case 'decorator-dropped':
+      return {type: entry.type, decorator: entry.decorator}
+    case 'style-fallback':
+      return {type: entry.type, style: entry.style}
+    case 'list-item-fallback':
+      return {type: entry.type, listItem: entry.listItem}
+  }
 }

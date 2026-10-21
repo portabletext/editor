@@ -10,17 +10,19 @@ import type {
 } from './types'
 
 /**
- * Returns one correction that makes a node structurally sound, or `undefined`.
+ * Returns the first correction that makes an entry structurally sound.
+ *
+ * @public
  */
 export function getStructuralCorrection(
-  entry: StructuralEntry,
   context: StructuralContext,
+  entry: StructuralEntry,
 ): StructuralCorrection | undefined {
   return (
-    repairMissingType(entry, context) ??
-    repairMissingKey(entry, context) ??
-    repairDuplicateKey(entry, context) ??
-    repairSpanText(entry, context) ??
-    repairMissingTextBlockChildren(entry, context)
+    repairMissingType(context, entry) ??
+    repairMissingKey(context, entry) ??
+    repairDuplicateKey(context, entry) ??
+    repairSpanText(context, entry) ??
+    repairMissingTextBlockChildren(context, entry)
   )
 }

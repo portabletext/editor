@@ -1,0 +1,28 @@
+diff --git a/lib-commonjs/collector/SourceMapper.js b/lib-commonjs/collector/SourceMapper.js
+index f147b0feb5bdb2dc8375b3c8e57af59c45ca8a3d..c37b890baadc8c45489eb9b31d5a7dff06ff0ffd 100644
+--- a/lib-commonjs/collector/SourceMapper.js
++++ b/lib-commonjs/collector/SourceMapper.js
+@@ -76,8 +76,7 @@ class SourceMapper {
+             line: sourceFileLine,
+             column: sourceFileColumn
+         });
+-        if (!nearestMappingItem)
+-            return;
++        if (!nearestMappingItem || nearestMappingItem.originalLine === null) return;
+         const mappedFilePath = path.resolve(path.dirname(sourceFilePath), nearestMappingItem.source);
+         // Does the mapped filename exist?  Use a cache to remember the answer.
+         let originalFileInfo = this._originalFileInfoByPath.get(mappedFilePath);
+diff --git a/lib-esm/collector/SourceMapper.js b/lib-esm/collector/SourceMapper.js
+index 810509ebd447a346ed40ad3cde47040cbfca062b..82bf09fe149b3f4e0800cda2e6591dc936175314 100644
+--- a/lib-esm/collector/SourceMapper.js
++++ b/lib-esm/collector/SourceMapper.js
+@@ -40,8 +40,7 @@ export class SourceMapper {
+             line: sourceFileLine,
+             column: sourceFileColumn
+         });
+-        if (!nearestMappingItem)
+-            return;
++        if (!nearestMappingItem || nearestMappingItem.originalLine === null) return;
+         const mappedFilePath = path.resolve(path.dirname(sourceFilePath), nearestMappingItem.source);
+         // Does the mapped filename exist?  Use a cache to remember the answer.
+         let originalFileInfo = this._originalFileInfoByPath.get(mappedFilePath);

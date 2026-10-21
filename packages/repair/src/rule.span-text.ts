@@ -1,4 +1,4 @@
-import {isSpanNode} from './node-kinds'
+import {isSpanNode} from '@portabletext/schema'
 import type {
   CorrectionEntry,
   StructuralContext,
@@ -6,19 +6,20 @@ import type {
 } from './types'
 
 export function repairSpanText(
-  entry: CorrectionEntry,
   context: StructuralContext,
+  entry: CorrectionEntry,
 ): StructuralCorrection | undefined {
   const {node, path} = entry
 
-  if (!isSpanNode(context.schema, node) || typeof node.text === 'string') {
+  if (
+    !isSpanNode({schema: context.schema}, node) ||
+    typeof node.text === 'string'
+  ) {
     return undefined
   }
 
   return {
-    rule: 'span-text',
-    type: 'set',
-    path: [...path, 'text'],
-    value: '',
+    type: 'span-text',
+    patches: [{type: 'set', path: [...path, 'text'], value: ''}],
   }
 }

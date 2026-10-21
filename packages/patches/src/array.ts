@@ -72,6 +72,12 @@ export function applyPatchToArray(
     }
   }
 
+  if (tail.length > 0 && index >= value.length) {
+    // Content Lake selects nothing for a path through a missing item, so the
+    // array stays as it is instead of growing an `undefined` slot.
+    return nextValue
+  }
+
   // The patch is not directed to me
   nextValue[index] = applyPatch(nextValue[index], {
     ...patch,

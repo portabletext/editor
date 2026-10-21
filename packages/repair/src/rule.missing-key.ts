@@ -1,4 +1,4 @@
-import {hasUsableKey} from '../paths/node-segment'
+import {hasUsableKey} from './has-usable-key'
 import type {
   CorrectionEntry,
   StructuralContext,
@@ -6,8 +6,8 @@ import type {
 } from './types'
 
 export function repairMissingKey(
-  entry: CorrectionEntry,
   context: StructuralContext,
+  entry: CorrectionEntry,
 ): StructuralCorrection | undefined {
   const {node, path} = entry
 
@@ -23,9 +23,9 @@ export function repairMissingKey(
   // keys exist, numeric indices where they don't (see `nodeSegment`), so
   // the `set` applies to it as-is.
   return {
-    rule: 'missing-key',
-    type: 'set',
-    path: [...path, '_key'],
-    value: context.keyGenerator(),
+    type: 'missing-key',
+    patches: [
+      {type: 'set', path: [...path, '_key'], value: context.keyGenerator()},
+    ],
   }
 }
