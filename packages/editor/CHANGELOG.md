@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.2.7
+
+### Patch Changes
+
+- [#3402](https://github.com/portabletext/editor/pull/3402) [`cc47d6b`](https://github.com/portabletext/editor/commit/cc47d6ba2977740a7c1aa8270fe6638a9a0014f9) Thanks [@christianhg](https://github.com/christianhg)! - fix: don't warn when copying only block objects leaves `text/html` empty
+  
+  Copying, cutting or dragging a selection that holds only block objects (an image, a table) no longer logs `Serialization of text/html failed with reason "Serialized HTML is empty"` to the console. Block objects have no HTML form, so an empty `text/html` entry is expected, and the clipboard still carries the selection as Portable Text, JSON and plain text. Other serialization failures still warn.
+
+- [#3395](https://github.com/portabletext/editor/pull/3395) [`401334d`](https://github.com/portabletext/editor/commit/401334d2f204c06dec282af677ce7326d7c25548) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `@portabletext/repair`
+
 ## 8.2.6
 
 ### Patch Changes
