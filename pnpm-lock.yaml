@@ -125,6 +125,11 @@ overrides:
   sanity>@portabletext/editor: workspace:*
   sanity>@sanity/cli: 8.9.0
 
+patchedDependencies:
+  '@microsoft/api-extractor':
+    hash: 61a9a605ee75409bbbc1bc692acc78400187d98e1a25b3f15a289c2f97bfc763
+    path: patches/@microsoft__api-extractor.patch
+
 importers:
 
   .:
@@ -13991,7 +13996,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.58.12(@types/node@24.12.2)':
+  '@microsoft/api-extractor@7.58.12(patch_hash=61a9a605ee75409bbbc1bc692acc78400187d98e1a25b3f15a289c2f97bfc763)(@types/node@24.12.2)':
     dependencies:
       '@microsoft/api-extractor-model': 7.33.10(@types/node@24.12.2)
       '@microsoft/tsdoc': 0.16.0
@@ -16866,7 +16871,7 @@ snapshots:
   '@sanity/tsdown-config@0.26.0(@babel/runtime@7.29.7)(@tsdown/css@0.22.14)(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(tsdown@0.22.14)(typescript@7.0.2)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))':
     dependencies:
       '@babel/core': 7.29.7
-      '@microsoft/api-extractor': 7.58.12(@types/node@24.12.2)
+      '@microsoft/api-extractor': 7.58.12(patch_hash=61a9a605ee75409bbbc1bc692acc78400187d98e1a25b3f15a289c2f97bfc763)(@types/node@24.12.2)
       '@microsoft/tsdoc-config': 0.18.1
       '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.7)(vite@8.3.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       '@sanity/browserslist-config': 1.0.5
