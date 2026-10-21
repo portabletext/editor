@@ -12,6 +12,7 @@ export type EditorEmittedEvent =
       type: 'blurred'
       event: FocusEvent<HTMLDivElement, Element>
     }
+  | ChangeEvent
   | {
       type: 'editable'
     }
@@ -73,6 +74,49 @@ export type EditorEmittedEvent =
   | {
       type: 'value changed'
       value: Array<PortableTextBlock> | undefined
+    }
+
+/**
+ * Emitted once for every change to the editor's content, synchronously, in
+ * the order the changes were applied:
+ *
+ * - `origin: 'local'`: what a user action did, the outermost Behavior
+ *   event and everything it raised. Undo and redo are one action each.
+ *   Local changes arrive in application order, and one user action can
+ *   produce several when the editor fixes something mid-action. `patches`
+ *   are the change as Content Lake patches, the same patches its
+ *   `mutation` carries, available as soon as the action finishes instead
+ *   of on the `mutation` event's debounced schedule.
+ * - `origin: 'local'` with `correction: true`: the editor's own fixes to
+ *   the content (normalization, such as merging adjacent spans with the
+ *   same marks or replacing a duplicate `_key`), emitted right after the
+ *   change that caused them, with their own operations and patches. A fix
+ *   to content the editor received (remote patches or `update value`) is
+ *   a correction too. A host that persists patches saves corrections like
+ *   any other local change.
+ * - `origin: 'remote'`: one event per applied `patches` message and per
+ *   `update value` that changed the content. Remote changes carry no
+ *   `patches`: there is nothing to save.
+ *
+ * `operations` are the {@link Operation}s the editor applied to its
+ * content, never the inputs it received. The first load of the initial
+ * value emits no `change`, and a `change` never has an empty `operations`
+ * array.
+ *
+ * @beta
+ */
+export type ChangeEvent =
+  | {
+      type: 'change'
+      origin: 'local'
+      operations: Array<Operation>
+      patches: Array<Patch>
+      correction?: true
+    }
+  | {
+      type: 'change'
+      origin: 'remote'
+      operations: Array<Operation>
     }
 
 /**

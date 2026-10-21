@@ -6,6 +6,7 @@ import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import {createChangeCollector} from './change-collector'
 import type {EditorActor} from './editor-machine'
 import {setupRemotePatches} from './remote-patches'
 import {subscribeHistory} from './subscriber.history'
@@ -85,6 +86,7 @@ export function createEditorEngine(
   editor.isPatching = true
   editor.isPerformingBehaviorOperation = false
   editor.withHistory = true
+  editor.onChangeEvent = () => {}
 
   const editorEngine = plugins(withDOM(editor), {
     editorActor: config.editorActor,
@@ -92,10 +94,21 @@ export function createEditorEngine(
 
   subscribeUpdateValue(context, editorEngine)
   subscribeRepairJournal(editorEngine)
+  const changeCollector = createChangeCollector({
+    editor: editorEngine,
+    emit: (event) => {
+      editorEngine.onChangeEvent(event)
+    },
+  })
+  editorEngine.withChangeUnit = changeCollector.withUnit
   subscribePatchGeneration({
     editorActor: config.editorActor,
     editor: editorEngine,
+    onPatches: changeCollector.addPatches,
   })
+  // Subscribed after patch generation: an operation's patches must reach
+  // the collector before the outermost apply flushes it.
+  changeCollector.subscribe()
   setupRemotePatches({
     editorActor: config.editorActor,
     subscriptions: config.subscriptions,

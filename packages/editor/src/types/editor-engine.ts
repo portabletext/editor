@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {ChangeEvent} from '../editor/relay'
 import type {ApplyContextFrame} from '../engine/core/apply-context'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {Node} from '../engine/interfaces/node'
@@ -151,6 +152,19 @@ export interface PortableTextEditorEngine extends DOMEditor {
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
   withHistory: boolean
+
+  /**
+   * Runs `fn` as one unit of work for `change` events: everything applied
+   * inside it, at any nesting, goes out as one change (plus its correction)
+   * when the outermost unit returns. Installed by `createEditorEngine`;
+   * absent on engines assembled without it.
+   */
+  withChangeUnit?: (fn: () => void) => void
+  /**
+   * Receives each `change` event the engine collects. Wired to the relay
+   * at editor setup.
+   */
+  onChangeEvent: (event: ChangeEvent) => void
 
   /**
    * The current {@link EditorSnapshot}. Reassigned (new object reference)

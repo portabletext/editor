@@ -2,16 +2,18 @@ import type {OperationOrigin} from './operation-channel'
 
 /**
  * A frame pushed onto `editor.applyContext` for the duration of an
- * attribution bracket (remote changes, undo, redo, normalization). Brackets
- * nest, so a normalization that fires while replaying a remote patch pushes
- * a `normalization` frame on top of the still-active `remote` one; both
- * stay visible to `getOrigin` below instead of only the innermost.
+ * attribution bracket (remote changes, undo, redo, normalization, the
+ * empty-editor placeholder insert). Brackets nest, so a normalization that
+ * fires while replaying a remote patch pushes a `normalization` frame on
+ * top of the still-active `remote` one; both stay visible to `getOrigin`
+ * below instead of only the innermost.
  */
 export type ApplyContextFrame =
   | {kind: 'remote'; source: 'patches' | 'update-value' | 'initial-sync'}
   | {kind: 'undo'}
   | {kind: 'redo'}
   | {kind: 'normalization'}
+  | {kind: 'placeholder'}
 
 /**
  * Reduces the frame stack to an `OperationOrigin` by fixed precedence
