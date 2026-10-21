@@ -54,7 +54,7 @@
     "@portabletext/toolkit": "^6.0.0",
     "@sanity/diff-match-patch": "catalog:",
     "linkify-it": "^6.1.0",
-    "markdown-it": "^15.0.2"
+    "markdown-it": "^15.0.3"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
