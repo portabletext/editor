@@ -174,3 +174,14 @@ Feature: Receiving
     And the gap wait runs out
     Then the editor shows "B: fooabc"
     And io's sync is "synced"
+
+  Scenario: An edit to a block another writer deleted is reported dropped
+    Given the document is "B _key=\"b1\": foo;;B _key=\"b2\": bar"
+    When the editor changes it to "B _key=\"b1\": foox;;B _key=\"b2\": bar"
+    And the quiet wait runs out
+    Then io sends mutation 1 that makes it "B _key=\"b1\": foox;;B _key=\"b2\": bar"
+    When the host delivers a transaction from revision 1 to 2 that makes it "B _key=\"b2\": bar"
+    And the host reports mutation 1 comes back
+    Then io reports work dropped that would have made it "B _key=\"b1\": foox;;B _key=\"b2\": bar", with reason "no target"
+    And the editor shows "B _key=\"b2\": bar"
+    And io's sync is "synced"
