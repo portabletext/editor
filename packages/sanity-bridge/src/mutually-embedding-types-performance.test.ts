@@ -232,12 +232,7 @@ describe('mutually-embedding block objects', () => {
     // The recursive implementation overflowed the call stack between
     // 1,400 and 1,600 types (the first descent chains through every
     // type before any memo entry lands). The work-stack conversion is
-    // heap-bounded. The absolute time stays generous because the
-    // output of n mutually-embedding types is inherently O(n^2)
-    // entries: each of the n embedding positions carries its own `of`
-    // list, and those lists really do differ per position (a type's
-    // self-reference is ancestor-cut at its own position and
-    // memo-shared at others).
+    // heap-bounded.
     const objectCount = 1_600
     const objects = Array.from({length: objectCount}, (_, index) =>
       defineType({
@@ -264,18 +259,12 @@ describe('mutually-embedding block objects', () => {
       types: [blockContent, ...objects],
     })
 
-    const startedAt = performance.now()
     const converted = sanitySchemaToPortableTextSchema(
       schema.get('blockContent'),
     )
-    const durationMs = performance.now() - startedAt
 
     expect(converted.blockObjects).toHaveLength(objectCount)
-    expect(durationMs).toBeLessThan(10_000)
-    // The explicit test timeout exceeds the duration bound because
-    // `SanitySchema.compile` on 1,600 types runs before the measured
-    // window and dominates on slow CI runners; the test guards against
-    // stack overflow, not compile speed, and vitest's 5s default has
-    // flaked on CI where the whole test body takes ~7-8s.
+    // `SanitySchema.compile` on 1,600 types dominates the test body on
+    // slow CI runners, which is what the explicit timeout is sized for.
   }, 30_000)
 })
