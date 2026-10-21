@@ -1,4 +1,4 @@
-import {isTextBlockNode} from './node-kinds'
+import {isTextBlockNode} from '@portabletext/schema'
 import type {
   CorrectionEntry,
   StructuralContext,
@@ -10,19 +10,20 @@ import type {
  * patch.
  */
 export function repairMissingTextBlockChildren(
-  entry: CorrectionEntry,
   context: StructuralContext,
+  entry: CorrectionEntry,
 ): StructuralCorrection | undefined {
   const {node, path} = entry
 
-  if (!isTextBlockNode(context.schema, node) || Array.isArray(node.children)) {
+  if (
+    !isTextBlockNode({schema: context.schema}, node) ||
+    Array.isArray(node.children)
+  ) {
     return undefined
   }
 
   return {
-    rule: 'missing-children',
-    type: 'set',
-    path: [...path, 'children'],
-    value: [],
+    type: 'missing-children',
+    patches: [{type: 'set', path: [...path, 'children'], value: []}],
   }
 }

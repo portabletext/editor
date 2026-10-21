@@ -1,4 +1,4 @@
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {isTextBlockNode} from '@portabletext/schema'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
 import {getNode} from '../traversal/get-node'

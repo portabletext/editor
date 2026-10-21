@@ -1,5 +1,19 @@
 # Changelog
 
+## 8.1.15
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.7`
+
+## 8.1.14
+
+### Patch Changes
+
+- [#3260](https://github.com/portabletext/editor/pull/3260) [`dabaea4`](https://github.com/portabletext/editor/commit/dabaea4a182054032a83324799a1d480cd2b7c9e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react to ^19.3.1
+- Updated dependencies [[`a2c9bb2`](https://github.com/portabletext/editor/commit/a2c9bb2d59f87d50387526314e9578c030d5a5ee)]:
+  - @portabletext/patches@3.0.2
+
 ## 8.1.13
 
 ### Patch Changes

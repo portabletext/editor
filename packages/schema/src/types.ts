@@ -62,6 +62,32 @@ export function isTextBlock(
 }
 
 /**
+ * Whether `node` is a text block in this schema, judged by `_type` alone.
+ * Unlike `isTextBlock`, it doesn't require `children`, so it also matches
+ * a text block whose `children` are missing.
+ *
+ * Only `_type` is checked. The narrowed type describes a well-formed text
+ * block, so check `_key`, `children` and the other fields yourself before
+ * relying on them in a value that may be malformed.
+ *
+ * @public
+ */
+export function isTextBlockNode(
+  context: {schema: Schema},
+  node: unknown,
+): node is {
+  _type: string
+  _key: string
+  children?: Array<PortableTextSpan | PortableTextObject>
+  markDefs?: Array<PortableTextObject>
+  style?: string
+  listItem?: string
+  level?: number
+} {
+  return isTypedObject(node) && node._type === context.schema.block.name
+}
+
+/**
  * @public
  */
 export interface PortableTextSpan {
@@ -91,6 +117,29 @@ export function isSpan(
   }
 
   return true
+}
+
+/**
+ * Whether `node` is a span in this schema, judged by `_type` alone. Unlike
+ * `isSpan`, it doesn't require `text`, so it also matches a span whose
+ * `text` is missing.
+ *
+ * Only `_type` is checked. The narrowed type describes a well-formed span,
+ * so check `_key`, `text` and `marks` yourself before relying on them in
+ * a value that may be malformed.
+ *
+ * @public
+ */
+export function isSpanNode(
+  context: {schema: Schema},
+  node: unknown,
+): node is {
+  _type: string
+  _key: string
+  text?: string
+  marks?: Array<string>
+} {
+  return isTypedObject(node) && node._type === context.schema.span.name
 }
 
 /**

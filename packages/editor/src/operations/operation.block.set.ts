@@ -1,5 +1,5 @@
 import {applyAll, set} from '@portabletext/patches'
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {isTextBlockNode} from '@portabletext/schema'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
 import {getBlockObjectSchema} from '../schema/get-block-object-schema'

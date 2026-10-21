@@ -1,5 +1,95 @@
 # @portabletext/markdown
 
+## 2.6.0
+
+### Minor Changes
+
+- [#3404](https://github.com/portabletext/editor/pull/3404) [`0339026`](https://github.com/portabletext/editor/commit/03390265bca31e3d7bd415b2a5f9d08c63eab0cd) Thanks [@christianhg](https://github.com/christianhg)! - feat: report content an edit lost without the markdown showing it
+  
+  Every `ReconciliationReport` passed to `applyMarkdownEdit`'s `onReconciliation` now carries `hiddenLosses`: one `SerializeDegradation` per annotation, decorator, block style, or list-item kind the `serialize` options could not express in markdown and that is missing from the returned value. Content `applyMarkdownEdit` restores is not listed, and neither are losses on blocks the edit deleted. A non-empty list means saving the result drops content whoever edited the markdown never saw, so a caller can refuse or retry the write:
+  
+  ```ts
+  import {applyMarkdownEdit} from '@portabletext/markdown'
+  
+  const edited = applyMarkdownEdit(stored, editedMarkdown, {
+    onReconciliation: (report) => {
+      if (report.hiddenLosses.length > 0) {
+        throw new Error(report.hiddenLosses.map((loss) => loss.message).join('; '))
+      }
+    },
+  })
+  ```
+  
+  Code that builds a `ReconciliationReport` by hand needs to add the field.
+
+### Patch Changes
+
+- [#3406](https://github.com/portabletext/editor/pull/3406) [`d3f5b26`](https://github.com/portabletext/editor/commit/d3f5b26f299772ec2df7ba19b1c6e8cfdd2a45af) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency markdown-it to ^15.0.3 [security]
+
+- [#3412](https://github.com/portabletext/editor/pull/3412) [`d1753bc`](https://github.com/portabletext/editor/commit/d1753bc4bdd132f511478c597906cea7f8f65c8c) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep untouched table cells intact when another cell is edited
+  
+  `applyMarkdownEdit` now returns a table cell the edit did not touch exactly as stored, even when a sibling cell in the same table changed, as long as the table's shape survives the markdown round trip. A table whose rows hold different numbers of cells does not, and its untouched cells can still lose what markdown cannot show. Previously the untouched cell was rebuilt from the markdown, so anything markdown cannot show (annotations such as internal links, custom styles and decorators) was dropped from it:
+  
+  ```ts
+  const stored = [
+    {
+      _type: 'table',
+      _key: 't1',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'r1',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'c1',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  style: 'normal',
+                  markDefs: [
+                    {_type: 'internalLink', _key: 'l1', reference: {_ref: 'foo'}},
+                  ],
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'foo', marks: ['l1']},
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'cell',
+              _key: 'c2',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [{_type: 'span', _key: 's2', text: 'bar', marks: []}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  const markdown = portableTextToMarkdown(stored).replace('bar', 'baz')
+  applyMarkdownEdit(stored, markdown)
+  // Cell `c1` now keeps its `internalLink` definition.
+  // Previously it came back with `markDefs: []`.
+  ```
+  
+  The reconciliation report now lists the untouched cell and everything inside it as `content-unchanged`, the same as an untouched top-level block. Those entries report `valueChanged: false`, except where a stored node had no `_key`: the key it gets is not listed, and the nodes containing it report `valueChanged: true`.
+
+## 2.5.2
+
+### Patch Changes
+
+- Updated dependencies [[`329cd2e`](https://github.com/portabletext/editor/commit/329cd2e27dc27f81ff4577e9d02c95471a56c846)]:
+  - @portabletext/schema@3.1.0
+
 ## 2.5.1
 
 ### Patch Changes
