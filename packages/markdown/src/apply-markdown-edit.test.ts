@@ -610,6 +610,180 @@ describe(applyMarkdownEdit.name, () => {
     ).toEqual([{_type: 'product', _key: 'p1', sku: 'new'}])
   })
 
+  test('an edit to a `json:object` block keeps a changed `_key` inside a nested object field', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'foo',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            details: {_key: 'old', label: 'baz'},
+          },
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+      .replace('"foo"', '"bar"')
+      .replace('"old"', '"new"')
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'bar',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            details: {_key: 'new', label: 'baz'},
+          },
+        ],
+      },
+    ])
+  })
+
+  test('an edit to a `json:object` block keeps a changed member `_key` in a typed array nested under an object field', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'foo',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            details: {items: [{_type: 'item', _key: 'old', label: 'baz'}]},
+          },
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+      .replace('"foo"', '"bar"')
+      .replace('"old"', '"new"')
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'bar',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            details: {items: [{_type: 'item', _key: 'new', label: 'baz'}]},
+          },
+        ],
+      },
+    ])
+  })
+
+  test('an edit to a `json:object` block keeps a changed member `_key` in a typed array inside a mark definition', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'foo',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            markDefs: [
+              {
+                _type: 'note',
+                _key: 'n1',
+                items: [{_type: 'item', _key: 'old', label: 'baz'}],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+      .replace('"foo"', '"bar"')
+      .replace('"old"', '"new"')
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'bar',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            markDefs: [
+              {
+                _type: 'note',
+                _key: 'n1',
+                items: [{_type: 'item', _key: 'new', label: 'baz'}],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('an edit to a `json:object` block keeps a literal mark spelled like an annotation reference', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const item = (marks: Array<string>) => ({
+      _type: 'item',
+      _key: 'i1',
+      markDefs: [{_type: 'note', _key: 'n1', label: 'foo'}],
+      children: [{_type: 'span', _key: 's1', text: 'foo', marks}],
+    })
+    const stored = [
+      {_type: 'widget', _key: 'w1', title: 'foo', items: [item(['n1'])]},
+    ]
+    const edited = [
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'bar',
+        items: [item(['@annotation:0:{"_type":"note","label":"foo"}'])],
+      },
+    ]
+    expect(
+      applyMarkdownEdit(
+        stored,
+        portableTextToMarkdown(structuredClone(edited)),
+        {
+          deserialize: {keyGenerator},
+        },
+      ),
+    ).toEqual([
+      {
+        _type: 'widget',
+        _key: 'w1',
+        title: 'bar',
+        items: [
+          {
+            _type: 'item',
+            _key: 'i1',
+            markDefs: [{_type: 'note', _key: 'n1', label: 'foo'}],
+            children: [
+              {
+                _type: 'span',
+                _key: 's1',
+                text: 'foo',
+                marks: ['@annotation:0:{"_type":"note","label":"foo"}'],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
   test('an unchanged table gets its whole subtree of keys back', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
@@ -2540,6 +2714,110 @@ describe(applyMarkdownEdit.name, () => {
         deserialize: {keyGenerator},
       }),
     ).toEqual([stored[0], block('b2', 's3', 'gamma')])
+  })
+
+  test('an edit to one table cell leaves an annotated sibling cell verbatim', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [
+                  {
+                    _type: 'block',
+                    _key: 'cb1',
+                    style: 'normal',
+                    markDefs: [
+                      {
+                        _type: 'internalLink',
+                        _key: 'm1',
+                        reference: {_type: 'reference', _ref: 'foo'},
+                      },
+                    ],
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+                      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+                      {
+                        _type: 'span',
+                        _key: 's3',
+                        text: ' before baz.',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {_type: 'cell', _key: 'c2', value: [block('cb2', 's4', 'bar')]},
+            ],
+          },
+        ],
+      },
+      block('b2', 's5', 'qux'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'bar now',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [
+                  {
+                    _type: 'block',
+                    _key: 'cb1',
+                    style: 'normal',
+                    markDefs: [
+                      {
+                        _type: 'internalLink',
+                        _key: 'm1',
+                        reference: {_type: 'reference', _ref: 'foo'},
+                      },
+                    ],
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+                      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+                      {
+                        _type: 'span',
+                        _key: 's3',
+                        text: ' before baz.',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                _type: 'cell',
+                _key: 'c2',
+                value: [block('cb2', 's4', 'bar now')],
+              },
+            ],
+          },
+        ],
+      },
+      block('b2', 's5', 'qux'),
+    ])
   })
 
   test('a moved block with unmappable-mark spans keeps its span structure', () => {
