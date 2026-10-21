@@ -1,5 +1,9 @@
+import type {Patch} from '@portabletext/patches'
 import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
-import {subscribeToOperations} from '../engine/core/operation-channel'
+import {
+  subscribeToOperations,
+  type OperationEvent,
+} from '../engine/core/operation-channel'
 import {addFieldLifecyclePatches} from '../internal-utils/field-lifecycle-patches'
 import {operationToPatches} from '../internal-utils/operation-to-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -12,9 +16,11 @@ import type {EditorActor} from './editor-machine'
 export function subscribePatchGeneration({
   editorActor,
   editor,
+  onPatches,
 }: {
   editorActor: EditorActor
   editor: PortableTextEditorEngine
+  onPatches: (event: OperationEvent, patches: Array<Patch>) => void
 }): () => void {
   return subscribeToOperations(editor, (event) => {
     if (!event.isPatching) {
@@ -49,6 +55,11 @@ export function subscribePatchGeneration({
 
     editor.lastSyncedValue = state.lastSyncedValue
     editor.valueUnsetEmitted = state.valueUnsetEmitted
+
+    onPatches(
+      event,
+      patches.map((patch) => ({...patch, origin: 'local'})),
+    )
 
     for (const patch of patches) {
       editorActor.send({

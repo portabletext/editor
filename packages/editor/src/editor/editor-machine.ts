@@ -16,6 +16,7 @@ import type {
   ExternalBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
+import {withChangeUnit} from '../engine-plugins/engine-plugin.change-unit'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {normalize} from '../engine/editor/normalize'
 import {debug} from '../internal-utils/debug'
@@ -383,32 +384,34 @@ export const editorMachine = setup({
           (config) => config.behavior,
         )
 
-        performEvent({
-          mode: 'send',
-          depth: 0,
-          behaviors,
-          remainingEventBehaviors: behaviors,
-          event: event.behaviorEvent,
-          editor: event.editor,
-          converters: event.editor.snapshot.context.converters,
-          keyGenerator: event.editor.snapshot.context.keyGenerator,
-          schema: event.editor.snapshot.context.schema,
-          readOnly: event.editor.snapshot.context.readOnly,
-          nativeEvent: event.nativeEvent,
-          sendBack: (eventSentBack) => {
-            if (eventSentBack.type === 'set drag ghost') {
-              self.send(eventSentBack)
-              return
-            }
+        withChangeUnit(event.editor, () =>
+          performEvent({
+            mode: 'send',
+            depth: 0,
+            behaviors,
+            remainingEventBehaviors: behaviors,
+            event: event.behaviorEvent,
+            editor: event.editor,
+            converters: event.editor.snapshot.context.converters,
+            keyGenerator: event.editor.snapshot.context.keyGenerator,
+            schema: event.editor.snapshot.context.schema,
+            readOnly: event.editor.snapshot.context.readOnly,
+            nativeEvent: event.nativeEvent,
+            sendBack: (eventSentBack) => {
+              if (eventSentBack.type === 'set drag ghost') {
+                self.send(eventSentBack)
+                return
+              }
 
-            self.send(
-              rerouteExternalBehaviorEvent({
-                event: eventSentBack,
-                editorEngine: event.editor,
-              }),
-            )
-          },
-        })
+              self.send(
+                rerouteExternalBehaviorEvent({
+                  event: eventSentBack,
+                  editorEngine: event.editor,
+                }),
+              )
+            },
+          }),
+        )
       } catch (error) {
         console.error(
           new Error(

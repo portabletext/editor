@@ -13,6 +13,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {withChangeUnit} from '../engine-plugins/engine-plugin.change-unit'
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
@@ -80,12 +81,16 @@ const syncValueCallback: CallbackLogicFunction<
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
-  updateValue({
-    context: input.context,
-    sendBack,
-    editorEngine: input.editorEngine,
-    value: input.value,
-    streamBlocks: input.streamBlocks,
+  // One `change` for the whole value sync. `streamBlocks` syncs across
+  // ticks, but only for the first load, which emits no `change`.
+  withChangeUnit(input.editorEngine, () => {
+    updateValue({
+      context: input.context,
+      sendBack,
+      editorEngine: input.editorEngine,
+      value: input.value,
+      streamBlocks: input.streamBlocks,
+    })
   })
 }
 

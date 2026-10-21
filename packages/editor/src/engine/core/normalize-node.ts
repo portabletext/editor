@@ -43,13 +43,18 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add a placeholder block when the editor is empty
    */
   if (isEditor(node) && node.snapshot.context.value.length === 0) {
-    withoutPatching(editor, () => {
-      applyInsertNodeAtPath(
-        editor,
-        createPlaceholderBlock(editor.snapshot),
-        [0],
-      )
-    })
+    editor.applyContext.push(Object.freeze({kind: 'placeholder'}))
+    try {
+      withoutPatching(editor, () => {
+        applyInsertNodeAtPath(
+          editor,
+          createPlaceholderBlock(editor.snapshot),
+          [0],
+        )
+      })
+    } finally {
+      editor.applyContext.pop()
+    }
     return
   }
 
