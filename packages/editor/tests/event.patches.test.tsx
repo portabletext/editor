@@ -20,6 +20,11 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 
+// `createTestEditors` forwards A's `mutation` events to B, and the batcher
+// flushes those on a 500ms interval, which leaves little of `vi.waitFor`'s
+// 1s default on a loaded runner.
+const remoteSyncTimeout = 3_000
+
 describe('event.patches', () => {
   describe('Scenario: `set`ing the entire value', () => {
     test('more blocks', async () => {
@@ -211,26 +216,29 @@ describe('event.patches', () => {
       })
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'ea-k0',
-          children: [{_type: 'span', _key: 'ea-k1', text: 'f', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editorB.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'ea-k0',
-          children: [{_type: 'span', _key: 'ea-k1', text: 'f', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'ea-k0',
+            children: [{_type: 'span', _key: 'ea-k1', text: 'f', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(editorB.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'ea-k0',
+            children: [{_type: 'span', _key: 'ea-k1', text: 'f', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      {timeout: remoteSyncTimeout},
+    )
   })
 
   test('Scenario: Consuming initial insert patch', async () => {
@@ -287,40 +295,43 @@ describe('event.patches', () => {
       })
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'ea-k0',
-          children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: 'ea-k2',
-          children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editorB.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'ea-k0',
-          children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: 'ea-k2',
-          children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'ea-k0',
+            children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'ea-k2',
+            children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(editorB.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'ea-k0',
+            children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'ea-k2',
+            children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      {timeout: remoteSyncTimeout},
+    )
   })
 
   test('Scenario: Splitting initial block', async () => {
@@ -377,40 +388,43 @@ describe('event.patches', () => {
       })
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'ea-k0',
-          children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: 'ea-k2',
-          children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editorB.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'ea-k0',
-          children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: 'ea-k2',
-          children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'ea-k0',
+            children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'ea-k2',
+            children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(editorB.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'ea-k0',
+            children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'ea-k2',
+            children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      },
+      {timeout: remoteSyncTimeout},
+    )
   })
 
   test('Scenario: Patching while syncing initial value', async () => {
@@ -1327,10 +1341,13 @@ describe('event.patches', () => {
       },
     ]
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(value)
-      expect(editorB.getSnapshot().context.value).toEqual(value)
-    })
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.value).toEqual(value)
+        expect(editorB.getSnapshot().context.value).toEqual(value)
+      },
+      {timeout: remoteSyncTimeout},
+    )
   })
 
   test('Scenario: `set` inline object properties', async () => {
