@@ -5,6 +5,10 @@
     ":dependencyDashboardApproval"
   ],
   "ignorePresets": ["github>sanity-io/renovate-config:group-non-major"],
+  "vulnerabilityAlerts": {
+    "description": "Raise the declared range on security updates. Renovate defaults these to `update-lockfile` and forces it over every `packageRules` entry, so a fix inside an existing range only moved the lockfile: no manifest changed, the changeset bot had nothing to release, and consumers kept the vulnerable version. With `bump`, `fix(deps)` security updates in published packages ship as patch releases. The forced strategy also applies to `peerDependencies`, which then narrow instead of widening",
+    "rangeStrategy": "bump"
+  },
   "packageRules": [
     {
       "matchFileNames": ["apps/**/*", "examples/**/*"],
