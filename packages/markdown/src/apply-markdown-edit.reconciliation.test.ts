@@ -2060,7 +2060,7 @@ describe('the reconciliation report', () => {
     })
   })
 
-  test('an edit to one table cell reports a loss in an untouched sibling cell, since the table block came back changed', () => {
+  test('an edit to one cell of a ragged table reports a loss in an untouched sibling cell', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
       {
@@ -2076,9 +2076,17 @@ describe('the reconciliation report', () => {
               {_type: 'cell', _key: 'c2', value: [block('cb2', 's4', 'bar')]},
             ],
           },
+          {
+            _type: 'row',
+            _key: 'r2',
+            cells: [
+              {_type: 'cell', _key: 'c3', value: [block('cb3', 's5', 'qux')]},
+              {_type: 'cell', _key: 'c4', value: [block('cb4', 's6', 'quux')]},
+              {_type: 'cell', _key: 'c5', value: [block('cb5', 's7', 'corge')]},
+            ],
+          },
         ],
       },
-      block('b2', 's5', 'qux'),
     ]
     const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
       'bar',
@@ -2103,19 +2111,28 @@ describe('the reconciliation report', () => {
             cells: [
               {
                 _type: 'cell',
-                _key: 'c1',
-                value: [block('cb1', 's1', 'Read foo before baz.')],
+                _key: 'k11',
+                value: [block('k9', 'k10', 'Read foo before baz.')],
               },
               {
                 _type: 'cell',
-                _key: 'c2',
-                value: [block('cb2', 's4', 'bar now')],
+                _key: 'k14',
+                value: [block('k12', 'k13', 'bar now')],
               },
+              {_type: 'cell', _key: 'k17', value: [block('k15', 'k16', '')]},
+            ],
+          },
+          {
+            _type: 'row',
+            _key: 'r2',
+            cells: [
+              {_type: 'cell', _key: 'c3', value: [block('cb3', 's5', 'qux')]},
+              {_type: 'cell', _key: 'c4', value: [block('cb4', 's6', 'quux')]},
+              {_type: 'cell', _key: 'c5', value: [block('cb5', 's7', 'corge')]},
             ],
           },
         ],
       },
-      block('b2', 's5', 'qux'),
     ])
     expect(report).toEqual({
       keyMatching: 'performed',
@@ -2133,87 +2150,117 @@ describe('the reconciliation report', () => {
           valueChanged: true,
         },
         {
-          basis: 'same-position',
-          key: 'c1',
-          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}],
-          valueChanged: true,
-        },
-        {
-          basis: 'same-position',
-          key: 'cb1',
-          path: [
-            {_key: 't1'},
-            'rows',
-            {_key: 'r1'},
-            'cells',
-            {_key: 'c1'},
-            'value',
-            {_key: 'cb1'},
-          ],
-          valueChanged: true,
-        },
-        {
-          basis: 'content-merged',
-          key: 's1',
-          path: [
-            {_key: 't1'},
-            'rows',
-            {_key: 'r1'},
-            'cells',
-            {_key: 'c1'},
-            'value',
-            {_key: 'cb1'},
-            'children',
-            {_key: 's1'},
-          ],
-          valueChanged: true,
-        },
-        {
-          basis: 'same-position',
-          key: 'c2',
-          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c2'}],
-          valueChanged: true,
-        },
-        {
-          basis: 'same-position',
-          key: 'cb2',
-          path: [
-            {_key: 't1'},
-            'rows',
-            {_key: 'r1'},
-            'cells',
-            {_key: 'c2'},
-            'value',
-            {_key: 'cb2'},
-          ],
-          valueChanged: true,
-        },
-        {
-          basis: 'same-position',
-          key: 's4',
-          path: [
-            {_key: 't1'},
-            'rows',
-            {_key: 'r1'},
-            'cells',
-            {_key: 'c2'},
-            'value',
-            {_key: 'cb2'},
-            'children',
-            {_key: 's4'},
-          ],
-          valueChanged: true,
+          basis: 'content-unchanged',
+          key: 'r2',
+          path: [{_key: 't1'}, 'rows', {_key: 'r2'}],
+          valueChanged: false,
         },
         {
           basis: 'content-unchanged',
-          key: 'b2',
-          path: [{_key: 'b2'}],
+          key: 'c3',
+          path: [{_key: 't1'}, 'rows', {_key: 'r2'}, 'cells', {_key: 'c3'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb3',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r2'},
+            'cells',
+            {_key: 'c3'},
+            'value',
+            {_key: 'cb3'},
+          ],
           valueChanged: false,
         },
         {
           basis: 'content-unchanged',
           key: 's5',
-          path: [{_key: 'b2'}, 'children', {_key: 's5'}],
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r2'},
+            'cells',
+            {_key: 'c3'},
+            'value',
+            {_key: 'cb3'},
+            'children',
+            {_key: 's5'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c4',
+          path: [{_key: 't1'}, 'rows', {_key: 'r2'}, 'cells', {_key: 'c4'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb4',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r2'},
+            'cells',
+            {_key: 'c4'},
+            'value',
+            {_key: 'cb4'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's6',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r2'},
+            'cells',
+            {_key: 'c4'},
+            'value',
+            {_key: 'cb4'},
+            'children',
+            {_key: 's6'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c5',
+          path: [{_key: 't1'}, 'rows', {_key: 'r2'}, 'cells', {_key: 'c5'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb5',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r2'},
+            'cells',
+            {_key: 'c5'},
+            'value',
+            {_key: 'cb5'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's7',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r2'},
+            'cells',
+            {_key: 'c5'},
+            'value',
+            {_key: 'cb5'},
+            'children',
+            {_key: 's7'},
+          ],
           valueChanged: false,
         },
       ],
@@ -2482,6 +2529,645 @@ describe('the reconciliation report', () => {
           basis: 'same-position',
           key: 's2',
           path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
+  test('an edit to one table cell reports the untouched sibling cell content-unchanged at every depth', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [
+                  {
+                    _type: 'block',
+                    _key: 'cb1',
+                    style: 'normal',
+                    markDefs: [
+                      {
+                        _type: 'internalLink',
+                        _key: 'm1',
+                        reference: {_type: 'reference', _ref: 'foo'},
+                      },
+                    ],
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+                      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+                      {
+                        _type: 'span',
+                        _key: 's3',
+                        text: ' before baz.',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {_type: 'cell', _key: 'c2', value: [block('cb2', 's4', 'bar')]},
+            ],
+          },
+        ],
+      },
+      block('b2', 's5', 'qux'),
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'bar now',
+    )
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 't1',
+          path: [{_key: 't1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'r1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'm1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'markDefs',
+            {_key: 'm1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's2'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's3',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's3'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'c2',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'cb2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's4',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+            'children',
+            {_key: 's4'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's5',
+          path: [{_key: 'b2'}, 'children', {_key: 's5'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
+  test('an edit to one table cell reports an untouched sibling cell holding a plain link content-unchanged', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [
+                  {
+                    _type: 'block',
+                    _key: 'cb1',
+                    style: 'normal',
+                    markDefs: [
+                      {_type: 'link', _key: 'm1', href: 'https://example.com'},
+                    ],
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+                      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+                      {
+                        _type: 'span',
+                        _key: 's3',
+                        text: ' before baz.',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {_type: 'cell', _key: 'c2', value: [block('cb2', 's4', 'bar')]},
+            ],
+          },
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'bar now',
+    )
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 't1',
+          path: [{_key: 't1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'r1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'cb1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'm1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'markDefs',
+            {_key: 'm1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's2'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's3',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'cb1'},
+            'children',
+            {_key: 's3'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'c2',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'cb2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's4',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+            'children',
+            {_key: 's4'},
+          ],
+          valueChanged: true,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
+  test('a keyless block in an untouched table cell is not reported as a preserved key once key filling mints one', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [
+                  {
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [
+                      {
+                        _type: 'internalLink',
+                        _key: 'm1',
+                        reference: {_type: 'reference', _ref: 'foo'},
+                      },
+                    ],
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+                      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+                      {
+                        _type: 'span',
+                        _key: 's3',
+                        text: ' before baz.',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {_type: 'cell', _key: 'c2', value: [block('cb2', 's4', 'bar')]},
+            ],
+          },
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'bar',
+      'bar now',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      {
+        _type: 'table',
+        _key: 't1',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                value: [
+                  {
+                    _type: 'block',
+                    _key: 'k6',
+                    style: 'normal',
+                    markDefs: [
+                      {
+                        _type: 'internalLink',
+                        _key: 'm1',
+                        reference: {_type: 'reference', _ref: 'foo'},
+                      },
+                    ],
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'Read ', marks: []},
+                      {_type: 'span', _key: 's2', text: 'foo', marks: ['m1']},
+                      {
+                        _type: 'span',
+                        _key: 's3',
+                        text: ' before baz.',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                _type: 'cell',
+                _key: 'c2',
+                value: [block('cb2', 's4', 'bar now')],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 't1',
+          path: [{_key: 't1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'r1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'c1',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'm1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'k6'},
+            'markDefs',
+            {_key: 'm1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'k6'},
+            'children',
+            {_key: 's1'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'k6'},
+            'children',
+            {_key: 's2'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's3',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c1'},
+            'value',
+            {_key: 'k6'},
+            'children',
+            {_key: 's3'},
+          ],
+          valueChanged: false,
+        },
+        {
+          basis: 'same-position',
+          key: 'c2',
+          path: [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c2'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'cb2',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+          ],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's4',
+          path: [
+            {_key: 't1'},
+            'rows',
+            {_key: 'r1'},
+            'cells',
+            {_key: 'c2'},
+            'value',
+            {_key: 'cb2'},
+            'children',
+            {_key: 's4'},
+          ],
           valueChanged: true,
         },
       ],

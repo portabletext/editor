@@ -1012,6 +1012,7 @@ function adoptVerbatim(
   adoptedNodes: AdoptedNodes,
   basis: PreservationBasis,
   recorder: ReconciliationRecorder | undefined,
+  filledKeys: 'report-filled-keys' | 'omit-filled-keys' = 'report-filled-keys',
 ): Node {
   const clone = structuredClone(original)
   fillMissingKeysFromTarget(clone, target)
@@ -1021,7 +1022,12 @@ function adoptVerbatim(
     // included. A non-default basis overrides the root only: a moved
     // block's children were not themselves moved.
     const storedCounterpart = structuredClone(original)
-    tagSubtreePreservedAgainst(clone, storedCounterpart, recorder)
+    tagSubtreePreservedAgainst(
+      clone,
+      storedCounterpart,
+      recorder,
+      filledKeys === 'omit-filled-keys',
+    )
     if (basis !== 'content-unchanged' && typeof clone['_key'] === 'string') {
       recorder.preservation.set(clone, {basis, storedCounterpart})
     }
@@ -1408,21 +1414,28 @@ function adoptNode(
 
     const matchedOriginal = new Set<number>()
     const matchedTarget = new Set<number>()
+    const isSpanLevel = field === 'children'
     // Children reference their parent block's `markDefs`, so their
     // neutral forms alias marks against the parent, not themselves.
-    const originalGroups = groupByNeutralForm(
-      originalChildren,
-      matchedOriginal,
-      buildAliasMap(original),
-    )
-    const targetGroups = groupByNeutralForm(
-      targetChildren,
-      matchedTarget,
-      buildAliasMap(target),
-    )
+    const originalGroups = isSpanLevel
+      ? groupByNeutralForm(
+          originalChildren,
+          matchedOriginal,
+          buildAliasMap(original),
+        )
+      : groupByForm(
+          originalChildren.map(
+            (child, index) => canonicalChildren?.[index] ?? child,
+          ),
+          matchedOriginal,
+          adoptionForm,
+        )
+    const targetGroups = isSpanLevel
+      ? groupByNeutralForm(targetChildren, matchedTarget, buildAliasMap(target))
+      : groupByForm(targetChildren, matchedTarget, adoptionForm)
 
-    for (const [neutral, originalIndexes] of originalGroups) {
-      const targetIndexes = targetGroups.get(neutral)
+    for (const [form, originalIndexes] of originalGroups) {
+      const targetIndexes = targetGroups.get(form)
       if (
         originalIndexes.length !== 1 ||
         !targetIndexes ||
@@ -1430,16 +1443,31 @@ function adoptNode(
       ) {
         continue
       }
-      matchedOriginal.add(originalIndexes[0]!)
-      matchedTarget.add(targetIndexes[0]!)
-      adoptNode(
-        originalChildren[originalIndexes[0]!]!,
-        canonicalChildren?.[originalIndexes[0]!],
-        targetChildren[targetIndexes[0]!]!,
-        adoptedNodes,
-        'content-unchanged',
-        recorder,
-      )
+      const originalIndex = originalIndexes[0]!
+      const targetIndex = targetIndexes[0]!
+      matchedOriginal.add(originalIndex)
+      matchedTarget.add(targetIndex)
+      if (isSpanLevel) {
+        // A verbatim span would keep stored `marks` keys that point at
+        // `markDefs` this edited block may not have adopted.
+        adoptNode(
+          originalChildren[originalIndex]!,
+          canonicalChildren?.[originalIndex],
+          targetChildren[targetIndex]!,
+          adoptedNodes,
+          'content-unchanged',
+          recorder,
+        )
+      } else {
+        targetChildren[targetIndex] = adoptVerbatim(
+          originalChildren[originalIndex]!,
+          targetChildren[targetIndex]!,
+          adoptedNodes,
+          'content-unchanged',
+          recorder,
+          'omit-filled-keys',
+        )
+      }
     }
 
     // The concatenation search is quadratic in the block's span count,
@@ -1818,23 +1846,124 @@ function groupByNeutralForm(
   exclude: ReadonlySet<number>,
   aliasByKey?: Map<string, string>,
 ): Map<string, Array<number>> {
+  return groupByForm(nodes, exclude, (node) =>
+    aliasByKey ? encodeNeutral(node, aliasByKey) : neutralForm(node),
+  )
+}
+
+function groupByForm(
+  nodes: ReadonlyArray<Node>,
+  exclude: ReadonlySet<number>,
+  formOf: (node: Node) => string,
+): Map<string, Array<number>> {
   const groups = new Map<string, Array<number>>()
   for (let index = 0; index < nodes.length; index++) {
     if (exclude.has(index)) {
       continue
     }
-    const neutral = aliasByKey
-      ? encodeNeutral(nodes[index]!, aliasByKey)
-      : neutralForm(nodes[index]!)
-    const group = groups.get(neutral)
+    const form = formOf(nodes[index]!)
+    const group = groups.get(form)
     if (group) {
       group.push(index)
     } else {
-      groups.set(neutral, [index])
+      groups.set(form, [index])
     }
   }
   return groups
 }
+
+/**
+ * A stored child whose adoption form equals the parse's can be
+ * returned verbatim. Only keys adoption reconciles are identity: the
+ * node's own, those of typed object array members reached through
+ * typed object arrays, and a definition's own `_key` (references
+ * compare through `marks` instead). `adoptMarkDefs` does not reconcile
+ * inside a definition, and nothing reconciles below any other field, so
+ * every `_key` there is content an edit can change.
+ */
+function adoptionForm(node: Node): string {
+  return encodeAdoption(node, 'identity', undefined)
+}
+
+type KeyRole = 'identity' | 'definition' | 'content'
+
+function encodeAdoption(
+  value: unknown,
+  keyRole: KeyRole,
+  aliasByKey: Map<string, AdoptionMarkAlias> | undefined,
+): string {
+  if (Array.isArray(value)) {
+    return `[${value
+      .map((item) => encodeAdoption(item, keyRole, aliasByKey))
+      .join(',')}]`
+  }
+  if (typeof value !== 'object' || value === null) {
+    return JSON.stringify(value) ?? 'undefined'
+  }
+  const node = value as Node
+  const ownAliasByKey =
+    keyRole === 'identity'
+      ? (buildAdoptionAliasMap(node) ?? aliasByKey)
+      : undefined
+  const entries = Object.entries(node)
+    .filter(([field]) => !(keyRole !== 'content' && field === '_key'))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([field, fieldValue]) => {
+      if (field === 'marks' && ownAliasByKey && Array.isArray(fieldValue)) {
+        const tagged = fieldValue.map((mark) =>
+          typeof mark === 'string' && ownAliasByKey.has(mark)
+            ? ownAliasByKey.get(mark)
+            : ['m', mark],
+        )
+        return `${JSON.stringify(field)}:${JSON.stringify(tagged)}`
+      }
+      return `${JSON.stringify(field)}:${encodeAdoption(
+        fieldValue,
+        childKeyRole(keyRole, field, fieldValue),
+        ownAliasByKey,
+      )}`
+    })
+  return `{${entries.join(',')}}`
+}
+
+function childKeyRole(
+  parentRole: KeyRole,
+  field: string,
+  fieldValue: unknown,
+): KeyRole {
+  if (parentRole !== 'identity' || !isTypedObjectArray(fieldValue)) {
+    return 'content'
+  }
+  return field === 'markDefs' ? 'definition' : 'identity'
+}
+
+function buildAdoptionAliasMap(
+  node: Node,
+): Map<string, AdoptionMarkAlias> | undefined {
+  const markDefs = node['markDefs']
+  if (!isTypedObjectArray(markDefs)) {
+    return undefined
+  }
+  const aliasByKey = new Map<string, AdoptionMarkAlias>()
+  const occurrenceByForm = new Map<string, number>()
+  for (const definition of markDefs) {
+    const key = definition['_key']
+    if (typeof key !== 'string') {
+      continue
+    }
+    const form = encodeAdoption(definition, 'definition', undefined)
+    const occurrence = occurrenceByForm.get(form) ?? 0
+    occurrenceByForm.set(form, occurrence + 1)
+    aliasByKey.set(key, ['a', form, occurrence])
+  }
+  return aliasByKey
+}
+
+/**
+ * A reference encodes as `['a', form, occurrence]` and a literal mark
+ * as `['m', mark]`, so no decorator string can spell a reference.
+ */
+type AdoptionMarkAlias = ['a', string, number]
 
 /**
  * A canonical JSON encoding that erases identity: `_key` properties
@@ -2247,8 +2376,12 @@ function tagSubtreePreservedAgainst(
   node: Node,
   counterpart: Node,
   recorder: ReconciliationRecorder,
+  storedKeysOnly = false,
 ): void {
-  if (typeof node['_key'] === 'string') {
+  if (
+    typeof node['_key'] === 'string' &&
+    (!storedKeysOnly || typeof counterpart['_key'] === 'string')
+  ) {
     recorder.preservation.set(node, {
       basis: 'content-unchanged',
       storedCounterpart: counterpart,
@@ -2267,6 +2400,7 @@ function tagSubtreePreservedAgainst(
           child as Node,
           counterpartChildren[index]!,
           recorder,
+          storedKeysOnly,
         )
       })
     } else if (typeof value === 'object' && value !== null) {
@@ -2274,6 +2408,7 @@ function tagSubtreePreservedAgainst(
         value as Node,
         counterpartValue as Node,
         recorder,
+        storedKeysOnly,
       )
     }
   }
