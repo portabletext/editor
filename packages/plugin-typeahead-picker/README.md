@@ -232,27 +232,28 @@ Creates a picker definition to pass to `useTypeaheadPicker`.
 
 **Config:**
 
-| Property     | Type                                   | Description                                                                                                                             |
-| ------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `trigger`    | `RegExp`                               | Pattern that activates the picker. Can include `^` for start-of-block triggers. Must be single-character (e.g., `/:/`, `/@/`, `/^\//`). |
-| `keyword`    | `RegExp`                               | Pattern matching characters after the trigger (e.g., `/\S*/`, `/\w*/`).                                                                 |
-| `delimiter`  | `string?`                              | Optional delimiter that triggers auto-completion (e.g., `':'` for `:joy:`)                                                              |
-| `guard`      | `TypeaheadTriggerGuard?`               | Optional guard that runs at trigger time to conditionally prevent activation                                                            |
-| `mode`       | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                             |
-| `debounceMs` | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)      |
-| `getMatches` | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                           |
-| `onSelect`   | `TypeaheadSelectActionSet[]`           | Action sets to execute when a match is selected                                                                                         |
-| `onDismiss`  | `TypeaheadDismissActionSet[]?`         | Optional action sets to execute when the picker is dismissed                                                                            |
+| Property     | Type                                   | Description                                                                                                                                     |
+| ------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger`    | `RegExp`                               | Pattern that activates the picker. Can include `^` for start-of-block triggers. One or more characters (e.g., `/:/`, `/@/`, `/^\//`, `/\[\[/`). |
+| `keyword`    | `RegExp`                               | Pattern matching characters after the trigger (e.g., `/\S*/`, `/\w*/`).                                                                         |
+| `delimiter`  | `string?`                              | Optional delimiter that triggers auto-completion (e.g., `':'` for `:joy:`)                                                                      |
+| `guard`      | `TypeaheadTriggerGuard?`               | Optional guard that runs at trigger time to conditionally prevent activation                                                                    |
+| `mode`       | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                                     |
+| `debounceMs` | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)              |
+| `getMatches` | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                                   |
+| `onSelect`   | `TypeaheadSelectActionSet[]`           | Action sets to execute when a match is selected                                                                                                 |
+| `onDismiss`  | `TypeaheadDismissActionSet[]?`         | Optional action sets to execute when the picker is dismissed                                                                                    |
 
 **Trigger pattern rules:**
 
-- Must be a single-character trigger (e.g., `:`, `@`, `/`)
-- Multi-character triggers (e.g., `##`) are not supported
+- Single-character triggers (e.g., `:`, `@`, `/`) and multi-character triggers (e.g., `[[`, `##`, `:::`) are supported
+- A multi-character trigger activates when the character that completes it is typed, so `[` followed by `[` opens the picker. An existing `[` still counts, even after moving the caret away and back
+- Typing more trigger characters after dismissing does not reopen the picker: after `[[` and Escape, typing `[` gives `[[[` and the picker stays closed
 - Position anchors (`^`) allow start-of-block constraints
 
 **How triggering works:**
 
-The picker activates the moment a trigger character is typed. After activation, the keyword is tracked via editor selection changes.
+The picker activates the moment the character that completes the trigger is typed. After activation, the keyword is tracked via editor selection changes.
 
 ```
 User types `:` → Trigger matches → Picker activates with keyword ""
@@ -263,12 +264,14 @@ User types `y` → Keyword updates to "joy"
 
 **Trigger compatibility summary:**
 
-| Trigger | Example input | Works? | Why                              |
-| ------- | ------------- | ------ | -------------------------------- |
-| `/:/`   | `:joy`        | ✅     | Single-char trigger              |
-| `/@/`   | `@john`       | ✅     | Single-char trigger              |
-| `/^\//` | `/cmd`        | ✅     | Single-char with position anchor |
-| `/##/`  | `##tag`       | ❌     | Multi-char triggers unsupported  |
+| Trigger  | Example input | Works? | Why                                    |
+| -------- | ------------- | ------ | -------------------------------------- |
+| `/:/`    | `:joy`        | ✅     | Single-char trigger                    |
+| `/@/`    | `@john`       | ✅     | Single-char trigger                    |
+| `/^\//`  | `/cmd`        | ✅     | Single-char with position anchor       |
+| `/\[\[/` | `[[page`      | ✅     | Multi-char trigger, completed by `[`   |
+| `/##/`   | `##tag`       | ✅     | Multi-char trigger, completed by `#`   |
+| `/\[\[/` | `[[` Esc `[`  | ❌     | A dismissed trigger is not found again |
 
 **delimiter requirements:**
 
@@ -515,10 +518,9 @@ The following keyboard shortcuts are handled automatically by the picker:
 
 ### Picker doesn't activate
 
-- **Check trigger**: Must be a single-character trigger (e.g., `/:/`, `/@/`)
+- **Check trigger**: The picker opens when the character that completes the trigger is typed (e.g., the second `[` of `/\[\[/`)
 - **Check position anchors**: `^` means start of block, not start of line. `hello /command` won't match `/^\//`
 - **Check for conflicts**: Only one picker can be active at a time
-- **Avoid multi-character triggers**: Triggers like `/##/` don't work because the picker only activates on newly typed single characters
 - **Check guard**: If you have a `guard` configured, ensure it's returning `true` when activation should be allowed
 
 ### Auto-completion doesn't work

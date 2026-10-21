@@ -155,18 +155,115 @@ describe('Pattern variations', () => {
     expect(stateLocator.element().textContent).toEqual('active')
   })
 
-  test('multi-character triggers are not supported', async () => {
-    // Multi-character triggers don't work reliably because:
-    // 1. Typing character-by-character: the trigger rule requires textInserted === lastMatch.text
-    // 2. Android composition: partial rule rejects when match starts before insertion point
-    // Use single-character triggers for reliable behavior.
-    const picker = createPicker({trigger: /##/, keyword: /\w*/})
-    const {locator, stateLocator} = await setupTest(picker)
+  test('Scenario: Typing the second character of a multi-character trigger opens the picker', async () => {
+    const picker = createPicker({trigger: /\[\[/, keyword: /[^\]]*/})
+    const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
-    await userEvent.type(locator, '##test')
+    // `[` starts a key descriptor in the user-event keyboard syntax, `[[` types a literal `[`
+    await userEvent.type(locator, '[[[[')
 
     await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[[')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('')
+    })
+
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[[foo')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('foo')
+    })
+  })
+
+  test('Scenario: Typing a multi-character trigger opens the picker when the keyword pattern requires a character', async () => {
+    const picker = createPicker({trigger: /\[\[/, keyword: /\w+/})
+    const {locator, keywordLocator, stateLocator} = await setupTest(picker)
+
+    await userEvent.click(locator)
+    // `[` starts a key descriptor in the user-event keyboard syntax, `[[` types a literal `[`
+    await userEvent.type(locator, '[[[[')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[[')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('')
+    })
+
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[[foo')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('foo')
+    })
+  })
+
+  test('Scenario: One insert that completes a multi-character trigger and adds a keyword opens the picker', async () => {
+    const picker = createPicker({trigger: /\[\[/, keyword: /[^\]]*/})
+    const {editor, locator, keywordLocator, stateLocator} =
+      await setupTest(picker)
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, '[[')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[')
+    })
+
+    editor.send({type: 'insert.text', text: '[foo'})
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[[foo')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('foo')
+    })
+  })
+
+  test('Scenario: Typing the third character of a three-character trigger opens the picker', async () => {
+    const picker = createPicker({trigger: /:::/, keyword: /\w*/})
+    const {locator, keywordLocator, stateLocator} = await setupTest(picker)
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, '::')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('::')
+      expect(stateLocator.element().textContent).toEqual('idle')
+    })
+
+    await userEvent.type(locator, ':foo')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual(':::foo')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('foo')
+    })
+  })
+
+  test('Scenario: Selecting a match after a multi-character trigger removes the whole trigger', async () => {
+    const picker = createPicker({
+      trigger: /\[\[/,
+      keyword: /[^\]]*/,
+      getMatches: () => [{key: '1', value: 'bar'}],
+    })
+    const {locator, keywordLocator, stateLocator} = await setupTest(picker)
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, '[[[[foo')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[[foo')
+      expect(stateLocator.element().textContent).toEqual('active')
+      expect(keywordLocator.element().textContent).toEqual('foo')
+    })
+
+    await userEvent.keyboard('{Enter}')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('bar')
       expect(stateLocator.element().textContent).toEqual('idle')
     })
   })
@@ -218,6 +315,59 @@ describe('delimiter edge cases', () => {
     await vi.waitFor(() => {
       expect(stateLocator.element().textContent).toEqual('idle')
       expect(locator.element().textContent).toContain('test1')
+    })
+  })
+
+  test('Scenario: Typing a multi-character trigger, keyword and delimiter auto-completes a single exact match', async () => {
+    const picker = createPicker({
+      trigger: /\[\[/,
+      keyword: /[^\]]*/,
+      delimiter: ']',
+      getMatches: ({keyword}) => {
+        if (keyword === 'foo') {
+          return [{key: '1', value: 'bar', type: 'exact'}]
+        }
+        return []
+      },
+    })
+    const {locator, stateLocator} = await setupTest(picker)
+
+    await userEvent.click(locator)
+    // `[` starts a key descriptor in the user-event keyboard syntax, `[[` types a literal `[`
+    await userEvent.type(locator, '[[[[foo]')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('bar')
+      expect(stateLocator.element().textContent).toEqual('idle')
+    })
+  })
+
+  test('Scenario: One insert that completes a multi-character trigger, keyword and delimiter auto-completes', async () => {
+    const picker = createPicker({
+      trigger: /\[\[/,
+      keyword: /[^\]]*/,
+      delimiter: ']',
+      getMatches: ({keyword}) => {
+        if (keyword === 'foo') {
+          return [{key: '1', value: 'bar', type: 'exact'}]
+        }
+        return []
+      },
+    })
+    const {editor, locator, stateLocator} = await setupTest(picker)
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, '[[')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('[')
+    })
+
+    editor.send({type: 'insert.text', text: '[foo]'})
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('bar')
+      expect(stateLocator.element().textContent).toEqual('idle')
     })
   })
 
