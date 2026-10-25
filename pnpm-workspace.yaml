@@ -32,8 +32,8 @@ catalogs:
     "@types/react": ^19.2.17
     "@types/react-dom": ^19.2.3
     "@vitejs/plugin-react": ^6.1.0
-    "@vitest/browser": ^5.0.4
-    "@vitest/browser-playwright": ^5.0.4
+    "@vitest/browser": ^5.0.5
+    "@vitest/browser-playwright": ^5.0.5
     jsdom: ^27.2.0
     lucide-react: ^0.562.0
     oxc-transform-react: ^0.145.0
@@ -45,7 +45,7 @@ catalogs:
     tailwindcss: ^4.1.18
     typescript: ^7.0.2
     vite: ^8.3.3
-    vitest: ^5.0.4
+    vitest: ^5.0.5
     vitest-browser-react: ^2.3.0
 
 minimumReleaseAge: 4320
@@ -78,6 +78,17 @@ minimumReleaseAgeExclude:
   - "@oxc-transform-react/*"
   # Renovate security update: sharp@0.35.4 || 0.35.5
   - sharp@0.35.0 || 0.35.4 || 0.35.5
+  # Renovate security update: vitest@5.0.5
+  - vitest@5.0.5
+  - "@vitest/browser@5.0.5"
+  - "@vitest/browser-playwright@5.0.5"
+  - "@vitest/coverage-istanbul@5.0.5"
+  - "@vitest/coverage-v8@5.0.5"
+  - "@vitest/mocker@5.0.5"
+  - "@vitest/pretty-format@5.0.5"
+  - "@vitest/spy@5.0.5"
+  - "@vitest/ui@5.0.5"
+  - "@vitest/utils@5.0.5"
 
 trustPolicy: no-downgrade
 
