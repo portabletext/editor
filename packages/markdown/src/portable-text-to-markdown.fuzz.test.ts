@@ -7,6 +7,7 @@ import type {
   TypedObject,
 } from '@portabletext/types'
 import {describe, expect, test} from 'vitest'
+import {mulberry32} from '../test-utils/mulberry32'
 import {
   defaultCalloutObjectDefinition,
   defaultCodeObjectDefinition,
@@ -17,21 +18,6 @@ import {
 } from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
-
-/**
- * A tiny deterministic PRNG (mulberry32): the fuzz corpus is generated from
- * fixed seeds, so a failure is always reproducible by re-running this file,
- * and CI never sees a flake from `Math.random()`.
- */
-function mulberry32(seed: number): () => number {
-  let state = seed
-  return () => {
-    state = (state + 0x6d2b79f5) | 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 const HOSTILE_ALPHABET = [
   ' ',

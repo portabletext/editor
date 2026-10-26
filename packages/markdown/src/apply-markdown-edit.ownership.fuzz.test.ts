@@ -5,6 +5,7 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {mulberry32} from '../test-utils/mulberry32'
 import {applyMarkdownEdit} from './apply-markdown-edit'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 
@@ -35,22 +36,6 @@ const schema = compileSchema(
     ],
   }),
 )
-
-/**
- * A tiny deterministic PRNG (mulberry32): the corpus is generated from
- * fixed seeds, so a failure is always reproducible by re-running this
- * file. Verbatim twin of the one in `apply-markdown-edit.fuzz.test.ts`
- * and `portable-text-to-markdown.fuzz.test.ts`; keep it in sync.
- */
-function mulberry32(seed: number): () => number {
-  let state = seed
-  return () => {
-    state = (state + 0x6d2b79f5) | 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 function pick<T>(random: () => number, items: ReadonlyArray<T>): T {
   return items[Math.floor(random() * items.length)]!
