@@ -68,11 +68,13 @@ import {compileSchema, getSubSchema} from '@portabletext/schema'
 
 const schema = compileSchema(schemaDefinition)
 const codeBlock = schema.blockObjects.find((type) => type.name === 'code-block')
-const lines = codeBlock.fields.find((field) => field.name === 'lines')
+const lines = codeBlock?.fields.find((field) => field.name === 'lines')
 
-const subSchema = getSubSchema(schema, lines.of)
-// subSchema.decorators === []                 (the code line forbids decorators)
-// subSchema.styles     === [{name: 'code', ...}] (only the `code` style)
+if (lines?.type === 'array' && lines.of) {
+  const subSchema = getSubSchema(schema, lines.of)
+  // subSchema.decorators === []                 (the code line forbids decorators)
+  // subSchema.styles     === [{name: 'code', ...}] (only the `code` style)
+}
 ```
 
 ### How a nested block overrides and inherits
