@@ -77,6 +77,10 @@ describe('event.drag.drop self-drop semantics', () => {
     })
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: collapsed drop at start edge of expanded drag origin is suppressed', async () => {
@@ -148,6 +152,10 @@ describe('event.drag.drop self-drop semantics', () => {
     })
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: collapsed drop at end edge of expanded drag origin is suppressed', async () => {
@@ -219,6 +227,10 @@ describe('event.drag.drop self-drop semantics', () => {
     })
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: drop onto block-object inside drag origin is suppressed', async () => {
@@ -305,6 +317,10 @@ describe('event.drag.drop self-drop semantics', () => {
     })
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: drop after the drag origin end is allowed', async () => {
@@ -467,6 +483,10 @@ describe('event.drag.drop self-drop semantics', () => {
     })
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: chrome drop inside the dragged container is suppressed', async () => {
