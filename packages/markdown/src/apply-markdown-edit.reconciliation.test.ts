@@ -1381,7 +1381,7 @@ describe('the reconciliation report', () => {
     })
   })
 
-  test('a renamed key inside a keyless top-level `json:object` block reports with an index root', () => {
+  test("a renamed key inside a keyless top-level `json:object` payload reports under the payload's generated key", () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [block('b1', 's1', 'alpha')]
     const fence = [
@@ -1411,11 +1411,12 @@ describe('the reconciliation report', () => {
       block('b1', 's1', 'alpha'),
       {
         _type: 'widget',
+        _key: 'k2',
         rows: [
           {
             cells: [
               {_key: 'dup', label: 'a'},
-              {_key: 'k2', label: 'b'},
+              {_key: 'k3', label: 'b'},
             ],
           },
         ],
@@ -1441,8 +1442,8 @@ describe('the reconciliation report', () => {
       renamedKeys: [
         {
           previousKey: 'dup',
-          key: 'k2',
-          path: [1, 'rows', 0, 'cells', {_key: 'k2'}],
+          key: 'k3',
+          path: [{_key: 'k2'}, 'rows', 0, 'cells', {_key: 'k3'}],
         },
       ],
       hiddenLosses: [],
