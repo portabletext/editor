@@ -41,10 +41,10 @@ const DecoratorButton = (props: {schemaType: ToolbarDecoratorSchemaType}) => {
 }
 
 function ToolbarPlugin() {
-  const toolbarSchema = useToolbarSchema()
+  const toolbarSchema = useToolbarSchema({})
   return (
     <div>
-      {toolBarSchema.decorators?.map((decorator) => (
+      {toolbarSchema.decorators.map((decorator) => (
         <DecoratorButton key={decorator.name} schemaType={decorator} />
       ))}
     </div>
@@ -148,7 +148,7 @@ Repeat this same approach for styles, annotations, blocks, etc. as needed using 
 
 ### Configure `useToolbarSchema` with the extended schema
 
-The `useToolbarSchema` hook optionally accepts these extended schemas.
+The `useToolbarSchema` hook accepts these extended schemas. Each one is optional, so pass an empty object when you don't extend any.
 
 ```tsx
 const toolbarSchema = useToolbarSchema({
@@ -281,9 +281,7 @@ import * as selectors from '@portabletext/editor/selectors'
 You can then combine these with the `useEditorSelector` hook in your toolbar components. For example, this button will underline if the selected text matches the annotation.
 
 ```tsx
-function AnnotationButton(props: {
-  annotation: SchemaDefinition['annotations'][number]
-}) {
+function AnnotationButton(props: {annotation: AnnotationSchemaType}) {
   const editor = useEditor()
   // useEditorSelector takes the editor instance and the selector
   const active = useEditorSelector(

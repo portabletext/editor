@@ -32,7 +32,7 @@ function overridesOf(
   return new Map(entries)
 }
 
-describe('collapseToCaret', () => {
+describe(collapseToCaret.name, () => {
   it('leaves an absent selection absent', () => {
     expect(collapseToCaret(null)).toBeNull()
   })
@@ -49,7 +49,7 @@ describe('collapseToCaret', () => {
   })
 })
 
-describe('resolveCursorSelection', () => {
+describe(resolveCursorSelection.name, () => {
   it('collapses a fresh report when nothing has moved it', () => {
     const cursor: RemoteCursor = {sessionId: 'a', selection: span(2, 6)}
 
@@ -97,7 +97,7 @@ describe('resolveCursorSelection', () => {
   })
 })
 
-describe('recordCursorMove', () => {
+describe(recordCursorMove.name, () => {
   const cursor: RemoteCursor = {sessionId: 'a', selection: span(1, 1)}
   const cursors = [cursor]
 
@@ -148,7 +148,7 @@ describe('recordCursorMove', () => {
   })
 })
 
-describe('toRangeDecorations', () => {
+describe(toRangeDecorations.name, () => {
   const cursors: RemoteCursor[] = [
     {sessionId: 'a', selection: span(1, 1)},
     {sessionId: 'b', selection: span(2, 2)},
