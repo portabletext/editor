@@ -1,5 +1,12 @@
 # @portabletext/plugin-paste-link
 
+## 5.0.22-next.0
+
+### Patch Changes
+
+- Updated dependencies [[`e52a9d2`](https://github.com/portabletext/editor/commit/e52a9d24b73c71dee09ad7b039dc3de9dd62db50), [`12510bf`](https://github.com/portabletext/editor/commit/12510bf50d535af9f0c83e6a94990e2501efbec3)]:
+  - @portabletext/editor@9.0.0-next.0
+
 ## 5.0.21
 
 ### Patch Changes
