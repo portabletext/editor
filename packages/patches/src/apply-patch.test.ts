@@ -672,6 +672,107 @@ describe(applyAll.name, () => {
       expect(applyAll(value, [set('h1', [3, 'style'])])).toStrictEqual(value)
     })
   })
+
+  describe('an array index resolves as on the server', () => {
+    test('a nested set through a negative index targets an item counted from the end', () => {
+      expect(applyAll(items(), [set('Z', [-1, 'v'])])).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'b', v: 'B'},
+        {_key: 'c', v: 'Z'},
+      ])
+    })
+
+    test('a set of a whole item through a negative index replaces that item', () => {
+      expect(applyAll(items(), [set({_key: 'z', v: 'Z'}, [-3])])).toEqual([
+        {_key: 'z', v: 'Z'},
+        {_key: 'b', v: 'B'},
+        {_key: 'c', v: 'C'},
+      ])
+    })
+
+    test('a diffMatchPatch through a negative index edits that item', () => {
+      expect(applyAll(items(), [diffMatchPatch('C', 'CD', [-1, 'v'])])).toEqual(
+        [
+          {_key: 'a', v: 'A'},
+          {_key: 'b', v: 'B'},
+          {_key: 'c', v: 'CD'},
+        ],
+      )
+    })
+
+    test('an unset through a negative index removes that item', () => {
+      expect(applyAll(items(), [unset([-1])])).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'b', v: 'B'},
+      ])
+    })
+
+    test('an insert before a negative index lands before that item', () => {
+      expect(
+        applyAll(items(), [insert([{_key: 'z', v: 'Z'}], 'before', [-1])]),
+      ).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'b', v: 'B'},
+        {_key: 'z', v: 'Z'},
+        {_key: 'c', v: 'C'},
+      ])
+    })
+
+    test('a nested set through a negative index before the start is a no-op', () => {
+      expect(applyAll(items(), [set('Z', [-4, 'v'])])).toEqual(items())
+    })
+
+    test('a set of a whole item outside the array is a no-op', () => {
+      expect(
+        applyAll(items(), [
+          set({_key: 'z', v: 'Z'}, [5]),
+          set({_key: 'z', v: 'Z'}, [-5]),
+        ]),
+      ).toEqual(items())
+    })
+
+    test('a diffMatchPatch through an index outside the array is a no-op', () => {
+      expect(applyAll(items(), [diffMatchPatch('C', 'CD', [-5, 'v'])])).toEqual(
+        items(),
+      )
+    })
+
+    test('an unset of an index outside the array is a no-op', () => {
+      expect(applyAll(items(), [unset([-5]), unset([5])])).toEqual(items())
+    })
+
+    test('an insert at an index outside the array is a no-op', () => {
+      expect(
+        applyAll(items(), [
+          insert([{_key: 'z', v: 'Z'}], 'before', [-5]),
+          insert([{_key: 'z', v: 'Z'}], 'after', [-5]),
+          insert([{_key: 'z', v: 'Z'}], 'before', [3]),
+          insert([{_key: 'z', v: 'Z'}], 'after', [3]),
+        ]),
+      ).toEqual(items())
+    })
+
+    test('an insert into an empty array lands at index 0 or -1', () => {
+      expect(
+        applyAll([], [insert([{_key: 'z', v: 'Z'}], 'after', [0])]),
+      ).toEqual([{_key: 'z', v: 'Z'}])
+      expect(
+        applyAll([], [insert([{_key: 'z', v: 'Z'}], 'before', [-1])]),
+      ).toEqual([{_key: 'z', v: 'Z'}])
+    })
+
+    test('an insert into an empty array at any other index is a no-op', () => {
+      expect(
+        applyAll(
+          [],
+          [
+            insert([{_key: 'z', v: 'Z'}], 'after', [1]),
+            insert([{_key: 'z', v: 'Z'}], 'before', [-2]),
+          ],
+        ),
+      ).toEqual([])
+    })
+  })
 })
 
 function createTestKeyGenerator() {
@@ -682,4 +783,12 @@ function createTestKeyGenerator() {
     index++
     return key
   }
+}
+
+function items() {
+  return [
+    {_key: 'a', v: 'A'},
+    {_key: 'b', v: 'B'},
+    {_key: 'c', v: 'C'},
+  ]
 }

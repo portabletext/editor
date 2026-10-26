@@ -8,7 +8,10 @@ function isKeyedSegment(segment: unknown): segment is KeyedSegment {
 
 function findTargetIndex(array: any[], pathSegment: PathSegment | undefined) {
   if (typeof pathSegment === 'number') {
-    return pathSegment
+    // Sanity counts a negative index from the end and leaves the value
+    // unchanged when the index falls outside the array.
+    const index = pathSegment < 0 ? array.length + pathSegment : pathSegment
+    return index >= 0 && index < array.length ? index : false
   }
   if (isKeyedSegment(pathSegment)) {
     const index = array.findIndex((item) => item._key === pathSegment._key)
@@ -50,6 +53,17 @@ export function applyPatchToArray(
 
   const [head, ...tail] = patch.path
 
+  if (
+    patch.type === 'insert' &&
+    tail.length === 0 &&
+    value.length === 0 &&
+    (head === 0 || head === -1)
+  ) {
+    // Sanity lets an insert into an empty array address the item it
+    // will become, as `[0]` or `[-1]`.
+    return insert(value, patch.position, 0, patch.items)
+  }
+
   const index = findTargetIndex(value, head)
 
   // If the given selector could not be found, return as-is
@@ -70,12 +84,6 @@ export function applyPatchToArray(
       nextValue.splice(index, 1)
       return nextValue
     }
-  }
-
-  if (tail.length > 0 && index >= value.length) {
-    // Content Lake selects nothing for a path through a missing item, so the
-    // array stays as it is instead of growing an `undefined` slot.
-    return nextValue
   }
 
   // The patch is not directed to me
