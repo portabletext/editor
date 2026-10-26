@@ -2896,11 +2896,11 @@ describe('event.drag.drop', () => {
       const dragSelection = {
         anchor: {
           path: [{_key: blockKey}, 'children', {_key: spanKey}],
-          offset: 0,
+          offset: 1,
         },
         focus: {
           path: [{_key: blockKey}, 'children', {_key: spanKey}],
-          offset: 6,
+          offset: 5,
         },
       }
       const dropSelection = {
@@ -3489,6 +3489,82 @@ describe('event.drag.drop', () => {
       })
 
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    test('Scenario: dragover inside the drag origin claims the native event', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const {locator, editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {_key: spanKey, _type: 'span', text: 'foobar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      const dragSelection = {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 6,
+        },
+      }
+
+      await userEvent.click(locator)
+      editor.send({type: 'select', at: dragSelection})
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          ...dragSelection,
+          backward: false,
+        })
+      })
+
+      const text = locator.element().querySelector('[data-pt-text]')
+      assert(text)
+      const rect = text.getBoundingClientRect()
+      const clientX = rect.left + rect.width / 2
+      const clientY = rect.top + rect.height / 2
+      const dataTransfer = new DataTransfer()
+
+      text.dispatchEvent(
+        new DragEvent('dragstart', {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+          clientX,
+          clientY,
+        }),
+      )
+
+      await vi.waitFor(() => {
+        expect(
+          safeParse(dataTransfer.getData('application/x-portable-text')),
+        ).toEqual(editor.getSnapshot().context.value)
+      })
+
+      const dragover = new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+        clientX,
+        clientY,
+      })
+      text.dispatchEvent(dragover)
+
+      expect(dragover.defaultPrevented).toBe(true)
     })
   })
 })
