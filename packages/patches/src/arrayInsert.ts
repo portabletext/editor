@@ -1,5 +1,6 @@
 const BEFORE = 'before'
 const AFTER = 'after'
+const REPLACE = 'replace'
 
 export default function insert(
   array: any[],
@@ -7,9 +8,9 @@ export default function insert(
   index: number,
   ...args: any[]
 ) {
-  if (position !== BEFORE && position !== AFTER) {
+  if (position !== BEFORE && position !== AFTER && position !== REPLACE) {
     throw new Error(
-      `Invalid position "${position}", must be either ${BEFORE} or ${AFTER}`,
+      `Invalid position "${position}", must be either ${BEFORE}, ${AFTER} or ${REPLACE}`,
     )
   }
 
@@ -22,9 +23,15 @@ export default function insert(
   const len = array.length
   const idx = Math.abs((len + index) % len) % len
 
-  const normalizedIdx = position === 'after' ? idx + 1 : idx
-
   const copy = array.slice()
+
+  if (position === REPLACE) {
+    copy.splice(idx, 1, ...items)
+    return copy
+  }
+
+  const normalizedIdx = position === AFTER ? idx + 1 : idx
+
   copy.splice(normalizedIdx, 0, ...flatten(items))
   return copy
 }

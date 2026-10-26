@@ -773,6 +773,100 @@ describe(applyAll.name, () => {
       ).toEqual([])
     })
   })
+
+  describe('`insert` replace', () => {
+    test('replaces the item at an index', () => {
+      expect(
+        applyAll(items(), [insert([{_key: 'z', v: 'Z'}], 'replace', [1])]),
+      ).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'z', v: 'Z'},
+        {_key: 'c', v: 'C'},
+      ])
+    })
+
+    test('replaces the item counted from the end for a negative index', () => {
+      expect(
+        applyAll(items(), [insert([{_key: 'z', v: 'Z'}], 'replace', [-1])]),
+      ).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'b', v: 'B'},
+        {_key: 'z', v: 'Z'},
+      ])
+    })
+
+    test('replaces the item with a key', () => {
+      expect(
+        applyAll(items(), [
+          insert([{_key: 'z', v: 'Z'}], 'replace', [{_key: 'b'}]),
+        ]),
+      ).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'z', v: 'Z'},
+        {_key: 'c', v: 'C'},
+      ])
+    })
+
+    test('replaces one item with every item given', () => {
+      expect(
+        applyAll(items(), [
+          insert(
+            [
+              {_key: 'y', v: 'Y'},
+              {_key: 'z', v: 'Z'},
+            ],
+            'replace',
+            [1],
+          ),
+        ]),
+      ).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'y', v: 'Y'},
+        {_key: 'z', v: 'Z'},
+        {_key: 'c', v: 'C'},
+      ])
+    })
+
+    test('removes the item when no items are given', () => {
+      expect(applyAll(items(), [insert([], 'replace', [1])])).toEqual([
+        {_key: 'a', v: 'A'},
+        {_key: 'c', v: 'C'},
+      ])
+    })
+
+    test('replaces an item in a nested array', () => {
+      expect(
+        applyAll({list: items()}, [
+          insert([{_key: 'z', v: 'Z'}], 'replace', ['list', -1]),
+        ]),
+      ).toEqual({
+        list: [
+          {_key: 'a', v: 'A'},
+          {_key: 'b', v: 'B'},
+          {_key: 'z', v: 'Z'},
+        ],
+      })
+    })
+
+    test('lands in an empty array at index 0 or -1', () => {
+      expect(
+        applyAll([], [insert([{_key: 'z', v: 'Z'}], 'replace', [0])]),
+      ).toEqual([{_key: 'z', v: 'Z'}])
+      expect(
+        applyAll([], [insert([{_key: 'z', v: 'Z'}], 'replace', [-1])]),
+      ).toEqual([{_key: 'z', v: 'Z'}])
+    })
+
+    test('is a no-op for a missing key or an index outside the array', () => {
+      expect(
+        applyAll(items(), [
+          insert([{_key: 'z', v: 'Z'}], 'replace', [{_key: 'q'}]),
+          insert([{_key: 'z', v: 'Z'}], 'replace', [3]),
+          insert([{_key: 'z', v: 'Z'}], 'replace', [-4]),
+        ]),
+      ).toEqual(items())
+    })
+  })
 })
 
 function createTestKeyGenerator() {
