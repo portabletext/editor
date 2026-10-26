@@ -80,11 +80,12 @@ function ToolbarPlugin() {
    */
   return (
     <div>
-      {toolbarSchema.decorators?.map((decorator) => (
+      {toolbarSchema.decorators.map((decorator) => (
         <DecoratorButton key={decorator.name} schemaType={decorator} />
       ))}
-      {toolbarSchema.annotations?.map((annotation) => {
+      {toolbarSchema.annotations.map((annotation) => {
         /** ... */
+        return null
       })}
       <HistoryButtons />
     </div>
@@ -105,7 +106,7 @@ function DecoratorButton(props: {schemaType: ToolbarDecoratorSchemaType}) {
       className={
         decoratorButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''
       }
-      title={props.schemaType.shortcut?.description}
+      title={props.schemaType.shortcut?.keys.join('+')}
     >
       {props.schemaType.icon && <props.schemaType.icon />}
       {props.schemaType.title}
@@ -250,18 +251,18 @@ function useBlockObjectButton(props: {
 
 ### `useBlockObjectPopover`
 
-Provides state management for block object insertion dialogs.
+Provides state management for a popover on the selected block object, to edit or remove it. The popover is active when the selection is collapsed on a block object of one of the given `schemaTypes`.
 
 ```typescript
 function useBlockObjectPopover(props: {
-  schemaType: ToolbarBlockObjectSchemaType
+  schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
 }): BlockObjectPopover
 ```
 
 **Returns:** An object with:
 
-- `snapshot`: Current state snapshot with `matches()` method
-- `send`: Function to dispatch events like `{type: 'open dialog'}`, `{type: 'close dialog'}`, `{type: 'insert'}`
+- `snapshot`: Current state snapshot with `matches()` method and `context` containing `blockObjects` (the selected block object as `{value, schemaType, at}`) and `elementRef` (its DOM element, to anchor the popover)
+- `send`: Function to dispatch events like `{type: 'edit', at, props}`, `{type: 'remove', at}`, `{type: 'close'}`
 
 ### `useInlineObjectButton`
 
@@ -280,18 +281,18 @@ function useInlineObjectButton(props: {
 
 ### `useInlineObjectPopover`
 
-Provides state management for inline object insertion dialogs.
+Provides state management for a popover on the selected inline object, to edit or remove it. The popover is active when the selection is collapsed on an inline object of one of the given `schemaTypes`.
 
 ```typescript
 function useInlineObjectPopover(props: {
-  schemaType: ToolbarInlineObjectSchemaType
+  schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
 }): InlineObjectPopover
 ```
 
 **Returns:** An object with:
 
-- `snapshot`: Current state snapshot with `matches()` method
-- `send`: Function to dispatch events like `{type: 'open dialog'}`, `{type: 'close dialog'}`, `{type: 'insert'}`
+- `snapshot`: Current state snapshot with `matches()` method and `context` containing `inlineObjects` (the selected inline object as `{value, schemaType, at}`) and `elementRef` (its DOM element, to anchor the popover)
+- `send`: Function to dispatch events like `{type: 'edit', at, props}`, `{type: 'remove', at}`, `{type: 'close'}`
 
 ### `useHistoryButtons`
 
