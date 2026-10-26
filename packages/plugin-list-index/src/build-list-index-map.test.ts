@@ -21,8 +21,6 @@ function blockObject(_key: string, name: string) {
   }
 }
 
-let keyCounter = 0
-
 function textBlock(
   _key: string,
   {
@@ -38,7 +36,7 @@ function textBlock(
     _type: 'block',
     children: [
       {
-        _key: `span-${keyCounter++}`,
+        _key: `${_key}-s0`,
         _type: 'span',
         text: `${listItem}-${level}`,
       },
