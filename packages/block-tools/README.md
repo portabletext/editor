@@ -68,15 +68,17 @@ const blocks = htmlToBlocks(html, blockContentType, {
 
 ### `normalizeBlock(block, options?)`
 
-Normalize a block object structure to ensure it has `_key`, `_type`, `children`, and `markDefs`.
+Normalize a block to ensure it has a `_key`. A text block also gets `children` and `markDefs`, and its children get new keys.
 
 ```ts
 import {normalizeBlock} from '@portabletext/block-tools'
 
-const normalized = normalizeBlock({
+const block = {
   _type: 'block',
   children: [{_type: 'span', text: 'Hello', marks: ['strong']}],
-})
+}
+
+const normalized = normalizeBlock(block)
 // => { _key: '...', _type: 'block', children: [{ _key: '...', _type: 'span', text: 'Hello', marks: ['strong'] }], markDefs: [] }
 ```
 
